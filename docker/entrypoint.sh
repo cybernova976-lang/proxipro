@@ -5,6 +5,8 @@ set -e
 if [ "$DB_CONNECTION" = "sqlite" ] || [ -z "$DB_CONNECTION" ]; then
     if [ ! -f /var/www/html/database/database.sqlite ]; then
         touch /var/www/html/database/database.sqlite
+        chown www-data:www-data /var/www/html/database/database.sqlite
+        chmod 640 /var/www/html/database/database.sqlite
     fi
 fi
 
@@ -18,7 +20,7 @@ php artisan migrate --force
 
 # Fix storage permissions
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 770 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Start PHP-FPM in background
 php-fpm -D

@@ -34,8 +34,8 @@ L'application sera disponible sur `http://localhost:8000`.
 Construire et lancer l'image Docker localement :
 
 ```bash
-# Générer une clé d'application
-APP_KEY=$(php -r "echo 'base64:'.base64_encode(random_bytes(32));")
+# Générer une clé d'application (nécessite PHP et Laravel installés localement)
+APP_KEY=$(php artisan key:generate --show)
 
 # Lancer avec Docker Compose
 APP_KEY=$APP_KEY docker compose up --build -d
