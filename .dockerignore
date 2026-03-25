@@ -1,0 +1,35 @@
+.git
+.github
+.gitignore
+.gitattributes
+.editorconfig
+.styleci.yml
+.env
+.env.*
+.phpunit.cache
+.phpactor.json
+.vscode
+.idea
+.nova
+.zed
+.fleet
+node_modules
+vendor
+storage/*.key
+storage/pail
+tests
+phpunit.xml
+*.md
+*.log
+*.sqlite
+Homestead.json
+Homestead.yaml
+Thumbs.db
+desktop.ini
+docker-compose.yml
+CAPTURE
+ste
+page accueil
+datetime
+composer-setup.php
+toggle comments.png
