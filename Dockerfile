@@ -89,16 +89,12 @@ RUN mkdir -p storage/framework/{sessions,views,cache} \
     storage/app/public \
     bootstrap/cache \
     database \
-    && touch database/database.sqlite \
     && chown -R www-data:www-data storage bootstrap/cache database \
     && chmod -R 775 storage bootstrap/cache database
 
-# Copy environment file if not present
-RUN cp .env.example .env || true
-
-# Generate app key, run migrations, create storage link
-RUN php artisan key:generate --force \
-    && php artisan storage:link --force || true
+# Copy entrypoint script
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Expose port (uses $PORT env var for cloud platforms)
 EXPOSE 8080
@@ -107,5 +103,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8080/ || exit 1
 
-# Start application
-CMD ["supervisord", "-c", "/etc/supervisord.conf"]
+# Runtime initialization and start
+ENTRYPOINT ["/entrypoint.sh"]
