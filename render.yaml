@@ -1,0 +1,31 @@
+# =============================================================================
+# Render.com - Configuration de déploiement ProxiPro
+# Déployez en connectant ce dépôt sur https://render.com
+# =============================================================================
+
+services:
+  - type: web
+    name: proxipro
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: APP_NAME
+        value: ProxiPro
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_URL
+        sync: false
+      - key: APP_KEY
+        generateValue: true
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: LOG_CHANNEL
+        value: stderr
