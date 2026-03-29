@@ -114,13 +114,12 @@ RUN mkdir -p \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache database
 
-# Remove dev/unnecessary files
+# Remove dev/unnecessary files (keep .env.example for entrypoint)
 RUN rm -rf \
     node_modules \
     tests \
     .git \
     .github \
-    .env.example \
     phpunit.xml \
     vite.config.js \
     package.json \
