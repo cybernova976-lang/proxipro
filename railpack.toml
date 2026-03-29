@@ -1,0 +1,8 @@
+[phases.build]
+cmds = [
+  "composer install --no-dev --optimize-autoloader --no-interaction",
+  "php artisan route:cache",
+  "php artisan view:cache",
+  "npm ci",
+  "npm run build",
+]
