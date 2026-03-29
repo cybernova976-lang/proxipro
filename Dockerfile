@@ -28,6 +28,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         mbstring xml zip gd bcmath intl opcache \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# OPCache production settings
+COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
 

@@ -28,3 +28,6 @@ Thumbs.db
 desktop.ini
 Homestead.json
 Homestead.yaml
+composer.phar
+check_users.php
+/toggle comments.png
