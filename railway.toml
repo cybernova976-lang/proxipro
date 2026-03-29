@@ -1,0 +1,15 @@
+# -------------------------------------------------------
+# Railway deployment configuration for ProxiPro
+# https://docs.railway.app/reference/config-as-code
+# -------------------------------------------------------
+
+[build]
+# Use the Dockerfile at the repo root
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# Railway injects $PORT; our Dockerfile + Apache honour it
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5
