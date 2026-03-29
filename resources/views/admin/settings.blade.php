@@ -198,6 +198,61 @@
 
 <!-- Informations système -->
 <div class="row mt-4">
+    <!-- Sécurité & Anti-bot -->
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-shield-alt me-2 text-danger"></i>
+                    Sécurité & Anti-bot
+                </h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ route('admin.settings.security') }}" method="POST">
+                    @csrf
+                    
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <label class="form-label mb-0 fw-semibold">Vérification e-mail par code</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="email_verification_enabled" id="emailVerificationEnabled" role="switch"
+                                    {{ ($settings['security']['email_verification_enabled'] ?? '1') == '1' ? 'checked' : '' }}>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-light border py-2 px-3 mb-3" style="font-size: 0.85rem;">
+                            <i class="fas fa-info-circle text-primary me-1"></i>
+                            Lorsque cette option est <strong>activée</strong>, un code à 6 chiffres est envoyé par e-mail à chaque inscription. L'utilisateur doit le saisir <strong>avant de pouvoir se connecter</strong>.
+                        </div>
+
+                        <div class="alert alert-warning py-2 px-3 mb-0" style="font-size: 0.82rem;" id="verificationWarning" 
+                            style="{{ ($settings['security']['email_verification_enabled'] ?? '1') == '1' ? '' : 'display:none' }}">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            <strong>Attention :</strong> Si les e-mails ne fonctionnent pas correctement (SMTP mal configuré, erreurs d'envoi), les utilisateurs ne pourront pas s'inscrire. Désactivez cette option en cas de problème.
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-0">
+                        <p class="text-muted mb-2" style="font-size: 0.85rem;">
+                            <i class="fas fa-check-circle text-success me-1"></i> Protection honeypot (toujours active)<br>
+                            <i class="fas fa-check-circle text-success me-1"></i> Vérification de timing anti-bot (toujours active)<br>
+                            <i class="fas fa-check-circle text-success me-1"></i> Limitation de tentatives : 5/min (toujours active)
+                        </p>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Enregistrer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Informations système -->
+<div class="row mt-4">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-0 py-3">

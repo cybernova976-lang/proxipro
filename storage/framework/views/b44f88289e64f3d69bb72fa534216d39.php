@@ -373,6 +373,30 @@
             grid-template-columns: repeat(2, 1fr);
         }
     }
+
+    @media (max-width: 768px) {
+        .dash-wrap { padding: 20px 14px 40px; }
+        .dash-greeting { margin-bottom: 20px; }
+        .dash-greeting h1 { font-size: 1.25rem; }
+        .dash-greeting p { font-size: 0.82rem; }
+        .btn-publish { padding: 8px 16px; font-size: 0.85rem; }
+        .top-row { gap: 12px; margin-bottom: 20px; }
+        .mini-stat { padding: 16px; gap: 10px; border-radius: 12px; }
+        .mini-stat-icon { width: 38px; height: 38px; font-size: 1rem; border-radius: 10px; }
+        .mini-stat-val { font-size: 1.3rem; }
+        .mini-stat-label { font-size: 0.73rem; }
+        .actions-row { gap: 12px; margin-bottom: 20px; }
+        .action-card { padding: 16px 14px; gap: 10px; border-radius: 12px; }
+        .action-icon { width: 40px; height: 40px; font-size: 1rem; border-radius: 10px; }
+        .action-card h5 { font-size: 0.82rem; }
+        .action-card p { font-size: 0.72rem; }
+        .table-section { border-radius: 12px; }
+        .table-section-head { padding: 14px 16px; }
+        .table-section-head h3 { font-size: 0.92rem; }
+        .points-card { padding: 14px 16px; border-radius: 12px; }
+        .points-card-val { font-size: 1.4rem; }
+    }
+
     @media (max-width: 576px) {
         .top-row {
             grid-template-columns: 1fr 1fr;
@@ -380,7 +404,31 @@
         .actions-row {
             grid-template-columns: 1fr;
         }
-        .dash-greeting h1 { font-size: 1.2rem; }
+        .dash-wrap { padding: 14px 10px 30px; }
+        .dash-greeting h1 { font-size: 1.1rem; }
+        .dash-greeting { gap: 8px; }
+        .btn-publish { padding: 7px 14px; font-size: 0.82rem; gap: 6px; }
+        .mini-stat { padding: 14px 12px; border-radius: 10px; }
+        .mini-stat-icon { width: 34px; height: 34px; font-size: 0.9rem; }
+        .mini-stat-val { font-size: 1.15rem; }
+        .action-card { padding: 14px 12px; border-radius: 10px; }
+        .action-icon { width: 36px; height: 36px; font-size: 0.9rem; }
+        .table-section-head { padding: 12px 14px; }
+        .dash-table thead th { font-size: 0.72rem; padding: 10px 8px; }
+        .dash-table tbody td { font-size: 0.78rem; padding: 10px 8px; }
+    }
+
+    @media (max-width: 420px) {
+        .dash-wrap { padding: 10px 8px 24px; }
+        .top-row { gap: 8px; }
+        .mini-stat { padding: 12px 10px; }
+        .mini-stat-val { font-size: 1.05rem; }
+        .points-card { padding: 12px; }
+        .points-card-val { font-size: 1.2rem; }
+        .points-card-actions a { font-size: 0.68rem; padding: 3px 8px; }
+        .action-card h5 { font-size: 0.78rem; }
+        .action-card p { font-size: 0.68rem; }
+        .dash-table { font-size: 0.72rem; }
     }
 
     /* Transaction History Styles */
@@ -519,6 +567,7 @@
 <?php $__env->stopPush(); ?>
 
 <?php $__env->startSection('content'); ?>
+<div id="dashboardContent">
 <div class="dash-wrap">
     <?php if(session('success')): ?>
         <div class="alert alert-success d-flex align-items-center gap-2 mb-3" role="alert" style="border-radius: 12px; font-size: 0.9rem;">
@@ -578,20 +627,20 @@
         <!-- Points (compact) -->
         <div class="points-card">
             <div class="points-card-top">
-                <a href="<?php echo e(route('points.dashboard')); ?>" style="color: #f59e0b; text-decoration: none;"><i class="fas fa-coins"></i></a>
+                <a href="#points" onclick="dashboardNav('points'); return false;" style="color: #f59e0b; text-decoration: none;"><i class="fas fa-coins"></i></a>
                 <div class="points-card-val"><?php echo e(Auth::user()->available_points ?? 0); ?></div>
             </div>
             <div class="points-card-label">Points disponibles</div>
             <div class="points-card-actions">
                 <a href="<?php echo e(route('pricing.index')); ?>" class="pts-buy"><i class="fas fa-plus me-1"></i>Acheter</a>
-                <a href="<?php echo e(route('points.transactions')); ?>" class="pts-history"><i class="fas fa-history me-1"></i>Historique</a>
+                <a href="#transactions" onclick="dashboardNav('transactions'); return false;" class="pts-history"><i class="fas fa-history me-1"></i>Historique</a>
             </div>
         </div>
     </div>
 
     <!-- Quick Actions -->
     <div class="actions-row">
-        <a href="<?php echo e(route('ads.myads')); ?>" class="action-card">
+        <a href="#my-ads" onclick="dashboardNav('my-ads'); return false;" class="action-card">
             <div class="action-icon" style="background: #f3e8ff; color: #8b5cf6;">
                 <i class="fas fa-list-alt"></i>
             </div>
@@ -600,7 +649,7 @@
                 <p>Gérez vos annonces publiées</p>
             </div>
         </a>
-        <a href="<?php echo e(route('profile.edit')); ?>" class="action-card">
+        <a href="#profile-edit" onclick="dashboardNav('profile-edit'); return false;" class="action-card">
             <div class="action-icon" style="background: #eff6ff; color: #3b82f6;">
                 <i class="fas fa-user-edit"></i>
             </div>
@@ -804,7 +853,7 @@
     <div class="table-section">
         <div class="table-section-head">
             <h3><i class="fas fa-bullhorn"></i>Mes annonces récentes</h3>
-            <a href="<?php echo e(route('ads.myads')); ?>" class="btn btn-outline-secondary btn-sm" style="border-radius: 8px; font-size: 0.8rem;">
+            <a href="#my-ads" onclick="dashboardNav('my-ads'); return false;" class="btn btn-outline-secondary btn-sm" style="border-radius: 8px; font-size: 0.8rem;">
                 Voir tout
             </a>
         </div>
@@ -968,6 +1017,7 @@
         </div>
         <?php endif; ?>
     </div>
+</div>
 </div>
 <?php $__env->stopSection(); ?>
 

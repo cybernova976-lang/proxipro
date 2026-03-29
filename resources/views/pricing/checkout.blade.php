@@ -8,56 +8,53 @@
 .pts-page { background: #f8fafc; min-height: 100vh; padding-bottom: 80px; }
 
 /* ========== HERO ========== */
-.pts-hero {
-    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #2563eb 100%);
-    padding: 36px 0 52px;
-    position: relative;
-    overflow: hidden;
+.pts-header {
+    padding: 30px 0 10px;
+    text-align: center;
 }
-.pts-hero::before {
-    content: '';
-    position: absolute;
-    top: -100px; right: -80px;
-    width: 400px; height: 400px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(251,191,36,0.12), transparent 70%);
+.pts-header .breadcrumb {
+    margin-bottom: 8px;
+    font-size: 0.85rem;
 }
-.pts-hero::after {
-    content: '';
-    position: absolute;
-    bottom: -120px; left: -60px;
-    width: 300px; height: 300px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%);
+.pts-header .breadcrumb a {
+    color: var(--primary, #2563eb);
+    text-decoration: none;
 }
-.pts-hero-inner { position: relative; z-index: 2; text-align: center; }
-.pts-hero-icon {
-    width: 56px; height: 56px; border-radius: 50%;
-    background: linear-gradient(135deg, #f59e0b, #f97316);
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 1.4rem; color: white;
-    margin-bottom: 12px;
-    box-shadow: 0 8px 28px rgba(245,158,11,0.3);
+.pts-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
 }
-.pts-hero h1 { color: white; font-weight: 800; font-size: 1.6rem; margin-bottom: 6px; letter-spacing: -0.5px; }
-.pts-hero p { color: rgba(255,255,255,0.6); font-size: 0.88rem; max-width: 480px; margin: 0 auto 16px; }
+.pts-header h1 i {
+    color: #f59e0b;
+    font-size: 1.4rem;
+}
+.pts-header p {
+    font-size: 0.95rem;
+    color: #64748b;
+    margin-bottom: 0;
+}
 .pts-balance-card {
     display: inline-flex; align-items: center; gap: 14px;
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #2563eb 100%);
+    color: white;
     border-radius: 60px;
     padding: 12px 28px 12px 14px;
+    margin-top: 14px;
 }
 .pts-balance-coin {
-    width: 44px; height: 44px; border-radius: 50%;
+    width: 40px; height: 40px; border-radius: 50%;
     background: linear-gradient(135deg, #f59e0b, #ef4444);
     display: flex; align-items: center; justify-content: center;
-    color: white; font-size: 1.1rem;
+    color: white; font-size: 1rem;
     box-shadow: 0 4px 16px rgba(245,158,11,0.3);
 }
 .pts-balance-info { text-align: left; }
-.pts-balance-label { color: rgba(255,255,255,0.5); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+.pts-balance-label { color: rgba(255,255,255,0.6); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
 .pts-balance-amount { color: white; font-size: 1.4rem; font-weight: 800; line-height: 1.2; }
 
 /* ========== CONFIRMATION BANNER ========== */
@@ -350,14 +347,13 @@
     .pts-steps { grid-template-columns: repeat(2,1fr); }
 }
 @media (max-width: 767px) {
-    .pts-hero h1 { font-size: 1.6rem; }
+    .pts-header h1 { font-size: 1.5rem; }
     .pts-free-wrap { padding: 28px 18px; }
     .pts-confirm-inner { flex-direction: column; text-align: center; }
     .pts-confirm-close { margin: 0 auto; }
     .pts-guarantees { flex-direction: column; align-items: center; gap: 12px; }
 }
 @media (max-width: 575px) {
-    .pts-hero { padding: 36px 0 56px; }
     .pts-steps { grid-template-columns: 1fr 1fr; gap: 10px; }
     .pts-step { padding: 20px 12px; }
 }
@@ -368,25 +364,30 @@
 <div class="pts-page">
     <div id="pts-toast" class="pts-toast"></div>
 
-    {{-- ===== HERO ===== --}}
-    <div class="pts-hero">
-        <div class="container">
-            <div class="pts-hero-inner">
-                <div class="pts-hero-icon"><i class="fas fa-coins"></i></div>
-                <h1>Boutique de Points</h1>
-                <p>Achetez des points pour booster vos annonces et gagner en visibilité. La publication reste <strong style="color: rgba(255,255,255,0.9);">100% gratuite</strong>.</p>
-                <div class="pts-balance-card">
-                    <div class="pts-balance-coin"><i class="fas fa-coins"></i></div>
-                    <div class="pts-balance-info">
-                        <div class="pts-balance-label">Votre solde</div>
-                        <div class="pts-balance-amount" id="user-points">{{ number_format($userPoints ?? 0, 0, ',', ' ') }} pts</div>
-                    </div>
+    {{-- ===== HEADER ===== --}}
+    <div class="container">
+        <div class="pts-header">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb justify-content-center">
+                    <li class="breadcrumb-item"><a href="{{ url('/') }}"><i class="fas fa-home"></i> Accueil</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('pricing.index') }}">Tarifs</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Boutique de Points</li>
+                </ol>
+            </nav>
+            <h1><i class="fas fa-coins"></i> Boutique de Points</h1>
+            <p>Achetez des points pour booster vos annonces et gagner en visibilité. La publication reste <strong>100% gratuite</strong>.</p>
+            <div class="pts-balance-card">
+                <div class="pts-balance-coin"><i class="fas fa-coins"></i></div>
+                <div class="pts-balance-info">
+                    <div class="pts-balance-label">Votre solde</div>
+                    <div class="pts-balance-amount" id="user-points">{{ number_format($userPoints ?? 0, 0, ',', ' ') }} pts</div>
                 </div>
             </div>
         </div>
+        <hr class="mb-4">
     </div>
 
-    <div class="container" style="margin-top: -28px; position: relative; z-index: 10;">
+    <div class="container">
 
         {{-- ===== SUCCESS BANNER ===== --}}
         @if(session('success'))

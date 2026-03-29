@@ -86,6 +86,7 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" href="{{ route('pro.invoices.show', $invoice->id) }}"><i class="fas fa-eye me-2"></i>Voir</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('pro.invoices.download', $invoice->id) }}"><i class="fas fa-download me-2"></i>Télécharger PDF</a></li>
                                     <li><a class="dropdown-item" href="{{ route('pro.invoices.edit', $invoice->id) }}"><i class="fas fa-edit me-2"></i>Modifier</a></li>
                                     @if($invoice->status !== 'paid')
                                     <li>
@@ -105,6 +106,13 @@
                                         </form>
                                     </li>
                                     @endif
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="POST" action="{{ route('pro.invoices.destroy', $invoice->id) }}" onsubmit="return confirm('Supprimer cette facture ?')">
+                                            @csrf @method('DELETE')
+                                            <button class="dropdown-item text-danger"><i class="fas fa-trash me-2"></i>Supprimer</button>
+                                        </form>
+                                    </li>
                                 </ul>
                             </div>
                         </td>

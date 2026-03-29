@@ -11,17 +11,18 @@
         .header-left { max-width: 55%; }
         .header-right { text-align: right; }
 
-        .company-name {
-            background: #1e293b;
+        /* Company name as logo */
+        .company-logo {
+            background: #4f46e5;
             color: #ffffff;
-            font-size: 16px;
+            font-size: 17px;
             font-weight: 900;
             letter-spacing: 3px;
             text-transform: uppercase;
-            padding: 12px 22px;
+            padding: 12px 24px;
             display: inline-block;
             line-height: 1;
-            border-bottom: 4px solid #4f46e5;
+            border-radius: 8px;
             margin-bottom: 10px;
         }
         .company-info { font-size: 9px; color: #64748b; line-height: 1.6; }
@@ -69,7 +70,7 @@
 <body>
     <div class="header">
         <div class="header-left">
-            <div class="company-name">{{ $emitter['company'] ?? $emitter['name'] }}</div>
+            <div class="company-logo">{{ $emitter['company'] ?? $emitter['name'] }}</div>
         </div>
         <div class="header-right">
             <div class="doc-title">DEVIS</div>

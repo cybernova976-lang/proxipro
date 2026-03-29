@@ -90,12 +90,6 @@
                     </svg>
                     S'inscrire avec Google
                 </a>
-                <a href="{{ route('social.redirect', 'facebook') }}" class="flex items-center justify-center gap-3 w-full py-2.5 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                    <svg class="w-[18px] h-[18px]" fill="#1877F2" viewBox="0 0 24 24">
-                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                    </svg>
-                    S'inscrire avec Facebook
-                </a>
             </div>
 
             <!-- Séparateur -->
@@ -171,8 +165,7 @@
                     <input type="text" name="website_url" id="website_url" value="" autocomplete="off" tabindex="-1">
                 </div>
 
-                <!-- reCAPTCHA v3 hidden token -->
-                <input type="hidden" name="g-recaptcha-response" id="recaptcha-token">
+
 
                 <!-- Champs Particulier -->
                 <div id="fields-particulier">
@@ -365,11 +358,7 @@
                     Créer mon compte
                 </button>
 
-                <p class="text-xs text-gray-400 text-center mt-2">
-                    Protégé par reCAPTCHA Google.
-                    <a href="https://policies.google.com/privacy" class="underline" target="_blank">Confidentialité</a> &
-                    <a href="https://policies.google.com/terms" class="underline" target="_blank">Conditions</a>.
-                </p>
+
             </form>
 
             <!-- Lien connexion -->
@@ -535,49 +524,6 @@
         }
     });
 
-    // =========================================
-    // reCAPTCHA v3 - Invisible bot protection
-    // =========================================
-    const recaptchaSiteKey = '{{ config("services.recaptcha.site_key") }}';
-    
-    if (recaptchaSiteKey) {
-        // Load reCAPTCHA script dynamically
-        const recaptchaScript = document.createElement('script');
-        recaptchaScript.src = `https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey}`;
-        recaptchaScript.async = true;
-        recaptchaScript.defer = true;
-        document.head.appendChild(recaptchaScript);
-        
-        // Intercept form submission to get reCAPTCHA token
-        const registerForm = document.getElementById('registerForm');
-        if (registerForm) {
-            registerForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const submitBtn = document.getElementById('submitBtn');
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'Vérification...';
-                
-                if (typeof grecaptcha !== 'undefined') {
-                    grecaptcha.ready(function() {
-                        grecaptcha.execute(recaptchaSiteKey, { action: 'register' })
-                            .then(function(token) {
-                                document.getElementById('recaptcha-token').value = token;
-                                registerForm.submit();
-                            })
-                            .catch(function(err) {
-                                console.error('reCAPTCHA error:', err);
-                                submitBtn.disabled = false;
-                                submitBtn.textContent = 'Créer mon compte';
-                                // Allow form submission anyway if reCAPTCHA fails
-                                registerForm.submit();
-                            });
-                    });
-                } else {
-                    // reCAPTCHA not loaded, submit anyway
-                    registerForm.submit();
-                }
-            });
-        }
-    }
+
 </script>
 @endsection

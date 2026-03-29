@@ -567,6 +567,7 @@
 @endpush
 
 @section('content')
+<div id="dashboardContent">
 <div class="dash-wrap">
     @if(session('success'))
         <div class="alert alert-success d-flex align-items-center gap-2 mb-3" role="alert" style="border-radius: 12px; font-size: 0.9rem;">
@@ -625,20 +626,20 @@
         <!-- Points (compact) -->
         <div class="points-card">
             <div class="points-card-top">
-                <a href="{{ route('points.dashboard') }}" style="color: #f59e0b; text-decoration: none;"><i class="fas fa-coins"></i></a>
+                <a href="#points" onclick="dashboardNav('points'); return false;" style="color: #f59e0b; text-decoration: none;"><i class="fas fa-coins"></i></a>
                 <div class="points-card-val">{{ Auth::user()->available_points ?? 0 }}</div>
             </div>
             <div class="points-card-label">Points disponibles</div>
             <div class="points-card-actions">
                 <a href="{{ route('pricing.index') }}" class="pts-buy"><i class="fas fa-plus me-1"></i>Acheter</a>
-                <a href="{{ route('points.transactions') }}" class="pts-history"><i class="fas fa-history me-1"></i>Historique</a>
+                <a href="#transactions" onclick="dashboardNav('transactions'); return false;" class="pts-history"><i class="fas fa-history me-1"></i>Historique</a>
             </div>
         </div>
     </div>
 
     <!-- Quick Actions -->
     <div class="actions-row">
-        <a href="{{ route('ads.myads') }}" class="action-card">
+        <a href="#my-ads" onclick="dashboardNav('my-ads'); return false;" class="action-card">
             <div class="action-icon" style="background: #f3e8ff; color: #8b5cf6;">
                 <i class="fas fa-list-alt"></i>
             </div>
@@ -647,7 +648,7 @@
                 <p>Gérez vos annonces publiées</p>
             </div>
         </a>
-        <a href="{{ route('profile.edit') }}" class="action-card">
+        <a href="#profile-edit" onclick="dashboardNav('profile-edit'); return false;" class="action-card">
             <div class="action-icon" style="background: #eff6ff; color: #3b82f6;">
                 <i class="fas fa-user-edit"></i>
             </div>
@@ -849,7 +850,7 @@
     <div class="table-section">
         <div class="table-section-head">
             <h3><i class="fas fa-bullhorn"></i>Mes annonces récentes</h3>
-            <a href="{{ route('ads.myads') }}" class="btn btn-outline-secondary btn-sm" style="border-radius: 8px; font-size: 0.8rem;">
+            <a href="#my-ads" onclick="dashboardNav('my-ads'); return false;" class="btn btn-outline-secondary btn-sm" style="border-radius: 8px; font-size: 0.8rem;">
                 Voir tout
             </a>
         </div>
@@ -1008,5 +1009,6 @@
         </div>
         @endif
     </div>
+</div>
 </div>
 @endsection

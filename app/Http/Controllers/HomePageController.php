@@ -3,14 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ad;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class HomePageController extends Controller
 {
     public function index()
     {
-        // Statistiques
+        // Statistiques réelles
         $totalAds = Ad::where('status', 'active')->count();
+        $totalPros = User::where(function ($q) {
+            $q->where('user_type', 'professionnel')
+              ->orWhere('is_service_provider', true);
+        })->count();
+        $totalUsers = User::count();
 
         // Mega menu categories with subcategories + counts
         $categoriesWithSubs = [
@@ -301,6 +307,20 @@ class HomePageController extends Controller
             ->take(6)
             ->get();
 
-        return view('pages.home', compact('totalAds', 'latestAds', 'categoriesWithSubs'));
+        // Prestataires mis en avant (avec abonnement Pro ou les plus actifs)
+        $featuredPros = User::where(function ($q) {
+                $q->where('user_type', 'professionnel')
+                  ->orWhere('is_service_provider', true);
+            })
+            ->whereNotNull('profession')
+            ->withCount(['ads as active_ads_count' => function ($q) {
+                $q->where('status', 'active');
+            }])
+            ->orderByRaw("CASE WHEN stripe_id IS NOT NULL THEN 0 ELSE 1 END")
+            ->orderByDesc('active_ads_count')
+            ->take(6)
+            ->get();
+
+        return view('pages.home', compact('totalAds', 'totalPros', 'totalUsers', 'latestAds', 'featuredPros', 'categoriesWithSubs'));
     }
 }

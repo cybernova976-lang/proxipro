@@ -549,6 +549,45 @@
         transform: none;
         box-shadow: none;
     }
+
+    .btn-refresh-stripe {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        border: none;
+        padding: 12px 28px;
+        border-radius: 12px;
+        font-weight: 700;
+        transition: all 0.3s;
+        margin-left: 10px;
+    }
+
+    .btn-refresh-stripe:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+        color: white;
+    }
+
+    .pro-discount-banner {
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        border: 2px solid #f59e0b;
+        border-radius: 16px;
+        padding: 16px 24px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 600;
+        color: #92400e;
+    }
+
+    .pro-discount-banner i { font-size: 1.4rem; color: #f59e0b; }
+
+    .price-original {
+        text-decoration: line-through;
+        color: #94a3b8;
+        font-size: 0.85em;
+        margin-right: 6px;
+    }
     
     /* Benefits */
     .benefits-section {
@@ -733,6 +772,14 @@
     </div>
     @endif
     
+    <!-- Pro Discount Banner -->
+    @if($isPro)
+    <div class="pro-discount-banner">
+        <i class="fas fa-crown"></i>
+        <span>Abonné Pro — Vous bénéficiez de <strong>-20%</strong> sur tous les boosts, rafraîchissements et publications urgentes !</span>
+    </div>
+    @endif
+
     <!-- User Points -->
     <div class="user-points-box">
         <div class="points-info">
@@ -752,17 +799,28 @@
     <div class="refresh-section">
         <h3><i class="fas fa-sync me-2"></i>Rafraîchir votre annonce</h3>
         <p>Le boost précédent a expiré. Rafraîchissez pour remonter dans les résultats.</p>
-        <form action="{{ route('ads.refresh', $ad) }}" method="POST" class="d-inline">
-            @csrf
-            <button type="submit" class="btn-refresh" {{ $userPoints < 10 ? 'disabled' : '' }}>
-                <i class="fas fa-sync me-2"></i>
-                @if($userPoints >= 10)
-                    Rafraîchir pour 10 points
-                @else
-                    Points insuffisants (10 requis)
-                @endif
-            </button>
-        </form>
+        <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap">
+            <form action="{{ route('ads.refresh', $ad) }}" method="POST" class="d-inline">
+                @csrf
+                <button type="submit" class="btn-refresh" {{ $userPoints < $refreshConfig['price_points'] ? 'disabled' : '' }}>
+                    <i class="fas fa-coins me-2"></i>
+                    @if($userPoints >= $refreshConfig['price_points'])
+                        @if($isPro)<span class="price-original">10 pts</span>@endif
+                        Rafraîchir pour {{ $refreshConfig['price_points'] }} points
+                    @else
+                        Points insuffisants ({{ $refreshConfig['price_points'] }} requis)
+                    @endif
+                </button>
+            </form>
+            <form action="{{ route('ads.refresh.stripe', $ad) }}" method="POST" class="d-inline">
+                @csrf
+                <button type="submit" class="btn-refresh-stripe">
+                    <i class="fas fa-credit-card me-2"></i>
+                    @if($isPro)<span class="price-original">3,00 €</span>@endif
+                    Rafraîchir pour {{ number_format($refreshConfig['price_euros'], 2, ',', ' ') }} €
+                </button>
+            </form>
+        </div>
     </div>
     @endif
     
@@ -811,11 +869,21 @@
             <div class="package-pricing">
                 <div class="price-row">
                     <span class="price-label">Avec points</span>
-                    <span class="price-value points">{{ $package['price_points'] }} pts</span>
+                    <span class="price-value points">
+                        @if($isPro && isset($package['price_points_original']))
+                            <span class="price-original">{{ $package['price_points_original'] }} pts</span>
+                        @endif
+                        {{ $package['price_points'] }} pts
+                    </span>
                 </div>
                 <div class="price-row">
                     <span class="price-label">Par carte</span>
-                    <span class="price-value euros">{{ number_format($package['price_euros'], 2, ',', ' ') }} €</span>
+                    <span class="price-value euros">
+                        @if($isPro && isset($package['price_euros_original']))
+                            <span class="price-original">{{ number_format($package['price_euros_original'], 2, ',', ' ') }} €</span>
+                        @endif
+                        {{ number_format($package['price_euros'], 2, ',', ' ') }} €
+                    </span>
                 </div>
             </div>
             

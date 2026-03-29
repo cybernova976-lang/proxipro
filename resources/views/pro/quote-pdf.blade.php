@@ -12,17 +12,18 @@
         .header { display: table; width: 100%; margin-bottom: 30px; border-bottom: 3px solid #2563eb; padding-bottom: 20px; }
         .header-left { display: table-cell; width: 60%; vertical-align: top; }
         .header-right { display: table-cell; width: 40%; vertical-align: top; text-align: right; }
-        .company-name {
-            background: #0f172a;
+        /* Company name as logo */
+        .company-logo {
+            background: #4f46e5;
             color: #ffffff;
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 900;
-            letter-spacing: 4px;
+            letter-spacing: 3px;
             text-transform: uppercase;
-            padding: 14px 24px;
+            padding: 14px 28px;
             display: inline-block;
             line-height: 1;
-            border-bottom: 4px solid #6366f1;
+            border-radius: 8px;
             margin-bottom: 12px;
         }
         .company-info { font-size: 10px; color: #64748b; line-height: 1.6; }
@@ -80,7 +81,7 @@
         {{-- Header --}}
         <div class="header">
             <div class="header-left">
-                <div class="company-name">{{ $user->company_name ?? $user->name }}</div>
+                <div class="company-logo">{{ $user->company_name ?? $user->name }}</div>
                 <div class="company-info">
                     @if($user->address){{ $user->address }}<br>@endif
                     @if($user->city){{ $user->city }}@if($user->country), {{ $user->country }}@endif<br>@endif

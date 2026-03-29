@@ -438,12 +438,6 @@
                     <button class="btn btn-social">
                         <i class="fab fa-google"></i>
                     </button>
-                    <button class="btn btn-social">
-                        <i class="fab fa-facebook-f"></i>
-                    </button>
-                    <button class="btn btn-social">
-                        <i class="fab fa-apple"></i>
-                    </button>
                 </div>
             </div>
             

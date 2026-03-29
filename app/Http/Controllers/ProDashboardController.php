@@ -113,6 +113,12 @@ class ProDashboardController extends Controller
     {
         $user = $this->ensurePro();
 
+        // Convert comma-separated specialties string to array
+        if ($request->has('specialties') && is_string($request->input('specialties'))) {
+            $specialties = array_filter(array_map('trim', explode(',', $request->input('specialties'))));
+            $request->merge(['specialties' => !empty($specialties) ? array_values($specialties) : null]);
+        }
+
         $validated = $request->validate([
             'company_name' => 'required|string|max:255',
             'bio' => 'nullable|string|max:1000',
@@ -568,6 +574,15 @@ class ProDashboardController extends Controller
         $pdf->setPaper('a4');
 
         return $pdf->download('Facture_' . $invoice->invoice_number . '.pdf');
+    }
+
+    public function destroyInvoice($id)
+    {
+        $user = $this->ensurePro();
+        $invoice = $user->proInvoices()->findOrFail($id);
+        $invoice->delete();
+
+        return redirect()->route('pro.invoices')->with('success', 'Facture supprimée avec succès.');
     }
 
     public function updateInvoiceStatus(Request $request, $id)

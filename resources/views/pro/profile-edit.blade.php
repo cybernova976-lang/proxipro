@@ -132,14 +132,15 @@
             {{-- Avatar --}}
             <div class="pro-card text-center">
                 <h6 class="fw-bold mb-3">Photo de profil</h6>
-                <div style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, #6366f1); color: white; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 16px; overflow: hidden;">
+                <div id="avatarPreview" style="width: 140px; height: 140px; border-radius: 16px; background: linear-gradient(135deg, #a855f7, #6366f1); color: white; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(99,102,241,0.18); border: 3px solid #e2e8f0;">
                     @if($user->avatar)
-                        <img src="{{ asset('storage/' . $user->avatar) }}" style="width: 100%; height: 100%; object-fit: cover;" alt="Avatar">
+                        <img id="avatarImg" src="{{ asset('storage/' . $user->avatar) }}" style="width: 100%; height: 100%; object-fit: cover;" alt="Avatar">
                     @else
-                        {{ strtoupper(substr($user->first_name ?? $user->name, 0, 1)) }}
+                        <span id="avatarInitial">{{ strtoupper(substr($user->first_name ?? $user->name, 0, 1)) }}</span>
+                        <img id="avatarImg" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;" alt="Avatar">
                     @endif
                 </div>
-                <input type="file" name="avatar" class="form-control" accept="image/*" style="border-radius: 10px; font-size: 0.85rem;">
+                <input type="file" name="avatar" id="avatarInput" class="form-control" accept="image/*" style="border-radius: 10px; font-size: 0.85rem;">
                 <small class="text-muted d-block mt-1">JPG, PNG — Max 2 Mo</small>
             </div>
 
@@ -304,4 +305,22 @@
 </script>
 @endpush
 @endif
+@endsection
+
+@section('scripts')
+<script>
+document.getElementById('avatarInput').addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        var img = document.getElementById('avatarImg');
+        img.src = ev.target.result;
+        img.style.display = '';
+        var initial = document.getElementById('avatarInitial');
+        if (initial) initial.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+});
+</script>
 @endsection

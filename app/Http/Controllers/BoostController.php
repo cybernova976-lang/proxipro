@@ -87,6 +87,7 @@ class BoostController extends Controller
 
         $user = Auth::user();
         $userPoints = $user->available_points ?? 0;
+        $isPro = $user->hasActiveProSubscription();
         $status = $ad->getBoostStatus();
 
         // Build smart recommendations for each package
@@ -97,6 +98,14 @@ class BoostController extends Controller
             $pkg['is_useful'] = true;
             $pkg['warning'] = null;
             $pkg['recommendation'] = null;
+
+            // Pro discount: -20% on points, -20% on euros
+            if ($isPro) {
+                $pkg['price_points_original'] = $pkg['price_points'];
+                $pkg['price_euros_original'] = $pkg['price_euros'];
+                $pkg['price_points'] = max(1, (int) round($pkg['price_points'] * 0.8));
+                $pkg['price_euros'] = round($pkg['price_euros'] * 0.8, 2);
+            }
 
             // If urgent is active and covers more days than this package → useless
             if ($status['is_urgent'] && $status['urgent_days_left'] >= $package['duration_days'] && !$status['is_boosted']) {
@@ -132,15 +141,23 @@ class BoostController extends Controller
             $recommendedKey = 'boost_7'; // Best value for new boost
         }
 
+        // Refresh config with Pro discount
+        $refreshConfig = [
+            'price_points' => $isPro ? 8 : 10,
+            'price_euros' => $isPro ? 2.40 : 3.00,
+        ];
+
         return view('boost.show', [
             'ad' => $ad,
             'packages' => $smartPackages,
             'userPoints' => $userPoints,
+            'isPro' => $isPro,
             'boostStatus' => $status,
             'recommendedKey' => $recommendedKey,
             'isAlreadyBoosted' => $status['is_boosted'],
             'boostTimeRemaining' => $status['is_boosted'] ? $ad->boost_end->diffForHumans() : null,
             'currentBoostType' => $ad->boost_type,
+            'refreshConfig' => $refreshConfig,
         ]);
     }
 
@@ -160,6 +177,12 @@ class BoostController extends Controller
         $user = Auth::user();
         $package = $this->boostPackages[$request->package];
         $pointsRequired = $package['price_points'];
+
+        // Pro discount: -20% on points
+        if ($user->hasActiveProSubscription()) {
+            $pointsRequired = max(1, (int) round($pointsRequired * 0.8));
+        }
+
         $status = $ad->getBoostStatus();
 
         // Check points
@@ -212,6 +235,12 @@ class BoostController extends Controller
         $user = Auth::user();
         $package = $this->boostPackages[$request->package];
 
+        // Pro discount: -20% on euros
+        $priceEuros = $package['price_euros'];
+        if ($user->hasActiveProSubscription()) {
+            $priceEuros = round($priceEuros * 0.8, 2);
+        }
+
         // Créer une session Stripe
         \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
 
@@ -225,7 +254,7 @@ class BoostController extends Controller
                             'name' => $package['name'] . ' - ' . $ad->title,
                             'description' => $package['description'],
                         ],
-                        'unit_amount' => (int)($package['price_euros'] * 100),
+                        'unit_amount' => (int)($priceEuros * 100),
                     ],
                     'quantity' => 1,
                 ]],
@@ -366,7 +395,7 @@ class BoostController extends Controller
         }
 
         $user = Auth::user();
-        $refreshCost = 10;
+        $refreshCost = $user->hasActiveProSubscription() ? 8 : 10;
 
         // Vérifier les points disponibles
         if (($user->available_points ?? 0) < $refreshCost) {
@@ -386,6 +415,74 @@ class BoostController extends Controller
 
         return redirect()->route('ads.show', $ad)->with('success', 
             '✅ Votre annonce a été rafraîchie et remontera dans les résultats de recherche !'
+        );
+    }
+
+    /**
+     * Refresh an ad with Stripe payment (3€, or 2.40€ for Pro)
+     */
+    public function refreshAdStripe(Ad $ad)
+    {
+        if (Auth::id() !== $ad->user_id) {
+            return back()->with('error', 'Vous ne pouvez pas rafraîchir cette annonce.');
+        }
+
+        $user = Auth::user();
+        $priceEuros = $user->hasActiveProSubscription() ? 2.40 : 3.00;
+
+        \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+
+        try {
+            $session = \Stripe\Checkout\Session::create([
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'price_data' => [
+                        'currency' => 'eur',
+                        'product_data' => [
+                            'name' => 'Rafraîchir l\'annonce - ' . $ad->title,
+                            'description' => 'Remonter votre annonce dans les résultats de recherche',
+                        ],
+                        'unit_amount' => (int)($priceEuros * 100),
+                    ],
+                    'quantity' => 1,
+                ]],
+                'mode' => 'payment',
+                'success_url' => route('ads.refresh.success', ['ad' => $ad->id]),
+                'cancel_url' => route('boost.show', $ad),
+                'customer_email' => $user->email,
+                'metadata' => [
+                    'ad_id' => $ad->id,
+                    'user_id' => $user->id,
+                    'type' => 'refresh',
+                ],
+            ]);
+
+            return redirect($session->url);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Erreur lors du paiement: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Handle successful refresh Stripe payment
+     */
+    public function refreshAdSuccess(Request $request)
+    {
+        $ad = Ad::findOrFail($request->ad);
+
+        if (Auth::id() !== $ad->user_id) {
+            return redirect()->route('homepage')->with('error', 'Accès non autorisé.');
+        }
+
+        $ad->update([
+            'updated_at' => now(),
+            'is_boosted' => false,
+            'boost_end' => null,
+            'boost_type' => null,
+        ]);
+
+        return redirect()->route('ads.show', $ad)->with('success', 
+            '✅ Paiement réussi ! Votre annonce a été rafraîchie et remontera dans les résultats !'
         );
     }
 
@@ -419,6 +516,11 @@ class BoostController extends Controller
         $user = Auth::user();
         $config = self::getUrgentConfig();
         $urgentCost = $config['price_points'];
+
+        // Pro discount: -20%
+        if ($user->hasActiveProSubscription()) {
+            $urgentCost = max(1, (int) round($urgentCost * 0.8));
+        }
 
         // Vérifier les points disponibles
         if (($user->available_points ?? 0) < $urgentCost) {
@@ -457,6 +559,12 @@ class BoostController extends Controller
         $user = Auth::user();
         $config = self::getUrgentConfig();
 
+        // Pro discount: -20%
+        $priceEuros = $config['price_euros'];
+        if ($user->hasActiveProSubscription()) {
+            $priceEuros = round($priceEuros * 0.8, 2);
+        }
+
         \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
 
         try {
@@ -469,7 +577,7 @@ class BoostController extends Controller
                             'name' => 'Publication Urgente 🔥 - ' . $ad->title,
                             'description' => 'Votre annonce sera épinglée en section Urgentes pendant ' . $config['duration_days'] . ' jours',
                         ],
-                        'unit_amount' => (int)($config['price_euros'] * 100),
+                        'unit_amount' => (int)($priceEuros * 100),
                     ],
                     'quantity' => 1,
                 ]],

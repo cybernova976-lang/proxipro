@@ -132,6 +132,9 @@ class User extends Authenticatable
         'identity_verified_at',
         'pro_verified',
         'pro_verified_at',
+        // Email verification code
+        'email_verification_code',
+        'email_verification_code_expires_at',
     ];
 
     /**
@@ -153,6 +156,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'email_verification_code_expires_at' => 'datetime',
             'password' => 'hashed',
             'is_verified' => 'boolean',
             'identity_verified' => 'boolean',
@@ -447,24 +451,8 @@ class User extends Authenticatable
         $newLevel = floor($this->total_points / 100) + 1;
         
         if ($newLevel > $this->level) {
-            $oldLevel = $this->level;
             $this->level = $newLevel;
             $this->save();
-            
-            // Ajouter des points bonus pour le level up (éviter récursion infinie)
-            if ($newLevel <= 10) { // Limite pour éviter la récursion
-                $bonusPoints = $newLevel * 10;
-                $this->total_points += $bonusPoints;
-                $this->available_points += $bonusPoints;
-                $this->save();
-                
-                $this->pointTransactions()->create([
-                    'points' => $bonusPoints,
-                    'type' => 'level_up',
-                    'description' => "Bonus de niveau $newLevel"
-                ]);
-            }
-            
             return true;
         }
         

@@ -809,14 +809,18 @@
             <div class="photo-preview-grid" id="photo-preview-grid"></div>
 
             @if(!empty($ad->photos))
-                <div class="photo-preview-grid mt-3">
-                    @foreach($ad->photos as $photo)
-                        <div class="photo-preview-item">
+                <div class="photo-preview-grid mt-3" id="existing-photos-grid">
+                    @foreach($ad->photos as $index => $photo)
+                        <div class="photo-preview-item" id="existing-photo-{{ $index }}">
                             <img src="{{ asset('storage/'.$photo) }}" alt="Photo">
+                            <button type="button" class="remove-photo" title="Supprimer cette photo"
+                                    onclick="deleteExistingPhoto({{ $ad->id }}, {{ $index }}, this)">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
                     @endforeach
                 </div>
-                <p class="form-hint mt-2">Importer de nouvelles photos remplacera les anciennes.</p>
+                <p class="form-hint mt-2">Vous pouvez supprimer une photo existante ou en importer de nouvelles (remplacera les anciennes).</p>
             @endif
         </div>
         
@@ -989,20 +993,8 @@
 @section('scripts')
 <script>
     // ===== CATEGORY SELECTION =====
-    const categoriesData = {
-        "Bricolage": { icon: "🔧", subcategories: ["Plomberie", "Électricité", "Peinture", "Menuiserie", "Carrelage", "Maçonnerie", "Serrurerie"] },
-        "Jardinage": { icon: "🌱", subcategories: ["Tonte de pelouse", "Taille de haies", "Élagage", "Entretien de jardin", "Plantation", "Arrosage automatique"] },
-        "Ménage": { icon: "🧹", subcategories: ["Nettoyage maison", "Repassage", "Vitres", "Nettoyage fin de chantier", "Désinfection"] },
-        "Informatique": { icon: "💻", subcategories: ["Dépannage PC", "Installation logiciels", "Création site web", "Récupération données", "Formation", "Réseaux"] },
-        "Covoiturage": { icon: "🚗", subcategories: ["Trajet quotidien", "Longue distance", "Aéroport", "Événements"] },
-        "Aide à domicile": { icon: "🏠", subcategories: ["Courses", "Accompagnement", "Aide administrative", "Compagnie", "Préparation repas"] },
-        "Garde d'enfant": { icon: "👶", subcategories: ["Baby-sitting", "Sortie d'école", "Aide aux devoirs", "Garde partagée", "Nounou"] },
-        "Main d'oeuvre": { icon: "💪", subcategories: ["Déménagement", "Manutention", "Montage meubles", "Livraison", "Nettoyage chantier"] },
-        "Animaux": { icon: "🐾", subcategories: ["Garde animaux", "Promenade chiens", "Toilettage", "Pet-sitting", "Dressage"] },
-        "Vente": { icon: "🛒", subcategories: ["Électroménager", "Meubles", "Vêtements", "High-tech", "Véhicules", "Immobilier"] },
-        "Emploi": { icon: "💼", subcategories: ["CDI", "CDD", "Intérim", "Stage", "Freelance", "Temps partiel"] },
-        "Cours": { icon: "📚", subcategories: ["Soutien scolaire", "Langues", "Musique", "Sport", "Informatique", "Arts"] }
-    };
+    // Généré dynamiquement depuis config/categories.php (source unique de vérité)
+    const categoriesData = @json($categoriesData);
 
     function selectMainCategory(catName, icon) {
         document.getElementById('main-categories-grid').style.display = 'none';
@@ -1088,10 +1080,11 @@
     function handleFiles(files) {
         const maxFiles = {{ Auth::check() && Auth::user()->hasActiveProSubscription() ? 4 : 2 }};
         const maxSize = 5 * 1024 * 1024; // 5MB
+        const existingCount = document.querySelectorAll('#existing-photos-grid .photo-preview-item').length;
         
         Array.from(files).forEach(file => {
-            if (uploadedFiles.length >= maxFiles) {
-                alert('Maximum ' + maxFiles + ' photos autorisées');
+            if (uploadedFiles.length + existingCount >= maxFiles) {
+                alert('Maximum ' + maxFiles + ' photos autorisées (vous en avez déjà ' + existingCount + ')');
                 return;
             }
             
@@ -1139,6 +1132,24 @@
         const dt = new DataTransfer();
         uploadedFiles.forEach(file => dt.items.add(file));
         photoInput.files = dt.files;
+    }
+
+    // ===== DELETE EXISTING PHOTO =====
+    function deleteExistingPhoto(adId, index, btn) {
+        if (!confirm('Supprimer cette photo ?')) return;
+        fetch('/ads/' + adId + '/photos/' + index, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            }
+        }).then(response => {
+            if (response.ok) {
+                btn.closest('.photo-preview-item').remove();
+            } else {
+                alert('Erreur lors de la suppression de la photo.');
+            }
+        }).catch(() => alert('Erreur réseau.'));
     }
 
     // ===== CONDITIONS CHECKBOX =====

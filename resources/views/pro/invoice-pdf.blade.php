@@ -13,18 +13,18 @@
         .header-left { display: table-cell; width: 55%; vertical-align: top; }
         .header-right { display: table-cell; width: 45%; vertical-align: top; text-align: right; }
 
-        /* Logo-style company name */
+        /* Company name as logo */
         .company-logo {
-            background: #0f172a;
+            background: #4f46e5;
             color: #ffffff;
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 900;
-            letter-spacing: 4px;
+            letter-spacing: 3px;
             text-transform: uppercase;
-            padding: 14px 24px;
+            padding: 14px 28px;
             display: inline-block;
             line-height: 1;
-            border-bottom: 4px solid #6366f1;
+            border-radius: 8px;
             margin-bottom: 12px;
         }
         .company-info { font-size: 10px; color: #64748b; line-height: 1.7; margin-top: 4px; }

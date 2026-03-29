@@ -9,21 +9,21 @@
         <div class="menu-section">
             <span class="menu-label">Navigation</span>
             
-            <a href="{{ route('home') }}" class="menu-item {{ request()->routeIs('home') ? 'active' : '' }}">
+            <a href="#" class="menu-item active" data-dashboard-section="overview" onclick="dashboardNav('overview'); return false;">
                 <div class="menu-icon">
                     <i class="fas fa-th-large"></i>
                 </div>
                 <span class="menu-text">Tableau de bord</span>
             </a>
 
-            <a href="{{ route('profile.show') }}" class="menu-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
+            <a href="#" class="menu-item" data-dashboard-section="profile" onclick="dashboardNav('profile'); return false;">
                 <div class="menu-icon">
                     <i class="fas fa-user-circle"></i>
                 </div>
                 <span class="menu-text">Profil</span>
             </a>
 
-            <a href="{{ route('ads.myads') }}" class="menu-item {{ request()->routeIs('ads.myads') ? 'active' : '' }}">
+            <a href="#" class="menu-item" data-dashboard-section="my-ads" onclick="dashboardNav('my-ads'); return false;">
                 <div class="menu-icon">
                     <i class="fas fa-briefcase"></i>
                 </div>
@@ -36,7 +36,7 @@
                 @endif
             </a>
 
-            <a href="{{ route('ads.create') }}" class="menu-item menu-item-highlight {{ request()->routeIs('ads.create') ? 'active' : '' }}">
+            <a href="#" class="menu-item menu-item-highlight" data-dashboard-section="create-ad" onclick="dashboardNav('create-ad'); return false;">
                 <div class="menu-icon highlight">
                     <i class="fas fa-plus-circle"></i>
                 </div>
@@ -47,7 +47,7 @@
         <div class="menu-section">
             <span class="menu-label">Communication</span>
             
-            <a href="{{ route('messages.index') }}" class="menu-item {{ request()->routeIs('messages.*') ? 'active' : '' }}">
+            <a href="#" class="menu-item" data-dashboard-section="messages" onclick="dashboardNav('messages'); return false;">
                 <div class="menu-icon">
                     <i class="fas fa-envelope"></i>
                 </div>
@@ -71,7 +71,7 @@
         <div class="menu-section">
             <span class="menu-label">Mon compte</span>
             
-            <a href="{{ route('points.dashboard') }}" class="menu-item {{ request()->routeIs('points.*') ? 'active' : '' }}">
+            <a href="#" class="menu-item" data-dashboard-section="points" onclick="dashboardNav('points'); return false;">
                 <div class="menu-icon">
                     <i class="fas fa-coins"></i>
                 </div>
@@ -86,7 +86,7 @@
                 <span class="menu-text">Tarifs & Points</span>
             </a>
 
-            <a href="{{ route('home') }}#transactions-history" class="menu-item">
+            <a href="#" class="menu-item" data-dashboard-section="transactions" onclick="dashboardNav('transactions'); return false;">
                 <div class="menu-icon">
                     <i class="fas fa-receipt"></i>
                 </div>
@@ -101,7 +101,7 @@
             <i class="fas fa-home"></i>
             <span>Retour à l'accueil</span>
         </a>
-        <a href="{{ route('settings.index') }}" class="footer-link">
+        <a href="#" class="footer-link" data-dashboard-section="settings" onclick="dashboardNav('settings'); return false;">
             <i class="fas fa-cog"></i>
             <span>Paramètres</span>
         </a>
@@ -549,11 +549,127 @@ window.addEventListener('resize', function() {
     }
 });
 
-document.querySelectorAll('.menu-item').forEach(item => {
-    item.addEventListener('click', function() {
-        if (window.innerWidth <= 1024) {
-            toggleSidebar();
-        }
+// ===== DASHBOARD SPA NAVIGATION =====
+var currentSection = 'overview';
+var isNavigating = false;
+
+function dashboardNav(section) {
+    if (!section) return;
+    // Prevent double-clicks while a fetch is in progress
+    if (isNavigating) return;
+
+    // Close mobile sidebar
+    if (window.innerWidth <= 1024) {
+        toggleSidebar();
+    }
+
+    // Update active state in sidebar
+    document.querySelectorAll('.menu-item[data-dashboard-section], .footer-link[data-dashboard-section]').forEach(function(item) {
+        item.classList.remove('active');
     });
+    var activeItem = document.querySelector('[data-dashboard-section="' + section + '"]');
+    if (activeItem) activeItem.classList.add('active');
+
+    currentSection = section;
+
+    // Find content area
+    var contentArea = document.getElementById('dashboardContent');
+    if (!contentArea) {
+        // Not on dashboard page - redirect to dashboard
+        window.location.href = '/home#' + section;
+        return;
+    }
+
+    // Update URL without reload
+    var newUrl = '/home#' + section;
+    history.pushState({ section: section }, '', newUrl);
+
+    isNavigating = true;
+
+    // Safety timeout: reset lock after 15s in case fetch hangs
+    var safetyTimer = setTimeout(function() {
+        isNavigating = false;
+        var existingLoader = document.getElementById('dashboardLoader');
+        if (existingLoader) existingLoader.remove();
+    }, 15000);
+
+    // Show loading spinner overlay
+    contentArea.style.position = 'relative';
+    var loader = document.createElement('div');
+    loader.id = 'dashboardLoader';
+    loader.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;z-index:10;min-height:200px;';
+    loader.innerHTML = '<div style="text-align:center;"><div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem;"></div><p style="margin-top:12px;color:#64748b;font-size:0.9rem;">Chargement...</p></div>';
+    contentArea.appendChild(loader);
+
+    // Fetch content
+    fetch('/dashboard/' + encodeURIComponent(section), {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'text/html'
+        },
+        credentials: 'same-origin'
+    })
+    .then(function(response) {
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        return response.text();
+    })
+    .then(function(html) {
+        clearTimeout(safetyTimer);
+
+        // Remove loader
+        var existingLoader = document.getElementById('dashboardLoader');
+        if (existingLoader) existingLoader.remove();
+
+        // Set content
+        contentArea.innerHTML = html;
+
+        // Execute inline scripts from loaded content
+        var scripts = contentArea.querySelectorAll('script');
+        scripts.forEach(function(oldScript) {
+            var newScript = document.createElement('script');
+            if (oldScript.src) {
+                newScript.src = oldScript.src;
+            } else {
+                newScript.textContent = oldScript.textContent;
+            }
+            oldScript.parentNode.replaceChild(newScript, oldScript);
+        });
+
+        // Scroll to top of content
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        isNavigating = false;
+    })
+    .catch(function(error) {
+        clearTimeout(safetyTimer);
+
+        // Remove loader
+        var existingLoader = document.getElementById('dashboardLoader');
+        if (existingLoader) existingLoader.remove();
+
+        contentArea.innerHTML = '<div class="container py-5 text-center"><div class="alert alert-danger" style="border-radius:14px;"><i class="fas fa-exclamation-triangle me-2"></i>Erreur de chargement. <a href="#" onclick="dashboardNav(\'' + section + '\'); return false;" style="font-weight:600;">Réessayer</a></div></div>';
+        isNavigating = false;
+    });
+}
+
+// Handle browser back/forward
+window.addEventListener('popstate', function(event) {
+    if (event.state && event.state.section) {
+        isNavigating = false; // Reset lock for back/forward
+        dashboardNav(event.state.section);
+    } else {
+        var hash = window.location.hash.replace('#', '');
+        if (hash && hash !== currentSection) {
+            isNavigating = false;
+            dashboardNav(hash);
+        }
+    }
+});
+
+// Load section from hash on page load
+document.addEventListener('DOMContentLoaded', function() {
+    var hash = window.location.hash.replace('#', '');
+    if (hash && hash !== 'overview' && hash !== '') {
+        dashboardNav(hash);
+    }
 });
 </script>

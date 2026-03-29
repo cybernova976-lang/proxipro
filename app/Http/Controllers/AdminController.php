@@ -631,6 +631,7 @@ class AdminController extends Controller
             'ads' => Setting::getGroup('ads'),
             'points' => Setting::getGroup('points'),
             'email' => Setting::getGroup('email'),
+            'security' => Setting::getGroup('security'),
         ];
         
         return view('admin.settings', compact('settings'));
@@ -695,6 +696,13 @@ class AdminController extends Controller
         Setting::set('email_new_message', $request->has('email_new_message') ? '1' : '0', 'email');
 
         return back()->with('success', 'Paramètres email mis à jour avec succès');
+    }
+
+    public function updateSettingsSecurity(Request $request)
+    {
+        Setting::set('email_verification_enabled', $request->has('email_verification_enabled') ? '1' : '0', 'security');
+
+        return back()->with('success', 'Paramètres de sécurité mis à jour avec succès');
     }
 
     public function updateSettingsSystem(Request $request)

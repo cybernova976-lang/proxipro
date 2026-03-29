@@ -2,7 +2,7 @@
 @section('title', 'Abonnement Pro - Espace Pro')
 
 @section('content')
-<div class="pro-content-header">
+<div class="pro-content-header" style="max-width: 960px; margin-left: auto; margin-right: auto;">
     <div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-1" style="font-size: 0.8rem;">
@@ -16,13 +16,13 @@
 </div>
 
 @if(session('success'))
-<div class="alert alert-success alert-dismissible fade show" role="alert" style="border-radius: 12px;">
+<div class="alert alert-success alert-dismissible fade show" role="alert" style="border-radius: 12px; max-width: 960px; margin-left: auto; margin-right: auto;">
     <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 @endif
 @if(session('error'))
-<div class="alert alert-danger alert-dismissible fade show" role="alert" style="border-radius: 12px;">
+<div class="alert alert-danger alert-dismissible fade show" role="alert" style="border-radius: 12px; max-width: 960px; margin-left: auto; margin-right: auto;">
     <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
@@ -270,7 +270,9 @@
 <style>
 /* Constrain card blocks width on subscription page */
 .sub-page-card {
-    max-width: 900px;
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* Subscription plan cards - compact */

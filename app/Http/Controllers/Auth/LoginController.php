@@ -3,9 +3,14 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Rules\Recaptcha;
+use App\Mail\EmailVerificationCode;
+use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class LoginController extends Controller
 {
@@ -59,13 +64,65 @@ class LoginController extends Controller
             'password' => 'required|string',
         ];
 
-        // Add reCAPTCHA validation if configured
-        if (config('services.recaptcha.secret_key')) {
-            $rules['g-recaptcha-response'] = ['required', new Recaptcha('login')];
+        $request->validate($rules);
+    }
+
+    /**
+     * After authentication, check if email is verified.
+     * If not: logout, generate a new code, send it, and redirect to verification page.
+     */
+    protected function authenticated(Request $request, $user)
+    {
+        // Check if email verification is enabled in admin settings
+        $verificationEnabled = true;
+        try {
+            $verificationEnabled = Setting::get('email_verification_enabled', '1') === '1';
+        } catch (\Exception $e) {
+            Log::warning('Could not read email_verification_enabled setting on login', [
+                'error' => $e->getMessage(),
+            ]);
+            $verificationEnabled = false; // On login failure-to-read, don't block users
         }
 
-        $request->validate($rules, [
-            'g-recaptcha-response.required' => 'La vérification de sécurité est requise.',
-        ]);
+        if ($verificationEnabled && is_null($user->email_verified_at)) {
+            $this->guard()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            // Generate a fresh verification code
+            $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $user->email_verification_code = Hash::make($code);
+            $user->email_verification_code_expires_at = now()->addMinutes(15);
+            $user->save();
+
+            $emailSent = false;
+            try {
+                Mail::to($user->email)->send(new EmailVerificationCode($code, $user->name));
+                $emailSent = true;
+            } catch (\Exception $e) {
+                Log::error('Verification code email failed on login: ' . $e->getMessage(), [
+                    'user_id' => $user->id,
+                ]);
+            }
+
+            if ($emailSent) {
+                return redirect()->route('verification.code.show', ['email' => $user->email])
+                    ->with('error', 'Veuillez d\'abord vérifier votre adresse e-mail. Un nouveau code vous a été envoyé.');
+            }
+
+            // Email failed: auto-verify to not block the user
+            Log::warning('Email send failed on login, auto-verifying user', [
+                'user_id' => $user->id,
+            ]);
+            $user->email_verified_at = now();
+            $user->email_verification_code = null;
+            $user->email_verification_code_expires_at = null;
+            $user->save();
+
+            // Re-login and continue
+            $this->guard()->login($user);
+        }
+
+        return redirect()->intended($this->redirectPath());
     }
 }

@@ -159,14 +159,9 @@
                  <div class="d-flex flex-wrap gap-2 justify-content-center">
                     <a href="{{ request()->fullUrlWithQuery(['category' => null]) }}" class="category-chip {{ !request('category') ? 'active' : '' }}">Tout</a>
                     @php
-                        $categories = [
-                            'Bricolage & Travaux', 'Jardinage', 'Nettoyage & Foyer', 'Déménagement & Transport',
-                            'Cours de langues', 'Cours particuliers', 'Aide à domicile', 'Animaux',
-                            'Beauté & Bien-être', 'Événements', 'Sports & Fitness', 'Informatique',
-                            'Avocats & Conseil', 'Santé & Médecine', 'Services Pro', 'Covoiturage', 'Vente', 'Emploi'
-                        ];
+                        $filterCategories = array_merge(array_keys(config('categories.services')), array_keys(config('categories.marketplace')));
                     @endphp
-                    @foreach($categories as $cat)
+                    @foreach($filterCategories as $cat)
                         <a href="{{ request()->fullUrlWithQuery(['category' => $cat]) }}" class="category-chip {{ request('category') == $cat ? 'active' : '' }}">{{ $cat }}</a>
                     @endforeach
                  </div>

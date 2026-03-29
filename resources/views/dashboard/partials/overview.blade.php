@@ -1,0 +1,443 @@
+{{-- Dashboard Overview Partial --}}
+<div class="dash-wrap">
+    @if(session('success'))
+        <div class="alert alert-success d-flex align-items-center gap-2 mb-3" role="alert" style="border-radius: 12px; font-size: 0.9rem;">
+            <i class="fas fa-check-circle"></i>
+            {{ session('success') }}
+        </div>
+    @endif
+
+    <!-- Greeting -->
+    <div class="dash-greeting">
+        <div>
+            <h1>Bonjour, <span>{{ Auth::user()->name }}</span></h1>
+            <p>Gérez vos annonces et votre activité sur ProxiPro</p>
+        </div>
+    </div>
+
+    <!-- Stats + Points -->
+    <div class="top-row">
+        <div class="mini-stat">
+            <div class="mini-stat-icon" style="background: #eff6ff; color: #3b82f6;">
+                <i class="fas fa-bullhorn"></i>
+            </div>
+            <div>
+                <div class="mini-stat-val">{{ $ads->count() }}</div>
+                <div class="mini-stat-label">Annonces</div>
+            </div>
+        </div>
+        <div class="mini-stat">
+            <div class="mini-stat-icon" style="background: #dcfce7; color: #16a34a;">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div>
+                <div class="mini-stat-val">{{ $ads->where('status', 'active')->count() }}</div>
+                <div class="mini-stat-label">Actives</div>
+            </div>
+        </div>
+        <div class="mini-stat">
+            <div class="mini-stat-icon" style="background: #fef3c7; color: #f59e0b;">
+                <i class="fas fa-eye"></i>
+            </div>
+            <div>
+                <div class="mini-stat-val">{{ $ads->sum('views') ?? 0 }}</div>
+                <div class="mini-stat-label">Vues totales</div>
+            </div>
+        </div>
+        <div class="mini-stat">
+            <div class="mini-stat-icon" style="background: #fce7f3; color: #ec4899;">
+                <i class="fas fa-envelope"></i>
+            </div>
+            <div>
+                <div class="mini-stat-val">{{ Auth::user()->unreadMessagesCount() ?? 0 }}</div>
+                <div class="mini-stat-label">Messages non lus</div>
+            </div>
+        </div>
+
+        <!-- Points (compact) -->
+        <div class="points-card">
+            <div class="points-card-top">
+                <a href="#" onclick="dashboardNav('points')" style="color: #f59e0b; text-decoration: none;"><i class="fas fa-coins"></i></a>
+                <div class="points-card-val">{{ Auth::user()->available_points ?? 0 }}</div>
+            </div>
+            <div class="points-card-label">Points disponibles</div>
+            <div class="points-card-actions">
+                <a href="{{ route('pricing.index') }}" class="pts-buy"><i class="fas fa-plus me-1"></i>Acheter</a>
+                <a href="#" onclick="dashboardNav('transactions'); return false;" class="pts-history"><i class="fas fa-history me-1"></i>Historique</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="actions-row">
+        <a href="#" onclick="dashboardNav('my-ads'); return false;" class="action-card">
+            <div class="action-icon" style="background: #f3e8ff; color: #8b5cf6;">
+                <i class="fas fa-list-alt"></i>
+            </div>
+            <div>
+                <h5>Mes Annonces</h5>
+                <p>Gérez vos annonces publiées</p>
+            </div>
+        </a>
+        <a href="#" onclick="dashboardNav('profile-edit'); return false;" class="action-card">
+            <div class="action-icon" style="background: #eff6ff; color: #3b82f6;">
+                <i class="fas fa-user-edit"></i>
+            </div>
+            <div>
+                <h5>Mon Profil</h5>
+                <p>Complétez votre profil</p>
+            </div>
+        </a>
+        <a href="{{ route('verification.index') }}" class="action-card">
+            <div class="action-icon" style="background: #dcfce7; color: #16a34a;">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div>
+                <h5>Vérification</h5>
+                <p>
+                    @if(Auth::user()->identity_verified)
+                        Identité vérifiée ✓
+                    @else
+                        Vérifiez votre identité
+                    @endif
+                </p>
+            </div>
+        </a>
+        <a href="{{ route('contact.index') }}" class="action-card">
+            <div class="action-icon" style="background: #fef3c7; color: #f59e0b;">
+                <i class="fas fa-headset"></i>
+            </div>
+            <div>
+                <h5>Support</h5>
+                <p>Contactez notre équipe</p>
+            </div>
+        </a>
+    </div>
+
+    <!-- Active Subscriptions & Purchases -->
+    @if((isset($activeBoostedAds) && $activeBoostedAds->count() > 0) || (isset($activeUrgentAds) && $activeUrgentAds->count() > 0) || (isset($proSubscription) && $proSubscription))
+    <div class="table-section" style="margin-bottom: 24px;">
+        <div class="table-section-head">
+            <h3><i class="fas fa-crown"></i>Mes abonnements & achats actifs</h3>
+        </div>
+        <div class="active-subs-grid">
+            {{-- Pro Subscription --}}
+            @if(isset($proSubscription) && $proSubscription && $proSubscription['is_active'])
+            @php
+                $planLabels = ['starter' => 'Starter', 'pro' => 'Pro', 'premium' => 'Premium', 'enterprise' => 'Entreprise'];
+                $planLabel = $planLabels[$proSubscription['plan']] ?? ucfirst($proSubscription['plan']);
+                $planColors = ['starter' => '#3b82f6', 'pro' => '#8b5cf6', 'premium' => '#f59e0b', 'enterprise' => '#1e293b'];
+                $planColor = $planColors[$proSubscription['plan']] ?? '#7c3aed';
+                $subEnd = $proSubscription['ends_at'];
+                $subStart = $proSubscription['started_at'];
+                if ($subEnd && $subStart) {
+                    $totalDays = max(1, $subStart->diffInDays($subEnd));
+                    $elapsedDays = $subStart->diffInDays(now());
+                    $subProgress = min(100, round(($elapsedDays / $totalDays) * 100));
+                    $daysLeft = max(0, (int) now()->diffInDays($subEnd, false));
+                } else {
+                    $subProgress = 0;
+                    $daysLeft = null;
+                }
+            @endphp
+            <div class="sub-card" style="border-left: 4px solid {{ $planColor }};">
+                <div class="sub-card-header">
+                    <div class="sub-card-icon" style="background: {{ $planColor }};">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <div>
+                        <div class="sub-card-title">Abonnement {{ $planLabel }}</div>
+                        <div class="sub-card-subtitle">
+                            @if($subEnd)
+                                Expire le {{ $subEnd->format('d/m/Y') }}
+                            @else
+                                Abonnement actif (sans limite)
+                            @endif
+                        </div>
+                    </div>
+                    <span class="sub-card-badge" style="background: {{ $planColor }}20; color: {{ $planColor }};">Actif</span>
+                </div>
+                @if($subEnd)
+                <div class="sub-card-progress">
+                    <div class="sub-progress-bar">
+                        <div class="sub-progress-fill" style="width: {{ $subProgress }}%; background: {{ $planColor }};"></div>
+                    </div>
+                    <div class="sub-progress-text">
+                        <span>{{ $daysLeft }} jour{{ $daysLeft > 1 ? 's' : '' }} restant{{ $daysLeft > 1 ? 's' : '' }}</span>
+                        <span>{{ $subProgress }}% écoulé</span>
+                    </div>
+                </div>
+                @endif
+                <div class="sub-card-actions">
+                    <a href="{{ route('pricing.index') }}" style="background: {{ $planColor }}15; color: {{ $planColor }};">
+                        <i class="fas fa-sync-alt"></i> Renouveler
+                    </a>
+                </div>
+            </div>
+            @endif
+
+            {{-- Active Boosts --}}
+            @if(isset($activeBoostedAds))
+            @foreach($activeBoostedAds as $bAd)
+            @php
+                $boostColors = ['boost_3' => '#3b82f6', 'boost_7' => '#10b981', 'boost_15' => '#f59e0b', 'boost_30' => '#8b5cf6'];
+                $boostLabels = ['boost_3' => 'Boost 3j', 'boost_7' => 'Boost 7j', 'boost_15' => 'Boost 15j', 'boost_30' => 'Boost 30j'];
+                $bColor = $boostColors[$bAd->boost_type] ?? '#3b82f6';
+                $bLabel = $boostLabels[$bAd->boost_type] ?? 'Boost';
+                $bDaysLeft = max(0, (int) now()->diffInDays($bAd->boost_end, false));
+                $bDurations = ['boost_3' => 3, 'boost_7' => 7, 'boost_15' => 15, 'boost_30' => 30];
+                $bTotal = $bDurations[$bAd->boost_type] ?? 7;
+                $bElapsed = max(0, $bTotal - $bDaysLeft);
+                $bProgress = min(100, round(($bElapsed / max(1, $bTotal)) * 100));
+            @endphp
+            <div class="sub-card" style="border-left: 4px solid {{ $bColor }};">
+                <div class="sub-card-header">
+                    <div class="sub-card-icon" style="background: {{ $bColor }};">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <div>
+                        <div class="sub-card-title">{{ $bLabel }} — {{ Str::limit($bAd->title, 25) }}</div>
+                        <div class="sub-card-subtitle">Expire le {{ $bAd->boost_end->format('d/m/Y à H:i') }}</div>
+                    </div>
+                    <span class="sub-card-badge" style="background: {{ $bColor }}20; color: {{ $bColor }};">
+                        {{ $bDaysLeft }}j
+                    </span>
+                </div>
+                <div class="sub-card-progress">
+                    <div class="sub-progress-bar">
+                        <div class="sub-progress-fill" style="width: {{ $bProgress }}%; background: {{ $bColor }};"></div>
+                    </div>
+                    <div class="sub-progress-text">
+                        <span>{{ $bDaysLeft }} jour{{ $bDaysLeft > 1 ? 's' : '' }} restant{{ $bDaysLeft > 1 ? 's' : '' }}</span>
+                        <span>{{ $bProgress }}% écoulé</span>
+                    </div>
+                </div>
+                <div class="sub-card-actions">
+                    <a href="{{ route('ads.show', $bAd) }}" style="background: {{ $bColor }}15; color: {{ $bColor }};">
+                        <i class="fas fa-eye"></i> Voir
+                    </a>
+                    <a href="{{ route('boost.show', $bAd) }}" style="background: {{ $bColor }}15; color: {{ $bColor }};">
+                        <i class="fas fa-rocket"></i> Prolonger
+                    </a>
+                </div>
+            </div>
+            @endforeach
+            @endif
+
+            {{-- Active Urgent Publications --}}
+            @if(isset($activeUrgentAds))
+            @foreach($activeUrgentAds as $uAd)
+            @php
+                $uDaysLeft = $uAd->urgent_until ? max(0, (int) now()->diffInDays($uAd->urgent_until, false)) : null;
+                $uProgress = $uDaysLeft !== null ? min(100, round(((7 - $uDaysLeft) / 7) * 100)) : 0;
+            @endphp
+            <div class="sub-card" style="border-left: 4px solid #dc2626;">
+                <div class="sub-card-header">
+                    <div class="sub-card-icon" style="background: #dc2626;">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div>
+                        <div class="sub-card-title">URGENT — {{ Str::limit($uAd->title, 25) }}</div>
+                        <div class="sub-card-subtitle">
+                            @if($uAd->urgent_until)
+                                Expire le {{ $uAd->urgent_until->format('d/m/Y') }}
+                            @else
+                                Sans limite
+                            @endif
+                        </div>
+                    </div>
+                    <span class="sub-card-badge" style="background: #fef2f2; color: #dc2626;">
+                        @if($uDaysLeft !== null)
+                            {{ $uDaysLeft }}j
+                        @else
+                            Actif
+                        @endif
+                    </span>
+                </div>
+                @if($uDaysLeft !== null)
+                <div class="sub-card-progress">
+                    <div class="sub-progress-bar">
+                        <div class="sub-progress-fill" style="width: {{ $uProgress }}%; background: #dc2626;"></div>
+                    </div>
+                    <div class="sub-progress-text">
+                        <span>{{ $uDaysLeft }} jour{{ $uDaysLeft > 1 ? 's' : '' }} restant{{ $uDaysLeft > 1 ? 's' : '' }}</span>
+                        <span>{{ $uProgress }}% écoulé</span>
+                    </div>
+                </div>
+                @endif
+                <div class="sub-card-actions">
+                    <a href="{{ route('ads.show', $uAd) }}" style="background: #fef2f220; color: #dc2626; border: 1px solid #fecaca;">
+                        <i class="fas fa-eye"></i> Voir
+                    </a>
+                </div>
+            </div>
+            @endforeach
+            @endif
+        </div>
+    </div>
+    @endif
+
+    <!-- Ads Table -->
+    <div class="table-section">
+        <div class="table-section-head">
+            <h3><i class="fas fa-bullhorn"></i>Mes annonces récentes</h3>
+            <a href="#" onclick="dashboardNav('my-ads'); return false;" class="btn btn-outline-secondary btn-sm" style="border-radius: 8px; font-size: 0.8rem;">
+                Voir tout
+            </a>
+        </div>
+
+        @if($ads->isEmpty())
+        <div class="empty-box">
+            <i class="fas fa-bullhorn"></i>
+            <h5>Aucune annonce pour le moment</h5>
+            <p>Publiez votre première annonce et commencez à proposer vos services.<br>Utilisez le bouton <strong>"Publier une offre"</strong> dans le menu pour commencer.</p>
+        </div>
+        @else
+        <div class="table-responsive">
+            <table class="dash-table">
+                <thead>
+                    <tr>
+                        <th>Titre</th>
+                        <th>Catégorie</th>
+                        <th>Statut</th>
+                        <th>Vues</th>
+                        <th>Date</th>
+                        <th style="text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($ads->take(5) as $ad)
+                    <tr>
+                        <td>
+                            <a href="{{ route('ads.show', $ad->id) }}" class="ad-title-link">
+                                {{ Str::limit($ad->title, 40) }}
+                            </a>
+                        </td>
+                        <td><span class="cat-badge">{{ $ad->category }}</span></td>
+                        <td>
+                            <span class="status-dot status-{{ $ad->status == 'active' ? 'active' : ($ad->status == 'pending' ? 'pending' : 'expired') }}">
+                                {{ $ad->status == 'active' ? 'Active' : ($ad->status == 'pending' ? 'En attente' : 'Expirée') }}
+                            </span>
+                        </td>
+                        <td style="color: #94a3b8;">
+                            <i class="fas fa-eye me-1" style="font-size: 0.75rem;"></i>{{ $ad->views ?? 0 }}
+                        </td>
+                        <td style="color: #94a3b8; font-size: 0.84rem;">{{ $ad->created_at->format('d/m/Y') }}</td>
+                        <td style="text-align: center;">
+                            <div class="d-flex justify-content-center gap-4">
+                                <a href="{{ route('ads.show', $ad->id) }}" class="btn-table-action" title="Voir">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ route('ads.edit', $ad->id) }}" class="btn-table-action" title="Modifier">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                                <form action="{{ route('ads.destroy', $ad->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette annonce ?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn-table-action btn-table-delete" title="Supprimer">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                                <a href="{{ route('boost.show', $ad->id) }}" class="btn-table-action btn-table-boost" title="Booster">
+                                    <i class="fas fa-rocket"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @endif
+    </div>
+
+    <!-- Transaction History Section -->
+    <div class="table-section" id="transactions-history" style="margin-top: 24px;">
+        <div class="table-section-head">
+            <h3><i class="fas fa-receipt"></i>Historique des transactions</h3>
+            <a href="{{ route('home.export-transactions-pdf') }}" class="btn btn-sm" style="border-radius: 8px; font-size: 0.8rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;">
+                <i class="fas fa-file-pdf"></i>Exporter PDF
+            </a>
+        </div>
+
+        @if($transactions->isEmpty() && $pointTransactions->isEmpty())
+        <div class="empty-box">
+            <i class="fas fa-receipt"></i>
+            <h5>Aucune transaction pour le moment</h5>
+            <p>Vos achats de points, paiements et transactions apparaîtront ici.</p>
+        </div>
+        @else
+        <div class="table-responsive">
+            <table class="dash-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Montant / Points</th>
+                        <th>Statut</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($transactions as $tx)
+                    <tr>
+                        <td style="color: #94a3b8; font-size: 0.84rem;">{{ $tx->created_at->format('d/m/Y H:i') }}</td>
+                        <td>
+                            <span class="tx-type-badge tx-type-{{ strtolower($tx->type ?? 'other') }}">
+                                @if($tx->type === 'POINTS')
+                                    <i class="fas fa-coins"></i> Achat de points
+                                @elseif($tx->type === 'SUBSCRIPTION')
+                                    <i class="fas fa-crown"></i> Abonnement
+                                @elseif($tx->type === 'BOOST')
+                                    <i class="fas fa-rocket"></i> Boost
+                                @else
+                                    <i class="fas fa-credit-card"></i> {{ $tx->type ?? 'Paiement' }}
+                                @endif
+                            </span>
+                        </td>
+                        <td style="font-size: 0.88rem; color: #334155;">{{ Str::limit($tx->description ?? '-', 50) }}</td>
+                        <td>
+                            <span class="tx-amount">{{ number_format($tx->amount, 0, ',', ' ') }} €</span>
+                        </td>
+                        <td>
+                            <span class="status-dot status-{{ $tx->status == 'completed' ? 'active' : ($tx->status == 'pending' ? 'pending' : 'expired') }}">
+                                {{ $tx->status == 'completed' ? 'Complété' : ($tx->status == 'pending' ? 'En attente' : ucfirst($tx->status ?? 'Inconnu')) }}
+                            </span>
+                        </td>
+                        <td>
+                            @if($tx->status === 'completed')
+                                <a href="{{ route('purchase.invoice', ['type' => 'points', 'id' => $tx->id]) }}" class="btn btn-sm btn-outline-secondary" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 6px;" title="Télécharger la facture">
+                                    <i class="fas fa-file-pdf"></i>
+                                </a>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+
+                    @foreach($pointTransactions as $ptx)
+                    <tr>
+                        <td style="color: #94a3b8; font-size: 0.84rem;">{{ $ptx->created_at->format('d/m/Y H:i') }}</td>
+                        <td>
+                            <span class="tx-type-badge tx-type-points">
+                                <i class="fas fa-coins"></i> Points
+                            </span>
+                        </td>
+                        <td style="font-size: 0.88rem; color: #334155;">{{ Str::limit($ptx->description ?? '-', 50) }}</td>
+                        <td>
+                            <span class="tx-points {{ $ptx->points >= 0 ? 'tx-points-positive' : 'tx-points-negative' }}">
+                                {{ $ptx->points >= 0 ? '+' : '' }}{{ $ptx->points }} pts
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-dot status-active">Complété</span>
+                        </td>
+                        <td></td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @endif
+    </div>
+</div>

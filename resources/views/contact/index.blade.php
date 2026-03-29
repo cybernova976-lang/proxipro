@@ -4,21 +4,35 @@
 
 @push('styles')
 <style>
-    .contact-hero {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
-        padding: 60px 0;
-        color: white;
+    .contact-header {
+        padding: 30px 0 10px;
         text-align: center;
-        margin-bottom: 40px;
     }
-    .contact-hero h1 {
-        font-size: 2.5rem;
+    .contact-header .breadcrumb {
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+    }
+    .contact-header .breadcrumb a {
+        color: var(--primary);
+        text-decoration: none;
+    }
+    .contact-header h1 {
+        font-size: 1.75rem;
         font-weight: 700;
-        margin-bottom: 10px;
+        color: var(--text-main);
+        margin-bottom: 4px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
     }
-    .contact-hero p {
-        font-size: 1.1rem;
-        opacity: 0.9;
+    .contact-header h1 i {
+        color: var(--primary);
+        font-size: 1.4rem;
+    }
+    .contact-header p {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        margin-bottom: 0;
     }
     .contact-card {
         background: white;
@@ -117,14 +131,18 @@
 @endpush
 
 @section('content')
-<div class="contact-hero">
-    <div class="container">
-        <h1><i class="fas fa-envelope me-3"></i>Contactez-nous</h1>
+<div class="container pb-5">
+    <div class="contact-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center">
+                <li class="breadcrumb-item"><a href="{{ url('/') }}"><i class="fas fa-home"></i> Accueil</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Contact</li>
+            </ol>
+        </nav>
+        <h1><i class="fas fa-envelope"></i> Contactez-nous</h1>
         <p>Une question ? Une suggestion ? Notre équipe est là pour vous aider.</p>
     </div>
-</div>
-
-<div class="container pb-5">
+    <hr class="mb-4">
     @if(session('success'))
         <div class="alert-success-custom mb-4">
             <i class="fas fa-check-circle fa-lg"></i>

@@ -4,17 +4,21 @@
 
 @push('styles')
 <style>
-    .verification-hero {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        padding: 50px 0;
-        color: white;
+    .verification-header {
+        padding: 30px 0 10px;
+        margin-bottom: 20px;
         text-align: center;
-        margin-bottom: 40px;
     }
-    .verification-hero h1 {
-        font-size: 2rem;
+    .verification-header h1 {
+        font-size: 1.6rem;
         font-weight: 700;
-        margin-bottom: 10px;
+        color: #0f172a;
+        margin-bottom: 6px;
+    }
+    .verification-header p {
+        color: #64748b;
+        font-size: 0.95rem;
+        margin: 0;
     }
     .verification-card {
         background: white;
@@ -172,9 +176,9 @@
 @endpush
 
 @section('content')
-<div class="verification-hero">
+<div class="verification-header">
     <div class="container">
-        <h1><i class="fas fa-shield-alt me-3"></i>Vérification d'identité</h1>
+        <h1><i class="fas fa-shield-alt me-2" style="color: #10b981;"></i>Vérification d'identité</h1>
         <p>Obtenez le badge vérifié et gagnez la confiance des autres utilisateurs</p>
     </div>
 </div>

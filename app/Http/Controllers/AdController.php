@@ -237,6 +237,88 @@ class AdController extends Controller
     }
 
     /**
+     * Store a new ad via AJAX from the feed popup (returns JSON).
+     */
+    public function storeFromPopup(Request $request)
+    {
+        if (!Auth::check()) {
+            return response()->json(['success' => false, 'message' => 'Non authentifié.'], 401);
+        }
+
+        $maxPhotos = Auth::user()->hasActiveProSubscription() ? 4 : 2;
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'category' => 'required|string',
+            'country' => 'required|string',
+            'city' => 'nullable|string',
+            'location' => 'nullable|string',
+            'price' => 'nullable|numeric|min:0',
+            'service_type' => 'required|in:offre,demande',
+            'photos' => 'nullable|array|max:' . $maxPhotos,
+            'photos.*' => 'image|mimes:jpeg,png,webp|max:5120',
+        ]);
+
+        $finalLocation = $request->location;
+        if (empty($finalLocation) && $request->city && $request->city !== '__other__') {
+            $finalLocation = $request->city;
+        }
+
+        if (empty($finalLocation)) {
+            return response()->json(['success' => false, 'errors' => ['location' => ['Veuillez sélectionner une ville.']]], 422);
+        }
+
+        $fullAddress = $finalLocation . ', ' . $request->country;
+        $geocodingService = new GeocodingService();
+        $coordinates = $geocodingService->geocode($fullAddress);
+
+        $ad = new Ad();
+        $ad->title = $request->title;
+        $ad->description = $request->description;
+        $ad->category = $request->category;
+        $ad->location = $finalLocation;
+        $ad->price = $request->price;
+        $ad->service_type = $request->service_type;
+        $ad->radius_km = 10;
+        $ad->user_id = Auth::id();
+        $ad->country = $request->country;
+        $ad->reply_restriction = 'everyone';
+        $ad->visibility = 'public';
+
+        if ($coordinates) {
+            $ad->latitude = $coordinates['latitude'];
+            $ad->longitude = $coordinates['longitude'];
+            $ad->address = $coordinates['address'];
+            $ad->postal_code = $coordinates['postal_code'];
+        }
+
+        $ad->save();
+
+        if ($request->hasFile('photos')) {
+            $paths = [];
+            foreach ($request->file('photos') as $photo) {
+                $paths[] = $photo->store('ads', 'public');
+            }
+            $ad->photos = $paths;
+            $ad->save();
+        }
+
+        try {
+            $this->notifyMatchingProfessionals($ad);
+        } catch (\Exception $e) {
+            Log::warning('Failed to notify matching professionals for ad #' . $ad->id . ': ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Votre demande a été publiée avec succès !',
+            'ad_id' => $ad->id,
+            'redirect_url' => route('boost.after-creation', $ad),
+        ]);
+    }
+
+    /**
      * Display the specified resource.
      */
     public function show(Ad $ad)
@@ -345,6 +427,30 @@ class AdController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+    /**
+     * Supprimer une photo spécifique d'une annonce.
+     */
+    public function deletePhoto(Ad $ad, $index)
+    {
+        if (Auth::id() !== $ad->user_id) {
+            abort(403);
+        }
+
+        $photos = $ad->photos ?? [];
+        $index = (int) $index;
+
+        if (!isset($photos[$index])) {
+            return response()->json(['error' => 'Photo introuvable.'], 404);
+        }
+
+        Storage::disk('public')->delete($photos[$index]);
+        array_splice($photos, $index, 1);
+        $ad->photos = $photos;
+        $ad->save();
+
+        return response()->json(['success' => true]);
+    }
+
     public function destroy(Ad $ad)
     {
         // Vérifier que l'utilisateur est propriétaire ou admin

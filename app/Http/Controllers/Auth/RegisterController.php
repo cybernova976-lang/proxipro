@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Mail\WelcomeMail;
+use App\Mail\EmailVerificationCode;
+use App\Models\Setting;
 use App\Models\User;
-use App\Rules\Recaptcha;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -93,6 +94,58 @@ class RegisterController extends Controller
         
         event(new \Illuminate\Auth\Events\Registered($user = $this->create($request->all())));
 
+        // Check if email verification is enabled in admin settings
+        $verificationEnabled = true;
+        try {
+            $verificationEnabled = Setting::get('email_verification_enabled', '1') === '1';
+        } catch (\Exception $e) {
+            Log::warning('Could not read email_verification_enabled setting, defaulting to enabled', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        if ($verificationEnabled) {
+            // Generate 6-digit verification code
+            $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $user->email_verification_code = Hash::make($code);
+            $user->email_verification_code_expires_at = now()->addMinutes(15);
+            $user->save();
+
+            // Send verification code email with robust error handling
+            $emailSent = false;
+            try {
+                Mail::to($user->email)->send(new EmailVerificationCode($code, $user->name));
+                $emailSent = true;
+            } catch (\Exception $e) {
+                Log::error('Verification code email FAILED: ' . $e->getMessage(), [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'exception' => get_class($e),
+                ]);
+            }
+
+            if ($emailSent) {
+                // Redirect to code verification page
+                return redirect()->route('verification.code.show', ['email' => $user->email])
+                    ->with('success', 'Un code de vérification a été envoyé à votre adresse e-mail.');
+            }
+
+            // Email failed to send: auto-verify and let user in to avoid blocking
+            Log::warning('Email send failed, auto-verifying user to prevent registration block', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+            ]);
+            $user->email_verified_at = now();
+            $user->email_verification_code = null;
+            $user->email_verification_code_expires_at = null;
+            $user->save();
+        } else {
+            // Verification disabled: mark as verified immediately
+            $user->email_verified_at = now();
+            $user->save();
+        }
+
+        // Send welcome email
         try {
             Mail::to($user->email)->send(new WelcomeMail($user));
         } catch (\Exception $e) {
@@ -102,6 +155,7 @@ class RegisterController extends Controller
             ]);
         }
 
+        // Auto-login and redirect
         $this->guard()->login($user);
 
         if ($response = $this->registered($request, $user)) {
@@ -135,11 +189,6 @@ class RegisterController extends Controller
             'website_url' => ['max:0'],
         ];
 
-        // reCAPTCHA v3 (only if configured)
-        if (config('services.recaptcha.secret_key')) {
-            $rules['g-recaptcha-response'] = ['required', new Recaptcha('register')];
-        }
-
         // Validation selon le type de compte
         if (isset($data['account_type']) && $data['account_type'] === 'professionnel') {
             $rules['company_name'] = ['required', 'string', 'max:255'];
@@ -170,7 +219,6 @@ class RegisterController extends Controller
             'password.numbers' => 'Le mot de passe doit contenir au moins un chiffre.',
             'terms.required' => 'Vous devez accepter les conditions d\'utilisation.',
             'terms.accepted' => 'Vous devez accepter les conditions d\'utilisation.',
-            'g-recaptcha-response.required' => 'La vérification de sécurité est requise. Veuillez réessayer.',
             'website_url.max' => '',
         ]);
     }

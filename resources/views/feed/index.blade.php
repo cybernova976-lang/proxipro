@@ -338,13 +338,14 @@
         display: grid;
         grid-template-columns: 250px minmax(0, 1fr);
         gap: 24px;
-        max-width: 1200px;
+        max-width: 1400px;
         margin: 0 auto;
         align-items: start;
     }
 
     .feed-main {
         min-width: 0;
+        max-width: 950px;
     }
 
     .feed-sidebar-left {
@@ -357,6 +358,7 @@
         scrollbar-width: none;
         -ms-overflow-style: none;
         z-index: 100;
+        transform: translateX(-60px);
     }
     .feed-sidebar-left::-webkit-scrollbar { display: none; }
 
@@ -378,14 +380,14 @@
     @media (min-width: 1400px) {
         .feed-layout {
             grid-template-columns: 260px minmax(0, 1fr);
-            max-width: 1320px;
+            max-width: 1500px;
         }
     }
 
     @media (max-width: 1200px) {
         .feed-layout {
             grid-template-columns: 240px minmax(0, 1fr);
-            max-width: 960px;
+            max-width: 1100px;
         }
         .feed-sidebar-right { display: none; }
     }
@@ -563,7 +565,7 @@
     /* Grille des cartes prestataires */
     .providers-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        grid-template-columns: repeat(4, 1fr);
         gap: 16px;
         max-width: 100%;
         margin-left: auto;
@@ -777,10 +779,10 @@
     .urgent-carousel-track::-webkit-scrollbar {
         display: none;
     }
-    /* 4 cards per row: calc((100% - 3*10px gap) / 4) */
+    /* 5 cards per row: calc((100% - 4*10px gap) / 5) */
     .urgent-card {
-        flex: 0 0 calc((100% - 30px) / 4);
-        min-width: 140px;
+        flex: 0 0 calc((100% - 40px) / 5);
+        min-width: 120px;
         background: white;
         border-radius: 0.75rem;
         border: 1px solid #fecaca;
@@ -937,7 +939,7 @@
 
     .providers-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        grid-template-columns: repeat(4, 1fr);
         gap: 14px;
     }
     .provider-card { background: transparent; cursor: pointer; transition: transform 0.3s ease; text-decoration: none; color: inherit; display: block; }
@@ -1201,7 +1203,7 @@
     .featured-pros-viewall:hover { opacity: 0.7; }
     .featured-pros-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        grid-template-columns: repeat(4, 1fr);
         gap: 1rem;
     }
     .featured-pro-card {
@@ -2726,6 +2728,27 @@
         font-size: 0.9rem;
     }
 
+    /* Mobile: cacher les filtres secondaires par défaut */
+    @media (max-width: 768px) {
+        .filter-dropdown.secondary-filter {
+            display: none !important;
+        }
+        .filter-dropdown.secondary-filter.mobile-visible {
+            display: block !important;
+        }
+        .more-filters-btn {
+            display: flex !important;
+        }
+    }
+    @media (min-width: 769px) {
+        .more-filters-btn {
+            display: none;
+        }
+        .filter-dropdown.secondary-filter {
+            display: block;
+        }
+    }
+
     /* =========================================
        RESPONSIVE
        ========================================= */
@@ -2764,7 +2787,7 @@
             padding: 16px 10px;
         }
         .providers-grid {
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 16px;
         }
         .missions-feed {
@@ -4341,9 +4364,159 @@
     }
     .category-popup-next-info i { color: #10b981; font-size: 1rem; }
 
+    /* ===== POPUP FULL FORM (Step 3) ===== */
+    .popup-form-group { margin-bottom: 16px; }
+    .popup-form-label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+    .popup-form-label .required { color: #ef4444; }
+    .popup-form-input, .popup-form-select {
+        width: 100%;
+        padding: 10px 14px;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        outline: none;
+        transition: border-color 0.2s;
+        background: #f9fafb;
+        font-family: inherit;
+        box-sizing: border-box;
+    }
+    .popup-form-input:focus, .popup-form-select:focus {
+        border-color: #6366f1;
+        background: white;
+    }
+    .popup-form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .popup-form-row-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+    }
+    @media (max-width: 520px) {
+        .popup-form-row, .popup-form-row-3 { grid-template-columns: 1fr; }
+    }
+    .popup-photo-upload {
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: #fafbfc;
+    }
+    .popup-photo-upload:hover {
+        border-color: #6366f1;
+        background: #f0f4ff;
+    }
+    .popup-photo-upload i { font-size: 1.5rem; color: #6366f1; display: block; margin-bottom: 6px; }
+    .popup-photo-upload span { font-size: 0.8rem; color: #6b7280; }
+    .popup-photo-previews {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+    .popup-photo-preview {
+        position: relative;
+        width: 64px;
+        height: 64px;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    .popup-photo-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .popup-photo-preview .popup-photo-remove {
+        position: absolute;
+        top: 2px; right: 2px;
+        width: 20px; height: 20px;
+        background: rgba(0,0,0,0.6);
+        border: none;
+        border-radius: 50%;
+        color: white;
+        font-size: 0.65rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .popup-photo-preview .popup-photo-remove:hover { background: #ef4444; }
+    .popup-form-hint {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        margin-top: 4px;
+    }
+    .popup-form-error {
+        color: #ef4444;
+        font-size: 0.78rem;
+        margin-top: 4px;
+    }
+    .popup-success-container {
+        text-align: center;
+        padding: 20px 0;
+    }
+    .popup-success-icon {
+        width: 70px; height: 70px;
+        margin: 0 auto 16px;
+        background: linear-gradient(135deg, #10b981, #34d399);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .popup-success-icon i { font-size: 2rem; color: white; }
+    .popup-success-title { font-size: 1.15rem; font-weight: 700; color: #111827; margin-bottom: 6px; }
+    .popup-success-text { font-size: 0.88rem; color: #6b7280; margin-bottom: 20px; }
+    .popup-success-actions { display: flex; gap: 10px; justify-content: center; }
+    .popup-success-btn {
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.88rem;
+        cursor: pointer;
+        border: none;
+        transition: opacity 0.15s;
+        text-decoration: none;
+    }
+    .popup-success-btn:hover { opacity: 0.85; }
+    .popup-success-btn-primary {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+    }
+    .popup-success-btn-secondary {
+        background: #f3f4f6;
+        color: #374151;
+    }
+    .popup-submit-spinner {
+        display: inline-block;
+        width: 18px; height: 18px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: popupSpin 0.6s linear infinite;
+        vertical-align: middle;
+        margin-right: 8px;
+    }
+    @keyframes popupSpin { to { transform: rotate(360deg); } }
+    .category-popup-step3 {
+        overflow-y: auto;
+        max-height: calc(80vh - 120px);
+    }
+
     /* ===== WIDGET DEVENIR PRO (sidebar) ===== */
     .pro-widget {
-        background: linear-gradient(135deg, #312e81, #4c1d95);
+        background: linear-gradient(135deg, #0f766e, #0e7490);
         border-radius: 14px;
         padding: 20px 18px;
         color: white;
@@ -4818,13 +4991,16 @@
 <!-- Barre de Filtres (fixée au header) -->
 <div class="filter-bar-container">
     <div class="filter-bar">
-        <!-- Toggle Pro / Offre -->
+        <!-- Toggle Pro / Offre / Demandes -->
         <div class="toggle-group">
-            <button class="toggle-btn" id="togglePro" onclick="setViewMode('providers')">
+            <button class="toggle-btn{{ ($filterType ?? 'all') === 'all' ? '' : '' }}" id="togglePro" onclick="setViewMode('providers')">
                 <i class="fas fa-user-tie me-1"></i> Je cherche un Pro
             </button>
-            <a href="{{ route('ads.index') }}" class="toggle-btn active" id="toggleMission">
-                <i class="fas fa-briefcase me-1"></i> Je cherche une offre
+            <a href="{{ route('feed', ['type' => 'offres']) }}" class="toggle-btn{{ ($filterType ?? 'all') === 'offres' ? ' active' : (($filterType ?? 'all') === 'all' ? ' active' : '') }}" id="toggleOffres">
+                <i class="fas fa-briefcase me-1"></i> Offres de pros
+            </a>
+            <a href="{{ route('feed', ['type' => 'demandes']) }}" class="toggle-btn{{ ($filterType ?? 'all') === 'demandes' ? ' active' : '' }}" id="toggleDemandes">
+                <i class="fas fa-search me-1"></i> Demandes
             </a>
         </div>
 
@@ -5034,6 +5210,19 @@
 </div>
 @endif
 
+<!-- Notification d'élargissement du rayon -->
+@if($radiusWasExpanded ?? false)
+<div class="geo-expanded-banner" style="background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 1px solid #f59e0b; border-radius: 10px; padding: 12px 18px; margin: 0 auto 16px; max-width: 1200px; display: flex; align-items: center; gap: 10px; font-size: 0.85rem;">
+    <i class="fas fa-search-location" style="color: #d97706; font-size: 1.1rem;"></i>
+    <span style="color: #92400e;">
+        Peu de résultats à <strong>{{ $originalRadius ?? 50 }} km</strong> — rayon élargi à <strong>{{ $userRadius }} km</strong> pour afficher plus d'annonces.
+    </span>
+    <a href="{{ route('feed', ['radius' => $originalRadius ?? 50, 'type' => $filterType ?? 'all']) }}" style="margin-left: auto; color: #d97706; font-weight: 600; font-size: 0.8rem; text-decoration: none; white-space: nowrap;">
+        <i class="fas fa-undo me-1"></i>Revenir à {{ $originalRadius ?? 50 }} km
+    </a>
+</div>
+@endif
+
 <!-- Contenu Principal -->
 <div class="content-container">
     <!-- Loading Overlay -->
@@ -5103,9 +5292,24 @@
         
         <div class="text-center mb-4" style="max-width: 1060px; margin: 0 auto;">
             <h2 class="fw-bold mb-1" style="color: var(--text-dark); font-size: 1.5rem;" id="missionsSectionTitle">
-                <i class="fas fa-fire" style="color: var(--accent); margin-right: 6px;"></i>Dernières missions disponibles
+                <i class="fas fa-fire" style="color: var(--accent); margin-right: 6px;"></i>
+                @if(($filterType ?? 'all') === 'demandes')
+                    Dernières demandes de clients
+                @elseif(($filterType ?? 'all') === 'offres')
+                    Offres de professionnels
+                @else
+                    Dernières publications
+                @endif
             </h2>
-            <p class="text-muted mb-0" style="font-size: 0.9rem;" id="missionsSectionSubtitle">Trouvez des opportunités près de chez vous</p>
+            <p class="text-muted mb-0" style="font-size: 0.9rem;" id="missionsSectionSubtitle">
+                @if(($filterType ?? 'all') === 'demandes')
+                    Des particuliers recherchent vos compétences
+                @elseif(($filterType ?? 'all') === 'offres')
+                    Trouvez le professionnel qu'il vous faut
+                @else
+                    Trouvez des opportunités près de chez vous
+                @endif
+            </p>
         </div>
         
         <!-- Layout 2 colonnes: Feed (gauche) + Sidebar (droite) -->
@@ -5209,9 +5413,9 @@
                         <button type="button" onclick="handleProposerServices()" class="pro-widget-cta pro-widget-cta-active" style="margin-bottom: 8px;">
                             <i class="fas fa-hand-holding-heart"></i> Proposer mes services
                         </button>
-                        <button type="button" onclick="openCategoryPopup()" class="pro-widget-cta" style="background: #f3f4f6; border-color: #e5e7eb; color: #374151;">
+                        <a href="{{ route('demand.create') }}" class="pro-widget-cta" style="background: #f3f4f6; border-color: #e5e7eb; color: #374151; text-decoration:none; text-align:center;">
                             <i class="fas fa-plus"></i> Publier une demande
-                        </button>
+                        </a>
                     </div>
                     @elseif(Auth::user()->is_service_provider)
                     {{-- Prestataire sans abonnement --}}
@@ -5318,7 +5522,7 @@
                                 <div class="create-post-avatar-placeholder">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</div>
                             @endif
                         </div>
-                        <button type="button" class="create-post-input" onclick="openCategoryPopup()">De quoi avez-vous besoin ?</button>
+                        <a href="{{ route('demand.create') }}" class="create-post-input" style="text-decoration:none;">De quoi avez-vous besoin ?</a>
                     </div>
                 </div>
                 @endauth
@@ -5387,168 +5591,25 @@
                     $showcasePros = $featuredProfessionals ?? ($premiumPros ?? collect());
                 @endphp
 
-                {{-- === ANNONCES BOOSTÉES / URGENTES AFFICHÉES EN GRAND === --}}
-                @php
-                    $highlightedAds = collect();
-                    if (isset($boostedAds)) $highlightedAds = $highlightedAds->merge($boostedAds);
-                    if (isset($urgentAds)) $highlightedAds = $highlightedAds->merge($urgentAds);
-                    $highlightedAds = $highlightedAds->unique('id')->take(6);
-                @endphp
-                @if($highlightedAds->count() > 0)
-                <div class="highlighted-ads-section">
-                    @foreach($highlightedAds as $hAd)
-                    @php
-                        $hPhotos = $hAd->photos ?? [];
-                        if (is_string($hPhotos)) {
-                            $hd = json_decode($hPhotos, true);
-                            $hPhotos = (json_last_error() === JSON_ERROR_NONE && is_array($hd)) ? $hd : (trim($hPhotos) !== '' ? [$hPhotos] : []);
-                        }
-                        $hPhotos = array_values(array_filter((array)$hPhotos));
-                        $hPhoto = null;
-                        if (count($hPhotos) > 0) {
-                            $hp = trim(ltrim($hPhotos[0], '/'));
-                            if (str_starts_with($hp, 'http://') || str_starts_with($hp, 'https://')) { $hPhoto = $hp; }
-                            elseif (str_starts_with($hp, 'storage/')) { $hPhoto = asset($hp); }
-                            elseif (str_starts_with($hp, 'public/')) { $hPhoto = asset('storage/' . str_replace('public/', '', $hp)); }
-                            else { $hPhoto = asset('storage/' . $hp); }
-                        }
-                    @endphp
-                    <div class="highlighted-ad-card {{ $hAd->is_urgent ? 'urgent' : 'boosted' }}"
-                         data-ad-json="{{ htmlspecialchars(json_encode([
-                            'id' => $hAd->id, 'title' => $hAd->title, 'description' => $hAd->description,
-                            'category' => $hAd->category, 'price' => $hAd->price, 'location' => $hAd->location,
-                            'photos' => $hPhotos, 'is_urgent' => (bool)$hAd->is_urgent,
-                            'reply_restriction' => $hAd->reply_restriction ?? 'everyone',
-                            'visibility' => $hAd->visibility ?? 'public',
-                            'created_at_human' => $hAd->created_at->diffForHumans(),
-                            'user_id' => $hAd->user_id, 'comments_count' => $hAd->comments()->count(),
-                            'shares_count' => $hAd->shares_count ?? 0,
-                            'user' => $hAd->user ? ['id'=>$hAd->user->id,'name'=>$hAd->user->name,'avatar'=>$hAd->user->avatar,'is_verified'=>(bool)$hAd->user->is_verified] : null,
-                         ]), ENT_QUOTES, 'UTF-8') }}"
-                         onclick="openAdDetail(this)" style="cursor:pointer;">
-                        <div class="highlighted-ad-badge">
-                            @if($hAd->is_urgent)
-                                <i class="fas fa-fire"></i> URGENT
-                            @else
-                                <i class="fas fa-rocket"></i> SPONSORISÉ
-                            @endif
-                        </div>
-                        <div class="highlighted-ad-img">
-                            @if($hPhoto)
-                                <img src="{{ $hPhoto }}" alt="{{ $hAd->title }}">
-                            @else
-                                <div class="highlighted-ad-img-placeholder">
-                                    <i class="fas fa-image"></i>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="highlighted-ad-body">
-                            <div class="highlighted-ad-title">{{ Str::limit($hAd->title, 50) }}</div>
-                            <div class="highlighted-ad-desc">{{ Str::limit($hAd->description, 100) }}</div>
-                            <div class="highlighted-ad-meta">
-                                <div class="highlighted-ad-user">
-                                    @if($hAd->user && $hAd->user->avatar)
-                                        <img src="{{ asset('storage/' . $hAd->user->avatar) }}" alt="">
-                                    @else
-                                        <div class="highlighted-ad-user-placeholder">{{ strtoupper(substr($hAd->user->name ?? 'U', 0, 1)) }}</div>
-                                    @endif
-                                    <span>{{ Str::limit($hAd->user->name ?? 'Utilisateur', 20) }}</span>
-                                </div>
-                                @if($hAd->price)
-                                    <span class="highlighted-ad-price">{{ number_format($hAd->price, 0, ',', ' ') }} €</span>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-                @endif
+                {{-- === ANNONCES BOOSTÉES / URGENTES : intégrées directement dans le feed principal === --}}
+                {{-- Supprimé : grille dupliquée - les annonces boostées/urgentes apparaissent déjà dans le feed principal grâce à l'orderBy --}}
 
-                {{-- === CAROUSEL PUBLICATIONS À LA UNE (10 dernières) === --}}
-                @if(isset($featuredAds) && $featuredAds->count() > 0)
-                <div class="featured-ads-carousel">
-                    <div class="featured-ads-wrapper">
-                        <button class="featured-ads-arrow featured-ads-arrow-left" onclick="scrollFeaturedAds(-1)" title="Précédent">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <div class="featured-ads-track" id="featuredAdsTrack">
-                            @foreach($featuredAds as $fAd)
-                            @php
-                                $fPhotos = $fAd->photos ?? [];
-                                if (is_string($fPhotos)) {
-                                    $fd = json_decode($fPhotos, true);
-                                    $fPhotos = (json_last_error() === JSON_ERROR_NONE && is_array($fd)) ? $fd : (trim($fPhotos) !== '' ? [$fPhotos] : []);
-                                }
-                                $fPhotos = array_values(array_filter((array)$fPhotos));
-                                $fPhoto = null;
-                                if (count($fPhotos) > 0) {
-                                    $fp = trim(ltrim($fPhotos[0], '/'));
-                                    if (str_starts_with($fp, 'http://') || str_starts_with($fp, 'https://')) { $fPhoto = $fp; }
-                                    elseif (str_starts_with($fp, 'storage/')) { $fPhoto = asset($fp); }
-                                    elseif (str_starts_with($fp, 'public/')) { $fPhoto = asset('storage/' . str_replace('public/', '', $fp)); }
-                                    else { $fPhoto = asset('storage/' . $fp); }
-                                }
-                                $fHasSub = $fAd->user && $fAd->user->hasActiveProSubscription();
-                            @endphp
-                            <a href="#" class="featured-ad-card"
-                               data-ad-json="{{ htmlspecialchars(json_encode([
-                                    'id' => $fAd->id, 'title' => $fAd->title, 'description' => $fAd->description,
-                                    'category' => $fAd->category, 'price' => $fAd->price, 'location' => $fAd->location,
-                                    'photos' => $fPhotos, 'is_urgent' => (bool)$fAd->is_urgent,
-                                    'reply_restriction' => $fAd->reply_restriction ?? 'everyone',
-                                    'visibility' => $fAd->visibility ?? 'public',
-                                    'created_at_human' => $fAd->created_at->diffForHumans(),
-                                    'user_id' => $fAd->user_id, 'comments_count' => $fAd->comments()->count(),
-                                    'shares_count' => $fAd->shares_count ?? 0,
-                                    'user' => $fAd->user ? ['id'=>$fAd->user->id,'name'=>$fAd->user->name,'avatar'=>$fAd->user->avatar,'is_verified'=>(bool)$fAd->user->is_verified] : null,
-                               ]), ENT_QUOTES, 'UTF-8') }}"
-                               onclick="event.preventDefault(); openAdDetail(this)">
-                                <div class="featured-ad-img">
-                                    @if($fPhoto)
-                                        <img src="{{ $fPhoto }}" alt="{{ $fAd->title }}">
-                                    @else
-                                        <div class="featured-ad-img-placeholder">
-                                            <i class="fas fa-image"></i>
-                                        </div>
-                                    @endif
-                                    @if($fHasSub)
-                                    <span class="featured-ad-badge-pro"><i class="fas fa-check-circle"></i> PRO</span>
-                                    @endif
-                                </div>
-                                <div class="featured-ad-info">
-                                    <div class="featured-ad-title">{{ Str::limit($fAd->title, 30) }}</div>
-                                    <div class="featured-ad-meta">
-                                        @if($fAd->user && $fAd->user->avatar)
-                                            <img src="{{ asset('storage/' . $fAd->user->avatar) }}" alt="" class="featured-ad-user-avatar">
-                                        @endif
-                                        <span>{{ Str::limit($fAd->user->name ?? 'Utilisateur', 15) }}</span>
-                                    </div>
-                                    <div class="featured-ad-bottom">
-                                        @if($fAd->price)
-                                        <span class="featured-ad-price">{{ number_format($fAd->price, 0, ',', ' ') }} €</span>
-                                        @endif
-                                        <span class="featured-ad-cat">{{ Str::limit($fAd->category ?? '', 15) }}</span>
-                                    </div>
-                                </div>
-                            </a>
-                            @endforeach
-                        </div>
-                        <button class="featured-ads-arrow featured-ads-arrow-right" onclick="scrollFeaturedAds(1)" title="Suivant">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
-                </div>
-                @endif
+                {{-- === CAROUSEL PUBLICATIONS À LA UNE : supprimé pour simplifier le feed === --}}
+                {{-- Les publications importantes apparaissent directement dans le feed principal --}}
 
                 <div class="missions-feed" id="missionsGrid">
             @forelse($ads as $loopIndex => $ad)
+
+            {{-- Les publications urgentes s'affichent UNIQUEMENT dans le carousel horizontal --}}
+            @if($ad->is_urgent)
+                @continue
+            @endif
 
             {{-- === BLOC PROFESSIONNELS À LA UNE après les 2 premières cartes === --}}
             @if($loopIndex === 2 && isset($showcasePros) && $showcasePros->count() > 0)
                 <div class="featured-pros-section">
                     <div class="featured-pros-header">
                         <h2><i class="fas fa-user-shield" style="color: var(--primary, #4f46e5); margin-right: 6px;"></i> Profils professionnels à la une</h2>
-                        <p>Sélectionnés selon la qualité des avis clients et la fiabilité du profil</p>
                     </div>
                     <div class="providers-grid" id="featuredProfessionalsGrid">
                         @foreach($showcasePros->take(4) as $sPro)
@@ -5587,36 +5648,7 @@
                 </div>
             @endif
 
-            {{-- Carte pro interspersée tous les 5 posts (après la section Featured) --}}
-            @if($loopIndex > 0 && $loopIndex % 5 === 0 && isset($showcasePros) && $showcasePros->count() > 0)
-                @php $proChunk = (int)(($loopIndex / 5) - 1); @endphp
-                @if(isset($showcasePros[$proChunk * 2]) || isset($showcasePros[$proChunk * 2 + 1]))
-                <div class="pro-inline-card">
-                    <div class="pro-inline-header">
-                        <i class="fas fa-star"></i> Professionnels recommandés
-                    </div>
-                    <div class="pro-inline-grid">
-                        @for($pi = $proChunk * 2; $pi <= min($proChunk * 2 + 1, $showcasePros->count() - 1); $pi++)
-                            @if(isset($showcasePros[$pi]))
-                            <a href="{{ route('profile.public', $showcasePros[$pi]->id) }}" class="pro-inline-item">
-                                <div class="pro-inline-avatar">
-                                    @if($showcasePros[$pi]->avatar)
-                                        <img src="{{ asset('storage/' . $showcasePros[$pi]->avatar) }}" alt="">
-                                    @else
-                                        <div class="pro-inline-avatar-placeholder">{{ strtoupper(substr($showcasePros[$pi]->name, 0, 1)) }}</div>
-                                    @endif
-                                </div>
-                                <div>
-                                    <div class="pro-inline-name">{{ Str::limit($showcasePros[$pi]->name, 16) }}</div>
-                                    <div class="pro-inline-cat">{{ Str::limit($showcasePros[$pi]->profession ?? $showcasePros[$pi]->bio ?? 'Professionnel', 25) }}</div>
-                                </div>
-                            </a>
-                            @endif
-                        @endfor
-                    </div>
-                </div>
-                @endif
-            @endif
+            {{-- Pro inline cards supprimés - les pros sont déjà mis en avant dans la section Featured --}}
 
             @php
                 $photos = $ad->photos ?? [];
@@ -5877,9 +5909,9 @@
             <div style="text-align: center; padding: 60px 20px; color: #65676b;">
                 <i class="fas fa-briefcase" style="font-size: 2.5rem; color: #bec3c9; margin-bottom: 12px;"></i>
                 <h3 style="font-weight: 600; color: #050505;">Aucune publication</h3>
-                <p>Soyez le premier à publier une offre !</p>
-                <a href="{{ route('ads.create') }}" class="btn btn-primary mt-3">
-                    <i class="fas fa-plus me-2"></i>Publier une offre
+                <p>Soyez le premier à publier une demande !</p>
+                <a href="{{ route('demand.create') }}" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus me-2"></i>Publier une demande
                 </a>
             </div>
             @endforelse
@@ -5933,7 +5965,7 @@
                 <h5 class="footer-title">Liens utiles</h5>
                 <ul class="footer-links">
                     <li><a href="{{ route('feed') }}">Accueil</a></li>
-                    <li><a href="{{ route('ads.create') }}">Publier une annonce</a></li>
+                    <li><a href="{{ route('demand.create') }}">Publier une demande</a></li>
                     <li><a href="{{ route('pricing.index') }}">Tarifs</a></li>
                     <li><a href="{{ route('contact.index') }}">Contact</a></li>
                 </ul>
@@ -6523,6 +6555,28 @@
                 <div class="sub-popup-step-title">
                     <i class="fas fa-rocket"></i> Boostez votre profil
                 </div>
+
+                @auth
+                @if(Auth::user()->hasActiveProSubscription())
+                {{-- L'utilisateur a déjà un abonnement actif --}}
+                <div style="background: linear-gradient(135deg, #dcfce7, #bbf7d0); border: 1px solid #86efac; border-radius: 14px; padding: 20px; margin-bottom: 16px; text-align: center;">
+                    <div style="font-size: 2rem; margin-bottom: 8px;">✅</div>
+                    <h4 style="color: #166534; font-weight: 700; margin-bottom: 6px;">Vous êtes déjà abonné Pro !</h4>
+                    <p style="color: #15803d; font-size: 0.85rem; margin-bottom: 0;">
+                        Votre abonnement est actif. Vos services ont été mis à jour avec succès.
+                    </p>
+                </div>
+
+                <div class="sub-popup-actions">
+                    <button class="sub-popup-btn-primary" id="subPopupSubmitBtn" onclick="submitProRegistration()" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                        <i class="fas fa-check"></i> <span id="subPopupSubmitLabel">Enregistrer les modifications</span>
+                    </button>
+                    <button class="sub-popup-btn-secondary" onclick="goToWizardStep(3)">
+                        <i class="fas fa-arrow-left" style="font-size:0.7rem;"></i> Retour
+                    </button>
+                </div>
+                @else
+                {{-- L'utilisateur n'a pas d'abonnement --}}
                 <p style="font-size:0.78rem; color:#6b7280; margin-bottom:14px;">Passez Pro pour apparaître en priorité et recevoir plus de demandes clients.</p>
 
                 {{-- Recap rapide --}}
@@ -6584,6 +6638,8 @@
                         <strong>— Mohamed A., Plombier à Mamoudzou</strong>
                     </div>
                 </div>
+                @endif
+                @endauth
             </div>
 
         </div>
@@ -6935,7 +6991,7 @@
         if (event) event.stopPropagation();
         const url = `${window.location.origin}/ads/${adId}`;
         if (navigator.share) {
-            navigator.share({ title: 'Publication Massiwani', url: url }).catch(() => {});
+            navigator.share({ title: 'Publication ProxiPro', url: url }).catch(() => {});
         } else {
             navigator.clipboard.writeText(url).then(() => {
                 showToast('Lien copié !', 'success');
@@ -7549,11 +7605,31 @@
         });
     }
 
-    // === STEP 3 : Décrire le besoin, puis publier ===
+    // === STEP 3 : Formulaire complet de publication ===
+    const popupCitiesByCountry = {
+        "France": ["Paris", "Marseille", "Lyon", "Toulouse", "Nice", "Nantes", "Strasbourg", "Montpellier", "Bordeaux", "Lille", "Rennes", "Reims", "Le Havre", "Saint-Étienne", "Toulon", "Grenoble", "Dijon", "Angers", "Nîmes"],
+        "Mayotte": ["Mamoudzou", "Koungou", "Dzaoudzi", "Dembeni", "Bandraboua", "Tsingoni", "Sada", "Ouangani", "Chiconi", "Pamandzi", "Mtsamboro", "Acoua", "Chirongui", "Bouéni", "Kani-Kéli", "Bandrélé", "M'Tsangamouji"],
+        "Madagascar": ["Antananarivo", "Toamasina", "Antsirabe", "Fianarantsoa", "Mahajanga", "Toliara", "Antsiranana", "Ambatondrazaka", "Antalaha", "Nosy Be"],
+        "La Réunion": ["Saint-Denis", "Saint-Paul", "Saint-Pierre", "Le Tampon", "Saint-André", "Saint-Louis", "Saint-Benoît", "Le Port", "Saint-Joseph", "Sainte-Marie"],
+        "Maurice": ["Port-Louis", "Beau Bassin-Rose Hill", "Vacoas-Phoenix", "Curepipe", "Quatre Bornes", "Triolet", "Goodlands", "Centre de Flacq", "Mahébourg", "Grand Baie"],
+        "Belgique": ["Bruxelles", "Anvers", "Gand", "Charleroi", "Liège", "Bruges", "Namur", "Louvain", "Mons"],
+        "Suisse": ["Zurich", "Genève", "Bâle", "Lausanne", "Berne", "Lucerne", "Fribourg", "Neuchâtel", "Sion"],
+        "Canada": ["Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton", "Ottawa", "Winnipeg", "Québec"],
+        "Sénégal": ["Dakar", "Thiès", "Rufisque", "Kaolack", "M'Bour", "Saint-Louis", "Ziguinchor", "Touba"],
+        "Côte d'Ivoire": ["Abidjan", "Bouaké", "Yamoussoukro", "Korhogo", "San-Pédro", "Man", "Daloa"],
+        "Maroc": ["Casablanca", "Rabat", "Fès", "Marrakech", "Tanger", "Agadir", "Meknès", "Oujda"],
+        "Tunisie": ["Tunis", "Sfax", "Sousse", "Kairouan", "Bizerte", "Gabès", "Monastir"],
+        "Algérie": ["Alger", "Oran", "Constantine", "Annaba", "Blida", "Batna", "Sétif", "Djelfa"]
+    };
+
+    let popupSelectedPhotos = [];
+    const popupMaxPhotos = 2;
+
     function renderPopupStep3(catName, subName) {
         popupState.step = 3;
         popupState.category = catName;
         popupState.subcategory = subName;
+        popupSelectedPhotos = [];
         const body = document.getElementById('categoryPopupBody');
         const step3 = document.getElementById('categoryPopupStep3');
         const search = document.getElementById('categoryPopupSearch');
@@ -7562,7 +7638,7 @@
         search.style.display = 'none';
         step3.style.display = 'block';
 
-        document.getElementById('categoryPopupTitle').textContent = 'Décrivez votre besoin';
+        document.getElementById('categoryPopupTitle').textContent = 'Publier votre demande';
         document.getElementById('categoryBreadcrumb').innerHTML = `
             <div class="category-popup-steps-indicator" style="margin-bottom:0;">
                 <div class="step-dot done"></div>
@@ -7584,33 +7660,276 @@
             <div class="category-popup-selection-tag">
                 <i class="fas fa-tag"></i> ${catName} → ${subName}
             </div>
-            <div class="category-popup-step3-label">Décrivez brièvement votre besoin <span style="color:#9ca3af;font-weight:400;">(facultatif)</span></div>
-            <textarea class="category-popup-step3-textarea" id="categoryNeedDescription" 
-                placeholder="Ex: J'ai besoin d'un ${subName.toLowerCase()} pour...
-Décrivez votre projet, lieu, budget estimé, etc."></textarea>
-            <button class="category-popup-step3-submit" onclick="submitCategoryNeed()">
+
+            <div class="popup-form-group">
+                <label class="popup-form-label">Titre de votre demande <span class="required">*</span></label>
+                <input type="text" class="popup-form-input" id="popupAdTitle" 
+                    placeholder="Ex: Recherche ${subName.toLowerCase()} à Mamoudzou" maxlength="255">
+                <div class="popup-form-error" id="popupTitleError"></div>
+            </div>
+
+            <div class="popup-form-group">
+                <label class="popup-form-label">Description <span class="required">*</span></label>
+                <textarea class="category-popup-step3-textarea" id="categoryNeedDescription" 
+                    placeholder="Décrivez votre besoin : type de travaux, délais, budget estimé..."
+                    style="min-height:80px;"></textarea>
+                <div class="popup-form-error" id="popupDescError"></div>
+            </div>
+
+            <div class="popup-form-group">
+                <label class="popup-form-label"><i class="fas fa-camera me-1"></i> Photos <span style="color:#9ca3af;font-weight:400;">(facultatif)</span></label>
+                <div class="popup-photo-upload" onclick="document.getElementById('popupPhotoInput').click()">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Cliquez pour ajouter des photos (max ${popupMaxPhotos})</span>
+                </div>
+                <input type="file" id="popupPhotoInput" multiple accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handlePopupPhotos(this)">
+                <div class="popup-photo-previews" id="popupPhotoPreviews"></div>
+                <div class="popup-form-hint">Formats : JPG, PNG, WEBP • Max 5 MB par photo</div>
+            </div>
+
+            <div class="popup-form-group">
+                <label class="popup-form-label"><i class="fas fa-map-marker-alt me-1"></i> Localisation <span class="required">*</span></label>
+                <div class="popup-form-row">
+                    <div>
+                        <select class="popup-form-select" id="popupCountry" onchange="updatePopupCities()">
+                            <option value="">-- Pays --</option>
+                            <option value="France">🇫🇷 France</option>
+                            <option value="Mayotte">🇾🇹 Mayotte</option>
+                            <option value="Madagascar">🇲🇬 Madagascar</option>
+                            <option value="La Réunion">🇷🇪 La Réunion</option>
+                            <option value="Maurice">🇲🇺 Maurice</option>
+                            <option value="Belgique">🇧🇪 Belgique</option>
+                            <option value="Suisse">🇨🇭 Suisse</option>
+                            <option value="Canada">🇨🇦 Canada</option>
+                            <option value="Sénégal">🇸🇳 Sénégal</option>
+                            <option value="Côte d'Ivoire">🇨🇮 Côte d'Ivoire</option>
+                            <option value="Maroc">🇲🇦 Maroc</option>
+                            <option value="Tunisie">🇹🇳 Tunisie</option>
+                            <option value="Algérie">🇩🇿 Algérie</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select class="popup-form-select" id="popupCity" disabled>
+                            <option value="">-- Ville --</option>
+                        </select>
+                    </div>
+                </div>
+                <input type="text" class="popup-form-input" id="popupLocationManual" 
+                    placeholder="Saisissez votre ville" style="display:none; margin-top:8px;">
+                <div class="popup-form-error" id="popupLocationError"></div>
+            </div>
+
+            <div class="popup-form-group">
+                <label class="popup-form-label"><i class="fas fa-euro-sign me-1"></i> Budget estimé <span style="color:#9ca3af;font-weight:400;">(facultatif)</span></label>
+                <div style="display:flex; gap:0;">
+                    <input type="number" class="popup-form-input" id="popupPrice" placeholder="Prix" min="0" step="0.01"
+                        style="border-radius:10px 0 0 10px; flex:1;">
+                    <span style="background:#e5e7eb; border:2px solid #e5e7eb; border-left:none; border-radius:0 10px 10px 0; padding:0 14px; display:flex; align-items:center; font-weight:600; color:#6b7280; font-size:0.9rem;">€</span>
+                </div>
+                <div class="popup-form-hint">Laissez vide si le prix est à discuter</div>
+            </div>
+
+            <button class="category-popup-step3-submit" id="popupSubmitBtn" onclick="submitPopupAd()">
                 <i class="fas fa-paper-plane me-2"></i>Publier ma demande
             </button>
-            <a class="category-popup-skip" onclick="submitCategoryNeed()">
-                Passer et remplir le formulaire complet <i class="fas fa-arrow-right" style="font-size:0.7rem;"></i>
-            </a>
-            <div class="category-popup-next-info">
-                <i class="fas fa-info-circle"></i>
-                <span>Vous serez redirigé vers le formulaire de publication où vous pourrez ajouter photos, localisation et prix.</span>
+            <div class="popup-form-error" id="popupGlobalError" style="text-align:center; margin-top:8px;"></div>
+        `;
+
+        // Auto-select country if user has one
+        @auth
+        @if(Auth::user()->country)
+        setTimeout(() => {
+            const countryEl = document.getElementById('popupCountry');
+            if (countryEl) {
+                countryEl.value = @json(Auth::user()->country);
+                updatePopupCities();
+            }
+        }, 50);
+        @endif
+        @endauth
+
+        setTimeout(() => document.getElementById('popupAdTitle')?.focus(), 100);
+    }
+
+    function updatePopupCities() {
+        const countryEl = document.getElementById('popupCountry');
+        const cityEl = document.getElementById('popupCity');
+        const manualEl = document.getElementById('popupLocationManual');
+        const country = countryEl.value;
+
+        cityEl.innerHTML = '<option value="">-- Ville --</option>';
+        manualEl.style.display = 'none';
+        manualEl.value = '';
+
+        if (country && popupCitiesByCountry[country]) {
+            cityEl.disabled = false;
+            popupCitiesByCountry[country].forEach(city => {
+                const opt = document.createElement('option');
+                opt.value = city;
+                opt.textContent = city;
+                cityEl.appendChild(opt);
+            });
+            const otherOpt = document.createElement('option');
+            otherOpt.value = '__other__';
+            otherOpt.textContent = '🔤 Autre ville';
+            cityEl.appendChild(otherOpt);
+        } else {
+            cityEl.disabled = true;
+        }
+
+        cityEl.onchange = function() {
+            if (this.value === '__other__') {
+                manualEl.style.display = 'block';
+                manualEl.focus();
+            } else {
+                manualEl.style.display = 'none';
+                manualEl.value = '';
+            }
+        };
+    }
+
+    function handlePopupPhotos(input) {
+        const files = Array.from(input.files);
+        const remaining = popupMaxPhotos - popupSelectedPhotos.length;
+        const toAdd = files.slice(0, remaining);
+
+        toAdd.forEach(file => {
+            if (file.size > 5 * 1024 * 1024) return;
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return;
+            popupSelectedPhotos.push(file);
+        });
+
+        input.value = '';
+        renderPopupPhotosPreviews();
+    }
+
+    function renderPopupPhotosPreviews() {
+        const container = document.getElementById('popupPhotoPreviews');
+        if (!container) return;
+        container.innerHTML = '';
+        popupSelectedPhotos.forEach((file, idx) => {
+            const div = document.createElement('div');
+            div.className = 'popup-photo-preview';
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            const btn = document.createElement('button');
+            btn.className = 'popup-photo-remove';
+            btn.innerHTML = '&times;';
+            btn.onclick = (e) => { e.stopPropagation(); popupSelectedPhotos.splice(idx, 1); renderPopupPhotosPreviews(); };
+            div.appendChild(img);
+            div.appendChild(btn);
+            container.appendChild(div);
+        });
+    }
+
+    function submitPopupAd() {
+        // Clear errors
+        ['popupTitleError', 'popupDescError', 'popupLocationError', 'popupGlobalError'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '';
+        });
+
+        const title = document.getElementById('popupAdTitle')?.value?.trim() || '';
+        const description = document.getElementById('categoryNeedDescription')?.value?.trim() || '';
+        const country = document.getElementById('popupCountry')?.value || '';
+        const city = document.getElementById('popupCity')?.value || '';
+        const manualLocation = document.getElementById('popupLocationManual')?.value?.trim() || '';
+        const price = document.getElementById('popupPrice')?.value || '';
+
+        // Client-side validation
+        let hasError = false;
+        if (!title) {
+            document.getElementById('popupTitleError').textContent = 'Le titre est obligatoire.';
+            hasError = true;
+        }
+        if (!description) {
+            document.getElementById('popupDescError').textContent = 'La description est obligatoire.';
+            hasError = true;
+        }
+        if (!country || (!city && !manualLocation) || city === '') {
+            document.getElementById('popupLocationError').textContent = 'Veuillez sélectionner un pays et une ville.';
+            hasError = true;
+        }
+        if (hasError) return;
+
+        const submitBtn = document.getElementById('popupSubmitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="popup-submit-spinner"></span>Publication en cours...';
+
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('description', description);
+        formData.append('category', popupState.subcategory || popupState.category);
+        formData.append('country', country);
+        formData.append('service_type', 'demande');
+
+        if (city === '__other__' && manualLocation) {
+            formData.append('location', manualLocation);
+        } else if (city && city !== '__other__') {
+            formData.append('city', city);
+            formData.append('location', city);
+        }
+
+        if (price) formData.append('price', price);
+
+        popupSelectedPhotos.forEach(file => {
+            formData.append('photos[]', file);
+        });
+
+        fetch('{{ route("ads.storeFromPopup") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json',
+            },
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showPopupSuccess(data);
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Publier ma demande';
+                if (data.errors) {
+                    const firstError = Object.values(data.errors)[0];
+                    document.getElementById('popupGlobalError').textContent = Array.isArray(firstError) ? firstError[0] : firstError;
+                } else {
+                    document.getElementById('popupGlobalError').textContent = data.message || 'Une erreur est survenue.';
+                }
+            }
+        })
+        .catch(err => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Publier ma demande';
+            document.getElementById('popupGlobalError').textContent = 'Erreur de connexion. Veuillez réessayer.';
+        });
+    }
+
+    function showPopupSuccess(data) {
+        const step3 = document.getElementById('categoryPopupStep3');
+        document.getElementById('categoryPopupTitle').textContent = '';
+        document.getElementById('categoryBreadcrumb').innerHTML = '';
+
+        step3.innerHTML = `
+            <div class="popup-success-container">
+                <div class="popup-success-icon"><i class="fas fa-check"></i></div>
+                <div class="popup-success-title">Demande publiée avec succès !</div>
+                <div class="popup-success-text">Votre annonce est maintenant visible. Les professionnels correspondants seront notifiés.</div>
+                <div class="popup-success-actions">
+                    <a href="${data.redirect_url}" class="popup-success-btn popup-success-btn-primary">
+                        <i class="fas fa-rocket me-1"></i> Booster l'annonce
+                    </a>
+                    <button class="popup-success-btn popup-success-btn-secondary" onclick="closeCategoryPopup(); location.reload();">
+                        Fermer
+                    </button>
+                </div>
             </div>
         `;
-        setTimeout(() => document.getElementById('categoryNeedDescription')?.focus(), 100);
     }
 
     function submitCategoryNeed() {
-        const desc = document.getElementById('categoryNeedDescription')?.value || '';
-        const params = new URLSearchParams();
-        if (popupState.category) params.append('category', popupState.category);
-        if (popupState.subcategory) params.append('subcategory', popupState.subcategory);
-        if (desc.trim()) params.append('description', desc.trim());
-        params.append('type', 'demande');
-        closeCategoryPopup();
-        window.location.href = '{{ route("ads.create") }}?' + params.toString();
+        submitPopupAd();
     }
 
     function filterCategoryPopup(query) {
@@ -7660,7 +7979,16 @@ Décrivez votre projet, lieu, budget estimé, etc."></textarea>
 
     function handleProposerServices() {
         @auth
+        @if(Auth::user()->hasActiveProSubscription() && Auth::user()->is_service_provider && Auth::user()->pro_service_categories && count(Auth::user()->pro_service_categories) > 0)
+        // L'utilisateur a déjà un abonnement actif et des services configurés
+        // On ouvre directement à l'étape 2 (catégories) pour modifier ses services
+        openSubPopup(2);
+        @elseif(Auth::user()->is_service_provider)
+        // Prestataire mais sans abonnement ou sans services - étape 2
+        openSubPopup(2);
+        @else
         openSubPopup(1);
+        @endif
         @else
         window.location.href = '{{ route("login") }}';
         @endauth
@@ -8036,6 +8364,9 @@ Décrivez votre projet, lieu, budget estimé, etc."></textarea>
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement...';
 
+        // Si l'utilisateur a déjà un abonnement, ne pas envoyer de plan
+        const userHasSubscription = {{ Auth::check() && Auth::user()->hasActiveProSubscription() ? 'true' : 'false' }};
+
         // Build services from selected subcategories
         const services = [];
         for (const [catName, subcats] of Object.entries(wizardSelectedSubcats)) {
@@ -8060,19 +8391,23 @@ Décrivez votre projet, lieu, budget estimé, etc."></textarea>
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
             body: JSON.stringify({
                 services: services,
-                plan: selectedProPlan === 'free' ? null : selectedProPlan,
+                plan: userHasSubscription ? null : (selectedProPlan === 'free' ? null : selectedProPlan),
                 notification_preferences: notifPrefs
             })
         })
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                if (data.requires_payment && data.checkout_url) {
+                if (data.already_subscribed) {
+                    closeSubPopup();
+                    showToast(data.message || 'Vos nouveaux services ont été ajoutés à votre profil ! Les informations précédentes ont été conservées.', 'success');
+                    setTimeout(() => location.reload(), 2500);
+                } else if (data.requires_payment && data.checkout_url) {
                     window.location.href = data.checkout_url;
                 } else {
                     closeSubPopup();
-                    showToast('Profil mis à jour avec succès !', 'success');
-                    setTimeout(() => location.reload(), 1500);
+                    showToast('Vos nouvelles informations ont été ajoutées à votre profil ! Vos données précédentes ont été conservées. Vous pouvez les modifier depuis votre profil.', 'success');
+                    setTimeout(() => location.reload(), 2500);
                 }
             } else {
                 showToast(data.message || 'Une erreur est survenue.', 'error');
@@ -8093,6 +8428,10 @@ Décrivez votre projet, lieu, budget estimé, etc."></textarea>
     function toggleMoreFilters() {
         const filterBar = document.querySelector('.filter-bar');
         filterBar.classList.toggle('show-all-filters');
+        // Toggle mobile visibility for secondary filters
+        document.querySelectorAll('.filter-dropdown.secondary-filter').forEach(el => {
+            el.classList.toggle('mobile-visible');
+        });
         updateActiveFilterCount();
     }
 
@@ -8156,7 +8495,8 @@ Décrivez votre projet, lieu, budget estimé, etc."></textarea>
         
         // Mettre à jour les boutons toggle
         document.getElementById('togglePro').classList.toggle('active', mode === 'providers');
-        document.getElementById('toggleMission').classList.toggle('active', mode === 'missions');
+        document.getElementById('toggleOffres').classList.toggle('active', mode === 'missions');
+        document.getElementById('toggleDemandes').classList.remove('active');
         
         // Afficher/Masquer les sections
         document.getElementById('providersSection').style.display = mode === 'providers' ? 'block' : 'none';
@@ -8641,7 +8981,7 @@ Décrivez votre projet, lieu, budget estimé, etc."></textarea>
             }
 
             prosCards += `
-                <a href="/profile/${pro.id}" class="featured-pro-card">
+                <a href="/user/${pro.id}" class="featured-pro-card">
                     <div class="featured-pro-image">${imageHtml}</div>
                     <div class="featured-pro-info">
                         <div class="featured-pro-name">${(pro.name||'').substring(0, 18)}${proBadge}</div>
@@ -8686,6 +9026,9 @@ Décrivez votre projet, lieu, budget estimé, etc."></textarea>
         let html = '';
         let featuredProsInserted = false;
         missions.forEach((ad, loopIndex) => {
+
+            // Les publications urgentes s'affichent uniquement dans le carousel horizontal
+            if (ad.is_urgent) return;
 
             // Injecter le bloc Professionnels à la une après les 2 premières cartes
             if (loopIndex === 2 && !featuredProsInserted) {
@@ -9373,7 +9716,7 @@ Décrivez votre projet, lieu, budget estimé, etc."></textarea>
                     const grid = document.getElementById('missionsGrid');
                     ads.forEach(ad => {
                         const postEl = buildInfiniteScrollPost(ad);
-                        grid.appendChild(postEl);
+                        if (postEl) grid.appendChild(postEl);
                     });
                 }
 
@@ -9392,8 +9735,11 @@ Décrivez votre projet, lieu, budget estimé, etc."></textarea>
 
         // Construire un élément post simplifié pour le scroll infini
         function buildInfiniteScrollPost(ad) {
+            // Les publications urgentes s'affichent uniquement dans le carousel horizontal
+            if (ad.is_urgent) return null;
+
             const div = document.createElement('div');
-            div.className = 'fb-post' + (ad.is_urgent ? ' urgent-flow' : '') + (ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date() ? ' boosted-post' : '');
+            div.className = 'fb-post' + (ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date() ? ' boosted-post' : '');
             div.setAttribute('data-ad-id', ad.id);
             try { div.setAttribute('data-ad-json', JSON.stringify(ad)); } catch(e) {}
 

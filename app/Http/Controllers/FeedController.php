@@ -66,6 +66,14 @@ class FeedController extends Controller
 
         // Appliquer le filtre de type si présent
         $filterType = $request->get('type', 'all'); // all, offres, demandes
+        
+        // Personnalisation: les pros voient les demandes par défaut, les particuliers voient les offres
+        if ($filterType === 'all' && !$request->has('type')) {
+            if ($user && ($user->user_type === 'professionnel' || $user->is_service_provider)) {
+                $filterType = 'demandes';
+            }
+        }
+        
         if ($filterType === 'offres') {
             $allAdsQuery->where('service_type', 'offre');
         } elseif ($filterType === 'demandes') {
@@ -85,6 +93,8 @@ class FeedController extends Controller
         $ads = $allAdsQuery->paginate(12)->withQueryString();
         
         // Si peu de résultats, élargir automatiquement le rayon
+        $radiusWasExpanded = false;
+        $originalRadius = $userRadius;
         if ($geoEnabled && $ads->total() < 3 && $userRadius < 200) {
             $expandedRadius = min($userRadius * 3, 500);
             $expandedQuery = Ad::where('status', 'active')->with('user');
@@ -95,6 +105,7 @@ class FeedController extends Controller
             if ($adsExp->total() > $ads->total()) {
                 $ads = $adsExp;
                 $userRadius = $expandedRadius;
+                $radiusWasExpanded = true;
             }
         }
 
@@ -352,6 +363,8 @@ class FeedController extends Controller
             'geoCity',
             'geoCountry',
             'geoSource',
+            'radiusWasExpanded',
+            'originalRadius',
             'showOnboardingModal',
             'onboardingCategories',
             'proSuggestions',

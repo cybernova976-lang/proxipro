@@ -26,6 +26,7 @@ use App\Http\Controllers\ServiceProviderController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\PurchaseInvoiceController;
 use App\Http\Controllers\QuoteToolController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Mail;
 
 // Page d'accueil publique
@@ -91,7 +92,17 @@ Route::post('password/confirm', [App\Http\Controllers\Auth\ConfirmPasswordContro
 Route::get('/auth/{provider}', [App\Http\Controllers\Auth\SocialAuthController::class, 'redirect'])->name('social.redirect');
 Route::get('/auth/{provider}/callback', [App\Http\Controllers\Auth\SocialAuthController::class, 'callback'])->name('social.callback');
 
-// Email Verification Routes
+// Email Verification Code Routes (code-based, before login)
+Route::get('/email/verify-code', [App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'show'])
+    ->name('verification.code.show');
+Route::post('/email/verify-code', [App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'verify'])
+    ->middleware('throttle:5,1')
+    ->name('verification.code.verify');
+Route::post('/email/resend-code', [App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'resend'])
+    ->middleware('throttle:3,1')
+    ->name('verification.code.resend');
+
+// Email Verification Routes (legacy link-based)
 Route::middleware('auth')->group(function () {
     Route::get('/email/verify', function () {
         return view('auth.verify');
@@ -109,11 +120,26 @@ Route::middleware('auth')->group(function () {
 // Routes pour les annonces
 Route::middleware(['auth'])->group(function () {
     Route::get('/ads/my-ads', [AdController::class, 'myAds'])->name('ads.myads');
+    Route::post('/ads/store-from-popup', [AdController::class, 'storeFromPopup'])->name('ads.storeFromPopup');
 });
 Route::resource('ads', AdController::class);
+Route::delete('/ads/{ad}/photos/{index}', [AdController::class, 'deletePhoto'])->middleware('auth')->name('ads.photos.delete');
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::get('/home/export-transactions-pdf', [App\Http\Controllers\HomeController::class, 'exportTransactionsPdf'])->middleware('auth')->name('home.export-transactions-pdf');
+
+// Dashboard AJAX sections (SPA navigation)
+Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(function () {
+    Route::get('/overview', [DashboardController::class, 'overview'])->name('overview');
+    Route::get('/profile', [DashboardController::class, 'profile'])->name('profile');
+    Route::get('/profile-edit', [DashboardController::class, 'profileEdit'])->name('profile-edit');
+    Route::get('/settings', [DashboardController::class, 'settings'])->name('settings');
+    Route::get('/points', [DashboardController::class, 'points'])->name('points');
+    Route::get('/my-ads', [DashboardController::class, 'myAds'])->name('my-ads');
+    Route::get('/messages', [DashboardController::class, 'messages'])->name('messages');
+    Route::get('/transactions', [DashboardController::class, 'transactions'])->name('transactions');
+    Route::get('/create-ad', [DashboardController::class, 'createAd'])->name('create-ad');
+});
 
 // Factures d'achat (points & abonnements)
 Route::get('/purchase/invoice', [PurchaseInvoiceController::class, 'download'])->middleware('auth')->name('purchase.invoice');
@@ -169,6 +195,14 @@ Route::middleware(['auth'])->prefix('become-provider')->name('become-provider.')
     Route::post('/store', [\App\Http\Controllers\BecomeProviderController::class, 'store'])->name('store');
     Route::get('/payment/success', [\App\Http\Controllers\BecomeProviderController::class, 'paymentSuccess'])->name('payment.success');
     Route::get('/payment/cancel', [\App\Http\Controllers\BecomeProviderController::class, 'paymentCancel'])->name('payment.cancel');
+});
+
+// Routes pour publier une demande simplifiée + matching
+Route::middleware(['auth'])->prefix('demande')->name('demand.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\DemandController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\DemandController::class, 'store'])->name('store');
+    Route::get('/{ad}/professionnels', [\App\Http\Controllers\DemandController::class, 'matching'])->name('matching');
+    Route::get('/{ad}/matching-api', [\App\Http\Controllers\DemandController::class, 'matchingApi'])->name('matching.api');
 });
 
 // Routes de profil
@@ -323,6 +357,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/boost/success', [BoostController::class, 'success'])->name('boost.success');
     Route::get('/ads/{ad}/boost/after-creation', [BoostController::class, 'afterCreation'])->name('boost.after-creation');
     Route::post('/ads/{ad}/refresh', [BoostController::class, 'refreshAd'])->name('ads.refresh');
+    Route::post('/ads/{ad}/refresh/stripe', [BoostController::class, 'refreshAdStripe'])->name('ads.refresh.stripe');
+    Route::get('/refresh/success', [BoostController::class, 'refreshAdSuccess'])->name('ads.refresh.success');
     Route::post('/ads/{ad}/make-urgent', [BoostController::class, 'makeUrgent'])->name('ads.make-urgent');
     Route::post('/ads/{ad}/make-urgent/stripe', [BoostController::class, 'makeUrgentStripe'])->name('ads.make-urgent.stripe');
     Route::get('/urgent/success', [BoostController::class, 'urgentSuccess'])->name('boost.urgent.success');
@@ -399,6 +435,7 @@ Route::middleware(['auth'])->prefix('pro')->name('pro.')->group(function () {
     Route::put('/invoices/{id}', [$ctrl, 'updateInvoice'])->name('invoices.update');
     Route::put('/invoices/{id}/status', [$ctrl, 'updateInvoiceStatus'])->name('invoices.status');
     Route::get('/invoices/{id}/download', [$ctrl, 'downloadInvoice'])->name('invoices.download');
+    Route::delete('/invoices/{id}', [$ctrl, 'destroyInvoice'])->name('invoices.destroy');
 
     // Documents
     Route::get('/documents', [$ctrl, 'documents'])->name('documents');
@@ -472,7 +509,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/settings/ads', [AdminController::class, 'updateSettingsAds'])->name('admin.settings.ads');
     Route::post('/settings/points', [AdminController::class, 'updateSettingsPoints'])->name('admin.settings.points');
     Route::post('/settings/email', [AdminController::class, 'updateSettingsEmail'])->name('admin.settings.email');
+    Route::post('/settings/security', [AdminController::class, 'updateSettingsSecurity'])->name('admin.settings.security');
     Route::post('/settings/system', [AdminController::class, 'updateSettingsSystem'])->name('admin.settings.system');
+
     
     // Gestion des administrateurs (réservé à l'admin principal)
     Route::get('/admins', [AdminController::class, 'admins'])->name('admin.admins');

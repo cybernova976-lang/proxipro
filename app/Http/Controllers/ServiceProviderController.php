@@ -85,19 +85,20 @@ class ServiceProviderController extends Controller
         try {
             DB::beginTransaction();
 
-            // Supprimer les anciens services pour repartir à zéro
-            $user->services()->delete();
-
-            // Ajouter les nouveaux services
+            // Ajouter les nouveaux services sans supprimer les anciens (mode additif)
             foreach ($request->services as $service) {
-                UserService::create([
-                    'user_id' => $user->id,
-                    'main_category' => $service['main_category'],
-                    'subcategory' => $service['subcategory'],
-                    'experience_years' => $service['experience_years'] ?? 0,
-                    'description' => $service['description'] ?? null,
-                    'is_active' => true,
-                ]);
+                UserService::updateOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'main_category' => $service['main_category'],
+                        'subcategory' => $service['subcategory'],
+                    ],
+                    [
+                        'experience_years' => $service['experience_years'] ?? 0,
+                        'description' => $service['description'] ?? null,
+                        'is_active' => true,
+                    ]
+                );
             }
 
             // Activer le statut prestataire
@@ -126,8 +127,21 @@ class ServiceProviderController extends Controller
 
             DB::commit();
 
-            // Si un plan est sélectionné, rediriger vers Stripe pour le paiement
+            // Si un plan est sélectionné, vérifier d'abord si l'utilisateur a déjà un abonnement actif
             if ($request->filled('plan') && in_array($request->plan, ['monthly', 'annual'])) {
+                
+                // Vérifier si l'utilisateur a déjà un abonnement actif
+                if ($user->hasActiveProSubscription()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Vos nouveaux services ont été ajoutés à votre profil. Vous avez déjà un abonnement Pro actif. Vos services précédents ont été conservés.',
+                        'services_count' => count($request->services),
+                        'is_service_provider' => true,
+                        'has_subscription' => true,
+                        'already_subscribed' => true,
+                    ]);
+                }
+
                 $planType = $request->plan;
                 $amount = $planType === 'annual' ? 85.00 : 9.99;
                 $planLabel = $planType === 'annual' ? 'Abonnement ProxiPro Annuel' : 'Abonnement ProxiPro Mensuel';
@@ -199,7 +213,7 @@ class ServiceProviderController extends Controller
             // Sans abonnement
             return response()->json([
                 'success' => true,
-                'message' => 'Félicitations ! Vous êtes maintenant un prestataire. Votre profil apparaîtra dans les recherches de professionnels.',
+                'message' => 'Félicitations ! Vos nouveaux services ont été ajoutés à votre profil. Vos informations précédentes ont été conservées. Vous pouvez les modifier depuis votre profil.',
                 'services_count' => count($request->services),
                 'is_service_provider' => true,
                 'has_subscription' => false,

@@ -28,12 +28,9 @@
                 <div class="col-md-2">
                     <select name="category" class="form-select">
                         <option value="">Toutes les catégories</option>
-                        <option value="Plomberie" {{ request('category') == 'Plomberie' ? 'selected' : '' }}>Plomberie</option>
-                        <option value="Électricité" {{ request('category') == 'Électricité' ? 'selected' : '' }}>Électricité</option>
-                        <option value="Jardinage" {{ request('category') == 'Jardinage' ? 'selected' : '' }}>Jardinage</option>
-                        <option value="Ménage" {{ request('category') == 'Ménage' ? 'selected' : '' }}>Ménage</option>
-                        <option value="Informatique" {{ request('category') == 'Informatique' ? 'selected' : '' }}>Informatique</option>
-                        <option value="Autre" {{ request('category') == 'Autre' ? 'selected' : '' }}>Autre</option>
+                        @foreach(array_merge(array_keys(config('categories.services')), array_keys(config('categories.marketplace'))) as $cat)
+                            <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="col-md-2">

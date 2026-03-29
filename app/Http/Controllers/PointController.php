@@ -70,19 +70,20 @@ class PointController extends Controller
         $action = $request->action;
 
         // Limite de points journaliers
-        if ($user->daily_points >= 10) {
+        $dailyLimit = $user->hasActiveProSubscription() ? 25 : 15;
+        if ($user->daily_points >= $dailyLimit) {
             return response()->json([
                 'success' => false,
-                'message' => 'Limite quotidienne atteinte (10 points max par jour)'
+                'message' => "Limite quotidienne atteinte ($dailyLimit points max par jour)"
             ], 400);
         }
 
-        $points = 1; // 1 point par action
+        $points = 2; // 2 points par action
         $user->addPoints($points, 'daily', "Action quotidienne: $action");
 
         return response()->json([
             'success' => true,
-            'message' => "1 point ajouté pour $action",
+            'message' => "2 points ajoutés pour $action",
             'points' => $user->available_points,
             'daily_points' => $user->daily_points
         ]);

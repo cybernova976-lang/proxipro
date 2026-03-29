@@ -218,15 +218,19 @@ class BecomeProviderController extends Controller
 
             $user->update($updateData);
 
-            // Créer le service principal
-            UserService::create([
-                'user_id' => $user->id,
-                'main_category' => $request->category,
-                'subcategory' => $request->subcategory,
-                'experience_years' => 0,
-                'description' => null,
-                'is_active' => true,
-            ]);
+            // Créer ou mettre à jour le service principal (sans supprimer les existants)
+            UserService::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'main_category' => $request->category,
+                    'subcategory' => $request->subcategory,
+                ],
+                [
+                    'experience_years' => 0,
+                    'description' => null,
+                    'is_active' => true,
+                ]
+            );
 
             DB::commit();
 

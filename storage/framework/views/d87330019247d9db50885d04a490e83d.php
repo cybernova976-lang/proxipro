@@ -156,6 +156,13 @@
                         <!-- Généré dynamiquement -->
                     </div>
                     
+                    <div class="alert" style="background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 1px solid #93c5fd; border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: flex-start; gap: 10px;">
+                        <i class="fas fa-info-circle" style="color: #2563eb; margin-top: 2px; flex-shrink: 0;"></i>
+                        <div style="font-size: 0.88rem; color: #1e40af;">
+                            <strong>Note :</strong> Ces informations s'ajouteront à votre profil existant. Vos catégories et services déjà enregistrés ne seront pas supprimés. Vous pouvez les modifier à tout moment depuis votre profil.
+                        </div>
+                    </div>
+
                     <div class="provider-benefits">
                         <h6><i class="fas fa-gift"></i> Avantages du statut Prestataire</h6>
                         <ul>
@@ -1259,7 +1266,7 @@
                         <i class="fas fa-check" style="color: white; font-size: 2rem;"></i>
                     </div>
                     <h5 style="color: #1f2937; font-weight: 700; margin-bottom: 0.5rem;">Félicitations ! 🎉</h5>
-                    <p style="color: #6b7280; margin-bottom: 1.5rem;">Votre profil prestataire est maintenant actif. Vous pouvez désormais proposer vos services !</p>
+                    <p style="color: #6b7280; margin-bottom: 1.5rem;">Vos nouvelles informations ont été ajoutées à votre profil. Les catégories et services précédents ont été conservés. Vous pouvez les gérer depuis votre profil.</p>
                     
                     ${subscriptionInfo}
                     

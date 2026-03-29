@@ -169,6 +169,10 @@
                 <p style="font-size:0.85rem; color:#888; margin-bottom:14px;">
                     Sélectionnez vos spécialités dans <strong id="onb-cat-name" style="color:#3a86ff;"></strong> :
                 </p>
+                <div style="background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 1px solid #93c5fd; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 0.8rem; color: #1e40af; display: flex; align-items: flex-start; gap: 8px;">
+                    <i class="fas fa-info-circle" style="margin-top: 1px; flex-shrink: 0;"></i>
+                    <span>Ces informations s'ajouteront à votre profil existant. Vos données précédentes seront conservées.</span>
+                </div>
                 <div class="onb-sub-list" id="onb-sub-list"></div>
                 <div class="onb-count" id="onb-sub-count" style="display:none;"></div>
             </div>
@@ -463,7 +467,7 @@
                 document.getElementById('onb-overlay').style.display = 'none';
                 var toast = document.createElement('div');
                 toast.className = 'onb-toast';
-                toast.innerHTML = '<i class="fas fa-check-circle"></i> Profil configuré avec succès ! Vous êtes prêt.';
+                toast.innerHTML = '<i class="fas fa-check-circle"></i> Vos informations ont été ajoutées à votre profil ! Les données précédentes ont été conservées. Vous pouvez les modifier depuis votre profil.';
                 document.body.appendChild(toast);
                 setTimeout(function() { toast.remove(); }, 5000);
             } else {

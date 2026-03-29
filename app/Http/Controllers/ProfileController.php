@@ -107,9 +107,35 @@ class ProfileController extends Controller
         ]);
 
         $user = Auth::user();
-        $user->service_category = $request->input('service_category');
-        $user->service_subcategories = $request->input('service_subcategories');
-        $user->profession = $request->input('service_subcategories')[0] ?? null;
+
+        // Mode additif : fusionner les nouvelles catégories/sous-catégories avec les existantes
+        $existingCategory = $user->service_category;
+        $newCategory = $request->input('service_category');
+
+        // Si l'utilisateur avait déjà une catégorie différente, on garde les deux (séparées par virgule)
+        if ($existingCategory && $existingCategory !== $newCategory) {
+            $existingCats = array_map('trim', explode(',', $existingCategory));
+            if (!in_array($newCategory, $existingCats)) {
+                $existingCats[] = $newCategory;
+            }
+            $user->service_category = implode(', ', $existingCats);
+        } else {
+            $user->service_category = $newCategory;
+        }
+
+        // Fusionner les sous-catégories existantes avec les nouvelles
+        $existingSubcategories = $user->service_subcategories ?? [];
+        $newSubcategories = $request->input('service_subcategories');
+        $mergedSubcategories = array_values(array_unique(array_merge(
+            is_array($existingSubcategories) ? $existingSubcategories : [],
+            is_array($newSubcategories) ? $newSubcategories : []
+        )));
+        $user->service_subcategories = $mergedSubcategories;
+
+        // Ne remplacer la profession que si elle n'est pas déjà définie
+        if (empty($user->profession)) {
+            $user->profession = $newSubcategories[0] ?? null;
+        }
 
         if ($request->filled('address')) {
             $user->address = $request->input('address');
@@ -123,7 +149,7 @@ class ProfileController extends Controller
 
         $user->save();
 
-        return response()->json(['success' => true, 'message' => 'Profil configuré avec succès.']);
+        return response()->json(['success' => true, 'message' => 'Vos nouvelles informations ont été ajoutées à votre profil. Les données précédentes ont été conservées.']);
     }
 
     /**

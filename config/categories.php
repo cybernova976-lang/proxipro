@@ -241,6 +241,24 @@ return [
                 'Moniteur d\'équitation', 'Coach de running',
             ],
         ],
+        'Commerce & Marchandises' => [
+            'icon' => '🏪',
+            'fa_icon' => 'fas fa-store',
+            'color' => '#b45309',
+            'description' => 'Magasin, vente au détail, grossiste...',
+            'subcategories' => [
+                'Magasin alimentation générale', 'Magasin prêt-à-porter',
+                'Magasin chaussures', 'Quincaillerie', 'Marchandises générales',
+                'Épicerie / Supérette', 'Boucherie / Charcuterie', 'Poissonnerie',
+                'Boulangerie / Pâtisserie', 'Magasin électronique / High-tech',
+                'Magasin électroménager', 'Magasin cosmétiques / Parfumerie',
+                'Magasin meubles / Décoration', 'Magasin jouets / Loisirs',
+                'Librairie / Papeterie', 'Pharmacie / Parapharmacie',
+                'Magasin matériaux de construction', 'Grossiste / Demi-grossiste',
+                'Magasin de tissus / Mercerie', 'Magasin de téléphonie',
+                'Boutique cadeaux / Souvenirs', 'Magasin de sport',
+            ],
+        ],
     ],
 
     /*

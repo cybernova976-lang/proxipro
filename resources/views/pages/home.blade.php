@@ -113,20 +113,20 @@
         /* ===== HERO ===== */
         .hero {
             position: relative; padding: 70px 0 90px;
-            background: linear-gradient(160deg, #0f172a 0%, #1e1b4b 40%, #312e81 70%, #3730a3 100%);
+            background: url('https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1920&q=80') center center / cover no-repeat;
             overflow: hidden;
         }
         .hero::before {
-            content: ''; position: absolute; top: -200px; right: -200px;
-            width: 700px; height: 700px;
-            background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 65%);
-            border-radius: 50%; animation: heroFloat 20s ease-in-out infinite;
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(160deg, rgba(15,23,42,0.88) 0%, rgba(30,27,75,0.82) 40%, rgba(49,46,129,0.75) 70%, rgba(55,48,163,0.70) 100%);
+            z-index: 1;
         }
         .hero::after {
             content: ''; position: absolute; bottom: -150px; left: -100px;
             width: 500px; height: 500px;
             background: radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 65%);
             border-radius: 50%; animation: heroFloat 15s ease-in-out infinite reverse;
+            z-index: 1;
         }
         @keyframes heroFloat { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-30px)} }
         
@@ -601,35 +601,27 @@
                             <i class="fas fa-search"></i>
                             De quoi avez-vous besoin ?
                         </div>
-                        <form action="{{ url('/ads') }}" method="GET">
-                            <div class="search-field">
-                                <i class="fas fa-search"></i>
-                                <input type="text" name="q" placeholder="Ex : plombier, cours de maths, ménage...">
-                            </div>
-                            <div class="search-field">
-                                <i class="fas fa-map-marker-alt"></i>
-                                <input type="text" name="location" placeholder="Ville, département ou région">
-                            </div>
+                        <form action="{{ route('demand.create') }}" method="GET">
                             <div class="search-field">
                                 <i class="fas fa-th-large"></i>
                                 <select name="category">
-                                    <option value="">Toutes les catégories</option>
+                                    <option value="">Choisissez un service</option>
                                     @foreach($categoriesWithSubs as $catName => $catData)
-                                        <option value="{{ $catName }}">{{ $catName }} ({{ $catData['total'] }})</option>
+                                        <option value="{{ $catName }}">{{ $catName }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <button type="submit" class="btn-hero-search">
-                                <i class="fas fa-search"></i> Rechercher
+                                <i class="fas fa-paper-plane"></i> Trouver un professionnel
                             </button>
                         </form>
                         <div class="popular-searches">
                             <span>Populaire :</span>
-                            <a href="{{ url('/ads?q=plombier') }}" class="popular-tag">Plombier</a>
-                            <a href="{{ url('/ads?q=ménage') }}" class="popular-tag">Ménage</a>
-                            <a href="{{ url('/ads?q=déménagement') }}" class="popular-tag">Déménagement</a>
-                            <a href="{{ url('/ads?q=cours') }}" class="popular-tag">Cours particuliers</a>
-                            <a href="{{ url('/ads?q=jardinage') }}" class="popular-tag">Jardinage</a>
+                            <a href="{{ route('demand.create') }}?category=Bricolage+%26+Travaux" class="popular-tag">Plombier</a>
+                            <a href="{{ route('demand.create') }}?category=Nettoyage+%26+Foyer" class="popular-tag">Ménage</a>
+                            <a href="{{ route('demand.create') }}?category=D%C3%A9m%C3%A9nagement+%26+Transport" class="popular-tag">Déménagement</a>
+                            <a href="{{ route('demand.create') }}?category=Cours+particuliers" class="popular-tag">Cours particuliers</a>
+                            <a href="{{ route('demand.create') }}?category=Jardinage" class="popular-tag">Jardinage</a>
                         </div>
                     </div>
                 </div>
@@ -642,23 +634,23 @@
         <div class="container">
             <div class="trust-bar-inner">
                 <div class="trust-stat">
-                    <div class="trust-stat-number" data-count="{{ max($totalAds, 150) }}">0</div>
+                    <div class="trust-stat-number" data-count="{{ $totalPros }}">0</div>
+                    <div class="trust-stat-label">Professionnels inscrits</div>
+                </div>
+                <div class="trust-divider"></div>
+                <div class="trust-stat">
+                    <div class="trust-stat-number" data-count="{{ $totalAds }}">0</div>
                     <div class="trust-stat-label">Annonces actives</div>
                 </div>
                 <div class="trust-divider"></div>
                 <div class="trust-stat">
                     <div class="trust-stat-number" data-count="{{ count($categoriesWithSubs) }}">0</div>
-                    <div class="trust-stat-label">Catégories</div>
+                    <div class="trust-stat-label">Catégories de services</div>
                 </div>
                 <div class="trust-divider"></div>
                 <div class="trust-stat">
-                    <div class="trust-stat-number" data-count="98" data-suffix="%">0</div>
-                    <div class="trust-stat-label">Satisfaction</div>
-                </div>
-                <div class="trust-divider"></div>
-                <div class="trust-stat">
-                    <div class="trust-stat-number" data-count="24" data-suffix="h/7j">0</div>
-                    <div class="trust-stat-label">Support</div>
+                    <div class="trust-stat-number" data-count="{{ $totalUsers }}">0</div>
+                    <div class="trust-stat-label">Membres actifs</div>
                 </div>
             </div>
         </div>
@@ -709,11 +701,11 @@
                 @php $shown = 0; @endphp
                 @foreach($categoriesWithSubs as $catName => $catData)
                     @if($shown < 8)
-                    <a href="{{ url('/ads?category=' . urlencode($catName)) }}" class="cat-card reveal">
+                    <a href="{{ route('demand.create') }}?category={{ urlencode($catName) }}" class="cat-card reveal">
                         <div class="cat-icon" style="background:{{ $catData['color'] }};"><i class="{{ $catData['icon'] }}"></i></div>
                         <div class="cat-info">
                             <h5>{{ $catName }}</h5>
-                            <span>{{ $catData['total'] }} annonce{{ $catData['total'] > 1 ? 's' : '' }}</span>
+                            <span>Trouver un pro</span>
                         </div>
                     </a>
                     @php $shown++; @endphp
@@ -721,56 +713,52 @@
                 @endforeach
             </div>
             <div class="text-center">
-                <a href="{{ url('/ads') }}" class="btn-see-all">
+                <a href="{{ route('demand.create') }}" class="btn-see-all">
                     Voir les {{ count($categoriesWithSubs) }} catégories <i class="fas fa-arrow-right"></i>
                 </a>
             </div>
         </div>
     </section>
 
-    <!-- ===== LATEST ADS ===== -->
-    @if($latestAds->count() > 0)
+    <!-- ===== FEATURED PROFESSIONALS ===== -->
+    @if($featuredPros->count() > 0)
     <section class="section">
         <div class="container">
-            <div class="d-flex justify-content-between align-items-end mb-4">
-                <div class="reveal">
-                    <span class="section-pill">Nouveautés</span>
-                    <h2 class="section-title">Dernières annonces publiées</h2>
-                </div>
-                <a href="{{ url('/ads') }}" class="btn-see-all d-none d-md-inline-flex" style="margin-top:0;">Voir tout <i class="fas fa-arrow-right"></i></a>
+            <div class="section-head reveal">
+                <span class="section-pill">Prestataires</span>
+                <h2 class="section-title">Nos professionnels en vedette</h2>
+                <p class="section-desc">Des prestataires vérifiés, prêts à répondre à vos besoins</p>
             </div>
             <div class="row g-4">
-                @foreach($latestAds as $ad)
+                @foreach($featuredPros as $pro)
                 <div class="col-md-6 col-lg-4">
-                    <a href="{{ url('/ads/' . $ad->id) }}" class="ad-card reveal">
-                        <div class="ad-card-img">
-                            @if($ad->photos && count($ad->photos) > 0)
-                                <img src="{{ asset('storage/' . $ad->photos[0]) }}" alt="{{ $ad->title }}">
+                    <a href="{{ route('profile.public', $pro->id) }}" class="ad-card reveal" style="text-decoration:none;">
+                        <div style="padding:24px 20px; text-align:center;">
+                            @if($pro->avatar)
+                                <img src="{{ asset('storage/' . $pro->avatar) }}" alt="{{ $pro->name }}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--primary-light);margin-bottom:12px;">
                             @else
-                                <i class="fas fa-image"></i>
+                                <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.5rem;font-weight:700;margin:0 auto 12px;">{{ strtoupper(substr($pro->name, 0, 1)) }}</div>
                             @endif
-                            <span class="ad-card-badge">{{ $ad->category }}</span>
-                        </div>
-                        <div class="ad-card-body">
-                            <h4>{{ Str::limit($ad->title, 55) }}</h4>
-                            <div class="ad-card-location">
-                                <i class="fas fa-map-marker-alt me-1"></i>{{ $ad->address ?? $ad->city ?? $ad->location ?? 'France' }}
-                            </div>
-                            <div class="ad-card-bottom">
-                                @if($ad->price)
-                                    <span class="ad-card-price">{{ number_format($ad->price, 0, ',', ' ') }} €</span>
-                                @else
-                                    <span class="ad-card-price" style="color:var(--success);">Sur devis</span>
-                                @endif
-                                <span class="ad-card-time">{{ $ad->created_at->diffForHumans() }}</span>
-                            </div>
+                            @if($pro->stripe_id)
+                                <span style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:2px 10px;border-radius:8px;font-size:0.72rem;font-weight:700;margin-bottom:8px;"><i class="fas fa-crown" style="font-size:0.65rem;"></i> PRO</span>
+                            @endif
+                            <h4 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin-bottom:4px;">{{ $pro->name }}</h4>
+                            @if($pro->profession)
+                                <div style="font-size:0.85rem;color:var(--primary);font-weight:600;margin-bottom:6px;">{{ $pro->profession }}</div>
+                            @endif
+                            @if($pro->city || $pro->country)
+                                <div style="font-size:0.82rem;color:var(--gray-500);"><i class="fas fa-map-marker-alt me-1"></i>{{ $pro->city ?? '' }}{{ $pro->city && $pro->country ? ', ' : '' }}{{ $pro->country ?? '' }}</div>
+                            @endif
+                            @if($pro->bio)
+                                <p style="font-size:0.82rem;color:var(--gray-500);margin-top:8px;line-height:1.4;">{{ Str::limit($pro->bio, 80) }}</p>
+                            @endif
                         </div>
                     </a>
                 </div>
                 @endforeach
             </div>
-            <div class="text-center mt-4 d-md-none">
-                <a href="{{ url('/ads') }}" class="btn-see-all">Voir toutes les annonces <i class="fas fa-arrow-right"></i></a>
+            <div class="text-center" style="margin-top:24px;">
+                <a href="{{ route('demand.create') }}" class="btn-see-all">Trouver un professionnel <i class="fas fa-arrow-right"></i></a>
             </div>
         </div>
     </section>
@@ -863,15 +851,15 @@
                 <div class="cta-card cta-client reveal">
                     <div class="cta-card-icon"><i class="fas fa-search"></i></div>
                     <h3>Vous cherchez un prestataire ?</h3>
-                    <p>Publiez votre demande gratuitement et recevez des propositions de professionnels qualifiés près de chez vous.</p>
-                    <a href="{{ route('register') }}" class="btn-cta-white">
-                        Publier une demande <i class="fas fa-arrow-right"></i>
+                    <p>Décrivez votre besoin en 2 minutes et trouvez les professionnels disponibles près de chez vous.</p>
+                    <a href="{{ route('demand.create') }}" class="btn-cta-white">
+                        Trouver un professionnel <i class="fas fa-arrow-right"></i>
                     </a>
                 </div>
                 <div class="cta-card cta-pro reveal">
                     <div class="cta-card-icon"><i class="fas fa-briefcase"></i></div>
                     <h3>Vous êtes professionnel ?</h3>
-                    <p>Rejoignez des milliers de prestataires et développez votre activité en trouvant de nouveaux clients chaque jour.</p>
+                    <p>Rejoignez notre réseau de prestataires et développez votre activité en trouvant de nouveaux clients chaque jour.</p>
                     <div class="d-flex gap-3 flex-wrap">
                         <a href="{{ route('register') }}" class="btn-cta-white" style="color:var(--gray-900);">
                             Devenir prestataire <i class="fas fa-arrow-right"></i>
@@ -883,19 +871,7 @@
         </div>
     </section>
 
-    <!-- ===== PRESS LOGOS ===== -->
-    <div class="press-bar">
-        <div class="container">
-            <div class="press-label">Ils parlent de nous</div>
-            <div class="press-logos">
-                <span class="press-logo">Le Figaro</span>
-                <span class="press-logo">BFM</span>
-                <span class="press-logo">France Info</span>
-                <span class="press-logo">Les Échos</span>
-                <span class="press-logo">TF1</span>
-            </div>
-        </div>
-    </div>
+
 
     <!-- ===== FOOTER ===== -->
     <footer class="footer">
@@ -915,7 +891,7 @@
                 <div class="footer-col">
                     <h5>Plateforme</h5>
                     <ul>
-                        <li><a href="{{ url('/ads') }}">Parcourir les annonces</a></li>
+                        <li><a href="{{ route('demand.create') }}">Trouver un professionnel</a></li>
                         <li><a href="{{ route('register') }}">Créer un compte</a></li>
                         <li><a href="{{ route('contact.index') }}">Nous contacter</a></li>
                     </ul>
