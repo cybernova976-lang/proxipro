@@ -5,9 +5,10 @@ cd /var/www/html
 
 # Use PORT from Railway, default to 8080
 export PORT="${PORT:-8080}"
+export NGINX_PORT="${PORT}"
 
-# Generate Nginx config with the correct port
-sed -i "s/listen 8080;/listen ${PORT};/" /etc/nginx/nginx.conf
+# Generate Nginx config with the correct port using envsubst
+envsubst '${NGINX_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
 # Generate APP_KEY if not set
 if [ -z "$APP_KEY" ]; then
@@ -26,10 +27,8 @@ if [ "$DB_CONNECTION" = "sqlite" ] || [ -z "$DB_CONNECTION" ]; then
     fi
 fi
 
-# Regenerate autoloader and discover packages
-php artisan package:discover --ansi
-
 # Cache configuration for performance
+php artisan package:discover --ansi
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
@@ -40,7 +39,7 @@ php artisan migrate --force
 # Create storage symlink
 php artisan storage:link --force 2>/dev/null || true
 
-# Ensure proper permissions
+# Fix permissions for runtime-writable directories only
 chown -R www-data:www-data storage bootstrap/cache database
 
 echo "Starting application on port ${PORT}..."

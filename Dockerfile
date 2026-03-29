@@ -94,8 +94,8 @@ COPY --from=frontend /app/public/build ./public/build
 # Copy vendor directory from stage 2
 COPY --from=vendor /app/vendor ./vendor
 
-# Copy Nginx and Supervisor configs
-COPY docker/nginx.conf /etc/nginx/nginx.conf
+# Copy Nginx config as template (envsubst replaces PORT at runtime)
+COPY docker/nginx.conf /etc/nginx/nginx.conf.template
 COPY docker/supervisord.conf /etc/supervisord.conf
 
 # Copy and set up entrypoint
