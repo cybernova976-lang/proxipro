@@ -37,13 +37,19 @@ class AppServiceProvider extends ServiceProvider
         Carbon::setLocale('fr');
         setlocale(LC_TIME, 'fr_FR.UTF-8', 'fra_fra', 'fra');
 
-        // Enregistrer les fonctions mathématiques manquantes pour SQLite (Haversine)
-        if (DB::connection()->getDriverName() === 'sqlite') {
-            $pdo = DB::connection()->getPdo();
-            $pdo->sqliteCreateFunction('acos', 'acos', 1);
-            $pdo->sqliteCreateFunction('cos', 'cos', 1);
-            $pdo->sqliteCreateFunction('sin', 'sin', 1);
-            $pdo->sqliteCreateFunction('radians', 'deg2rad', 1);
+        // Enregistrer les fonctions mathématiques manquantes pour SQLite (Haversine).
+        // Check the configured driver first (no live connection needed) to avoid
+        // attempting a DB connection during build-time commands like config:cache.
+        if (config('database.default') === 'sqlite') {
+            try {
+                $pdo = DB::connection()->getPdo();
+                $pdo->sqliteCreateFunction('acos', 'acos', 1);
+                $pdo->sqliteCreateFunction('cos', 'cos', 1);
+                $pdo->sqliteCreateFunction('sin', 'sin', 1);
+                $pdo->sqliteCreateFunction('radians', 'deg2rad', 1);
+            } catch (\Exception $e) {
+                // Silently ignore if the database is not available (e.g. during build).
+            }
         }
     }
 }

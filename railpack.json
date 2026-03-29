@@ -1,0 +1,15 @@
+{
+    "php": {
+        "extensions": ["bcmath", "gd", "pdo_mysql", "pdo_sqlite"]
+    },
+    "build": {
+        "cmd": [
+            "composer install --no-dev --optimize-autoloader",
+            "npm ci",
+            "npm run build"
+        ]
+    },
+    "deploy": {
+        "startCmd": "php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan storage:link --force && php artisan migrate --force && php-fpm"
+    }
+}
