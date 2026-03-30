@@ -1,8 +1,14 @@
 [phases.build]
 cmds = [
+  "cp .env.example .env || true",
+  "mkdir -p database && touch database/database.sqlite",
   "composer install --no-dev --optimize-autoloader --no-interaction",
-  "php artisan route:cache",
-  "php artisan view:cache",
+  "php artisan key:generate --force || true",
+  "php artisan route:cache || true",
+  "php artisan view:cache || true",
   "npm ci",
   "npm run build",
 ]
+
+[start]
+cmd = "php artisan migrate --force && php artisan config:cache && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
