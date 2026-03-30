@@ -1,9 +1,23 @@
+[phases.setup]
+cmds = [
+  # Create a minimal .env so Laravel can boot during the build phase.
+  # On Railway, the real environment variables are injected at runtime;
+  # this file is only needed to satisfy artisan commands that run during build.
+  "cp .env.example .env || true",
+  # Ensure the SQLite file exists so package:discover (triggered by composer)
+  # does not crash when DB_CONNECTION=sqlite is the build-time fallback.
+  "mkdir -p database && touch database/database.sqlite",
+]
+
 [phases.build]
 cmds = [
-  "cp .env.example .env || true",
-  "mkdir -p database && touch database/database.sqlite",
   "composer install --no-dev --optimize-autoloader --no-interaction",
   "php artisan key:generate --force || true",
+  # Run migrations against the build-time SQLite DB so any artisan commands
+  # that inspect schema (e.g. config caching) succeed during the build phase.
+  # On Railway with PostgreSQL these will run again at startup against the
+  # real database (see the start command below).
+  "php artisan migrate --force || true",
   "php artisan route:cache || true",
   "php artisan view:cache || true",
   "npm ci",
@@ -11,4 +25,6 @@ cmds = [
 ]
 
 [start]
+# At runtime Railway injects the real DB_* variables (PostgreSQL).
+# Migrations run here against the live database before the server starts.
 cmd = "php artisan migrate --force && php artisan config:cache && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"

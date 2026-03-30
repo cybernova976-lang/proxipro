@@ -16,6 +16,15 @@ return [
     |
     */
 
+    /*
+    | IMPORTANT — Railway / Production:
+    | Set DB_CONNECTION=pgsql in your Railway service environment variables.
+    | SQLite is only suitable for local development; Railway's filesystem is
+    | ephemeral and the SQLite file is lost on every deployment.
+    |
+    | Local development default: sqlite (no extra setup required)
+    | Railway / production default: pgsql (add a PostgreSQL service on Railway)
+    */
     'default' => env('DB_CONNECTION', 'sqlite'),
 
     /*
