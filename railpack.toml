@@ -13,11 +13,10 @@ cmds = [
 cmds = [
   "composer install --no-dev --optimize-autoloader --no-interaction",
   "php artisan key:generate --force || true",
-  # Run migrations against the build-time SQLite DB so any artisan commands
-  # that inspect schema (e.g. config caching) succeed during the build phase.
-  # On Railway with PostgreSQL these will run again at startup against the
-  # real database (see the start command below).
-  "php artisan migrate --force || true",
+  # Skip migrations at build time to avoid running SQLite-specific migration
+  # logic against the ephemeral SQLite build DB when the target is PostgreSQL.
+  # Migrations will run at container start against the real PostgreSQL database.
+  # "php artisan migrate --force || true",
   # Build frontend assets FIRST so the Vite manifest (public/build/.vite/manifest.json)
   # exists before any artisan caching commands that resolve @vite() directives.
   "npm ci",
@@ -30,7 +29,9 @@ cmds = [
 
 [start]
 # At runtime Railway injects the real DB_* variables (PostgreSQL).
-# Migrations run here against the live database before the server starts.
+# Regenerate the Composer autoloader first to ensure anonymous migration classes
+# (return new class ...) are resolved correctly and not cached from build time.
+# Then run migrations against the live database before the server starts.
 # config:cache and view:cache re-run here so they pick up the real APP_URL
 # and any other runtime environment variables injected by Railway.
-cmd = "php artisan migrate --force && php artisan config:cache && php artisan view:cache && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+cmd = "composer dump-autoload --optimize && php artisan migrate --force && php artisan config:cache && php artisan view:cache && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}",
