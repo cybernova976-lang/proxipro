@@ -29,6 +29,84 @@ use App\Http\Controllers\QuoteToolController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Mail;
 
+// Diagnostic route (temporary - remove after debugging)
+Route::get('/debug-railway', function () {
+    if (!app()->environment('production') && !request()->has('force')) {
+        return response()->json(['error' => 'Only available in production or with ?force']);
+    }
+    
+    $results = [];
+    
+    // 1. APP_KEY check
+    $appKey = config('app.key');
+    $results['app_key_set'] = !empty($appKey);
+    $results['app_key_valid'] = str_starts_with($appKey ?? '', 'base64:') && strlen($appKey) > 20;
+    
+    // 2. Database check
+    try {
+        $userCount = \App\Models\User::count();
+        $results['db_connected'] = true;
+        $results['user_count'] = $userCount;
+    } catch (\Exception $e) {
+        $results['db_connected'] = false;
+        $results['db_error'] = $e->getMessage();
+    }
+    
+    // 3. Admin user check
+    try {
+        $adminEmail = config('admin.principal_admin.email');
+        $admin = \App\Models\User::where('email', $adminEmail)->first();
+        $results['admin_email_config'] = $adminEmail;
+        $results['admin_exists'] = $admin !== null;
+        $results['admin_role'] = $admin?->role;
+        $results['admin_is_active'] = $admin?->is_active;
+    } catch (\Exception $e) {
+        $results['admin_error'] = $e->getMessage();
+    }
+    
+    // 4. Sessions table check
+    try {
+        $sessionCount = \Illuminate\Support\Facades\DB::table('sessions')->count();
+        $results['sessions_table_exists'] = true;
+        $results['session_count'] = $sessionCount;
+    } catch (\Exception $e) {
+        $results['sessions_table_exists'] = false;
+        $results['sessions_error'] = $e->getMessage();
+    }
+    
+    // 5. Cache table check
+    try {
+        \Illuminate\Support\Facades\DB::table('cache')->count();
+        $results['cache_table_exists'] = true;
+    } catch (\Exception $e) {
+        $results['cache_table_exists'] = false;
+        $results['cache_error'] = $e->getMessage();
+    }
+    
+    // 6. Mail config
+    $results['mail_mailer'] = config('mail.default');
+    $results['mail_host'] = config('mail.mailers.smtp.host');
+    $results['mail_port'] = config('mail.mailers.smtp.port');
+    $results['mail_username_set'] = !empty(config('mail.mailers.smtp.username'));
+    $results['mail_password_set'] = !empty(config('mail.mailers.smtp.password'));
+    $results['mail_from'] = config('mail.from.address');
+    
+    // 7. Storage config
+    $results['filesystem_disk'] = config('filesystems.default');
+    $results['public_disk_driver'] = config('filesystems.disks.public.driver');
+    $results['aws_bucket'] = config('filesystems.disks.s3.bucket') ?? config('filesystems.disks.public.bucket');
+    
+    // 8. Session/Cache drivers
+    $results['session_driver'] = config('session.driver');
+    $results['cache_store'] = config('cache.default');
+    
+    // 9. Google OAuth
+    $results['google_client_id_set'] = !empty(config('services.google.client_id'));
+    $results['google_redirect'] = config('services.google.redirect');
+    
+    return response()->json($results, 200, [], JSON_PRETTY_PRINT);
+})->name('debug-railway');
+
 // Page d'accueil publique
 Route::get('/', [HomePageController::class, 'index'])->name('homepage');
 
