@@ -456,12 +456,13 @@ class FeedController extends Controller
                     'ads as ads_count' => fn($q) => $q->where('status', 'active'),
                 ])
                 ->withAvg(['verifiedReviewsReceived as verified_reviews_avg' => fn($q) => $q], 'rating')
-                ->orderByRaw('COALESCE(verified_reviews_avg, 0) DESC')
                 ->orderByDesc('verified_reviews_count')
                 ->orderByDesc('ads_count')
                 ->orderByDesc('updated_at')
+                ->get()
+                ->sortByDesc(fn($pro) => (float) ($pro->verified_reviews_avg ?? 0))
                 ->take($take)
-                ->get();
+                ->values();
         };
 
         $premiumPros = $rankPros(
