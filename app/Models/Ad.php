@@ -34,7 +34,8 @@ class Ad extends Model
         'shares_count',
         'reply_restriction',
         'visibility',
-        'target_categories'
+        'target_categories',
+        'views'
     ];
 
     protected $casts = [
