@@ -6,6 +6,8 @@ cmds = [
     "mkdir -p storage/framework/{sessions,views,cache}",
     "mkdir -p storage/logs",
     "mkdir -p bootstrap/cache",
+    "cp .env.example .env || true",
+    "mkdir -p database && touch database/database.sqlite",
     "composer install --no-dev --optimize-autoloader --no-interaction",
     "npm ci"
 ]
@@ -14,10 +16,10 @@ cmds = [
 cmds = [
     "npm run build",
     "php artisan storage:link || true",
-    "php artisan config:cache || true",
-    "php artisan route:cache || true",
-    "php artisan view:cache || true"
+    "php artisan route:cache || true"
+    # Do NOT run config:cache or view:cache at build time.
+    # Real env variables (DB_*, APP_URL, etc.) are only available at runtime on Railway.
 ]
 
 [start]
-cmd = "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+cmd = "composer dump-autoload --optimize && php artisan migrate --force && php artisan config:cache && php artisan view:cache && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"

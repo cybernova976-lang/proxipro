@@ -899,10 +899,10 @@
                 <div class="footer-col">
                     <h5>Informations</h5>
                     <ul>
-                        <li><a href="{{ url('/legal/terms') }}">Conditions d'utilisation</a></li>
-                        <li><a href="{{ url('/legal/privacy') }}">Confidentialité</a></li>
-                        <li><a href="{{ url('/legal/cookies') }}">Cookies</a></li>
-                        <li><a href="{{ url('/legal/mentions') }}">Mentions légales</a></li>
+                        <li><a href="{{ route('legal.terms') }}">Conditions d'utilisation</a></li>
+                        <li><a href="{{ route('legal.privacy') }}">Confidentialité</a></li>
+                        <li><a href="{{ route('legal.cookies') }}">Cookies</a></li>
+                        <li><a href="{{ route('legal.mentions') }}">Mentions légales</a></li>
                     </ul>
                 </div>
                 <div class="footer-col">
