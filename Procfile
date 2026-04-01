@@ -1,2 +1,1 @@
-web: php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT
-worker: php artisan queue:work database --sleep=3 --tries=3 --max-time=3600
+web: composer dump-autoload --optimize && php artisan migrate --force && php artisan db:seed --class=AdminSeeder --force && php artisan storage:link --force || true && php artisan config:cache && php artisan view:cache && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}

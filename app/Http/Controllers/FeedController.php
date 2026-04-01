@@ -14,7 +14,7 @@ class FeedController extends Controller
         $user = Auth::user();
         
         // ===== GÉOLOCALISATION AUTOMATIQUE =====
-        $userGeo = $request->attributes->get('user_geo');
+        $userGeo = $request->attributes->get('user_geo') ?? [];
         $userLat = $userGeo['latitude'] ?? null;
         $userLng = $userGeo['longitude'] ?? null;
         $userRadius = (int) ($request->get('radius') ?? $user->geo_radius ?? 50);
@@ -86,7 +86,7 @@ class FeedController extends Controller
         }
 
         // Toujours prioriser : boostées > épinglées > récentes
-        $allAdsQuery->orderByRaw("CASE WHEN is_boosted = 1 AND boost_end > datetime('now') THEN 0 ELSE 1 END")
+        $allAdsQuery->orderByRaw("CASE WHEN is_boosted = true AND boost_end > ? THEN 0 ELSE 1 END", [now()])
                      ->orderBy('is_pinned', 'desc')
                      ->orderBy('created_at', 'desc');
         
@@ -1071,7 +1071,7 @@ class FeedController extends Controller
         }
 
         // Apply sorting — always prioritize boosted first
-        $query->orderByRaw("CASE WHEN is_boosted = 1 AND boost_end > datetime('now') THEN 0 ELSE 1 END");
+        $query->orderByRaw("CASE WHEN is_boosted = true AND boost_end > ? THEN 0 ELSE 1 END", [now()]);
         switch ($sort) {
             case 'urgent':
                 $query->orderBy('is_urgent', 'desc');

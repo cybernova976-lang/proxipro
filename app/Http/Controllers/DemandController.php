@@ -106,12 +106,13 @@ class DemandController extends Controller
 
         // Notifier les professionnels correspondants
         try {
-            $adController = app(AdController::class);
-            $reflection = new \ReflectionMethod($adController, 'notifyMatchingProfessionals');
-            $reflection->setAccessible(true);
-            $reflection->invoke($adController, $ad);
+            app(AdController::class)->notifyMatchingProfessionals($ad);
         } catch (\Exception $e) {
-            Log::warning('Demand matching notification failed: ' . $e->getMessage());
+            Log::error('Demand matching notification failed: ' . $e->getMessage(), [
+                'ad_id' => $ad->id,
+                'category' => $ad->category,
+                'exception' => get_class($e),
+            ]);
         }
 
         return redirect()->route('demand.matching', $ad);
