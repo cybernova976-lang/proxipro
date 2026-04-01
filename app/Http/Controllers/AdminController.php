@@ -35,7 +35,7 @@ class AdminController extends Controller
 
         // Graphique des inscriptions (7 derniers jours)
         $registrations = User::select(
-                DB::raw('DATE(created_at) as date'),
+                DB::raw('created_at::date as date'),
                 DB::raw('COUNT(*) as count')
             )
             ->where('created_at', '>=', now()->subDays(7))
@@ -537,7 +537,7 @@ class AdminController extends Controller
         
         // Inscriptions par jour (30 derniers jours)
         $registrationsByDay = User::select(
-                DB::raw('DATE(created_at) as date'),
+                DB::raw('created_at::date as date'),
                 DB::raw('COUNT(*) as count')
             )
             ->where('created_at', '>=', now()->subDays(30))
@@ -547,7 +547,7 @@ class AdminController extends Controller
         
         // Annonces par jour (30 derniers jours)
         $adsByDay = Ad::select(
-                DB::raw('DATE(created_at) as date'),
+                DB::raw('created_at::date as date'),
                 DB::raw('COUNT(*) as count')
             )
             ->where('created_at', '>=', now()->subDays(30))
