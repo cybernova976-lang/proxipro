@@ -16,7 +16,8 @@
         "laravel/socialite": "^5.24",
         "laravel/tinker": "^2.10.1",
         "laravel/ui": "^4.6",
-        "league/flysystem-aws-s3-v3": "^3.32"
+        "league/flysystem-aws-s3-v3": "^3.32",
+        "symfony/brevo-mailer": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

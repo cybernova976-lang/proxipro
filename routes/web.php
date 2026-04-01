@@ -112,46 +112,38 @@ Route::get('/debug-mail', function () {
     $results = [];
     
     // 1. Config
-    $results['mailer'] = config('mail.default');
-    $results['host'] = config('mail.mailers.smtp.host');
-    $results['port'] = config('mail.mailers.smtp.port');
-    $results['scheme'] = config('mail.mailers.smtp.scheme');
-    $results['username'] = config('mail.mailers.smtp.username');
-    $results['password_set'] = !empty(config('mail.mailers.smtp.password'));
-    $results['password_length'] = strlen(config('mail.mailers.smtp.password') ?? '');
+    $results['active_mailer'] = config('mail.default');
+    $results['brevo_api_key_set'] = !empty(config('mail.mailers.brevo.key'));
+    $results['brevo_api_key_length'] = strlen(config('mail.mailers.brevo.key') ?? '');
     $results['from_address'] = config('mail.from.address');
     $results['from_name'] = config('mail.from.name');
-    $results['timeout'] = config('mail.mailers.smtp.timeout');
     
-    // 2. Try raw socket connection to SMTP
-    $results['socket_test'] = 'testing...';
+    // 2. Test HTTPS connectivity to Brevo API
     try {
-        $host = config('mail.mailers.smtp.host');
-        $port = config('mail.mailers.smtp.port');
-        $fp = @fsockopen($host, (int) $port, $errno, $errstr, 5);
-        if ($fp) {
-            $results['socket_test'] = 'SUCCESS - Connected to ' . $host . ':' . $port;
-            $banner = fgets($fp, 1024);
-            $results['smtp_banner'] = trim($banner);
-            fclose($fp);
-        } else {
-            $results['socket_test'] = "FAILED - {$errstr} (errno: {$errno})";
+        $ch = curl_init('https://api.brevo.com/v3/account');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['api-key: ' . config('mail.mailers.brevo.key')]);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        $results['brevo_api_test'] = "HTTP {$httpCode}";
+        if ($httpCode === 200) {
+            $account = json_decode($response, true);
+            $results['brevo_account_email'] = $account['email'] ?? 'unknown';
         }
     } catch (\Exception $e) {
-        $results['socket_test'] = 'EXCEPTION: ' . $e->getMessage();
+        $results['brevo_api_test'] = 'FAILED: ' . $e->getMessage();
     }
     
-    // 3. Try sending with Laravel Mail
+    // 3. Try sending with Laravel Mail (uses active mailer)
     $to = request('to', config('mail.from.address'));
     $results['sending_to'] = $to;
     try {
-        \Illuminate\Support\Facades\Mail::raw('Test email from ProxiPro Railway debug - ' . now(), function ($message) use ($to) {
+        \Illuminate\Support\Facades\Mail::raw('Test email from ProxiPro Railway - ' . now(), function ($message) use ($to) {
             $message->to($to)->subject('ProxiPro Mail Test');
         });
-        $results['send_result'] = 'SUCCESS - No exception thrown';
-    } catch (\Symfony\Component\Mailer\Exception\TransportExceptionInterface $e) {
-        $results['send_result'] = 'TRANSPORT ERROR: ' . $e->getMessage();
-        $results['send_debug'] = $e->getDebug() ?? null;
+        $results['send_result'] = 'SUCCESS - Email sent!';
     } catch (\Exception $e) {
         $results['send_result'] = get_class($e) . ': ' . $e->getMessage();
     }
