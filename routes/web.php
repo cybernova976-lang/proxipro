@@ -109,23 +109,24 @@ Route::get('/debug-railway', function () {
 
 // Temporary: promote admin user (remove after use)
 Route::get('/setup-admin', function () {
-    $email = config('admin.principal_admin.email');
-    if (empty($email)) {
-        return response()->json(['error' => 'PRINCIPAL_ADMIN_EMAIL not set']);
+    $emails = [
+        config('admin.principal_admin.email'),
+        'cybernova976@gmail.com',
+    ];
+    $results = [];
+    foreach (array_filter($emails) as $email) {
+        $user = \App\Models\User::where('email', $email)->first();
+        if ($user) {
+            $user->role = 'admin';
+            $user->is_verified = true;
+            $user->is_active = true;
+            $user->save();
+            $results[] = "{$email} → admin OK";
+        } else {
+            $results[] = "{$email} → not found";
+        }
     }
-    $user = \App\Models\User::where('email', $email)->first();
-    if (!$user) {
-        return response()->json(['error' => "User {$email} not found. Register first, then visit this URL again."]);
-    }
-    $user->role = 'admin';
-    $user->is_verified = true;
-    $user->is_active = true;
-    $user->save();
-    return response()->json([
-        'success' => true,
-        'message' => "{$email} is now admin. Log out and log back in to see the admin button.",
-        'role' => $user->role,
-    ]);
+    return response()->json(['results' => $results]);
 })->name('setup-admin');
 
 // Page d'accueil publique
