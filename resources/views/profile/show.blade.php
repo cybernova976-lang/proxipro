@@ -19,10 +19,10 @@
                     <!-- Avatar -->
                     @if($user->avatar)
                             <img src="{{ storage_url($user->avatar) }}" alt="Avatar" 
-                                class="mb-4" style="width: 180px; height: 180px; object-fit: cover; border-radius: 12px;">
+                                class="mb-4 shadow" style="width: 140px; height: 140px; object-fit: cover; border-radius: 50%; border: 4px solid #e2e8f0;">
                     @else
-                            <div class="bg-primary text-white d-inline-flex align-items-center justify-content-center mb-4" 
-                                style="width: 180px; height: 180px; font-size: 64px; border-radius: 12px;">
+                            <div class="bg-primary text-white d-inline-flex align-items-center justify-content-center mb-4 shadow" 
+                                style="width: 140px; height: 140px; font-size: 56px; border-radius: 50%; border: 4px solid #e2e8f0;">
                             {{ strtoupper(substr($user->name, 0, 1)) }}
                         </div>
                     @endif
@@ -179,25 +179,40 @@
             <div class="row g-3 mb-4">
                 <div class="col-md-4">
                     <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body text-center">
-                            <div class="display-6 fw-bold text-primary">{{ $stats['total_ads'] }}</div>
-                            <div class="text-muted">Annonces publiées</div>
+                        <div class="card-body d-flex align-items-center gap-3 py-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: rgba(58,134,255,0.1);">
+                                <i class="fas fa-bullhorn text-primary"></i>
+                            </div>
+                            <div>
+                                <div class="fs-4 fw-bold text-primary lh-1 mb-1">{{ $stats['total_ads'] }}</div>
+                                <div class="text-muted small">Annonces publiées</div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body text-center">
-                            <div class="display-6 fw-bold text-success">{{ $stats['active_ads'] }}</div>
-                            <div class="text-muted">Annonces actives</div>
+                        <div class="card-body d-flex align-items-center gap-3 py-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: rgba(16,185,129,0.1);">
+                                <i class="fas fa-check-circle text-success"></i>
+                            </div>
+                            <div>
+                                <div class="fs-4 fw-bold text-success lh-1 mb-1">{{ $stats['active_ads'] }}</div>
+                                <div class="text-muted small">Annonces actives</div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body text-center">
-                            <div class="display-6 fw-bold text-info">{{ number_format($stats['total_views'], 0, ',', ' ') }}</div>
-                            <div class="text-muted">Vues totales</div>
+                        <div class="card-body d-flex align-items-center gap-3 py-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: rgba(14,165,233,0.1);">
+                                <i class="fas fa-eye text-info"></i>
+                            </div>
+                            <div>
+                                <div class="fs-4 fw-bold text-info lh-1 mb-1">{{ number_format($stats['total_views'], 0, ',', ' ') }}</div>
+                                <div class="text-muted small">Vues totales</div>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -140,58 +140,58 @@
     </div>
 
     <!-- Features Comparison -->
-    <div class="card border-0 shadow-lg mb-5" style="border-radius: 20px; background: #0f172a;">
-        <div class="card-header bg-transparent border-0 py-4">
+    <div class="card border-0 shadow-lg mb-5" style="border-radius: 20px; overflow: hidden;">
+        <div class="card-header border-0 py-4" style="background: linear-gradient(135deg, #1e293b, #334155);">
             <h4 class="mb-0 text-white">
-                <i class="fas fa-table me-2 text-primary"></i>Comparaison des fonctionnalités
+                <i class="fas fa-table me-2" style="color: #818cf8;"></i>Comparaison des fonctionnalités
             </h4>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-dark table-hover mb-0">
-                    <thead>
+                <table class="table table-hover mb-0 align-middle">
+                    <thead style="background: #f8fafc;">
                         <tr>
-                            <th class="border-0 py-3">Fonctionnalité</th>
-                            <th class="border-0 py-3 text-center">Basic</th>
-                            <th class="border-0 py-3 text-center bg-warning bg-opacity-25">Pro</th>
-                            <th class="border-0 py-3 text-center">Business</th>
+                            <th class="border-0 py-3 ps-4 fw-semibold text-muted">Fonctionnalité</th>
+                            <th class="border-0 py-3 text-center fw-semibold text-muted">Basic</th>
+                            <th class="border-0 py-3 text-center fw-semibold" style="background: rgba(245,158,11,0.06); color: #b45309;">Pro</th>
+                            <th class="border-0 py-3 text-center fw-semibold text-muted">Business</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="py-3">Annonces par mois</td>
+                            <td class="py-3 ps-4">Annonces par mois</td>
                             <td class="text-center py-3">10</td>
-                            <td class="text-center py-3 bg-warning bg-opacity-10">50</td>
+                            <td class="text-center py-3" style="background: rgba(245,158,11,0.03);">50</td>
                             <td class="text-center py-3"><i class="fas fa-infinity text-success"></i></td>
                         </tr>
                         <tr>
-                            <td class="py-3">Points bonus/mois</td>
+                            <td class="py-3 ps-4">Points bonus/mois</td>
                             <td class="text-center py-3">50</td>
-                            <td class="text-center py-3 bg-warning bg-opacity-10">150</td>
+                            <td class="text-center py-3" style="background: rgba(245,158,11,0.03);">150</td>
                             <td class="text-center py-3">500</td>
                         </tr>
                         <tr>
-                            <td class="py-3">Badge premium</td>
-                            <td class="text-center py-3"><i class="fas fa-times text-danger"></i></td>
-                            <td class="text-center py-3 bg-warning bg-opacity-10"><i class="fas fa-check text-success"></i></td>
+                            <td class="py-3 ps-4">Badge premium</td>
+                            <td class="text-center py-3"><i class="fas fa-times text-danger opacity-50"></i></td>
+                            <td class="text-center py-3" style="background: rgba(245,158,11,0.03);"><i class="fas fa-check text-success"></i></td>
                             <td class="text-center py-3"><i class="fas fa-check text-success"></i></td>
                         </tr>
                         <tr>
-                            <td class="py-3">Support prioritaire</td>
-                            <td class="text-center py-3"><i class="fas fa-times text-danger"></i></td>
-                            <td class="text-center py-3 bg-warning bg-opacity-10"><i class="fas fa-check text-success"></i></td>
+                            <td class="py-3 ps-4">Support prioritaire</td>
+                            <td class="text-center py-3"><i class="fas fa-times text-danger opacity-50"></i></td>
+                            <td class="text-center py-3" style="background: rgba(245,158,11,0.03);"><i class="fas fa-check text-success"></i></td>
                             <td class="text-center py-3"><i class="fas fa-check text-success"></i></td>
                         </tr>
                         <tr>
-                            <td class="py-3">Statistiques avancées</td>
-                            <td class="text-center py-3"><i class="fas fa-times text-danger"></i></td>
-                            <td class="text-center py-3 bg-warning bg-opacity-10"><i class="fas fa-check text-success"></i></td>
+                            <td class="py-3 ps-4">Statistiques avancées</td>
+                            <td class="text-center py-3"><i class="fas fa-times text-danger opacity-50"></i></td>
+                            <td class="text-center py-3" style="background: rgba(245,158,11,0.03);"><i class="fas fa-check text-success"></i></td>
                             <td class="text-center py-3"><i class="fas fa-check text-success"></i></td>
                         </tr>
                         <tr>
-                            <td class="py-3">Accès API</td>
-                            <td class="text-center py-3"><i class="fas fa-times text-danger"></i></td>
-                            <td class="text-center py-3 bg-warning bg-opacity-10"><i class="fas fa-times text-danger"></i></td>
+                            <td class="py-3 ps-4">Accès API</td>
+                            <td class="text-center py-3"><i class="fas fa-times text-danger opacity-50"></i></td>
+                            <td class="text-center py-3" style="background: rgba(245,158,11,0.03);"><i class="fas fa-times text-danger opacity-50"></i></td>
                             <td class="text-center py-3"><i class="fas fa-check text-success"></i></td>
                         </tr>
                     </tbody>

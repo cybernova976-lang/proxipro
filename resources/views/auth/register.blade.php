@@ -8,7 +8,7 @@
     <div class="flex flex-col h-full px-10 py-10">
         <!-- Logo -->
         <a href="{{ url('/') }}" class="flex items-center gap-2 mb-16">
-            <span class="text-2xl">🔨</span>
+            <span class="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-content-center text-white font-extrabold text-base shadow-md" style="display:inline-flex;align-items:center;justify-content:center;">P</span>
             <span class="text-xl font-extrabold tracking-tight text-gray-900">ProxiPro</span>
         </a>
         
@@ -67,7 +67,7 @@
     <div class="w-full max-w-lg fade-in">
         <!-- Logo mobile -->
         <a href="{{ url('/') }}" class="flex items-center gap-2 mb-8 lg:hidden">
-            <span class="text-2xl">🔨</span>
+            <span class="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-content-center text-white font-extrabold text-base shadow-md" style="display:inline-flex;align-items:center;justify-content:center;">P</span>
             <span class="text-xl font-extrabold tracking-tight text-gray-900">ProxiPro</span>
         </a>
 

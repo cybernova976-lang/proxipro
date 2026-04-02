@@ -6,6 +6,12 @@
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-8">
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb small">
+                    <li class="breadcrumb-item"><a href="{{ url('/') }}" class="text-decoration-none"><i class="fas fa-home me-1"></i>Accueil</a></li>
+                    <li class="breadcrumb-item active">Conditions d'utilisation</li>
+                </ol>
+            </nav>
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-5">
                     <h1 class="mb-4">Conditions d'utilisation</h1>

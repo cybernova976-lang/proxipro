@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name', 'ProxiPro') }} - La plateforme de services entre particuliers et professionnels</title>
     <meta name="description" content="Trouvez le prestataire idéal près de chez vous. Bricolage, ménage, cours, déménagement... Des milliers de professionnels vérifiés à votre service.">
+    
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ config('app.name', 'ProxiPro') }} - La plateforme de services entre particuliers et professionnels">
+    <meta property="og:description" content="Trouvez le prestataire idéal près de chez vous. Bricolage, ménage, cours, déménagement... Des milliers de professionnels vérifiés à votre service.">
+    <meta property="og:url" content="{{ url('/') }}">
+    <meta property="og:site_name" content="{{ config('app.name', 'ProxiPro') }}">
+    <meta property="og:locale" content="fr_FR">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ config('app.name', 'ProxiPro') }} - Trouvez le bon prestataire en quelques clics">
+    <meta name="twitter:description" content="Plateforme de mise en relation entre particuliers et professionnels. Trouvez le bon professionnel partout en France.">
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -532,20 +543,30 @@
                         @endif
                     @endauth
                 </ul>
-                <button class="nav-burger" onclick="document.getElementById('mobileMenu').classList.toggle('show')">
-                    <i class="fas fa-bars"></i>
+                <button class="nav-burger" id="navBurger" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars" id="burgerIcon"></i>
                 </button>
             </div>
-            <div id="mobileMenu" class="collapse" style="padding-bottom: 16px;">
+            <div id="mobileMenu" style="padding-bottom: 16px; display: none; opacity: 0; transition: opacity 0.25s ease;">
                 <div class="d-flex flex-column gap-2">
-                    <a href="{{ url('/ads') }}" class="d-block py-2 text-decoration-none text-dark fw-semibold">Annonces</a>
-                    <a href="{{ route('contact.index') }}" class="d-block py-2 text-decoration-none text-dark fw-semibold">Contact</a>
+                    <a href="{{ url('/ads') }}" class="d-block py-2 text-decoration-none text-dark fw-semibold">
+                        <i class="fas fa-bullhorn me-2 text-muted"></i>Annonces
+                    </a>
+                    <a href="{{ route('contact.index') }}" class="d-block py-2 text-decoration-none text-dark fw-semibold">
+                        <i class="fas fa-envelope me-2 text-muted"></i>Contact
+                    </a>
                     @auth
-                        <a href="{{ url('/home') }}" class="btn btn-primary btn-sm rounded-3 mt-2">Tableau de bord</a>
+                        <a href="{{ url('/home') }}" class="btn btn-primary rounded-3 mt-2 py-2">
+                            <i class="fas fa-tachometer-alt me-2"></i>Tableau de bord
+                        </a>
                     @else
-                        <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm rounded-3 mt-2">Connexion</a>
+                        <a href="{{ route('login') }}" class="btn btn-outline-primary rounded-3 mt-2 py-2">
+                            <i class="fas fa-sign-in-alt me-2"></i>Connexion
+                        </a>
                         @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="btn btn-primary btn-sm rounded-3">S'inscrire</a>
+                            <a href="{{ route('register') }}" class="btn btn-primary rounded-3 py-2">
+                                <i class="fas fa-user-plus me-2"></i>S'inscrire gratuitement
+                            </a>
                         @endif
                     @endauth
                 </div>
@@ -921,12 +942,46 @@
         </div>
     </footer>
 
+    <!-- Scroll to Top Button -->
+    <button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" 
+        style="display:none;position:fixed;bottom:30px;right:30px;width:48px;height:48px;border-radius:50%;background:var(--primary);color:white;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(79,70,229,0.35);z-index:9999;font-size:1.1rem;transition:all 0.3s;opacity:0;transform:translateY(10px);">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+    // Mobile menu toggle with animation
+    function toggleMobileMenu() {
+        var menu = document.getElementById('mobileMenu');
+        var icon = document.getElementById('burgerIcon');
+        if (menu.style.display === 'none' || !menu.style.display) {
+            menu.style.display = 'block';
+            requestAnimationFrame(function() { menu.style.opacity = '1'; });
+            icon.className = 'fas fa-times';
+        } else {
+            menu.style.opacity = '0';
+            icon.className = 'fas fa-bars';
+            setTimeout(function() { menu.style.display = 'none'; }, 250);
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        // Navbar scroll shadow
+        // Navbar scroll shadow + scroll-to-top button
         const nav = document.getElementById('mainNav');
-        window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 20));
+        const scrollBtn = document.getElementById('scrollTopBtn');
+        window.addEventListener('scroll', () => {
+            nav.classList.toggle('scrolled', window.scrollY > 20);
+            if (window.scrollY > 400) {
+                scrollBtn.style.display = 'flex';
+                scrollBtn.style.alignItems = 'center';
+                scrollBtn.style.justifyContent = 'center';
+                requestAnimationFrame(() => { scrollBtn.style.opacity = '1'; scrollBtn.style.transform = 'translateY(0)'; });
+            } else {
+                scrollBtn.style.opacity = '0';
+                scrollBtn.style.transform = 'translateY(10px)';
+                setTimeout(() => { if (window.scrollY <= 400) scrollBtn.style.display = 'none'; }, 300);
+            }
+        });
         
         // Scroll reveal animations (staggered)
         const revealObserver = new IntersectionObserver((entries) => {

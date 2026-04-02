@@ -176,11 +176,11 @@
                             </td>
                             <td>
                                 @if($isBoostedActive)
-                                    @php $daysLeft = (int) now()->diffInDays($ad->boost_end, false); @endphp
-                                    <span class="badge {{ $daysLeft <= 2 ? 'bg-danger' : 'bg-success' }}">{{ $daysLeft }}j</span>
+                                    @php $daysLeft = max(0, (int) now()->diffInDays($ad->boost_end, false)); @endphp
+                                    <span class="badge {{ $daysLeft <= 1 ? 'bg-danger' : ($daysLeft <= 3 ? 'bg-warning text-dark' : 'bg-success') }}">{{ $daysLeft }}j</span>
                                 @elseif($isUrgentActive)
-                                    @php $daysLeft = (int) now()->diffInDays($ad->urgent_until, false); @endphp
-                                    <span class="badge {{ $daysLeft <= 2 ? 'bg-danger' : 'bg-success' }}">{{ $daysLeft }}j</span>
+                                    @php $daysLeft = max(0, (int) now()->diffInDays($ad->urgent_until, false)); @endphp
+                                    <span class="badge {{ $daysLeft <= 1 ? 'bg-danger' : ($daysLeft <= 3 ? 'bg-warning text-dark' : 'bg-success') }}">{{ $daysLeft }}j</span>
                                 @elseif($isPermanentUrgent)
                                     <span class="badge bg-info">∞</span>
                                 @else

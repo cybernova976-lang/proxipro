@@ -70,8 +70,16 @@
                                 
                                 <div class="mb-3">
                                     <label for="password" class="form-label">Nouveau mot de passe</label>
-                                    <input type="password" class="form-control" id="password" name="password" required minlength="8">
-                                    <div class="form-text">Minimum 8 caractères</div>
+                                    <input type="password" class="form-control" id="password" name="password" required minlength="8" oninput="checkPasswordStrength(this.value)">
+                                    <div id="passwordStrength" class="mt-2" style="display:none;">
+                                        <div class="d-flex gap-1 mb-1">
+                                            <div class="flex-fill rounded-pill" style="height:4px;background:#e2e8f0;" id="str1"></div>
+                                            <div class="flex-fill rounded-pill" style="height:4px;background:#e2e8f0;" id="str2"></div>
+                                            <div class="flex-fill rounded-pill" style="height:4px;background:#e2e8f0;" id="str3"></div>
+                                            <div class="flex-fill rounded-pill" style="height:4px;background:#e2e8f0;" id="str4"></div>
+                                        </div>
+                                        <small id="strengthText" class="text-muted">Minimum 8 caractères</small>
+                                    </div>
                                 </div>
                                 
                                 <div class="mb-4">
@@ -249,6 +257,7 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Delete account checkbox toggle
         var checkbox = document.getElementById('settings_confirm_delete');
         var btn = document.getElementById('settingsDeleteBtn');
         if (checkbox && btn) {
@@ -256,6 +265,49 @@
                 btn.disabled = !this.checked;
             });
         }
+
+        // Active sidebar state based on hash or first item
+        var hash = window.location.hash;
+        var listItems = document.querySelectorAll('.list-group-item[data-bs-toggle="list"]');
+        if (hash && document.querySelector('.list-group-item[href="' + hash + '"]')) {
+            listItems.forEach(function(item) { item.classList.remove('active'); });
+            document.querySelector('.list-group-item[href="' + hash + '"]').click();
+        } else if (listItems.length > 0) {
+            listItems[0].classList.add('active');
+        }
+
+        // Update hash on tab change
+        listItems.forEach(function(item) {
+            item.addEventListener('click', function() {
+                history.replaceState(null, null, this.getAttribute('href'));
+            });
+        });
     });
+
+    // Password strength checker
+    function checkPasswordStrength(val) {
+        var container = document.getElementById('passwordStrength');
+        var bars = [document.getElementById('str1'), document.getElementById('str2'), document.getElementById('str3'), document.getElementById('str4')];
+        var text = document.getElementById('strengthText');
+
+        if (val.length === 0) { container.style.display = 'none'; return; }
+        container.style.display = 'block';
+
+        var score = 0;
+        if (val.length >= 8) score++;
+        if (/[a-z]/.test(val) && /[A-Z]/.test(val)) score++;
+        if (/\d/.test(val)) score++;
+        if (/[^a-zA-Z0-9]/.test(val)) score++;
+
+        var colors = ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'];
+        var labels = ['Faible', 'Moyen', 'Bon', 'Excellent'];
+        var textColors = ['text-danger', 'text-warning', 'text-primary', 'text-success'];
+
+        bars.forEach(function(bar, i) {
+            bar.style.background = i < score ? colors[Math.max(0, score - 1)] : '#e2e8f0';
+        });
+        text.textContent = labels[Math.max(0, score - 1)] || 'Minimum 8 caractères';
+        text.className = 'small ' + (textColors[Math.max(0, score - 1)] || 'text-muted');
+    }
 </script>
 @endpush

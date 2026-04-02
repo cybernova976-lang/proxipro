@@ -6,8 +6,8 @@
 <div class="flex-1 flex flex-col items-center justify-center px-4 py-10">
     <div class="w-full max-w-[400px] fade-in">
         <!-- Logo -->
-        <a href="{{ url('/') }}" class="flex items-center justify-center gap-2 mb-10">
-            <span class="text-2xl">🔨</span>
+        <a href="{{ url('/') }}" class="flex items-center justify-center gap-2.5 mb-10">
+            <span class="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-content-center text-white font-extrabold text-base shadow-md" style="display:inline-flex;align-items:center;justify-content:center;">P</span>
             <span class="text-xl font-extrabold tracking-tight text-gray-900">ProxiPro</span>
         </a>
 

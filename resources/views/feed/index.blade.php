@@ -358,7 +358,6 @@
         scrollbar-width: none;
         -ms-overflow-style: none;
         z-index: 100;
-        transform: translateX(-60px);
     }
     .feed-sidebar-left::-webkit-scrollbar { display: none; }
 

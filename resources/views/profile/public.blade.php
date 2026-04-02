@@ -34,10 +34,10 @@
                     <!-- Avatar en format carte -->
                     @if($user->avatar)
                         <img src="{{ storage_url($user->avatar) }}" alt="Avatar" 
-                            class="mb-4" style="width: 180px; height: 180px; object-fit: cover; border-radius: 12px;">
+                            class="mb-4 shadow" style="width: 140px; height: 140px; object-fit: cover; border-radius: 50%; border: 4px solid #e2e8f0;">
                     @else
-                        <div class="bg-primary text-white d-inline-flex align-items-center justify-content-center mb-4" 
-                            style="width: 180px; height: 180px; font-size: 64px; border-radius: 12px;">
+                        <div class="bg-primary text-white d-inline-flex align-items-center justify-content-center mb-4 shadow" 
+                            style="width: 140px; height: 140px; font-size: 56px; border-radius: 50%; border: 4px solid #e2e8f0;">
                             {{ strtoupper(substr($user->name, 0, 1)) }}
                         </div>
                     @endif
