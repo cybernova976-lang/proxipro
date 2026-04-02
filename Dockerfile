@@ -17,7 +17,10 @@ RUN npm run build
 # ============================================================
 FROM php:8.2-apache AS runtime
 
-# Install system dependencies
+# Cache-bust: force rebuild of PHP extensions layer
+ARG CACHEBUST=20260403
+
+# Install system dependencies including libpq-dev for PostgreSQL
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git unzip curl libpng-dev libjpeg-dev libfreetype6-dev \
         libonig-dev libxml2-dev libzip-dev libsqlite3-dev \
