@@ -447,7 +447,7 @@
         background: white;
         border-radius: 8px;
         display: flex;
-        align-items: center;
+        align-items: flex-end;
         padding: 0 12px;
     }
     
@@ -459,6 +459,12 @@
         color: #111b21;
         outline: none;
         background: transparent;
+        resize: none;
+        overflow: hidden;
+        max-height: 150px;
+        line-height: 1.4;
+        display: block;
+        height: auto;
     }
     
     .message-input::placeholder {
@@ -837,7 +843,7 @@
                         </button>
                     </div>
                     <div class="message-input-wrapper">
-                        <input type="text" class="message-input" id="messageInput" placeholder="Tapez un message" autocomplete="off">
+                        <textarea class="message-input" id="messageInput" placeholder="Tapez un message" autocomplete="off" rows="1"></textarea>
                     </div>
                     <button type="submit" class="btn-send" title="Envoyer">
                         <i class="fas fa-paper-plane"></i>
@@ -940,6 +946,7 @@
                 chatMessages.insertBefore(msgDiv, typingIndicator);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
                 messageInput.value = '';
+                messageInput.style.height = 'auto';
                 scheduleActionExpiry(msgDiv);
                 
                 if (data.message?.id) {
@@ -951,6 +958,23 @@
         }
     });
     
+    // Auto-resize textarea and send on Enter (Shift+Enter for newline)
+    function autoResize(el) {
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+    }
+
+    messageInput?.addEventListener('input', function() {
+        autoResize(this);
+    });
+
+    messageInput?.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            messageForm?.requestSubmit();
+        }
+    });
+
     // Escape HTML
     function escapeHtml(text) {
         const div = document.createElement('div');
@@ -1100,10 +1124,15 @@
         if (!textEl) return;
         const originalText = textEl.textContent || '';
 
-        const input = document.createElement('input');
-        input.type = 'text';
+        const input = document.createElement('textarea');
         input.className = 'message-edit-input';
         input.value = originalText;
+        input.rows = 1;
+        input.style.resize = 'none';
+        input.style.overflow = 'hidden';
+        input.addEventListener('input', function() {
+            autoResize(this);
+        });
 
         const actions = document.createElement('div');
         actions.className = 'message-edit-actions';

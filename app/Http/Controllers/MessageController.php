@@ -66,7 +66,7 @@ class MessageController extends Controller
     {
         $request->validate([
             'conversation_id' => 'required|exists:conversations,id',
-            'content' => 'required|string|max:2000'
+            'content' => 'required|string|max:5000'
         ]);
 
         $user = Auth::user();
@@ -265,7 +265,7 @@ class MessageController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'content' => 'required|string|max:2000'
+            'content' => 'required|string|max:5000'
         ]);
 
         $user = Auth::user();
