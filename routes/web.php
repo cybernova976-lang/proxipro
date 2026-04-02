@@ -29,11 +29,6 @@ use App\Http\Controllers\QuoteToolController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Mail;
 
-// Health check for Railway (no database access)
-Route::get('/health', function () {
-    return response('OK', 200)->header('Content-Type', 'text/plain');
-});
-
 // Page d'accueil publique
 Route::get('/', [HomePageController::class, 'index'])->name('homepage');
 
