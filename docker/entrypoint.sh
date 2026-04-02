@@ -43,6 +43,7 @@ fi
 echo "⏳  Caching configuration …"
 php artisan config:cache
 php artisan route:cache
+php artisan view:clear
 php artisan view:cache
 
 # 5. Run database migrations
