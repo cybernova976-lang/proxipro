@@ -14,6 +14,10 @@ if [ -n "$PORT" ]; then
     sed -i "s/<VirtualHost \*:80>/<VirtualHost *:$PORT>/" /etc/apache2/sites-available/000-default.conf || true
 fi
 
+# Ensure storage directories exist
+mkdir -p storage/app/public storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs 2>/dev/null || true
+chown -R www-data:www-data storage 2>/dev/null || true
+
 # 1. Create .env from .env.example if it does not exist
 if [ ! -f .env ]; then
     if [ -f .env.example ]; then
