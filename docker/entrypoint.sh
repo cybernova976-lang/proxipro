@@ -46,29 +46,36 @@ if [ "$DB_CONNECTION" = "sqlite" ] || [ -z "$DB_CONNECTION" ]; then
     chown www-data:www-data "$DB_PATH" 2>/dev/null || true
 fi
 
-# 4. Cache configuration & routes for production
-#    These run at startup (not build time) because config:cache
-#    bakes in runtime environment variables supplied by Railway.
-echo "⏳  Caching configuration …"
-php artisan config:cache --no-interaction || true
-php artisan route:cache --no-interaction || true
-php artisan view:clear --no-interaction || true
-php artisan view:cache --no-interaction || true
+echo "Apache listen configuration:"
+grep -nE '^Listen ' /etc/apache2/ports.conf || true
+grep -nE '<VirtualHost' /etc/apache2/sites-available/000-default.conf || true
+apache2ctl -t || true
 
-# 5. Run database migrations
-echo "⏳  Running migrations …"
-php artisan migrate --force --no-interaction || echo "WARNING: Migrations failed, continuing..."
+run_laravel_bootstrap() {
+    echo "⏳  Background Laravel bootstrap started"
 
-# 6. Run admin seeder
-php artisan db:seed --class=AdminSeeder --force --no-interaction || true
+    # These tasks are non-critical for initial HTTP readiness.
+    php artisan config:cache --no-interaction || echo "WARNING: config:cache failed"
+    php artisan route:cache --no-interaction || echo "WARNING: route:cache failed"
+    php artisan view:clear --no-interaction || echo "WARNING: view:clear failed"
+    php artisan view:cache --no-interaction || echo "WARNING: view:cache failed"
 
-# 7. Create storage symlink if missing
-if [ ! -L public/storage ]; then
-    echo "⏳  Creating storage link …"
-    php artisan storage:link --force --no-interaction 2>/dev/null || true
-fi
+    echo "⏳  Running migrations in background …"
+    php artisan migrate --force --no-interaction || echo "WARNING: migrations failed"
 
-echo "✅  Entrypoint complete – starting server"
+    php artisan db:seed --class=AdminSeeder --force --no-interaction || echo "WARNING: AdminSeeder failed"
+
+    if [ ! -L public/storage ]; then
+        echo "⏳  Creating storage link …"
+        php artisan storage:link --force --no-interaction 2>/dev/null || echo "WARNING: storage:link failed"
+    fi
+
+    echo "✅  Background Laravel bootstrap complete"
+}
+
+run_laravel_bootstrap &
+
+echo "✅  Entrypoint complete – starting server immediately"
 
 # Execute the CMD passed by the Dockerfile (Apache or php artisan serve)
 exec "$@"
