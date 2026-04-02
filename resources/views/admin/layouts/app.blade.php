@@ -71,6 +71,8 @@
         @media (max-width: 768px) {
             .sidebar {
                 margin-left: -250px;
+                z-index: 1050;
+                overflow-y: auto;
             }
             
             .main-content {
@@ -80,17 +82,56 @@
             .sidebar.active {
                 margin-left: 0;
             }
+
+            .sidebar-close-btn {
+                display: block !important;
+            }
+        }
+
+        .sidebar-close-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.8);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .sidebar-close-btn:hover {
+            color: white;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1040;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
         }
     </style>
 </head>
 <body>
     <!-- Sidebar -->
     <div class="sidebar">
-        <div class="sidebar-header">
-            <h4 class="mb-0">
-                <i class="fas fa-crown me-2"></i>Admin Panel
-            </h4>
-            <small class="text-muted">ProxiPro Platform</small>
+        <div class="sidebar-header d-flex align-items-start justify-content-between">
+            <div>
+                <h4 class="mb-0">
+                    <i class="fas fa-crown me-2"></i>Admin Panel
+                </h4>
+                <small class="text-muted">ProxiPro Platform</small>
+            </div>
+            <button class="sidebar-close-btn d-md-none" id="sidebarClose" aria-label="Fermer le menu">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
         
         <ul class="sidebar-menu mt-4">
@@ -191,6 +232,9 @@
         </ul>
     </div>
 
+    <!-- Overlay mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <!-- Main Content -->
     <div class="main-content">
         <nav class="navbar navbar-light bg-white shadow-sm rounded mb-4">
@@ -225,9 +269,40 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Toggle sidebar sur mobile
-        document.getElementById('sidebarToggle')?.addEventListener('click', function() {
-            document.querySelector('.sidebar').classList.toggle('active');
-        });
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        const closeBtn = document.getElementById('sidebarClose');
+
+        function openSidebar() {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                if (sidebar.classList.contains('active')) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
+            });
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeSidebar);
+        }
+
+        if (overlay) {
+            overlay.addEventListener('click', closeSidebar);
+        }
     </script>
 </body>
 </html>
