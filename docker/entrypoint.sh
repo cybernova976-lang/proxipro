@@ -8,11 +8,27 @@
 cd /var/www/html
 
 # 0. Configure Apache to listen on $PORT (Railway injects it at runtime)
-if [ -n "$PORT" ]; then
-    echo "Configuring Apache to listen on port $PORT ..."
-    sed -i "s/^Listen 80$/Listen $PORT/" /etc/apache2/ports.conf || true
-    sed -i "s/<VirtualHost \*:80>/<VirtualHost *:$PORT>/" /etc/apache2/sites-available/000-default.conf || true
-fi
+PORT="${PORT:-8080}"
+echo "Configuring Apache to listen on port $PORT ..."
+
+# Overwrite ports.conf entirely (more reliable than sed)
+echo "Listen $PORT" > /etc/apache2/ports.conf
+
+# Overwrite the default site VirtualHost to use $PORT
+cat > /etc/apache2/sites-available/000-default.conf <<VHOST
+<VirtualHost *:${PORT}>
+    ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/html/public
+
+    <Directory /var/www/html/public>
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog \${APACHE_LOG_DIR}/error.log
+    CustomLog \${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+VHOST
 
 # Ensure storage directories exist
 mkdir -p storage/app/public storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs 2>/dev/null || true
