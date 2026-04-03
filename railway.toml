@@ -13,3 +13,4 @@ healthcheckPath = "/health.php"
 healthcheckTimeout = 600
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 5
+numReplicas = 1
