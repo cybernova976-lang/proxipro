@@ -6,7 +6,6 @@
 [build]
 
 [deploy]
-healthcheckPath = "/health.php"
 healthcheckTimeout = 600
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 5
