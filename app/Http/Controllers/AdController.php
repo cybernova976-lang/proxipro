@@ -368,7 +368,11 @@ class AdController extends Controller
             'service_type' => 'required|in:offre,demande',
             'radius_km' => 'nullable|integer|min:1|max:100',
             'photos' => 'nullable|array|max:' . $maxPhotos,
-            'photos.*' => 'image|mimes:jpeg,png,webp|max:5120'
+            'photos.*' => 'image|mimes:jpeg,png,webp|max:5120',
+            'reply_restriction' => 'nullable|in:everyone,pro_only,verified_only',
+            'visibility' => 'nullable|in:public,pro_targeted',
+            'target_categories' => 'nullable|array',
+            'target_categories.*' => 'string',
         ]);
 
         // Déterminer la localisation finale
@@ -402,10 +406,10 @@ class AdController extends Controller
         $ad->country = $request->country;
         $ad->price = $request->price;
         $ad->service_type = $request->service_type;
-        $ad->radius_km = $request->radius_km ?? 10;
-        $ad->reply_restriction = $request->reply_restriction ?? 'everyone';
-        $ad->visibility = $request->visibility ?? 'public';
-        $ad->target_categories = $request->visibility === 'pro_targeted' ? $request->target_categories : null;
+        $ad->radius_km = $request->input('radius_km', 10);
+        $ad->reply_restriction = $request->input('reply_restriction', 'everyone');
+        $ad->visibility = $request->input('visibility', 'public');
+        $ad->target_categories = $request->input('visibility') === 'pro_targeted' ? $request->input('target_categories') : null;
         $ad->save();
 
         if ($request->hasFile('photos')) {
