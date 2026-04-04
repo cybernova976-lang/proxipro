@@ -296,12 +296,16 @@ class AdController extends Controller
         $ad->save();
 
         if ($request->hasFile('photos')) {
-            $paths = [];
-            foreach ($request->file('photos') as $photo) {
-                $paths[] = $photo->store('ads', 'public');
+            try {
+                $paths = [];
+                foreach ($request->file('photos') as $photo) {
+                    $paths[] = $photo->store('ads', 'public');
+                }
+                $ad->photos = $paths;
+                $ad->save();
+            } catch (\Exception $e) {
+                Log::error('Erreur upload photos pour annonce #' . $ad->id . ': ' . $e->getMessage());
             }
-            $ad->photos = $paths;
-            $ad->save();
         }
 
         try {
@@ -413,16 +417,21 @@ class AdController extends Controller
         $ad->save();
 
         if ($request->hasFile('photos')) {
-            $existing = $ad->photos ?? [];
-            foreach ($existing as $path) {
-                Storage::disk('public')->delete($path);
+            try {
+                $existing = $ad->photos ?? [];
+                foreach ($existing as $path) {
+                    Storage::disk('public')->delete($path);
+                }
+                $paths = [];
+                foreach ($request->file('photos') as $photo) {
+                    $paths[] = $photo->store('ads', 'public');
+                }
+                $ad->photos = $paths;
+                $ad->save();
+            } catch (\Exception $e) {
+                Log::error('Erreur upload photos pour annonce #' . $ad->id . ': ' . $e->getMessage());
+                return back()->withErrors(['photos' => 'Erreur lors du téléchargement des photos. Veuillez réessayer.'])->withInput();
             }
-            $paths = [];
-            foreach ($request->file('photos') as $photo) {
-                $paths[] = $photo->store('ads', 'public');
-            }
-            $ad->photos = $paths;
-            $ad->save();
         }
 
         return redirect()->route('ads.show', $ad)->with('success', 'Annonce mise à jour avec succès !');

@@ -6728,8 +6728,9 @@
 
     /**
      * Base URL pour les fichiers stockés (local: /storage, production: URL R2)
+     * Note: utilise config() au lieu de env() pour fonctionner avec config:cache
      */
-    const storageBaseUrl = @json(rtrim(\Illuminate\Support\Facades\Storage::disk('public')->url(''), '/'));
+    const storageBaseUrl = @json(rtrim(config('filesystems.disks.public.url') ?: url('/storage'), '/'));
 
     /**
      * Construire l'URL complète d'un fichier stocké (avatar, photo, etc.)

@@ -210,30 +210,28 @@
                         <div class="row g-3">
                             @foreach($ads as $ad)
                                 <div class="col-md-6">
-                                    <div class="d-flex align-items-center p-3 bg-light rounded-3">
+                                    <div class="card border-0 bg-light rounded-3 overflow-hidden h-100">
                                         @if($ad->photos && count($ad->photos) > 0)
                                             <img src="{{ storage_url($ad->photos[0]) }}" alt="" 
-                                                 class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                                                 class="card-img-top" style="height: 160px; object-fit: cover;">
                                         @else
-                                            <div class="bg-secondary rounded me-3 d-flex align-items-center justify-content-center" 
-                                                 style="width: 60px; height: 60px;">
-                                                <i class="fas fa-image text-white"></i>
+                                            <div class="bg-secondary d-flex align-items-center justify-content-center" 
+                                                 style="height: 160px;">
+                                                <i class="fas fa-image text-white fa-2x"></i>
                                             </div>
                                         @endif
-                                        <div class="flex-grow-1 min-width-0">
+                                        <div class="card-body p-3">
                                             <h6 class="mb-1 text-truncate">
                                                 <a href="{{ route('ads.show', $ad) }}" class="text-decoration-none text-dark">
                                                     {{ $ad->title }}
                                                 </a>
                                             </h6>
-                                            <div class="small text-muted">
-                                                {{ $ad->created_at->diffForHumans() }}
+                                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                                <small class="text-muted">{{ $ad->created_at->diffForHumans() }}</small>
+                                                <span class="badge {{ $ad->status == 'active' ? 'bg-success' : 'bg-secondary' }}">
+                                                    {{ $ad->status == 'active' ? 'Actif' : 'Inactif' }}
+                                                </span>
                                             </div>
-                                        </div>
-                                        <div class="ms-2">
-                                            <span class="badge {{ $ad->status == 'active' ? 'bg-success' : 'bg-secondary' }}">
-                                                {{ $ad->status == 'active' ? 'Actif' : 'Inactif' }}
-                                            </span>
                                         </div>
                                     </div>
                                 </div>
