@@ -33,10 +33,16 @@ return [
     | statically and control which one is used via FILESYSTEM_DISK (default)
     | or by explicitly passing the disk name to Storage::disk().
     |
-    | Production (Railway): set FILESYSTEM_DISK=s3 to route Storage::disk('public')
-    | calls to Cloudflare R2. The 'public' disk below is kept as a local fallback
-    | for development. All controllers use Storage::disk('public') which resolves
-    | to whichever disk is set as the default.
+    | Storage strategy:
+    |   - Default (recommended): FILESYSTEM_DISK=public — files stored in
+    |     storage/app/public and served via the public/storage symlink created
+    |     by `php artisan storage:link`. Reliable on any host.
+    |   - R2/S3 (optional): FILESYSTEM_DISK=s3 — requires valid AWS_ACCESS_KEY_ID,
+    |     AWS_SECRET_ACCESS_KEY, AWS_BUCKET, AWS_ENDPOINT, and AWS_URL. If AWS_URL
+    |     is missing, storage_url() automatically falls back to local asset URLs.
+    |
+    | The nixpacks.toml start command runs `php artisan storage:link --force`
+    | on every deploy, so the public/storage symlink is always present.
     |
     */
 

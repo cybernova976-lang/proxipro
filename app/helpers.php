@@ -5,9 +5,10 @@ if (!function_exists('storage_url')) {
      * Génère l'URL publique d'un fichier stocké sur le disque par défaut.
      * Fonctionne avec le disque local (dev) ET Cloudflare R2/S3 (production).
      *
-     * - En production (FILESYSTEM_DISK=s3) : construit l'URL depuis la clé `url`
-     *   du disque s3 dans config/filesystems.php (AWS_URL).
-     * - En local (FILESYSTEM_DISK=public ou non défini) : utilise asset('storage/…').
+     * Stratégie de résolution :
+     * 1. Si le chemin est déjà une URL complète (OAuth, etc.) → retourner tel quel.
+     * 2. Si FILESYSTEM_DISK=s3 ET AWS_URL est configuré → URL R2/S3.
+     * 3. Sinon → asset('storage/…') via le lien symbolique public/storage.
      *
      * N'utilise jamais env() directement — toujours config() — pour être compatible
      * avec php artisan config:cache.
@@ -27,24 +28,27 @@ if (!function_exists('storage_url')) {
         $path = ltrim(preg_replace('#^/?storage/#', '', $path), '/');
 
         // Determine whether the active default disk is S3-based.
-        // We check the default disk name (FILESYSTEM_DISK) rather than the 'public'
-        // disk driver, because in production FILESYSTEM_DISK=s3 makes Storage::disk()
-        // resolve to the 's3' disk — not the local 'public' disk.
-        $defaultDisk = config('filesystems.default', 'public');
+        $defaultDisk   = config('filesystems.default', 'public');
         $defaultDriver = config('filesystems.disks.' . $defaultDisk . '.driver', 'local');
 
         if ($defaultDriver === 's3') {
-            // Cloudflare R2 / S3 : assembler l'URL publique depuis AWS_URL
-            $baseUrl = rtrim(config('filesystems.disks.' . $defaultDisk . '.url', config('filesystems.disks.s3.url', '')), '/');
+            // Cloudflare R2 / S3 : assembler l'URL publique depuis AWS_URL.
+            // If AWS_URL is not set, fall back to local storage so images are
+            // never broken when R2 credentials are missing or misconfigured.
+            $baseUrl = rtrim(
+                config('filesystems.disks.' . $defaultDisk . '.url', config('filesystems.disks.s3.url', '')),
+                '/'
+            );
 
-            if (empty($baseUrl)) {
-                return asset('storage/' . $path);
+            if (!empty($baseUrl)) {
+                return $baseUrl . '/' . ltrim($path, '/');
             }
 
-            return $baseUrl . '/' . ltrim($path, '/');
+            // AWS_URL not configured — fall through to local asset URL below.
         }
 
-        // Disque local : servir via le lien symbolique public/storage
+        // Disque local (ou S3 sans AWS_URL) : servir via le lien symbolique public/storage.
         return asset('storage/' . $path);
     }
 }
+
