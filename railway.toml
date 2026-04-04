@@ -4,11 +4,10 @@
 # -------------------------------------------------------
 
 [build]
-# Use the Dockerfile at the repo root
-dockerfilePath = "Dockerfile"
+# Use Nixpacks (nixpacks.toml) for building
 
 [deploy]
-# Railway injects $PORT; our Dockerfile + Apache honor it
+# Railway injects $PORT; nixpacks.toml start command honors it
 healthcheckPath = "/health.php"
 healthcheckTimeout = 600
 restartPolicyType = "on_failure"
