@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('ads', function (Blueprint $table) {
-            $table->unsignedInteger('shares_count')->default(0)->after('is_boosted');
-        });
+        if (!Schema::hasColumn('ads', 'shares_count')) {
+            Schema::table('ads', function (Blueprint $table) {
+                $table->unsignedInteger('shares_count')->default(0)->after('is_boosted');
+            });
+        }
     }
 
     /**
