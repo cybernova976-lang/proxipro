@@ -244,8 +244,8 @@
                             @foreach($ads as $ad)
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-center p-3 bg-light rounded-3">
-                                        @if($ad->images && count($ad->images) > 0)
-                                            <img src="{{ storage_url($ad->images[0]) }}" alt="" 
+                                        @if($ad->photos && count($ad->photos) > 0)
+                                            <img src="{{ storage_url($ad->photos[0]) }}" alt="" 
                                                  class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
                                         @else
                                             <div class="bg-secondary rounded me-3 d-flex align-items-center justify-content-center" 

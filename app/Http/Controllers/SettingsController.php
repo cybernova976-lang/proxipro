@@ -143,8 +143,8 @@ class SettingsController extends Controller
 
             // Supprimer les images des annonces
             foreach ($user->ads as $ad) {
-                if (!empty($ad->images)) {
-                    $images = is_array($ad->images) ? $ad->images : json_decode($ad->images, true) ?? [];
+                if (!empty($ad->photos)) {
+                    $images = is_array($ad->photos) ? $ad->photos : json_decode($ad->photos, true) ?? [];
                     foreach ($images as $image) {
                         if (Storage::disk('public')->exists($image)) {
                             Storage::disk('public')->delete($image);

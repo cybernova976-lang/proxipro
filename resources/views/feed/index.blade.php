@@ -6726,6 +6726,23 @@
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
     const likedAds = new Set();
 
+    /**
+     * Base URL pour les fichiers stockés (local: /storage, production: URL R2)
+     */
+    const storageBaseUrl = @json(rtrim(\Illuminate\Support\Facades\Storage::disk('public')->url(''), '/'));
+
+    /**
+     * Construire l'URL complète d'un fichier stocké (avatar, photo, etc.)
+     */
+    function buildStorageUrl(path) {
+        if (!path) return '';
+        if (path.startsWith('http://') || path.startsWith('https://')) return path;
+        // Nettoyer les préfixes inutiles
+        path = path.replace(/^\/?(storage|public)\//, '');
+        path = path.replace(/^\/+/, '');
+        return storageBaseUrl + '/' + path;
+    }
+
     // Données des professionnels à la une (pour injection JS)
     const featuredProsData = @json($featuredProsJson ?? []);
 
@@ -8900,7 +8917,7 @@
         let html = '';
         providers.forEach(pro => {
             const avatar = pro.avatar 
-                ? `<img src="/storage/${pro.avatar}" alt="${pro.name}">`
+                ? `<img src="${buildStorageUrl(pro.avatar)}" alt="${pro.name}">`
                 : `<div class="provider-image-placeholder">${pro.name.charAt(0).toUpperCase()}</div>`;
             
             const badge = pro.profession 
@@ -8945,11 +8962,7 @@
      */
     function buildPhotoUrl(photo) {
         if (!photo) return '';
-        if (photo.startsWith('http://') || photo.startsWith('https://')) return photo;
-        if (photo.startsWith('/storage/')) return photo;
-        if (photo.startsWith('storage/')) return '/' + photo;
-        if (photo.startsWith('public/')) return '/storage/' + photo.replace('public/', '');
-        return '/storage/' + photo.replace(/^\/+/, '');
+        return buildStorageUrl(photo);
     }
 
     /**
@@ -8960,7 +8973,7 @@
         let prosCards = '';
         featuredProsData.forEach(pro => {
             const imageHtml = pro.avatar
-                ? `<img src="/storage/${pro.avatar}" alt="${(pro.name||'').replace(/"/g,'&quot;')}">`
+                ? `<img src="${buildStorageUrl(pro.avatar)}" alt="${(pro.name||'').replace(/"/g,'&quot;')}">`
                 : `<div class="featured-pro-image-placeholder">${(pro.name||'P').charAt(0).toUpperCase()}</div>`;
             const proBadge = pro.is_pro ? ' <span class="badge-pro-featured">PRO</span>' : '';
             const ratingVal = pro.verified_reviews_avg ? parseFloat(pro.verified_reviews_avg).toFixed(1).replace('.', ',') : null;
@@ -9036,8 +9049,7 @@
             }
 
             const userAvatar = ad.user && ad.user.avatar 
-                ? `<img src="/storage/${ad.user.avatar}" alt="${(ad.user.name||'').replace(/"/g,'')}">`
-                : `<div class="fb-post-avatar-placeholder">${(ad.user?.name || 'U').charAt(0).toUpperCase()}</div>`;
+                ? `<img src="${buildStorageUrl(ad.user.avatar)}" alt="${(ad.user.name||'').replace(/"/g,'')}">` 
             
             let photos = [];
             if (ad.photos) {
@@ -9074,7 +9086,7 @@
             let commentFormHtml = '';
             if (isAuth) {
                 const authAvatar = authUser.avatar 
-                    ? `<img src="/storage/${authUser.avatar}" alt="">`
+                    ? `<img src="${buildStorageUrl(authUser.avatar)}" alt="">`
                     : `<div class="fb-post-avatar-placeholder" style="width:32px;height:32px;font-size:0.8rem;">${authUser.name.charAt(0).toUpperCase()}</div>`;
                 commentFormHtml = `
                     <form class="fb-comment-form" onsubmit="submitComment(event, ${ad.id})">
@@ -9214,7 +9226,7 @@
         // User
         const userEl = document.getElementById('adDetailUser');
         const avatarHtml = ad.user?.avatar
-            ? `<img src="/storage/${ad.user.avatar}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">`
+            ? `<img src="${buildStorageUrl(ad.user.avatar)}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">`
             : `<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a78bfa);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">${(ad.user?.name||'U').charAt(0).toUpperCase()}</div>`;
         const verifiedIcon = ad.user?.is_verified
             ? '<i class="fas fa-check-circle" style="color:#10b981;font-size:0.7rem;margin-left:4px;"></i>'
@@ -9743,7 +9755,7 @@
             try { div.setAttribute('data-ad-json', JSON.stringify(ad)); } catch(e) {}
 
             const userAvatar = ad.user && ad.user.avatar
-                ? `<img src="/storage/${ad.user.avatar}" alt="">`
+                ? `<img src="${buildStorageUrl(ad.user.avatar)}" alt="">`
                 : `<div class="fb-post-avatar-placeholder">${(ad.user?.name || 'U').charAt(0).toUpperCase()}</div>`;
 
             let photos = [];

@@ -40,8 +40,8 @@
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center gap-3">
-                                    @if($ad->images && count($ad->images) > 0)
-                                        <img src="{{ storage_url($ad->images[0]) }}" alt="" 
+                                    @if($ad->photos && count($ad->photos) > 0)
+                                        <img src="{{ storage_url($ad->photos[0]) }}" alt="" 
                                              class="rounded" style="width: 45px; height: 45px; object-fit: cover;">
                                     @else
                                         <div class="bg-light rounded d-flex align-items-center justify-content-center" 
