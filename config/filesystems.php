@@ -26,6 +26,18 @@ return [
     |
     | Supported drivers: "local", "ftp", "sftp", "s3"
     |
+    | IMPORTANT: Do NOT use PHP ternary/conditional expressions here to select
+    | between disk configs. config:cache evaluates this file once and bakes the
+    | result — any env() call inside a ternary would be evaluated at cache time
+    | and the chosen array would be frozen. Instead, always define all disks
+    | statically and control which one is used via FILESYSTEM_DISK (default)
+    | or by explicitly passing the disk name to Storage::disk().
+    |
+    | Production (Railway): set FILESYSTEM_DISK=s3 to route Storage::disk('public')
+    | calls to Cloudflare R2. The 'public' disk below is kept as a local fallback
+    | for development. All controllers use Storage::disk('public') which resolves
+    | to whichever disk is set as the default.
+    |
     */
 
     'disks' => [
@@ -38,22 +50,9 @@ return [
             'report' => false,
         ],
 
-        // En production (Railway), utilisez FILESYSTEM_PUBLIC_DRIVER=s3 pour pointer
-        // le disque "public" vers Cloudflare R2. En local, il reste sur le disque local.
-        'public' => env('FILESYSTEM_PUBLIC_DRIVER', 'local') === 's3' ? [
-            'driver' => 's3',
-            'key' => env('AWS_ACCESS_KEY_ID'),
-            'secret' => env('AWS_SECRET_ACCESS_KEY'),
-            'region' => env('AWS_DEFAULT_REGION', 'auto'),
-            'bucket' => env('AWS_BUCKET'),
-            'url' => env('AWS_URL'),
-            'endpoint' => env('AWS_ENDPOINT'),
-            // R2 exige toujours path-style ; forcer true pour éviter les erreurs de config
-            'use_path_style_endpoint' => true,
-            'visibility' => 'public',
-            'throw' => true,
-            'report' => false,
-        ] : [
+        // Local development disk — served via public/storage symlink.
+        // In production, set FILESYSTEM_DISK=s3 to use the 's3' disk instead.
+        'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
             'url' => env('APP_URL').'/storage',
@@ -62,6 +61,9 @@ return [
             'report' => false,
         ],
 
+        // Cloudflare R2 / AWS S3 disk.
+        // Set FILESYSTEM_DISK=s3 in Railway environment variables to make this
+        // the default disk used by Storage::disk('public') and file uploads.
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
@@ -70,6 +72,7 @@ return [
             'bucket' => env('AWS_BUCKET'),
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
+            // Cloudflare R2 requires path-style endpoints.
             'use_path_style_endpoint' => true,
             'visibility' => 'public',
             'throw' => true,
