@@ -2,12 +2,15 @@
 
 if (!function_exists('storage_url')) {
     /**
-     * Génère l'URL publique d'un fichier stocké sur le disque "public".
+     * Génère l'URL publique d'un fichier stocké sur le disque par défaut.
      * Fonctionne avec le disque local (dev) ET Cloudflare R2/S3 (production).
      *
-     * - Si le disque public est configuré en s3 (R2/S3) : construit l'URL
-     *   depuis la clé `url` du disque (config filesystems) ou AWS_URL en fallback.
-     * - Sinon : utilise asset('storage/' . chemin) pour le disque local.
+     * - En production (FILESYSTEM_DISK=s3) : construit l'URL depuis la clé `url`
+     *   du disque s3 dans config/filesystems.php (AWS_URL).
+     * - En local (FILESYSTEM_DISK=public ou non défini) : utilise asset('storage/…').
+     *
+     * N'utilise jamais env() directement — toujours config() — pour être compatible
+     * avec php artisan config:cache.
      */
     function storage_url(?string $path): string
     {
@@ -23,9 +26,16 @@ if (!function_exists('storage_url')) {
         // Nettoyer le préfixe storage/ si présent (restes de l'ancien stockage local)
         $path = ltrim(preg_replace('#^/?storage/#', '', $path), '/');
 
-        if (config('filesystems.disks.public.driver') === 's3' || env('FILESYSTEM_PUBLIC_DRIVER') === 's3') {
+        // Determine whether the active default disk is S3-based.
+        // We check the default disk name (FILESYSTEM_DISK) rather than the 'public'
+        // disk driver, because in production FILESYSTEM_DISK=s3 makes Storage::disk()
+        // resolve to the 's3' disk — not the local 'public' disk.
+        $defaultDisk = config('filesystems.default', 'public');
+        $defaultDriver = config('filesystems.disks.' . $defaultDisk . '.driver', 'local');
+
+        if ($defaultDriver === 's3') {
             // Cloudflare R2 / S3 : assembler l'URL publique depuis AWS_URL
-            $baseUrl = rtrim(config('filesystems.disks.public.url', env('AWS_URL', '')), '/');
+            $baseUrl = rtrim(config('filesystems.disks.' . $defaultDisk . '.url', config('filesystems.disks.s3.url', '')), '/');
 
             if (empty($baseUrl)) {
                 return asset('storage/' . $path);

@@ -79,23 +79,46 @@ class ProfileController extends Controller
         // Gérer l'upload d'avatar
         if ($request->hasFile('avatar')) {
             try {
+                $defaultDisk = config('filesystems.default', 'public');
+                $diskDriver  = config('filesystems.disks.' . $defaultDisk . '.driver', 'local');
+
+                Log::info('Avatar upload — disk: ' . $defaultDisk . ', driver: ' . $diskDriver, [
+                    'user_id'   => $user->id,
+                    'file_size' => $request->file('avatar')->getSize(),
+                    'mime_type' => $request->file('avatar')->getMimeType(),
+                ]);
+
                 // Supprimer l'ancien avatar
                 if ($user->avatar && !str_starts_with($user->avatar, 'http')) {
                     try {
-                        Storage::disk('public')->delete($user->avatar);
+                        Storage::disk($defaultDisk)->delete($user->avatar);
                     } catch (\Exception $e) {
-                        Log::warning('Impossible de supprimer l\'ancien avatar: ' . $e->getMessage());
+                        Log::warning('Impossible de supprimer l\'ancien avatar: ' . $e->getMessage(), [
+                            'user_id' => $user->id,
+                            'avatar'  => $user->avatar,
+                        ]);
                     }
                 }
-                
-                $path = $request->file('avatar')->store('avatars', 'public');
+
+                $path = $request->file('avatar')->store('avatars', $defaultDisk);
+
                 if ($path) {
+                    Log::info('Avatar stored successfully', ['user_id' => $user->id, 'path' => $path]);
                     $data['avatar'] = $path;
                 } else {
+                    Log::error('Avatar store() returned empty path', [
+                        'user_id' => $user->id,
+                        'disk'    => $defaultDisk,
+                        'driver'  => $diskDriver,
+                    ]);
                     return back()->withErrors(['avatar' => 'Erreur lors du téléchargement de la photo. Veuillez réessayer.'])->withInput();
                 }
             } catch (\Exception $e) {
-                Log::error('Erreur upload avatar: ' . $e->getMessage());
+                Log::error('Erreur upload avatar: ' . $e->getMessage(), [
+                    'user_id'   => $user->id,
+                    'exception' => get_class($e),
+                    'trace'     => $e->getTraceAsString(),
+                ]);
                 return back()->withErrors(['avatar' => 'Erreur lors du téléchargement de la photo. Veuillez réessayer.'])->withInput();
             }
         }

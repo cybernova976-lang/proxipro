@@ -217,12 +217,39 @@ class AdController extends Controller
         $ad->save();
 
         if ($request->hasFile('photos')) {
-            $paths = [];
-            foreach ($request->file('photos') as $photo) {
-                $paths[] = $photo->store('ads', 'public');
+            try {
+                $defaultDisk = config('filesystems.default', 'public');
+                $diskDriver  = config('filesystems.disks.' . $defaultDisk . '.driver', 'local');
+
+                Log::info('Ad photos upload — disk: ' . $defaultDisk . ', driver: ' . $diskDriver, [
+                    'ad_id'       => $ad->id,
+                    'photo_count' => count($request->file('photos')),
+                ]);
+
+                $paths = [];
+                foreach ($request->file('photos') as $photo) {
+                    $path = $photo->store('ads', $defaultDisk);
+                    if ($path) {
+                        $paths[] = $path;
+                    } else {
+                        Log::error('Ad photo store() returned empty path', [
+                            'ad_id'  => $ad->id,
+                            'disk'   => $defaultDisk,
+                            'driver' => $diskDriver,
+                        ]);
+                    }
+                }
+                $ad->photos = $paths;
+                $ad->save();
+
+                Log::info('Ad photos stored successfully', ['ad_id' => $ad->id, 'paths' => $paths]);
+            } catch (\Exception $e) {
+                Log::error('Erreur upload photos pour annonce #' . $ad->id . ': ' . $e->getMessage(), [
+                    'exception' => get_class($e),
+                    'trace'     => $e->getTraceAsString(),
+                ]);
+                // Ad was already saved — continue to redirect rather than failing the whole request.
             }
-            $ad->photos = $paths;
-            $ad->save();
         }
 
         // Notifier les professionnels correspondants
@@ -297,14 +324,36 @@ class AdController extends Controller
 
         if ($request->hasFile('photos')) {
             try {
+                $defaultDisk = config('filesystems.default', 'public');
+                $diskDriver  = config('filesystems.disks.' . $defaultDisk . '.driver', 'local');
+
+                Log::info('Popup ad photos upload — disk: ' . $defaultDisk . ', driver: ' . $diskDriver, [
+                    'ad_id'       => $ad->id,
+                    'photo_count' => count($request->file('photos')),
+                ]);
+
                 $paths = [];
                 foreach ($request->file('photos') as $photo) {
-                    $paths[] = $photo->store('ads', 'public');
+                    $path = $photo->store('ads', $defaultDisk);
+                    if ($path) {
+                        $paths[] = $path;
+                    } else {
+                        Log::error('Popup ad photo store() returned empty path', [
+                            'ad_id'  => $ad->id,
+                            'disk'   => $defaultDisk,
+                            'driver' => $diskDriver,
+                        ]);
+                    }
                 }
                 $ad->photos = $paths;
                 $ad->save();
+
+                Log::info('Popup ad photos stored successfully', ['ad_id' => $ad->id, 'paths' => $paths]);
             } catch (\Exception $e) {
-                Log::error('Erreur upload photos pour annonce #' . $ad->id . ': ' . $e->getMessage());
+                Log::error('Erreur upload photos pour annonce #' . $ad->id . ': ' . $e->getMessage(), [
+                    'exception' => get_class($e),
+                    'trace'     => $e->getTraceAsString(),
+                ]);
             }
         }
 
@@ -418,18 +467,47 @@ class AdController extends Controller
 
         if ($request->hasFile('photos')) {
             try {
+                $defaultDisk = config('filesystems.default', 'public');
+                $diskDriver  = config('filesystems.disks.' . $defaultDisk . '.driver', 'local');
+
+                Log::info('Ad update photos upload — disk: ' . $defaultDisk . ', driver: ' . $diskDriver, [
+                    'ad_id'       => $ad->id,
+                    'photo_count' => count($request->file('photos')),
+                ]);
+
                 $existing = $ad->photos ?? [];
                 foreach ($existing as $path) {
-                    Storage::disk('public')->delete($path);
+                    try {
+                        Storage::disk($defaultDisk)->delete($path);
+                    } catch (\Exception $e) {
+                        Log::warning('Could not delete old ad photo: ' . $e->getMessage(), [
+                            'ad_id' => $ad->id,
+                            'path'  => $path,
+                        ]);
+                    }
                 }
                 $paths = [];
                 foreach ($request->file('photos') as $photo) {
-                    $paths[] = $photo->store('ads', 'public');
+                    $path = $photo->store('ads', $defaultDisk);
+                    if ($path) {
+                        $paths[] = $path;
+                    } else {
+                        Log::error('Ad update photo store() returned empty path', [
+                            'ad_id'  => $ad->id,
+                            'disk'   => $defaultDisk,
+                            'driver' => $diskDriver,
+                        ]);
+                    }
                 }
                 $ad->photos = $paths;
                 $ad->save();
+
+                Log::info('Ad update photos stored successfully', ['ad_id' => $ad->id, 'paths' => $paths]);
             } catch (\Exception $e) {
-                Log::error('Erreur upload photos pour annonce #' . $ad->id . ': ' . $e->getMessage());
+                Log::error('Erreur upload photos pour annonce #' . $ad->id . ': ' . $e->getMessage(), [
+                    'exception' => get_class($e),
+                    'trace'     => $e->getTraceAsString(),
+                ]);
                 return back()->withErrors(['photos' => 'Erreur lors du téléchargement des photos. Veuillez réessayer.'])->withInput();
             }
         }
@@ -457,9 +535,13 @@ class AdController extends Controller
         }
 
         try {
-            Storage::disk('public')->delete($photos[$index]);
+            $defaultDisk = config('filesystems.default', 'public');
+            Storage::disk($defaultDisk)->delete($photos[$index]);
         } catch (\Exception $e) {
-            Log::warning('Impossible de supprimer la photo du stockage: ' . $e->getMessage());
+            Log::warning('Impossible de supprimer la photo du stockage: ' . $e->getMessage(), [
+                'ad_id' => $ad->id,
+                'path'  => $photos[$index],
+            ]);
         }
         
         array_splice($photos, $index, 1);
