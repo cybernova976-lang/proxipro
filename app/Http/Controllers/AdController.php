@@ -407,7 +407,7 @@ class AdController extends Controller
         if (Auth::id() !== $ad->user_id) {
             abort(403);
         }
-        
+
         $maxPhotos = Auth::user() && Auth::user()->hasActiveProSubscription() ? 4 : 2;
 
         $request->validate([
@@ -433,40 +433,47 @@ class AdController extends Controller
         if (empty($finalLocation) && $request->city && $request->city !== '__other__') {
             $finalLocation = $request->city;
         }
-        
+
         if (empty($finalLocation)) {
             return back()->withErrors(['location' => 'Veuillez sélectionner une ville ou saisir une adresse.'])->withInput();
         }
 
-        // Re-géocoder si la localisation ou le pays a changé
-        if ($ad->location !== $finalLocation || $ad->country !== $request->country) {
-            $fullAddress = $finalLocation . ', ' . $request->country;
-            $geocodingService = new GeocodingService();
-            $coordinates = $geocodingService->geocode($fullAddress);
-            
-            if ($coordinates) {
-                $ad->latitude = $coordinates['latitude'];
-                $ad->longitude = $coordinates['longitude'];
-                $ad->address = $coordinates['address'];
-                $ad->postal_code = $coordinates['postal_code'];
-            }
-        }
-        
-        $ad->title = $request->title;
-        $ad->description = $request->description;
-        $ad->category = $request->category;
-        $ad->location = $finalLocation;
-        $ad->country = $request->country;
-        $ad->price = $request->price;
-        $ad->service_type = $request->service_type;
-        $ad->radius_km = $request->input('radius_km', 10);
-        $ad->reply_restriction = $request->input('reply_restriction', 'everyone');
-        $ad->visibility = $request->input('visibility', 'public');
-        $ad->target_categories = $request->input('visibility') === 'pro_targeted' ? $request->input('target_categories') : null;
-        $ad->save();
+        try {
+            // Re-géocoder si la localisation ou le pays a changé
+            if ($ad->location !== $finalLocation || $ad->country !== $request->country) {
+                try {
+                    $fullAddress      = $finalLocation . ', ' . $request->country;
+                    $geocodingService = new GeocodingService();
+                    $coordinates      = $geocodingService->geocode($fullAddress);
 
-        if ($request->hasFile('photos')) {
-            try {
+                    if ($coordinates) {
+                        $ad->latitude    = $coordinates['latitude'];
+                        $ad->longitude   = $coordinates['longitude'];
+                        $ad->address     = $coordinates['address'];
+                        $ad->postal_code = $coordinates['postal_code'];
+                    }
+                } catch (\Exception $e) {
+                    // Geocoding failure is non-fatal — log and continue without coordinates.
+                    Log::warning('Geocoding failed during ad update #' . $ad->id . ': ' . $e->getMessage());
+                }
+            }
+
+            $ad->title             = $request->title;
+            $ad->description       = $request->description;
+            $ad->category          = $request->category;
+            $ad->location          = $finalLocation;
+            $ad->country           = $request->country;
+            $ad->price             = $request->price;
+            $ad->service_type      = $request->service_type;
+            $ad->radius_km         = $request->input('radius_km', 10);
+            $ad->reply_restriction = $request->input('reply_restriction', 'everyone');
+            $ad->visibility        = $request->input('visibility', 'public');
+            $ad->target_categories = $request->input('visibility') === 'pro_targeted'
+                ? $request->input('target_categories')
+                : null;
+            $ad->save();
+
+            if ($request->hasFile('photos')) {
                 $defaultDisk = config('filesystems.default', 'public');
                 $diskDriver  = config('filesystems.disks.' . $defaultDisk . '.driver', 'local');
 
@@ -475,22 +482,23 @@ class AdController extends Controller
                     'photo_count' => count($request->file('photos')),
                 ]);
 
-                $existing = $ad->photos ?? [];
-                foreach ($existing as $path) {
+                // Delete old photos (best-effort — don't abort on failure)
+                foreach ($ad->photos ?? [] as $oldPath) {
                     try {
-                        Storage::disk($defaultDisk)->delete($path);
+                        Storage::disk($defaultDisk)->delete($oldPath);
                     } catch (\Exception $e) {
                         Log::warning('Could not delete old ad photo: ' . $e->getMessage(), [
                             'ad_id' => $ad->id,
-                            'path'  => $path,
+                            'path'  => $oldPath,
                         ]);
                     }
                 }
+
                 $paths = [];
                 foreach ($request->file('photos') as $photo) {
-                    $path = $photo->store('ads', $defaultDisk);
-                    if ($path) {
-                        $paths[] = $path;
+                    $stored = $photo->store('ads', $defaultDisk);
+                    if ($stored) {
+                        $paths[] = $stored;
                     } else {
                         Log::error('Ad update photo store() returned empty path', [
                             'ad_id'  => $ad->id,
@@ -499,17 +507,23 @@ class AdController extends Controller
                         ]);
                     }
                 }
+
                 $ad->photos = $paths;
                 $ad->save();
 
                 Log::info('Ad update photos stored successfully', ['ad_id' => $ad->id, 'paths' => $paths]);
-            } catch (\Exception $e) {
-                Log::error('Erreur upload photos pour annonce #' . $ad->id . ': ' . $e->getMessage(), [
-                    'exception' => get_class($e),
-                    'trace'     => $e->getTraceAsString(),
-                ]);
-                return back()->withErrors(['photos' => 'Erreur lors du téléchargement des photos. Veuillez réessayer.'])->withInput();
             }
+        } catch (\Exception $e) {
+            Log::error('Ad update failed for ad #' . $ad->id . ': ' . $e->getMessage(), [
+                'exception' => get_class($e),
+                'file'      => $e->getFile(),
+                'line'      => $e->getLine(),
+                'trace'     => $e->getTraceAsString(),
+            ]);
+
+            return back()
+                ->withErrors(['general' => 'Une erreur est survenue lors de la mise à jour. Veuillez réessayer.'])
+                ->withInput();
         }
 
         return redirect()->route('ads.show', $ad)->with('success', 'Annonce mise à jour avec succès !');
