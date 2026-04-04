@@ -137,8 +137,8 @@ class SettingsController extends Controller
             ]);
             foreach ($filesToDelete as $file) {
                 try {
-                    if ($file && Storage::disk('public')->exists($file)) {
-                        Storage::disk('public')->delete($file);
+                    if ($file && Storage::disk(config('filesystems.default', config('filesystems.default', 'public')))->exists($file)) {
+                        Storage::disk(config('filesystems.default', config('filesystems.default', 'public')))->delete($file);
                     }
                 } catch (\Exception $e) {
                     Log::warning('Impossible de supprimer le fichier lors de la suppression du compte: ' . $e->getMessage());
@@ -151,8 +151,8 @@ class SettingsController extends Controller
                     $images = is_array($ad->photos) ? $ad->photos : json_decode($ad->photos, true) ?? [];
                     foreach ($images as $image) {
                         try {
-                            if (Storage::disk('public')->exists($image)) {
-                                Storage::disk('public')->delete($image);
+                            if (Storage::disk(config('filesystems.default', config('filesystems.default', 'public')))->exists($image)) {
+                                Storage::disk(config('filesystems.default', config('filesystems.default', 'public')))->delete($image);
                             }
                         } catch (\Exception $e) {
                             Log::warning('Impossible de supprimer l\'image d\'annonce: ' . $e->getMessage());
@@ -203,8 +203,8 @@ class SettingsController extends Controller
             if (method_exists($user, 'proDocuments')) {
                 // Supprimer les fichiers des documents pro
                 foreach ($user->proDocuments as $doc) {
-                    if (!empty($doc->file_path) && Storage::disk('public')->exists($doc->file_path)) {
-                        Storage::disk('public')->delete($doc->file_path);
+                    if (!empty($doc->file_path) && Storage::disk(config('filesystems.default', config('filesystems.default', 'public')))->exists($doc->file_path)) {
+                        Storage::disk(config('filesystems.default', config('filesystems.default', 'public')))->delete($doc->file_path);
                     }
                 }
                 $user->proDocuments()->delete();

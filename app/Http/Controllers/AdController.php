@@ -188,8 +188,13 @@ class AdController extends Controller
         $fullAddress = $finalLocation . ', ' . $request->country;
 
         // Géocoder l'adresse
-        $geocodingService = new GeocodingService();
-        $coordinates = $geocodingService->geocode($fullAddress);
+        $coordinates = null;
+        try {
+            $geocodingService = new GeocodingService();
+            $coordinates = $geocodingService->geocode($fullAddress);
+        } catch (\Exception $e) {
+            Log::warning('Géocodage échoué lors de la création: ' . $e->getMessage());
+        }
         
         // Créer l'annonce
         $ad = new Ad();
@@ -297,8 +302,13 @@ class AdController extends Controller
         }
 
         $fullAddress = $finalLocation . ', ' . $request->country;
-        $geocodingService = new GeocodingService();
-        $coordinates = $geocodingService->geocode($fullAddress);
+        $coordinates = null;
+        try {
+            $geocodingService = new GeocodingService();
+            $coordinates = $geocodingService->geocode($fullAddress);
+        } catch (\Exception $e) {
+            Log::warning('Géocodage échoué (popup): ' . $e->getMessage());
+        }
 
         $ad = new Ad();
         $ad->title = $request->title;
@@ -440,15 +450,19 @@ class AdController extends Controller
 
         // Re-géocoder si la localisation ou le pays a changé
         if ($ad->location !== $finalLocation || $ad->country !== $request->country) {
-            $fullAddress = $finalLocation . ', ' . $request->country;
-            $geocodingService = new GeocodingService();
-            $coordinates = $geocodingService->geocode($fullAddress);
-            
-            if ($coordinates) {
-                $ad->latitude = $coordinates['latitude'];
-                $ad->longitude = $coordinates['longitude'];
-                $ad->address = $coordinates['address'];
-                $ad->postal_code = $coordinates['postal_code'];
+            try {
+                $fullAddress = $finalLocation . ', ' . $request->country;
+                $geocodingService = new GeocodingService();
+                $coordinates = $geocodingService->geocode($fullAddress);
+                
+                if ($coordinates) {
+                    $ad->latitude = $coordinates['latitude'];
+                    $ad->longitude = $coordinates['longitude'];
+                    $ad->address = $coordinates['address'];
+                    $ad->postal_code = $coordinates['postal_code'];
+                }
+            } catch (\Exception $e) {
+                Log::warning('Géocodage échoué pour annonce #' . $ad->id . ': ' . $e->getMessage());
             }
         }
         

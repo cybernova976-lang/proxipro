@@ -551,17 +551,57 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::delete('/contact-messages/{id}', [AdminController::class, 'deleteContactMessage'])->name('admin.contact-messages.delete');
 });
 
+// Diagnostic de stockage (admin uniquement)
+Route::get('/storage-diagnostic', function () {
+    if (!Auth::check() || (Auth::user()->role ?? '') !== 'admin') {
+        abort(403);
+    }
+
+    $defaultDisk = config('filesystems.default', 'public');
+    $disk = \Illuminate\Support\Facades\Storage::disk($defaultDisk);
+    $driver = config('filesystems.disks.' . $defaultDisk . '.driver');
+    $url = config('filesystems.disks.' . $defaultDisk . '.url');
+
+    $results = [
+        'default_disk' => $defaultDisk,
+        'disk_driver' => $driver,
+        'disk_url' => $url,
+        'env_FILESYSTEM_DISK' => config('filesystems.default'),
+        'env_AWS_URL' => config('filesystems.disks.s3.url'),
+        'env_AWS_ENDPOINT' => config('filesystems.disks.s3.endpoint') ? '***set***' : 'NOT SET',
+        'env_AWS_ACCESS_KEY_ID' => config('filesystems.disks.s3.key') ? '***set***' : 'NOT SET',
+    ];
+
+    try {
+        $testFile = '_diagnostic_test_' . time() . '.txt';
+        $disk->put($testFile, 'test-' . now());
+        $results['write_test'] = 'OK';
+        $results['file_url'] = $disk->url($testFile);
+        $content = $disk->get($testFile);
+        $results['read_test'] = $content ? 'OK' : 'FAILED';
+        $disk->delete($testFile);
+        $results['delete_test'] = 'OK';
+    } catch (\Exception $e) {
+        $results['storage_error'] = $e->getMessage();
+    }
+
+    return response()->json($results, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+})->middleware('auth');
+
 // Route de secours pour les images (disque local uniquement)
-// Quand FILESYSTEM_PUBLIC_DRIVER=s3, les images sont servies directement par R2/S3.
+// Quand FILESYSTEM_DISK=s3, les images sont servies directement par R2/S3.
 Route::get('storage/{path}', function ($path) {
     // Sécurité : empêcher la traversée de répertoire
     if (str_contains($path, '..')) {
         abort(403);
     }
 
-    // Si le disque public est S3, rediriger vers l'URL S3
-    if (config('filesystems.disks.public.driver') === 's3') {
-        return redirect(\Illuminate\Support\Facades\Storage::disk('public')->url($path));
+    $defaultDisk = config('filesystems.default', 'public');
+    $defaultDriver = config('filesystems.disks.' . $defaultDisk . '.driver', 'local');
+
+    // Si le disque par défaut est S3, rediriger vers l'URL S3
+    if ($defaultDriver === 's3') {
+        return redirect(\Illuminate\Support\Facades\Storage::disk($defaultDisk)->url($path));
     }
 
     $filePath = storage_path('app/public/' . $path);

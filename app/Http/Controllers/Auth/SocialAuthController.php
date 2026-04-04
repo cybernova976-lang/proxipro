@@ -198,7 +198,7 @@ class SocialAuthController extends Controller
             $ext = $extensions[$mimeType] ?? 'jpg';
             
             $filename = 'avatars/' . Str::uuid() . '.' . $ext;
-            \Storage::disk('public')->put($filename, $contents);
+            \Storage::disk(config('filesystems.default', 'public'))->put($filename, $contents);
             
             return $filename;
         } catch (\Exception $e) {

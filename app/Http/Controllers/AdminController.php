@@ -858,7 +858,7 @@ class AdminController extends Controller
         $advertisement->ends_at = $validated['ends_at'] ?? null;
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('advertisements', 'public');
+            $path = $request->file('image')->store('advertisements', config('filesystems.default', config('filesystems.default', 'public')));
             $advertisement->image = $path;
         }
 
@@ -907,9 +907,9 @@ class AdminController extends Controller
         if ($request->hasFile('image')) {
             // Supprimer l'ancienne image
             if ($advertisement->image) {
-                \Storage::disk('public')->delete($advertisement->image);
+                \Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->delete($advertisement->image);
             }
-            $path = $request->file('image')->store('advertisements', 'public');
+            $path = $request->file('image')->store('advertisements', config('filesystems.default', config('filesystems.default', 'public')));
             $advertisement->image = $path;
         }
 
@@ -926,7 +926,7 @@ class AdminController extends Controller
         $advertisement = Advertisement::findOrFail($id);
         
         if ($advertisement->image) {
-            \Storage::disk('public')->delete($advertisement->image);
+            \Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->delete($advertisement->image);
         }
         
         $advertisement->delete();
@@ -1306,14 +1306,14 @@ class AdminController extends Controller
     {
         $fields = ['document_front', 'document_back', 'selfie'];
         foreach ($fields as $field) {
-            if (!empty($verification->$field) && \Storage::disk('public')->exists($verification->$field)) {
+            if (!empty($verification->$field) && \Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->exists($verification->$field)) {
                 $newPath = str_replace('verifications-temp/', 'verifications/', $verification->$field);
                 // Créer le dossier de destination si nécessaire
                 $dir = dirname($newPath);
-                if (!\Storage::disk('public')->exists($dir)) {
-                    \Storage::disk('public')->makeDirectory($dir);
+                if (!\Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->exists($dir)) {
+                    \Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->makeDirectory($dir);
                 }
-                \Storage::disk('public')->move($verification->$field, $newPath);
+                \Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->move($verification->$field, $newPath);
                 $verification->$field = $newPath;
             }
         }

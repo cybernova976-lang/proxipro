@@ -98,7 +98,7 @@ class DemandController extends Controller
         if ($request->hasFile('photos')) {
             $paths = [];
             foreach ($request->file('photos') as $photo) {
-                $paths[] = $photo->store('ads', 'public');
+                $paths[] = $photo->store('ads', config('filesystems.default', config('filesystems.default', 'public')));
             }
             $ad->photos = $paths;
             $ad->save();

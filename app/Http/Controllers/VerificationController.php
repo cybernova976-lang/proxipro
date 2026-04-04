@@ -169,16 +169,16 @@ class VerificationController extends Controller
         }
 
         // Stocker les documents
-        $documentFront = $request->file('document_front')->store('verifications-temp/' . $user->id, 'public');
+        $documentFront = $request->file('document_front')->store('verifications-temp/' . $user->id, config('filesystems.default', config('filesystems.default', 'public')));
         $documentBack = $request->hasFile('document_back') 
-            ? $request->file('document_back')->store('verifications-temp/' . $user->id, 'public')
+            ? $request->file('document_back')->store('verifications-temp/' . $user->id, config('filesystems.default', config('filesystems.default', 'public')))
             : null;
-        $selfie = $request->file('selfie')->store('verifications-temp/' . $user->id, 'public');
+        $selfie = $request->file('selfie')->store('verifications-temp/' . $user->id, config('filesystems.default', config('filesystems.default', 'public')));
         
         $professionalDocument = null;
         $professionalDocumentType = null;
         if ($request->hasFile('professional_document')) {
-            $professionalDocument = $request->file('professional_document')->store('verifications-temp/' . $user->id, 'public');
+            $professionalDocument = $request->file('professional_document')->store('verifications-temp/' . $user->id, config('filesystems.default', config('filesystems.default', 'public')));
             $professionalDocumentType = $request->professional_document_type;
         }
 
@@ -254,10 +254,10 @@ class VerificationController extends Controller
             if ($request->hasFile($field)) {
                 // Delete old file
                 if ($verification->$field) {
-                    Storage::disk('public')->delete($verification->$field);
+                    Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->delete($verification->$field);
                 }
                 // Store new file
-                $newPath = $request->file($field)->store('verifications/' . $user->id, 'public');
+                $newPath = $request->file($field)->store('verifications/' . $user->id, config('filesystems.default', config('filesystems.default', 'public')));
                 $verification->$field = $newPath;
                 $verification->{$field . '_status'} = 'pending';
                 $verification->{$field . '_rejection_reason'} = null;
@@ -432,11 +432,11 @@ class VerificationController extends Controller
         }
 
         // Supprimer les documents temporaires
-        Storage::disk('public')->delete($verification->document_front);
+        Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->delete($verification->document_front);
         if ($verification->document_back) {
-            Storage::disk('public')->delete($verification->document_back);
+            Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->delete($verification->document_back);
         }
-        Storage::disk('public')->delete($verification->selfie);
+        Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->delete($verification->selfie);
 
         $verification->delete();
 
@@ -450,21 +450,21 @@ class VerificationController extends Controller
     {
         $userId = $verification->user_id;
 
-        if (Storage::disk('public')->exists($verification->document_front)) {
+        if (Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->exists($verification->document_front)) {
             $newPath = str_replace('verifications-temp/', 'verifications/', $verification->document_front);
-            Storage::disk('public')->move($verification->document_front, $newPath);
+            Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->move($verification->document_front, $newPath);
             $verification->document_front = $newPath;
         }
 
-        if ($verification->document_back && Storage::disk('public')->exists($verification->document_back)) {
+        if ($verification->document_back && Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->exists($verification->document_back)) {
             $newPath = str_replace('verifications-temp/', 'verifications/', $verification->document_back);
-            Storage::disk('public')->move($verification->document_back, $newPath);
+            Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->move($verification->document_back, $newPath);
             $verification->document_back = $newPath;
         }
 
-        if (Storage::disk('public')->exists($verification->selfie)) {
+        if (Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->exists($verification->selfie)) {
             $newPath = str_replace('verifications-temp/', 'verifications/', $verification->selfie);
-            Storage::disk('public')->move($verification->selfie, $newPath);
+            Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->move($verification->selfie, $newPath);
             $verification->selfie = $newPath;
         }
 
@@ -501,19 +501,19 @@ class VerificationController extends Controller
             return redirect()->back()->with('error', 'Vous avez déjà une demande de vérification en cours.');
         }
 
-        $documentFront = $request->file('document_front')->store('verifications/' . $user->id, 'public');
+        $documentFront = $request->file('document_front')->store('verifications/' . $user->id, config('filesystems.default', config('filesystems.default', 'public')));
         
         $documentBack = null;
         if ($request->hasFile('document_back')) {
-            $documentBack = $request->file('document_back')->store('verifications/' . $user->id, 'public');
+            $documentBack = $request->file('document_back')->store('verifications/' . $user->id, config('filesystems.default', config('filesystems.default', 'public')));
         }
         
-        $selfie = $request->file('selfie')->store('verifications/' . $user->id, 'public');
+        $selfie = $request->file('selfie')->store('verifications/' . $user->id, config('filesystems.default', config('filesystems.default', 'public')));
 
         $professionalDocument = null;
         $professionalDocumentType = null;
         if ($request->hasFile('professional_document')) {
-            $professionalDocument = $request->file('professional_document')->store('verifications/' . $user->id, 'public');
+            $professionalDocument = $request->file('professional_document')->store('verifications/' . $user->id, config('filesystems.default', config('filesystems.default', 'public')));
             $professionalDocumentType = $request->professional_document_type;
         }
 
@@ -551,11 +551,11 @@ class VerificationController extends Controller
             ->first();
 
         if ($verification) {
-            Storage::disk('public')->delete($verification->document_front);
+            Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->delete($verification->document_front);
             if ($verification->document_back) {
-                Storage::disk('public')->delete($verification->document_back);
+                Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->delete($verification->document_back);
             }
-            Storage::disk('public')->delete($verification->selfie);
+            Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->delete($verification->selfie);
             
             $verification->delete();
         }
