@@ -136,8 +136,12 @@ class SettingsController extends Controller
                 $user->id_document,
             ]);
             foreach ($filesToDelete as $file) {
-                if ($file && Storage::disk('public')->exists($file)) {
-                    Storage::disk('public')->delete($file);
+                try {
+                    if ($file && Storage::disk('public')->exists($file)) {
+                        Storage::disk('public')->delete($file);
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Impossible de supprimer le fichier lors de la suppression du compte: ' . $e->getMessage());
                 }
             }
 
@@ -146,8 +150,12 @@ class SettingsController extends Controller
                 if (!empty($ad->photos)) {
                     $images = is_array($ad->photos) ? $ad->photos : json_decode($ad->photos, true) ?? [];
                     foreach ($images as $image) {
-                        if (Storage::disk('public')->exists($image)) {
-                            Storage::disk('public')->delete($image);
+                        try {
+                            if (Storage::disk('public')->exists($image)) {
+                                Storage::disk('public')->delete($image);
+                            }
+                        } catch (\Exception $e) {
+                            Log::warning('Impossible de supprimer l\'image d\'annonce: ' . $e->getMessage());
                         }
                     }
                 }

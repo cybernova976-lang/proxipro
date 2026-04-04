@@ -456,7 +456,12 @@ class AdController extends Controller
             return response()->json(['error' => 'Photo introuvable.'], 404);
         }
 
-        Storage::disk('public')->delete($photos[$index]);
+        try {
+            Storage::disk('public')->delete($photos[$index]);
+        } catch (\Exception $e) {
+            Log::warning('Impossible de supprimer la photo du stockage: ' . $e->getMessage());
+        }
+        
         array_splice($photos, $index, 1);
         $ad->photos = $photos;
         $ad->save();

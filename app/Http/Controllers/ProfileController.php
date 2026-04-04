@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Ad;
 use App\Models\Review;
@@ -77,13 +78,26 @@ class ProfileController extends Controller
 
         // Gérer l'upload d'avatar
         if ($request->hasFile('avatar')) {
-            // Supprimer l'ancien avatar
-            if ($user->avatar) {
-                Storage::disk('public')->delete($user->avatar);
+            try {
+                // Supprimer l'ancien avatar
+                if ($user->avatar && !str_starts_with($user->avatar, 'http')) {
+                    try {
+                        Storage::disk('public')->delete($user->avatar);
+                    } catch (\Exception $e) {
+                        Log::warning('Impossible de supprimer l\'ancien avatar: ' . $e->getMessage());
+                    }
+                }
+                
+                $path = $request->file('avatar')->store('avatars', 'public');
+                if ($path) {
+                    $data['avatar'] = $path;
+                } else {
+                    return back()->withErrors(['avatar' => 'Erreur lors du téléchargement de la photo. Veuillez réessayer.'])->withInput();
+                }
+            } catch (\Exception $e) {
+                Log::error('Erreur upload avatar: ' . $e->getMessage());
+                return back()->withErrors(['avatar' => 'Erreur lors du téléchargement de la photo. Veuillez réessayer.'])->withInput();
             }
-            
-            $path = $request->file('avatar')->store('avatars', 'public');
-            $data['avatar'] = $path;
         }
 
         $user->update($data);

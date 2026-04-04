@@ -25,14 +25,14 @@
                             <div class="position-relative d-inline-block">
                                 @if($user->avatar)
                                     <img src="{{ storage_url($user->avatar) }}" alt="Avatar" 
-                                         class="rounded-circle" style="width: 120px; height: 120px; object-fit: cover;" id="avatarPreview">
+                                         class="rounded-3 shadow-sm" style="width: 140px; height: 140px; object-fit: cover;" id="avatarPreview">
                                 @else
-                                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" 
-                                         style="width: 120px; height: 120px; font-size: 48px;" id="avatarPlaceholder">
+                                    <div class="rounded-3 bg-primary text-white d-inline-flex align-items-center justify-content-center shadow-sm" 
+                                         style="width: 140px; height: 140px; font-size: 48px;" id="avatarPlaceholder">
                                         {{ strtoupper(substr($user->name, 0, 1)) }}
                                     </div>
-                                    <img src="" alt="Avatar" class="rounded-circle d-none" 
-                                         style="width: 120px; height: 120px; object-fit: cover;" id="avatarPreview">
+                                    <img src="" alt="Avatar" class="rounded-3 shadow-sm d-none" 
+                                         style="width: 140px; height: 140px; object-fit: cover;" id="avatarPreview">
                                 @endif
                                 <label for="avatar" class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
                                        style="cursor: pointer; width: 44px; height: 44px; font-size: 1rem;">
