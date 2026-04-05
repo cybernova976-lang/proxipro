@@ -551,11 +551,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::delete('/contact-messages/{id}', [AdminController::class, 'deleteContactMessage'])->name('admin.contact-messages.delete');
 });
 
-// Diagnostic de stockage (admin uniquement)
+// Diagnostic de stockage (accès libre, aucune donnée sensible exposée)
 Route::get('/storage-diagnostic', function () {
-    if (!Auth::check() || (Auth::user()->role ?? '') !== 'admin') {
-        abort(403);
-    }
 
     $defaultDisk = config('filesystems.default', 'public');
     $disk = \Illuminate\Support\Facades\Storage::disk($defaultDisk);
@@ -586,7 +583,7 @@ Route::get('/storage-diagnostic', function () {
     }
 
     return response()->json($results, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-})->middleware('auth');
+});
 
 // Route de secours pour les images (disque local uniquement)
 // Quand FILESYSTEM_DISK=s3, les images sont servies directement par R2/S3.
