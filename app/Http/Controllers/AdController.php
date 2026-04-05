@@ -153,6 +153,7 @@ class AdController extends Controller
      */
     public function store(Request $request)
     {
+      try {
         $maxPhotos = Auth::user() && Auth::user()->hasActiveProSubscription() ? 4 : 2;
 
         // Valider les données
@@ -266,6 +267,14 @@ class AdController extends Controller
 
         // Rediriger vers la page après publication (urgent + boost)
         return redirect()->route('boost.after-creation', $ad);
+      } catch (\Exception $e) {
+          Log::error('STORE AD CRASH: ' . $e->getMessage(), [
+              'exception' => get_class($e),
+              'file'      => $e->getFile() . ':' . $e->getLine(),
+              'trace'     => $e->getTraceAsString(),
+          ]);
+          return back()->withErrors(['general' => 'Erreur serveur: ' . $e->getMessage()])->withInput();
+      }
     }
 
     /**
@@ -413,6 +422,7 @@ class AdController extends Controller
      */
     public function update(Request $request, Ad $ad)
     {
+      try {
         // Vérifier que l'utilisateur est propriétaire
         if (Auth::id() !== $ad->user_id) {
             abort(403);
@@ -527,6 +537,15 @@ class AdController extends Controller
         }
 
         return redirect()->route('ads.show', $ad)->with('success', 'Annonce mise à jour avec succès !');
+      } catch (\Exception $e) {
+          Log::error('UPDATE AD CRASH: ' . $e->getMessage(), [
+              'ad_id'     => $ad->id ?? null,
+              'exception' => get_class($e),
+              'file'      => $e->getFile() . ':' . $e->getLine(),
+              'trace'     => $e->getTraceAsString(),
+          ]);
+          return back()->withErrors(['general' => 'Erreur serveur: ' . $e->getMessage()])->withInput();
+      }
     }
 
     /**
