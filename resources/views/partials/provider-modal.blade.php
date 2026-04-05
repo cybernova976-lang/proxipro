@@ -49,7 +49,7 @@
                     <div class="step-connector"></div>
                     <div class="provider-step" data-step="4">
                         <div class="step-number">4</div>
-                        <span class="step-label">Confirmation</span>
+                        <span class="step-label">Récapitulatif</span>
                     </div>
                 </div>
 
@@ -146,10 +146,10 @@
                 <div class="provider-step-content" id="step4Content">
                     <h6 class="step-title">
                         <i class="fas fa-check-double"></i>
-                        Récapitulatif de vos services
+                        Récapitulatif
                     </h6>
                     <p class="step-description">
-                        Vérifiez vos informations avant de valider. Vous pourrez modifier ces informations à tout moment.
+                        Vérifiez vos informations personnelles et vos services avant de valider.
                     </p>
                     
                     <div class="services-summary" id="servicesSummary">
@@ -864,6 +864,9 @@
     let selectedServices = [];
     let selectedPlan = null;
     
+    // User info for recap
+    const currentUser = @json(Auth::check() ? Auth::user()->only(['name', 'email', 'phone', 'city', 'country', 'address']) : []);
+    
     // DOM Elements
     const modal = document.getElementById('becomeProviderModal');
     if (!modal) return;
@@ -944,8 +947,9 @@
         
         for (const [name, data] of Object.entries(categoriesData)) {
             const isSelected = selectedCategories[name] ? 'selected' : '';
+            const safeName = name.replace(/'/g, "\\'");
             html += `
-                <div class="category-card ${isSelected}" data-category="${name}" onclick="toggleCategory('${name}')">
+                <div class="category-card ${isSelected}" data-category="${name}" onclick="toggleCategory('${safeName}')">
                     <div class="category-check"><i class="fas fa-check"></i></div>
                     <div class="category-icon" style="background: ${data.color};">
                         <i class="${data.icon}"></i>
@@ -995,12 +999,14 @@
             categoryData.subcategories.forEach(sub => {
                 const existingService = selectedCategories[categoryName].find(s => s.subcategory === sub);
                 const isSelected = existingService ? 'selected' : '';
+                const safeCatName = categoryName.replace(/'/g, "\\'");
+                const safeSub = sub.replace(/'/g, "\\'");
                 
                 html += `
                     <div class="subcategory-chip ${isSelected}" 
                          data-category="${categoryName}" 
                          data-subcategory="${sub}"
-                         onclick="toggleSubcategory('${categoryName}', '${sub}')">
+                         onclick="toggleSubcategory('${safeCatName}', '${safeSub}')">
                         ${sub}
                     </div>
                 `;
@@ -1038,6 +1044,24 @@
     function renderSummary() {
         let html = '';
         let totalServices = 0;
+        
+        // Personal info recap
+        html += `
+            <div style="margin-bottom: 20px; padding: 16px; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-radius: 12px; border: 1px solid #7dd3fc;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                    <i class="fas fa-user-circle" style="color: #0284c7; font-size: 1.3rem;"></i>
+                    <strong style="color: #0c4a6e; font-size: 0.95rem;">Vos informations personnelles</strong>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.88rem;">
+                    <div><span style="color: #64748b;">Nom :</span> <strong style="color: #1e293b;">${currentUser.name || '—'}</strong></div>
+                    <div><span style="color: #64748b;">Email :</span> <strong style="color: #1e293b;">${currentUser.email || '—'}</strong></div>
+                    <div><span style="color: #64748b;">Téléphone :</span> <strong style="color: #1e293b;">${currentUser.phone || '—'}</strong></div>
+                    <div><span style="color: #64748b;">Ville :</span> <strong style="color: #1e293b;">${currentUser.city || '—'}</strong></div>
+                    ${currentUser.country ? `<div><span style="color: #64748b;">Pays :</span> <strong style="color: #1e293b;">${currentUser.country}</strong></div>` : ''}
+                    ${currentUser.address ? `<div style="grid-column: span 2;"><span style="color: #64748b;">Adresse :</span> <strong style="color: #1e293b;">${currentUser.address}</strong></div>` : ''}
+                </div>
+            </div>
+        `;
         
         for (const [categoryName, services] of Object.entries(selectedCategories)) {
             const categoryData = categoriesData[categoryName];
@@ -1224,9 +1248,8 @@
         selectedPlan = null;
         document.querySelectorAll('#step3Content .plan-card').forEach(c => c.classList.remove('selected'));
         hideError();
-        currentStep = 4;
-        updateStepUI();
-        updateSummary();
+        goToStep(4);
+        renderSummary();
     };
     
     function showSuccessStep(result) {
