@@ -33,10 +33,10 @@ return [
     | statically and control which one is used via FILESYSTEM_DISK (default)
     | or by explicitly passing the disk name to Storage::disk().
     |
-    | Production (Railway): set FILESYSTEM_DISK=s3 to route Storage::disk('public')
-    | calls to Cloudflare R2. The 'public' disk below is kept as a local fallback
-    | for development. All controllers use Storage::disk('public') which resolves
-    | to whichever disk is set as the default.
+    | Production (Railway): set FILESYSTEM_DISK=s3 (lowercase!) so that
+    | config('filesystems.default') returns 's3'.  All controllers call
+    | Storage::disk(config('filesystems.default', 'public')) which resolves
+    | to the 's3' disk in production and the local 'public' disk in dev.
     |
     */
 
@@ -62,8 +62,8 @@ return [
         ],
 
         // Cloudflare R2 / AWS S3 disk.
-        // Set FILESYSTEM_DISK=s3 in Railway environment variables to make this
-        // the default disk used by Storage::disk('public') and file uploads.
+        // Set FILESYSTEM_DISK=s3 (lowercase) in Railway to make this
+        // the default disk used by all file uploads.
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

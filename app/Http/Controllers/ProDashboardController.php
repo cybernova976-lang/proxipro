@@ -134,7 +134,7 @@ class ProDashboardController extends Controller
         ]);
 
         if ($request->hasFile('avatar')) {
-            $path = $request->file('avatar')->store('avatars', config('filesystems.default', config('filesystems.default', 'public')));
+            $path = $request->file('avatar')->store('avatars', config('filesystems.default', 'public'));
             $validated['avatar'] = $path;
         }
 
@@ -698,7 +698,7 @@ class ProDashboardController extends Controller
         ]);
 
         $file = $request->file('file');
-        $path = $file->store('pro-documents/' . $user->id, config('filesystems.default', config('filesystems.default', 'public')));
+        $path = $file->store('pro-documents/' . $user->id, config('filesystems.default', 'public'));
 
         ProDocument::create([
             'user_id' => $user->id,
@@ -721,7 +721,7 @@ class ProDashboardController extends Controller
         $user = $this->ensurePro();
         $document = $user->proDocuments()->findOrFail($id);
 
-        Storage::disk(config('filesystems.default', config('filesystems.default', config('filesystems.default', 'public'))))->delete($document->file_path);
+        Storage::disk(config('filesystems.default', 'public'))->delete($document->file_path);
         $document->delete();
 
         return redirect()->route('pro.documents')->with('success', 'Document supprimé.');

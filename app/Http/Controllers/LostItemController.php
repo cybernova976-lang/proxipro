@@ -89,7 +89,7 @@ class LostItemController extends Controller
         $images = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                $images[] = $image->store('lost-items', config('filesystems.default', config('filesystems.default', 'public')));
+                $images[] = $image->store('lost-items', config('filesystems.default', 'public'));
             }
         }
 
