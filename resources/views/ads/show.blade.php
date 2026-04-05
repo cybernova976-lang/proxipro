@@ -448,7 +448,7 @@
         <div class="similar-ads">
             <h3><i class="fas fa-lightbulb me-2 text-warning"></i>Annonces similaires</h3>
             <div class="row g-3">
-                @php $similarAds = \App\Models\Ad::where('category', $ad->category)->where('id', '!=', $ad->id)->where('is_active', true)->limit(4)->get(); @endphp
+                @php $similarAds = \App\Models\Ad::where('category', $ad->category)->where('id', '!=', $ad->id)->where('status', 'active')->limit(4)->get(); @endphp
                 @forelse($similarAds as $similar)
                 <div class="col-6 col-lg-3">
                     <a href="{{ route('ads.show', $similar) }}" class="text-decoration-none">
