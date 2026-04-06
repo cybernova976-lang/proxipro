@@ -85,12 +85,14 @@ run_laravel_bootstrap() {
 }
 
 # --- Critical tasks: run BEFORE Apache starts ---
-echo "⏳  Caching configuration …"
-php artisan config:cache --no-interaction || echo "WARNING: config:cache failed"
-php artisan route:cache --no-interaction || echo "WARNING: route:cache failed"
-
 echo "⏳  Running migrations (blocking) …"
 php artisan migrate --force --no-interaction || echo "WARNING: migrations failed"
+
+echo "⏳  Caching configuration …"
+php artisan config:clear --no-interaction || true
+php artisan config:cache --no-interaction || echo "WARNING: config:cache failed"
+php artisan route:clear --no-interaction || true
+php artisan route:cache --no-interaction || echo "WARNING: route:cache failed"
 
 # --- Non-critical tasks: run in background so Apache starts fast ---
 run_laravel_bootstrap &
