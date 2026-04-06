@@ -113,10 +113,12 @@ class LoginController extends Controller
                     $emailSent = true;
                     Log::info('Verification code email sent on login', ['email' => $user->email]);
                 } catch (\Throwable $e) {
-                    Log::error('Verification code email failed on login: ' . $e->getMessage(), [
+                    Log::error('Verification code email failed on login', [
                         'user_id' => $user->id,
                         'email' => $user->email,
-                        'exception' => get_class($e),
+                        'exception_class' => get_class($e),
+                        'exception_message' => $e->getMessage(),
+                        'exception_trace' => $e->getTraceAsString(),
                     ]);
                 }
 
@@ -129,13 +131,22 @@ class LoginController extends Controller
                 Log::warning('Email send failed on login, auto-verifying user', [
                     'user_id' => $user->id,
                 ]);
-                $user->email_verified_at = now();
-                $user->email_verification_code = null;
-                $user->email_verification_code_expires_at = null;
-                $user->save();
+                try {
+                    $user->email_verified_at = now();
+                    $user->email_verification_code = null;
+                    $user->email_verification_code_expires_at = null;
+                    $user->save();
 
-                // Re-login and continue
-                $this->guard()->login($user);
+                    // Re-login and continue
+                    $this->guard()->login($user);
+                } catch (\Throwable $e) {
+                    Log::error('Auto-verify fallback failed on login', [
+                        'user_id' => $user->id,
+                        'exception_class' => get_class($e),
+                        'exception_message' => $e->getMessage(),
+                        'exception_trace' => $e->getTraceAsString(),
+                    ]);
+                }
             }
         } catch (\Throwable $e) {
             Log::error('Login post-authentication failed, redirecting to feed anyway', [
