@@ -21,4 +21,15 @@ cmds = [
 ]
 
 [start]
-cmd = "composer dump-autoload --optimize && php artisan storage:link --force || true && php artisan migrate --force && php artisan db:seed --class=AdminSeeder --force && php artisan config:cache && php artisan view:clear && php artisan view:cache && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+cmd = """
+(grep -q '^APP_KEY=base64:' .env 2>/dev/null || [ -n \"$APP_KEY\" ] || php artisan key:generate --force --no-interaction) && \
+composer dump-autoload --optimize --no-interaction && \
+php artisan migrate --force --no-interaction && \
+(php artisan db:seed --class=AdminSeeder --force --no-interaction || true) && \
+php artisan config:cache --no-interaction && \
+php artisan route:cache --no-interaction && \
+php artisan view:clear --no-interaction && \
+php artisan view:cache --no-interaction && \
+(php artisan storage:link --force --no-interaction 2>/dev/null || true) && \
+php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+"""

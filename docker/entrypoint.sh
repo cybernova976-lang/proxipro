@@ -45,8 +45,8 @@ if [ ! -f .env ]; then
     fi
 fi
 
-# 2. Generate APP_KEY if not already set
-if [ -z "$APP_KEY" ]; then
+# 2. Generate APP_KEY if not already set (in .env or as system env var)
+if [ -z "$APP_KEY" ] && ! grep -q '^APP_KEY=base64:' .env 2>/dev/null; then
     echo "Generating application key ..."
     php artisan key:generate --force --no-interaction || echo "WARNING: key:generate failed"
 fi
@@ -71,13 +71,8 @@ run_laravel_bootstrap() {
     echo "⏳  Background Laravel bootstrap started"
 
     # These tasks are non-critical for initial HTTP readiness.
-    php artisan config:cache --no-interaction || echo "WARNING: config:cache failed"
-    php artisan route:cache --no-interaction || echo "WARNING: route:cache failed"
     php artisan view:clear --no-interaction || echo "WARNING: view:clear failed"
     php artisan view:cache --no-interaction || echo "WARNING: view:cache failed"
-
-    echo "⏳  Running migrations in background …"
-    php artisan migrate --force --no-interaction || echo "WARNING: migrations failed"
 
     php artisan db:seed --class=AdminSeeder --force --no-interaction || echo "WARNING: AdminSeeder failed"
 
@@ -89,6 +84,15 @@ run_laravel_bootstrap() {
     echo "✅  Background Laravel bootstrap complete"
 }
 
+# --- Critical tasks: run BEFORE Apache starts ---
+echo "⏳  Caching configuration …"
+php artisan config:cache --no-interaction || echo "WARNING: config:cache failed"
+php artisan route:cache --no-interaction || echo "WARNING: route:cache failed"
+
+echo "⏳  Running migrations (blocking) …"
+php artisan migrate --force --no-interaction || echo "WARNING: migrations failed"
+
+# --- Non-critical tasks: run in background so Apache starts fast ---
 run_laravel_bootstrap &
 
 echo "✅  Entrypoint complete – starting server immediately"
