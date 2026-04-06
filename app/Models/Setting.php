@@ -14,11 +14,16 @@ class Setting extends Model
      */
     public static function get(string $key, $default = null)
     {
-        $setting = Cache::remember("setting_{$key}", 3600, function () use ($key) {
-            return self::where('key', $key)->first();
-        });
+        try {
+            $setting = Cache::remember("setting_{$key}", 3600, function () use ($key) {
+                return self::where('key', $key)->first();
+            });
 
-        return $setting ? $setting->value : $default;
+            return $setting ? $setting->value : $default;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Setting::get('{$key}') failed: " . $e->getMessage());
+            return $default;
+        }
     }
 
     /**
