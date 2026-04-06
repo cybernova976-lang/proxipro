@@ -6390,7 +6390,18 @@
     }
 </style>
 </head>
-<body>
+<body class="device-{{ $deviceType ?? 'desktop' }}{{ ($isMobile ?? false) ? ' is-mobile' : '' }}{{ ($isTablet ?? false) ? ' is-tablet' : '' }}">
+    {{-- Variables JS pour détection appareil côté client --}}
+    <script>
+        window.__device = {
+            type: '{{ $deviceType ?? "desktop" }}',
+            isMobile: {{ ($isMobile ?? false) ? 'true' : 'false' }},
+            isTablet: {{ ($isTablet ?? false) ? 'true' : 'false' }},
+            isDesktop: {{ ($isDesktop ?? true) ? 'true' : 'false' }},
+            browser: '{{ $deviceBrowser ?? "unknown" }}',
+            platform: '{{ $devicePlatform ?? "unknown" }}'
+        };
+    </script>
     <div id="app">
         <header class="header-modern sticky-top">
             <div class="container-fluid px-4">

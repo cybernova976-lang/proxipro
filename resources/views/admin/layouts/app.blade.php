@@ -121,7 +121,7 @@
         }
     </style>
 </head>
-<body>
+<body class="device-{{ $deviceType ?? 'desktop' }}{{ ($isMobile ?? false) ? ' is-mobile' : '' }}">
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header d-flex align-items-start justify-content-between">

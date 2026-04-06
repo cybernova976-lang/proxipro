@@ -13,6 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
+        
+        // Détection appareil (mobile/tablet/desktop) sur toutes les requêtes web
+        $middleware->web(append: [
+            \App\Http\Middleware\DetectDevice::class,
+        ]);
+        
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'geo' => \App\Http\Middleware\DetectUserGeolocation::class,
