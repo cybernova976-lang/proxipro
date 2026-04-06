@@ -25,5 +25,15 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response, \Throwable $e) {
+            if ($response->getStatusCode() >= 500) {
+                \Illuminate\Support\Facades\Log::error('Server error: ' . $e->getMessage(), [
+                    'exception' => get_class($e),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'url' => request()->fullUrl(),
+                ]);
+            }
+            return $response;
+        });
     })->create();

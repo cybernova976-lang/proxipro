@@ -28,16 +28,20 @@ class DetectUserGeolocation
      */
     public function handle(Request $request, Closure $next)
     {
-        if (Auth::check()) {
-            $user = Auth::user();
-            
-            // Détecter la localisation (le service gère le cache session)
-            $geoData = $this->geoService->detectUserLocation($user, $request);
-            
-            // Stocker dans la requête pour que les contrôleurs y accèdent facilement
-            if ($geoData) {
-                $request->attributes->set('user_geo', $geoData);
+        try {
+            if (Auth::check()) {
+                $user = Auth::user();
+
+                // Détecter la localisation (le service gère le cache session)
+                $geoData = $this->geoService->detectUserLocation($user, $request);
+
+                // Stocker dans la requête pour que les contrôleurs y accèdent facilement
+                if ($geoData) {
+                    $request->attributes->set('user_geo', $geoData);
+                }
             }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Geolocation detection failed: ' . $e->getMessage());
         }
 
         return $next($request);
