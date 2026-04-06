@@ -1,6 +1,6 @@
 {
     "php": {
-        "extensions": ["bcmath", "gd", "pdo_mysql", "pdo_sqlite"]
+        "extensions": ["bcmath", "gd", "pdo_pgsql", "pdo_mysql", "pdo_sqlite", "mbstring", "xml", "curl", "zip", "fileinfo", "tokenizer"]
     },
     "build": {
         "cmd": [
