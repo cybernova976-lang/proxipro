@@ -855,6 +855,12 @@
 }
 </style>
 
+@php
+    $providerCurrentUser = Auth::check()
+        ? Auth::user()->only(['name', 'email', 'phone', 'city', 'country', 'address'])
+        : [];
+@endphp
+
 <script>
 (function() {
     // State
@@ -865,7 +871,7 @@
     let selectedPlan = null;
     
     // User info for recap
-    const currentUser = @json(Auth::check() ? Auth::user()->only(['name', 'email', 'phone', 'city', 'country', 'address']) : []);
+    const currentUser = @json($providerCurrentUser);
     
     // DOM Elements
     const modal = document.getElementById('becomeProviderModal');
