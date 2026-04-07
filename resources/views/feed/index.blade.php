@@ -2791,6 +2791,9 @@
         .content-container {
             padding: 12px 10px 16px;
         }
+        #missionsSection {
+            padding-top: 10px;
+        }
         .providers-grid {
             grid-template-columns: repeat(4, 1fr);
             gap: 16px;
@@ -2859,6 +2862,9 @@
         }
         .content-container {
             padding: 0 8px 12px;
+        }
+        #missionsSection {
+            padding-top: 16px;
         }
         .providers-grid {
             grid-template-columns: repeat(2, 1fr);

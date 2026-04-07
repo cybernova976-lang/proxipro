@@ -183,6 +183,13 @@
         .header-modern .container-fluid {
             padding: 0 8px 0 0 !important;
         }
+        .mobile-brand-group {
+            gap: 10px !important;
+            min-width: 0;
+        }
+        .mobile-actions-group {
+            gap: 8px !important;
+        }
         .nav-messages-btn span {
             display: none !important;
         }
@@ -276,7 +283,8 @@
             padding: 6px 7px;
             font-size: 0.7rem;
             gap: 3px;
-            margin-left: 6px;
+            margin-left: 0;
+            flex-shrink: 0;
         }
         .dropdown-menu-modern {
             min-width: 220px !important;
@@ -6485,7 +6493,7 @@
         <header class="header-modern sticky-top">
             <div class="container-fluid px-4">
                 <div class="d-flex justify-content-between align-items-center h-100">
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2 mobile-brand-group">
                         <!-- Logo Ã  gauche -->
                         <a class="navbar-brand-modern" href="{{ Auth::check() ? route('feed') : url('/') }}">
                             <div class="brand-logo">P</div>
@@ -6516,7 +6524,7 @@
                     </div>
                     
                     <!-- Actions droite -->
-                    <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center gap-3 mobile-actions-group">
 
                         <!-- Bouton Devenir Prestataire / Espace Pro -->
                         @php
