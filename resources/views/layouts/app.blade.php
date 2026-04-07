@@ -121,7 +121,11 @@
             min-height: 64px !important;
         }
         .header-modern .container-fluid {
-            padding: 0 12px !important;
+            padding: 0 10px 0 4px !important;
+        }
+        .navbar-brand-modern {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
         }
         .header-modern .navbar-brand-modern .brand-logo {
             width: 34px;
@@ -164,7 +168,7 @@
             min-height: 56px !important;
         }
         .header-modern .container-fluid {
-            padding: 0 8px !important;
+            padding: 0 8px 0 2px !important;
         }
         .nav-messages-btn span {
             display: none !important;
@@ -198,6 +202,39 @@
         .btn-provider-badge {
             padding: 6px 8px !important;
             font-size: 0.75rem !important;
+        }
+        .header-mobile-action {
+            min-width: 46px;
+            height: 46px;
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 4px 6px !important;
+        }
+        .header-mobile-action i {
+            font-size: 0.95rem;
+            line-height: 1;
+        }
+        .mobile-action-label {
+            font-size: 0.58rem;
+            line-height: 1;
+            font-weight: 600;
+            color: #64748b;
+        }
+        .user-menu-btn.header-mobile-action {
+            border-radius: 12px;
+            gap: 2px !important;
+        }
+        .user-menu-btn.header-mobile-action .dropdown-chevron {
+            display: none;
+        }
+        .user-menu-btn.header-mobile-action .user-avatar,
+        .user-menu-btn.header-mobile-action .user-avatar-placeholder {
+            width: 26px !important;
+            height: 26px !important;
+            font-size: 0.8rem !important;
         }
         .dropdown-menu-modern {
             min-width: 220px !important;
@@ -6442,24 +6479,28 @@
                             $hasProSpace = $currentUser->hasCompletedProOnboarding() || $currentUser->user_type === 'professionnel' || $currentUser->isProfessionnel();
                         @endphp
                         @if($hasProSpace)
-                            <a href="{{ route('pro.dashboard') }}" class="btn-provider-badge" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none;" title="Espace Pro">
+                            <a href="{{ route('pro.dashboard') }}" class="btn-provider-badge header-mobile-action" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none;" title="Espace Pro">
                                 <i class="fas fa-briefcase"></i>
                                 <span class="d-none d-sm-inline">Espace Pro</span>
+                                <span class="mobile-action-label d-sm-none">Pro</span>
                             </a>
                         @elseif($isOAuthWithoutProfile)
-                            <button type="button" class="btn-become-provider" data-bs-toggle="modal" data-bs-target="#becomeProviderOAuthModal">
+                            <button type="button" class="btn-become-provider header-mobile-action" data-bs-toggle="modal" data-bs-target="#becomeProviderOAuthModal">
                                 <i class="fas fa-rocket"></i>
                                 <span class="d-none d-sm-inline">Devenir prestataire</span>
+                                <span class="mobile-action-label d-sm-none">Pro</span>
                             </button>
                         @elseif($isRegularParticulier)
-                            <button type="button" class="btn-become-provider" data-bs-toggle="modal" data-bs-target="#becomeProviderModal">
+                            <button type="button" class="btn-become-provider header-mobile-action" data-bs-toggle="modal" data-bs-target="#becomeProviderModal">
                                 <i class="fas fa-user-plus"></i>
                                 <span class="d-none d-sm-inline">Devenir prestataire</span>
+                                <span class="mobile-action-label d-sm-none">Pro</span>
                             </button>
                         @elseif($isActiveParticulierProvider)
-                            <button type="button" class="btn-provider-badge" data-bs-toggle="modal" data-bs-target="#becomeProviderModal" title="Gérer mes services">
+                            <button type="button" class="btn-provider-badge header-mobile-action" data-bs-toggle="modal" data-bs-target="#becomeProviderModal" title="Gérer mes services">
                                 <i class="fas fa-check-circle"></i>
                                 <span class="d-none d-sm-inline">Prestataire</span>
+                                <span class="mobile-action-label d-sm-none">Pro</span>
                             </button>
                         @endif
 
@@ -6469,7 +6510,7 @@
                         <!-- Groupe icônes : Messages, Points, Alertes boost, Notifications -->
                         <div class="d-flex align-items-center gap-2">
                             <!-- Messages -->
-                            <a href="{{ route('messages.index') }}" class="nav-messages-btn position-relative" title="Messages">
+                            <a href="{{ route('messages.index') }}" class="nav-messages-btn position-relative d-none d-md-flex" title="Messages">
                                 <i class="fas fa-envelope"></i>
                                 <span class="d-none d-md-inline">Messages</span>
                                 @php
@@ -6481,7 +6522,7 @@
                             </a>
 
                             <!-- Points -->
-                            <a href="{{ route('points.dashboard') }}" class="header-points-badge" title="Mes points">
+                            <a href="{{ route('points.dashboard') }}" class="header-points-badge d-none d-md-flex" title="Mes points">
                                 <i class="fas fa-coins"></i>
                                 <span class="header-points-value">{{ Auth::user()->available_points ?? 0 }}</span>
                             </a>
@@ -6492,9 +6533,10 @@
                             @endphp
                             @if(count($boostAlerts) > 0)
                             <div class="dropdown">
-                                <button class="header-alert-btn position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Alertes boost">
+                                <button class="header-alert-btn header-mobile-action position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Alertes boost">
                                     <i class="fas fa-bell"></i>
                                     <span class="alert-counter">{{ count($boostAlerts) }}</span>
+                                    <span class="mobile-action-label d-md-none">Alertes</span>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-modern mt-2" style="min-width: 320px; max-height: 400px; overflow-y: auto;">
                                     <li class="px-3 py-2 border-bottom">
@@ -6573,11 +6615,12 @@
                                 $totalUnread = $liveUnread + $unreadNotifCount;
                             @endphp
                             <div class="dropdown" id="notificationDropdown">
-                                <button class="header-notif-btn position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                                <button class="header-notif-btn header-mobile-action position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
                                     <i class="fas fa-bell"></i>
                                     @if($totalUnread > 0)
                                         <span class="notif-counter">{{ $totalUnread > 99 ? '99+' : $totalUnread }}</span>
                                     @endif
+                                    <span class="mobile-action-label d-md-none">Notif</span>
                                 </button>
                                 <div class="dropdown-menu dropdown-menu-end notif-dropdown-menu mt-2">
                                     <div class="notif-dropdown-header">
@@ -6632,7 +6675,7 @@
 
                         <!-- User Dropdown -->
                         <div class="dropdown">
-                            <button class="user-menu-btn d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button class="user-menu-btn header-mobile-action d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 @if(Auth::user()->avatar)
                                     <img src="{{ storage_url(Auth::user()->avatar) }}" alt="Avatar" class="user-avatar" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 @else
@@ -6645,6 +6688,7 @@
                                     <span class="user-type-badge">{{ ucfirst(Auth::user()->user_type ?? 'Utilisateur') }}</span>
                                 </div>
                                 <i class="fas fa-chevron-down dropdown-chevron"></i>
+                                <span class="mobile-action-label d-md-none">Profil</span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end dropdown-menu-modern mt-2" style="min-width: 240px;">
                                 <li class="px-3 py-2 border-bottom">
