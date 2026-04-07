@@ -309,6 +309,9 @@
                         <input 
                             id="password" name="password" type="password" required 
                             placeholder="Min. 8 caractères"
+                            autocomplete="new-password"
+                            autocapitalize="off"
+                            spellcheck="false"
                             class="w-full px-3 py-2.5 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400 @error('password') border-red-400 @enderror"
                         >
                         <button type="button" onclick="togglePassword('password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -318,6 +321,10 @@
                     @error('password')
                         <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                     @enderror
+                    <div class="mt-2 flex items-center justify-between gap-2">
+                        <p class="text-xs text-gray-500">8 à 128 caractères. Les phrases de passe sont autorisées (espaces inclus).</p>
+                        <button type="button" id="suggest-password-btn" class="text-xs text-blue-600 hover:text-blue-700 font-semibold whitespace-nowrap">Proposer un mot de passe sécurisé</button>
+                    </div>
                     <div class="mt-1.5 h-1 bg-gray-100 rounded-full overflow-hidden">
                         <div id="password-strength-bar" class="h-full rounded-full transition-all duration-500 bg-gray-300" style="width: 0%"></div>
                     </div>
@@ -330,6 +337,9 @@
                         <input 
                             id="password-confirm" name="password_confirmation" type="password" required 
                             placeholder="Répétez le mot de passe"
+                            autocomplete="new-password"
+                            autocapitalize="off"
+                            spellcheck="false"
                             class="w-full px-3 py-2.5 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400"
                         >
                         <button type="button" onclick="togglePassword('password-confirm')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -459,31 +469,113 @@
         field.type = field.type === 'password' ? 'text' : 'password';
     }
 
-    // Password strength checker
-    document.getElementById('password').addEventListener('input', function(e) {
-        const password = e.target.value;
+    const commonPasswords = new Set([
+        '123456', '12345678', '123456789', '1234567890', 'password', 'password123',
+        'qwerty', 'azerty', 'admin', 'admin123', 'welcome', 'letmein', 'iloveyou',
+        '000000', '111111', 'abc123', 'motdepasse', 'motdepasse123', 'proxipro'
+    ]);
+
+    function evaluatePasswordStrength(password) {
+        const normalized = password.trim().toLowerCase();
+        const email = (document.getElementById('email').value || '').trim().toLowerCase();
+        const emailLocalPart = email.includes('@') ? email.split('@')[0] : email;
+
+        const firstName = (document.querySelector('input[name="firstname"]')?.value || '').trim().toLowerCase();
+        const lastName = (document.querySelector('input[name="lastname"]')?.value || '').trim().toLowerCase();
+        const companyName = (document.querySelector('input[name="company_name"]')?.value || '').trim().toLowerCase();
+        const fullName = `${firstName} ${lastName}`.trim();
+
+        if (!password) {
+            return { width: '0%', color: '#9ca3af', text: 'Sécurité du mot de passe' };
+        }
+
+        if (password.length < 8) {
+            return { width: '20%', color: '#ef4444', text: 'Insuffisant (minimum 8 caractères)' };
+        }
+
+        if (password.length > 128) {
+            return { width: '20%', color: '#ef4444', text: 'Insuffisant (maximum 128 caractères)' };
+        }
+
+        if (commonPasswords.has(normalized)) {
+            return { width: '20%', color: '#ef4444', text: 'Mot de passe trop courant' };
+        }
+
+        if (normalized === email || normalized === emailLocalPart || normalized === firstName || normalized === lastName || normalized === companyName || normalized === fullName) {
+            return { width: '20%', color: '#ef4444', text: 'Insuffisant (trop proche de vos informations)' };
+        }
+
+        let score = 0;
+        if (password.length >= 8) score++;
+        if (password.length >= 12) score++;
+        if (password.length >= 16) score++;
+        if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+        if (/[0-9]/.test(password)) score++;
+        if (/[^A-Za-z0-9\s]/.test(password)) score++;
+        if (password.includes(' ') && password.trim().split(/\s+/).length >= 3) score++;
+
+        if (score <= 2) {
+            return { width: '35%', color: '#f97316', text: 'Moyen' };
+        }
+
+        if (score <= 5) {
+            return { width: '70%', color: '#22c55e', text: 'Fort' };
+        }
+
+        return { width: '100%', color: '#16a34a', text: 'Très fort' };
+    }
+
+    function updatePasswordStrength(password) {
         const bar = document.getElementById('password-strength-bar');
         const text = document.getElementById('password-strength-text');
-        
-        let strength = 0;
-        if (password.length >= 8) strength++;
-        if (/[A-Z]/.test(password)) strength++;
-        if (/[0-9]/.test(password)) strength++;
-        if (/[^A-Za-z0-9]/.test(password)) strength++;
-
-        const levels = [
-            { width: '0%', color: '#6c757d', text: 'Sécurité du mot de passe' },
-            { width: '25%', color: '#e63946', text: 'Très faible' },
-            { width: '50%', color: '#f4a261', text: 'Faible' },
-            { width: '75%', color: '#ffd166', text: 'Moyen' },
-            { width: '100%', color: '#06d6a0', text: 'Fort' },
-        ];
-
-        const level = password ? levels[strength] : levels[0];
+        const level = evaluatePasswordStrength(password);
         bar.style.width = level.width;
         bar.style.backgroundColor = level.color;
         text.style.color = level.color;
         text.textContent = level.text;
+    }
+
+    function generateSecurePassword() {
+        const words = [
+            'chien', 'soleil', 'ciel', 'rivière', 'jardin', 'montagne',
+            'poulet', 'orange', 'libellule', 'nuage', 'voiture', 'plage'
+        ];
+        const symbols = ['!', '@', '#', '%', '&', '*'];
+        const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+        const passphrase = `${pick(words)} ${pick(words)} ${pick(words)} ${Math.floor(100 + Math.random() * 900)}${pick(symbols)}`;
+        return passphrase.charAt(0).toUpperCase() + passphrase.slice(1);
+    }
+
+    document.getElementById('password').addEventListener('input', function(e) {
+        updatePasswordStrength(e.target.value);
+
+        const confirmPassword = document.getElementById('password-confirm').value;
+        if (confirmPassword) {
+            const matchText = document.getElementById('password-match');
+            matchText.classList.remove('hidden');
+            if (e.target.value === confirmPassword) {
+                matchText.className = 'text-xs mt-1.5 font-medium text-green-500';
+                matchText.textContent = '✓ Les mots de passe correspondent';
+            } else {
+                matchText.className = 'text-xs mt-1.5 font-medium text-red-500';
+                matchText.textContent = '✗ Les mots de passe ne correspondent pas';
+            }
+        }
+    });
+
+    document.getElementById('suggest-password-btn').addEventListener('click', function() {
+        const suggested = generateSecurePassword();
+        const passwordField = document.getElementById('password');
+        const confirmField = document.getElementById('password-confirm');
+
+        passwordField.value = suggested;
+        confirmField.value = '';
+        updatePasswordStrength(suggested);
+
+        const matchText = document.getElementById('password-match');
+        matchText.classList.add('hidden');
+        confirmField.focus();
     });
 
     // Password match checker

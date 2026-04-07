@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rules\Password;
 
 class RegisterController extends Controller
 {
@@ -184,13 +183,47 @@ class RegisterController extends Controller
         $rules = [
             'email' => ['required', 'string', 'email:rfc,dns', 'max:255', 'unique:users,email,NULL,id,deleted_at,NULL'],
             'password' => [
-                'required', 
-                'string', 
+                'required',
+                'string',
+                'min:8',
+                'max:128',
                 'confirmed',
-                Password::min(8)
-                    ->letters()
-                    ->mixedCase()
-                    ->numbers()
+                function ($attribute, $value, $fail) use ($data) {
+                    $normalizedPassword = mb_strtolower(trim((string) $value));
+
+                    $commonPasswords = [
+                        '123456', '12345678', '123456789', '1234567890', 'password', 'password123',
+                        'qwerty', 'azerty', 'admin', 'admin123', 'welcome', 'letmein', 'iloveyou',
+                        '000000', '111111', 'abc123', 'motdepasse', 'motdepasse123', 'proxipro',
+                    ];
+
+                    if (in_array($normalizedPassword, $commonPasswords, true)) {
+                        $fail('Mot de passe trop courant. Choisissez un mot de passe plus unique.');
+                        return;
+                    }
+
+                    $email = mb_strtolower(trim((string) ($data['email'] ?? '')));
+                    $emailLocalPart = mb_strtolower(trim((string) strtok($email, '@')));
+
+                    if ($normalizedPassword !== '' && ($normalizedPassword === $email || $normalizedPassword === $emailLocalPart)) {
+                        $fail('Le mot de passe ne doit pas être identique à votre e-mail.');
+                        return;
+                    }
+
+                    $nameCandidates = [
+                        mb_strtolower(trim((string) ($data['firstname'] ?? ''))),
+                        mb_strtolower(trim((string) ($data['lastname'] ?? ''))),
+                        mb_strtolower(trim((string) ($data['company_name'] ?? ''))),
+                        mb_strtolower(trim((string) (($data['firstname'] ?? '').' '.($data['lastname'] ?? '')))),
+                    ];
+
+                    foreach ($nameCandidates as $candidate) {
+                        if ($candidate !== '' && $normalizedPassword === $candidate) {
+                            $fail('Le mot de passe ne doit pas être identique à votre nom ou à votre entreprise.');
+                            return;
+                        }
+                    }
+                },
             ],
             'terms' => ['required', 'accepted'],
             // Honeypot: must be empty
@@ -221,10 +254,8 @@ class RegisterController extends Controller
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
             'password.required' => 'Le mot de passe est obligatoire.',
             'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
+            'password.max' => 'Le mot de passe ne peut pas dépasser 128 caractères.',
             'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
-            'password.letters' => 'Le mot de passe doit contenir au moins une lettre.',
-            'password.mixed' => 'Le mot de passe doit contenir au moins une majuscule et une minuscule.',
-            'password.numbers' => 'Le mot de passe doit contenir au moins un chiffre.',
             'terms.required' => 'Vous devez accepter les conditions d\'utilisation.',
             'terms.accepted' => 'Vous devez accepter les conditions d\'utilisation.',
             'website_url.max' => '',

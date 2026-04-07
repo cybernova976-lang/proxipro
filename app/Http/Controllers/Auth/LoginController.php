@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
@@ -59,12 +61,61 @@ class LoginController extends Controller
      */
     protected function validateLogin(Request $request)
     {
+        $usernameRules = ['required', 'string'];
+
+        if ($this->username() === 'email') {
+            $usernameRules[] = 'email';
+        }
+
         $rules = [
-            $this->username() => 'required|string',
-            'password' => 'required|string',
+            $this->username() => $usernameRules,
+            'password' => ['required', 'string'],
         ];
 
-        $request->validate($rules);
+        $request->validate($rules, [
+            $this->username().'.required' => 'L\'adresse e-mail est obligatoire.',
+            $this->username().'.email' => 'Veuillez saisir une adresse e-mail valide.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+        ]);
+    }
+
+    /**
+     * Limite de tentatives anti brute-force.
+     */
+    public function maxAttempts()
+    {
+        return 5;
+    }
+
+    /**
+     * Fenêtre de blocage en minutes.
+     */
+    public function decayMinutes()
+    {
+        return 5;
+    }
+
+    /**
+     * Message d'erreur de connexion en français.
+     */
+    protected function sendFailedLoginResponse(Request $request)
+    {
+        throw ValidationException::withMessages([
+            $this->username() => ['Identifiants incorrects. Vérifiez votre e-mail et votre mot de passe.'],
+        ]);
+    }
+
+    /**
+     * Message de verrouillage anti brute-force en français.
+     */
+    protected function sendLockoutResponse(Request $request)
+    {
+        $seconds = RateLimiter::availableIn($this->throttleKey($request));
+        $minutes = (int) ceil($seconds / 60);
+
+        throw ValidationException::withMessages([
+            $this->username() => ["Trop de tentatives de connexion. Réessayez dans {$minutes} minute(s)."],
+        ])->status(429);
     }
 
     /**
