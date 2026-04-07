@@ -121,11 +121,24 @@
             min-height: 64px !important;
         }
         .header-modern .container-fluid {
-            padding: 0 10px 0 4px !important;
+            padding: 0 10px 0 0 !important;
         }
         .navbar-brand-modern {
-            margin-left: 0 !important;
+            margin-left: -2px !important;
             padding-left: 0 !important;
+        }
+        .header-home-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 8px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #334155;
+            text-decoration: none;
+            font-size: 0.74rem;
+            font-weight: 600;
         }
         .header-modern .navbar-brand-modern .brand-logo {
             width: 34px;
@@ -168,7 +181,7 @@
             min-height: 56px !important;
         }
         .header-modern .container-fluid {
-            padding: 0 8px 0 2px !important;
+            padding: 0 8px 0 0 !important;
         }
         .nav-messages-btn span {
             display: none !important;
@@ -203,38 +216,34 @@
             padding: 6px 8px !important;
             font-size: 0.75rem !important;
         }
-        .header-mobile-action {
-            min-width: 46px;
-            height: 46px;
-            display: flex !important;
+        .mobile-header-item {
+            display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             gap: 2px;
+        }
+        .header-mobile-action {
+            min-width: 40px;
+            height: 36px;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
             padding: 4px 6px !important;
         }
         .header-mobile-action i {
             font-size: 0.95rem;
             line-height: 1;
         }
-        .mobile-action-label {
+        .mobile-header-label {
             font-size: 0.58rem;
             line-height: 1;
             font-weight: 600;
             color: #64748b;
         }
-        .user-menu-btn.header-mobile-action {
-            border-radius: 12px;
-            gap: 2px !important;
-        }
-        .user-menu-btn.header-mobile-action .dropdown-chevron {
-            display: none;
-        }
-        .user-menu-btn.header-mobile-action .user-avatar,
-        .user-menu-btn.header-mobile-action .user-avatar-placeholder {
-            width: 26px !important;
-            height: 26px !important;
-            font-size: 0.8rem !important;
+        .header-home-link {
+            padding: 6px 7px;
+            font-size: 0.7rem;
+            gap: 3px;
         }
         .dropdown-menu-modern {
             min-width: 220px !important;
@@ -6443,11 +6452,17 @@
         <header class="header-modern sticky-top">
             <div class="container-fluid px-4">
                 <div class="d-flex justify-content-between align-items-center h-100">
-                    <!-- Logo Ã  gauche -->
-                    <a class="navbar-brand-modern" href="{{ Auth::check() ? route('feed') : url('/') }}">
-                        <div class="brand-logo">P</div>
-                        <span class="brand-text d-none d-sm-inline">ProxiPro</span>
-                    </a>
+                    <div class="d-flex align-items-center gap-2">
+                        <!-- Logo Ã  gauche -->
+                        <a class="navbar-brand-modern" href="{{ Auth::check() ? route('feed') : url('/') }}">
+                            <div class="brand-logo">P</div>
+                            <span class="brand-text d-none d-sm-inline">ProxiPro</span>
+                        </a>
+                        <a href="{{ route('feed') }}" class="header-home-link d-lg-none">
+                            <i class="fas fa-home"></i>
+                            <span>Accueil</span>
+                        </a>
+                    </div>
 
                     
                     <!-- Search Removed -->
@@ -6479,29 +6494,37 @@
                             $hasProSpace = $currentUser->hasCompletedProOnboarding() || $currentUser->user_type === 'professionnel' || $currentUser->isProfessionnel();
                         @endphp
                         @if($hasProSpace)
-                            <a href="{{ route('pro.dashboard') }}" class="btn-provider-badge header-mobile-action" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none;" title="Espace Pro">
-                                <i class="fas fa-briefcase"></i>
-                                <span class="d-none d-sm-inline">Espace Pro</span>
-                                <span class="mobile-action-label d-sm-none">Pro</span>
-                            </a>
+                            <div class="mobile-header-item">
+                                <a href="{{ route('pro.dashboard') }}" class="btn-provider-badge header-mobile-action" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none;" title="Espace Pro">
+                                    <i class="fas fa-briefcase"></i>
+                                    <span class="d-none d-sm-inline">Espace Pro</span>
+                                </a>
+                                <span class="mobile-header-label d-sm-none">Pro</span>
+                            </div>
                         @elseif($isOAuthWithoutProfile)
-                            <button type="button" class="btn-become-provider header-mobile-action" data-bs-toggle="modal" data-bs-target="#becomeProviderOAuthModal">
-                                <i class="fas fa-rocket"></i>
-                                <span class="d-none d-sm-inline">Devenir prestataire</span>
-                                <span class="mobile-action-label d-sm-none">Pro</span>
-                            </button>
+                            <div class="mobile-header-item">
+                                <button type="button" class="btn-become-provider header-mobile-action" data-bs-toggle="modal" data-bs-target="#becomeProviderOAuthModal">
+                                    <i class="fas fa-rocket"></i>
+                                    <span class="d-none d-sm-inline">Devenir prestataire</span>
+                                </button>
+                                <span class="mobile-header-label d-sm-none">Pro</span>
+                            </div>
                         @elseif($isRegularParticulier)
-                            <button type="button" class="btn-become-provider header-mobile-action" data-bs-toggle="modal" data-bs-target="#becomeProviderModal">
-                                <i class="fas fa-user-plus"></i>
-                                <span class="d-none d-sm-inline">Devenir prestataire</span>
-                                <span class="mobile-action-label d-sm-none">Pro</span>
-                            </button>
+                            <div class="mobile-header-item">
+                                <button type="button" class="btn-become-provider header-mobile-action" data-bs-toggle="modal" data-bs-target="#becomeProviderModal">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span class="d-none d-sm-inline">Devenir prestataire</span>
+                                </button>
+                                <span class="mobile-header-label d-sm-none">Pro</span>
+                            </div>
                         @elseif($isActiveParticulierProvider)
-                            <button type="button" class="btn-provider-badge header-mobile-action" data-bs-toggle="modal" data-bs-target="#becomeProviderModal" title="Gérer mes services">
-                                <i class="fas fa-check-circle"></i>
-                                <span class="d-none d-sm-inline">Prestataire</span>
-                                <span class="mobile-action-label d-sm-none">Pro</span>
-                            </button>
+                            <div class="mobile-header-item">
+                                <button type="button" class="btn-provider-badge header-mobile-action" data-bs-toggle="modal" data-bs-target="#becomeProviderModal" title="Gérer mes services">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span class="d-none d-sm-inline">Prestataire</span>
+                                </button>
+                                <span class="mobile-header-label d-sm-none">Pro</span>
+                            </div>
                         @endif
 
                         <!-- Séparateur -->
@@ -6532,12 +6555,12 @@
                                 $boostAlerts = \App\Http\Controllers\BoostController::getExpiringAlerts(Auth::user());
                             @endphp
                             @if(count($boostAlerts) > 0)
-                            <div class="dropdown">
+                            <div class="dropdown mobile-header-item">
                                 <button class="header-alert-btn header-mobile-action position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Alertes boost">
                                     <i class="fas fa-bell"></i>
                                     <span class="alert-counter">{{ count($boostAlerts) }}</span>
-                                    <span class="mobile-action-label d-md-none">Alertes</span>
                                 </button>
+                                <span class="mobile-header-label d-md-none">Alertes</span>
                                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-modern mt-2" style="min-width: 320px; max-height: 400px; overflow-y: auto;">
                                     <li class="px-3 py-2 border-bottom">
                                         <strong style="color: #1e293b; font-size: 0.9rem;"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Alertes d'expiration</strong>
@@ -6614,14 +6637,14 @@
                                 $liveUnread = $navNotifications->filter(fn($n) => $n->is_live && !$n->is_read)->count();
                                 $totalUnread = $liveUnread + $unreadNotifCount;
                             @endphp
-                            <div class="dropdown" id="notificationDropdown">
+                            <div class="dropdown mobile-header-item" id="notificationDropdown">
                                 <button class="header-notif-btn header-mobile-action position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
                                     <i class="fas fa-bell"></i>
                                     @if($totalUnread > 0)
                                         <span class="notif-counter">{{ $totalUnread > 99 ? '99+' : $totalUnread }}</span>
                                     @endif
-                                    <span class="mobile-action-label d-md-none">Notif</span>
                                 </button>
+                                <span class="mobile-header-label d-md-none">Notif</span>
                                 <div class="dropdown-menu dropdown-menu-end notif-dropdown-menu mt-2">
                                     <div class="notif-dropdown-header">
                                         <span class="notif-dropdown-title">
@@ -6675,7 +6698,7 @@
 
                         <!-- User Dropdown -->
                         <div class="dropdown">
-                            <button class="user-menu-btn header-mobile-action d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button class="user-menu-btn d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 @if(Auth::user()->avatar)
                                     <img src="{{ storage_url(Auth::user()->avatar) }}" alt="Avatar" class="user-avatar" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 @else
@@ -6688,7 +6711,6 @@
                                     <span class="user-type-badge">{{ ucfirst(Auth::user()->user_type ?? 'Utilisateur') }}</span>
                                 </div>
                                 <i class="fas fa-chevron-down dropdown-chevron"></i>
-                                <span class="mobile-action-label d-md-none">Profil</span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end dropdown-menu-modern mt-2" style="min-width: 240px;">
                                 <li class="px-3 py-2 border-bottom">
