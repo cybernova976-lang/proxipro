@@ -2752,6 +2752,12 @@
        RESPONSIVE
        ========================================= */
     @media (max-width: 768px) {
+        .filter-bar-container,
+        .filter-bar-spacer,
+        .geo-banner,
+        .geo-expanded-banner {
+            display: none !important;
+        }
         .filter-bar-container {
             top: 64px;
             padding: 8px 0;
@@ -2783,7 +2789,7 @@
             font-size: 0.8rem;
         }
         .content-container {
-            padding: 16px 10px;
+            padding: 0 10px 16px;
         }
         .providers-grid {
             grid-template-columns: repeat(4, 1fr);
@@ -2852,7 +2858,7 @@
             display: none;
         }
         .content-container {
-            padding: 12px 8px;
+            padding: 0 8px 12px;
         }
         .providers-grid {
             grid-template-columns: repeat(2, 1fr);

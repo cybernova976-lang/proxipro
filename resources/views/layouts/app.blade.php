@@ -240,6 +240,38 @@
             font-weight: 600;
             color: #64748b;
         }
+        .header-home-link,
+        .header-mobile-action {
+            border: 1px solid #e2e8f0 !important;
+            background: #f8fafc !important;
+            color: #334155 !important;
+            border-radius: 12px !important;
+            box-shadow: none !important;
+        }
+        .header-home-link {
+            min-height: 36px;
+            padding: 0 10px !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .header-mobile-action {
+            width: 40px;
+            min-width: 40px;
+            height: 36px;
+            padding: 0 !important;
+        }
+        .header-mobile-action i {
+            font-size: 0.95rem;
+            color: #334155 !important;
+        }
+        .mobile-header-item {
+            min-width: 40px;
+        }
+        .mobile-header-label {
+            margin-top: 1px;
+            text-align: center;
+        }
         .header-home-link {
             padding: 6px 7px;
             font-size: 0.7rem;
