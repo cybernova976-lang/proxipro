@@ -130,10 +130,6 @@
                         <li><hr class="dropdown-divider my-2"></li>
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('pricing.index') }}"><i class="fas fa-crown text-warning"></i>Tarifs</a></li>
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('settings.index') }}"><i class="fas fa-cog text-secondary"></i>Paramètres</a></li>
-                        <!-- Mobile items -->
-                        <li class="d-lg-none"><hr class="dropdown-divider my-2"></li>
-                        <li class="d-lg-none"><a class="dropdown-item dropdown-item-modern" href="{{ route('lost-items.index') }}"><i class="fas fa-search-location text-orange"></i>Objets perdus</a></li>
-                        <li class="d-lg-none"><a class="dropdown-item dropdown-item-modern" href="{{ route('tools.pdf-converter') }}"><i class="fas fa-file-pdf text-danger"></i>Convertisseur PDF</a></li>
                         @if(Auth::user()->email === config('admin.principal_admin.email'))
                         <li><hr class="dropdown-divider my-2"></li>
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('admin.dashboard') }}"><i class="fas fa-shield-alt text-danger"></i>Administration</a></li>
