@@ -186,7 +186,7 @@ class RegisterController extends Controller
                 'required',
                 'string',
                 'min:8',
-                'max:128',
+                'max:20',
                 'confirmed',
                 function ($attribute, $value, $fail) use ($data) {
                     $normalizedPassword = mb_strtolower(trim((string) $value));
@@ -254,7 +254,7 @@ class RegisterController extends Controller
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
             'password.required' => 'Le mot de passe est obligatoire.',
             'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
-            'password.max' => 'Le mot de passe ne peut pas dépasser 128 caractères.',
+            'password.max' => 'Le mot de passe ne peut pas dépasser 20 caractères.',
             'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
             'terms.required' => 'Vous devez accepter les conditions d\'utilisation.',
             'terms.accepted' => 'Vous devez accepter les conditions d\'utilisation.',

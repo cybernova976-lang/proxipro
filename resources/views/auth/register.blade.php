@@ -309,6 +309,7 @@
                         <input 
                             id="password" name="password" type="password" required 
                             placeholder="Min. 8 caractères"
+                            maxlength="20"
                             autocomplete="new-password"
                             autocapitalize="off"
                             spellcheck="false"
@@ -321,10 +322,7 @@
                     @error('password')
                         <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                     @enderror
-                    <div class="mt-2 flex items-center justify-between gap-2">
-                        <p class="text-xs text-gray-500">8 à 128 caractères. Les phrases de passe sont autorisées (espaces inclus).</p>
-                        <button type="button" id="suggest-password-btn" class="text-xs text-blue-600 hover:text-blue-700 font-semibold whitespace-nowrap">Proposer un mot de passe sécurisé</button>
-                    </div>
+                    <p class="mt-2 text-xs text-gray-500">8 à 20 caractères. Les phrases de passe sont autorisées (espaces inclus).</p>
                     <div class="mt-1.5 h-1 bg-gray-100 rounded-full overflow-hidden">
                         <div id="password-strength-bar" class="h-full rounded-full transition-all duration-500 bg-gray-300" style="width: 0%"></div>
                     </div>
@@ -337,6 +335,7 @@
                         <input 
                             id="password-confirm" name="password_confirmation" type="password" required 
                             placeholder="Répétez le mot de passe"
+                            maxlength="20"
                             autocomplete="new-password"
                             autocapitalize="off"
                             spellcheck="false"
@@ -493,8 +492,8 @@
             return { width: '20%', color: '#ef4444', text: 'Insuffisant (minimum 8 caractères)' };
         }
 
-        if (password.length > 128) {
-            return { width: '20%', color: '#ef4444', text: 'Insuffisant (maximum 128 caractères)' };
+        if (password.length > 20) {
+            return { width: '20%', color: '#ef4444', text: 'Insuffisant (maximum 20 caractères)' };
         }
 
         if (commonPasswords.has(normalized)) {
@@ -535,18 +534,6 @@
         text.textContent = level.text;
     }
 
-    function generateSecurePassword() {
-        const words = [
-            'chien', 'soleil', 'ciel', 'rivière', 'jardin', 'montagne',
-            'poulet', 'orange', 'libellule', 'nuage', 'voiture', 'plage'
-        ];
-        const symbols = ['!', '@', '#', '%', '&', '*'];
-        const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-        const passphrase = `${pick(words)} ${pick(words)} ${pick(words)} ${Math.floor(100 + Math.random() * 900)}${pick(symbols)}`;
-        return passphrase.charAt(0).toUpperCase() + passphrase.slice(1);
-    }
-
     document.getElementById('password').addEventListener('input', function(e) {
         updatePasswordStrength(e.target.value);
 
@@ -562,20 +549,6 @@
                 matchText.textContent = '✗ Les mots de passe ne correspondent pas';
             }
         }
-    });
-
-    document.getElementById('suggest-password-btn').addEventListener('click', function() {
-        const suggested = generateSecurePassword();
-        const passwordField = document.getElementById('password');
-        const confirmField = document.getElementById('password-confirm');
-
-        passwordField.value = suggested;
-        confirmField.value = '';
-        updatePasswordStrength(suggested);
-
-        const matchText = document.getElementById('password-match');
-        matchText.classList.add('hidden');
-        confirmField.focus();
     });
 
     // Password match checker
