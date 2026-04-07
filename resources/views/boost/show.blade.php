@@ -682,14 +682,25 @@
                 </div>
                 <div class="status-bar-info">
                     <strong>Mode Urgent actif</strong>
-                    <small>Expire le {{ $boostStatus['urgent_until']->format('d/m/Y à H:i') }}</small>
+                    <small>
+                        @if($boostStatus['is_permanent_urgent'])
+                            Permanent
+                        @else
+                            Expire le {{ $boostStatus['urgent_until']->format('d/m/Y à H:i') }}
+                        @endif
+                    </small>
                 </div>
                 <div class="status-bar-countdown">
                     @php $urgDays = $boostStatus['urgent_days_left']; @endphp
+                    @if($boostStatus['is_permanent_urgent'])
+                    <div class="days-left days-good">∞</div>
+                    <div class="days-label">permanent</div>
+                    @else
                     <div class="days-left {{ $urgDays <= 1 ? 'days-warning' : ($urgDays <= 3 ? 'days-ok' : 'days-good') }}">
                         {{ $urgDays }}
                     </div>
                     <div class="days-label">jour{{ $urgDays > 1 ? 's' : '' }} restant{{ $urgDays > 1 ? 's' : '' }}</div>
+                    @endif
                 </div>
             </div>
             @endif
@@ -731,14 +742,21 @@
     @endif
     
     <!-- ========== SMART ALERTS ========== -->
-    @if($boostStatus['is_urgent'] && !$boostStatus['is_boosted'] && $boostStatus['urgent_days_left'] > 3)
+    @if($boostStatus['is_urgent'] && !$boostStatus['is_boosted'] && ($boostStatus['is_permanent_urgent'] || $boostStatus['urgent_days_left'] > 3))
     <div class="smart-alert alert-info-custom">
         <i class="fas fa-info-circle smart-alert-icon" style="color: #3b82f6;"></i>
         <div class="smart-alert-content">
             <h4>Votre mode Urgent est déjà actif</h4>
-            <p>Votre annonce est en mode Urgent pour encore <strong>{{ $boostStatus['urgent_days_left'] }} jours</strong>. 
-            Les plans de boost inférieurs à cette durée n'apporteront pas de visibilité supplémentaire. 
-            Seuls les plans plus longs sont recommandés.</p>
+            <p>
+                @if($boostStatus['is_permanent_urgent'])
+                    Votre annonce est déjà en mode <strong>Urgent permanent</strong>.
+                    Vous pouvez ajouter un boost classique pour améliorer encore sa visibilité.
+                @else
+                    Votre annonce est en mode Urgent pour encore <strong>{{ $boostStatus['urgent_days_left'] }} jours</strong>.
+                    Les plans de boost inférieurs à cette durée n'apporteront pas de visibilité supplémentaire.
+                    Seuls les plans plus longs sont recommandés.
+                @endif
+            </p>
         </div>
     </div>
     @endif
@@ -749,7 +767,7 @@
         <div class="smart-alert-content">
             <h4>Votre visibilité expire bientôt !</h4>
             <p>
-                @if($boostStatus['is_urgent'] && $boostStatus['urgent_days_left'] <= 2)
+                @if(!$boostStatus['is_permanent_urgent'] && $boostStatus['is_urgent'] && $boostStatus['urgent_days_left'] <= 2)
                     Le mode <strong>Urgent</strong> expire dans {{ $boostStatus['urgent_days_left'] }} jour{{ $boostStatus['urgent_days_left'] > 1 ? 's' : '' }}.
                 @endif
                 @if($boostStatus['is_boosted'] && $boostStatus['boost_days_left'] <= 2)
@@ -766,7 +784,7 @@
         <i class="fas fa-shield-alt smart-alert-icon" style="color: #10b981;"></i>
         <div class="smart-alert-content">
             <h4>Double visibilité active !</h4>
-            <p>Votre annonce bénéficie du mode <strong>Urgent</strong> ({{ $boostStatus['urgent_days_left'] }}j) ET d'un <strong>Boost</strong> ({{ $boostStatus['boost_days_left'] }}j). 
+            <p>Votre annonce bénéficie du mode <strong>Urgent</strong> ({{ $boostStatus['is_permanent_urgent'] ? 'permanent' : $boostStatus['urgent_days_left'].'j' }}) ET d'un <strong>Boost</strong> ({{ $boostStatus['boost_days_left'] }}j).
             Visibilité maximale jusqu'au {{ $boostStatus['best_visibility_end']->format('d/m/Y') }}.</p>
         </div>
     </div>

@@ -392,7 +392,11 @@
                                         <div>
                                             <strong style="color: #92400e; font-size: 0.9rem;">Urgent actif</strong>
                                             <div style="font-size: 0.78rem; color: #a16207;">
-                                                {{ $bStatus['urgent_days_left'] }}j restants — expire le {{ $bStatus['urgent_until']->format('d/m') }}
+                                                @if($bStatus['is_permanent_urgent'])
+                                                    Permanent
+                                                @else
+                                                    {{ $bStatus['urgent_days_left'] }}j restants — expire le {{ $bStatus['urgent_until']->format('d/m') }}
+                                                @endif
                                             </div>
                                         </div>
                                     </div>

@@ -194,6 +194,18 @@ body { background: #f0f2f5; }
     box-shadow: 0 4px 14px rgba(34,197,94,0.3);
 }
 .demand-btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(34,197,94,0.4); }
+.demand-btn-submit-content {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.demand-btn-submit-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
 
 /* Error */
 .demand-error {
@@ -207,6 +219,39 @@ body { background: #f0f2f5; }
     color: #6b7280; cursor: pointer; margin-bottom: 14px; background: none; border: none; padding: 0;
 }
 .demand-back-link:hover { color: #3b82f6; }
+
+@media (max-width: 768px) {
+    .demand-nav {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .demand-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .demand-btn-submit {
+        padding: 16px 20px;
+    }
+    .demand-btn-submit-content {
+        flex-direction: column;
+        gap: 6px;
+    }
+    .demand-btn-submit-text {
+        font-size: 1rem;
+        line-height: 1.2;
+    }
+}
+
+@media (max-width: 420px) {
+    .demand-nav {
+        padding: 18px 20px;
+    }
+    .demand-btn-submit-text {
+        flex-wrap: wrap;
+        row-gap: 4px;
+        column-gap: 6px;
+    }
+}
 </style>
 @endpush
 
@@ -418,7 +463,13 @@ body { background: #f0f2f5; }
                     Continuer <i class="fas fa-arrow-right"></i>
                 </button>
                 <button type="submit" class="demand-btn demand-btn-submit" id="demandBtnSubmit" style="display:none;">
-                    <i class="fas fa-paper-plane"></i> Publier et trouver des pros
+                    <span class="demand-btn-submit-content">
+                        <i class="fas fa-paper-plane"></i>
+                        <span class="demand-btn-submit-text">
+                            <span>Publier</span>
+                            <span>et trouver des pros</span>
+                        </span>
+                    </span>
                 </button>
             </div>
         </div>

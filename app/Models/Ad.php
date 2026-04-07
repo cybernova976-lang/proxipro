@@ -224,12 +224,14 @@ class Ad extends Model
     {
         $isUrgent = $this->isCurrentlyUrgent();
         $isBoosted = $this->isCurrentlyBoosted();
+        $isPermanentUrgent = $isUrgent && is_null($this->urgent_until);
         $urgentDaysLeft = $isUrgent && $this->urgent_until ? max(0, (int) now()->diffInDays($this->urgent_until, false)) : 0;
         $boostDaysLeft = $isBoosted && $this->boost_end ? max(0, (int) now()->diffInDays($this->boost_end, false)) : 0;
         $bestEnd = $this->getBestVisibilityEnd();
 
         return [
             'is_urgent' => $isUrgent,
+            'is_permanent_urgent' => $isPermanentUrgent,
             'is_boosted' => $isBoosted,
             'urgent_days_left' => $urgentDaysLeft,
             'boost_days_left' => $boostDaysLeft,
