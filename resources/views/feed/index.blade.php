@@ -2789,7 +2789,7 @@
             font-size: 0.8rem;
         }
         .content-container {
-            padding: 0 10px 16px;
+            padding: 12px 10px 16px;
         }
         .providers-grid {
             grid-template-columns: repeat(4, 1fr);

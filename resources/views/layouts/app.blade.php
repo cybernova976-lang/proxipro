@@ -276,6 +276,7 @@
             padding: 6px 7px;
             font-size: 0.7rem;
             gap: 3px;
+            margin-left: 6px;
         }
         .dropdown-menu-modern {
             min-width: 220px !important;
