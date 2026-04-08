@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Mail;
@@ -34,6 +35,16 @@ class AppServiceProvider extends ServiceProvider
         if (app()->environment('production')) {
             URL::forceScheme('https');
         }
+
+        ResetPassword::toMailUsing(function ($notifiable, string $url) {
+            return (new MailMessage)
+                ->subject('Réinitialisation de votre mot de passe')
+                ->greeting('Bonjour ' . ($notifiable->name ?? ''))
+                ->line('Vous recevez cet e-mail car une demande de réinitialisation du mot de passe a été effectuée pour votre compte ProxiPro.')
+                ->action('Réinitialiser mon mot de passe', $url)
+                ->line('Ce lien de réinitialisation expirera dans 60 minutes.')
+                ->line('Si vous n\'êtes pas à l\'origine de cette demande, aucune action supplémentaire n\'est requise.');
+        });
 
         VerifyEmail::toMailUsing(function ($notifiable, string $url) {
             return (new MailMessage)
