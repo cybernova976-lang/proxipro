@@ -180,6 +180,7 @@ Route::middleware(['auth'])->prefix('service-provider')->name('service-provider.
     Route::get('/form', [ServiceProviderController::class, 'showForm'])->name('form');
     Route::get('/categories', [ServiceProviderController::class, 'getCategories'])->name('categories');
     Route::get('/my-services', [ServiceProviderController::class, 'getMyServices'])->name('my-services');
+    Route::get('/mes-services', [ServiceProviderController::class, 'mesServices'])->name('mes-services');
     Route::post('/register', [ServiceProviderController::class, 'store'])->name('register');
     Route::post('/deactivate', [ServiceProviderController::class, 'deactivate'])->name('deactivate');
     Route::put('/service/{id}', [ServiceProviderController::class, 'updateService'])->name('update-service');

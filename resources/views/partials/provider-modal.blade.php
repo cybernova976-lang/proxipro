@@ -34,27 +34,118 @@
                 <div class="provider-steps" id="providerSteps">
                     <div class="provider-step active" data-step="1">
                         <div class="step-number">1</div>
-                        <span class="step-label">Catégories</span>
+                        <span class="step-label">Profil</span>
                     </div>
                     <div class="step-connector"></div>
                     <div class="provider-step" data-step="2">
                         <div class="step-number">2</div>
-                        <span class="step-label">Détails</span>
+                        <span class="step-label">Catégories</span>
                     </div>
                     <div class="step-connector"></div>
                     <div class="provider-step" data-step="3">
                         <div class="step-number">3</div>
-                        <span class="step-label">Abonnement</span>
+                        <span class="step-label">Détails</span>
                     </div>
                     <div class="step-connector"></div>
                     <div class="provider-step" data-step="4">
                         <div class="step-number">4</div>
+                        <span class="step-label">Abonnement</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="provider-step" data-step="5">
+                        <div class="step-number">5</div>
                         <span class="step-label">Récapitulatif</span>
                     </div>
                 </div>
 
-                <!-- Step 1: Sélection des catégories -->
-                <div class="provider-step-content active" id="step1Content">
+                <!-- Step 1: Informations personnelles -->
+                <div class="provider-step-content active" id="step0Content">
+                    <h6 class="step-title">
+                        <i class="fas fa-user-edit"></i>
+                        Vérifiez vos informations personnelles
+                    </h6>
+                    <p class="step-description">
+                        Avant de proposer vos services, assurez-vous que vos informations sont complètes. 
+                        Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires.
+                    </p>
+                    
+                    <div class="profile-info-form" style="background: white; border-radius: 14px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" style="font-size: 0.88rem;">
+                                    <i class="fas fa-user text-primary me-1"></i>Nom complet <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="providerProfileName" 
+                                       value="{{ Auth::user()->name }}" 
+                                       placeholder="Votre nom complet" required
+                                       style="border-radius: 10px; padding: 10px 14px;">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" style="font-size: 0.88rem;">
+                                    <i class="fas fa-envelope text-primary me-1"></i>Email
+                                </label>
+                                <input type="email" class="form-control" 
+                                       value="{{ Auth::user()->email }}" disabled
+                                       style="border-radius: 10px; padding: 10px 14px; background: #f1f5f9;">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" style="font-size: 0.88rem;">
+                                    <i class="fas fa-phone text-success me-1"></i>Téléphone <span class="text-danger">*</span>
+                                </label>
+                                <input type="tel" class="form-control" id="providerProfilePhone" 
+                                       value="{{ Auth::user()->phone }}" 
+                                       placeholder="Ex: +33 6 12 34 56 78" required
+                                       style="border-radius: 10px; padding: 10px 14px;">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" style="font-size: 0.88rem;">
+                                    <i class="fas fa-map-marker-alt text-danger me-1"></i>Ville <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="providerProfileCity" 
+                                       value="{{ Auth::user()->city ?? Auth::user()->detected_city }}" 
+                                       placeholder="Votre ville" required
+                                       style="border-radius: 10px; padding: 10px 14px;">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" style="font-size: 0.88rem;">
+                                    <i class="fas fa-globe text-info me-1"></i>Pays <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="providerProfileCountry" 
+                                       value="{{ Auth::user()->country ?? Auth::user()->detected_country ?? 'France' }}" 
+                                       placeholder="Votre pays" required
+                                       style="border-radius: 10px; padding: 10px 14px;">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" style="font-size: 0.88rem;">
+                                    <i class="fas fa-mail-bulk text-secondary me-1"></i>Code postal
+                                </label>
+                                <input type="text" class="form-control" id="providerProfilePostalCode" 
+                                       value="{{ Auth::user()->postal_code }}" 
+                                       placeholder="Ex: 75001"
+                                       style="border-radius: 10px; padding: 10px 14px;">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold" style="font-size: 0.88rem;">
+                                    <i class="fas fa-home text-warning me-1"></i>Adresse complète
+                                </label>
+                                <input type="text" class="form-control" id="providerProfileAddress" 
+                                       value="{{ Auth::user()->address }}" 
+                                       placeholder="Numéro et nom de rue"
+                                       style="border-radius: 10px; padding: 10px 14px;">
+                            </div>
+                        </div>
+
+                        <div class="alert mt-3 mb-0" style="background: linear-gradient(135deg, #fefce8, #fef9c3); border: 1px solid #fde047; border-radius: 12px; padding: 12px 16px; display: flex; align-items: flex-start; gap: 10px;">
+                            <i class="fas fa-info-circle" style="color: #ca8a04; margin-top: 2px; flex-shrink: 0;"></i>
+                            <div style="font-size: 0.85rem; color: #854d0e;">
+                                Ces informations seront visibles sur votre profil prestataire et permettront aux clients de vous contacter.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Sélection des catégories -->
+                <div class="provider-step-content" id="step1Content">
                     <h6 class="step-title">
                         <i class="fas fa-th-large"></i>
                         Sélectionnez vos domaines d'expertise
@@ -88,7 +179,7 @@
                     </div>
                 </div>
 
-                <!-- Step 3: Abonnement -->
+                <!-- Step 4: Abonnement -->
                 <div class="provider-step-content" id="step3Content">
                     <h6 class="step-title">
                         <i class="fas fa-crown"></i>
@@ -142,14 +233,14 @@
                     </div>
                 </div>
 
-                <!-- Step 4: Récapitulatif et confirmation -->
+                <!-- Step 5: Récapitulatif complet et confirmation -->
                 <div class="provider-step-content" id="step4Content">
                     <h6 class="step-title">
                         <i class="fas fa-check-double"></i>
-                        Récapitulatif
+                        Récapitulatif complet
                     </h6>
                     <p class="step-description">
-                        Vérifiez vos informations personnelles et vos services avant de valider.
+                        Vérifiez attentivement vos informations personnelles et vos services avant de valider votre inscription.
                     </p>
                     
                     <div class="services-summary" id="servicesSummary">
@@ -857,7 +948,7 @@
 
 @php
     $providerCurrentUser = Auth::check()
-        ? Auth::user()->only(['name', 'email', 'phone', 'city', 'country', 'address'])
+        ? Auth::user()->only(['name', 'email', 'phone', 'city', 'country', 'address', 'postal_code', 'detected_city', 'detected_country'])
         : [];
 @endphp
 
@@ -865,12 +956,13 @@
 (function() {
     // State
     let currentStep = 1;
+    const totalSteps = 5;
     let categoriesData = {};
     let selectedCategories = {};
     let selectedServices = [];
     let selectedPlan = null;
     
-    // User info for recap
+    // User info for recap (editable copy)
     const currentUser = @json($providerCurrentUser);
     
     // DOM Elements
@@ -878,6 +970,7 @@
     if (!modal) return;
     
     const stepsIndicator = document.getElementById('providerSteps');
+    const step0Content = document.getElementById('step0Content');
     const step1Content = document.getElementById('step1Content');
     const step2Content = document.getElementById('step2Content');
     const step3Content = document.getElementById('step3Content');
@@ -898,6 +991,59 @@
     btnNext.addEventListener('click', nextStep);
     btnPrev.addEventListener('click', prevStep);
     btnSubmit.addEventListener('click', submitProvider);
+    
+    // Collect profile data from form inputs
+    function collectProfileData() {
+        const name = document.getElementById('providerProfileName');
+        const phone = document.getElementById('providerProfilePhone');
+        const city = document.getElementById('providerProfileCity');
+        const country = document.getElementById('providerProfileCountry');
+        const postalCode = document.getElementById('providerProfilePostalCode');
+        const address = document.getElementById('providerProfileAddress');
+        
+        return {
+            name: name ? name.value.trim() : '',
+            phone: phone ? phone.value.trim() : '',
+            city: city ? city.value.trim() : '',
+            country: country ? country.value.trim() : '',
+            postal_code: postalCode ? postalCode.value.trim() : '',
+            address: address ? address.value.trim() : ''
+        };
+    }
+    
+    // Validate profile fields
+    function validateProfile() {
+        const profile = collectProfileData();
+        const errors = [];
+        
+        if (!profile.name) errors.push('Le nom est obligatoire');
+        if (!profile.phone) errors.push('Le téléphone est obligatoire pour que les clients puissent vous contacter');
+        if (!profile.city) errors.push('La ville est obligatoire');
+        if (!profile.country) errors.push('Le pays est obligatoire');
+        
+        return errors;
+    }
+    
+    // Highlight missing fields
+    function highlightMissingFields() {
+        const fields = [
+            { id: 'providerProfileName', required: true },
+            { id: 'providerProfilePhone', required: true },
+            { id: 'providerProfileCity', required: true },
+            { id: 'providerProfileCountry', required: true }
+        ];
+        
+        fields.forEach(f => {
+            const el = document.getElementById(f.id);
+            if (el && f.required && !el.value.trim()) {
+                el.style.borderColor = '#ef4444';
+                el.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.1)';
+            } else if (el) {
+                el.style.borderColor = '';
+                el.style.boxShadow = '';
+            }
+        });
+    }
     
     async function loadCategories() {
         categoriesGrid.innerHTML = '<div class="loading-categories"><i class="fas fa-spinner fa-spin"></i><span>Chargement des catégories...</span></div>';
@@ -1050,52 +1196,99 @@
     function renderSummary() {
         let html = '';
         let totalServices = 0;
+        const profile = collectProfileData();
         
-        // Personal info recap
+        // Personal info recap with edit button
         html += `
-            <div style="margin-bottom: 20px; padding: 16px; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-radius: 12px; border: 1px solid #7dd3fc;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                    <i class="fas fa-user-circle" style="color: #0284c7; font-size: 1.3rem;"></i>
-                    <strong style="color: #0c4a6e; font-size: 0.95rem;">Vos informations personnelles</strong>
+            <div style="margin-bottom: 20px; padding: 18px; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-radius: 14px; border: 1px solid #7dd3fc;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #0284c7, #0369a1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-user-circle" style="color: white; font-size: 1.1rem;"></i>
+                        </div>
+                        <strong style="color: #0c4a6e; font-size: 1rem;">Informations personnelles</strong>
+                    </div>
+                    <button type="button" onclick="goToStep(1)" class="btn btn-sm btn-outline-primary" style="border-radius: 8px; font-size: 0.78rem;">
+                        <i class="fas fa-pen me-1"></i>Modifier
+                    </button>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.88rem;">
-                    <div><span style="color: #64748b;">Nom :</span> <strong style="color: #1e293b;">${currentUser.name || '—'}</strong></div>
-                    <div><span style="color: #64748b;">Email :</span> <strong style="color: #1e293b;">${currentUser.email || '—'}</strong></div>
-                    <div><span style="color: #64748b;">Téléphone :</span> <strong style="color: #1e293b;">${currentUser.phone || '—'}</strong></div>
-                    <div><span style="color: #64748b;">Ville :</span> <strong style="color: #1e293b;">${currentUser.city || '—'}</strong></div>
-                    ${currentUser.country ? `<div><span style="color: #64748b;">Pays :</span> <strong style="color: #1e293b;">${currentUser.country}</strong></div>` : ''}
-                    ${currentUser.address ? `<div style="grid-column: span 2;"><span style="color: #64748b;">Adresse :</span> <strong style="color: #1e293b;">${currentUser.address}</strong></div>` : ''}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.88rem;">
+                    <div style="padding: 8px 12px; background: rgba(255,255,255,0.7); border-radius: 8px;">
+                        <span style="color: #64748b; font-size: 0.78rem; display: block;">Nom</span>
+                        <strong style="color: #1e293b;">${profile.name || '—'}</strong>
+                    </div>
+                    <div style="padding: 8px 12px; background: rgba(255,255,255,0.7); border-radius: 8px;">
+                        <span style="color: #64748b; font-size: 0.78rem; display: block;">Email</span>
+                        <strong style="color: #1e293b;">${currentUser.email || '—'}</strong>
+                    </div>
+                    <div style="padding: 8px 12px; background: rgba(255,255,255,0.7); border-radius: 8px;">
+                        <span style="color: #64748b; font-size: 0.78rem; display: block;">Téléphone</span>
+                        <strong style="color: #1e293b;">${profile.phone || '<span class=&quot;text-danger&quot;>Non renseigné</span>'}</strong>
+                    </div>
+                    <div style="padding: 8px 12px; background: rgba(255,255,255,0.7); border-radius: 8px;">
+                        <span style="color: #64748b; font-size: 0.78rem; display: block;">Ville</span>
+                        <strong style="color: #1e293b;">${profile.city || '<span class=&quot;text-danger&quot;>Non renseigné</span>'}</strong>
+                    </div>
+                    <div style="padding: 8px 12px; background: rgba(255,255,255,0.7); border-radius: 8px;">
+                        <span style="color: #64748b; font-size: 0.78rem; display: block;">Pays</span>
+                        <strong style="color: #1e293b;">${profile.country || '—'}</strong>
+                    </div>
+                    ${profile.postal_code ? `<div style="padding: 8px 12px; background: rgba(255,255,255,0.7); border-radius: 8px;">
+                        <span style="color: #64748b; font-size: 0.78rem; display: block;">Code postal</span>
+                        <strong style="color: #1e293b;">${profile.postal_code}</strong>
+                    </div>` : ''}
+                    ${profile.address ? `<div style="padding: 8px 12px; background: rgba(255,255,255,0.7); border-radius: 8px; grid-column: span 2;">
+                        <span style="color: #64748b; font-size: 0.78rem; display: block;">Adresse</span>
+                        <strong style="color: #1e293b;">${profile.address}</strong>
+                    </div>` : ''}
                 </div>
             </div>
         `;
+        
+        // Services recap with edit button
+        html += `<div style="margin-bottom: 20px; padding: 18px; background: white; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-briefcase" style="color: white; font-size: 1.1rem;"></i>
+                    </div>
+                    <strong style="color: #1e293b; font-size: 1rem;">Services proposés</strong>
+                </div>
+                <button type="button" onclick="goToStep(2)" class="btn btn-sm btn-outline-success" style="border-radius: 8px; font-size: 0.78rem;">
+                    <i class="fas fa-pen me-1"></i>Modifier
+                </button>
+            </div>`;
         
         for (const [categoryName, services] of Object.entries(selectedCategories)) {
             const categoryData = categoriesData[categoryName];
             if (!categoryData || services.length === 0) continue;
             
+            html += `<div style="margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <div style="width: 28px; height: 28px; border-radius: 7px; background: ${categoryData.color}; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem;">
+                        <i class="${categoryData.icon}"></i>
+                    </div>
+                    <strong style="font-size: 0.9rem; color: #374151;">${categoryName}</strong>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px; padding-left: 36px;">`;
+            
             services.forEach(service => {
                 totalServices++;
-                html += `
-                    <div class="summary-service-item">
-                        <div class="summary-service-icon" style="background: ${categoryData.color};">
-                            <i class="${categoryData.icon}"></i>
-                        </div>
-                        <div class="summary-service-info">
-                            <h6>${service.subcategory}</h6>
-                            <p>${categoryName}</p>
-                        </div>
-                    </div>
-                `;
+                html += `<span style="padding: 5px 12px; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 20px; font-size: 0.82rem; color: #065f46; font-weight: 500;">${service.subcategory}</span>`;
             });
+            
+            html += `</div></div>`;
         }
         
         if (totalServices === 0) {
-            html = '<div class="text-center text-muted py-4">Aucun service sélectionné</div>';
+            html += '<div class="text-center text-muted py-3">Aucun service sélectionné</div>';
         } else {
-            html = `<div class="mb-3"><strong>${totalServices} service(s)</strong> sélectionné(s)</div>` + html;
+            html = html.replace('Services proposés', `Services proposés <span style="font-size: 0.8rem; color: #64748b; font-weight: 400;">(${totalServices})</span>`);
         }
         
-        // Afficher l'abonnement choisi
+        html += '</div>';
+        
+        // Subscription recap
         if (selectedPlan) {
             const planLabel = selectedPlan === 'annual' ? 'Annuel (85€/an)' : 'Mensuel (9,99€/mois)';
             html += `
@@ -1127,14 +1320,25 @@
         hideError();
         
         if (currentStep === 1) {
+            // Validate profile fields
+            const profileErrors = validateProfile();
+            if (profileErrors.length > 0) {
+                highlightMissingFields();
+                showError(profileErrors[0]);
+                return;
+            }
+            // Save profile data to server
+            saveProfileFields();
+            goToStep(2);
+        } else if (currentStep === 2) {
             // Validate at least one category selected
             if (Object.keys(selectedCategories).length === 0) {
                 showError('Veuillez sélectionner au moins une catégorie.');
                 return;
             }
-            goToStep(2);
+            goToStep(3);
             renderSubcategoriesStep();
-        } else if (currentStep === 2) {
+        } else if (currentStep === 3) {
             // Validate at least one subcategory selected
             let hasServices = false;
             for (const services of Object.values(selectedCategories)) {
@@ -1147,9 +1351,9 @@
                 showError('Veuillez sélectionner au moins un service.');
                 return;
             }
-            goToStep(3);
-        } else if (currentStep === 3) {
             goToStep(4);
+        } else if (currentStep === 4) {
+            goToStep(5);
             renderSummary();
         }
     }
@@ -1157,6 +1361,30 @@
     function prevStep() {
         if (currentStep > 1) {
             goToStep(currentStep - 1);
+        }
+    }
+    
+    // Save profile fields to server (async, non-blocking)
+    async function saveProfileFields() {
+        const profile = collectProfileData();
+        try {
+            await fetch('{{ route("service-provider.update-profile-fields") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    name: profile.name,
+                    phone: profile.phone,
+                    city: profile.city,
+                    country: profile.country,
+                    postal_code: profile.postal_code,
+                    address: profile.address
+                })
+            });
+        } catch (e) {
+            console.warn('Profile save in background failed:', e);
         }
     }
     
@@ -1172,16 +1400,22 @@
         });
         
         // Show/hide content
-        step1Content.classList.toggle('active', step === 1);
-        step2Content.classList.toggle('active', step === 2);
-        step3Content.classList.toggle('active', step === 3);
-        step4Content.classList.toggle('active', step === 4);
+        step0Content.classList.toggle('active', step === 1);
+        step1Content.classList.toggle('active', step === 2);
+        step2Content.classList.toggle('active', step === 3);
+        step3Content.classList.toggle('active', step === 4);
+        step4Content.classList.toggle('active', step === 5);
         
         // Show/hide buttons
         btnPrev.style.display = step > 1 ? 'inline-flex' : 'none';
-        btnNext.style.display = step < 4 ? 'inline-flex' : 'none';
-        btnSubmit.style.display = step === 4 ? 'inline-flex' : 'none';
+        btnNext.style.display = step < totalSteps ? 'inline-flex' : 'none';
+        btnSubmit.style.display = step === totalSteps ? 'inline-flex' : 'none';
+        
+        hideError();
     }
+    
+    // Expose goToStep globally for recap edit buttons
+    window.goToStep = goToStep;
     
     async function submitProvider() {
         hideError();
@@ -1254,7 +1488,7 @@
         selectedPlan = null;
         document.querySelectorAll('#step3Content .plan-card').forEach(c => c.classList.remove('selected'));
         hideError();
-        goToStep(4);
+        goToStep(5);
         renderSummary();
     };
     
@@ -1295,33 +1529,16 @@
                         <i class="fas fa-check" style="color: white; font-size: 2rem;"></i>
                     </div>
                     <h5 style="color: #1f2937; font-weight: 700; margin-bottom: 0.5rem;">Félicitations ! 🎉</h5>
-                    <p style="color: #6b7280; margin-bottom: 1.5rem;">Vos nouvelles informations ont été ajoutées à votre profil. Les catégories et services précédents ont été conservés. Vous pouvez les gérer depuis votre profil.</p>
+                    <p style="color: #6b7280; margin-bottom: 1.5rem;">Votre profil prestataire est maintenant actif. Retrouvez et gérez vos services sur votre page dédiée.</p>
                     
                     ${subscriptionInfo}
                     
-                    <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08)); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; text-align: left;">
-                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem;">
-                            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem; flex-shrink: 0;">
-                                <i class="fas fa-shield-alt"></i>
-                            </div>
-                            <div>
-                                <h6 style="margin: 0; color: #4f46e5; font-weight: 600;">Obtenez votre badge vérifié</h6>
-                                <p style="margin: 0; font-size: 0.85rem; color: #6b7280;">Renforcez la confiance de vos clients avec un profil vérifié</p>
-                            </div>
-                        </div>
-                        <ul style="list-style: none; padding: 0; margin: 0;">
-                            <li style="padding: 0.25rem 0; font-size: 0.85rem; color: #4b5563;"><i class="fas fa-check" style="color: #10b981; margin-right: 0.5rem;"></i> Badge "Profil vérifié" visible</li>
-                            <li style="padding: 0.25rem 0; font-size: 0.85rem; color: #4b5563;"><i class="fas fa-check" style="color: #10b981; margin-right: 0.5rem;"></i> Plus de visibilité dans les résultats</li>
-                            <li style="padding: 0.25rem 0; font-size: 0.85rem; color: #4b5563;"><i class="fas fa-check" style="color: #10b981; margin-right: 0.5rem;"></i> Annonces illimitées</li>
-                        </ul>
-                    </div>
-                    
-                    <div style="display: flex; gap: 0.75rem; justify-content: center;">
+                    <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+                        <a href="{{ route('service-provider.mes-services') }}" class="btn btn-success" style="border-radius: 10px; padding: 0.625rem 1.25rem; background: linear-gradient(135deg, #10b981, #059669); border: none;">
+                            <i class="fas fa-briefcase me-1"></i> Voir mes services
+                        </a>
                         <button type="button" class="btn btn-outline-secondary" onclick="providerCloseAndReload()" style="border-radius: 10px; padding: 0.625rem 1.25rem;">
-                            <i class="fas fa-home"></i> Plus tard
-                        </button>
-                        <button type="button" class="btn btn-primary" onclick="providerGoToVerification()" style="border-radius: 10px; padding: 0.625rem 1.25rem; background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none;">
-                            <i class="fas fa-shield-alt"></i> Vérifier mon profil
+                            <i class="fas fa-home"></i> Retour au feed
                         </button>
                     </div>
                 </div>
@@ -1373,6 +1590,12 @@
         
         // Reset plan selection UI
         document.querySelectorAll('#step3Content .plan-card').forEach(c => c.classList.remove('selected'));
+        
+        // Reset profile field styles
+        ['providerProfileName', 'providerProfilePhone', 'providerProfileCity', 'providerProfileCountry'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) { el.style.borderColor = ''; el.style.boxShadow = ''; }
+        });
         
         goToStep(1);
     });

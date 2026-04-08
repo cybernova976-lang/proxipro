@@ -218,7 +218,7 @@ class ServiceProviderController extends Controller
                 'is_service_provider' => true,
                 'has_subscription' => false,
                 'plan' => null,
-                'redirect' => route('pro.dashboard')
+                'redirect' => route('service-provider.mes-services')
             ]);
 
         } catch (\Exception $e) {
@@ -257,7 +257,7 @@ class ServiceProviderController extends Controller
 
             $existingSub = ProSubscription::where('stripe_payment_intent', $session->payment_intent)->first();
             if ($existingSub) {
-                return redirect()->route('pro.dashboard')->with('success', 'Votre abonnement est déjà actif !');
+                return redirect()->route('service-provider.mes-services')->with('success', 'Votre abonnement est déjà actif !');
             }
 
             $data = session('provider_subscription', []);
@@ -294,7 +294,7 @@ class ServiceProviderController extends Controller
                 DB::commit();
                 session()->forget('provider_subscription');
 
-                return redirect()->route('pro.dashboard')->with('success', 'Félicitations ! Votre abonnement ' . ($plan === 'annual' ? 'annuel' : 'mensuel') . ' est activé !');
+                return redirect()->route('service-provider.mes-services')->with('success', 'Félicitations ! Votre abonnement ' . ($plan === 'annual' ? 'annuel' : 'mensuel') . ' est activé !');
 
             } catch (\Exception $e) {
                 DB::rollBack();
@@ -314,7 +314,23 @@ class ServiceProviderController extends Controller
     public function paymentCancel()
     {
         session()->forget('provider_subscription');
-        return redirect()->route('feed')->with('info', 'Paiement annulé. Votre profil prestataire est actif mais sans abonnement.');
+        return redirect()->route('service-provider.mes-services')->with('info', 'Paiement annulé. Votre profil prestataire est actif mais sans abonnement.');
+    }
+
+    /**
+     * Affiche la page "Mes Services" dédiée au prestataire
+     */
+    public function mesServices()
+    {
+        $user = Auth::user();
+        $services = $user->services()->orderBy('main_category')->orderBy('subcategory')->get();
+        $categoriesCount = $services->pluck('main_category')->unique()->count();
+        $subscription = ProSubscription::where('user_id', $user->id)
+            ->where('status', 'active')
+            ->latest()
+            ->first();
+
+        return view('service-provider.mes-services', compact('user', 'services', 'categoriesCount', 'subscription'));
     }
 
     /**
@@ -415,7 +431,7 @@ class ServiceProviderController extends Controller
         $user = Auth::user();
         $data = [];
 
-        $allowed = ['city', 'address', 'latitude', 'longitude',
+        $allowed = ['name', 'phone', 'city', 'address', 'country', 'postal_code', 'latitude', 'longitude',
                      'pro_notifications_email', 'pro_notifications_realtime', 'pro_notifications_sms'];
 
         foreach ($allowed as $field) {
