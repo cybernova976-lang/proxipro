@@ -8,6 +8,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
 use Carbon\Carbon;
 use Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoApiTransport;
@@ -31,10 +32,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $publicUrl = $this->resolvePublicUrl();
+
         // Force HTTPS in production (Railway reverse proxy)
-        if (app()->environment('production')) {
+        if (app()->environment('production') && $publicUrl !== null) {
+            URL::forceRootUrl($publicUrl);
             URL::forceScheme('https');
         }
+
+        ResetPassword::createUrlUsing(function ($notifiable, string $token) {
+            return $this->makeAbsoluteRoute('password.reset', [
+                'token' => $token,
+                'email' => $notifiable->getEmailForPasswordReset(),
+            ]);
+        });
 
         ResetPassword::toMailUsing(function ($notifiable, string $url) {
             return (new MailMessage)
@@ -80,5 +91,91 @@ class AppServiceProvider extends ServiceProvider
                 // Silently ignore if the database is not available (e.g. during build).
             }
         }
+    }
+
+    protected function makeAbsoluteRoute(string $name, array $parameters = []): string
+    {
+        $path = route($name, $parameters, false);
+        $publicUrl = $this->resolvePublicUrl();
+
+        if ($publicUrl !== null) {
+            return $publicUrl . $path;
+        }
+
+        return url($path);
+    }
+
+    protected function resolvePublicUrl(): ?string
+    {
+        $candidates = [];
+
+        if (! $this->app->runningInConsole() && $this->app->bound('request')) {
+            $candidates[] = request()->getSchemeAndHttpHost();
+        }
+
+        $candidates[] = config('app.url');
+
+        $railwayPublicDomain = env('RAILWAY_PUBLIC_DOMAIN');
+        if (is_string($railwayPublicDomain) && trim($railwayPublicDomain) !== '') {
+            $candidates[] = 'https://' . ltrim(trim($railwayPublicDomain), '/');
+        }
+
+        foreach ($candidates as $candidate) {
+            $normalized = $this->normalizePublicUrl($candidate);
+
+            if ($normalized !== null) {
+                return $normalized;
+            }
+        }
+
+        return null;
+    }
+
+    protected function normalizePublicUrl(mixed $candidate): ?string
+    {
+        if (! is_string($candidate)) {
+            return null;
+        }
+
+        $candidate = trim($candidate);
+        if ($candidate === '') {
+            return null;
+        }
+
+        if (! Str::startsWith($candidate, ['http://', 'https://'])) {
+            $candidate = 'https://' . ltrim($candidate, '/');
+        }
+
+        if (filter_var($candidate, FILTER_VALIDATE_URL) === false) {
+            return null;
+        }
+
+        $host = (string) parse_url($candidate, PHP_URL_HOST);
+        if ($host === '') {
+            return null;
+        }
+
+        $isIpAddress = filter_var($host, FILTER_VALIDATE_IP) !== false;
+        $isLocalhost = $host === 'localhost';
+        $looksLikeHash = preg_match('/^[a-f0-9]{32,}$/i', $host) === 1;
+
+        if ($looksLikeHash || (! $isIpAddress && ! $isLocalhost && ! str_contains($host, '.'))) {
+            return null;
+        }
+
+        $scheme = (string) (parse_url($candidate, PHP_URL_SCHEME) ?: 'https');
+        $port = parse_url($candidate, PHP_URL_PORT);
+        $path = trim((string) parse_url($candidate, PHP_URL_PATH));
+
+        $normalized = $scheme . '://' . $host;
+        if ($port !== false && $port !== null) {
+            $normalized .= ':' . $port;
+        }
+
+        if ($path !== '' && $path !== '/') {
+            $normalized .= '/' . trim($path, '/');
+        }
+
+        return rtrim($normalized, '/');
     }
 }
