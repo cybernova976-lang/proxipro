@@ -40,14 +40,12 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        ResetPassword::createUrlUsing(function ($notifiable, string $token) {
-            return $this->makeAbsoluteRoute('password.reset', [
+        ResetPassword::toMailUsing(function ($notifiable, string $token) {
+            $url = $this->makeAbsoluteRoute('password.reset', [
                 'token' => $token,
                 'email' => $notifiable->getEmailForPasswordReset(),
             ]);
-        });
 
-        ResetPassword::toMailUsing(function ($notifiable, string $url) {
             return (new MailMessage)
                 ->subject('Réinitialisation de votre mot de passe')
                 ->greeting('Bonjour ' . ($notifiable->name ?? ''))
