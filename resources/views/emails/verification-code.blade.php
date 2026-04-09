@@ -51,17 +51,6 @@
                         </td>
                     </tr>
 
-                    {{-- Security notice --}}
-                    <tr>
-                        <td style="padding:0 40px 16px 40px;">
-                            <div style="background-color:#eff6ff; border-radius:8px; padding:14px 18px;">
-                                <p style="color:#1e40af; font-size:12px; line-height:1.5; margin:0;">
-                                    📧 <strong>Vous ne trouvez pas cet e-mail ?</strong> Pensez à vérifier votre dossier <strong>Courrier indésirable</strong> (spam). Si le message s'y trouve, marquez-le comme « Non spam » pour recevoir nos prochains e-mails correctement.
-                                </p>
-                            </div>
-                        </td>
-                    </tr>
-
                     <tr>
                         <td style="padding:0 40px 32px 40px;">
                             <div style="background-color:#fef3c7; border-radius:8px; padding:14px 18px;">
