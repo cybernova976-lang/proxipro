@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class RegisterController extends Controller
 {
@@ -135,7 +136,7 @@ class RegisterController extends Controller
             if ($emailSent) {
                 // Redirect to code verification page
                 return redirect()->route('verification.code.show', ['email' => $user->email])
-                    ->with('success', 'Un code de vérification a été envoyé à votre adresse e-mail.');
+                    ->with('success', 'Un code de vérification a été envoyé à votre adresse e-mail. Pensez à vérifier votre dossier de courrier indésirable (spam).');
             }
 
             // Email failed: still redirect to verification page so user can request a resend
@@ -181,12 +182,12 @@ class RegisterController extends Controller
     protected function validator(array $data)
     {
         $rules = [
-            'email' => ['required', 'string', 'email:rfc,dns', 'max:255', 'unique:users,email,NULL,id,deleted_at,NULL'],
+            'email' => ['required', 'string', 'email:rfc,dns', 'max:255', Rule::unique('users', 'email')->whereNull('deleted_at')],
             'password' => [
                 'required',
                 'string',
                 'min:8',
-                'max:20',
+                'max:40',
                 'confirmed',
                 function ($attribute, $value, $fail) use ($data) {
                     $normalizedPassword = mb_strtolower(trim((string) $value));
@@ -254,7 +255,7 @@ class RegisterController extends Controller
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
             'password.required' => 'Le mot de passe est obligatoire.',
             'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
-            'password.max' => 'Le mot de passe ne peut pas dépasser 20 caractères.',
+            'password.max' => 'Le mot de passe ne peut pas dépasser 40 caractères.',
             'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
             'terms.required' => 'Vous devez accepter les conditions d\'utilisation.',
             'terms.accepted' => 'Vous devez accepter les conditions d\'utilisation.',

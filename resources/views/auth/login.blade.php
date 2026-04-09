@@ -138,7 +138,7 @@
         </p>
         
         <p class="text-center text-xs text-gray-400 mt-4">
-            <a href="{{ url('/legal/terms') }}" class="hover:text-gray-600 underline">Conditions</a> · <a href="{{ url('/legal/privacy') }}" class="hover:text-gray-600 underline">Confidentialité</a>
+            <a href="{{ route('legal.terms') }}" target="_blank" class="hover:text-gray-600 underline">Conditions</a> · <a href="{{ route('legal.privacy') }}" target="_blank" class="hover:text-gray-600 underline">Confidentialité</a>
         </p>
     </div>
 </div>

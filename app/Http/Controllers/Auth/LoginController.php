@@ -34,15 +34,15 @@ class LoginController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/profile';
+    protected $redirectTo = '/feed';
 
     /**
      * Determine the redirect path after login.
-     * All users go to their profile page.
+     * All users go to the feed page.
      */
     protected function redirectTo()
     {
-        return route('profile.show');
+        return route('feed');
     }
 
     /**

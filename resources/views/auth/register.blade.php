@@ -4,61 +4,73 @@
 
 @section('content')
 <!-- Panneau gauche - visible grand écran -->
-<div class="hidden lg:flex w-[440px] shrink-0 bg-white border-r border-gray-200 flex-col sticky top-0 h-screen">
+<div class="hidden lg:flex w-[440px] shrink-0 flex-col sticky top-0 h-screen" style="background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #3b82f6 100%);">
     <div class="flex flex-col h-full px-10 py-10">
         <!-- Logo -->
-        <a href="{{ url('/') }}" class="flex items-center gap-2 mb-16">
-            <span class="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-content-center text-white font-extrabold text-base shadow-md" style="display:inline-flex;align-items:center;justify-content:center;">P</span>
-            <span class="text-xl font-extrabold tracking-tight text-gray-900">ProxiPro</span>
+        <a href="{{ url('/') }}" class="flex items-center gap-2 mb-12">
+            <span class="w-9 h-9 bg-white/20 backdrop-blur rounded-xl flex items-center justify-content-center text-white font-extrabold text-base shadow-md" style="display:inline-flex;align-items:center;justify-content:center;">P</span>
+            <span class="text-xl font-extrabold tracking-tight text-white">ProxiPro</span>
         </a>
         
         <!-- Contenu -->
         <div class="flex-1 flex flex-col justify-center">
-            <h2 class="text-2xl font-bold text-gray-900 leading-snug mb-3">Trouvez et proposez<br>des services partout</h2>
-            <p class="text-sm text-gray-500 leading-relaxed mb-10">Rejoignez une communauté de prestataires et clients. Publication gratuite, messagerie intégrée.</p>
+            <h2 class="text-[26px] font-extrabold text-white leading-tight mb-3">Trouvez le bon pro,<br>près de chez vous</h2>
+            <p class="text-sm text-blue-100 leading-relaxed mb-10">Rejoignez des milliers d'utilisateurs qui font confiance à ProxiPro pour trouver des prestataires fiables.</p>
             
-            <div class="space-y-5">
-                <div class="flex items-start gap-3">
-                    <div class="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
-                        <svg class="w-3 h-3 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <div class="space-y-4">
+                <div class="flex items-start gap-3.5 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3.5 transition hover:bg-white/15">
+                    <div class="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                     <div>
-                        <p class="text-sm font-medium text-gray-900">Inscription gratuite</p>
-                        <p class="text-xs text-gray-400 mt-0.5">Aucun frais pour créer votre compte</p>
+                        <p class="text-sm font-semibold text-white">100% gratuit</p>
+                        <p class="text-xs text-blue-200 mt-0.5">Créez votre compte sans aucun frais</p>
                     </div>
                 </div>
-                <div class="flex items-start gap-3">
-                    <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
-                        <svg class="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                <div class="flex items-start gap-3.5 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3.5 transition hover:bg-white/15">
+                    <div class="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
                     </div>
                     <div>
-                        <p class="text-sm font-medium text-gray-900">Profils vérifiés</p>
-                        <p class="text-xs text-gray-400 mt-0.5">Badges de confiance pour les prestataires</p>
+                        <p class="text-sm font-semibold text-white">Prestataires vérifiés</p>
+                        <p class="text-xs text-blue-200 mt-0.5">Badges de confiance et avis certifiés</p>
                     </div>
                 </div>
-                <div class="flex items-start gap-3">
-                    <div class="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center shrink-0 mt-0.5">
-                        <svg class="w-3 h-3 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                <div class="flex items-start gap-3.5 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3.5 transition hover:bg-white/15">
+                    <div class="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/></svg>
                     </div>
                     <div>
-                        <p class="text-sm font-medium text-gray-900">Messagerie sécurisée</p>
-                        <p class="text-xs text-gray-400 mt-0.5">Échangez directement avec vos clients</p>
+                        <p class="text-sm font-semibold text-white">Messagerie intégrée</p>
+                        <p class="text-xs text-blue-200 mt-0.5">Échangez directement et en toute sécurité</p>
                     </div>
                 </div>
-                <div class="flex items-start gap-3">
-                    <div class="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center shrink-0 mt-0.5">
-                        <svg class="w-3 h-3 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                <div class="flex items-start gap-3.5 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3.5 transition hover:bg-white/15">
+                    <div class="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
                     </div>
                     <div>
-                        <p class="text-sm font-medium text-gray-900">Points de bienvenue</p>
-                        <p class="text-xs text-gray-400 mt-0.5">Bonus offerts dès la création du compte</p>
+                        <p class="text-sm font-semibold text-white">5 points offerts</p>
+                        <p class="text-xs text-blue-200 mt-0.5">Bonus de bienvenue dès l'inscription</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- Social proof -->
+            <div class="mt-10 pt-6 border-t border-white/15">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="flex -space-x-2">
+                        <div class="w-7 h-7 rounded-full bg-blue-300 border-2 border-white/30 flex items-center justify-center text-[10px] font-bold text-blue-800">JD</div>
+                        <div class="w-7 h-7 rounded-full bg-green-300 border-2 border-white/30 flex items-center justify-center text-[10px] font-bold text-green-800">ML</div>
+                        <div class="w-7 h-7 rounded-full bg-purple-300 border-2 border-white/30 flex items-center justify-center text-[10px] font-bold text-purple-800">SA</div>
+                    </div>
+                    <p class="text-xs text-blue-200">Rejoignez notre communauté grandissante</p>
                 </div>
             </div>
         </div>
         
         <!-- Footer -->
-        <p class="text-xs text-gray-400">© {{ date('Y') }} ProxiPro</p>
+        <p class="text-xs text-blue-200/60">© {{ date('Y') }} ProxiPro</p>
     </div>
 </div>
 
@@ -309,7 +321,7 @@
                         <input 
                             id="password" name="password" type="password" required 
                             placeholder="Min. 8 caractères"
-                            maxlength="20"
+                            maxlength="40"
                             autocomplete="new-password"
                             autocapitalize="off"
                             spellcheck="false"
@@ -322,7 +334,7 @@
                     @error('password')
                         <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                     @enderror
-                    <p class="mt-2 text-xs text-gray-500">8 à 20 caractères. Les phrases de passe sont autorisées (espaces inclus).</p>
+                    <p class="mt-2 text-xs text-gray-500">8 à 40 caractères. Les phrases de passe sont autorisées (espaces inclus).</p>
                     <div class="mt-1.5 h-1 bg-gray-100 rounded-full overflow-hidden">
                         <div id="password-strength-bar" class="h-full rounded-full transition-all duration-500 bg-gray-300" style="width: 0%"></div>
                     </div>
@@ -335,7 +347,7 @@
                         <input 
                             id="password-confirm" name="password_confirmation" type="password" required 
                             placeholder="Répétez le mot de passe"
-                            maxlength="20"
+                            maxlength="40"
                             autocomplete="new-password"
                             autocapitalize="off"
                             spellcheck="false"
@@ -353,7 +365,7 @@
                     <label class="flex items-start gap-2.5 cursor-pointer">
                         <input type="checkbox" name="terms" required class="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         <span class="text-xs text-gray-600 leading-relaxed">
-                            J'accepte les <a href="{{ url('/legal/terms') }}" class="text-blue-600 hover:underline">Conditions d'utilisation</a> et la <a href="{{ url('/legal/privacy') }}" class="text-blue-600 hover:underline">Politique de confidentialité</a> *
+                            J'accepte les <a href="{{ route('legal.terms') }}" target="_blank" class="text-blue-600 hover:underline">Conditions d'utilisation</a> et la <a href="{{ route('legal.privacy') }}" target="_blank" class="text-blue-600 hover:underline">Politique de confidentialité</a> *
                         </span>
                     </label>
                     <label class="flex items-start gap-2.5 cursor-pointer">
@@ -378,7 +390,7 @@
 
         <!-- Footer -->
         <p class="text-center text-xs text-gray-400 mt-4">
-            <a href="{{ url('/legal/terms') }}" class="hover:text-gray-600 underline">Conditions</a> · <a href="{{ url('/legal/privacy') }}" class="hover:text-gray-600 underline">Confidentialité</a>
+            <a href="{{ route('legal.terms') }}" target="_blank" class="hover:text-gray-600 underline">Conditions</a> · <a href="{{ route('legal.privacy') }}" target="_blank" class="hover:text-gray-600 underline">Confidentialité</a>
         </p>
     </div>
 </div>
@@ -492,8 +504,8 @@
             return { width: '20%', color: '#ef4444', text: 'Insuffisant (minimum 8 caractères)' };
         }
 
-        if (password.length > 20) {
-            return { width: '20%', color: '#ef4444', text: 'Insuffisant (maximum 20 caractères)' };
+        if (password.length > 40) {
+            return { width: '20%', color: '#ef4444', text: 'Insuffisant (maximum 40 caractères)' };
         }
 
         if (commonPasswords.has(normalized)) {
