@@ -136,7 +136,7 @@ class RegisterController extends Controller
             if ($emailSent) {
                 // Redirect to code verification page
                 return redirect()->route('verification.code.show', ['email' => $user->email])
-                    ->with('success', 'Un code de vérification a été envoyé à votre adresse e-mail. Pensez à vérifier votre dossier de courrier indésirable (spam).');
+                    ->with('success', 'Un code de vérification a été envoyé à votre adresse e-mail.');
             }
 
             // Email failed: still redirect to verification page so user can request a resend
