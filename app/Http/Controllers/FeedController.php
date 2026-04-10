@@ -54,8 +54,24 @@ class FeedController extends Controller
         $clientRequests = $clientRequestsQuery->take(8)->get();
 
         // ===== SECTION "LES DERNIÈRES PÉPITES" - filtrée par proximité =====
-        $allAdsQuery = Ad::where('status', 'active')->with('user');
-        
+        // Nouvelle logique : n'afficher que les annonces des utilisateurs abonnés (plan actif) ou boostées
+        $allAdsQuery = Ad::where('status', 'active')->with('user')
+            ->where(function($q) {
+                $q->where(function($q2) {
+                    $q2->where('is_boosted', true)
+                        ->where('boost_end', '>', now());
+                })
+                ->orWhereHas('user', function($q3) {
+                    $q3->whereNotNull('plan')
+                        ->where('plan', '!=', '')
+                        ->where('plan', '!=', 'free')
+                        ->where(function($q4) {
+                            $q4->whereNull('subscription_end')
+                                ->orWhere('subscription_end', '>', now());
+                        });
+                });
+            });
+
         // Filtre visibilité : pro_targeted visible uniquement par les pros
         $allAdsQuery->where(function($q) use ($user) {
             $q->where('visibility', 'public');
@@ -66,30 +82,23 @@ class FeedController extends Controller
 
         // Appliquer le filtre de type si présent
         $filterType = $request->get('type', 'all'); // all, offres, demandes
-        
-        // Personnalisation: les pros voient les demandes par défaut, les particuliers voient les offres
         if ($filterType === 'all' && !$request->has('type')) {
             if ($user && ($user->user_type === 'professionnel' || $user->is_service_provider)) {
                 $filterType = 'demandes';
             }
         }
-        
         if ($filterType === 'offres') {
             $allAdsQuery->where('service_type', 'offre');
         } elseif ($filterType === 'demandes') {
             $allAdsQuery->where('service_type', 'demande');
         }
-        
-        // Appliquer le filtre de proximité géographique
         if ($geoEnabled) {
             $allAdsQuery->withinRadius($userLat, $userLng, $userRadius);
         }
-
         // Toujours prioriser : boostées > épinglées > récentes
         $allAdsQuery->orderByRaw("CASE WHEN is_boosted = true AND boost_end > ? THEN 0 ELSE 1 END", [now()])
                      ->orderBy('is_pinned', 'desc')
                      ->orderBy('created_at', 'desc');
-        
         $ads = $allAdsQuery->paginate(12)->withQueryString();
         
         // Si peu de résultats, élargir automatiquement le rayon

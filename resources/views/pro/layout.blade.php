@@ -214,9 +214,10 @@
         overflow-y: auto;
         overflow-x: hidden;
         z-index: 1040;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         scrollbar-width: none;
         -ms-overflow-style: none;
+        transform: translateX(0);
     }
 
     .pro-sidebar::-webkit-scrollbar {
@@ -565,6 +566,17 @@
 
         .pro-main {
             margin-left: 0;
+        }
+    }
+
+    @media (min-width: 992px) {
+        .pro-sidebar {
+            transform: translateX(0) !important;
+            display: block !important;
+        }
+
+        .pro-main {
+            margin-left: var(--sidebar-width) !important;
         }
     }
 

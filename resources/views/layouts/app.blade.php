@@ -6493,9 +6493,9 @@
         <header class="header-modern sticky-top">
             <div class="container-fluid px-4">
                 <div class="d-flex justify-content-between align-items-center h-100">
-                    <div class="d-flex align-items-center gap-2 mobile-brand-group">
-                        <!-- Logo Ã  gauche -->
-                        <a class="navbar-brand-modern" href="{{ Auth::check() ? route('feed') : url('/') }}">
+                    <!-- Logo à gauche -->
+                    <div class="d-flex align-items-center gap-2 mobile-brand-group flex-grow-1" style="min-width:0;">
+                        <a class="navbar-brand-modern me-2" href="{{ Auth::check() ? route('feed') : url('/') }}">
                             <div class="brand-logo">P</div>
                             <span class="brand-text d-none d-sm-inline">ProxiPro</span>
                         </a>
@@ -6504,14 +6504,10 @@
                             <span>Accueil</span>
                         </a>
                     </div>
-
-                    
-                    <!-- Search Removed -->
-                    
                     @auth
                     @if(!request()->routeIs('feed.test'))
-                    <!-- Navigation principale dans le header -->
-                    <div class="d-none d-lg-flex align-items-center gap-1 mx-4">
+                    <!-- Navigation principale + Contact à droite -->
+                    <div class="d-none d-lg-flex align-items-center gap-1 ms-auto">
                         <a href="{{ route('feed') }}" class="header-nav-btn {{ request()->routeIs('feed') ? 'active' : '' }}">
                             <i class="fas fa-home"></i><span>Accueil</span>
                         </a>
@@ -6521,10 +6517,12 @@
                         <a href="{{ route('ads.create') }}" class="header-nav-btn header-nav-btn-primary">
                             <i class="fas fa-plus-circle"></i><span>Publier une offre</span>
                         </a>
+                        <a href="{{ route('contact.index') }}" class="header-nav-btn">
+                            <i class="fas fa-headset"></i><span>Contact</span>
+                        </a>
                     </div>
-                    
                     <!-- Actions droite -->
-                    <div class="d-flex align-items-center gap-3 mobile-actions-group">
+                    <div class="d-flex align-items-center gap-3 mobile-actions-group ms-2">
 
                         <!-- Bouton Devenir Prestataire / Espace Pro -->
                         @php
