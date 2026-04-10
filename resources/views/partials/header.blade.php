@@ -1,7 +1,7 @@
 {{-- Header partagé pour toutes les pages standalone --}}
 <header class="main-header-modern">
     <div class="container-fluid px-4">
-        <div class="d-flex justify-content-between align-items-center h-100">
+        <div class="d-flex align-items-center h-100">
             <!-- Logo -->
             <a href="{{ route('feed') }}" class="navbar-brand-modern">
                 <div class="brand-logo">P</div>
@@ -12,8 +12,8 @@
             
             @auth
             <!-- Navigation centrale -->
-            <div class="d-none d-lg-flex align-items-center gap-1 mx-4">
-                <a href="{{ route('feed') }}" class="nav-link-modern active">
+            <div class="d-none d-lg-flex align-items-center gap-1 mx-4 flex-grow-1 justify-content-center">
+                <a href="{{ route('feed') }}" class="nav-link-modern {{ request()->routeIs('feed') ? 'active' : '' }}">
                     <i class="fas fa-home"></i>Accueil
                 </a>
                 <a href="{{ route('home') }}" class="nav-link-modern">
@@ -31,6 +31,9 @@
                         <span class="lost-badge">{{ $lostItemsCountHeader }}</span>
                     @endif
                 </a>
+                <a href="{{ route('contact.index') }}" class="nav-link-modern {{ request()->routeIs('contact.*') ? 'active' : '' }}">
+                    <i class="fas fa-headset"></i>Contact
+                </a>
                 <div class="dropdown">
                     <a href="#" class="nav-link-modern dropdown-toggle" data-bs-toggle="dropdown">
                         <i class="fas fa-tools"></i>Outils
@@ -44,7 +47,7 @@
             </div>
 
             <!-- Actions droite -->
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 ms-auto">
                 <!-- Bouton Devenir Prestataire -->
                 @php
                     $user = Auth::user();
@@ -128,6 +131,7 @@
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('messages.index') }}"><i class="fas fa-envelope text-info"></i>Messages @if($unreadMessages > 0)<span class="badge bg-danger ms-auto" style="font-size: 0.65rem;">{{ $unreadMessages }}</span>@endif</a></li>
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('points.dashboard') }}"><i class="fas fa-coins text-warning"></i>Mes Points <span class="badge bg-success ms-auto">{{ Auth::user()->available_points ?? 0 }}</span></a></li>
                         <li><hr class="dropdown-divider my-2"></li>
+                        <li><a class="dropdown-item dropdown-item-modern" href="{{ route('contact.index') }}"><i class="fas fa-headset text-primary"></i>Contact</a></li>
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('pricing.index') }}"><i class="fas fa-crown text-warning"></i>Tarifs</a></li>
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('settings.index') }}"><i class="fas fa-cog text-secondary"></i>Paramètres</a></li>
                         @if(Auth::user()->email === config('admin.principal_admin.email'))
@@ -147,7 +151,7 @@
             </div>
             @else
             <!-- Guest Navigation -->
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 ms-auto">
                 <a href="{{ route('login') }}" class="btn-auth btn-login">Connexion</a>
                 <a href="{{ route('register') }}" class="btn-auth btn-register">S'inscrire</a>
             </div>
