@@ -198,6 +198,11 @@ class ProfileController extends Controller
         $user = \App\Models\User::with('services')->where('id', $id)->firstOrFail();
         $user->refresh(); // Force le rafraîchissement des données depuis la DB
         
+        // Incrémenter le compteur de vues du profil (seulement si un autre utilisateur visite)
+        if (!Auth::check() || Auth::id() !== $user->id) {
+            $user->increment('profile_views');
+        }
+        
         // Récupérer les annonces actives de l'utilisateur
         $ads = Ad::where('user_id', $user->id)
             ->where('status', 'active')

@@ -470,6 +470,25 @@
     .message-input::placeholder {
         color: #8696a0;
     }
+
+    .char-counter {
+        font-size: 0.7rem;
+        color: #8696a0;
+        padding: 0 12px 6px;
+        text-align: right;
+        background: white;
+        border-radius: 0 0 8px 8px;
+        margin-top: -2px;
+    }
+
+    .char-counter.warning {
+        color: #f59e0b;
+    }
+
+    .char-counter.danger {
+        color: #ef4444;
+        font-weight: 600;
+    }
     
     .btn-send {
         width: 48px;
@@ -480,7 +499,7 @@
         color: white;
         font-size: 1.2rem;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: all 0.2s;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -488,13 +507,125 @@
     
     .btn-send:hover {
         background: #008f72;
+        transform: scale(1.05);
+    }
+
+    .btn-send:active {
+        transform: scale(0.95);
+    }
+
+    /* Message tail (WhatsApp style) */
+    .message.own .message-bubble::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: -8px;
+        width: 0;
+        height: 0;
+        border-left: 8px solid #d9fdd3;
+        border-bottom: 8px solid transparent;
+    }
+
+    .message.other .message-bubble::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -8px;
+        width: 0;
+        height: 0;
+        border-right: 8px solid #ffffff;
+        border-bottom: 8px solid transparent;
+    }
+
+    .message-bubble {
+        padding: 8px 12px;
+        border-radius: 8px;
+        position: relative;
+        line-height: 1.4;
+        font-size: 0.95rem;
+        word-wrap: break-word;
+    }
+
+    /* Message links styling */
+    .message-text a {
+        color: #027eb5;
+        text-decoration: underline;
+    }
+
+    /* Emoji-only messages */
+    .message-bubble.emoji-only {
+        background: transparent !important;
+        box-shadow: none !important;
+        font-size: 2.5rem;
+        padding: 4px 8px;
+        line-height: 1.2;
+    }
+
+    .message-bubble.emoji-only::after {
+        display: none;
+    }
+
+    .message-bubble.emoji-only .message-meta {
+        font-size: 0.68rem;
+    }
+
+    /* New message indicator animation */
+    .message.new-message {
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Scroll to bottom button */
+    .scroll-bottom-btn {
+        position: absolute;
+        bottom: 90px;
+        right: 30px;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: white;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        color: #54656f;
+        font-size: 1.1rem;
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 5;
+        transition: all 0.2s;
+    }
+
+    .scroll-bottom-btn:hover {
+        background: #f0f2f5;
+    }
+
+    .scroll-bottom-btn .unread-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: #25d366;
+        color: white;
+        font-size: 0.65rem;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
     }
 
     .emoji-picker {
         position: absolute;
         bottom: 70px;
         left: 20px;
-        width: 280px;
+        width: 320px;
+        max-height: 300px;
         background: #ffffff;
         border: 1px solid #e9edef;
         border-radius: 12px;
@@ -502,26 +633,42 @@
         padding: 12px;
         display: none;
         z-index: 10;
+        overflow-y: auto;
+    }
+
+    .emoji-category-label {
+        font-size: 0.7rem;
+        color: #8696a0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 8px 0 4px;
+        font-weight: 600;
+    }
+
+    .emoji-category-label:first-child {
+        margin-top: 0;
     }
 
     .emoji-grid {
         display: grid;
         grid-template-columns: repeat(8, 1fr);
-        gap: 6px;
+        gap: 4px;
     }
 
     .emoji-btn {
         border: none;
         background: transparent;
         cursor: pointer;
-        font-size: 1.1rem;
-        padding: 4px;
+        font-size: 1.2rem;
+        padding: 5px;
         border-radius: 6px;
-        transition: background 0.15s;
+        transition: all 0.15s;
+        line-height: 1;
     }
 
     .emoji-btn:hover {
         background: #f0f2f5;
+        transform: scale(1.2);
     }
     
     .message-actions {
@@ -843,13 +990,15 @@
                         </button>
                     </div>
                     <div class="message-input-wrapper">
-                        <textarea class="message-input" id="messageInput" placeholder="Tapez un message" autocomplete="off" rows="1"></textarea>
+                        <textarea class="message-input" id="messageInput" placeholder="Tapez un message" autocomplete="off" rows="1" maxlength="3000"></textarea>
+                        <div class="char-counter" id="charCounter">0 / 3000</div>
                     </div>
                     <button type="submit" class="btn-send" title="Envoyer">
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </form>
                 <div class="emoji-picker" id="emojiPicker">
+                    <div class="emoji-category-label">Smileys</div>
                     <div class="emoji-grid">
                         <button type="button" class="emoji-btn" data-emoji="😀">😀</button>
                         <button type="button" class="emoji-btn" data-emoji="😁">😁</button>
@@ -863,18 +1012,56 @@
                         <button type="button" class="emoji-btn" data-emoji="😢">😢</button>
                         <button type="button" class="emoji-btn" data-emoji="😭">😭</button>
                         <button type="button" class="emoji-btn" data-emoji="😡">😡</button>
+                        <button type="button" class="emoji-btn" data-emoji="😅">😅</button>
+                        <button type="button" class="emoji-btn" data-emoji="🤗">🤗</button>
+                        <button type="button" class="emoji-btn" data-emoji="🤩">🤩</button>
+                        <button type="button" class="emoji-btn" data-emoji="😇">😇</button>
+                        <button type="button" class="emoji-btn" data-emoji="🥰">🥰</button>
+                        <button type="button" class="emoji-btn" data-emoji="😏">😏</button>
+                        <button type="button" class="emoji-btn" data-emoji="😬">😬</button>
+                        <button type="button" class="emoji-btn" data-emoji="🤭">🤭</button>
+                        <button type="button" class="emoji-btn" data-emoji="🙄">🙄</button>
+                        <button type="button" class="emoji-btn" data-emoji="😴">😴</button>
+                        <button type="button" class="emoji-btn" data-emoji="🤯">🤯</button>
+                        <button type="button" class="emoji-btn" data-emoji="🥳">🥳</button>
+                    </div>
+                    <div class="emoji-category-label">Gestes</div>
+                    <div class="emoji-grid">
                         <button type="button" class="emoji-btn" data-emoji="👍">👍</button>
-                        <button type="button" class="emoji-btn" data-emoji="🙏">🙏</button>
+                        <button type="button" class="emoji-btn" data-emoji="👎">👎</button>
                         <button type="button" class="emoji-btn" data-emoji="👏">👏</button>
-                        <button type="button" class="emoji-btn" data-emoji="🔥">🔥</button>
-                        <button type="button" class="emoji-btn" data-emoji="🎉">🎉</button>
+                        <button type="button" class="emoji-btn" data-emoji="🙏">🙏</button>
+                        <button type="button" class="emoji-btn" data-emoji="🤝">🤝</button>
+                        <button type="button" class="emoji-btn" data-emoji="💪">💪</button>
+                        <button type="button" class="emoji-btn" data-emoji="✌️">✌️</button>
+                        <button type="button" class="emoji-btn" data-emoji="👋">👋</button>
+                        <button type="button" class="emoji-btn" data-emoji="🙌">🙌</button>
+                        <button type="button" class="emoji-btn" data-emoji="☝️">☝️</button>
+                        <button type="button" class="emoji-btn" data-emoji="👌">👌</button>
+                        <button type="button" class="emoji-btn" data-emoji="👀">👀</button>
+                    </div>
+                    <div class="emoji-category-label">Objets & Symboles</div>
+                    <div class="emoji-grid">
                         <button type="button" class="emoji-btn" data-emoji="❤️">❤️</button>
+                        <button type="button" class="emoji-btn" data-emoji="🧡">🧡</button>
+                        <button type="button" class="emoji-btn" data-emoji="💛">💛</button>
+                        <button type="button" class="emoji-btn" data-emoji="💚">💚</button>
+                        <button type="button" class="emoji-btn" data-emoji="🔥">🔥</button>
+                        <button type="button" class="emoji-btn" data-emoji="⭐">⭐</button>
+                        <button type="button" class="emoji-btn" data-emoji="🎉">🎉</button>
                         <button type="button" class="emoji-btn" data-emoji="💡">💡</button>
                         <button type="button" class="emoji-btn" data-emoji="✅">✅</button>
                         <button type="button" class="emoji-btn" data-emoji="❌">❌</button>
                         <button type="button" class="emoji-btn" data-emoji="📎">📎</button>
                         <button type="button" class="emoji-btn" data-emoji="📷">📷</button>
                         <button type="button" class="emoji-btn" data-emoji="📝">📝</button>
+                        <button type="button" class="emoji-btn" data-emoji="💰">💰</button>
+                        <button type="button" class="emoji-btn" data-emoji="🏠">🏠</button>
+                        <button type="button" class="emoji-btn" data-emoji="🔧">🔧</button>
+                        <button type="button" class="emoji-btn" data-emoji="📞">📞</button>
+                        <button type="button" class="emoji-btn" data-emoji="📍">📍</button>
+                        <button type="button" class="emoji-btn" data-emoji="⏰">⏰</button>
+                        <button type="button" class="emoji-btn" data-emoji="🎯">🎯</button>
                     </div>
                 </div>
             </div>
@@ -930,7 +1117,7 @@
                 const now = new Date();
                 const time = now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
                 const msgDiv = document.createElement('div');
-                msgDiv.className = 'message own';
+                msgDiv.className = 'message own new-message';
                 msgDiv.dataset.messageId = data.message?.id || '';
                 msgDiv.dataset.createdAt = Math.floor(Date.now() / 1000);
                 msgDiv.innerHTML = buildMessageHtml({
@@ -947,6 +1134,7 @@
                 chatMessages.scrollTop = chatMessages.scrollHeight;
                 messageInput.value = '';
                 messageInput.style.height = 'auto';
+                updateCharCounter();
                 scheduleActionExpiry(msgDiv);
                 
                 if (data.message?.id) {
@@ -964,8 +1152,25 @@
         el.style.height = Math.min(el.scrollHeight, 200) + 'px';
     }
 
+    // Character counter
+    const charCounter = document.getElementById('charCounter');
+    const maxChars = 3000;
+
+    function updateCharCounter() {
+        if (!messageInput || !charCounter) return;
+        const len = messageInput.value.length;
+        charCounter.textContent = len + ' / ' + maxChars;
+        charCounter.classList.remove('warning', 'danger');
+        if (len >= maxChars) {
+            charCounter.classList.add('danger');
+        } else if (len >= maxChars * 0.9) {
+            charCounter.classList.add('warning');
+        }
+    }
+
     messageInput?.addEventListener('input', function() {
         autoResize(this);
+        updateCharCounter();
     });
 
     messageInput?.addEventListener('keydown', function(e) {
@@ -1069,7 +1274,7 @@
                     if (msg.sender_id != {{ auth()->id() }}) {
                         const time = new Date(msg.created_at).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
                         const msgDiv = document.createElement('div');
-                        msgDiv.className = 'message other';
+                        msgDiv.className = 'message other new-message';
                         msgDiv.innerHTML = buildMessageHtml({
                             content: msg.content || '',
                             time,

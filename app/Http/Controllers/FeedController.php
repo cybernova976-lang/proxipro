@@ -310,7 +310,7 @@ class FeedController extends Controller
             'unread_messages' => $user->unreadMessagesCount(),
             'available_points' => $user->available_points ?? 0,
             'saved_ads' => $user->savedAds()->count(),
-            'profile_views' => 0, 
+            'profile_views' => $user->profile_views ?? 0, 
         ];
 
         // Catégories populaires avec compteurs

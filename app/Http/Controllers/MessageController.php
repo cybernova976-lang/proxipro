@@ -6,6 +6,7 @@ use App\Models\Ad;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Notifications\NewMessageNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -66,7 +67,7 @@ class MessageController extends Controller
     {
         $request->validate([
             'conversation_id' => 'required|exists:conversations,id',
-            'content' => 'required|string|max:5000'
+            'content' => 'required|string|max:3000'
         ]);
 
         $user = Auth::user();
@@ -89,6 +90,13 @@ class MessageController extends Controller
             'content' => $request->content
         ]);
 
+        // Notifier le destinataire par email et notification interne
+        $recipientId = $conversation->user1_id === $user->id ? $conversation->user2_id : $conversation->user1_id;
+        $recipient = User::find($recipientId);
+        if ($recipient) {
+            $recipient->notify(new NewMessageNotification($message, $conversation, $user));
+        }
+
         return response()->json([
             'success' => true,
             'message' => $message->load('sender')
@@ -101,7 +109,7 @@ class MessageController extends Controller
         $request->validate([
             'recipient_id' => 'required|exists:users,id',
             'ad_id' => 'nullable|exists:ads,id',
-            'message' => 'required|string|max:5000'
+            'message' => 'required|string|max:3000'
         ]);
 
         $currentUser = Auth::user();
@@ -151,6 +159,9 @@ class MessageController extends Controller
                 'sender_id' => $currentUser->id,
                 'content' => $request->message
             ]);
+
+            // Notifier le destinataire par email et notification interne
+            $otherUser->notify(new NewMessageNotification($message, $conversation, $currentUser));
 
             DB::commit();
 
@@ -265,7 +276,7 @@ class MessageController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'content' => 'required|string|max:5000'
+            'content' => 'required|string|max:3000'
         ]);
 
         $user = Auth::user();
