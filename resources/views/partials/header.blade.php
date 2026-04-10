@@ -13,7 +13,7 @@
             @auth
             <!-- Navigation centrale -->
             <div class="d-none d-lg-flex align-items-center gap-1 mx-4 flex-grow-1 justify-content-center">
-                <a href="{{ route('feed') }}" class="nav-link-modern active">
+                <a href="{{ route('feed') }}" class="nav-link-modern {{ request()->routeIs('feed') ? 'active' : '' }}">
                     <i class="fas fa-home"></i>Accueil
                 </a>
                 <a href="{{ route('home') }}" class="nav-link-modern">
