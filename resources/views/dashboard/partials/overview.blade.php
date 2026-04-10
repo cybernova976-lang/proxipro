@@ -70,31 +70,31 @@
 
     <!-- Quick Actions -->
     <div class="actions-row">
-        <a href="#" onclick="dashboardNav('my-ads'); return false;" class="action-card">
-            <div class="action-icon" style="background: #f3e8ff; color: #8b5cf6;">
+        <a href="#my-ads" onclick="dashboardNav('my-ads'); return false;" class="action-card" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); border: none;">
+            <div class="action-icon" style="background: rgba(255,255,255,0.2); color: white;">
                 <i class="fas fa-list-alt"></i>
             </div>
             <div>
-                <h5>Mes Annonces</h5>
-                <p>Gérez vos annonces publiées</p>
+                <h5 style="color: white;">Mes Annonces</h5>
+                <p style="color: rgba(255,255,255,0.8);">Gérez vos annonces publiées</p>
             </div>
         </a>
-        <a href="#" onclick="dashboardNav('profile-edit'); return false;" class="action-card">
-            <div class="action-icon" style="background: #eff6ff; color: #3b82f6;">
+        <a href="#profile-edit" onclick="dashboardNav('profile-edit'); return false;" class="action-card" style="background: linear-gradient(135deg, #3b82f6, #2563eb); border: none;">
+            <div class="action-icon" style="background: rgba(255,255,255,0.2); color: white;">
                 <i class="fas fa-user-edit"></i>
             </div>
             <div>
-                <h5>Mon Profil</h5>
-                <p>Complétez votre profil</p>
+                <h5 style="color: white;">Mon Profil</h5>
+                <p style="color: rgba(255,255,255,0.8);">Complétez votre profil</p>
             </div>
         </a>
-        <a href="{{ route('verification.index') }}" class="action-card">
-            <div class="action-icon" style="background: #dcfce7; color: #16a34a;">
+        <a href="{{ route('verification.index') }}" class="action-card" style="background: linear-gradient(135deg, #16a34a, #15803d); border: none;">
+            <div class="action-icon" style="background: rgba(255,255,255,0.2); color: white;">
                 <i class="fas fa-shield-alt"></i>
             </div>
             <div>
-                <h5>Vérification</h5>
-                <p>
+                <h5 style="color: white;">Vérification</h5>
+                <p style="color: rgba(255,255,255,0.8);">
                     @if(Auth::user()->identity_verified)
                         Identité vérifiée ✓
                     @else
@@ -103,13 +103,13 @@
                 </p>
             </div>
         </a>
-        <a href="{{ route('contact.index') }}" class="action-card">
-            <div class="action-icon" style="background: #fef3c7; color: #f59e0b;">
+        <a href="{{ route('contact.index') }}" class="action-card" style="background: linear-gradient(135deg, #f59e0b, #d97706); border: none;">
+            <div class="action-icon" style="background: rgba(255,255,255,0.2); color: white;">
                 <i class="fas fa-headset"></i>
             </div>
             <div>
-                <h5>Support</h5>
-                <p>Contactez notre équipe</p>
+                <h5 style="color: white;">Support</h5>
+                <p style="color: rgba(255,255,255,0.8);">Contactez notre équipe</p>
             </div>
         </a>
     </div>
