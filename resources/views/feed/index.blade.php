@@ -5611,8 +5611,8 @@
                 <div class="missions-feed" id="missionsGrid">
             @forelse($ads as $loopIndex => $ad)
 
-            {{-- Les publications urgentes s'affichent UNIQUEMENT dans le carousel horizontal --}}
-            @if($ad->is_urgent)
+            {{-- Les publications urgentes s'affichent UNIQUEMENT dans le carousel horizontal, SAUF si elles sont boostées --}}
+            @if($ad->is_urgent && !($ad->is_boosted && $ad->boost_end > now()))
                 @continue
             @endif
 
