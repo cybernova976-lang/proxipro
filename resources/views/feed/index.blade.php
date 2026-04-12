@@ -1588,7 +1588,7 @@
         border-radius: 1rem;
         border: 1px solid #e2e8f0;
         box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        overflow: hidden;
+        overflow: visible;
         transition: box-shadow 0.2s;
     }
     .fb-post:hover {
@@ -1906,6 +1906,10 @@
         color: #0f172a;
         margin-bottom: 0.35rem;
         line-height: 1.3;
+    }
+    .fb-post-title:hover {
+        color: var(--primary);
+        text-decoration: underline;
     }
 
     .fb-post-text {
@@ -5796,7 +5800,7 @@
 
                 {{-- Body: title + description + tags --}}
                 <div class="fb-post-body">
-                    <div class="fb-post-title">{{ $ad->title }}</div>
+                    <div class="fb-post-title" onclick="openAdDetail(this.closest('.fb-post'))" style="cursor: pointer;">{{ $ad->title }}</div>
                     <div class="fb-post-text">{{ Str::limit($ad->description, 300) }}</div>
                     <div class="fb-post-tags">
                         @if($ad->price)
@@ -9146,7 +9150,7 @@
                         </div>
                     </div>
                     <div class="fb-post-body">
-                        <div class="fb-post-title">${ad.title}</div>
+                        <div class="fb-post-title" onclick="openAdDetail(this.closest('.fb-post'))" style="cursor: pointer;">${ad.title}</div>
                         <div class="fb-post-text">${(ad.description || '').substring(0, 300)}${(ad.description||'').length > 300 ? '...' : ''}</div>
                         <div class="fb-post-tags">${priceTag}${catTag}</div>
                     </div>
@@ -9825,7 +9829,7 @@
                     </div>
                 </div>
                 <div class="fb-post-body">
-                    <div class="fb-post-title">${ad.title || ''}</div>
+                    <div class="fb-post-title" onclick="openAdDetail(this.closest('.fb-post'))" style="cursor: pointer;">${ad.title || ''}</div>
                     <div class="fb-post-text">${(ad.description || '').substring(0, 300)}${(ad.description||'').length > 300 ? '...' : ''}</div>
                     <div class="fb-post-tags">${priceTag}${catTag}</div>
                 </div>

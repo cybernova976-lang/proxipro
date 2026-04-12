@@ -61,6 +61,7 @@ class ProfileController extends Controller
             'phone' => 'nullable|string|max:20',
             'bio' => 'nullable|string|max:500',
             'location' => 'nullable|string|max:255',
+            'profession' => 'nullable|string|max:255',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'hourly_rate' => 'nullable|numeric|min:0|max:999',
             'show_hourly_rate' => 'nullable',
@@ -68,7 +69,7 @@ class ProfileController extends Controller
 
         $request->validate($rules);
 
-        $data = $request->only(['name', 'email', 'phone', 'bio', 'location']);
+        $data = $request->only(['name', 'email', 'phone', 'bio', 'location', 'profession']);
 
         // Gérer le tarif horaire (prestataires uniquement)
         if ($user->user_type === 'professionnel' || $user->is_service_provider || $user->hasActiveProSubscription() || $user->hasCompletedProOnboarding()) {
@@ -124,6 +125,13 @@ class ProfileController extends Controller
         }
 
         $user->update($data);
+
+        // Rediriger vers le profil public si c'est la page d'origine
+        $referer = $request->headers->get('referer', '');
+        if (str_contains($referer, '/user/')) {
+            return redirect()->route('profile.public', $user->id)
+                ->with('success', 'Profil mis à jour avec succès !');
+        }
 
         return redirect()->route('profile.show')
             ->with('success', 'Profil mis à jour avec succès !');
