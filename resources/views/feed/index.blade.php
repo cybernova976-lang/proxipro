@@ -8873,6 +8873,12 @@
         const overlay = document.getElementById('loadingOverlay');
         overlay.classList.add('active');
         
+        // Safety timeout: remove overlay after 8 seconds max
+        const safetyTimeout = setTimeout(() => {
+            overlay.classList.remove('active');
+            console.warn('Loading overlay forcé à se fermer (timeout)');
+        }, 8000);
+        
         // Construire l'URL avec les filtres
         let url = currentFilters.mode === 'providers' 
             ? '{{ route("feed.professionals") }}' 
@@ -8901,6 +8907,7 @@
         fetch(`${url}?${params.toString()}`)
             .then(response => response.json())
             .then(data => {
+                clearTimeout(safetyTimeout);
                 overlay.classList.remove('active');
                 
                 if (currentFilters.mode === 'providers') {
@@ -8911,6 +8918,7 @@
             })
             .catch(err => {
                 console.error('Erreur chargement:', err);
+                clearTimeout(safetyTimeout);
                 overlay.classList.remove('active');
             });
     }
@@ -9068,6 +9076,7 @@
 
             const userAvatar = ad.user && ad.user.avatar 
                 ? `<img src="${buildStorageUrl(ad.user.avatar)}" alt="${(ad.user.name||'').replace(/"/g,'')}">` 
+                : `<div class="fb-post-avatar-placeholder">${(ad.user?.name || 'U').charAt(0).toUpperCase()}</div>`;
             
             let photos = [];
             if (ad.photos) {
