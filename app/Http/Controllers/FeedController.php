@@ -1079,10 +1079,17 @@ class FeedController extends Controller
         });
 
         // ===== FILTRE PROXIMITÉ GÉOGRAPHIQUE =====
+        // Ne s'applique PAS aux annonces boostées (visibilité payée)
         $geoApplied = false;
         if ($userLat && $userLng && !$location) {
-            // Si pas de filtre location texte, appliquer le filtre par rayon
-            $query->withinRadius((float) $userLat, (float) $userLng, $radius);
+            $query->where(function($q) use ($userLat, $userLng, $radius) {
+                $q->whereRaw(
+                    "(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) <= ?",
+                    [(float) $userLat, (float) $userLng, (float) $userLat, $radius]
+                )->orWhere(function($q2) {
+                    $q2->where('is_boosted', true)->where('boost_end', '>', now());
+                });
+            });
             $geoApplied = true;
         }
 
