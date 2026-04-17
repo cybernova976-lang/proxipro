@@ -54,14 +54,34 @@ class FeedController extends Controller
         $clientRequests = $clientRequestsQuery->take(8)->get();
 
         // ===== SECTION "LES DERNIÈRES PÉPITES" - filtrée par proximité =====
-        $allAdsQuery = Ad::where('status', 'active')->with('user');
+        // N'afficher que les annonces des utilisateurs abonnés (plan actif) ou boostées
+        $allAdsQuery = Ad::where('status', 'active')->with('user')
+            ->where(function($q) {
+                $q->where(function($q2) {
+                    $q2->where('is_boosted', true)
+                        ->where('boost_end', '>', now());
+                })
+                ->orWhereHas('user', function($q3) {
+                    $q3->whereNotNull('plan')
+                        ->where('plan', '!=', '')
+                        ->where('plan', '!=', 'free')
+                        ->where(function($q4) {
+                            $q4->whereNull('subscription_end')
+                                ->orWhere('subscription_end', '>', now());
+                        });
+                });
+            });
 
-        // Filtre visibilité : pro_targeted visible uniquement par les pros
+        // Filtre visibilité : pro_targeted visible uniquement par les pros, SAUF annonces boostées
         $allAdsQuery->where(function($q) use ($user) {
             $q->where('visibility', 'public');
             if ($user && ($user->user_type === 'professionnel' || $user->is_service_provider)) {
                 $q->orWhere('visibility', 'pro_targeted');
             }
+            // Les annonces boostées sont toujours visibles quelle que soit leur visibilité
+            $q->orWhere(function($q2) {
+                $q2->where('is_boosted', true)->where('boost_end', '>', now());
+            });
         });
 
         // Appliquer le filtre de type si présent
@@ -71,14 +91,32 @@ class FeedController extends Controller
                 $filterType = 'demandes';
             }
         }
+        // Filtre de type : ne s'applique PAS aux annonces boostées (visibilité payée)
         if ($filterType === 'offres') {
-            $allAdsQuery->where('service_type', 'offre');
+            $allAdsQuery->where(function($q) {
+                $q->where('service_type', 'offre')
+                  ->orWhere(function($q2) {
+                      $q2->where('is_boosted', true)->where('boost_end', '>', now());
+                  });
+            });
         } elseif ($filterType === 'demandes') {
-            $allAdsQuery->where('service_type', 'demande');
+            $allAdsQuery->where(function($q) {
+                $q->where('service_type', 'demande')
+                  ->orWhere(function($q2) {
+                      $q2->where('is_boosted', true)->where('boost_end', '>', now());
+                  });
+            });
         }
-        // Filtre géo
+        // Filtre géo : ne s'applique PAS aux annonces boostées (visibilité payée)
         if ($geoEnabled) {
-            $allAdsQuery->withinRadius($userLat, $userLng, $userRadius);
+            $allAdsQuery->where(function($q) use ($userLat, $userLng, $userRadius) {
+                $q->whereRaw(
+                    "(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) <= ?",
+                    [$userLat, $userLng, $userLat, $userRadius]
+                )->orWhere(function($q2) {
+                    $q2->where('is_boosted', true)->where('boost_end', '>', now());
+                });
+            });
         }
         // Toujours prioriser : boostées > épinglées > récentes
         $allAdsQuery->orderByRaw("CASE WHEN is_boosted = true AND boost_end > ? THEN 0 ELSE 1 END", [now()])
@@ -1010,14 +1048,34 @@ class FeedController extends Controller
 
         $query = Ad::where('status', 'active')->with('user');
 
+        // N'afficher que les annonces des utilisateurs abonnés (plan actif) ou boostées
+        $query->where(function($q) {
+            $q->where(function($q2) {
+                $q2->where('is_boosted', true)
+                    ->where('boost_end', '>', now());
+            })
+            ->orWhereHas('user', function($q3) {
+                $q3->whereNotNull('plan')
+                    ->where('plan', '!=', '')
+                    ->where('plan', '!=', 'free')
+                    ->where(function($q4) {
+                        $q4->whereNull('subscription_end')
+                            ->orWhere('subscription_end', '>', now());
+                    });
+            });
+        });
+
         // ===== FILTRE VISIBILITÉ =====
-        // Les annonces "pro_targeted" ne sont visibles que par les pros dont les catégories correspondent
+        // Les annonces "pro_targeted" ne sont visibles que par les pros, SAUF annonces boostées
         $user = Auth::user();
         $query->where(function($q) use ($user) {
             $q->where('visibility', 'public');
             if ($user && ($user->user_type === 'professionnel' || $user->is_service_provider)) {
                 $q->orWhere('visibility', 'pro_targeted');
             }
+            $q->orWhere(function($q2) {
+                $q2->where('is_boosted', true)->where('boost_end', '>', now());
+            });
         });
 
         // ===== FILTRE PROXIMITÉ GÉOGRAPHIQUE =====

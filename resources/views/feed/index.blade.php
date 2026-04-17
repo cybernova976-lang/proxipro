@@ -9065,8 +9065,8 @@
         let featuredProsInserted = false;
         missions.forEach((ad, loopIndex) => {
 
-            // Les publications urgentes s'affichent uniquement dans le carousel horizontal
-            if (ad.is_urgent) return;
+            // Les publications urgentes s'affichent uniquement dans le carousel horizontal (sauf si boostées)
+            if (ad.is_urgent && !(ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date())) return;
 
             // Injecter le bloc Professionnels à la une après les 2 premières cartes
             if (loopIndex === 2 && !featuredProsInserted) {
@@ -9773,8 +9773,8 @@
 
         // Construire un élément post simplifié pour le scroll infini
         function buildInfiniteScrollPost(ad) {
-            // Les publications urgentes s'affichent uniquement dans le carousel horizontal
-            if (ad.is_urgent) return null;
+            // Les publications urgentes s'affichent uniquement dans le carousel horizontal (sauf si boostées)
+            if (ad.is_urgent && !(ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date())) return null;
 
             const div = document.createElement('div');
             div.className = 'fb-post' + (ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date() ? ' boosted-post' : '');
