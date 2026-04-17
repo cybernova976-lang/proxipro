@@ -17,15 +17,23 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center py-5">
                     <!-- Avatar -->
+                    <div class="position-relative d-inline-block">
                     @if($user->avatar)
-                            <img src="{{ storage_url($user->avatar) }}" alt="Avatar" 
+                            <img src="{{ storage_url($user->avatar) }}" alt="Avatar" id="profileAvatarImg"
                                 class="mb-4 shadow rounded-3" style="width: 200px; height: 200px; object-fit: cover; border: 4px solid #e2e8f0;">
                     @else
-                            <div class="bg-primary text-white d-inline-flex align-items-center justify-content-center mb-4 shadow rounded-3" 
+                            <div class="bg-primary text-white d-inline-flex align-items-center justify-content-center mb-4 shadow rounded-3" id="profileAvatarPlaceholder"
                                 style="width: 200px; height: 200px; font-size: 72px; border: 4px solid #e2e8f0;">
                             {{ strtoupper(substr($user->name, 0, 1)) }}
                         </div>
+                        <img src="" alt="Avatar" id="profileAvatarImg" class="mb-4 shadow rounded-3 d-none" style="width: 200px; height: 200px; object-fit: cover; border: 4px solid #e2e8f0;">
                     @endif
+                        <label for="avatarUploadInput" class="position-absolute bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                               style="cursor: pointer; width: 44px; height: 44px; bottom: 20px; right: -5px; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                            <i class="fas fa-camera"></i>
+                        </label>
+                        <input type="file" id="avatarUploadInput" class="d-none" accept="image/jpeg,image/png,image/jpg,image/gif">
+                    </div>
                     
                     <h4 class="fw-bold mb-1">{{ $user->name }}</h4>
                     
@@ -243,7 +251,9 @@
                         <div class="row g-3">
                             @foreach($ads as $ad)
                                 <div class="col-md-6">
-                                    <div class="card border-0 bg-light rounded-3 overflow-hidden h-100">
+                                    <div class="card border-0 bg-light rounded-3 overflow-hidden h-100" 
+                                         style="cursor:pointer;" 
+                                         onclick="showAdDetail({{ json_encode(['id' => $ad->id, 'title' => $ad->title, 'description' => $ad->description, 'price' => $ad->price, 'location' => $ad->location, 'category' => $ad->category, 'status' => $ad->status, 'created_at' => $ad->created_at->format('d/m/Y'), 'photo' => ($ad->photos && count($ad->photos) > 0) ? storage_url($ad->photos[0]) : null, 'url' => route('ads.show', $ad)]) }})">
                                         @if($ad->photos && count($ad->photos) > 0)
                                             <img src="{{ storage_url($ad->photos[0]) }}" alt="" 
                                                  class="card-img-top" style="height: 160px; object-fit: cover;">
@@ -254,11 +264,7 @@
                                             </div>
                                         @endif
                                         <div class="card-body p-3">
-                                            <h6 class="mb-1 text-truncate">
-                                                <a href="{{ route('ads.show', $ad) }}" class="text-decoration-none text-dark">
-                                                    {{ $ad->title }}
-                                                </a>
-                                            </h6>
+                                            <h6 class="mb-1 text-truncate">{{ $ad->title }}</h6>
                                             <div class="d-flex justify-content-between align-items-center mt-2">
                                                 <small class="text-muted">{{ $ad->created_at->diffForHumans() }}</small>
                                                 <span class="badge {{ $ad->status == 'active' ? 'bg-success' : 'bg-secondary' }}">
@@ -284,4 +290,125 @@
         </div>
     </div>
 </div>
+
+{{-- Ad Detail Modal --}}
+<div class="modal fade" id="adDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 overflow-hidden">
+            <div id="adDetailPhoto" style="height:200px; background:#f1f5f9; display:none;">
+                <img id="adDetailImg" src="" alt="" style="width:100%; height:100%; object-fit:cover;">
+            </div>
+            <div class="modal-body p-4">
+                <h5 class="fw-bold mb-2" id="adDetailTitle"></h5>
+                <div class="d-flex gap-2 mb-3 flex-wrap">
+                    <span class="badge bg-primary" id="adDetailCategory"></span>
+                    <span class="badge" id="adDetailStatus"></span>
+                    <span class="text-muted small" id="adDetailDate"></span>
+                </div>
+                <div class="mb-3" id="adDetailPriceRow">
+                    <strong class="text-success" id="adDetailPrice"></strong>
+                </div>
+                <div class="mb-3" id="adDetailLocationRow">
+                    <i class="fas fa-map-marker-alt text-muted me-1"></i>
+                    <span id="adDetailLocation"></span>
+                </div>
+                <p class="text-muted" id="adDetailDesc" style="white-space: pre-line;"></p>
+            </div>
+            <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
+                <a href="#" class="btn btn-primary" id="adDetailLink"><i class="fas fa-eye me-1"></i>Voir l'annonce</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Avatar upload script --}}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const avatarInput = document.getElementById('avatarUploadInput');
+    if (!avatarInput) return;
+    
+    avatarInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (!file) return;
+        
+        if (file.size > 2 * 1024 * 1024) {
+            alert('L\'image ne doit pas dépasser 2 Mo.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+        formData.append('_method', 'PUT');
+        formData.append('name', '{{ $user->name }}');
+        formData.append('email', '{{ $user->email }}');
+
+        fetch('{{ route("profile.update") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+            body: formData
+        }).then(response => {
+            if (response.ok || response.status === 302) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('profileAvatarImg');
+                    const placeholder = document.getElementById('profileAvatarPlaceholder');
+                    if (img) {
+                        img.src = e.target.result;
+                        img.classList.remove('d-none');
+                    }
+                    if (placeholder) placeholder.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('Erreur lors du téléchargement. Veuillez réessayer.');
+            }
+        }).catch(() => {
+            alert('Erreur réseau. Veuillez réessayer.');
+        });
+    });
+});
+
+function showAdDetail(ad) {
+    document.getElementById('adDetailTitle').textContent = ad.title;
+    document.getElementById('adDetailCategory').textContent = ad.category || '';
+    document.getElementById('adDetailDate').textContent = ad.created_at;
+    document.getElementById('adDetailLink').href = ad.url;
+
+    const statusEl = document.getElementById('adDetailStatus');
+    statusEl.textContent = ad.status === 'active' ? 'Actif' : 'Inactif';
+    statusEl.className = 'badge ' + (ad.status === 'active' ? 'bg-success' : 'bg-secondary');
+
+    const priceRow = document.getElementById('adDetailPriceRow');
+    if (ad.price) {
+        document.getElementById('adDetailPrice').textContent = new Intl.NumberFormat('fr-FR').format(ad.price) + ' €/h';
+        priceRow.style.display = '';
+    } else {
+        priceRow.style.display = 'none';
+    }
+
+    const locRow = document.getElementById('adDetailLocationRow');
+    if (ad.location) {
+        document.getElementById('adDetailLocation').textContent = ad.location;
+        locRow.style.display = '';
+    } else {
+        locRow.style.display = 'none';
+    }
+
+    document.getElementById('adDetailDesc').textContent = ad.description || '';
+
+    const photoDiv = document.getElementById('adDetailPhoto');
+    if (ad.photo) {
+        document.getElementById('adDetailImg').src = ad.photo;
+        photoDiv.style.display = '';
+    } else {
+        photoDiv.style.display = 'none';
+    }
+
+    new bootstrap.Modal(document.getElementById('adDetailModal')).show();
+}
+</script>
 @endsection

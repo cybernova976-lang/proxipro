@@ -185,9 +185,14 @@ class BoostController extends Controller
 
         $status = $ad->getBoostStatus();
 
-        // Check points
+        // Prevent double-boost: reject if current boost covers more than this package
+        if ($status['is_boosted'] && $status['boost_days_left'] >= $package['duration_days']) {
+            return back()->with('error', 'Votre boost actuel couvre déjà ' . $status['boost_days_left'] . ' jours restants. Choisissez un pack plus long pour prolonger.');
+        }
+
+        // Check points - redirect to pricing if insufficient
         if (($user->available_points ?? 0) < $pointsRequired) {
-            return back()->with('error', 'Points insuffisants. Vous avez ' . ($user->available_points ?? 0) . ' points, il vous en faut ' . $pointsRequired . '.');
+            return redirect()->route('pricing.index')->with('error', 'Points insuffisants. Vous avez ' . ($user->available_points ?? 0) . ' points, il vous en faut ' . $pointsRequired . '. Achetez des points ci-dessous.');
         }
 
         // Smart: warn if package is less useful than current visibility
@@ -234,6 +239,12 @@ class BoostController extends Controller
 
         $user = Auth::user();
         $package = $this->boostPackages[$request->package];
+
+        // Prevent double-boost: reject if current boost covers more than this package
+        $status = $ad->getBoostStatus();
+        if ($status['is_boosted'] && $status['boost_days_left'] >= $package['duration_days']) {
+            return back()->with('error', 'Votre boost actuel couvre déjà ' . $status['boost_days_left'] . ' jours restants. Choisissez un pack plus long pour prolonger.');
+        }
 
         // Pro discount: -20% on euros
         $priceEuros = $package['price_euros'];

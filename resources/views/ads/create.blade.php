@@ -1087,18 +1087,18 @@
             
             <div class="row">
                 <div class="col-md-6">
-                    <label for="price" class="form-label">Prix</label>
+                    <label for="price" class="form-label">Tarif horaire</label>
                     <div class="price-input-group">
                         <input type="number" step="0.01" min="0" 
                                class="form-control @error('price') is-invalid @enderror" 
                                id="price" name="price" value="{{ old('price') }}" 
-                               placeholder="Laisser vide si gratuit">
-                        <span class="input-suffix">€</span>
+                               placeholder="Ex : 10, 15, 25...">
+                        <span class="input-suffix">€/h</span>
                     </div>
                     @error('price')
                         <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
-                    <p class="form-hint">Laissez vide si le prix est à discuter ou gratuit</p>
+                    <p class="form-hint">Indiquez votre tarif horaire. Laissez vide si le prix est à discuter.</p>
                 </div>
             </div>
         </div>

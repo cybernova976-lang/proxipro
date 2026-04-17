@@ -60,22 +60,22 @@
 /* ========== CONFIRMATION BANNER ========== */
 .pts-confirm-banner {
     background: linear-gradient(135deg, #059669, #10b981);
-    border-radius: 20px; padding: 24px 28px;
-    margin-top: -40px; position: relative; z-index: 10;
-    box-shadow: 0 12px 40px rgba(16,185,129,0.3);
+    border-radius: 12px; padding: 14px 18px;
+    margin-top: -20px; position: relative; z-index: 10;
+    box-shadow: 0 6px 20px rgba(16,185,129,0.2);
     animation: ptsBannerIn 0.6s cubic-bezier(0.16,1,0.3,1);
 }
 @keyframes ptsBannerIn { from { opacity: 0; transform: translateY(-24px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
-.pts-confirm-inner { display: flex; align-items: center; gap: 18px; }
+.pts-confirm-inner { display: flex; align-items: center; gap: 12px; }
 .pts-confirm-icon {
-    width: 56px; height: 56px; border-radius: 50%;
+    width: 40px; height: 40px; border-radius: 50%;
     background: rgba(255,255,255,0.2);
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; font-size: 1.5rem; color: white;
+    flex-shrink: 0; font-size: 1.1rem; color: white;
 }
 .pts-confirm-text { flex-grow: 1; }
-.pts-confirm-text h5 { color: white; font-weight: 700; margin-bottom: 3px; font-size: 1.05rem; }
-.pts-confirm-text p { color: rgba(255,255,255,0.85); margin: 0; font-size: 0.88rem; }
+.pts-confirm-text h5 { color: white; font-weight: 700; margin-bottom: 2px; font-size: 0.9rem; }
+.pts-confirm-text p { color: rgba(255,255,255,0.85); margin: 0; font-size: 0.8rem; }
 .pts-confirm-close {
     background: rgba(255,255,255,0.2); border: none; color: white;
     width: 34px; height: 34px; border-radius: 50%;

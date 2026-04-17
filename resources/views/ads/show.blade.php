@@ -241,7 +241,7 @@
                             <div class="ad-meta-item"><i class="fas fa-calendar"></i><span>{{ $ad->created_at->diffForHumans() }}</span></div>
                             @if($ad->radius_km)<div class="ad-meta-item"><i class="fas fa-bullseye"></i><span>{{ $ad->radius_km }} km</span></div>@endif
                         </div>
-                        <div class="ad-price">@if($ad->price){{ number_format($ad->price, 2, ',', ' ') }} € @else Prix à discuter @endif</div>
+                        <div class="ad-price">@if($ad->price){{ number_format($ad->price, 2, ',', ' ') }} €/h @else Prix à discuter @endif</div>
                         <h6 style="color: #2d3748;" class="mb-2"><i class="fas fa-align-left me-2 text-primary"></i>Description</h6>
                         <div class="ad-description">{!! nl2br(e($ad->description)) !!}</div>
                         <div class="d-flex gap-2 flex-wrap">
@@ -255,6 +255,7 @@
                                     <i class="fas fa-check-circle me-1"></i>Réponses profils vérifiés uniquement
                                 </span>
                             @endif
+                            @if(!Auth::check() || Auth::id() !== $ad->user_id)
                             @auth
                                 <button
                                     class="btn btn-outline-warning btn-sm"
@@ -270,9 +271,11 @@
                                     <i class="fas fa-bookmark me-1"></i>Sauvegarder
                                 </a>
                             @endauth
+                            @endif
                             <button class="btn btn-outline-info btn-sm" id="shareAdBtn">
                                 <i class="fas fa-share-alt me-1"></i>Partager
                             </button>
+                            @if(!Auth::check() || Auth::id() !== $ad->user_id)
                             @auth
                                 <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#reportModal">
                                     <i class="fas fa-flag me-1"></i>Signaler
@@ -282,6 +285,7 @@
                                     <i class="fas fa-flag me-1"></i>Signaler
                                 </a>
                             @endauth
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -296,9 +300,9 @@
                         </a>
                     </h4>
                     @if($ad->user && $ad->user->is_verified)
-                        <span class="badge bg-success mb-2" style="font-size: 0.72rem;"><i class="fas fa-check-circle me-1"></i>Profil vérifié</span>
+                        <div class="text-center"><span class="badge bg-success mb-2" style="font-size: 0.72rem;"><i class="fas fa-check-circle me-1"></i>Profil vérifié</span></div>
                     @else
-                        <span class="badge bg-secondary mb-2" style="font-size: 0.72rem; opacity: 0.8;"><i class="fas fa-user-times me-1"></i>Profil non vérifié</span>
+                        <div class="text-center"><span class="badge bg-secondary mb-2" style="font-size: 0.72rem; opacity: 0.8;"><i class="fas fa-user-times me-1"></i>Profil non vérifié</span></div>
                     @endif
                     <p class="seller-since"><i class="fas fa-clock me-1"></i>Membre depuis {{ optional($ad->user)->created_at ? $ad->user->created_at->format('M Y') : 'N/A' }}</p>
                     <div class="seller-stats">
@@ -458,7 +462,7 @@
                     <a href="{{ route('ads.show', $similar) }}" class="text-decoration-none">
                         <div class="similar-ad-card">
                             <div class="similar-ad-title">{{ Str::limit($similar->title, 30) }}</div>
-                            <div class="similar-ad-price">@if($similar->price){{ number_format($similar->price, 2, ',', ' ') }} € @else À discuter @endif</div>
+                            <div class="similar-ad-price">@if($similar->price){{ number_format($similar->price, 2, ',', ' ') }} €/h @else À discuter @endif</div>
                             <div class="similar-ad-location"><i class="fas fa-map-marker-alt me-1"></i>{{ Str::limit($similar->location, 15) }}</div>
                         </div>
                     </a>

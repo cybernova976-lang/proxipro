@@ -102,6 +102,7 @@
         font-weight: 800;
         color: #1e293b;
         margin-bottom: 8px;
+        white-space: nowrap;
     }
     
     .section-title p {
@@ -523,7 +524,7 @@
         .success-container { padding: 24px 16px; }
         .success-header h1 { font-size: 1.5rem; }
         .options-grid { grid-template-columns: 1fr; }
-        .section-title h2 { font-size: 1.4rem; }
+        .section-title h2 { font-size: 1.4rem; white-space: normal; }
         .confirm-details { flex-direction: column; }
         .confirm-actions { flex-direction: column; }
         .top-info { flex-direction: column; }

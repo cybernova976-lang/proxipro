@@ -5804,7 +5804,7 @@
                     <div class="fb-post-text">{{ Str::limit($ad->description, 300) }}</div>
                     <div class="fb-post-tags">
                         @if($ad->price)
-                            <span class="fb-post-tag price"><i class="fas fa-tag"></i> {{ number_format($ad->price, 0, ',', ' ') }} €</span>
+                            <span class="fb-post-tag price"><i class="fas fa-tag"></i> {{ number_format($ad->price, 0, ',', ' ') }} €/h</span>
                         @else
                             <span class="fb-post-tag"><i class="fas fa-tag"></i> À discuter</span>
                         @endif
@@ -9102,7 +9102,7 @@
             }
 
             const priceTag = ad.price 
-                ? `<span class="fb-post-tag price"><i class="fas fa-tag"></i> ${new Intl.NumberFormat('fr-FR').format(ad.price)} €</span>` 
+                ? `<span class="fb-post-tag price"><i class="fas fa-tag"></i> ${new Intl.NumberFormat('fr-FR').format(ad.price)} €/h</span>` 
                 : `<span class="fb-post-tag"><i class="fas fa-tag"></i> À discuter</span>`;
             const catTag = ad.category ? `<span class="fb-post-tag"><i class="fas fa-folder"></i> ${ad.category}</span>` : '';
             const urgentMeta = ad.is_urgent ? `<span>·</span><span style="color:#dc2626;font-weight:600;"><i class="fas fa-bolt"></i> Urgent</span>` : '';
@@ -9811,7 +9811,7 @@
             }
 
             const priceTag = ad.price
-                ? `<span class="fb-post-tag price"><i class="fas fa-tag"></i> ${new Intl.NumberFormat('fr-FR').format(ad.price)} €</span>`
+                ? `<span class="fb-post-tag price"><i class="fas fa-tag"></i> ${new Intl.NumberFormat('fr-FR').format(ad.price)} €/h</span>`
                 : `<span class="fb-post-tag"><i class="fas fa-tag"></i> À discuter</span>`;
             const catTag = ad.category ? `<span class="fb-post-tag"><i class="fas fa-folder"></i> ${ad.category}</span>` : '';
             const urgentMeta = ad.is_urgent ? `<span>·</span><span style="color:#dc2626;font-weight:600;"><i class="fas fa-bolt"></i> Urgent</span>` : '';
