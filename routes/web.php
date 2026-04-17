@@ -552,6 +552,93 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::delete('/contact-messages/{id}', [AdminController::class, 'deleteContactMessage'])->name('admin.contact-messages.delete');
 });
 
+// Diagnostic boost (admin uniquement) - TEMPORAIRE
+Route::get('/boost-diagnostic', function () {
+    if (!Auth::check() || (Auth::user()->role ?? '') !== 'admin') {
+        abort(403);
+    }
+
+    $email = request('email', 'fatima.abdou009@gmail.com');
+    $user = \App\Models\User::where('email', $email)->first();
+    if (!$user) return response()->json(['error' => 'User not found: ' . $email]);
+
+    $userData = [
+        'id' => $user->id,
+        'name' => $user->name,
+        'email' => $user->email,
+        'plan' => $user->plan,
+        'subscription_end' => $user->subscription_end,
+        'user_type' => $user->user_type,
+        'is_service_provider' => $user->is_service_provider ?? false,
+    ];
+
+    $ads = \App\Models\Ad::where('user_id', $user->id)->get()->map(function($a) {
+        return [
+            'id' => $a->id,
+            'title' => $a->title,
+            'status' => $a->status,
+            'is_boosted' => $a->is_boosted,
+            'boost_end' => $a->boost_end ? $a->boost_end->toDateTimeString() : null,
+            'boost_end_is_future' => $a->boost_end ? $a->boost_end->isFuture() : false,
+            'boost_type' => $a->boost_type,
+            'is_urgent' => $a->is_urgent,
+            'urgent_until' => $a->urgent_until ? $a->urgent_until->toDateTimeString() : null,
+            'visibility' => $a->visibility,
+            'service_type' => $a->service_type,
+            'latitude' => $a->latitude,
+            'longitude' => $a->longitude,
+            'created_at' => $a->created_at->toDateTimeString(),
+        ];
+    });
+
+    // Simulate feed query for this user's ads
+    $feedQuery = \App\Models\Ad::where('status', 'active')
+        ->where(function($q) {
+            $q->where(function($q2) {
+                $q2->where('is_boosted', true)->where('boost_end', '>', now());
+            })
+            ->orWhereHas('user', function($q3) {
+                $q3->whereNotNull('plan')
+                    ->where('plan', '!=', '')
+                    ->where('plan', '!=', 'free')
+                    ->where(function($q4) {
+                        $q4->whereNull('subscription_end')
+                            ->orWhere('subscription_end', '>', now());
+                    });
+            });
+        })
+        ->where('user_id', $user->id)
+        ->get();
+
+    $feedMatchIds = $feedQuery->pluck('id')->toArray();
+
+    // Total feed count
+    $totalFeed = \App\Models\Ad::where('status', 'active')
+        ->where(function($q) {
+            $q->where(function($q2) {
+                $q2->where('is_boosted', true)->where('boost_end', '>', now());
+            })
+            ->orWhereHas('user', function($q3) {
+                $q3->whereNotNull('plan')
+                    ->where('plan', '!=', '')
+                    ->where('plan', '!=', 'free')
+                    ->where(function($q4) {
+                        $q4->whereNull('subscription_end')
+                            ->orWhere('subscription_end', '>', now());
+                    });
+            });
+        })->count();
+
+    return response()->json([
+        'now' => now()->toDateTimeString(),
+        'timezone' => config('app.timezone'),
+        'user' => $userData,
+        'ads' => $ads,
+        'ads_matching_feed_query' => $feedMatchIds,
+        'total_feed_ads' => $totalFeed,
+    ], 200, [], JSON_PRETTY_PRINT);
+});
+
 // Diagnostic de stockage (admin uniquement)
 Route::get('/storage-diagnostic', function () {
     if (!Auth::check() || (Auth::user()->role ?? '') !== 'admin') {
