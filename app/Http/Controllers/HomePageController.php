@@ -5,11 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Ad;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class HomePageController extends Controller
 {
     public function index()
     {
+        // Logged-in users go directly to the feed
+        if (Auth::check()) {
+            return redirect()->route('feed');
+        }
+
         // Statistiques réelles
         try {
             $totalAds = Ad::where('status', 'active')->count();

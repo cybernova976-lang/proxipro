@@ -535,7 +535,7 @@
                     <li><a href="{{ url('/ads') }}">Annonces</a></li>
                     <li><a href="{{ route('contact.index') }}">Contact</a></li>
                     @auth
-                        <li><a href="{{ url('/home') }}" class="btn-nav-login">Tableau de bord</a></li>
+                        <li><a href="{{ route('feed') }}" class="btn-nav-login">Accueil</a></li>
                     @else
                         <li><a href="{{ route('login') }}" class="btn-nav-login"><i class="fas fa-sign-in-alt me-1"></i>Connexion</a></li>
                         @if (Route::has('register'))
@@ -556,8 +556,8 @@
                         <i class="fas fa-envelope me-2 text-muted"></i>Contact
                     </a>
                     @auth
-                        <a href="{{ url('/home') }}" class="btn btn-primary rounded-3 mt-2 py-2">
-                            <i class="fas fa-tachometer-alt me-2"></i>Tableau de bord
+                        <a href="{{ route('feed') }}" class="btn btn-primary rounded-3 mt-2 py-2">
+                            <i class="fas fa-home me-2"></i>Accueil
                         </a>
                     @else
                         <a href="{{ route('login') }}" class="btn btn-outline-primary rounded-3 mt-2 py-2">

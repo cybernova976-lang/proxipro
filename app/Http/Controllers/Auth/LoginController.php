@@ -207,6 +207,9 @@ class LoginController extends Controller
             ]);
         }
 
-        return redirect()->intended($this->redirectPath());
+        // Always redirect to feed, ignore any stored intended URL
+        // This prevents mobile users from being redirected to /home (dashboard)
+        // when they had previously bookmarked or visited /home before logging in
+        return redirect()->to($this->redirectPath());
     }
 }
