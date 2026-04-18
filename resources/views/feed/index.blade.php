@@ -4531,10 +4531,11 @@
 
     /* ===== WIDGET DEVENIR PRO (sidebar) ===== */
     .pro-widget {
-        background: linear-gradient(135deg, #0f766e, #0e7490);
+        background: white;
+        border: 1px solid #e2e8f0;
         border-radius: 14px;
         padding: 20px 18px;
-        color: white;
+        color: #111827;
         position: relative;
         overflow: hidden;
     }
@@ -4556,14 +4557,15 @@
         right: -30px;
         width: 100px;
         height: 100px;
-        background: rgba(255,255,255,0.06);
+        background: rgba(0,0,0,0.02);
         border-radius: 50%;
     }
     .pro-widget-badge {
         display: inline-flex;
         align-items: center;
         gap: 5px;
-        background: rgba(255,255,255,0.15);
+        background: #f3f4f6;
+        color: #374151;
         padding: 3px 10px;
         border-radius: 20px;
         font-size: 0.68rem;
@@ -4577,10 +4579,12 @@
         font-weight: 700;
         margin-bottom: 6px;
         line-height: 1.3;
+        color: #111827;
     }
     .pro-widget p {
         font-size: 0.76rem;
-        opacity: 0.8;
+        color: #6b7280;
+        opacity: 1;
         margin-bottom: 16px;
         line-height: 1.5;
     }
@@ -5448,20 +5452,6 @@
                         <div class="pro-widget-badge"><i class="fas fa-star"></i> Opportunité</div>
                         <h3>Vous êtes professionnel ?</h3>
                         <p>Rejoignez +500 pros et recevez des demandes de clients près de chez vous.</p>
-                        <div class="pro-widget-stats">
-                            <div class="pro-widget-stat">
-                                <strong>500+</strong>
-                                <small>Pros inscrits</small>
-                            </div>
-                            <div class="pro-widget-stat">
-                                <strong>24h</strong>
-                                <small>Réponse moy.</small>
-                            </div>
-                            <div class="pro-widget-stat">
-                                <strong>Gratuit</strong>
-                                <small>Pour démarrer</small>
-                            </div>
-                        </div>
                         <button onclick="handleProposerServices()" class="pro-widget-cta">
                             <i class="fas fa-hand-holding-heart"></i> Proposer mes services
                         </button>
