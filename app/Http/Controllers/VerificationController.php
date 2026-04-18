@@ -120,9 +120,9 @@ class VerificationController extends Controller
         $rules = [
             'type' => 'required|in:profile_verification,service_provider',
             'document_type' => 'required|in:cni,passport,permis,carte_sejour,id_card,driver_license',
-            'document_front' => 'required|file|mimes:jpeg,png,jpg,pdf|max:8192',
-            'document_back' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:8192',
-            'selfie' => 'required|image|max:8192',
+            'document_front' => 'required|file|mimes:jpeg,png,jpg,pdf,webp,heic,heif|max:8192',
+            'document_back' => 'nullable|file|mimes:jpeg,png,jpg,pdf,webp,heic,heif|max:8192',
+            'selfie' => 'required|file|mimes:jpeg,png,jpg,webp,heic,heif|max:8192',
         ];
 
         $user = Auth::user();
@@ -478,11 +478,17 @@ class VerificationController extends Controller
     {
         $user = Auth::user();
 
+        // Check profile completeness first
+        $missingFields = $this->getProfileMissingFields($user);
+        if (!empty($missingFields)) {
+            return redirect()->back()->with('error', 'Veuillez compléter votre profil avant de soumettre votre vérification.');
+        }
+
         $rules = [
             'document_type' => 'required|in:id_card,passport,driver_license,cni,permis,carte_sejour',
-            'document_front' => 'required|file|mimes:jpeg,png,jpg,pdf|max:8192',
-            'document_back' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:8192',
-            'selfie' => 'required|image|mimes:jpeg,png,jpg|max:8192',
+            'document_front' => 'required|file|mimes:jpeg,png,jpg,pdf,webp,heic,heif|max:8192',
+            'document_back' => 'nullable|file|mimes:jpeg,png,jpg,pdf,webp,heic,heif|max:8192',
+            'selfie' => 'required|file|mimes:jpeg,png,jpg,webp,heic,heif|max:8192',
         ];
 
         // Professional document required for pros

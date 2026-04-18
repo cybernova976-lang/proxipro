@@ -100,6 +100,13 @@
         box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
         color: white;
     }
+    .btn-verify:disabled, .btn-verify[disabled] {
+        background: #94a3b8;
+        cursor: not-allowed;
+        opacity: 0.7;
+        transform: none;
+        box-shadow: none;
+    }
     .info-box {
         background: #eff6ff;
         border: 1px solid #bfdbfe;
@@ -158,12 +165,17 @@
 
     .missing-fields-box {
         background: #fefce8;
-        border: 1px solid #fde047;
+        border: 2px solid #fde047;
         border-radius: 12px;
         padding: 20px;
         color: #854d0e;
     }
     .missing-fields-box i { color: #eab308; }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.02); box-shadow: 0 0 15px rgba(234, 179, 8, 0.4); }
+    }
 
     .existing-doc-preview {
         max-width: 120px;
@@ -736,10 +748,17 @@
                         <a href="{{ route('home') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-2"></i>Retour
                         </a>
-                        <button type="submit" class="btn-verify" {{ (isset($missingFields) && count($missingFields) > 0) ? 'disabled' : '' }}>
-                            <i class="fas fa-paper-plane me-2"></i>
-                            Soumettre ma demande
-                        </button>
+                        <div>
+                            @if(isset($missingFields) && count($missingFields) > 0)
+                                <div class="text-danger small mb-2 text-end">
+                                    <i class="fas fa-exclamation-circle me-1"></i>Complétez votre profil pour soumettre
+                                </div>
+                            @endif
+                            <button type="submit" class="btn-verify" id="submitVerificationBtn" {{ (isset($missingFields) && count($missingFields) > 0) ? 'disabled' : '' }}>
+                                <i class="fas fa-paper-plane me-2"></i>
+                                Soumettre ma demande
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -991,6 +1010,30 @@
             }
         });
     });
+
+    // Handle click on disabled submit button — scroll to missing fields warning
+    const submitBtn = document.getElementById('submitVerificationBtn');
+    if (submitBtn && submitBtn.disabled) {
+        submitBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const missingBox = document.querySelector('.missing-fields-box');
+            if (missingBox) {
+                missingBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                missingBox.style.animation = 'pulse 0.5s ease 2';
+            }
+        });
+        // Disabled buttons don't fire click events — use a wrapper
+        submitBtn.parentElement.addEventListener('click', function(e) {
+            if (submitBtn.disabled) {
+                const missingBox = document.querySelector('.missing-fields-box');
+                if (missingBox) {
+                    missingBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    missingBox.style.animation = 'none';
+                    setTimeout(() => missingBox.style.animation = 'pulse 0.5s ease 2', 10);
+                }
+            }
+        });
+    }
 </script>
 @endpush
 @endsection
