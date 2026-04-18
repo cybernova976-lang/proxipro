@@ -349,7 +349,8 @@
         
         // Créer le FormData avec les fichiers
         var formData = new FormData();
-        formData.append('_token', '{{ csrf_token() }}');
+        var csrfToken = document.querySelector('meta[name="csrf-token"]');
+        formData.append('_token', csrfToken ? csrfToken.getAttribute('content') : '{{ csrf_token() }}');
         formData.append('type', 'profile_verification');
         formData.append('document_type', docType);
         formData.append('document_front', docFront, docFront.name);
@@ -406,12 +407,20 @@
                                     errorMessages.push(errorData.errors[field][0]);
                                 }
                             }
-                            alert('Erreurs:\n' + errorMessages.join('\n'));
+                            alert('Erreurs de validation:\n' + errorMessages.join('\n'));
                         } else {
                             alert('Erreur: ' + (errorData.message || 'Erreur serveur'));
                         }
                     } catch (e) {
-                        alert('Erreur serveur: ' + xhr.status);
+                        if (xhr.status === 419) {
+                            alert('Votre session a expiré. Veuillez rafraîchir la page et réessayer.');
+                        } else if (xhr.status === 413) {
+                            alert('Les fichiers sont trop volumineux. Veuillez réduire leur taille (max 8 Mo par fichier).');
+                        } else if (xhr.status === 500) {
+                            alert('Erreur serveur. Veuillez réessayer dans quelques instants.');
+                        } else {
+                            alert('Erreur serveur (code ' + xhr.status + '). Veuillez réessayer.');
+                        }
                     }
                     btn.disabled = false;
                     btn.innerHTML = 'Continuer <i class="fas fa-arrow-right ms-2"></i>';

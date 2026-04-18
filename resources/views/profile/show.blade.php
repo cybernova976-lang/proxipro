@@ -96,8 +96,8 @@
                             </span>
                         @else
                             {{-- Profil non vérifié - bouton pour vérifier --}}
-                            <button type="button" class="badge bg-secondary px-3 py-2 border-0" data-bs-toggle="modal" data-bs-target="#verifyProfileModal" style="cursor: pointer;">
-                                <i class="fas fa-shield-alt me-1"></i>Vérifier mon profil
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 border-0" data-bs-toggle="modal" data-bs-target="#verifyProfileModal" style="cursor: pointer; font-size: 0.85rem;">
+                                <i class="fas fa-shield-alt me-1"></i><span>Vérifier mon profil</span>
                             </button>
                         @endif
                     </div>

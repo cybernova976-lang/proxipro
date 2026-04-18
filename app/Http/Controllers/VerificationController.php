@@ -51,18 +51,8 @@ class VerificationController extends Controller
     {
         $missing = [];
         if (!$user->name) $missing[] = ['field' => 'name', 'label' => 'Nom complet'];
-        if (!$user->phone) $missing[] = ['field' => 'phone', 'label' => 'Numéro de téléphone'];
-        if (!$user->city && !$user->detected_city) $missing[] = ['field' => 'city', 'label' => 'Ville'];
-        if (!$user->country && !$user->detected_country) $missing[] = ['field' => 'country', 'label' => 'Pays'];
-        if (!$user->address) $missing[] = ['field' => 'address', 'label' => 'Adresse'];
-        
-        if ($user->isProfessionnel()) {
-            // profession peut venir de service_subcategories si pas renseigné directement
-            $hasProfession = !empty($user->profession) 
-                || (!empty($user->service_subcategories) && is_array($user->service_subcategories) && count($user->service_subcategories) > 0);
-            if (!$hasProfession) $missing[] = ['field' => 'profession', 'label' => 'Profession / Métier'];
-            if (!$user->business_type) $missing[] = ['field' => 'business_type', 'label' => 'Type d\'activité (entreprise/auto-entrepreneur)'];
-        }
+        // Photo de profil, nom et email suffisent pour la vérification
+        // Les autres champs ne sont plus obligatoires
         
         return $missing;
     }
