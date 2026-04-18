@@ -6971,22 +6971,41 @@
         selectedReportReason = null;
     }
 
-    function submitReport() {
-        const adId = document.getElementById('reportAdId').value;
-        const message = document.getElementById('reportMessage').value.trim();
-        if (!selectedReportReason) return;
+    function submitReport(adIdParam, reasonParam) {
+        const adId = adIdParam || document.getElementById('reportAdId')?.value;
+        const reason = reasonParam || selectedReportReason;
+        const message = document.getElementById('reportMessage')?.value?.trim() || '';
+        
+        if (!adId || !reason) {
+            showToast('Veuillez sélectionner une raison', 'info');
+            return;
+        }
 
         const btn = document.getElementById('reportSubmitBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i> Envoi...';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i> Envoi...';
+        }
+
+        // Fermer le modal Bootstrap si ouvert (ads-grid)
+        if (adIdParam) {
+            const bsModalEl = document.getElementById('reportModal' + adIdParam);
+            if (bsModalEl && typeof bootstrap !== 'undefined') {
+                const bsModal = bootstrap.Modal.getInstance(bsModalEl);
+                if (bsModal) bsModal.hide();
+            }
+        }
 
         fetch(`/ads/${adId}/report`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-            body: JSON.stringify({ reason: selectedReportReason, message: message || null })
+            body: JSON.stringify({ reason: reason, message: message || null })
         })
         .then(r => {
-            if (!r.ok) throw new Error('HTTP ' + r.status);
+            if (r.status === 419) throw new Error('Session expirée. Veuillez rafraîchir la page.');
+            if (r.status === 401) throw new Error('Connectez-vous pour signaler une annonce.');
+            if (r.status === 422) return r.json().then(d => { throw new Error(d.message || 'Données invalides'); });
+            if (!r.ok) throw new Error('Erreur serveur (code ' + r.status + ')');
             return r.json();
         })
         .then(data => {
@@ -6997,13 +7016,16 @@
                 showToast('Signalement envoyé. Merci pour votre vigilance !', 'success');
             }
         })
-        .catch(() => {
+        .catch(err => {
             closeReportModal();
-            showToast('Erreur lors du signalement', 'error');
+            console.error('Erreur signalement:', err);
+            showToast(err.message || 'Erreur lors du signalement', 'error');
         })
         .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right:6px;"></i> Envoyer le signalement';
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right:6px;"></i> Envoyer le signalement';
+            }
         });
     }
 
