@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use App\Models\Ad;
 use App\Models\Review;
 
@@ -62,7 +63,8 @@ class ProfileController extends Controller
             'bio' => 'nullable|string|max:500',
             'location' => 'nullable|string|max:255',
             'profession' => 'nullable|string|max:255',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'avatar_cropped' => 'nullable|string',
             'hourly_rate' => 'nullable|numeric|min:0|max:999',
             'show_hourly_rate' => 'nullable',
         ];
@@ -78,7 +80,65 @@ class ProfileController extends Controller
         }
 
         // Gérer l'upload d'avatar
-        if ($request->hasFile('avatar')) {
+        if ($request->filled('avatar_cropped')) {
+            try {
+                $defaultDisk = config('filesystems.default', 'public');
+                $diskDriver  = config('filesystems.disks.' . $defaultDisk . '.driver', 'local');
+                $rawImage = (string) $request->input('avatar_cropped');
+
+                if (!preg_match('/^data:image\/(jpeg|jpg|png|webp);base64,/', $rawImage)) {
+                    return back()->withErrors(['avatar' => 'Format d\'image recadrée invalide.'])->withInput();
+                }
+
+                [$meta, $content] = explode(',', $rawImage, 2);
+                $binary = base64_decode($content, true);
+
+                if ($binary === false) {
+                    return back()->withErrors(['avatar' => 'Impossible de traiter l\'image recadrée.'])->withInput();
+                }
+
+                if (strlen($binary) > (5 * 1024 * 1024)) {
+                    return back()->withErrors(['avatar' => 'L\'image recadrée est trop volumineuse (max 5 Mo).'])->withInput();
+                }
+
+                Log::info('Avatar cropped upload — disk: ' . $defaultDisk . ', driver: ' . $diskDriver, [
+                    'user_id'   => $user->id,
+                    'file_size' => strlen($binary),
+                ]);
+
+                if ($user->avatar && !str_starts_with($user->avatar, 'http')) {
+                    try {
+                        Storage::disk($defaultDisk)->delete($user->avatar);
+                    } catch (\Exception $e) {
+                        Log::warning('Impossible de supprimer l\'ancien avatar: ' . $e->getMessage(), [
+                            'user_id' => $user->id,
+                            'avatar'  => $user->avatar,
+                        ]);
+                    }
+                }
+
+                $extension = str_contains($meta, 'image/png') ? 'png' : (str_contains($meta, 'image/webp') ? 'webp' : 'jpg');
+                $path = 'avatars/' . Str::uuid() . '.' . $extension;
+                $saved = Storage::disk($defaultDisk)->put($path, $binary);
+
+                if (!$saved) {
+                    Log::error('Avatar cropped put() returned false', [
+                        'user_id' => $user->id,
+                        'disk'    => $defaultDisk,
+                    ]);
+                    return back()->withErrors(['avatar' => 'Erreur lors du téléchargement de la photo. Veuillez réessayer.'])->withInput();
+                }
+
+                $data['avatar'] = $path;
+            } catch (\Exception $e) {
+                Log::error('Erreur upload avatar recadré: ' . $e->getMessage(), [
+                    'user_id'   => $user->id,
+                    'exception' => get_class($e),
+                    'trace'     => $e->getTraceAsString(),
+                ]);
+                return back()->withErrors(['avatar' => 'Erreur lors du téléchargement de la photo. Veuillez réessayer.'])->withInput();
+            }
+        } elseif ($request->hasFile('avatar')) {
             try {
                 $defaultDisk = config('filesystems.default', 'public');
                 $diskDriver  = config('filesystems.disks.' . $defaultDisk . '.driver', 'local');

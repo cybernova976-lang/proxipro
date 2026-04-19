@@ -26,6 +26,20 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response, \Throwable $e) {
+            if ($response->getStatusCode() === 419 && request()->isMethod('post')) {
+                $email = (string) request()->input('email', '');
+
+                if (request()->routeIs('verification.code.verify') && $email !== '') {
+                    return redirect()->route('verification.code.show', ['email' => $email])
+                        ->with('error', 'Votre session a expiré pendant la vérification. Saisissez à nouveau le code pour continuer.');
+                }
+
+                if (request()->routeIs('verification.code.resend') && $email !== '') {
+                    return redirect()->route('verification.code.show', ['email' => $email])
+                        ->with('error', 'Votre session a expiré. La page a été rechargée, vous pouvez renvoyer un nouveau code.');
+                }
+            }
+
             if ($response->getStatusCode() >= 500) {
                 \Illuminate\Support\Facades\Log::error('Server error: ' . $e->getMessage(), [
                     'exception' => get_class($e),
