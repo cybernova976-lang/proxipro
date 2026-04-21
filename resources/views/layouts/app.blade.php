@@ -6585,12 +6585,6 @@
                                 @endif
                             </a>
 
-                            <!-- Points -->
-                            <a href="{{ route('points.dashboard') }}" class="header-points-badge d-none d-md-flex" title="Mes points">
-                                <i class="fas fa-coins"></i>
-                                <span class="header-points-value">{{ Auth::user()->available_points ?? 0 }}</span>
-                            </a>
-
                             <!-- Boost Expiration Alerts -->
                             @php
                                 $boostAlerts = \App\Http\Controllers\BoostController::getExpiringAlerts(Auth::user());
