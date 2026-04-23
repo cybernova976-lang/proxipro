@@ -11,10 +11,17 @@ class WelcomeMail extends Mailable
     use SerializesModels;
 
     public User $user;
+    public string $appName;
+    public string $supportEmail;
 
     public function __construct(User $user)
     {
         $this->user = $user;
+        $this->appName = config('app.name', 'ProxiPro');
+        $this->supportEmail = config('mail.reply_to.address')
+            ?: config('mail.admin_email')
+            ?: config('mail.from.address')
+            ?: 'support@proxipro.fr';
     }
 
     public function build()

@@ -58,6 +58,11 @@ return [
             'key' => env('BREVO_API_KEY'),
         ],
 
+        'brevo_secondary' => [
+            'transport' => 'brevo',
+            'key' => env('BREVO_API_KEY_2'),
+        ],
+
         'postmark' => [
             'transport' => 'postmark',
             // 'message_stream_id' => env('POSTMARK_MESSAGE_STREAM_ID'),
@@ -87,6 +92,8 @@ return [
         'failover' => [
             'transport' => 'failover',
             'mailers' => [
+                'brevo',
+                'brevo_secondary',
                 'smtp',
                 'log',
             ],
@@ -119,5 +126,12 @@ return [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
+
+    'reply_to' => [
+        'address' => env('MAIL_REPLY_TO_ADDRESS', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
+        'name' => env('MAIL_REPLY_TO_NAME', env('MAIL_FROM_NAME', 'Example')),
+    ],
+
+    'admin_email' => env('MAIL_ADMIN_ADDRESS', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
 
 ];

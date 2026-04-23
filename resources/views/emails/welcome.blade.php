@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bienvenue sur ProxiPro</title>
+    <title>Bienvenue sur {{ $appName }}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f5f7fb; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1e293b;">
 
@@ -11,16 +11,16 @@
 
         {{-- Header --}}
         <div style="text-align: center; margin-bottom: 32px;">
-            <div style="display: inline-block; width: 56px; height: 56px; background: linear-gradient(135deg, #7c3aed, #9333ea); border-radius: 16px; color: white; font-size: 1.5rem; font-weight: 700; line-height: 56px; text-align: center; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.35);">P</div>
-            <h1 style="margin: 12px 0 0; font-size: 1.8rem; background: linear-gradient(135deg, #7c3aed, #3a86ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">ProxiPro</h1>
+            <div style="display: inline-block; width: 56px; height: 56px; background: linear-gradient(135deg, #0f766e, #14b8a6); border-radius: 16px; color: white; font-size: 1.5rem; font-weight: 700; line-height: 56px; text-align: center; box-shadow: 0 4px 15px rgba(20, 184, 166, 0.30);">P</div>
+            <h1 style="margin: 12px 0 0; font-size: 1.8rem; background: linear-gradient(135deg, #0f766e, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">{{ $appName }}</h1>
         </div>
 
         {{-- Main Card --}}
         <div style="background: white; border-radius: 16px; padding: 40px 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
 
-            <h2 style="margin: 0 0 8px; font-size: 1.5rem; color: #1e293b;">Bienvenue {{ $user->name }} ! 🎉</h2>
+            <h2 style="margin: 0 0 8px; font-size: 1.5rem; color: #1e293b;">Bienvenue {{ $user->name }} !</h2>
             <p style="color: #64748b; font-size: 1rem; line-height: 1.7; margin: 0 0 24px;">
-                Nous sommes ravis de vous compter parmi la communauté ProxiPro. Votre compte a été créé avec succès et vous disposez déjà de <strong style="color: #7c3aed;">5 points de bienvenue</strong> pour démarrer.
+                Nous sommes ravis de vous compter parmi la communauté {{ $appName }}. Votre compte a été créé avec succès et vous disposez déjà de <strong style="color: #0f766e;">5 points de bienvenue</strong> pour démarrer.
             </p>
 
             {{-- Ce que vous pouvez faire --}}
@@ -52,9 +52,9 @@
 
             {{-- Bloc PRO --}}
             <div style="background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%); border-radius: 14px; padding: 24px; margin-bottom: 24px; border: 1px solid rgba(99, 102, 241, 0.15);">
-                <h3 style="margin: 0 0 10px; font-size: 1.15rem; color: #4338ca;">💼 Passez au niveau supérieur avec le compte Pro</h3>
+                <h3 style="margin: 0 0 10px; font-size: 1.15rem; color: #0f766e;">💼 Passez au niveau supérieur avec le compte Pro</h3>
                 <p style="color: #475569; font-size: 0.92rem; line-height: 1.6; margin: 0 0 16px;">
-                    Les professionnels sur ProxiPro bénéficient d'avantages exclusifs pour développer leur activité :
+                    Les professionnels sur {{ $appName }} bénéficient d'avantages exclusifs pour développer leur activité :
                 </p>
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>
@@ -108,7 +108,7 @@
                 </table>
 
                 <div style="text-align: center; margin-top: 20px;">
-                    <a href="{{ url('/pricing') }}" style="display: inline-block; padding: 12px 32px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);">
+                    <a href="{{ url('/pricing') }}" style="display: inline-block; padding: 12px 32px; background: linear-gradient(135deg, #0f766e, #2563eb); color: white; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">
                         Découvrir les offres Pro →
                     </a>
                 </div>
@@ -127,8 +127,9 @@
 
         {{-- Footer --}}
         <div style="text-align: center; margin-top: 32px; color: #94a3b8; font-size: 0.8rem; line-height: 1.5;">
-            <p style="margin: 0;">© {{ date('Y') }} ProxiPro — La plateforme des services de proximité</p>
+            <p style="margin: 0;">© {{ date('Y') }} {{ $appName }} — La plateforme des services de proximité</p>
             <p style="margin: 6px 0 0;">Cet email a été envoyé à {{ $user->email }}</p>
+            <p style="margin: 6px 0 0;">Support : <a href="mailto:{{ $supportEmail }}" style="color: #0f766e; text-decoration: none; font-weight: 600;">{{ $supportEmail }}</a></p>
         </div>
     </div>
 </body>

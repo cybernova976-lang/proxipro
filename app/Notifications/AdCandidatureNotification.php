@@ -25,20 +25,22 @@ class AdCandidatureNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $mail = (new MailMessage)
+        $supportEmail = config('mail.reply_to.address')
+            ?: config('mail.admin_email')
+            ?: config('mail.from.address')
+            ?: 'support@proxipro.fr';
+
+        return (new MailMessage)
             ->subject("📩 Nouvelle candidature pour votre annonce : {$this->ad->title}")
-            ->greeting("Bonjour {$notifiable->name},")
-            ->line("**{$this->candidate->name}** est intéressé(e) par votre annonce « {$this->ad->title} ».");
-
-        if ($this->message) {
-            $mail->line("**Message :** {$this->message}");
-        }
-
-        $mail->action('Voir l\'annonce', url(route('ads.show', $this->ad)))
-             ->line('Vous pouvez contacter cette personne via la messagerie de la plateforme.')
-             ->line('Merci de votre confiance !');
-
-        return $mail;
+            ->view('emails.notifications.ad-candidature', [
+                'appName' => config('app.name', 'ProxiPro'),
+                'supportEmail' => $supportEmail,
+                'recipientName' => $notifiable->name,
+                'candidateName' => $this->candidate->name,
+                'candidateMessage' => $this->message,
+                'adTitle' => $this->ad->title,
+                'adUrl' => url(route('ads.show', $this->ad)),
+            ]);
     }
 
     public function toArray(object $notifiable): array

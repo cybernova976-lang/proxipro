@@ -41,22 +41,28 @@ class NewAdMatchingNotification extends Notification implements ShouldQueue
     {
         $serviceType = $this->ad->service_type === 'demande' ? 'demande de service' : 'offre de service';
         $adUrl = url('/ads/' . $this->ad->id);
+        $supportEmail = config('mail.reply_to.address')
+            ?: config('mail.admin_email')
+            ?: config('mail.from.address')
+            ?: 'support@proxipro.fr';
+        $budget = $this->ad->price
+            ? number_format($this->ad->price, 0, ',', ' ') . ' EUR'
+            : null;
 
         return (new MailMessage)
             ->subject('📌 Nouvelle ' . $serviceType . ' dans votre domaine — ' . $this->ad->category)
-            ->greeting('Bonjour ' . $notifiable->name . ' 👋')
-            ->line('Une nouvelle publication correspondant à votre domaine d\'activité vient d\'être ajoutée sur ProxiPro.')
-            ->line('')
-            ->line('**' . $this->ad->title . '**')
-            ->line('📂 Catégorie : ' . $this->ad->category)
-            ->line('📍 Lieu : ' . ($this->ad->location ?? 'Non précisé'))
-            ->line(($this->ad->price ? '💰 Budget : ' . number_format($this->ad->price, 0, ',', ' ') . ' €' : ''))
-            ->line('')
-            ->line('Publié par **' . $this->publisher->name . '**')
-            ->action('Voir l\'annonce et postuler', $adUrl)
-            ->line('')
-            ->line('Vous recevez cet email car vos compétences correspondent à la catégorie « ' . $this->ad->category . ' ». Vous pouvez gérer vos préférences de notification depuis votre Espace Pro.')
-            ->salutation('L\'équipe ProxiPro');
+            ->view('emails.notifications.new-ad-matching', [
+                'appName' => config('app.name', 'ProxiPro'),
+                'supportEmail' => $supportEmail,
+                'recipientName' => $notifiable->name,
+                'serviceTypeLabel' => $serviceType,
+                'adTitle' => $this->ad->title,
+                'category' => $this->ad->category,
+                'location' => $this->ad->location ?? 'Non précisé',
+                'budget' => $budget,
+                'publisherName' => $this->publisher->name,
+                'adUrl' => $adUrl,
+            ]);
     }
 
     public function failed(\Throwable $exception): void

@@ -29,14 +29,23 @@ class BoostExpiringNotification extends Notification
         $timeText = $this->hoursLeft <= 24
             ? "moins de 24 heures"
             : "{$this->hoursLeft} heures";
+        $supportEmail = config('mail.reply_to.address')
+            ?: config('mail.admin_email')
+            ?: config('mail.from.address')
+            ?: 'support@proxipro.fr';
 
         return (new MailMessage)
             ->subject("{$icon} Votre {$label} expire bientôt — {$this->ad->title}")
-            ->greeting("Bonjour {$notifiable->name},")
-            ->line("Le {$label} de votre annonce « {$this->ad->title} » expire dans {$timeText}.")
-            ->line("Renouvelez-le maintenant pour continuer à bénéficier d'une visibilité maximale.")
-            ->action('Renouveler mon boost', url(route('boost.show', $this->ad)))
-            ->line('Merci de votre confiance !');
+            ->view('emails.notifications.boost-expiring', [
+                'appName' => config('app.name', 'ProxiPro'),
+                'supportEmail' => $supportEmail,
+                'recipientName' => $notifiable->name,
+                'label' => $label,
+                'icon' => $icon,
+                'timeText' => $timeText,
+                'adTitle' => $this->ad->title,
+                'renewUrl' => url(route('boost.show', $this->ad)),
+            ]);
     }
 
     public function toArray(object $notifiable): array

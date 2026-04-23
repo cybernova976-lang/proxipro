@@ -80,6 +80,53 @@
     </div>
 </div>
 
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                <h5 class="mb-0">
+                    <i class="fas fa-envelope-open-text me-2 text-info"></i>Résumé configuration e-mail
+                </h5>
+                <span class="badge rounded-pill {{ ($mailSummary['is_complete'] ?? false) ? 'text-bg-success' : 'text-bg-warning' }} px-3 py-2">
+                    {{ ($mailSummary['is_complete'] ?? false) ? 'Config OK' : 'Config incomplète' }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="small text-muted text-uppercase fw-semibold mb-1">Canal</div>
+                        <div class="fw-semibold">{{ $mailSummary['driver'] ?? config('mail.default') }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="small text-muted text-uppercase fw-semibold mb-1">Contact public</div>
+                        <div class="fw-semibold">{{ $mailSummary['contact_email'] ?? 'Non défini' }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="small text-muted text-uppercase fw-semibold mb-1">Réponse</div>
+                        <div class="fw-semibold">{{ $mailSummary['reply_to_address'] ?? 'Non défini' }}</div>
+                        @if($mailSummary['reply_to_uses_admin_fallback'] ?? false)
+                            <div class="small text-muted">Fallback admin actif</div>
+                        @endif
+                    </div>
+                    <div class="col-md-3">
+                        <div class="small text-muted text-uppercase fw-semibold mb-1">Administration</div>
+                        <div class="fw-semibold">{{ $mailSummary['admin_email'] ?? 'Non défini' }}</div>
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                    <div class="small text-muted">
+                        Expéditeur: {{ $mailSummary['from_name'] ?? 'Non défini' }} &lt;{{ $mailSummary['from_address'] ?? 'Non défini' }}&gt;
+                    </div>
+                    <a href="{{ route('admin.settings') }}" class="btn btn-sm btn-outline-info">
+                        Ouvrir la configuration e-mail
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Deux colonnes -->
 <div class="row g-4">
     <!-- Vérifications en attente -->

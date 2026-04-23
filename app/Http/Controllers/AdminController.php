@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\AdminTestMail;
 use App\Models\User;
 use App\Models\Ad;
 use App\Models\Setting;
@@ -12,6 +13,7 @@ use App\Models\ContactMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
@@ -58,7 +60,9 @@ class AdminController extends Controller
             ->take(5)
             ->get();
 
-        return view('admin.dashboard', compact('stats', 'registrations', 'latestUsers', 'latestAds', 'pendingVerifications'));
+        $mailSummary = $this->buildMailConfigSummary();
+
+        return view('admin.dashboard', compact('stats', 'registrations', 'latestUsers', 'latestAds', 'pendingVerifications', 'mailSummary'));
     }
 
     // Liste des utilisateurs
@@ -634,8 +638,10 @@ class AdminController extends Controller
             'email' => Setting::getGroup('email'),
             'security' => Setting::getGroup('security'),
         ];
+
+        $mailSummary = $this->buildMailConfigSummary();
         
-        return view('admin.settings', compact('settings'));
+        return view('admin.settings', compact('settings', 'mailSummary'));
     }
 
     public function updateSettingsGeneral(Request $request)
@@ -688,15 +694,63 @@ class AdminController extends Controller
     public function updateSettingsEmail(Request $request)
     {
         $validated = $request->validate([
-            'mail_driver' => 'required|in:smtp,mailgun,ses,log',
+            'mail_driver' => 'required|in:failover,brevo,brevo_secondary,smtp,mailgun,ses,log',
+            'mail_from_address' => 'required|email|max:255',
+            'mail_from_name' => 'required|string|max:255',
+            'mail_reply_to_address' => 'nullable|email|max:255',
+            'mail_reply_to_name' => 'nullable|string|max:255',
+            'mail_admin_address' => 'required|email|max:255',
         ]);
 
+        $replyToAddress = trim((string) ($validated['mail_reply_to_address'] ?? ''));
+        if ($replyToAddress === '') {
+            $replyToAddress = $validated['mail_admin_address'];
+        }
+
+        $replyToName = trim((string) ($validated['mail_reply_to_name'] ?? ''));
+        if ($replyToName === '') {
+            $replyToName = $validated['mail_from_name'];
+        }
+
         Setting::set('mail_driver', $validated['mail_driver'], 'email');
+        Setting::set('mail_from_address', $validated['mail_from_address'], 'email');
+        Setting::set('mail_from_name', $validated['mail_from_name'], 'email');
+        Setting::set('mail_reply_to_address', $replyToAddress, 'email');
+        Setting::set('mail_reply_to_name', $replyToName, 'email');
+        Setting::set('mail_admin_address', $validated['mail_admin_address'], 'email');
         Setting::set('email_new_user', $request->has('email_new_user') ? '1' : '0', 'email');
         Setting::set('email_new_ad', $request->has('email_new_ad') ? '1' : '0', 'email');
         Setting::set('email_new_message', $request->has('email_new_message') ? '1' : '0', 'email');
 
         return back()->with('success', 'Paramètres email mis à jour avec succès');
+    }
+
+    public function sendTestEmail(Request $request)
+    {
+        $validated = $request->validate([
+            'test_email' => 'nullable|email|max:255',
+        ]);
+
+        $targetEmail = $validated['test_email']
+            ?? Setting::get('mail_admin_address', config('mail.admin_email'))
+            ?? config('mail.from.address');
+
+        try {
+            Mail::to($targetEmail)->send(new AdminTestMail([
+                'mailer' => config('mail.default'),
+                'from_address' => config('mail.from.address'),
+                'from_name' => config('mail.from.name'),
+                'reply_to_address' => config('mail.reply_to.address'),
+                'reply_to_name' => config('mail.reply_to.name'),
+                'admin_email' => config('mail.admin_email'),
+                'environment' => app()->environment(),
+                'sent_at' => now()->format('d/m/Y H:i:s'),
+            ]));
+
+            return back()->with('success', "Email de test envoyé à {$targetEmail}");
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Échec de l\'envoi du mail de test : ' . $e->getMessage());
+        }
     }
 
     public function updateSettingsSecurity(Request $request)
@@ -723,6 +777,45 @@ class AdminController extends Controller
         }
 
         return back()->with('error', 'Action non reconnue');
+    }
+
+    protected function buildMailConfigSummary(): array
+    {
+        $contactEmail = Setting::get('contact_email', config('mail.admin_email'));
+        $driver = Setting::get('mail_driver', config('mail.default'));
+        $fromAddress = Setting::get('mail_from_address', config('mail.from.address'));
+        $fromName = Setting::get('mail_from_name', config('mail.from.name'));
+        $adminEmail = Setting::get('mail_admin_address', $contactEmail ?: config('mail.admin_email'));
+        $storedReplyToAddress = Setting::get('mail_reply_to_address', config('mail.reply_to.address'));
+        $storedReplyToName = Setting::get('mail_reply_to_name', config('mail.reply_to.name'));
+        $replyToAddress = $storedReplyToAddress ?: $adminEmail;
+        $replyToName = $storedReplyToName ?: $fromName;
+
+        $missingFields = [];
+        foreach ([
+            'contact_email' => $contactEmail,
+            'mail_from_address' => $fromAddress,
+            'mail_from_name' => $fromName,
+            'mail_admin_address' => $adminEmail,
+            'mail_reply_to_address' => $replyToAddress,
+        ] as $field => $value) {
+            if (! is_string($value) || trim($value) === '') {
+                $missingFields[] = $field;
+            }
+        }
+
+        return [
+            'driver' => $driver,
+            'contact_email' => $contactEmail,
+            'from_address' => $fromAddress,
+            'from_name' => $fromName,
+            'reply_to_address' => $replyToAddress,
+            'reply_to_name' => $replyToName,
+            'admin_email' => $adminEmail,
+            'reply_to_uses_admin_fallback' => $storedReplyToAddress !== $replyToAddress,
+            'is_complete' => count($missingFields) === 0,
+            'missing_fields' => $missingFields,
+        ];
     }
 
     // ===== GESTION DES ADMINS =====

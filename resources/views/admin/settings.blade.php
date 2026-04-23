@@ -47,8 +47,9 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Email de contact</label>
+                        <label class="form-label">Email de contact public</label>
                         <input type="email" class="form-control" name="contact_email" value="{{ $settings['general']['contact_email'] ?? 'contact@ProxiPro.com' }}">
+                        <small class="text-muted">Adresse affichée aux utilisateurs pour joindre la plateforme.</small>
                     </div>
                     
                     <div class="mb-3">
@@ -152,23 +153,95 @@
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-0 py-3">
-                <h5 class="mb-0">
-                    <i class="fas fa-envelope me-2 text-info"></i>
-                    Configuration Email
-                </h5>
+                <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                    <h5 class="mb-0">
+                        <i class="fas fa-envelope me-2 text-info"></i>
+                        Configuration Email
+                    </h5>
+                    @php
+                        $mailBadgeClass = ($mailSummary['is_complete'] ?? false) ? 'bg-success-subtle text-success border-success-subtle' : 'bg-warning-subtle text-warning border-warning-subtle';
+                        $mailBadgeLabel = ($mailSummary['is_complete'] ?? false) ? 'Config OK' : 'Config incomplète';
+                    @endphp
+                    <span class="badge rounded-pill border {{ $mailBadgeClass }} px-3 py-2">{{ $mailBadgeLabel }}</span>
+                </div>
             </div>
             <div class="card-body">
+                <div class="rounded-3 border bg-light-subtle p-3 mb-4">
+                    <h6 class="fw-semibold mb-3">
+                        <i class="fas fa-life-ring me-2 text-info"></i>Repères Support & Contact
+                    </h6>
+                    <div class="row g-3 small">
+                        <div class="col-md-6">
+                            <div class="text-muted text-uppercase fw-semibold mb-1">Contact public</div>
+                            <div>{{ $settings['general']['contact_email'] ?? 'contact@ProxiPro.com' }}</div>
+                            <div class="text-muted">Visible sur le site</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted text-uppercase fw-semibold mb-1">Expéditeur</div>
+                            <div>{{ $settings['email']['mail_from_address'] ?? config('mail.from.address') ?: 'Non défini' }}</div>
+                            <div class="text-muted">Adresse utilisée pour envoyer les mails</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted text-uppercase fw-semibold mb-1">Réponse</div>
+                            <div>{{ $mailSummary['reply_to_address'] ?? 'Non défini' }}</div>
+                            <div class="text-muted">Adresse qui reçoit les réponses @if($mailSummary['reply_to_uses_admin_fallback'] ?? false)(fallback admin actif)@endif</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted text-uppercase fw-semibold mb-1">Administration</div>
+                            <div>{{ $mailSummary['admin_email'] ?? 'Non défini' }}</div>
+                            <div class="text-muted">Adresse par défaut pour les alertes et tests</div>
+                        </div>
+                    </div>
+                    @if(!($mailSummary['is_complete'] ?? false))
+                        <div class="alert alert-warning mt-3 mb-0 py-2 px-3 small">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Configuration à compléter avant exploitation complète des notifications.
+                        </div>
+                    @endif
+                </div>
+
                 <form action="{{ route('admin.settings.email') }}" method="POST">
                     @csrf
                     
                     <div class="mb-3">
-                        <label class="form-label">Driver SMTP</label>
+                        <label class="form-label">Canal d'envoi</label>
                         <select class="form-select" name="mail_driver">
-                            <option value="smtp" {{ ($settings['email']['mail_driver'] ?? 'smtp') == 'smtp' ? 'selected' : '' }}>SMTP</option>
+                            <option value="failover" {{ ($settings['email']['mail_driver'] ?? config('mail.default')) == 'failover' ? 'selected' : '' }}>Failover Brevo + SMTP</option>
+                            <option value="brevo" {{ ($settings['email']['mail_driver'] ?? config('mail.default')) == 'brevo' ? 'selected' : '' }}>Brevo API</option>
+                            <option value="brevo_secondary" {{ ($settings['email']['mail_driver'] ?? config('mail.default')) == 'brevo_secondary' ? 'selected' : '' }}>Brevo API secondaire</option>
+                            <option value="smtp" {{ ($settings['email']['mail_driver'] ?? config('mail.default')) == 'smtp' ? 'selected' : '' }}>SMTP</option>
                             <option value="mailgun" {{ ($settings['email']['mail_driver'] ?? '') == 'mailgun' ? 'selected' : '' }}>Mailgun</option>
                             <option value="ses" {{ ($settings['email']['mail_driver'] ?? '') == 'ses' ? 'selected' : '' }}>Amazon SES</option>
                             <option value="log" {{ ($settings['email']['mail_driver'] ?? '') == 'log' ? 'selected' : '' }}>Log (dev)</option>
                         </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Adresse d'envoi</label>
+                        <input type="email" class="form-control" name="mail_from_address" value="{{ $settings['email']['mail_from_address'] ?? config('mail.from.address') }}">
+                        <small class="text-muted">Adresse vue par le destinataire. Elle doit correspondre à une adresse validée chez Brevo.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nom d'envoi</label>
+                        <input type="text" class="form-control" name="mail_from_name" value="{{ $settings['email']['mail_from_name'] ?? config('mail.from.name') }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Adresse de réponse</label>
+                        <input type="email" class="form-control" name="mail_reply_to_address" value="{{ $settings['email']['mail_reply_to_address'] ?? config('mail.reply_to.address') ?? ($settings['email']['mail_admin_address'] ?? config('mail.admin_email')) }}" placeholder="Laisser vide pour reprendre l'adresse admin">
+                        <small class="text-muted">Si ce champ est vide, l'adresse admin sera utilisée automatiquement.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nom de réponse</label>
+                        <input type="text" class="form-control" name="mail_reply_to_name" value="{{ $settings['email']['mail_reply_to_name'] ?? config('mail.reply_to.name') ?? ($settings['email']['mail_from_name'] ?? config('mail.from.name')) }}" placeholder="Laisser vide pour reprendre le nom d'envoi">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Adresse admin</label>
+                        <input type="email" class="form-control" name="mail_admin_address" value="{{ $settings['email']['mail_admin_address'] ?? config('mail.admin_email') }}">
+                        <small class="text-muted">Destinataire par défaut des tests et des notifications administratives.</small>
                     </div>
                     
                     <div class="mb-3">
@@ -190,6 +263,22 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save me-2"></i>Enregistrer
                     </button>
+                </form>
+
+                <hr>
+
+                <form action="{{ route('admin.settings.email.test') }}" method="POST" class="row g-2 align-items-end">
+                    @csrf
+                    <div class="col-md-8">
+                        <label class="form-label">Envoyer un e-mail de test</label>
+                        <input type="email" class="form-control" name="test_email" value="{{ $settings['email']['mail_admin_address'] ?? config('mail.admin_email') }}" placeholder="admin@example.com">
+                        <small class="text-muted">Laissez cette adresse ou saisissez un autre destinataire temporaire.</small>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-outline-info w-100">
+                            <i class="fas fa-paper-plane me-2"></i>Envoyer un test
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>

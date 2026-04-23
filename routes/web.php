@@ -510,6 +510,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/settings/ads', [AdminController::class, 'updateSettingsAds'])->name('admin.settings.ads');
     Route::post('/settings/points', [AdminController::class, 'updateSettingsPoints'])->name('admin.settings.points');
     Route::post('/settings/email', [AdminController::class, 'updateSettingsEmail'])->name('admin.settings.email');
+    Route::post('/settings/email/test', [AdminController::class, 'sendTestEmail'])->name('admin.settings.email.test');
     Route::post('/settings/security', [AdminController::class, 'updateSettingsSecurity'])->name('admin.settings.security');
     Route::post('/settings/system', [AdminController::class, 'updateSettingsSystem'])->name('admin.settings.system');
 

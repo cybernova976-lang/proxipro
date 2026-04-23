@@ -23,9 +23,31 @@
                     </p>
 
                     @if (session('status'))
-                        <div class="alert border-0 d-flex align-items-start gap-2 mb-4" role="alert" style="background: #ecfdf5; color: #166534; border-radius: 16px; padding: 1rem 1.1rem;">
-                            <i class="fas fa-circle-check mt-1"></i>
-                            <div>{{ session('status') }}</div>
+                        <div class="alert border-0 mb-4" role="alert" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #166534; border-radius: 18px; padding: 1rem 1.1rem;">
+                            <div class="d-flex align-items-start gap-3">
+                                <div style="width: 42px; height: 42px; border-radius: 14px; background: rgba(22, 101, 52, 0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="fas fa-circle-check"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold mb-1">Lien envoyé</div>
+                                    <div>{{ session('status') }}</div>
+                                    <div class="small mt-2" style="opacity: 0.85;">Vérifiez aussi vos courriers indésirables si vous ne voyez pas le message dans votre boîte de réception.</div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if ($errors->has('email'))
+                        <div class="alert border-0 mb-4" role="alert" style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); color: #991b1b; border-radius: 18px; padding: 1rem 1.1rem;">
+                            <div class="d-flex align-items-start gap-3">
+                                <div style="width: 42px; height: 42px; border-radius: 14px; background: rgba(153, 27, 27, 0.08); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="fas fa-triangle-exclamation"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold mb-1">Envoi impossible</div>
+                                    <div>{{ $errors->first('email') }}</div>
+                                </div>
+                            </div>
                         </div>
                     @endif
 

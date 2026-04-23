@@ -27,15 +27,21 @@ class NewMessageNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $preview = \Illuminate\Support\Str::limit($this->message->content, 100);
+        $supportEmail = config('mail.reply_to.address')
+            ?: config('mail.admin_email')
+            ?: config('mail.from.address')
+            ?: 'support@proxipro.fr';
 
         return (new MailMessage)
             ->subject("💬 Nouveau message de {$this->sender->name}")
-            ->greeting("Bonjour {$notifiable->name},")
-            ->line("**{$this->sender->name}** vous a envoyé un message :")
-            ->line("\"{$preview}\"")
-            ->action('Lire la conversation', url(route('messages.show', $this->conversation->id)))
-            ->line('Vous pouvez répondre directement depuis la messagerie de la plateforme.')
-            ->salutation('À bientôt sur ProxiPro !');
+            ->view('emails.notifications.new-message', [
+                'appName' => config('app.name', 'ProxiPro'),
+                'supportEmail' => $supportEmail,
+                'recipientName' => $notifiable->name,
+                'senderName' => $this->sender->name,
+                'preview' => $preview,
+                'conversationUrl' => url(route('messages.show', $this->conversation->id)),
+            ]);
     }
 
     public function toArray(object $notifiable): array

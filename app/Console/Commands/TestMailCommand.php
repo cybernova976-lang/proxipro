@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Mail\AdminTestMail;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\EmailVerificationCode;
 
 class TestMailCommand extends Command
 {
@@ -23,6 +23,9 @@ class TestMailCommand extends Command
             ['MAIL_SCHEME', config('mail.mailers.smtp.scheme') ?: '(null)'],
             ['MAIL_FROM_ADDRESS', config('mail.from.address')],
             ['MAIL_FROM_NAME', config('mail.from.name')],
+            ['MAIL_REPLY_TO_ADDRESS', config('mail.reply_to.address')],
+            ['MAIL_REPLY_TO_NAME', config('mail.reply_to.name')],
+            ['MAIL_ADMIN_ADDRESS', config('mail.admin_email')],
             ['QUEUE_CONNECTION', config('queue.default')],
         ]);
 
@@ -43,7 +46,16 @@ class TestMailCommand extends Command
         $this->info("\nSending test email to: {$email}");
 
         try {
-            Mail::to($email)->send(new EmailVerificationCode('123456', 'Test User'));
+            Mail::to($email)->send(new AdminTestMail([
+                'mailer' => config('mail.default'),
+                'from_address' => config('mail.from.address'),
+                'from_name' => config('mail.from.name'),
+                'reply_to_address' => config('mail.reply_to.address'),
+                'reply_to_name' => config('mail.reply_to.name'),
+                'admin_email' => config('mail.admin_email'),
+                'environment' => app()->environment(),
+                'sent_at' => now()->format('d/m/Y H:i:s'),
+            ]));
             $this->info('✅ Email sent successfully!');
             return 0;
         } catch (\Exception $e) {

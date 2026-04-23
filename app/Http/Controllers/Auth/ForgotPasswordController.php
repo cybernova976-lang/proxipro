@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\SendsPasswordResetEmails;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
 
 class ForgotPasswordController extends Controller
 {
@@ -19,4 +22,30 @@ class ForgotPasswordController extends Controller
     */
 
     use SendsPasswordResetEmails;
+
+    public function sendResetLinkEmail(Request $request)
+    {
+        $this->validateEmail($request);
+
+        try {
+            $response = $this->broker()->sendResetLink(
+                $this->credentials($request)
+            );
+        } catch (\Throwable $exception) {
+            Log::error('Password reset email failed to send.', [
+                'email' => $request->input('email'),
+                'message' => $exception->getMessage(),
+            ]);
+
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors([
+                    'email' => 'Impossible d\'envoyer l\'e-mail de réinitialisation pour le moment. Réessayez dans quelques instants.',
+                ]);
+        }
+
+        return $response == Password::RESET_LINK_SENT
+            ? $this->sendResetLinkResponse($request, $response)
+            : $this->sendResetLinkFailedResponse($request, $response);
+    }
 }

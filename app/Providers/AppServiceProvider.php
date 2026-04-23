@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use App\Models\Setting;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
@@ -32,6 +33,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->applyDynamicMailSettings();
+
         $publicUrl = $this->resolvePublicUrl();
 
         // Force HTTPS in production (Railway reverse proxy)
@@ -46,23 +49,33 @@ class AppServiceProvider extends ServiceProvider
                 'email' => $notifiable->getEmailForPasswordReset(),
             ]);
 
+            $supportEmail = config('mail.reply_to.address')
+                ?: config('mail.admin_email')
+                ?: config('mail.from.address');
+
             return (new MailMessage)
-                ->subject('Réinitialisation de votre mot de passe')
-                ->greeting('Bonjour ' . ($notifiable->name ?? ''))
-                ->line('Vous recevez cet e-mail car une demande de réinitialisation du mot de passe a été effectuée pour votre compte ProxiPro.')
-                ->action('Réinitialiser mon mot de passe', $url)
-                ->line('Ce lien de réinitialisation expirera dans 60 minutes.')
-                ->line('Si vous n\'êtes pas à l\'origine de cette demande, aucune action supplémentaire n\'est requise.');
+                ->subject('Réinitialisation de votre mot de passe ProxiPro')
+                ->view('emails.auth.reset-password', [
+                    'resetUrl' => $url,
+                    'userName' => $notifiable->name ?? null,
+                    'supportEmail' => $supportEmail,
+                    'appName' => config('app.name', 'ProxiPro'),
+                ]);
         });
 
         VerifyEmail::toMailUsing(function ($notifiable, string $url) {
+            $supportEmail = config('mail.reply_to.address')
+                ?: config('mail.admin_email')
+                ?: config('mail.from.address');
+
             return (new MailMessage)
-                ->subject('Verification de votre adresse e-mail')
-                ->greeting('Bonjour')
-                ->line('Merci pour votre inscription sur ProxiPro.')
-                ->line('Cliquez sur le bouton ci-dessous pour verifier votre adresse e-mail.')
-                ->action('Verifier mon adresse e-mail', $url)
-                ->line('Si vous n\'avez pas cree de compte, ignorez cet email.');
+                ->subject('Vérification de votre adresse e-mail ProxiPro')
+                ->view('emails.auth.verify-email', [
+                    'verificationUrl' => $url,
+                    'userName' => $notifiable->name ?? null,
+                    'supportEmail' => $supportEmail,
+                    'appName' => config('app.name', 'ProxiPro'),
+                ]);
         });
 
         // Configurer Carbon en français pour les dates
@@ -89,6 +102,28 @@ class AppServiceProvider extends ServiceProvider
                 // Silently ignore if the database is not available (e.g. during build).
             }
         }
+    }
+
+    protected function applyDynamicMailSettings(): void
+    {
+        $mailDriver = Setting::get('mail_driver', config('mail.default'));
+        $fromAddress = Setting::get('mail_from_address', config('mail.from.address'));
+        $fromName = Setting::get('mail_from_name', config('mail.from.name'));
+        $adminEmail = Setting::get(
+            'mail_admin_address',
+            Setting::get('contact_email', config('mail.admin_email'))
+        );
+        $replyToAddress = Setting::get('mail_reply_to_address', config('mail.reply_to.address')) ?: $adminEmail;
+        $replyToName = Setting::get('mail_reply_to_name', config('mail.reply_to.name')) ?: $fromName;
+
+        config([
+            'mail.default' => $mailDriver,
+            'mail.from.address' => $fromAddress,
+            'mail.from.name' => $fromName,
+            'mail.reply_to.address' => $replyToAddress,
+            'mail.reply_to.name' => $replyToName,
+            'mail.admin_email' => $adminEmail,
+        ]);
     }
 
     protected function makeAbsoluteRoute(string $name, array $parameters = []): string
