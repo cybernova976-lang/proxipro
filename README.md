@@ -1,59 +1,138 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ProxiPro — Site Web Professionnel
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**ProxiPro** est une plateforme française de mise en relation entre particuliers et prestataires de services (MASSIWANI-EMERGENT project).
 
-## About Laravel
+## 🌐 Accéder au site en ligne
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Le site est déployé sur **Railway**. Pour trouver l'URL en ligne :
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+1. Connectez-vous à votre tableau de bord Railway : [railway.app](https://railway.app)
+2. Ouvrez le projet **MASSIWANI-EMERGENT**
+3. Dans l'onglet **Settings** de votre service web, copiez le domaine généré (format : `https://proxipro-production-<hash>.up.railway.app`)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+> Si vous avez configuré un domaine personnalisé, il sera affiché dans l'onglet **Settings → Domains** de votre service Railway.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 📋 Analyse du projet
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Description
+ProxiPro est une marketplace de services entre particuliers et professionnels, entièrement en français. Elle permet aux utilisateurs de trouver des prestataires compétents près de chez eux pour tous types de services du quotidien.
 
-## Laravel Sponsors
+### Catégories de services
+| Catégorie | Description |
+|-----------|-------------|
+| 🔨 Bricolage | Réparations, installations, travaux |
+| 🌿 Jardinage | Entretien de jardins, taille, tonte |
+| ✨ Ménage | Nettoyage, repassage, entretien |
+| 🤝 Aide à domicile | Assistance, garde, accompagnement |
+| 📚 Cours | Soutien scolaire, langues, musique |
+| 💻 Informatique | Dépannage, formation, développement |
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Fonctionnalités principales
 
-### Premium Partners
+#### Pour les particuliers
+- 🔍 Recherche d'annonces par mot-clé et localisation
+- 📢 Publication d'annonces gratuites
+- 💌 Messagerie intégrée avec les prestataires
+- ⭐ Système d'avis et de notation
+- 🔖 Sauvegarde d'annonces favorites
+- 🔎 Signalement d'objets perdus
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+#### Pour les professionnels (abonnement Pro)
+- 📊 Tableau de bord Pro dédié
+- 📄 Gestion de devis et factures PDF
+- 🚀 Mise en avant des annonces (Boost / Urgent)
+- ✅ Vérification d'identité (badge de confiance)
+- 👤 Profil prestataire complet
+- 📈 Statistiques de performance
 
-## Contributing
+#### Monétisation
+- 💳 Paiements en ligne via **Stripe**
+- 🎯 Système de points (ProxiPoints)
+- 📦 Plans d'abonnement Pro
+- 🚀 Promotions payantes (Boost / Urgent)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+#### Administration
+- 🛡️ Panel administrateur complet
+- 👥 Gestion des utilisateurs
+- 🚨 Modération des signalements
+- ⚙️ Paramètres globaux de l'application
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 🏗️ Stack technique
 
-## Security Vulnerabilities
+| Composant | Technologie |
+|-----------|-------------|
+| Backend | PHP 8.2 + Laravel 12 |
+| Frontend | Blade + Tailwind CSS + Vite |
+| Base de données | PostgreSQL (prod) / SQLite (dev) |
+| Paiements | Stripe (Laravel Cashier) |
+| Authentification | Email + Google OAuth + Facebook OAuth |
+| Emails | Brevo (SMTP) |
+| Stockage fichiers | Cloudflare R2 / AWS S3 |
+| Déploiement | Railway (Railpack) |
+| Langue | Français 🇫🇷 |
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
+
+## 🚀 Déploiement Railway
+
+Le projet se déploie automatiquement sur Railway à chaque push sur la branche `main`.
+
+### Configuration requise sur Railway
+
+```
+APP_NAME=ProxiPro
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://<votre-domaine>.up.railway.app
+SESSION_DRIVER=cookie
+CACHE_STORE=file
+
+# Base de données PostgreSQL
+DB_CONNECTION=pgsql
+DB_HOST=${{Postgres.PGHOST}}
+DB_PORT=${{Postgres.PGPORT}}
+DB_DATABASE=${{Postgres.PGDATABASE}}
+DB_USERNAME=${{Postgres.PGUSER}}
+DB_PASSWORD=${{Postgres.PGPASSWORD}}
+```
+
+Pour le guide complet de déploiement, consultez [RAILWAY_SETUP.md](RAILWAY_SETUP.md).
+
+---
+
+## 💻 Développement local
+
+```bash
+# Cloner le projet
+git clone https://github.com/cybernova976-lang/proxipro.git
+cd proxipro
+
+# Installer les dépendances
+composer install
+npm install
+
+# Configurer l'environnement
+cp .env.example .env
+# Éditer .env : DB_CONNECTION=sqlite
+php artisan key:generate
+
+# Migrations et seeds
+php artisan migrate
+php artisan db:seed --class=AdminSeeder
+
+# Lancer le serveur
+npm run dev &
+php artisan serve
+```
+
+L'application sera accessible sur **http://localhost:8000**.
+
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+[MIT](https://opensource.org/licenses/MIT)
