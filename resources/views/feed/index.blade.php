@@ -6102,6 +6102,9 @@
 
                 @include('feed.partials.ads-map', ['adsMapData' => $adsMapData ?? collect(), 'geoEnabled' => $geoEnabled ?? false, 'geoCity' => $geoCity ?? null])
 
+                @php
+                    $seenMainFeedAdIds = [];
+                @endphp
                 <div class="missions-feed" id="missionsGrid">
             @forelse($ads as $loopIndex => $ad)
 
@@ -6114,6 +6117,14 @@
             @if(in_array((int) $ad->id, $recommendedFeedAdIds, true))
                 @continue
             @endif
+
+            {{-- Exclure les doublons d'annonces dans le flux principal --}}
+            @if(isset($seenMainFeedAdIds[(int) $ad->id]))
+                @continue
+            @endif
+            @php
+                $seenMainFeedAdIds[(int) $ad->id] = true;
+            @endphp
 
             {{-- Pro inline cards supprimés - les pros sont déjà mis en avant dans la section Featured --}}
 
@@ -9706,6 +9717,17 @@
         return ids;
     }
 
+    function getRenderedFeedAdIdSet() {
+        const ids = new Set();
+        document.querySelectorAll('#missionsGrid .fb-post[data-ad-id]').forEach((post) => {
+            const value = Number(post.getAttribute('data-ad-id'));
+            if (Number.isFinite(value) && value > 0) {
+                ids.add(value);
+            }
+        });
+        return ids;
+    }
+
     /**
      * Rendu des publications - Format Facebook
      */
@@ -9713,7 +9735,15 @@
         const grid = document.getElementById('missionsGrid');
         const featuredContainer = document.getElementById('featuredProsContainer');
         const recommendationAdIds = getRecommendationAdIdSet();
-        const filteredMissions = (missions || []).filter((ad) => !recommendationAdIds.has(Number(ad.id)));
+        const seenMissionIds = new Set();
+        const filteredMissions = (missions || []).filter((ad) => {
+            const adId = Number(ad.id);
+            if (!Number.isFinite(adId) || adId <= 0) return false;
+            if (recommendationAdIds.has(adId)) return false;
+            if (seenMissionIds.has(adId)) return false;
+            seenMissionIds.add(adId);
+            return true;
+        });
         updateFeedAdsMap(buildFeedMapMarkers(filteredMissions));
         
         if (!filteredMissions || filteredMissions.length === 0) {
@@ -10420,7 +10450,17 @@
                 const data = await response.json();
                 const ads = data.ads?.data || data.ads || [];
                 const recommendationAdIds = getRecommendationAdIdSet();
-                const uniqueAds = ads.filter((ad) => !recommendationAdIds.has(Number(ad.id)));
+                const alreadyRenderedAdIds = getRenderedFeedAdIdSet();
+                const seenBatchIds = new Set();
+                const uniqueAds = ads.filter((ad) => {
+                    const adId = Number(ad.id);
+                    if (!Number.isFinite(adId) || adId <= 0) return false;
+                    if (recommendationAdIds.has(adId)) return false;
+                    if (alreadyRenderedAdIds.has(adId)) return false;
+                    if (seenBatchIds.has(adId)) return false;
+                    seenBatchIds.add(adId);
+                    return true;
+                });
 
                 if (uniqueAds && uniqueAds.length > 0) {
                     const grid = document.getElementById('missionsGrid');
@@ -10464,7 +10504,10 @@
         function buildInfiniteScrollPost(ad) {
             // Les publications urgentes s'affichent uniquement dans le carousel horizontal (sauf si boostées)
             if (ad.is_urgent && !(ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date())) return null;
-            if (getRecommendationAdIdSet().has(Number(ad.id))) return null;
+            const adId = Number(ad.id);
+            if (!Number.isFinite(adId) || adId <= 0) return null;
+            if (getRecommendationAdIdSet().has(adId)) return null;
+            if (getRenderedFeedAdIdSet().has(adId)) return null;
 
             const div = document.createElement('div');
 

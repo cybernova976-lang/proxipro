@@ -101,9 +101,6 @@
                 <i class="fas fa-sparkles"></i>
                 Pour vous
             </h3>
-            <p class="recommendations-strip-copy">
-                Une selection personnalisee selon vos categories, votre activite et votre zone.
-            </p>
         </div>
         <a href="{{ route('feed', ['sort' => 'recommended']) }}" style="font-size: 0.82rem; font-weight: 700; color: #c2410c; text-decoration: none; white-space: nowrap;">
             Voir plus <i class="fas fa-arrow-right ms-1"></i>
@@ -190,16 +187,6 @@
                             </div>
                         @else
                             <p class="recommendation-card-text">{{ Str::limit($ad->description, 84) }}</p>
-
-                            @if(!empty($ad->recommendation_reasons))
-                            <div class="recommendation-reasons">
-                                @foreach(collect($ad->recommendation_reasons)->take(2) as $reason)
-                                <span class="recommendation-reason">
-                                    <i class="fas fa-check-circle"></i>{{ Str::limit($reason, 28) }}
-                                </span>
-                                @endforeach
-                            </div>
-                            @endif
 
                             <div class="recommendation-card-footer">
                                 <span>
