@@ -5881,12 +5881,9 @@
                         <div class="pro-widget-badge"><i class="fas fa-crown"></i> Pro actif</div>
                         <h3>Votre espace Pro</h3>
                         <p>Gérez votre profil et vos paramètres de services.</p>
-                        <button type="button" onclick="handleProposerServices()" class="pro-widget-cta pro-widget-cta-active" style="margin-bottom: 8px;">
+                        <button type="button" onclick="handleProposerServices()" class="pro-widget-cta pro-widget-cta-active">
                             <i class="fas fa-hand-holding-heart"></i> Proposer mes services
                         </button>
-                        <a href="{{ route('ads.create') }}" class="pro-widget-cta" style="background: #f3f4f6; border-color: #e5e7eb; color: #374151; text-decoration:none; text-align:center;">
-                            <i class="fas fa-bullhorn"></i> Publier une offre
-                        </a>
                     </div>
                     @elseif(Auth::user()->is_service_provider)
                     {{-- Prestataire sans abonnement --}}
@@ -5919,6 +5916,13 @@
                         </a>
                     </div>
                     @endauth
+
+                    <!-- Call to action: Publier une offre -->
+                    <div style="margin-bottom: 20px;">
+                        <a href="{{ route('ads.create') }}" style="display: flex; align-items: center; justify-content: center; width: 100%; padding: 12px; background: #E76F51; color: white; border-radius: 9999px; font-weight: 600; text-decoration: none; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(231,111,81,0.3); transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 8px -1px rgba(231,111,81,0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(231,111,81,0.3)';">
+                            <i class="fas fa-plus-circle" style="margin-right: 8px;"></i> Publier une offre
+                        </a>
+                    </div>
 
                     <!-- Top Pros -->
                     <div style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px;">
