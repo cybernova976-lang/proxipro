@@ -5881,9 +5881,12 @@
                         <div class="pro-widget-badge"><i class="fas fa-crown"></i> Pro actif</div>
                         <h3>Votre espace Pro</h3>
                         <p>Gérez votre profil et vos paramètres de services.</p>
-                        <button type="button" onclick="handleProposerServices()" class="pro-widget-cta pro-widget-cta-active">
+                        <button type="button" onclick="handleProposerServices()" class="pro-widget-cta pro-widget-cta-active" style="margin-bottom: 8px;">
                             <i class="fas fa-hand-holding-heart"></i> Proposer mes services
                         </button>
+                        <a href="{{ route('ads.create') }}" class="pro-widget-cta" style="background: #f3f4f6; border-color: #e5e7eb; color: #374151; text-decoration:none; text-align:center;">
+                            <i class="fas fa-bullhorn"></i> Publier une offre
+                        </a>
                     </div>
                     @elseif(Auth::user()->is_service_provider)
                     {{-- Prestataire sans abonnement --}}
