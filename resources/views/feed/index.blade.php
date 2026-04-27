@@ -763,21 +763,21 @@
     }
     .recommendations-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 22px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
     }
     .recommendation-card {
         display: flex;
         flex-direction: column;
         background: #ffffff;
         border: 1px solid #e2e2dc;
-        border-radius: 22px;
+        border-radius: 20px;
         padding: 0;
         text-decoration: none;
         color: inherit;
         overflow: hidden;
         min-height: 100%;
-        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
         transition: transform 0.26s ease, box-shadow 0.26s ease, border-color 0.26s ease;
     }
     .recommendation-card:hover {
@@ -832,7 +832,7 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        padding: 18px 18px 16px;
+        padding: 15px 15px 14px;
         min-width: 0;
         flex: 1;
     }
@@ -857,22 +857,22 @@
     }
     .recommendation-card-title {
         margin: 0 0 8px;
-        font-size: 1.08rem;
+        font-size: 0.98rem;
         font-weight: 800;
         color: #1f2421;
         line-height: 1.32;
     }
     .recommendation-card-profession {
         margin: 0 0 8px;
-        font-size: 0.9rem;
+        font-size: 0.82rem;
         font-weight: 700;
         color: #4a5642;
     }
     .recommendation-card-text {
         margin: 0 0 14px;
-        font-size: 0.88rem;
+        font-size: 0.8rem;
         color: #4a5642;
-        line-height: 1.55;
+        line-height: 1.5;
     }
     .recommendation-card-account-badge {
         display: inline-flex;
@@ -923,15 +923,20 @@
         justify-content: space-between;
         gap: 10px;
         align-items: center;
-        font-size: 0.82rem;
+        font-size: 0.76rem;
         color: #7b8374;
         margin-top: auto;
-        padding-top: 14px;
+        padding-top: 12px;
         border-top: 1px solid #e2e2dc;
     }
     .recommendation-card-price {
         font-weight: 800;
         color: #1f2421;
+    }
+    @media (max-width: 1280px) {
+        .recommendations-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
     }
     .saved-search-banner {
         display: flex;
