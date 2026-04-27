@@ -1,23 +1,12 @@
-@if(isset($recommendedAds) && $recommendedAds->count() > 0)
-<section class="recommendations-strip">
-    <div class="recommendations-strip-header">
-        <div>
-            <h3 class="recommendations-strip-title">
-                <i class="fas fa-sparkles"></i>
-                Pour vous
-            </h3>
-            <p class="recommendations-strip-copy">
-                Une selection personnalisee selon vos categories, votre activite et votre zone.
-            </p>
-        </div>
-        <a href="{{ route('feed', ['sort' => 'recommended']) }}" style="font-size: 0.82rem; font-weight: 700; color: #c2410c; text-decoration: none; white-space: nowrap;">
-            Voir plus <i class="fas fa-arrow-right ms-1"></i>
-        </a>
-    </div>
+@php
+    $recommendationBuckets = [
+        'individual_ads' => [],
+        'professional_ads' => [],
+        'professional_profiles' => [],
+    ];
 
-    <div class="recommendations-grid">
-        @foreach($recommendedAds as $ad)
-        @php
+    if (isset($recommendedAds) && $recommendedAds->count() > 0) {
+        foreach ($recommendedAds as $ad) {
             $recommendationUser = $ad->user;
             $isServiceProvider = $recommendationUser && ($recommendationUser->user_type === 'professionnel' || $recommendationUser->is_service_provider);
             $isProfessionalPromotion = $isServiceProvider && (($ad->service_type ?? null) !== 'demande');
@@ -46,6 +35,7 @@
             $photoCount = count($photos);
             $firstPhoto = $photos[0] ?? null;
             $visualUrl = null;
+
             if ($isProfessionalPromotion && $recommendationUser?->avatar) {
                 $visualUrl = storage_url($recommendationUser->avatar);
             } elseif ($firstPhoto) {
@@ -61,91 +51,180 @@
                 }
             }
 
-            $recommendationUrl = $isProfessionalPromotion && $recommendationUser
-                ? route('profile.public', $recommendationUser->id)
-                : route('ads.show', $ad->id);
-        @endphp
-        <a href="{{ $recommendationUrl }}" class="recommendation-card{{ $isProfessionalPromotion ? ' recommendation-card--profile' : '' }}">
-            <div class="recommendation-card-media">
-                @if($visualUrl)
-                    <img src="{{ $visualUrl }}" alt="{{ $isProfessionalPromotion ? $displayName : $ad->title }}" class="recommendation-card-image">
-                @else
-                    <div class="recommendation-card-image recommendation-card-image-placeholder">
-                        <span>{{ strtoupper(substr($displayName, 0, 1)) }}</span>
-                    </div>
-                @endif
+            $bucket = $isProfessionalPromotion
+                ? 'professional_profiles'
+                : ($isServiceProvider ? 'professional_ads' : 'individual_ads');
 
-                @if($isProfessionalPromotion)
-                    <span class="recommendation-card-media-badge">Profil mis en avant</span>
-                @elseif($photoCount > 1)
-                    <span class="recommendation-card-media-badge">1 / {{ $photoCount }}</span>
-                @endif
-            </div>
+            $recommendationBuckets[$bucket][] = [
+                'ad' => $ad,
+                'user' => $recommendationUser,
+                'isProfessionalPromotion' => $isProfessionalPromotion,
+                'displayName' => $displayName,
+                'isProAccount' => $isProAccount,
+                'qualities' => $qualities,
+                'photoCount' => $photoCount,
+                'visualUrl' => $visualUrl,
+                'recommendationUrl' => $isProfessionalPromotion && $recommendationUser
+                    ? route('profile.public', $recommendationUser->id)
+                    : route('ads.show', $ad->id),
+            ];
+        }
+    }
 
-            <div class="recommendation-card-body">
-                <div class="recommendation-card-meta">
-                    <span>
-                        <i class="fas {{ $isProfessionalPromotion ? 'fa-user-tie' : 'fa-folder-open' }} me-1"></i>
-                        {{ $isProfessionalPromotion ? 'Professionnel recommande' : $ad->category }}
-                    </span>
-                    <span>{{ $ad->created_at?->diffForHumans() }}</span>
-                </div>
+    $recommendationSections = [
+        [
+            'key' => 'individual_ads',
+            'icon' => 'fa-user',
+            'title' => 'Offres de particuliers',
+            'copy' => 'Demandes et offres publiees par les particuliers.',
+            'items' => collect($recommendationBuckets['individual_ads']),
+        ],
+        [
+            'key' => 'professional_ads',
+            'icon' => 'fa-briefcase',
+            'title' => 'Offres de professionnels',
+            'copy' => 'Prestations et annonces proposees par les professionnels.',
+            'items' => collect($recommendationBuckets['professional_ads']),
+        ],
+        [
+            'key' => 'professional_profiles',
+            'icon' => 'fa-user-shield',
+            'title' => 'Profils professionnels',
+            'copy' => 'Profils pro mis en avant, affiches a part des annonces.',
+            'items' => collect($recommendationBuckets['professional_profiles']),
+        ],
+    ];
+@endphp
 
-                @if($isProfessionalPromotion)
-                    <div class="recommendation-card-name-row">
-                        <h4 class="recommendation-card-title">{{ $displayName }}</h4>
-                        <span class="recommendation-card-account-badge{{ $isProAccount ? ' is-pro' : '' }}">
-                            {{ $isProAccount ? 'Pro' : 'Prestataire' }}
-                        </span>
-                    </div>
-                    <p class="recommendation-card-profession">{{ Str::limit($recommendationUser->profession ?? $recommendationUser->service_category ?? 'Prestataire de services', 52) }}</p>
-                    <p class="recommendation-card-text">{{ Str::limit($recommendationUser->bio ?: $ad->description, 118) }}</p>
-
-                    @if($qualities->isNotEmpty())
-                    <div class="recommendation-reasons recommendation-reasons--qualities">
-                        @foreach($qualities as $quality)
-                        <span class="recommendation-reason recommendation-reason--quality">{{ Str::limit($quality, 28) }}</span>
-                        @endforeach
-                    </div>
-                    @endif
-
-                    <div class="recommendation-card-footer">
-                        <span>
-                            <i class="fas fa-map-marker-alt me-1"></i>{{ Str::limit($recommendationUser->city ?? $ad->location ?? 'France', 28) }}
-                        </span>
-                        <span class="recommendation-card-price">
-                            @if($recommendationUser->hourly_rate && ($recommendationUser->show_hourly_rate ?? true))
-                                {{ number_format((float) $recommendationUser->hourly_rate, 0, ',', ' ') }} €/h
-                            @else
-                                Profil
-                            @endif
-                        </span>
-                    </div>
-                @else
-                    <h4 class="recommendation-card-title">{{ Str::limit($ad->title, 72) }}</h4>
-                    <p class="recommendation-card-text">{{ Str::limit($ad->description, 120) }}</p>
-
-                    @if(!empty($ad->recommendation_reasons))
-                    <div class="recommendation-reasons">
-                        @foreach(collect($ad->recommendation_reasons)->take(2) as $reason)
-                        <span class="recommendation-reason">
-                            <i class="fas fa-check-circle"></i>{{ $reason }}
-                        </span>
-                        @endforeach
-                    </div>
-                    @endif
-
-                    <div class="recommendation-card-footer">
-                        <span>
-                            <i class="fas fa-map-marker-alt me-1"></i>{{ Str::limit($ad->location ?? 'France', 28) }}
-                        </span>
-                        <span class="recommendation-card-price">
-                            {{ $ad->price ? number_format($ad->price, 0, ',', ' ') . ' €' : 'Sur devis' }}
-                        </span>
-                    </div>
-                @endif
-            </div>
+@if(collect($recommendationSections)->contains(fn ($section) => $section['items']->isNotEmpty()))
+<section class="recommendations-strip">
+    <div class="recommendations-strip-header">
+        <div>
+            <h3 class="recommendations-strip-title">
+                <i class="fas fa-sparkles"></i>
+                Pour vous
+            </h3>
+            <p class="recommendations-strip-copy">
+                Une selection personnalisee selon vos categories, votre activite et votre zone.
+            </p>
+        </div>
+        <a href="{{ route('feed', ['sort' => 'recommended']) }}" style="font-size: 0.82rem; font-weight: 700; color: #c2410c; text-decoration: none; white-space: nowrap;">
+            Voir plus <i class="fas fa-arrow-right ms-1"></i>
         </a>
+    </div>
+
+    <div class="recommendation-groups">
+        @foreach($recommendationSections as $section)
+        @continue($section['items']->isEmpty())
+        <div class="recommendation-group recommendation-group--{{ $section['key'] }}">
+            <div class="recommendation-group-header">
+                <div>
+                    <h4 class="recommendation-group-title">
+                        <i class="fas {{ $section['icon'] }}"></i>
+                        {{ $section['title'] }}
+                    </h4>
+                    <p class="recommendation-group-copy">{{ $section['copy'] }}</p>
+                </div>
+                <span class="recommendation-group-count">{{ $section['items']->count() }}</span>
+            </div>
+
+            <div class="recommendations-grid">
+                @foreach($section['items'] as $card)
+                @php
+                    $ad = $card['ad'];
+                    $recommendationUser = $card['user'];
+                    $isProfessionalPromotion = $card['isProfessionalPromotion'];
+                    $displayName = $card['displayName'];
+                    $qualities = $card['qualities'];
+                    $isProAccount = $card['isProAccount'];
+                @endphp
+                <a href="{{ $card['recommendationUrl'] }}" class="recommendation-card{{ $isProfessionalPromotion ? ' recommendation-card--profile' : '' }}">
+                    <div class="recommendation-card-media">
+                        @if($card['visualUrl'])
+                            <img src="{{ $card['visualUrl'] }}" alt="{{ $isProfessionalPromotion ? $displayName : $ad->title }}" class="recommendation-card-image">
+                        @else
+                            <div class="recommendation-card-image recommendation-card-image-placeholder">
+                                <span>{{ strtoupper(substr($displayName, 0, 1)) }}</span>
+                            </div>
+                        @endif
+
+                        @if($isProfessionalPromotion)
+                            <span class="recommendation-card-media-badge">Profil mis en avant</span>
+                        @elseif($card['photoCount'] > 1)
+                            <span class="recommendation-card-media-badge">1 / {{ $card['photoCount'] }}</span>
+                        @endif
+
+                        @unless($isProfessionalPromotion)
+                            <div class="recommendation-card-media-title">{{ Str::limit($ad->title, 64) }}</div>
+                        @endunless
+                    </div>
+
+                    <div class="recommendation-card-body">
+                        <div class="recommendation-card-meta">
+                            <span>
+                                <i class="fas {{ $isProfessionalPromotion ? 'fa-user-tie' : 'fa-folder-open' }} me-1"></i>
+                                {{ $isProfessionalPromotion ? 'Professionnel recommande' : $ad->category }}
+                            </span>
+                            <span>{{ $ad->created_at?->diffForHumans() }}</span>
+                        </div>
+
+                        @if($isProfessionalPromotion)
+                            <div class="recommendation-card-name-row">
+                                <h4 class="recommendation-card-title">{{ $displayName }}</h4>
+                                <span class="recommendation-card-account-badge{{ $isProAccount ? ' is-pro' : '' }}">
+                                    {{ $isProAccount ? 'Pro' : 'Prestataire' }}
+                                </span>
+                            </div>
+                            <p class="recommendation-card-profession">{{ Str::limit($recommendationUser->profession ?? $recommendationUser->service_category ?? 'Prestataire de services', 44) }}</p>
+                            <p class="recommendation-card-text">{{ Str::limit($recommendationUser->bio ?: $ad->description, 88) }}</p>
+
+                            @if($qualities->isNotEmpty())
+                            <div class="recommendation-reasons recommendation-reasons--qualities">
+                                @foreach($qualities as $quality)
+                                <span class="recommendation-reason recommendation-reason--quality">{{ Str::limit($quality, 24) }}</span>
+                                @endforeach
+                            </div>
+                            @endif
+
+                            <div class="recommendation-card-footer">
+                                <span>
+                                    <i class="fas fa-map-marker-alt me-1"></i>{{ Str::limit($recommendationUser->city ?? $ad->location ?? 'France', 22) }}
+                                </span>
+                                <span class="recommendation-card-price">
+                                    @if($recommendationUser->hourly_rate && ($recommendationUser->show_hourly_rate ?? true))
+                                        {{ number_format((float) $recommendationUser->hourly_rate, 0, ',', ' ') }} €/h
+                                    @else
+                                        Profil
+                                    @endif
+                                </span>
+                            </div>
+                        @else
+                            <p class="recommendation-card-text">{{ Str::limit($ad->description, 84) }}</p>
+
+                            @if(!empty($ad->recommendation_reasons))
+                            <div class="recommendation-reasons">
+                                @foreach(collect($ad->recommendation_reasons)->take(2) as $reason)
+                                <span class="recommendation-reason">
+                                    <i class="fas fa-check-circle"></i>{{ Str::limit($reason, 28) }}
+                                </span>
+                                @endforeach
+                            </div>
+                            @endif
+
+                            <div class="recommendation-card-footer">
+                                <span>
+                                    <i class="fas fa-map-marker-alt me-1"></i>{{ Str::limit($ad->location ?? 'France', 22) }}
+                                </span>
+                                <span class="recommendation-card-price">
+                                    {{ $ad->price ? number_format($ad->price, 0, ',', ' ') . ' €' : 'Sur devis' }}
+                                </span>
+                            </div>
+                        @endif
+                    </div>
+                </a>
+                @endforeach
+            </div>
+        </div>
         @endforeach
     </div>
 </section>

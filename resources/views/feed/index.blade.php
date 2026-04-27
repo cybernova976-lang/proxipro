@@ -761,23 +761,67 @@
         font-size: 0.92rem;
         color: #64748b;
     }
+    .recommendation-groups {
+        display: flex;
+        flex-direction: column;
+        gap: 26px;
+    }
+    .recommendation-group {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .recommendation-group-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .recommendation-group-title {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.98rem;
+        font-weight: 800;
+        color: #1f2421;
+    }
+    .recommendation-group-copy {
+        margin: 4px 0 0;
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+    .recommendation-group-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        height: 34px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: #ece9e2;
+        color: #4a5642;
+        font-size: 0.78rem;
+        font-weight: 800;
+        flex-shrink: 0;
+    }
     .recommendations-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 18px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
     }
     .recommendation-card {
         display: flex;
         flex-direction: column;
         background: #ffffff;
         border: 1px solid #e2e2dc;
-        border-radius: 20px;
+        border-radius: 16px;
         padding: 0;
         text-decoration: none;
         color: inherit;
         overflow: hidden;
         min-height: 100%;
-        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
         transition: transform 0.26s ease, box-shadow 0.26s ease, border-color 0.26s ease;
     }
     .recommendation-card:hover {
@@ -788,7 +832,7 @@
     }
     .recommendation-card-media {
         position: relative;
-        aspect-ratio: 4 / 3;
+        aspect-ratio: 1 / 1;
         overflow: hidden;
         background: #f3f2ee;
     }
@@ -815,37 +859,55 @@
     }
     .recommendation-card-media-badge {
         position: absolute;
-        left: 14px;
-        top: 14px;
+        left: 10px;
+        top: 10px;
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 7px 11px;
+        padding: 6px 9px;
         border-radius: 999px;
         background: rgba(31, 36, 33, 0.8);
         color: #fff;
-        font-size: 0.72rem;
+        font-size: 0.66rem;
         font-weight: 700;
         letter-spacing: 0.01em;
+    }
+    .recommendation-card-media-title {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 28px 12px 12px;
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.88) 100%);
+        color: #fff;
+        font-size: 0.88rem;
+        font-weight: 800;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        pointer-events: none;
     }
     .recommendation-card-body {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        padding: 15px 15px 14px;
+        padding: 12px 12px 11px;
         min-width: 0;
         flex: 1;
+        gap: 8px;
     }
     .recommendation-card-meta {
         display: flex;
         justify-content: space-between;
         gap: 10px;
         align-items: center;
-        margin-bottom: 10px;
-        font-size: 0.74rem;
+        margin-bottom: 0;
+        font-size: 0.68rem;
         color: #5c6b52;
         text-transform: uppercase;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.1em;
         font-weight: 700;
     }
     .recommendation-card-name-row {
@@ -856,33 +918,37 @@
         margin-bottom: 6px;
     }
     .recommendation-card-title {
-        margin: 0 0 8px;
-        font-size: 0.98rem;
+        margin: 0;
+        font-size: 0.9rem;
         font-weight: 800;
         color: #1f2421;
         line-height: 1.32;
     }
     .recommendation-card-profession {
-        margin: 0 0 8px;
-        font-size: 0.82rem;
+        margin: 0;
+        font-size: 0.76rem;
         font-weight: 700;
         color: #4a5642;
     }
     .recommendation-card-text {
-        margin: 0 0 14px;
-        font-size: 0.8rem;
+        margin: 0;
+        font-size: 0.75rem;
         color: #4a5642;
-        line-height: 1.5;
+        line-height: 1.45;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
     .recommendation-card-account-badge {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 5px 10px;
+        padding: 4px 8px;
         border-radius: 999px;
         background: #ece9e2;
         color: #4a5642;
-        font-size: 0.72rem;
+        font-size: 0.64rem;
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.04em;
@@ -895,21 +961,21 @@
     .recommendation-reasons {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 12px;
+        gap: 6px;
+        margin-bottom: 0;
     }
     .recommendation-reasons--qualities {
-        margin-bottom: 14px;
+        margin-bottom: 0;
     }
     .recommendation-reason {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 6px 10px;
+        padding: 5px 8px;
         border-radius: 999px;
         background: #f4f2ec;
         border: none;
-        font-size: 0.74rem;
+        font-size: 0.68rem;
         font-weight: 700;
         color: #4a5642;
     }
@@ -923,10 +989,10 @@
         justify-content: space-between;
         gap: 10px;
         align-items: center;
-        font-size: 0.76rem;
+        font-size: 0.7rem;
         color: #7b8374;
         margin-top: auto;
-        padding-top: 12px;
+        padding-top: 10px;
         border-top: 1px solid #e2e2dc;
     }
     .recommendation-card-price {
@@ -935,7 +1001,7 @@
     }
     @media (max-width: 1280px) {
         .recommendations-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
         }
     }
     .saved-search-banner {
@@ -1060,7 +1126,7 @@
     }
     @media (max-width: 991px) {
         .recommendations-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
         .recommendation-card {
             grid-template-columns: 1fr;
@@ -1077,6 +1143,14 @@
         }
         .saved-search-banner-actions {
             justify-content: flex-start;
+        }
+    }
+    @media (max-width: 640px) {
+        .recommendations-grid {
+            grid-template-columns: 1fr;
+        }
+        .recommendation-group-header {
+            align-items: center;
         }
     }
     /* Arrows INSIDE the track, overlaid left & right */
@@ -2256,6 +2330,24 @@
         color: #1f2421;
         margin-bottom: 0.45rem;
         line-height: 1.34;
+    }
+    .fb-post-media-title {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 34px 14px 14px;
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.9) 100%);
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 800;
+        line-height: 1.32;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        z-index: 4;
+        pointer-events: none;
     }
     .fb-post-title:hover {
         color: #e07a5f;
@@ -4387,7 +4479,7 @@
     /* ===== PRIX VISIBLE SUR PHOTO ===== */
     .fb-post-photos { position: relative; }
     .price-overlay-badge {
-        position: absolute; bottom: 12px; right: 12px;
+        position: absolute; top: 12px; right: 12px;
         background: rgba(5, 150, 105, 0.92);
         color: white; padding: 6px 14px; border-radius: 20px;
         font-size: 0.95rem; font-weight: 800;
@@ -6060,7 +6152,7 @@
                 }
             @endphp
 
-            <div class="fb-post{{ $ad->is_urgent ? ' urgent-flow' : '' }}{{ ($ad->is_boosted && $ad->boost_end && $ad->boost_end > now()) ? ' boosted-post' : '' }}" data-ad-id="{{ $ad->id }}"
+              <div class="fb-post{{ $ad->is_urgent ? ' urgent-flow' : '' }}{{ ($ad->is_boosted && $ad->boost_end && $ad->boost_end > now()) ? ' boosted-post' : '' }}{{ $photoCount > 0 ? ' has-visual' : '' }}" data-ad-id="{{ $ad->id }}"
                  data-ad-json="{{ htmlspecialchars(json_encode([
                     'id' => $ad->id, 'title' => $ad->title, 'description' => $ad->description,
                     'category' => $ad->category, 'price' => $ad->price, 'location' => $ad->location,
@@ -6159,6 +6251,7 @@
                     @if($ad->price)
                     <div class="price-overlay-badge">{{ number_format($ad->price, 0, ',', ' ') }} €</div>
                     @endif
+                    <div class="fb-post-media-title">{{ $ad->title }}</div>
                 </div>
                 @else
                 <div class="fb-post-no-photo" onclick="openAdDetail(this.closest('.fb-post'))">
@@ -6168,7 +6261,9 @@
 
                 {{-- Body: title + description + tags --}}
                 <div class="fb-post-body">
+                    @if($photoCount === 0)
                     <div class="fb-post-title" onclick="openAdDetail(this.closest('.fb-post'))" style="cursor: pointer;">{{ $ad->title }}</div>
+                    @endif
                     <div class="fb-post-text">{{ Str::limit($ad->description, 300) }}</div>
                     <div class="fb-post-tags">
                         @if($ad->price)
@@ -9629,7 +9724,7 @@
             
             let photosHtml = '';
             if (photoCount === 1) {
-                photosHtml = `<div class="fb-post-photos single" onclick="openAdDetail(this.closest('.fb-post'))"><img src="${photos[0]}" alt="" onerror="this.parentElement.style.display='none';"></div>`;
+                photosHtml = `<div class="fb-post-photos single" onclick="openAdDetail(this.closest('.fb-post'))"><img src="${photos[0]}" alt="" onerror="this.parentElement.style.display='none';">${ad.price ? `<div class="price-overlay-badge">${new Intl.NumberFormat('fr-FR').format(ad.price)} €</div>` : ''}<div class="fb-post-media-title">${ad.title || ''}</div></div>`;
             } else if (photoCount >= 2) {
                 const cls = photoCount === 2 ? 'two' : 'three-plus';
                 const show = photos.slice(0, Math.min(photoCount, 4));
@@ -9639,6 +9734,8 @@
                     if (i === 3 && photoCount > 4) photosHtml += `<div class="fb-photo-more-overlay">+${photoCount - 4}</div>`;
                     photosHtml += `</div>`;
                 });
+                if (ad.price) photosHtml += `<div class="price-overlay-badge">${new Intl.NumberFormat('fr-FR').format(ad.price)} €</div>`;
+                photosHtml += `<div class="fb-post-media-title">${ad.title || ''}</div>`;
                 photosHtml += `</div>`;
             } else {
                 photosHtml = `<div class="fb-post-no-photo" onclick="openAdDetail(this.closest('.fb-post'))"><i class="fas fa-image"></i></div>`;
@@ -9673,7 +9770,7 @@
             const searchBoostClass = (ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date()) ? ' boosted-post' : '';
 
             html += `
-                <div class="fb-post${ad.is_urgent ? ' urgent-flow' : ''}${searchBoostClass}" data-ad-id="${ad.id}" data-ad-json="${safeJson}">
+                <div class="fb-post${ad.is_urgent ? ' urgent-flow' : ''}${searchBoostClass}${photoCount > 0 ? ' has-visual' : ''}" data-ad-id="${ad.id}" data-ad-json="${safeJson}">
                     <div class="fb-post-header">
                         <a href="/profile/${ad.user?.id || ''}" class="fb-post-avatar">${userAvatar}</a>
                         <div class="fb-post-header-info">
@@ -9703,7 +9800,7 @@
                     </div>
                     ${photosHtml}
                     <div class="fb-post-body">
-                        <div class="fb-post-title" onclick="openAdDetail(this.closest('.fb-post'))" style="cursor: pointer;">${ad.title}</div>
+                        ${photoCount === 0 ? `<div class="fb-post-title" onclick="openAdDetail(this.closest('.fb-post'))" style="cursor: pointer;">${ad.title}</div>` : ''}
                         <div class="fb-post-text">${(ad.description || '').substring(0, 300)}${(ad.description||'').length > 300 ? '...' : ''}</div>
                         <div class="fb-post-tags">${priceTag}${catTag}</div>
                     </div>
@@ -10340,9 +10437,6 @@
             if (ad.is_urgent && !(ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date())) return null;
 
             const div = document.createElement('div');
-            div.className = 'fb-post' + (ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date() ? ' boosted-post' : '');
-            div.setAttribute('data-ad-id', ad.id);
-            try { div.setAttribute('data-ad-json', JSON.stringify(ad)); } catch(e) {}
 
             const userAvatar = ad.user && ad.user.avatar
                 ? `<img src="${buildStorageUrl(ad.user.avatar)}" alt="">`
@@ -10354,12 +10448,16 @@
                 else if (typeof ad.photos === 'string') { try { photos = JSON.parse(ad.photos); } catch(e) { photos = [ad.photos]; } }
             }
             photos = photos.filter(p => p).map(p => buildPhotoUrl(p));
+            div.className = 'fb-post' + (ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date() ? ' boosted-post' : '') + (photos.length > 0 ? ' has-visual' : '');
+            div.setAttribute('data-ad-id', ad.id);
+            try { div.setAttribute('data-ad-json', JSON.stringify(ad)); } catch(e) {}
 
             let photosHtml = '';
             if (photos.length === 1) {
                 photosHtml = `<div class="fb-post-photos single" onclick="openAdDetail(this.closest('.fb-post'))">
                     <img src="${photos[0]}" alt="" onerror="this.parentElement.style.display='none';">
                     ${ad.price ? `<div class="price-overlay-badge">${new Intl.NumberFormat('fr-FR').format(ad.price)} €</div>` : ''}
+                    <div class="fb-post-media-title">${ad.title || ''}</div>
                 </div>`;
             } else if (photos.length >= 2) {
                 const cls = photos.length === 2 ? 'two' : 'three-plus';
@@ -10370,6 +10468,7 @@
                     photosHtml += `</div>`;
                 });
                 if (ad.price) photosHtml += `<div class="price-overlay-badge">${new Intl.NumberFormat('fr-FR').format(ad.price)} €</div>`;
+                photosHtml += `<div class="fb-post-media-title">${ad.title || ''}</div>`;
                 photosHtml += `</div>`;
             } else {
                 photosHtml = `<div class="fb-post-no-photo" onclick="openAdDetail(this.closest('.fb-post'))"><i class="fas fa-image"></i></div>`;
@@ -10404,7 +10503,7 @@
                 </div>
                 ${photosHtml}
                 <div class="fb-post-body">
-                    <div class="fb-post-title" onclick="openAdDetail(this.closest('.fb-post'))" style="cursor: pointer;">${ad.title || ''}</div>
+                    ${photos.length === 0 ? `<div class="fb-post-title" onclick="openAdDetail(this.closest('.fb-post'))" style="cursor: pointer;">${ad.title || ''}</div>` : ''}
                     <div class="fb-post-text">${(ad.description || '').substring(0, 300)}${(ad.description||'').length > 300 ? '...' : ''}</div>
                     <div class="fb-post-tags">${priceTag}${catTag}</div>
                 </div>
