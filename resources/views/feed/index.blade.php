@@ -15,7 +15,7 @@
         --secondary: #7c3aed;
         --accent: #f59e0b;
 
-        --bg-body: #f8fafc;
+        --bg-body: #f5f7fb;
         --text-dark: #0f172a;
         --text-light: #64748b;
         --white: #ffffff;
@@ -346,7 +346,7 @@
 
     .feed-main {
         min-width: 0;
-        max-width: 950px;
+        max-width: 1120px;
     }
 
     .feed-sidebar-left {
@@ -733,52 +733,108 @@
         border-radius: 0.75rem;
     }
     .recommendations-strip {
-        background: linear-gradient(135deg, #fff7ed, #fffbeb);
-        border: 1px solid #fed7aa;
-        border-radius: 18px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 12px 28px rgba(249, 115, 22, 0.08);
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+        margin: 0 0 28px;
+        box-shadow: none;
     }
     .recommendations-strip-header {
         display: flex;
         justify-content: space-between;
         gap: 12px;
         align-items: flex-start;
-        margin-bottom: 14px;
+        margin-bottom: 18px;
     }
     .recommendations-strip-title {
         margin: 0;
-        font-size: 1.05rem;
+        font-size: 1.2rem;
         font-weight: 800;
-        color: #9a3412;
+        color: #0f172a;
         display: flex;
         align-items: center;
         gap: 8px;
     }
     .recommendations-strip-copy {
         margin: 4px 0 0;
-        font-size: 0.84rem;
-        color: #9a3412;
+        font-size: 0.92rem;
+        color: #64748b;
     }
     .recommendations-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 14px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
     }
     .recommendation-card {
-        background: rgba(255, 255, 255, 0.92);
-        border: 1px solid rgba(251, 146, 60, 0.2);
-        border-radius: 14px;
-        padding: 16px;
+        display: grid;
+        grid-template-columns: minmax(172px, 212px) minmax(0, 1fr);
+        align-items: stretch;
+        gap: 18px;
+        background: #ffffff;
+        border: none;
+        border-radius: 24px;
+        padding: 0;
         text-decoration: none;
         color: inherit;
-        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        overflow: hidden;
+        min-height: 236px;
+        box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+        transition: transform 0.22s ease, box-shadow 0.22s ease;
     }
     .recommendation-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 24px rgba(154, 52, 18, 0.12);
+        transform: translateY(-4px);
+        box-shadow: 0 20px 44px rgba(15, 23, 42, 0.12);
         color: inherit;
+    }
+    .recommendation-card-media {
+        position: relative;
+        min-height: 100%;
+        overflow: hidden;
+        background: #e2e8f0;
+    }
+    .recommendation-card-image {
+        width: 100%;
+        height: 100%;
+        min-height: 236px;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.28s ease, filter 0.28s ease;
+    }
+    .recommendation-card:hover .recommendation-card-image {
+        transform: scale(1.04);
+        filter: saturate(1.04);
+    }
+    .recommendation-card-image-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #dbeafe, #e2e8f0);
+        color: #1e293b;
+        font-size: 2.2rem;
+        font-weight: 800;
+    }
+    .recommendation-card-media-badge {
+        position: absolute;
+        left: 14px;
+        bottom: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.78);
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+    }
+    .recommendation-card-body {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 18px 20px 18px 0;
+        min-width: 0;
     }
     .recommendation-card-meta {
         display: flex;
@@ -787,14 +843,27 @@
         align-items: center;
         margin-bottom: 10px;
         font-size: 0.78rem;
-        color: #7c2d12;
+        color: #64748b;
+    }
+    .recommendation-card-name-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 6px;
     }
     .recommendation-card-title {
         margin: 0 0 8px;
-        font-size: 1rem;
-        font-weight: 700;
+        font-size: 1.08rem;
+        font-weight: 800;
         color: #111827;
         line-height: 1.35;
+    }
+    .recommendation-card-profession {
+        margin: 0 0 8px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #334155;
     }
     .recommendation-card-text {
         margin: 0 0 12px;
@@ -802,11 +871,32 @@
         color: #4b5563;
         line-height: 1.55;
     }
+    .recommendation-card-account-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        color: #334155;
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        flex-shrink: 0;
+    }
+    .recommendation-card-account-badge.is-pro {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
     .recommendation-reasons {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
         margin-bottom: 12px;
+    }
+    .recommendation-reasons--qualities {
+        margin-bottom: 14px;
     }
     .recommendation-reason {
         display: inline-flex;
@@ -814,11 +904,16 @@
         gap: 6px;
         padding: 6px 10px;
         border-radius: 999px;
-        background: #fff;
-        border: 1px solid #fdba74;
+        background: #f8fafc;
+        border: none;
         font-size: 0.76rem;
         font-weight: 600;
-        color: #c2410c;
+        color: #334155;
+    }
+    .recommendation-reason--quality {
+        background: #eef2ff;
+        color: #4338ca;
+        font-weight: 700;
     }
     .recommendation-card-footer {
         display: flex;
@@ -955,6 +1050,15 @@
     @media (max-width: 991px) {
         .recommendations-grid {
             grid-template-columns: 1fr;
+        }
+        .recommendation-card {
+            grid-template-columns: 1fr;
+        }
+        .recommendation-card-body {
+            padding: 16px 18px 18px;
+        }
+        .recommendation-card-image {
+            min-height: 210px;
         }
         .saved-search-banner {
             flex-direction: column;
@@ -1397,12 +1501,12 @@
        SECTION "PROFESSIONNELS À LA UNE"
        ========================================= */
     .featured-pros-section {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 1rem;
-        padding: 1.25rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+        margin: 28px 0 0;
+        box-shadow: none;
     }
     .featured-pros-header {
         display: flex;
@@ -1818,14 +1922,15 @@
     /* --- Post container --- */
     .fb-post {
         background: white;
-        border-radius: 1rem;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        border-radius: 1.2rem;
+        border: none;
+        box-shadow: 0 14px 36px rgba(15, 23, 42, 0.07);
         overflow: visible;
-        transition: box-shadow 0.2s;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     .fb-post:hover {
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
     }
 
     /* --- Post header: avatar + name + meta --- */
@@ -5665,8 +5770,8 @@
                         <button type="button" onclick="handleProposerServices()" class="pro-widget-cta pro-widget-cta-active" style="margin-bottom: 8px;">
                             <i class="fas fa-hand-holding-heart"></i> Proposer mes services
                         </button>
-                        <a href="{{ route('demand.create') }}" class="pro-widget-cta" style="background: #f3f4f6; border-color: #e5e7eb; color: #374151; text-decoration:none; text-align:center;">
-                            <i class="fas fa-plus"></i> Publier une demande
+                        <a href="{{ route('ads.create') }}" class="pro-widget-cta" style="background: #f3f4f6; border-color: #e5e7eb; color: #374151; text-decoration:none; text-align:center;">
+                            <i class="fas fa-bullhorn"></i> Publier une offre
                         </a>
                     </div>
                     @elseif(Auth::user()->is_service_provider)
@@ -5882,49 +5987,6 @@
             {{-- Les publications urgentes s'affichent UNIQUEMENT dans le carousel horizontal, SAUF si elles sont boostées --}}
             @if($ad->is_urgent && !($ad->is_boosted && $ad->boost_end > now()))
                 @continue
-            @endif
-
-            {{-- === BLOC PROFESSIONNELS À LA UNE après les 2 premières cartes === --}}
-            @if($loopIndex === 2 && isset($showcasePros) && $showcasePros->count() > 0)
-                <div class="featured-pros-section">
-                    <div class="featured-pros-header">
-                        <h2><i class="fas fa-user-shield" style="color: var(--primary, #4f46e5); margin-right: 6px;"></i> Profils professionnels à la une</h2>
-                    </div>
-                    <div class="providers-grid" id="featuredProfessionalsGrid">
-                        @foreach($showcasePros->take(4) as $sPro)
-                        <a href="{{ route('profile.public', $sPro->id) }}" class="provider-card">
-                            <div class="provider-image-wrapper">
-                                @if($sPro->avatar)
-                                    <img src="{{ storage_url($sPro->avatar) }}" alt="{{ $sPro->name }}">
-                                @else
-                                    <div class="provider-image-placeholder">{{ strtoupper(substr($sPro->name, 0, 1)) }}</div>
-                                @endif
-                                <div class="provider-badge-top">
-                                    <i class="fas fa-briefcase"></i> {{ Str::limit($sPro->profession ?? $sPro->bio ?? 'Professionnel', 15) }}
-                                </div>
-                            </div>
-                            <div class="provider-card-info">
-                                <div class="provider-info-header">
-                                    <h3 class="provider-name">
-                                        {{ Str::limit($sPro->name, 16) }}
-                                        @if($sPro->hasActiveProSubscription())
-                                            <span class="badge-pro">PRO</span>
-                                        @endif
-                                    </h3>
-                                </div>
-                                <div class="provider-rating">
-                                    <span class="star-icon">★</span>
-                                    <span class="rating-value">{{ $sPro->verified_reviews_avg ? number_format($sPro->verified_reviews_avg, 1, ',', '') : 'Nouveau' }}</span>
-                                    @if($sPro->verified_reviews_count ?? 0 > 0)
-                                    <span class="reviews-count">({{ $sPro->verified_reviews_count }} avis)</span>
-                                    @endif
-                                </div>
-                                <p class="provider-category">{{ Str::limit($sPro->profession ?? $sPro->bio ?? 'Professionnel', 30) }}</p>
-                            </div>
-                        </a>
-                        @endforeach
-                    </div>
-                </div>
             @endif
 
             {{-- Pro inline cards supprimés - les pros sont déjà mis en avant dans la section Featured --}}
@@ -6194,6 +6256,55 @@
                 </a>
             </div>
             @endforelse
+            </div>
+
+            <div id="featuredProsContainer">
+                @if(isset($showcasePros) && $showcasePros->count() > 0)
+                <div class="featured-pros-section">
+                    <div class="featured-pros-header">
+                        <h2><i class="fas fa-user-shield" style="color: var(--primary, #4f46e5); margin-right: 6px;"></i> Profils professionnels à la une</h2>
+                    </div>
+                    <div class="providers-grid" id="featuredProfessionalsGrid">
+                        @foreach($showcasePros->take(4) as $sPro)
+                        <a href="{{ route('profile.public', $sPro->id) }}" class="provider-card">
+                            <div class="provider-image-wrapper">
+                                @if($sPro->avatar)
+                                    <img src="{{ storage_url($sPro->avatar) }}" alt="{{ $sPro->name }}">
+                                @else
+                                    <div class="provider-image-placeholder">{{ strtoupper(substr($sPro->name, 0, 1)) }}</div>
+                                @endif
+                                <div class="provider-badge-top">
+                                    <i class="fas fa-briefcase"></i> {{ Str::limit($sPro->profession ?? $sPro->bio ?? 'Professionnel', 15) }}
+                                </div>
+                            </div>
+                            <div class="provider-card-info">
+                                <div class="provider-info-header">
+                                    <h3 class="provider-name">
+                                        {{ Str::limit($sPro->name, 16) }}
+                                        @if($sPro->hasActiveProSubscription())
+                                            <span class="badge-pro">PRO</span>
+                                        @else
+                                            <span class="badge-pro" style="background:#e2e8f0; color:#475569;">Prestataire</span>
+                                        @endif
+                                    </h3>
+                                    @if($sPro->hourly_rate && ($sPro->show_hourly_rate ?? true))
+                                        <span class="provider-price">{{ number_format((float) $sPro->hourly_rate, 0, ',', ' ') }} €/h</span>
+                                    @endif
+                                </div>
+                                <div class="provider-rating">
+                                    <span class="star-icon">★</span>
+                                    <span class="rating-value">{{ $sPro->verified_reviews_avg ? number_format($sPro->verified_reviews_avg, 1, ',', '') : 'Nouveau' }}</span>
+                                    @if($sPro->verified_reviews_count ?? 0 > 0)
+                                    <span class="reviews-count">({{ $sPro->verified_reviews_count }} avis)</span>
+                                    @endif
+                                </div>
+                                <p class="provider-category">{{ Str::limit($sPro->profession ?? $sPro->bio ?? 'Professionnel', 30) }}</p>
+                            </div>
+                        </a>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
             </div>
 
             {{-- Infinite scroll trigger --}}
@@ -9335,7 +9446,9 @@
      */
     function renderProviders(providers) {
         const grid = document.getElementById('providersGrid');
+        const featuredContainer = document.getElementById('featuredProsContainer');
         setFeedMapVisibility(false);
+        if (featuredContainer) featuredContainer.innerHTML = '';
         
         if (!providers || providers.length === 0) {
             grid.innerHTML = `
@@ -9454,9 +9567,11 @@
      */
     function renderMissions(missions) {
         const grid = document.getElementById('missionsGrid');
+        const featuredContainer = document.getElementById('featuredProsContainer');
         updateFeedAdsMap(buildFeedMapMarkers(missions));
         
         if (!missions || missions.length === 0) {
+            if (featuredContainer) featuredContainer.innerHTML = '';
             grid.innerHTML = `
                 <div style="text-align: center; padding: 60px 20px; color: #65676b;">
                     <i class="fas fa-briefcase" style="font-size: 2.5rem; color: #bec3c9; margin-bottom: 12px;"></i>
@@ -9471,17 +9586,10 @@
         const authUser = isAuth ? {!! json_encode(['name' => Auth::user()?->name, 'avatar' => Auth::user()?->avatar]) !!} : null;
         
         let html = '';
-        let featuredProsInserted = false;
-        missions.forEach((ad, loopIndex) => {
+        missions.forEach((ad) => {
 
             // Les publications urgentes s'affichent uniquement dans le carousel horizontal (sauf si boostées)
             if (ad.is_urgent && !(ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date())) return;
-
-            // Injecter le bloc Professionnels à la une après les 2 premières cartes
-            if (loopIndex === 2 && !featuredProsInserted) {
-                html += buildFeaturedProsBlockHtml();
-                featuredProsInserted = true;
-            }
 
             const userAvatar = ad.user && ad.user.avatar 
                 ? `<img src="${buildStorageUrl(ad.user.avatar)}" alt="${(ad.user.name||'').replace(/"/g,'')}">` 
@@ -9597,6 +9705,9 @@
         });
         
         grid.innerHTML = html;
+        if (featuredContainer) {
+            featuredContainer.innerHTML = buildFeaturedProsBlockHtml();
+        }
     }
     
     // Fonction pour afficher le modal de signalement
