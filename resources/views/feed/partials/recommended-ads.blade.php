@@ -74,23 +74,14 @@
     $recommendationSections = [
         [
             'key' => 'individual_ads',
-            'icon' => 'fa-user',
-            'title' => 'Offres de particuliers',
-            'copy' => 'Demandes et offres publiees par les particuliers.',
             'items' => collect($recommendationBuckets['individual_ads']),
         ],
         [
             'key' => 'professional_ads',
-            'icon' => 'fa-briefcase',
-            'title' => 'Offres de professionnels',
-            'copy' => 'Prestations et annonces proposees par les professionnels.',
             'items' => collect($recommendationBuckets['professional_ads']),
         ],
         [
             'key' => 'professional_profiles',
-            'icon' => 'fa-user-shield',
-            'title' => 'Profils professionnels',
-            'copy' => 'Profils pro mis en avant, affiches a part des annonces.',
             'items' => collect($recommendationBuckets['professional_profiles']),
         ],
     ];
@@ -117,17 +108,6 @@
         @foreach($recommendationSections as $section)
         @continue($section['items']->isEmpty())
         <div class="recommendation-group recommendation-group--{{ $section['key'] }}">
-            <div class="recommendation-group-header">
-                <div>
-                    <h4 class="recommendation-group-title">
-                        <i class="fas {{ $section['icon'] }}"></i>
-                        {{ $section['title'] }}
-                    </h4>
-                    <p class="recommendation-group-copy">{{ $section['copy'] }}</p>
-                </div>
-                <span class="recommendation-group-count">{{ $section['items']->count() }}</span>
-            </div>
-
             <div class="recommendations-grid">
                 @foreach($section['items'] as $card)
                 @php
@@ -148,9 +128,19 @@
                             </div>
                         @endif
 
-                        @if($isProfessionalPromotion)
-                            <span class="recommendation-card-media-badge">Profil mis en avant</span>
-                        @elseif($card['photoCount'] > 1)
+                        <div class="recommendation-card-media-flags">
+                            @if(!$isProfessionalPromotion && $ad->is_urgent)
+                                <span class="recommendation-card-flag recommendation-card-flag--urgent">Urgent</span>
+                            @endif
+                            @if(!$isProfessionalPromotion && ($ad->service_type ?? null) === 'demande')
+                                <span class="recommendation-card-flag recommendation-card-flag--demand">Demande</span>
+                            @endif
+                            @if($isProfessionalPromotion)
+                                <span class="recommendation-card-flag recommendation-card-flag--profile">Profil</span>
+                            @endif
+                        </div>
+
+                        @if(!$isProfessionalPromotion && $card['photoCount'] > 1)
                             <span class="recommendation-card-media-badge">1 / {{ $card['photoCount'] }}</span>
                         @endif
 

@@ -769,41 +769,7 @@
     .recommendation-group {
         display: flex;
         flex-direction: column;
-        gap: 14px;
-    }
-    .recommendation-group-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 12px;
-    }
-    .recommendation-group-title {
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.98rem;
-        font-weight: 800;
-        color: #1f2421;
-    }
-    .recommendation-group-copy {
-        margin: 4px 0 0;
-        font-size: 0.8rem;
-        color: #64748b;
-    }
-    .recommendation-group-count {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 34px;
-        height: 34px;
-        padding: 0 10px;
-        border-radius: 999px;
-        background: #ece9e2;
-        color: #4a5642;
-        font-size: 0.78rem;
-        font-weight: 800;
-        flex-shrink: 0;
+        gap: 0;
     }
     .recommendations-grid {
         display: grid;
@@ -859,18 +825,57 @@
     }
     .recommendation-card-media-badge {
         position: absolute;
-        left: 10px;
-        top: 10px;
+        right: 8px;
+        top: 8px;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 6px 9px;
+        gap: 4px;
+        padding: 5px 8px;
         border-radius: 999px;
-        background: rgba(31, 36, 33, 0.8);
-        color: #fff;
-        font-size: 0.66rem;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(6px);
+        color: #4a5642;
+        font-size: 0.58rem;
         font-weight: 700;
-        letter-spacing: 0.01em;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        border: 1px solid rgba(226, 226, 220, 0.95);
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+    }
+    .recommendation-card-media-flags {
+        position: absolute;
+        left: 8px;
+        top: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        z-index: 2;
+        max-width: calc(100% - 58px);
+    }
+    .recommendation-card-flag {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 22px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        color: #fff;
+        font-size: 0.56rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+    }
+    .recommendation-card-flag--urgent {
+        background: #E76F51;
+    }
+    .recommendation-card-flag--demand {
+        background: #2A9D8F;
+    }
+    .recommendation-card-flag--profile {
+        background: rgba(92, 107, 82, 0.9);
     }
     .recommendation-card-media-title {
         position: absolute;
@@ -1148,9 +1153,6 @@
     @media (max-width: 640px) {
         .recommendations-grid {
             grid-template-columns: 1fr;
-        }
-        .recommendation-group-header {
-            align-items: center;
         }
     }
     /* Arrows INSIDE the track, overlaid left & right */
