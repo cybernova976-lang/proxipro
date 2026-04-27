@@ -6,12 +6,17 @@ use App\Models\Ad;
 use App\Models\User;
 use App\Models\UserService;
 use App\Services\GeocodingService;
+use App\Services\SavedSearchService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class DemandController extends Controller
 {
+    public function __construct(private SavedSearchService $savedSearchService)
+    {
+    }
+
     /**
      * Affiche le formulaire simplifié de demande de service
      */
@@ -113,6 +118,12 @@ class DemandController extends Controller
                 'category' => $ad->category,
                 'exception' => get_class($e),
             ]);
+        }
+
+        try {
+            $this->savedSearchService->processNewAd($ad);
+        } catch (\Throwable $exception) {
+            Log::warning('Saved search matching failed for demand #' . $ad->id . ': ' . $exception->getMessage());
         }
 
         return redirect()->route('demand.matching', $ad);

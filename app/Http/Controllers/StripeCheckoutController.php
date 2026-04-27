@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Transaction;
+use App\Services\ReferralService;
+use App\Services\ServiceOrderWorkflowService;
 use Stripe\Stripe;
 use Stripe\Checkout\Session as StripeSession;
 use Carbon\Carbon;
@@ -37,7 +39,10 @@ class StripeCheckoutController extends Controller
         'telegram'  => ['points' => 5, 'name' => 'Telegram'],
     ];
 
-    public function __construct()
+    public function __construct(
+        protected ReferralService $referralService,
+        protected ServiceOrderWorkflowService $serviceOrderWorkflowService,
+    )
     {
         Stripe::setApiKey(config('services.stripe.secret'));
     }
@@ -121,7 +126,7 @@ class StripeCheckoutController extends Controller
         $sessionId = $request->get('session_id');
         $productKey = $request->get('product');
 
-        if (!$sessionId || !$productKey) {
+        if (!$sessionId) {
             return redirect()->route('pricing.index')->with('error', 'Session de paiement invalide');
         }
 
@@ -130,6 +135,21 @@ class StripeCheckoutController extends Controller
             
             if ($session->payment_status !== 'paid') {
                 return redirect()->route('pricing.index')->with('error', 'Paiement non confirmé');
+            }
+
+            if (($session->metadata->type ?? null) === 'service_order') {
+                $serviceOrder = $this->serviceOrderWorkflowService->markPaidFromCheckoutSession($session);
+
+                if (!$serviceOrder) {
+                    return redirect()->route('service-orders.index')->with('error', 'Commande introuvable pour ce paiement.');
+                }
+
+                return redirect()->route('service-orders.index')
+                    ->with('success', 'Paiement Stripe confirme. Les fonds sont bloques jusqu\'a liberation ou litige.');
+            }
+
+            if (!$productKey) {
+                return redirect()->route('pricing.index')->with('error', 'Produit invalide');
             }
 
             $userId = $session->metadata->user_id;
@@ -170,7 +190,7 @@ class StripeCheckoutController extends Controller
     private function processPayment($user, $product, $productKey, $session)
     {
         // Enregistrer la transaction
-        Transaction::create([
+        $transaction = Transaction::create([
             'user_id' => $user->id,
             'amount' => $product['price'] / 100,
             'type' => 'POINTS',
@@ -181,6 +201,7 @@ class StripeCheckoutController extends Controller
 
         // Créditer les points (via available_points et total_points)
         $user->addPoints($product['points'], 'purchase', 'Achat de ' . $product['points'] . ' points', 'stripe');
+        $this->referralService->grantFirstPurchaseRewards($user->fresh(), $transaction);
     }
 
     /**
@@ -206,6 +227,12 @@ class StripeCheckoutController extends Controller
         if (isset($event->type) && $event->type === 'checkout.session.completed') {
             $session = $event->data->object;
             $metadata = $session->metadata;
+
+            if (($metadata->type ?? null) === 'service_order') {
+                $this->serviceOrderWorkflowService->markPaidFromCheckoutSession($session);
+
+                return response()->json(['received' => true]);
+            }
             
             $user = User::find($metadata->user_id ?? null);
             $productKey = $metadata->product_key ?? null;

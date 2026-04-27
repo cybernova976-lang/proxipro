@@ -57,3 +57,64 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Local Multi-App Startup
+
+This workspace can run alongside the sibling Emergent project without port conflicts.
+
+Expected local ports:
+
+- MASSIWANI V2: `http://127.0.0.1:8001`
+- Emergent backend: `http://127.0.0.1:8000`
+- Emergent frontend: `http://127.0.0.1:3000`
+
+From the MASSIWANI V2 root on Windows PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start-local-dev.ps1
+```
+
+To preview the commands without opening terminals:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start-local-dev.ps1 -DryRun
+```
+
+Prerequisites:
+
+- MASSIWANI V2 dependencies already installed
+- Emergent located next to this folder at `..\Emergent`
+- Emergent backend virtual environment available at `backend\venv`
+- MongoDB available for the Emergent backend
+
+## Stripe Test Mode
+
+Until the project is finalized and the business is legally ready for production,
+Stripe must stay in test mode only.
+
+Rules for this repository:
+
+- use only `pk_test_...` and `sk_test_...` keys in local and staging environments
+- use a test webhook secret `whsec_...` for local webhook handling
+- do not configure live Stripe keys yet
+- validate secure orders, disputes, refunds, and Connect onboarding with Stripe test data only
+
+The application already reads Stripe from environment variables:
+
+- `STRIPE_KEY`
+- `STRIPE_SECRET`
+- `STRIPE_WEBHOOK_SECRET`
+
+Example local configuration:
+
+```env
+STRIPE_KEY=pk_test_xxxxxxxxxxxxxxxxxxxxx
+STRIPE_SECRET=sk_test_xxxxxxxxxxxxxxxxxxxxx
+STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxx
+```
+
+Important:
+
+- seller payouts via Stripe Connect can still be tested with Express test onboarding
+- admin refund and dispute flows should also be tested against Stripe test mode only
+- switch to live keys only once the legal/business setup and production launch are actually ready

@@ -78,6 +78,23 @@
             </div>
         </div>
     </div>
+
+    <div class="col-xl-3 col-lg-6">
+        <a href="{{ route('admin.service-orders.index') }}" class="text-decoration-none">
+            <div class="card stat-card border-0 text-white" style="background: linear-gradient(135deg, #0f766e, #115e59);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2">Commandes securisees</h6>
+                            <h2 class="card-title mb-0">Piloter</h2>
+                            <small>Litiges, remboursements, payouts</small>
+                        </div>
+                        <i class="fas fa-money-check-alt fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
 </div>
 
 <div class="row g-4 mb-4">

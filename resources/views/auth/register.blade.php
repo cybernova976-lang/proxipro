@@ -245,6 +245,20 @@
                 </div>
 
                 <div>
+                    <label for="referral_code" class="block text-sm font-medium text-gray-700 mb-1.5">Code de parrainage</label>
+                    <input
+                        id="referral_code" name="referral_code" type="text"
+                        placeholder="Ex. PROX123ABC"
+                        value="{{ old('referral_code', request('ref')) }}"
+                        class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400 @error('referral_code') border-red-400 @enderror"
+                    >
+                    <p class="mt-1 text-xs text-gray-500">Optionnel. Votre parrain gagne 50 points et vous 20 points après votre premier achat validé.</p>
+                    @error('referral_code')
+                        <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
                     <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">Mot de passe *</label>
                     <div class="relative">
                         <input 

@@ -6,6 +6,7 @@ use App\Models\ProQuote;
 use App\Models\ProInvoice;
 use App\Models\Transaction;
 use App\Models\FreeQuoteUsage;
+use App\Services\ReferralService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
@@ -16,6 +17,10 @@ use Stripe\Checkout\Session as StripeSession;
 
 class QuoteToolController extends Controller
 {
+    public function __construct(protected ReferralService $referralService)
+    {
+    }
+
     private $creditPacks = [
         'pack_5' => ['credits' => 5, 'price' => 499, 'label' => 'Découverte', 'price_display' => '4,99'],
         'pack_20' => ['credits' => 20, 'price' => 1499, 'label' => 'Professionnel', 'price_display' => '14,99'],
@@ -503,7 +508,7 @@ class QuoteToolController extends Controller
             $pack = $this->creditPacks[$packKey];
 
             DB::transaction(function () use ($user, $pack, $sessionId) {
-                Transaction::create([
+                $transaction = Transaction::create([
                     'user_id' => $user->id,
                     'amount' => $pack['price'] / 100,
                     'type' => 'DOCUMENT_CREDITS',
@@ -518,6 +523,7 @@ class QuoteToolController extends Controller
                 ]);
 
                 $user->increment('paid_quotes_remaining', $pack['credits']);
+                $this->referralService->grantFirstPurchaseRewards($user->fresh(), $transaction);
             });
 
             $user->refresh();

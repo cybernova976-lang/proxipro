@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\UserService;
 use App\Notifications\NewAdMatchingNotification;
 use App\Services\GeocodingService;
+use App\Services\SavedSearchService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -14,6 +15,10 @@ use Illuminate\Support\Facades\Storage;
 
 class AdController extends Controller
 {
+    public function __construct(private SavedSearchService $savedSearchService)
+    {
+    }
+
     /**
      * Display a listing of the resource with advanced search.
      */
@@ -265,6 +270,12 @@ class AdController extends Controller
             Log::warning('Failed to notify matching professionals for ad #' . $ad->id . ': ' . $e->getMessage());
         }
 
+        try {
+            $this->savedSearchService->processNewAd($ad);
+        } catch (\Throwable $exception) {
+            Log::warning('Failed to notify saved searches for ad #' . $ad->id . ': ' . $exception->getMessage());
+        }
+
         // Rediriger vers la page après publication (urgent + boost)
         return redirect()->route('boost.after-creation', $ad);
       } catch (\Exception $e) {
@@ -380,6 +391,12 @@ class AdController extends Controller
             $this->notifyMatchingProfessionals($ad);
         } catch (\Exception $e) {
             Log::warning('Failed to notify matching professionals for ad #' . $ad->id . ': ' . $e->getMessage());
+        }
+
+        try {
+            $this->savedSearchService->processNewAd($ad);
+        } catch (\Throwable $exception) {
+            Log::warning('Failed to notify saved searches for popup ad #' . $ad->id . ': ' . $exception->getMessage());
         }
 
         return response()->json([

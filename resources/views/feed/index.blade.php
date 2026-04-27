@@ -3,6 +3,7 @@
 @section('title', 'Accueil - ProxiPro')
 
 @push('styles')
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <style>
     /* =========================================
        PAGE D'ACCUEIL FEED - STYLE MARKETPLACE PRO
@@ -730,6 +731,238 @@
         position: relative;
         overflow: hidden;
         border-radius: 0.75rem;
+    }
+    .recommendations-strip {
+        background: linear-gradient(135deg, #fff7ed, #fffbeb);
+        border: 1px solid #fed7aa;
+        border-radius: 18px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 12px 28px rgba(249, 115, 22, 0.08);
+    }
+    .recommendations-strip-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+        margin-bottom: 14px;
+    }
+    .recommendations-strip-title {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #9a3412;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .recommendations-strip-copy {
+        margin: 4px 0 0;
+        font-size: 0.84rem;
+        color: #9a3412;
+    }
+    .recommendations-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+    }
+    .recommendation-card {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(251, 146, 60, 0.2);
+        border-radius: 14px;
+        padding: 16px;
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .recommendation-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(154, 52, 18, 0.12);
+        color: inherit;
+    }
+    .recommendation-card-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+        font-size: 0.78rem;
+        color: #7c2d12;
+    }
+    .recommendation-card-title {
+        margin: 0 0 8px;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #111827;
+        line-height: 1.35;
+    }
+    .recommendation-card-text {
+        margin: 0 0 12px;
+        font-size: 0.88rem;
+        color: #4b5563;
+        line-height: 1.55;
+    }
+    .recommendation-reasons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    .recommendation-reason {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #fff;
+        border: 1px solid #fdba74;
+        font-size: 0.76rem;
+        font-weight: 600;
+        color: #c2410c;
+    }
+    .recommendation-card-footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+        font-size: 0.82rem;
+        color: #6b7280;
+    }
+    .recommendation-card-price {
+        font-weight: 800;
+        color: #111827;
+    }
+    .saved-search-banner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 18px;
+        margin-bottom: 18px;
+        border-radius: 16px;
+        border: 1px solid #dbeafe;
+        background: linear-gradient(135deg, #eff6ff, #f8fafc);
+    }
+    .saved-search-banner-title {
+        margin: 0 0 4px;
+        font-size: 1rem;
+        font-weight: 800;
+        color: #1d4ed8;
+    }
+    .saved-search-banner-copy {
+        margin: 0;
+        font-size: 0.84rem;
+        color: #475569;
+    }
+    .saved-search-banner-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+    .saved-search-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: none;
+        background: #2563eb;
+        color: white;
+        font-size: 0.84rem;
+        font-weight: 700;
+        text-decoration: none;
+    }
+    .saved-search-btn:hover {
+        color: white;
+        background: #1d4ed8;
+    }
+    .saved-search-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: #dbeafe;
+        color: #1e3a8a;
+        font-size: 0.84rem;
+        font-weight: 700;
+    }
+    .ads-map-section {
+        background: white;
+        border: 1px solid #dbeafe;
+        border-radius: 18px;
+        padding: 18px;
+        margin-bottom: 20px;
+        box-shadow: 0 12px 28px rgba(37, 99, 235, 0.08);
+    }
+    .ads-map-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+        margin-bottom: 14px;
+    }
+    .ads-map-title {
+        margin: 0 0 4px;
+        font-size: 1rem;
+        font-weight: 800;
+        color: #1e3a8a;
+    }
+    .ads-map-copy {
+        margin: 0;
+        font-size: 0.84rem;
+        color: #475569;
+    }
+    .ads-map-canvas {
+        height: 340px;
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid #dbeafe;
+    }
+    .ads-map-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+    }
+    .ads-map-legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #eff6ff;
+        color: #1e3a8a;
+        font-size: 0.76rem;
+        font-weight: 600;
+    }
+    .ads-map-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .ads-map-dot.standard {
+        background: #2563eb;
+    }
+    .ads-map-dot.boosted {
+        background: #7c3aed;
+    }
+    .ads-map-dot.urgent {
+        background: #dc2626;
+    }
+    @media (max-width: 991px) {
+        .recommendations-grid {
+            grid-template-columns: 1fr;
+        }
+        .saved-search-banner {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .saved-search-banner-actions {
+            justify-content: flex-start;
+        }
     }
     /* Arrows INSIDE the track, overlaid left & right */
     .urgent-carousel-btn {
@@ -5602,6 +5835,47 @@
                 {{-- === CAROUSEL PUBLICATIONS À LA UNE : supprimé pour simplifier le feed === --}}
                 {{-- Les publications importantes apparaissent directement dans le feed principal --}}
 
+                <div class="saved-search-banner">
+                    <div>
+                        <h3 class="saved-search-banner-title">
+                            <i class="fas fa-bell me-2"></i>Alertes de recherche
+                        </h3>
+                        <p class="saved-search-banner-copy">
+                            Sauvegardez cette vue et recevez une notification des qu'une nouvelle annonce correspondante est publiee.
+                        </p>
+                    </div>
+                    <div class="saved-search-banner-actions">
+                        @if(isset($existingSavedSearch) && $existingSavedSearch)
+                            <span class="saved-search-chip">
+                                <i class="fas fa-check-circle"></i>Alerte activee
+                            </span>
+                        @else
+                            <form method="POST" action="{{ route('saved-searches.store') }}">
+                                @csrf
+                                <input type="hidden" name="type" value="{{ $currentSearchSnapshot['service_type'] ?? 'all' }}">
+                                <input type="hidden" name="category" value="{{ $currentSearchSnapshot['category'] ?? '' }}">
+                                <input type="hidden" name="search" value="{{ $currentSearchSnapshot['search_term'] ?? '' }}">
+                                <input type="hidden" name="sort" value="{{ $currentSearchSnapshot['filters']['sort'] ?? 'recent' }}">
+                                <input type="hidden" name="radius" value="{{ $currentSearchSnapshot['radius_km'] ?? '' }}">
+                                <input type="hidden" name="geo_city" value="{{ $currentSearchSnapshot['city'] ?? '' }}">
+                                <input type="hidden" name="geo_country" value="{{ $currentSearchSnapshot['country'] ?? '' }}">
+                                <input type="hidden" name="geo_latitude" value="{{ $currentSearchSnapshot['latitude'] ?? '' }}">
+                                <input type="hidden" name="geo_longitude" value="{{ $currentSearchSnapshot['longitude'] ?? '' }}">
+                                <button type="submit" class="saved-search-btn">
+                                    <i class="fas fa-bookmark"></i>Sauvegarder cette recherche
+                                </button>
+                            </form>
+                        @endif
+                        <a href="{{ route('saved-searches.index') }}" class="saved-search-btn" style="background:#0f172a;">
+                            <i class="fas fa-list"></i>Mes alertes
+                        </a>
+                    </div>
+                </div>
+
+                @include('feed.partials.recommended-ads', ['recommendedAds' => $recommendedAds ?? collect()])
+
+                @include('feed.partials.ads-map', ['adsMapData' => $adsMapData ?? collect(), 'geoEnabled' => $geoEnabled ?? false, 'geoCity' => $geoCity ?? null])
+
                 <div class="missions-feed" id="missionsGrid">
             @forelse($ads as $loopIndex => $ad)
 
@@ -6722,8 +6996,128 @@
 @endsection
 
 @push('scripts')
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
     console.log('=== Script ProxiPro Feed chargé ===');
+
+    let feedAdsMap = null;
+    let feedAdsMapLayer = null;
+
+    function buildFeedMapMarkers(ads) {
+        if (!Array.isArray(ads)) {
+            return [];
+        }
+
+        return ads.filter(ad => Number.isFinite(Number(ad.latitude)) && Number.isFinite(Number(ad.longitude)))
+            .map(ad => ({
+                id: ad.id,
+                title: ad.title,
+                category: ad.category,
+                location: ad.location,
+                price: ad.price,
+                latitude: Number(ad.latitude),
+                longitude: Number(ad.longitude),
+                is_urgent: !!ad.is_urgent,
+                is_boosted: !!ad.is_boosted,
+                url: ad.url || `/ads/${ad.id}`,
+            }));
+    }
+
+    function setFeedMapVisibility(hasMarkers) {
+        const mapSection = document.querySelector('.ads-map-section');
+        if (mapSection) {
+            mapSection.style.display = hasMarkers ? '' : 'none';
+        }
+    }
+
+    function updateFeedAdsMap(markers) {
+        const mapElement = document.getElementById('adsFeedMap');
+        if (!mapElement || typeof L === 'undefined') {
+            return;
+        }
+
+        const normalizedMarkers = Array.isArray(markers) ? markers : [];
+        setFeedMapVisibility(normalizedMarkers.length > 0);
+
+        if (normalizedMarkers.length === 0) {
+            return;
+        }
+
+        if (!feedAdsMap) {
+            feedAdsMap = L.map(mapElement, { scrollWheelZoom: false });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(feedAdsMap);
+        }
+
+        if (feedAdsMapLayer) {
+            feedAdsMapLayer.clearLayers();
+        }
+
+        feedAdsMapLayer = L.layerGroup().addTo(feedAdsMap);
+        const bounds = [];
+
+        normalizedMarkers.forEach((marker) => {
+            const lat = Number(marker.latitude);
+            const lng = Number(marker.longitude);
+
+            bounds.push([lat, lng]);
+
+            let color = '#2563eb';
+            if (marker.is_urgent) {
+                color = '#dc2626';
+            } else if (marker.is_boosted) {
+                color = '#7c3aed';
+            }
+
+            const icon = L.divIcon({
+                className: 'ads-feed-map-pin',
+                html: `<span style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${color};border:3px solid white;box-shadow:0 4px 14px rgba(15,23,42,0.25);"></span>`,
+                iconSize: [18, 18],
+                iconAnchor: [9, 9],
+            });
+
+            const price = marker.price ? new Intl.NumberFormat('fr-FR').format(marker.price) + ' €' : 'Sur devis';
+            const popup = `
+                <div style="min-width:220px;">
+                    <div style="font-weight:800;color:#0f172a;margin-bottom:6px;">${marker.title || ''}</div>
+                    <div style="font-size:12px;color:#475569;margin-bottom:6px;">${marker.category || 'Annonce'} · ${marker.location || 'Lieu non precise'}</div>
+                    <div style="font-size:13px;font-weight:700;color:#1e3a8a;margin-bottom:10px;">${price}</div>
+                    <a href="${marker.url}" style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;background:#2563eb;color:#fff;text-decoration:none;font-size:12px;font-weight:700;">Voir l'annonce</a>
+                </div>
+            `;
+
+            L.marker([lat, lng], { icon }).addTo(feedAdsMapLayer).bindPopup(popup);
+        });
+
+        if (bounds.length === 1) {
+            feedAdsMap.setView(bounds[0], 12);
+        } else {
+            feedAdsMap.fitBounds(bounds, { padding: [30, 30] });
+        }
+
+        requestAnimationFrame(() => feedAdsMap.invalidateSize());
+    }
+
+    function initializeFeedAdsMap() {
+        const mapElement = document.getElementById('adsFeedMap');
+        if (!mapElement || typeof L === 'undefined' || mapElement.dataset.initialized === '1') {
+            return;
+        }
+
+        let markers = [];
+        try {
+            markers = JSON.parse(mapElement.dataset.markers || '[]');
+        } catch (error) {
+            console.error('Impossible de lire les marqueurs de la carte.', error);
+            return;
+        }
+
+        updateFeedAdsMap(markers);
+        mapElement.dataset.initialized = '1';
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeFeedAdsMap);
     
     // =========================================
     // SYSTÈME DE PUBLICATION SOCIALE AMÉLIORÉ
@@ -8926,6 +9320,7 @@
                     renderProviders(data.professionals || data);
                 } else {
                     renderMissions(data.ads || data);
+                    updateFeedAdsMap(buildFeedMapMarkers(data.ads || data));
                 }
             })
             .catch(err => {
@@ -8940,6 +9335,7 @@
      */
     function renderProviders(providers) {
         const grid = document.getElementById('providersGrid');
+        setFeedMapVisibility(false);
         
         if (!providers || providers.length === 0) {
             grid.innerHTML = `
@@ -9058,6 +9454,7 @@
      */
     function renderMissions(missions) {
         const grid = document.getElementById('missionsGrid');
+        updateFeedAdsMap(buildFeedMapMarkers(missions));
         
         if (!missions || missions.length === 0) {
             grid.innerHTML = `
@@ -9768,6 +10165,23 @@
                         const postEl = buildInfiniteScrollPost(ad);
                         if (postEl) grid.appendChild(postEl);
                     });
+                    const currentMarkers = buildFeedMapMarkers(ads);
+                    const existingMarkers = feedAdsMapLayer
+                        ? feedAdsMapLayer.getLayers().map(layer => layer.getLatLng()).length
+                        : 0;
+                    if (currentMarkers.length > 0 || existingMarkers > 0) {
+                        const currentMapMarkers = [];
+                        document.querySelectorAll('#missionsGrid .fb-post[data-ad-json]').forEach((post) => {
+                            try {
+                                const decoded = post.getAttribute('data-ad-json').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+                                const ad = JSON.parse(decoded);
+                                currentMapMarkers.push(ad);
+                            } catch (error) {
+                                console.error('Erreur lecture annonce pour carte:', error);
+                            }
+                        });
+                        updateFeedAdsMap(buildFeedMapMarkers(currentMapMarkers));
+                    }
                 }
 
                 if (currentPage >= lastPage) {

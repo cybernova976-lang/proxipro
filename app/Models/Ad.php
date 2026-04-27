@@ -67,6 +67,11 @@ class Ad extends Model
         return $this->hasMany(Comment::class);
     }
 
+    public function serviceOrders()
+    {
+        return $this->hasMany(ServiceOrder::class);
+    }
+
     /**
      * Portée géographique pour les recherches par rayon (formule de Haversine)
      */

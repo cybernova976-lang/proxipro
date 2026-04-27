@@ -45,6 +45,9 @@ class User extends Authenticatable
             
             // Détacher les annonces sauvegardées
             $user->savedAds()->detach();
+
+            // Supprimer les alertes sauvegardées
+            $user->savedSearches()->delete();
             
             // Supprimer les messages envoyés
             $user->sentMessages()->delete();
@@ -66,6 +69,15 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'stripe_id',
+        'stripe_connect_account_id',
+        'stripe_connect_onboarding_completed_at',
+        'stripe_connect_payouts_enabled',
+        'stripe_connect_charges_enabled',
+        'referral_code',
+        'referred_by_user_id',
+        'referral_bonus_granted_at',
+        'first_qualifying_purchase_at',
         'password',
         'phone',
         'address',
@@ -156,7 +168,10 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'stripe_connect_onboarding_completed_at' => 'datetime',
             'email_verification_code_expires_at' => 'datetime',
+            'referral_bonus_granted_at' => 'datetime',
+            'first_qualifying_purchase_at' => 'datetime',
             'password' => 'hashed',
             'is_verified' => 'boolean',
             'identity_verified' => 'boolean',
@@ -172,6 +187,8 @@ class User extends Authenticatable
             'pro_verified_at' => 'datetime',
             'can_boost_ads' => 'boolean',
             'newsletter_subscribed' => 'boolean',
+            'stripe_connect_payouts_enabled' => 'boolean',
+            'stripe_connect_charges_enabled' => 'boolean',
             'profile_completed' => 'boolean',
             'profile_completed_at' => 'datetime',
             'pro_onboarding_completed' => 'boolean',
@@ -390,6 +407,26 @@ class User extends Authenticatable
         return $this->hasMany(Ad::class);
     }
 
+    public function referrer()
+    {
+        return $this->belongsTo(User::class, 'referred_by_user_id');
+    }
+
+    public function referredUsers()
+    {
+        return $this->hasMany(User::class, 'referred_by_user_id');
+    }
+
+    public function referralRewardsEarned()
+    {
+        return $this->hasMany(ReferralReward::class, 'referrer_user_id');
+    }
+
+    public function referralRewardsTriggered()
+    {
+        return $this->hasMany(ReferralReward::class, 'referee_user_id');
+    }
+
     public function pointTransactions()
     {
         return $this->hasMany(PointTransaction::class);
@@ -547,6 +584,21 @@ class User extends Authenticatable
     public function savedAds()
     {
         return $this->belongsToMany(Ad::class, 'saved_ads')->withTimestamps();
+    }
+
+    public function savedSearches()
+    {
+        return $this->hasMany(SavedSearch::class);
+    }
+
+    public function serviceOrdersPlaced()
+    {
+        return $this->hasMany(ServiceOrder::class, 'buyer_id');
+    }
+
+    public function serviceOrdersReceived()
+    {
+        return $this->hasMany(ServiceOrder::class, 'seller_id');
     }
 
     /**

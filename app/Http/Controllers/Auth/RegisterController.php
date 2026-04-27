@@ -7,6 +7,7 @@ use App\Mail\WelcomeMail;
 use App\Mail\EmailVerificationCode;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\ReferralService;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -42,7 +43,7 @@ class RegisterController extends Controller
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(protected ReferralService $referralService)
     {
         $this->middleware('guest');
         $this->middleware('throttle:5,1'); // Max 5 registration attempts per minute
@@ -183,6 +184,7 @@ class RegisterController extends Controller
     {
         $rules = [
             'email' => ['required', 'string', 'email:rfc,dns', 'max:255', Rule::unique('users', 'email')->whereNull('deleted_at')],
+            'referral_code' => ['nullable', 'string', 'max:20', Rule::exists('users', 'referral_code')],
             'password' => [
                 'required',
                 'string',
@@ -253,6 +255,7 @@ class RegisterController extends Controller
             'email.required' => 'L\'adresse e-mail est obligatoire.',
             'email.email' => 'Veuillez entrer une adresse e-mail valide.',
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
+            'referral_code.exists' => 'Code de parrainage invalide.',
             'password.required' => 'Le mot de passe est obligatoire.',
             'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
             'password.max' => 'Le mot de passe ne peut pas dépasser 40 caractères.',
@@ -305,9 +308,13 @@ class RegisterController extends Controller
             $trashedUser->forceDelete();
         }
 
+        $referrer = $this->referralService->findReferrerByCode($data['referral_code'] ?? null);
+
         $user = User::create([
             'name' => $name,
             'email' => $data['email'],
+            'referral_code' => $this->referralService->generateUniqueCode($name),
+            'referred_by_user_id' => $referrer?->id,
             'password' => Hash::make($data['password']),
             'phone' => $data['phone'] ?? null,
             'user_type' => $userType,

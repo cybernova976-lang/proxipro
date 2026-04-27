@@ -205,6 +205,83 @@
         </div>
     </div>
 
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-user-friends text-info me-2"></i>Parrainage</h5>
+            <span class="badge bg-info">+50 / +20 points</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <div class="p-3 bg-light rounded h-100">
+                        <div class="text-muted small mb-1">Mon code</div>
+                        <div class="fw-bold fs-5">{{ $referralStats['code'] ?: 'Bientôt disponible' }}</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-light rounded h-100">
+                        <div class="text-muted small mb-1">Filleuls inscrits</div>
+                        <div class="fw-bold fs-5">{{ $referralStats['referred_count'] }}</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-light rounded h-100">
+                        <div class="text-muted small mb-1">Points gagnés</div>
+                        <div class="fw-bold fs-5">{{ number_format($referralStats['points_earned'], 0, ',', ' ') }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <label for="referral-link" class="form-label fw-semibold">Mon lien d'invitation</label>
+            <div class="input-group mb-3">
+                <input id="referral-link" type="text" class="form-control" value="{{ $referralStats['link'] }}" readonly>
+                <button class="btn btn-outline-primary" type="button" id="copy-referral-link">
+                    <i class="fas fa-copy me-1"></i>Copier
+                </button>
+            </div>
+
+            <p class="text-muted small mb-3">Le filleul reçoit 20 points après son premier achat validé. Le parrain reçoit 50 points au même moment.</p>
+
+            @if($referralHistory->isEmpty())
+                <div class="text-center py-3 bg-light rounded">
+                    <i class="fas fa-gift fa-2x text-muted mb-2"></i>
+                    <p class="mb-0 text-muted">Aucun bonus de parrainage pour le moment.</p>
+                </div>
+            @else
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Utilisateur lié</th>
+                                <th class="text-end">Points</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($referralHistory as $reward)
+                                @php
+                                    $isReferrerReward = $reward->referrer_user_id === $user->id && $reward->reward_type === 'first_purchase_referrer';
+                                    $linkedUser = $isReferrerReward ? optional($reward->referee)->name : optional($reward->referrer)->name;
+                                @endphp
+                                <tr>
+                                    <td>{{ optional($reward->granted_at)->format('d/m/Y H:i') }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ $isReferrerReward ? 'primary' : 'success' }}">
+                                            {{ $isReferrerReward ? 'Bonus parrain' : 'Bonus filleul' }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $linkedUser ?: 'Utilisateur supprimé' }}</td>
+                                    <td class="text-end text-success fw-bold">+{{ $reward->points }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
+    </div>
+
     <!-- Dernières transactions -->
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
@@ -239,6 +316,7 @@
                                             'daily' => 'success',
                                             'level_up' => 'warning',
                                             'purchase' => 'info',
+                                            'referral_bonus' => 'primary',
                                             'subscription' => 'danger',
                                             'welcome' => 'secondary'
                                         ];
@@ -267,6 +345,25 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const copyButton = document.getElementById('copy-referral-link');
+    const referralInput = document.getElementById('referral-link');
+
+    if (copyButton && referralInput) {
+        copyButton.addEventListener('click', async function() {
+            try {
+                await navigator.clipboard.writeText(referralInput.value);
+            } catch (error) {
+                referralInput.select();
+                document.execCommand('copy');
+            }
+
+            copyButton.innerHTML = '<i class="fas fa-check me-1"></i>Copié';
+            setTimeout(() => {
+                copyButton.innerHTML = '<i class="fas fa-copy me-1"></i>Copier';
+            }, 1800);
+        });
+    }
+
     // Gestion des partages
     document.querySelectorAll('.share-btn').forEach(button => {
         button.addEventListener('click', function() {

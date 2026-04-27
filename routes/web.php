@@ -20,6 +20,9 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\BoostController;
 use App\Http\Controllers\SavedAdController;
+use App\Http\Controllers\SavedSearchController;
+use App\Http\Controllers\ServiceOrderController;
+use App\Http\Controllers\Admin\AdminServiceOrderController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ServiceProviderController;
@@ -166,6 +169,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/ads/{ad}/toggle-save', [SavedAdController::class, 'toggle'])->name('ads.toggle-save');
     Route::get('/ads/{ad}/check-saved', [SavedAdController::class, 'check'])->name('ads.check-saved');
     Route::post('/ads/{ad}/candidature', [FeedController::class, 'submitCandidature'])->name('ads.candidature');
+    Route::get('/saved-searches', [SavedSearchController::class, 'index'])->name('saved-searches.index');
+    Route::post('/saved-searches', [SavedSearchController::class, 'store'])->name('saved-searches.store');
+    Route::delete('/saved-searches/{savedSearch}', [SavedSearchController::class, 'destroy'])->name('saved-searches.destroy');
+    Route::get('/service-orders', [ServiceOrderController::class, 'index'])->name('service-orders.index');
+    Route::post('/ads/{ad}/service-orders', [ServiceOrderController::class, 'store'])->name('service-orders.store');
+    Route::post('/service-orders/{serviceOrder}/accept', [ServiceOrderController::class, 'accept'])->name('service-orders.accept');
+    Route::post('/service-orders/{serviceOrder}/refuse', [ServiceOrderController::class, 'refuse'])->name('service-orders.refuse');
+    Route::post('/service-orders/{serviceOrder}/checkout', [ServiceOrderController::class, 'checkout'])->name('service-orders.checkout');
+    Route::post('/service-orders/{serviceOrder}/release', [ServiceOrderController::class, 'release'])->name('service-orders.release');
+    Route::post('/service-orders/{serviceOrder}/dispute', [ServiceOrderController::class, 'dispute'])->name('service-orders.dispute');
+    Route::get('/service-orders/connect/onboarding', [ServiceOrderController::class, 'connectOnboarding'])->name('service-orders.connect.onboarding');
+    Route::get('/service-orders/connect/return', [ServiceOrderController::class, 'connectReturn'])->name('service-orders.connect.return');
 });
 
 // Routes pour les commentaires
@@ -551,6 +566,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/contact-messages/{id}/reply', [AdminController::class, 'replyContactMessage'])->name('admin.contact-messages.reply');
     Route::post('/contact-messages/{id}/status', [AdminController::class, 'updateContactMessageStatus'])->name('admin.contact-messages.status');
     Route::delete('/contact-messages/{id}', [AdminController::class, 'deleteContactMessage'])->name('admin.contact-messages.delete');
+
+    // Gestion des commandes securisees / litiges
+    Route::get('/service-orders', [AdminServiceOrderController::class, 'index'])->name('admin.service-orders.index');
+    Route::post('/service-orders/{serviceOrder}/release', [AdminServiceOrderController::class, 'release'])->name('admin.service-orders.release');
+    Route::post('/service-orders/{serviceOrder}/refund', [AdminServiceOrderController::class, 'refund'])->name('admin.service-orders.refund');
 });
 
 // Diagnostic boost (admin uniquement) - TEMPORAIRE

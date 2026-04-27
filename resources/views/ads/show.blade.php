@@ -334,6 +334,9 @@
 
                             @if($canReply)
                                 <button class="btn btn-contact btn-contact-primary" data-bs-toggle="modal" data-bs-target="#contactModal"><i class="fas fa-paper-plane me-2"></i>Contacter</button>
+                                <button class="btn btn-contact" style="background: linear-gradient(135deg, #0f766e, #0f766e); color: white; border: none;" data-bs-toggle="modal" data-bs-target="#secureOrderModal">
+                                    <i class="fas fa-shield-alt me-2"></i>Commande securisee
+                                </button>
                                 <button class="btn btn-contact" id="btnCandidatureShow" onclick="toggleCandidatureShowForm()" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none;">
                                     <i class="fas fa-hand-paper me-2"></i>Envoyer ma candidature
                                 </button>
@@ -634,6 +637,51 @@ Cordialement,
             </div>
         </div>
     </div>
+    @endauth
+
+    @auth
+    @if(Auth::id() !== $ad->user_id)
+    <div class="modal fade" id="secureOrderModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2 text-success"></i>Lancer une commande securisee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ route('service-orders.store', $ad) }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="alert alert-success" style="border-radius: 12px;">
+                            <strong>Paiement securise</strong><br>
+                            Une commission ProxiPro de 10% est previsualisee. Le paiement securise sera branche a l'etape suivante.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-light">Montant convenu</label>
+                            <input type="number" step="0.01" min="1" name="amount" class="form-control form-control-dark" value="{{ $ad->price ? number_format((float) $ad->price, 2, '.', '') : '' }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-light">Date souhaitee</label>
+                            <input type="date" name="scheduled_for" class="form-control form-control-dark" min="{{ now()->toDateString() }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-light">Message</label>
+                            <textarea name="message" class="form-control form-control-dark" rows="4" placeholder="Precisez le besoin, le perimetre et les attentes.">Bonjour,
+
+Je souhaite lancer une commande securisee pour votre annonce "{{ $ad->title }}".
+
+Cordialement,
+{{ Auth::user()->name }}</textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-lock me-1"></i>Envoyer la commande</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
     @endauth
 
     @auth

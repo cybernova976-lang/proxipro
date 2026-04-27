@@ -6,9 +6,18 @@ use App\Models\Ad;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Services\IpGeolocationService;
+use App\Services\RecommendationService;
+use App\Services\SavedSearchService;
 
 class FeedController extends Controller
 {
+    public function __construct(
+        private RecommendationService $recommendationService,
+        private SavedSearchService $savedSearchService
+    )
+    {
+    }
+
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -370,6 +379,41 @@ class FeedController extends Controller
             $onboardingCategories = $proCtrl->getServiceCategoriesPublic();
         }
 
+        $recommendedAds = $this->recommendationService->getFeedRecommendations($user, [
+            'latitude' => $userLat,
+            'longitude' => $userLng,
+            'radius' => $userRadius,
+        ]);
+
+        $adsMapData = $ads->getCollection()
+            ->filter(fn ($ad) => $ad->latitude !== null && $ad->longitude !== null)
+            ->map(function ($ad) {
+                return [
+                    'id' => $ad->id,
+                    'title' => $ad->title,
+                    'category' => $ad->category,
+                    'location' => $ad->location,
+                    'price' => $ad->price,
+                    'latitude' => (float) $ad->latitude,
+                    'longitude' => (float) $ad->longitude,
+                    'is_urgent' => (bool) $ad->is_urgent,
+                    'is_boosted' => (bool) $ad->is_boosted,
+                    'url' => route('ads.show', $ad),
+                ];
+            })
+            ->values();
+
+        $currentSearchSnapshot = $this->savedSearchService->buildSnapshot($request->all(), $user, [
+            'city' => $geoCity,
+            'country' => $geoCountry,
+            'latitude' => $userLat,
+            'longitude' => $userLng,
+            'radius' => $userRadius,
+        ]);
+        $existingSavedSearch = $user
+            ? $this->savedSearchService->findExistingSearch($user, $currentSearchSnapshot)
+            : null;
+
         return view('feed.index', compact(
             'proCategories',
             'missionCategories',
@@ -400,7 +444,11 @@ class FeedController extends Controller
             'showOnboardingModal',
             'onboardingCategories',
             'proSuggestions',
-            'proProfileCompletion'
+            'proProfileCompletion',
+            'recommendedAds',
+            'adsMapData',
+            'currentSearchSnapshot',
+            'existingSavedSearch'
         ));
     }
 
@@ -1175,6 +1223,9 @@ class FeedController extends Controller
                         'user_id' => $ad->user_id,
                         'comments_count' => $ad->comments_count,
                         'shares_count' => $ad->shares_count ?? 0,
+                        'latitude' => $ad->latitude !== null ? (float) $ad->latitude : null,
+                        'longitude' => $ad->longitude !== null ? (float) $ad->longitude : null,
+                        'url' => route('ads.show', $ad),
                         'reply_restriction' => $ad->reply_restriction ?? 'everyone',
                         'visibility' => $ad->visibility ?? 'public',
                         'user' => $ad->user ? [

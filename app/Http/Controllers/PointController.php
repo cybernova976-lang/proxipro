@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ReferralReward;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -12,8 +13,25 @@ class PointController extends Controller
         $user = Auth::user();
         $transactions = $user->pointTransactions()->latest()->take(10)->get();
         $badges = $user->badges;
+        $referralHistory = ReferralReward::with(['referee', 'referrer'])
+            ->where(function ($query) use ($user) {
+                $query->where('referrer_user_id', $user->id)
+                    ->orWhere('referee_user_id', $user->id);
+            })
+            ->latest('granted_at')
+            ->take(10)
+            ->get();
+        $referralStats = [
+            'code' => $user->referral_code,
+            'link' => route('register', ['ref' => $user->referral_code]),
+            'referred_count' => $user->referredUsers()->count(),
+            'successful_referrals' => $user->referralRewardsEarned()
+                ->where('reward_type', 'first_purchase_referrer')
+                ->count(),
+            'points_earned' => (int) $user->referralRewardsEarned()->sum('points'),
+        ];
         
-        return view('points.dashboard', compact('user', 'transactions', 'badges'));
+        return view('points.dashboard', compact('user', 'transactions', 'badges', 'referralHistory', 'referralStats'));
     }
 
     public function share(Request $request)
