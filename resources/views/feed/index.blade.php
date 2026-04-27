@@ -764,66 +764,65 @@
     .recommendations-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 18px;
+        gap: 22px;
     }
     .recommendation-card {
-        display: grid;
-        grid-template-columns: minmax(172px, 212px) minmax(0, 1fr);
-        align-items: stretch;
-        gap: 18px;
+        display: flex;
+        flex-direction: column;
         background: #ffffff;
-        border: none;
-        border-radius: 24px;
+        border: 1px solid #e2e2dc;
+        border-radius: 22px;
         padding: 0;
         text-decoration: none;
         color: inherit;
         overflow: hidden;
-        min-height: 236px;
-        box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
-        transition: transform 0.22s ease, box-shadow 0.22s ease;
+        min-height: 100%;
+        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+        transition: transform 0.26s ease, box-shadow 0.26s ease, border-color 0.26s ease;
     }
     .recommendation-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 20px 44px rgba(15, 23, 42, 0.12);
+        transform: translateY(-6px);
+        border-color: #d8d5ce;
+        box-shadow: 0 18px 38px rgba(15, 23, 42, 0.12);
         color: inherit;
     }
     .recommendation-card-media {
         position: relative;
-        min-height: 100%;
+        aspect-ratio: 4 / 3;
         overflow: hidden;
-        background: #e2e8f0;
+        background: #f3f2ee;
     }
     .recommendation-card-image {
         width: 100%;
         height: 100%;
-        min-height: 236px;
         object-fit: cover;
         display: block;
-        transition: transform 0.28s ease, filter 0.28s ease;
+        transition: transform 0.45s ease;
     }
     .recommendation-card:hover .recommendation-card-image {
-        transform: scale(1.04);
-        filter: saturate(1.04);
+        transform: scale(1.06);
     }
     .recommendation-card-image-placeholder {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #dbeafe, #e2e8f0);
-        color: #1e293b;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #ece9e2, #ddd8cf);
+        color: #4a5642;
         font-size: 2.2rem;
         font-weight: 800;
     }
     .recommendation-card-media-badge {
         position: absolute;
         left: 14px;
-        bottom: 14px;
+        top: 14px;
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 7px 10px;
+        padding: 7px 11px;
         border-radius: 999px;
-        background: rgba(15, 23, 42, 0.78);
+        background: rgba(31, 36, 33, 0.8);
         color: #fff;
         font-size: 0.72rem;
         font-weight: 700;
@@ -833,8 +832,9 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        padding: 18px 20px 18px 0;
+        padding: 18px 18px 16px;
         min-width: 0;
+        flex: 1;
     }
     .recommendation-card-meta {
         display: flex;
@@ -842,12 +842,15 @@
         gap: 10px;
         align-items: center;
         margin-bottom: 10px;
-        font-size: 0.78rem;
-        color: #64748b;
+        font-size: 0.74rem;
+        color: #5c6b52;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-weight: 700;
     }
     .recommendation-card-name-row {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: space-between;
         gap: 12px;
         margin-bottom: 6px;
@@ -856,19 +859,19 @@
         margin: 0 0 8px;
         font-size: 1.08rem;
         font-weight: 800;
-        color: #111827;
-        line-height: 1.35;
+        color: #1f2421;
+        line-height: 1.32;
     }
     .recommendation-card-profession {
         margin: 0 0 8px;
         font-size: 0.9rem;
         font-weight: 700;
-        color: #334155;
+        color: #4a5642;
     }
     .recommendation-card-text {
-        margin: 0 0 12px;
+        margin: 0 0 14px;
         font-size: 0.88rem;
-        color: #4b5563;
+        color: #4a5642;
         line-height: 1.55;
     }
     .recommendation-card-account-badge {
@@ -877,8 +880,8 @@
         justify-content: center;
         padding: 5px 10px;
         border-radius: 999px;
-        background: #e2e8f0;
-        color: #334155;
+        background: #ece9e2;
+        color: #4a5642;
         font-size: 0.72rem;
         font-weight: 800;
         text-transform: uppercase;
@@ -886,8 +889,8 @@
         flex-shrink: 0;
     }
     .recommendation-card-account-badge.is-pro {
-        background: #dbeafe;
-        color: #1d4ed8;
+        background: #e07a5f;
+        color: #fff;
     }
     .recommendation-reasons {
         display: flex;
@@ -904,15 +907,15 @@
         gap: 6px;
         padding: 6px 10px;
         border-radius: 999px;
-        background: #f8fafc;
+        background: #f4f2ec;
         border: none;
-        font-size: 0.76rem;
-        font-weight: 600;
-        color: #334155;
+        font-size: 0.74rem;
+        font-weight: 700;
+        color: #4a5642;
     }
     .recommendation-reason--quality {
-        background: #eef2ff;
-        color: #4338ca;
+        background: #f2efe8;
+        color: #4a5642;
         font-weight: 700;
     }
     .recommendation-card-footer {
@@ -921,11 +924,14 @@
         gap: 10px;
         align-items: center;
         font-size: 0.82rem;
-        color: #6b7280;
+        color: #7b8374;
+        margin-top: auto;
+        padding-top: 14px;
+        border-top: 1px solid #e2e2dc;
     }
     .recommendation-card-price {
         font-weight: 800;
-        color: #111827;
+        color: #1f2421;
     }
     .saved-search-banner {
         display: flex;
@@ -1938,7 +1944,7 @@
         display: flex;
         align-items: center;
         gap: 0.6rem;
-        padding: 0.7rem 1rem;
+        padding: 0.95rem 1rem 0.8rem;
     }
 
     .fb-post-avatar {
@@ -1974,9 +1980,9 @@
     }
 
     .fb-post-author {
-        font-weight: 600;
-        font-size: 0.88rem;
-        color: #050505;
+        font-weight: 700;
+        font-size: 0.92rem;
+        color: #1f2421;
         display: flex;
         align-items: center;
         gap: 6px;
@@ -1989,18 +1995,19 @@
 
     .fb-post-badge {
         display: inline-block;
-        background: #e7f3ff;
-        color: #1877f2;
-        font-size: 0.65rem;
+        background: #e07a5f;
+        color: #fff;
+        font-size: 0.62rem;
         font-weight: 700;
-        padding: 1px 6px;
-        border-radius: 4px;
+        padding: 3px 7px;
+        border-radius: 999px;
         text-transform: uppercase;
+        letter-spacing: 0.04em;
     }
 
     .fb-post-meta {
-        font-size: 0.75rem;
-        color: #64748b;
+        font-size: 0.73rem;
+        color: #7b8374;
         display: flex;
         align-items: center;
         gap: 0.25rem;
@@ -2026,7 +2033,7 @@
     }
 
     .fb-post-options-btn:hover {
-        background: #f0f2f5;
+        background: #f4f2ec;
     }
 
     /* --- Post options dropdown menu --- */
@@ -2235,51 +2242,51 @@
 
     /* --- Post body: title + description + price + tags --- */
     .fb-post-body {
-        padding: 0 1rem 0.5rem;
+        padding: 1rem 1rem 0.9rem;
     }
 
     .fb-post-title {
-        font-size: 0.97rem;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 0.35rem;
-        line-height: 1.3;
+        font-size: 1.04rem;
+        font-weight: 800;
+        color: #1f2421;
+        margin-bottom: 0.45rem;
+        line-height: 1.34;
     }
     .fb-post-title:hover {
-        color: var(--primary);
-        text-decoration: underline;
+        color: #e07a5f;
+        text-decoration: none;
     }
 
     .fb-post-text {
         font-size: 0.88rem;
-        color: #475569;
-        line-height: 1.5;
+        color: #4a5642;
+        line-height: 1.58;
         word-break: break-word;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
     }
 
     .fb-post-tags {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-top: 0.75rem;
+        gap: 0.45rem;
+        margin-top: 0.85rem;
     }
 
     .fb-post-tag {
         display: inline-flex;
         align-items: center;
         gap: 3px;
-        background: #f1f5f9;
-        color: #475569;
-        font-size: 0.65rem;
-        padding: 0.2rem 0.6rem;
+        background: #f4f2ec;
+        color: #4a5642;
+        font-size: 0.68rem;
+        padding: 0.32rem 0.68rem;
         border-radius: 9999px;
-        font-weight: 600;
+        font-weight: 700;
     }
 
     .fb-post-tag.price {
-        background: var(--primary-light, #eef2ff);
-        color: var(--primary, #4f46e5);
+        background: #f5ece8;
+        color: #c96a50;
         font-weight: 700;
     }
 
@@ -2294,27 +2301,27 @@
         width: 100%;
         overflow: hidden;
         cursor: pointer;
-        margin: 0.35rem 1rem 0.5rem;
-        border-radius: 0.5rem;
-        width: calc(100% - 2rem);
+        margin: 0;
+        border-radius: 0;
+        width: 100%;
+        background: #f3f2ee;
     }
 
     .fb-post-photos.single {
-        display: flex;
-        justify-content: flex-start;
+        display: block;
+        aspect-ratio: 4 / 3;
     }
     .fb-post-photos.single img {
-        max-width: 100%;
-        max-height: 320px;
-        width: auto;
-        object-fit: contain;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
         display: block;
-        border-radius: 0.5rem;
     }
 
     .fb-post-photos.multi {
         display: grid;
         gap: 2px;
+        aspect-ratio: 4 / 3;
     }
 
     .fb-post-photos.multi.two {
@@ -2339,15 +2346,14 @@
     .fb-photo-item img {
         width: 100%;
         height: 100%;
-        min-height: 150px;
-        max-height: 350px;
+        min-height: 100%;
         object-fit: cover;
         display: block;
-        transition: opacity 0.15s;
+        transition: transform 0.4s ease;
     }
 
     .fb-photo-item:hover img {
-        opacity: 0.95;
+        transform: scale(1.04);
     }
 
     .fb-photo-more-overlay {
@@ -2364,13 +2370,13 @@
 
     .fb-post-no-photo {
         width: 100%;
-        height: 90px;
-        background: linear-gradient(135deg, #667eea, #764ba2);
+        aspect-ratio: 4 / 3;
+        background: linear-gradient(135deg, #ece9e2, #ddd8cf);
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
-        font-size: 1.3rem;
+        color: #7b8374;
+        font-size: 1.9rem;
     }
 
     /* --- Reactions count bar --- */
@@ -2378,9 +2384,9 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.35rem 1rem;
-        font-size: 0.8rem;
-        color: #64748b;
+        padding: 0.8rem 1rem 0.55rem;
+        font-size: 0.78rem;
+        color: #7b8374;
         border-top: 1px solid #e2e8f0;
     }
 
@@ -2405,31 +2411,32 @@
 
     /* --- Action buttons bar (Like / Comment / Share / Contact) --- */
     .fb-post-actions {
-        display: flex;
-        gap: 0.25rem;
-        padding: 0.2rem 1rem 0.5rem;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.55rem;
+        padding: 0 1rem 1rem;
     }
 
     .fb-action-btn {
-        flex: 1;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 0.4rem;
-        padding: 0.35rem;
-        font-size: 0.8rem;
-        font-weight: 500;
-        color: #64748b;
-        background: none;
-        border: none;
+        padding: 0.6rem 0.5rem;
+        font-size: 0.79rem;
+        font-weight: 700;
+        color: #4a5642;
+        background: #f8f7f4;
+        border: 1px solid #e2e2dc;
         cursor: pointer;
-        border-radius: 0.5rem;
-        transition: background 0.2s, color 0.2s;
+        border-radius: 999px;
+        transition: background 0.2s, color 0.2s, border-color 0.2s;
     }
 
     .fb-action-btn:hover {
-        background: #f1f5f9;
-        color: #0f172a;
+        background: #f1eee7;
+        border-color: #d8d5ce;
+        color: #1f2421;
     }
 
     .fb-action-btn.liked {
@@ -2441,7 +2448,15 @@
     }
 
     .fb-action-btn.contact-btn {
-        color: var(--primary, #4f46e5);
+        background: #1f2421;
+        border-color: #1f2421;
+        color: #fff;
+    }
+
+    .fb-action-btn.contact-btn:hover {
+        background: #313632;
+        border-color: #313632;
+        color: #fff;
     }
 
     /* --- Inline comments section --- */
@@ -6124,6 +6139,28 @@
                     </div>
                 </div>
 
+                {{-- Photos --}}
+                @if($photoCount > 0)
+                <div class="fb-post-photos {{ $photoCount === 1 ? 'single' : 'multi' }} {{ $photoCount === 2 ? 'two' : '' }} {{ $photoCount >= 3 ? 'three-plus' : '' }}"
+                     onclick="openAdDetail(this.closest('.fb-post'))">
+                    @foreach(array_slice($photoUrls, 0, min($photoCount, 4)) as $i => $url)
+                        <div class="fb-photo-item">
+                            <img src="{{ $url }}" alt="{{ $ad->title }}" onerror="this.parentElement.style.display='none';">
+                            @if($i === 3 && $photoCount > 4)
+                                <div class="fb-photo-more-overlay">+{{ $photoCount - 4 }}</div>
+                            @endif
+                        </div>
+                    @endforeach
+                    @if($ad->price)
+                    <div class="price-overlay-badge">{{ number_format($ad->price, 0, ',', ' ') }} €</div>
+                    @endif
+                </div>
+                @else
+                <div class="fb-post-no-photo" onclick="openAdDetail(this.closest('.fb-post'))">
+                    <i class="fas fa-image"></i>
+                </div>
+                @endif
+
                 {{-- Body: title + description + tags --}}
                 <div class="fb-post-body">
                     <div class="fb-post-title" onclick="openAdDetail(this.closest('.fb-post'))" style="cursor: pointer;">{{ $ad->title }}</div>
@@ -6144,24 +6181,6 @@
                         @endif
                     </div>
                 </div>
-
-                {{-- Photos --}}
-                @if($photoCount > 0)
-                <div class="fb-post-photos {{ $photoCount === 1 ? 'single' : 'multi' }} {{ $photoCount === 2 ? 'two' : '' }} {{ $photoCount >= 3 ? 'three-plus' : '' }}"
-                     onclick="openAdDetail(this.closest('.fb-post'))">
-                    @foreach(array_slice($photoUrls, 0, min($photoCount, 4)) as $i => $url)
-                        <div class="fb-photo-item">
-                            <img src="{{ $url }}" alt="{{ $ad->title }}" onerror="this.parentElement.style.display='none';">
-                            @if($i === 3 && $photoCount > 4)
-                                <div class="fb-photo-more-overlay">+{{ $photoCount - 4 }}</div>
-                            @endif
-                        </div>
-                    @endforeach
-                    @if($ad->price)
-                    <div class="price-overlay-badge">{{ number_format($ad->price, 0, ',', ' ') }} €</div>
-                    @endif
-                </div>
-                @endif
 
                 {{-- Reactions count bar --}}
                 <div class="fb-post-reactions-bar">
@@ -9616,6 +9635,8 @@
                     photosHtml += `</div>`;
                 });
                 photosHtml += `</div>`;
+            } else {
+                photosHtml = `<div class="fb-post-no-photo" onclick="openAdDetail(this.closest('.fb-post'))"><i class="fas fa-image"></i></div>`;
             }
 
             const priceTag = ad.price 
@@ -9675,12 +9696,12 @@
                             </div>
                         </div>
                     </div>
+                    ${photosHtml}
                     <div class="fb-post-body">
                         <div class="fb-post-title" onclick="openAdDetail(this.closest('.fb-post'))" style="cursor: pointer;">${ad.title}</div>
                         <div class="fb-post-text">${(ad.description || '').substring(0, 300)}${(ad.description||'').length > 300 ? '...' : ''}</div>
                         <div class="fb-post-tags">${priceTag}${catTag}</div>
                     </div>
-                    ${photosHtml}
                     <div class="fb-post-reactions-bar">
                         <div class="reactions-left"><span>👍</span> <span class="likes-count-${ad.id}">0</span></div>
                         <div class="reactions-right">
@@ -10345,6 +10366,8 @@
                 });
                 if (ad.price) photosHtml += `<div class="price-overlay-badge">${new Intl.NumberFormat('fr-FR').format(ad.price)} €</div>`;
                 photosHtml += `</div>`;
+            } else {
+                photosHtml = `<div class="fb-post-no-photo" onclick="openAdDetail(this.closest('.fb-post'))"><i class="fas fa-image"></i></div>`;
             }
 
             const priceTag = ad.price
@@ -10374,12 +10397,12 @@
                         </div>
                     </div>
                 </div>
+                ${photosHtml}
                 <div class="fb-post-body">
                     <div class="fb-post-title" onclick="openAdDetail(this.closest('.fb-post'))" style="cursor: pointer;">${ad.title || ''}</div>
                     <div class="fb-post-text">${(ad.description || '').substring(0, 300)}${(ad.description||'').length > 300 ? '...' : ''}</div>
                     <div class="fb-post-tags">${priceTag}${catTag}</div>
                 </div>
-                ${photosHtml}
                 <div class="fb-post-reactions-bar">
                     <div class="reactions-left"><span>👍</span> <span class="likes-count-${ad.id}">0</span></div>
                     <div class="reactions-right">
