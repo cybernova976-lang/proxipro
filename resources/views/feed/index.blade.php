@@ -6046,6 +6046,13 @@
 
                 @php
                     $showcasePros = $featuredProfessionals ?? ($premiumPros ?? collect());
+                    $recommendedFeedAdIds = collect($recommendedAds ?? collect())
+                        ->pluck('id')
+                        ->filter()
+                        ->map(fn ($id) => (int) $id)
+                        ->unique()
+                        ->values()
+                        ->all();
                 @endphp
 
                 {{-- === ANNONCES BOOSTÉES / URGENTES : intégrées directement dans le feed principal === --}}
@@ -6100,6 +6107,11 @@
 
             {{-- Les publications urgentes s'affichent UNIQUEMENT dans le carousel horizontal, SAUF si elles sont boostées --}}
             @if($ad->is_urgent && !($ad->is_boosted && $ad->boost_end > now()))
+                @continue
+            @endif
+
+            {{-- Exclure les annonces deja affichees dans le bloc "Pour vous" --}}
+            @if(in_array((int) $ad->id, $recommendedFeedAdIds, true))
                 @continue
             @endif
 
@@ -9683,15 +9695,28 @@
         `;
     }
 
+    function getRecommendationAdIdSet() {
+        const ids = new Set();
+        document.querySelectorAll('.recommendation-card[data-recommendation-ad-id]').forEach((card) => {
+            const value = Number(card.getAttribute('data-recommendation-ad-id'));
+            if (Number.isFinite(value) && value > 0) {
+                ids.add(value);
+            }
+        });
+        return ids;
+    }
+
     /**
      * Rendu des publications - Format Facebook
      */
     function renderMissions(missions) {
         const grid = document.getElementById('missionsGrid');
         const featuredContainer = document.getElementById('featuredProsContainer');
-        updateFeedAdsMap(buildFeedMapMarkers(missions));
+        const recommendationAdIds = getRecommendationAdIdSet();
+        const filteredMissions = (missions || []).filter((ad) => !recommendationAdIds.has(Number(ad.id)));
+        updateFeedAdsMap(buildFeedMapMarkers(filteredMissions));
         
-        if (!missions || missions.length === 0) {
+        if (!filteredMissions || filteredMissions.length === 0) {
             if (featuredContainer) featuredContainer.innerHTML = '';
             grid.innerHTML = `
                 <div style="text-align: center; padding: 60px 20px; color: #65676b;">
@@ -9707,7 +9732,7 @@
         const authUser = isAuth ? {!! json_encode(['name' => Auth::user()?->name, 'avatar' => Auth::user()?->avatar]) !!} : null;
         
         let html = '';
-        missions.forEach((ad) => {
+        filteredMissions.forEach((ad) => {
 
             // Les publications urgentes s'affichent uniquement dans le carousel horizontal (sauf si boostées)
             if (ad.is_urgent && !(ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date())) return;
@@ -10394,14 +10419,16 @@
                 });
                 const data = await response.json();
                 const ads = data.ads?.data || data.ads || [];
+                const recommendationAdIds = getRecommendationAdIdSet();
+                const uniqueAds = ads.filter((ad) => !recommendationAdIds.has(Number(ad.id)));
 
-                if (ads && ads.length > 0) {
+                if (uniqueAds && uniqueAds.length > 0) {
                     const grid = document.getElementById('missionsGrid');
-                    ads.forEach(ad => {
+                    uniqueAds.forEach(ad => {
                         const postEl = buildInfiniteScrollPost(ad);
                         if (postEl) grid.appendChild(postEl);
                     });
-                    const currentMarkers = buildFeedMapMarkers(ads);
+                    const currentMarkers = buildFeedMapMarkers(uniqueAds);
                     const existingMarkers = feedAdsMapLayer
                         ? feedAdsMapLayer.getLayers().map(layer => layer.getLatLng()).length
                         : 0;
@@ -10437,6 +10464,7 @@
         function buildInfiniteScrollPost(ad) {
             // Les publications urgentes s'affichent uniquement dans le carousel horizontal (sauf si boostées)
             if (ad.is_urgent && !(ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date())) return null;
+            if (getRecommendationAdIdSet().has(Number(ad.id))) return null;
 
             const div = document.createElement('div');
 

@@ -4,9 +4,15 @@
         'professional_ads' => [],
         'professional_profiles' => [],
     ];
+    $seenRecommendationAdIds = [];
 
     if (isset($recommendedAds) && $recommendedAds->count() > 0) {
         foreach ($recommendedAds as $ad) {
+            if (!$ad || !$ad->id || isset($seenRecommendationAdIds[$ad->id])) {
+                continue;
+            }
+            $seenRecommendationAdIds[$ad->id] = true;
+
             $recommendationUser = $ad->user;
             $isServiceProvider = $recommendationUser && ($recommendationUser->user_type === 'professionnel' || $recommendationUser->is_service_provider);
             $isProfessionalPromotion = $isServiceProvider && (($ad->service_type ?? null) !== 'demande');
@@ -118,7 +124,7 @@
                     $qualities = $card['qualities'];
                     $isProAccount = $card['isProAccount'];
                 @endphp
-                <a href="{{ $card['recommendationUrl'] }}" class="recommendation-card{{ $isProfessionalPromotion ? ' recommendation-card--profile' : '' }}">
+                <a href="{{ $card['recommendationUrl'] }}" class="recommendation-card{{ $isProfessionalPromotion ? ' recommendation-card--profile' : '' }}" data-recommendation-ad-id="{{ $ad->id }}">
                     <div class="recommendation-card-media">
                         @if($card['visualUrl'])
                             <img src="{{ $card['visualUrl'] }}" alt="{{ $isProfessionalPromotion ? $displayName : $ad->title }}" class="recommendation-card-image">
@@ -131,12 +137,6 @@
                         <div class="recommendation-card-media-flags">
                             @if(!$isProfessionalPromotion && $ad->is_urgent)
                                 <span class="recommendation-card-flag recommendation-card-flag--urgent">Urgent</span>
-                            @endif
-                            @if(!$isProfessionalPromotion && ($ad->service_type ?? null) === 'demande')
-                                <span class="recommendation-card-flag recommendation-card-flag--demand">Demande</span>
-                            @endif
-                            @if($isProfessionalPromotion)
-                                <span class="recommendation-card-flag recommendation-card-flag--profile">Profil</span>
                             @endif
                         </div>
 
