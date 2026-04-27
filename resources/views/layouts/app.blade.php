@@ -6517,7 +6517,7 @@
                                 <i class="fas fa-th-large"></i><span>Tableau de bord</span>
                             </a>
                             <a href="{{ route('ads.create') }}" class="header-nav-btn header-nav-btn-primary">
-                                <i class="fas fa-plus-circle"></i><span>Publier une offre</span>
+                                <i class="fas fa-plus-circle"></i><span>Demander un service</span>
                             </a>
                             <a href="{{ route('contact.index') }}" class="header-nav-btn">
                                 <i class="fas fa-headset"></i><span>Contact</span>

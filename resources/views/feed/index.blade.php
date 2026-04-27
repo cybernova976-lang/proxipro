@@ -5920,10 +5920,10 @@
                     </div>
                     @endauth
 
-                    <!-- Call to action: Publier une offre -->
+                    <!-- Call to action: Demander un service -->
                     <div style="margin-bottom: 20px;">
                         <a href="{{ route('ads.create') }}" style="display: flex; align-items: center; justify-content: center; width: 100%; padding: 12px; background: #E76F51; color: white; border-radius: 9999px; font-weight: 600; text-decoration: none; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(231,111,81,0.3); transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 8px -1px rgba(231,111,81,0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(231,111,81,0.3)';">
-                            <i class="fas fa-plus-circle" style="margin-right: 8px;"></i> Publier une offre
+                            <i class="fas fa-plus-circle" style="margin-right: 8px;"></i> Demander un service
                         </a>
                     </div>
 
