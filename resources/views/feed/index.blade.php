@@ -909,7 +909,7 @@
         gap: 10px;
         align-items: center;
         margin-bottom: 0;
-        font-size: 0.68rem;
+        font-size: 0.62rem;
         color: #5c6b52;
         text-transform: uppercase;
         letter-spacing: 0.1em;
@@ -931,7 +931,7 @@
     }
     .recommendation-card-profession {
         margin: 0;
-        font-size: 0.76rem;
+        font-size: 0.68rem;
         font-weight: 700;
         color: #4a5642;
     }
@@ -2087,7 +2087,7 @@
     }
 
     .fb-post-meta {
-        font-size: 0.73rem;
+        font-size: 0.67rem;
         color: #7b8374;
         display: flex;
         align-items: center;
@@ -3343,7 +3343,7 @@
             font-size: 0.82rem;
         }
         .fb-post-meta {
-            font-size: 0.7rem;
+            font-size: 0.64rem;
         }
         .fb-post-body {
             padding: 0 0.7rem 0.5rem;
