@@ -47,7 +47,37 @@
     .ad-card-location { color: #718096; font-size: 0.85rem; margin-bottom: 10px; }
     .ad-card-price { color: #28a745; font-weight: 700; font-size: 1.1rem; }
     .ad-card-footer { padding: 15px 20px; border-top: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
-    .ad-card-user { color: #a0aec0; font-size: 0.8rem; }
+    .ad-card-user {
+        color: #a0aec0;
+        font-size: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .ad-card-user-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid #e2e8f0;
+        flex-shrink: 0;
+    }
+    .ad-card-user-fallback {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #7c3aed, #9333ea);
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .ad-card-user-name {
+        line-height: 1.2;
+    }
     .btn-view { background: linear-gradient(135deg, #7c3aed, #9333ea); color: white; border: none; border-radius: 10px; padding: 8px 16px; font-size: 0.85rem; font-weight: 500; }
     .btn-view:hover { color: white; box-shadow: 0 5px 15px rgba(124, 58, 237,0.4); }
     
@@ -103,7 +133,9 @@
         .ad-card-location { font-size: 0.8rem; }
         .ad-card-price { font-size: 1rem; }
         .ad-card-footer { padding: 10px 12px; }
-        .ad-card-user { font-size: 0.75rem; }
+        .ad-card-user { font-size: 0.75rem; gap: 6px; }
+        .ad-card-user-avatar,
+        .ad-card-user-fallback { width: 24px; height: 24px; }
         .btn-view { padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; }
         .category-chip { padding: 5px 10px; font-size: 0.75rem; margin: 2px; }
         .empty-state { padding: 30px 12px; }
@@ -237,7 +269,12 @@
                                     </div>
                                     <div class="ad-card-footer">
                                         <a href="{{ route('profile.public', $ad->user_id) }}" class="ad-card-user text-decoration-none">
-                                            <i class="fas fa-user me-1"></i>{{ $ad->user->name ?? 'Anonyme' }}
+                                            @if($ad->user && $ad->user->avatar)
+                                                <img src="{{ storage_url($ad->user->avatar) }}" alt="{{ $ad->user->name ?? 'Utilisateur' }}" class="ad-card-user-avatar">
+                                            @else
+                                                <span class="ad-card-user-fallback">{{ strtoupper(substr($ad->user->name ?? 'U', 0, 1)) }}</span>
+                                            @endif
+                                            <span class="ad-card-user-name">{{ $ad->user->name ?? 'Anonyme' }}</span>
                                         </a>
                                         <div class="d-flex gap-2 align-items-center">
                                             <a href="{{ route('ads.show', $ad) }}" class="btn btn-view">Voir <i class="fas fa-arrow-right ms-1"></i></a>
