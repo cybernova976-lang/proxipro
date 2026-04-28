@@ -151,7 +151,6 @@
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="#categories" class="text-gray-600 hover:text-primary-600 font-medium transition">Services</a>
                     <a href="#comment-ca-marche" class="text-gray-600 hover:text-primary-600 font-medium transition">Comment ça marche</a>
-                    <a href="#pro" class="text-gray-600 hover:text-primary-600 font-medium transition">Devenir Pro</a>
                 </div>
 
                 <!-- Auth Buttons -->
@@ -185,7 +184,6 @@
             <div class="px-4 py-3 space-y-2">
                 <a href="#categories" class="block px-3 py-2 rounded-lg hover:bg-white/50 text-gray-700">Services</a>
                 <a href="#comment-ca-marche" class="block px-3 py-2 rounded-lg hover:bg-white/50 text-gray-700">Comment ça marche</a>
-                <a href="#pro" class="block px-3 py-2 rounded-lg hover:bg-white/50 text-gray-700">Devenir Pro</a>
                 <hr class="border-gray-200">
                 @if (Route::has('login'))
                     @auth
