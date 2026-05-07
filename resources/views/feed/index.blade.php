@@ -2009,32 +2009,37 @@
     /* --- Post container --- */
     .fb-post {
         background: white;
-        border-radius: 1.2rem;
-        border: none;
-        box-shadow: 0 14px 36px rgba(15, 23, 42, 0.07);
-        overflow: visible;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-radius: 12px;
+        border: 1px solid #f0f0f0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        margin-bottom: 24px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
     .fb-post:hover {
         transform: translateY(-2px);
-        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        border-color: #e5e7eb;
     }
 
     /* --- Post header: avatar + name + meta --- */
     .fb-post-header {
         display: flex;
         align-items: center;
-        gap: 0.6rem;
-        padding: 0.95rem 1rem 0.8rem;
+        gap: 12px;
+        padding: 16px;
+        border-bottom: 1px solid #f9fafb;
     }
 
     .fb-post-avatar {
-        width: 2.2rem;
-        height: 2.2rem;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         overflow: hidden;
         flex-shrink: 0;
         cursor: pointer;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
     .fb-post-avatar img {
@@ -2323,21 +2328,40 @@
 
     /* --- Post body: title + description + price + tags --- */
     .fb-post-body {
-        padding: 1rem 1rem 0.9rem;
+        padding: 16px;
     }
 
     .fb-post-title {
-        font-size: 1.04rem;
-        font-weight: 800;
-        color: #1f2421;
-        margin-bottom: 0.45rem;
-        line-height: 1.34;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 8px;
+        line-height: 1.4;
     }
+    .fb-post-title:hover {
+        color: #3b82f6;
+    }
+    
+    .fb-post-text {
+        font-size: 0.95rem;
+        color: #4b5563;
+        line-height: 1.5;
+        margin-bottom: 12px;
+        white-space: pre-wrap;
+    }
+    
     .fb-post-media-title {
         position: absolute;
         left: 0;
         right: 0;
         bottom: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        color: white;
+        padding: 40px 16px 12px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        pointer-events: none;
+    }
         padding: 34px 14px 14px;
         background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.9) 100%);
         color: #ffffff;
@@ -2402,8 +2426,21 @@
         cursor: pointer;
         margin: 0;
         border-radius: 0;
-        width: 100%;
-        background: #f3f2ee;
+        background: #f8f9fa;
+        position: relative;
+    }
+    
+    .fb-photo-item {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .fb-photo-item img {
+        transition: transform 0.3s ease;
+    }
+    
+    .fb-post-photos:hover .fb-photo-item img {
+        transform: scale(1.02);
     }
 
     .fb-post-photos.single {
@@ -2512,19 +2549,31 @@
     .fb-post-actions {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 0.55rem;
-        padding: 0 1rem 1rem;
+        gap: 8px;
+        padding: 12px 16px 16px;
+        border-top: 1px solid #f9fafb;
     }
 
     .fb-action-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.4rem;
-        padding: 0.6rem 0.5rem;
-        font-size: 0.79rem;
-        font-weight: 700;
-        color: #4a5642;
+        gap: 6px;
+        padding: 8px 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #4b5563;
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .fb-action-btn:hover {
+        background: #f3f4f6;
+        color: #111827;
+    }
         background: #f8f7f4;
         border: 1px solid #e2e2dc;
         cursor: pointer;
