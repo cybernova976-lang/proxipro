@@ -334,66 +334,33 @@
         min-height: calc(100vh - 200px);
     }
 
-    /* ===== LAYOUT 1 COLONNE CENTRÉ (CSS Grid) ===== */
+    /* ===== LAYOUT 3 COLONNES CENTRÉ (CSS Grid) ===== */
     .feed-layout {
         display: grid;
-        grid-template-columns: 1fr;
+        grid-template-columns: 250px minmax(0, 1fr);
         gap: 24px;
-        max-width: 900px;
+        max-width: 1400px;
         margin: 0 auto;
         align-items: start;
     }
 
     .feed-main {
         min-width: 0;
-        max-width: 100%;
-        margin: 0 auto;
+        max-width: 1120px;
     }
 
-    .feed-sidepanel-content {
+    .feed-sidebar-left {
+        position: sticky;
+        top: 170px;
+        max-height: calc(100vh - 190px);
+        overflow-y: auto;
         display: flex;
         flex-direction: column;
-        gap: 0;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        z-index: 100;
     }
-
-    .feed-drawer-trigger-wrap {
-        position: fixed;
-        top: 150px;
-        left: 16px;
-        z-index: 1040;
-    }
-
-    .feed-drawer-trigger {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 12px 16px;
-        border: none;
-        border-radius: 999px;
-        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-        color: #fff;
-        font-size: 0.9rem;
-        font-weight: 700;
-        box-shadow: 0 12px 30px rgba(79, 70, 229, 0.25);
-    }
-
-    .feed-drawer-trigger:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 16px 36px rgba(79, 70, 229, 0.32);
-    }
-
-    .feed-left-menu-panel {
-        width: min(360px, 92vw);
-    }
-
-    .feed-left-menu-panel .offcanvas-header {
-        border-bottom: 1px solid #e2e8f0;
-        padding: 18px 20px;
-    }
-
-    .feed-left-menu-panel .offcanvas-body {
-        padding: 18px;
-    }
+    .feed-sidebar-left::-webkit-scrollbar { display: none; }
 
     .feed-sidebar-right {
         position: sticky;
@@ -412,35 +379,31 @@
 
     @media (min-width: 1400px) {
         .feed-layout {
-            max-width: 900px;
+            grid-template-columns: 260px minmax(0, 1fr);
+            max-width: 1500px;
         }
     }
 
     @media (max-width: 1200px) {
         .feed-layout {
-            max-width: 800px;
+            grid-template-columns: 240px minmax(0, 1fr);
+            max-width: 1100px;
         }
         .feed-sidebar-right { display: none; }
     }
 
     @media (max-width: 992px) {
         .feed-layout {
+            grid-template-columns: 1fr;
             max-width: 680px;
         }
+        .feed-sidebar-left { display: none; }
         .feed-sidebar-right { display: none; }
     }
 
     @media (max-width: 640px) {
         .content-container { padding: 16px 12px; }
         .feed-layout { max-width: 100%; }
-        .feed-drawer-trigger-wrap {
-            top: 132px;
-            left: 12px;
-        }
-        .feed-drawer-trigger {
-            padding: 10px 14px;
-            font-size: 0.85rem;
-        }
     }
 
     /* ===== SIDEBAR DROITE - MENU UTILISATEUR ===== */
@@ -5869,23 +5832,10 @@
             </p>
         </div>
         
-        <div class="feed-drawer-trigger-wrap">
-            <button class="feed-drawer-trigger" type="button" data-bs-toggle="offcanvas" data-bs-target="#userSidebarMenu" aria-controls="userSidebarMenu">
-                <i class="fas fa-bars"></i>
-                <span>Menu</span>
-            </button>
-        </div>
-
-        <!-- Sidebar utilisateur transformée en Offcanvas -->
-        <div class="offcanvas offcanvas-start feed-left-menu-panel" tabindex="-1" id="userSidebarMenu" aria-labelledby="userSidebarMenuLabel">
-            <div class="offcanvas-header border-bottom">
-                <div style="font-weight: 700; font-size: 1.1rem; color: #0f172a;" id="userSidebarMenuLabel">
-                    <i class="fas fa-compass me-2" style="color: var(--primary);"></i> Navigation
-                </div>
-                <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-            </div>
-            <div class="offcanvas-body" style="background-color: var(--bg-body);">
-                <div class="feed-sidepanel-content">
+        <!-- Layout 2 colonnes: Feed (gauche) + Sidebar (droite) -->
+        <div class="feed-layout">
+            <!-- Sidebar utilisateur (affichée à gauche via CSS order: 1) -->
+            <div class="feed-sidebar-left">
                 {{-- Verification status alert in sidebar --}}
                 @php
                     $feedVerification = \App\Models\IdentityVerification::where('user_id', Auth::id())->latest()->first();
@@ -5944,20 +5894,7 @@
                 @endif
 
                 {{-- Menu sidebar --}}
-                <div class="sidebar-menu-card" style="margin-bottom: 16px;">
-                    <div class="sidebar-menu-header">
-                        <div class="sidebar-menu-avatar">
-                            @if(Auth::user()->profile_photo_path)
-                                <img src="{{ Storage::url(Auth::user()->profile_photo_path) }}" alt="{{ Auth::user()->name }}">
-                            @else
-                                {{ substr(Auth::user()->name, 0, 2) }}
-                            @endif
-                        </div>
-                        <div class="sidebar-menu-user-info" style="margin-left: 10px;">
-                            <div class="sidebar-menu-name">{{ Auth::user()->name }}</div>
-                            <div class="sidebar-menu-sub">Utilisateur</div>
-                        </div>
-                    </div>
+                <div class="sidebar-menu-card">
                     <div class="sidebar-menu-links">
                         <a class="sidebar-menu-link" href="{{ route('profile.show') }}">
                             <i class="fas fa-user"></i> Mon profil
@@ -5978,9 +5915,10 @@
                             <i class="fas fa-bookmark"></i> Favoris
                         </a>
                         <a class="sidebar-menu-link" href="{{ route('settings.index') }}">
-                            <i class="fas fa-cog"></i> Paramètres
+                            <i class="fas fa-cog"></i> Parametres
                         </a>
                     </div>
+
                 </div>
 
                 <div class="sidebar-left-widgets">
@@ -6082,10 +6020,6 @@
 
                 </div>
             </div>
-            </div>
-
-            <!-- Layout principal: feed centré uniquement -->
-            <div class="feed-layout">
 
             <!-- Colonne principale: Feed des missions -->
             <div class="feed-main">
@@ -9568,6 +9502,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         // Ajuster la position sticky du sidebar en fonction du geo-banner
         const geoBanner = document.getElementById('geoBanner');
+        const sidebarLeft = document.querySelector('.feed-sidebar-left');
         const sidebarRight = document.querySelector('.feed-sidebar-right');
         const baseTop = 170;
 
@@ -9577,6 +9512,7 @@
                 const bannerBottom = bannerRect.bottom;
                 const newTop = bannerBottom > baseTop ? (bannerBottom + 10) + 'px' : baseTop + 'px';
                 const newMaxH = bannerBottom > baseTop ? 'calc(100vh - ' + (bannerBottom + 30) + 'px)' : 'calc(100vh - 190px)';
+                if (sidebarLeft) { sidebarLeft.style.top = newTop; sidebarLeft.style.maxHeight = newMaxH; }
                 if (sidebarRight) { sidebarRight.style.top = newTop; sidebarRight.style.maxHeight = newMaxH; }
             }
         }
