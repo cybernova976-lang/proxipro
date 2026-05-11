@@ -5893,33 +5893,7 @@
                 </a>
                 @endif
 
-                {{-- Menu sidebar --}}
-                <div class="sidebar-menu-card">
-                    <div class="sidebar-menu-links">
-                        <a class="sidebar-menu-link" href="{{ route('profile.show') }}">
-                            <i class="fas fa-user"></i> Mon profil
-                        </a>
-                        <a class="sidebar-menu-link" href="{{ route('ads.index') }}">
-                            <i class="fas fa-bullhorn"></i> Annonces
-                        </a>
-                        <a class="sidebar-menu-link" href="{{ route('pro.dashboard') }}">
-                            <i class="fas fa-crown" style="color: #7c3aed;"></i> Espace Pro
-                        </a>
-                        <a class="sidebar-menu-link" href="{{ route('quote-tool.landing') }}">
-                            <i class="fas fa-file-invoice" style="color: #16a34a;"></i> Devis & Factures
-                        </a>
-                        <a class="sidebar-menu-link" href="{{ route('messages.index') }}">
-                            <i class="fas fa-comments"></i> Messages
-                        </a>
-                        <a class="sidebar-menu-link" href="{{ route('saved-ads.index') }}">
-                            <i class="fas fa-bookmark"></i> Favoris
-                        </a>
-                        <a class="sidebar-menu-link" href="{{ route('settings.index') }}">
-                            <i class="fas fa-cog"></i> Parametres
-                        </a>
-                    </div>
 
-                </div>
 
                 <div class="sidebar-left-widgets">
                     <!-- CTA Proposer mes services (pro) -->
