@@ -5729,57 +5729,6 @@
 <!-- Spacer pour compenser la barre fixe -->
 <div class="filter-bar-spacer"></div>
 
-<!-- Géolocalisation Banner -->
-@if($geoEnabled ?? false)
-<div class="geo-banner" id="geoBanner">
-    <span class="geo-banner-icon"><i class="fas fa-map-marker-alt"></i></span>
-    <span class="geo-banner-text">
-        Annonces proches de
-        <span class="geo-banner-city" id="geoCityLabel">{{ $geoCity ?? 'votre position' }}@if($geoCountry ?? false), {{ $geoCountry }}@endif</span>
-        <span class="geo-source-badge" id="geoSourceBadge">
-            @if(($geoSource ?? '') === 'browser') Ma position
-            @elseif(($geoSource ?? '') === 'profile') Mon adresse
-            @elseif(($geoSource ?? '') === 'ip') Localisation approximative
-            @else Détection auto
-            @endif
-        </span>
-    </span>
-    <div class="geo-radius-control">
-        <label><i class="fas fa-bullseye me-1"></i>Rayon</label>
-        <select class="geo-radius-select" id="geoRadiusSelect" onchange="changeGeoRadius(this.value)">
-            <option value="5" {{ ($userRadius ?? 50) == 5 ? 'selected' : '' }}>5 km</option>
-            <option value="10" {{ ($userRadius ?? 50) == 10 ? 'selected' : '' }}>10 km</option>
-            <option value="25" {{ ($userRadius ?? 50) == 25 ? 'selected' : '' }}>25 km</option>
-            <option value="50" {{ ($userRadius ?? 50) == 50 ? 'selected' : '' }}>50 km</option>
-            <option value="100" {{ ($userRadius ?? 50) == 100 ? 'selected' : '' }}>100 km</option>
-            <option value="200" {{ ($userRadius ?? 50) == 200 ? 'selected' : '' }}>200 km</option>
-            <option value="500" {{ ($userRadius ?? 50) == 500 ? 'selected' : '' }}>500 km</option>
-        </select>
-    </div>
-    <div class="geo-banner-actions">
-        <button class="geo-btn-precise" id="geoPreciseBtn" onclick="requestBrowserGeolocation()" title="Utiliser votre GPS pour une localisation précise">
-            <i class="fas fa-crosshairs"></i> Préciser
-        </button>
-        <button class="geo-btn-disable" onclick="disableGeoFiltering()" title="Voir toutes les annonces sans filtre géographique">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
-</div>
-@endif
-
-<!-- Notification d'élargissement du rayon -->
-@if($radiusWasExpanded ?? false)
-<div class="geo-expanded-banner" style="background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 1px solid #f59e0b; border-radius: 10px; padding: 12px 18px; margin: 0 auto 16px; max-width: 1200px; display: flex; align-items: center; gap: 10px; font-size: 0.85rem;">
-    <i class="fas fa-search-location" style="color: #d97706; font-size: 1.1rem;"></i>
-    <span style="color: #92400e;">
-        Peu de résultats à <strong>{{ $originalRadius ?? 50 }} km</strong> — rayon élargi à <strong>{{ $userRadius }} km</strong> pour afficher plus d'annonces.
-    </span>
-    <a href="{{ route('feed', ['radius' => $originalRadius ?? 50, 'type' => $filterType ?? 'all']) }}" style="margin-left: auto; color: #d97706; font-weight: 600; font-size: 0.8rem; text-decoration: none; white-space: nowrap;">
-        <i class="fas fa-undo me-1"></i>Revenir à {{ $originalRadius ?? 50 }} km
-    </a>
-</div>
-@endif
-
 <!-- Contenu Principal -->
 <div class="content-container">
     <!-- Loading Overlay -->
@@ -6170,43 +6119,6 @@
 
                 {{-- === CAROUSEL PUBLICATIONS À LA UNE : supprimé pour simplifier le feed === --}}
                 {{-- Les publications importantes apparaissent directement dans le feed principal --}}
-
-                <div class="saved-search-banner">
-                    <div>
-                        <h3 class="saved-search-banner-title">
-                            <i class="fas fa-bell me-2"></i>Alertes de recherche
-                        </h3>
-                        <p class="saved-search-banner-copy">
-                            Sauvegardez cette vue et recevez une notification des qu'une nouvelle annonce correspondante est publiee.
-                        </p>
-                    </div>
-                    <div class="saved-search-banner-actions">
-                        @if(isset($existingSavedSearch) && $existingSavedSearch)
-                            <span class="saved-search-chip">
-                                <i class="fas fa-check-circle"></i>Alerte activee
-                            </span>
-                        @else
-                            <form method="POST" action="{{ route('saved-searches.store') }}">
-                                @csrf
-                                <input type="hidden" name="type" value="{{ $currentSearchSnapshot['service_type'] ?? 'all' }}">
-                                <input type="hidden" name="category" value="{{ $currentSearchSnapshot['category'] ?? '' }}">
-                                <input type="hidden" name="search" value="{{ $currentSearchSnapshot['search_term'] ?? '' }}">
-                                <input type="hidden" name="sort" value="{{ $currentSearchSnapshot['filters']['sort'] ?? 'recent' }}">
-                                <input type="hidden" name="radius" value="{{ $currentSearchSnapshot['radius_km'] ?? '' }}">
-                                <input type="hidden" name="geo_city" value="{{ $currentSearchSnapshot['city'] ?? '' }}">
-                                <input type="hidden" name="geo_country" value="{{ $currentSearchSnapshot['country'] ?? '' }}">
-                                <input type="hidden" name="geo_latitude" value="{{ $currentSearchSnapshot['latitude'] ?? '' }}">
-                                <input type="hidden" name="geo_longitude" value="{{ $currentSearchSnapshot['longitude'] ?? '' }}">
-                                <button type="submit" class="saved-search-btn">
-                                    <i class="fas fa-bookmark"></i>Sauvegarder cette recherche
-                                </button>
-                            </form>
-                        @endif
-                        <a href="{{ route('saved-searches.index') }}" class="saved-search-btn" style="background:#0f172a;">
-                            <i class="fas fa-list"></i>Mes alertes
-                        </a>
-                    </div>
-                </div>
 
                 @include('feed.partials.recommended-ads', ['recommendedAds' => $recommendedAds ?? collect()])
 
