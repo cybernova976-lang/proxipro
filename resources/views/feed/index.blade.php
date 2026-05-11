@@ -334,31 +334,24 @@
         min-height: calc(100vh - 200px);
     }
 
-    /* ===== LAYOUT 3 COLONNES CENTRÉ (CSS Grid) ===== */
+    /* ===== LAYOUT 1 COLONNE CENTRÉ (CSS Grid) ===== */
     .feed-layout {
         display: grid;
-        grid-template-columns: 250px minmax(0, 1fr);
+        grid-template-columns: 1fr;
         gap: 24px;
-        max-width: 1400px;
+        max-width: 900px;
         margin: 0 auto;
         align-items: start;
     }
 
     .feed-main {
         min-width: 0;
-        max-width: 1120px;
+        max-width: 100%;
+        margin: 0 auto;
     }
 
     .feed-sidebar-left {
-        position: sticky;
-        top: 170px;
-        max-height: calc(100vh - 190px);
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-        z-index: 100;
+        /* This is now handled by offcanvas */
     }
     .feed-sidebar-left::-webkit-scrollbar { display: none; }
 
@@ -379,25 +372,21 @@
 
     @media (min-width: 1400px) {
         .feed-layout {
-            grid-template-columns: 260px minmax(0, 1fr);
-            max-width: 1500px;
+            max-width: 900px;
         }
     }
 
     @media (max-width: 1200px) {
         .feed-layout {
-            grid-template-columns: 240px minmax(0, 1fr);
-            max-width: 1100px;
+            max-width: 800px;
         }
         .feed-sidebar-right { display: none; }
     }
 
     @media (max-width: 992px) {
         .feed-layout {
-            grid-template-columns: 1fr;
             max-width: 680px;
         }
-        .feed-sidebar-left { display: none; }
         .feed-sidebar-right { display: none; }
     }
 
@@ -5832,10 +5821,25 @@
             </p>
         </div>
         
-        <!-- Layout 2 colonnes: Feed (gauche) + Sidebar (droite) -->
+        <!-- Layout principal: Feed centré et Offcanvas pour le menu -->
         <div class="feed-layout">
-            <!-- Sidebar utilisateur (affichée à gauche via CSS order: 1) -->
-            <div class="feed-sidebar-left">
+            
+            <div class="mb-3 d-flex justify-content-start w-100 px-3 px-md-0">
+                <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#userSidebarMenu" aria-controls="userSidebarMenu" style="border-radius: 20px; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);">
+                    <i class="fas fa-bars me-2"></i> Menu
+                </button>
+            </div>
+
+            <!-- Sidebar utilisateur transformée en Offcanvas -->
+            <div class="offcanvas offcanvas-start" tabindex="-1" id="userSidebarMenu" aria-labelledby="userSidebarMenuLabel">
+                <div class="offcanvas-header border-bottom">
+                    <div style="font-weight: 700; font-size: 1.1rem; color: #0f172a;" id="userSidebarMenuLabel">
+                        <i class="fas fa-compass me-2" style="color: var(--primary);"></i> Navigation
+                    </div>
+                    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="offcanvas-body" style="background-color: var(--bg-body);">
+                    <div class="feed-sidebar-left" style="display: flex; flex-direction: column; gap: 0;">
                 {{-- Verification status alert in sidebar --}}
                 @php
                     $feedVerification = \App\Models\IdentityVerification::where('user_id', Auth::id())->latest()->first();
@@ -5992,6 +5996,8 @@
                         </div>
                     </div>
 
+                </div>
+                <!-- Fin contenu Offcanvas-body -->
                 </div>
             </div>
 
