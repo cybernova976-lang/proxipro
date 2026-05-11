@@ -6068,12 +6068,12 @@
                     </div>
 
                 </div>
+                </div>
             </div>
+        </div>
 
-            </div>
-
-            <!-- Feed principal centré -->
-            <div class="feed-layout">
+        <!-- Feed principal centré -->
+        <div class="feed-layout">
 
             <!-- Colonne principale: Feed des missions -->
             <div class="feed-main">
