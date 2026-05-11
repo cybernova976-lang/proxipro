@@ -357,58 +357,89 @@
 
     :root {
         --feed-header-offset: 90px;
+        --feed-menu-peek: 58px;
     }
 
-    .feed-drawer-trigger-wrap {
-        display: flex;
-        justify-content: flex-start;
-        max-width: 1120px;
-        margin: 0 auto 18px;
-        padding: 0 4px;
-        position: relative;
-        overflow: visible;
-    }
-
-    .feed-drawer-trigger {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 11px 15px;
-        border: none;
-        border-radius: 999px;
-        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-        color: white;
-        font-size: 0.85rem;
-        font-weight: 700;
-        box-shadow: 0 12px 30px rgba(79, 70, 229, 0.25);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        margin-left: -52px;
-    }
-
-    .feed-drawer-trigger:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 16px 36px rgba(79, 70, 229, 0.32);
-    }
-
-    .feed-left-menu-panel {
-        width: min(308px, 86vw);
+    .feed-left-menu-shell {
+        position: fixed;
         top: var(--feed-header-offset);
+        left: 0;
+        width: min(292px, 82vw);
         height: calc(100vh - var(--feed-header-offset));
+        background: rgba(248, 250, 252, 0.98);
         border-top-right-radius: 18px;
         border-right: 1px solid #e2e8f0;
         box-shadow: 18px 0 40px rgba(15, 23, 42, 0.08);
         z-index: 1035;
+        transform: translateX(calc(-100% + var(--feed-menu-peek)));
+        transition: transform 0.28s ease, box-shadow 0.28s ease;
+        overflow: hidden;
+        backdrop-filter: blur(12px);
     }
 
-    .feed-left-menu-panel .offcanvas-header {
-        border-bottom: 1px solid #e2e8f0;
-        padding: 16px 18px;
+    .feed-left-menu-shell.is-open {
+        transform: translateX(0);
+        box-shadow: 24px 0 48px rgba(15, 23, 42, 0.12);
     }
 
-    .feed-left-menu-panel .offcanvas-body {
-        padding: 16px;
+    .feed-left-menu-toggle {
+        position: absolute;
+        top: 14px;
+        right: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        box-shadow: 0 10px 24px rgba(79, 70, 229, 0.24);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        z-index: 2;
+    }
+
+    .feed-left-menu-toggle:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 28px rgba(79, 70, 229, 0.3);
+    }
+
+    .feed-left-menu-rail {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: var(--feed-menu-peek);
+        height: 100%;
+        background: linear-gradient(180deg, rgba(79, 70, 229, 0.08), rgba(79, 70, 229, 0.02));
+        border-left: 1px solid rgba(99, 102, 241, 0.12);
+        pointer-events: none;
+    }
+
+    .feed-left-menu-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+        padding-right: 48px;
+    }
+
+    .feed-left-menu-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .feed-sidepanel-content {
+        height: 100%;
+        overflow-y: auto;
+        padding: 16px 16px 24px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
         background: var(--bg-body);
     }
+
+    .feed-sidepanel-content::-webkit-scrollbar { display: none; }
 
     .feed-sidebar-right {
         position: sticky;
@@ -429,20 +460,11 @@
         .feed-layout {
             max-width: 1120px;
         }
-        .feed-drawer-trigger-wrap {
-            max-width: 1120px;
-        }
     }
 
     @media (max-width: 1200px) {
         .feed-layout {
             max-width: 980px;
-        }
-        .feed-drawer-trigger-wrap {
-            max-width: 980px;
-        }
-        .feed-drawer-trigger {
-            margin-left: -24px;
         }
         .feed-sidebar-right { display: none; }
     }
@@ -450,16 +472,14 @@
     @media (max-width: 992px) {
         :root {
             --feed-header-offset: 64px;
+            --feed-menu-peek: 52px;
         }
 
         .feed-layout {
             max-width: 680px;
         }
-        .feed-drawer-trigger-wrap {
-            max-width: 680px;
-        }
-        .feed-drawer-trigger {
-            margin-left: 0;
+        .feed-left-menu-shell {
+            width: min(276px, 86vw);
         }
         .feed-sidebar-right { display: none; }
     }
@@ -467,22 +487,20 @@
     @media (max-width: 640px) {
         :root {
             --feed-header-offset: 56px;
+            --feed-menu-peek: 48px;
         }
 
         .content-container { padding: 16px 12px; }
         .feed-layout { max-width: 100%; }
-        .feed-drawer-trigger-wrap {
-            max-width: 100%;
-            margin-bottom: 14px;
-            padding: 0;
+        .feed-left-menu-shell {
+            width: min(262px, 88vw);
+            border-top-right-radius: 16px;
         }
-        .feed-drawer-trigger {
-            padding: 10px 13px;
-            font-size: 0.82rem;
-            margin-left: 0;
-        }
-        .feed-left-menu-panel {
-            width: min(292px, 88vw);
+        .feed-left-menu-toggle {
+            width: 34px;
+            height: 34px;
+            top: 12px;
+            right: 8px;
         }
     }
 
@@ -5861,22 +5879,17 @@
             </p>
         </div>
         
-        <div class="feed-drawer-trigger-wrap">
-            <button class="feed-drawer-trigger" type="button" data-bs-toggle="offcanvas" data-bs-target="#feedLeftMenu" aria-controls="feedLeftMenu">
-                <i class="fas fa-bars"></i>
-                <span>Menu</span>
+        <aside class="feed-left-menu-shell" id="feedLeftMenu">
+            <div class="feed-left-menu-rail"></div>
+            <button class="feed-left-menu-toggle" type="button" id="feedLeftMenuToggle" aria-controls="feedLeftMenu" aria-expanded="false" aria-label="Ouvrir le menu">
+                <i class="fas fa-bars" id="feedLeftMenuToggleIcon"></i>
             </button>
-        </div>
-
-        <div class="offcanvas offcanvas-start feed-left-menu-panel" tabindex="-1" id="feedLeftMenu" aria-labelledby="feedLeftMenuLabel" data-bs-backdrop="false" data-bs-scroll="true">
-            <div class="offcanvas-header">
-                <div style="font-weight: 700; font-size: 1.1rem; color: #0f172a;" id="feedLeftMenuLabel">
-                    <i class="fas fa-compass me-2" style="color: var(--primary);"></i> Menu
+            <div class="feed-sidepanel-content">
+                <div class="feed-left-menu-header">
+                    <div class="feed-left-menu-title">
+                        <i class="fas fa-compass me-2" style="color: var(--primary);"></i>Menu
+                    </div>
                 </div>
-                <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-            </div>
-            <div class="offcanvas-body">
-                <div class="feed-sidepanel-content">
                 {{-- Verification status alert in sidebar --}}
                 @php
                     $feedVerification = \App\Models\IdentityVerification::where('user_id', Auth::id())->latest()->first();
@@ -6060,9 +6073,7 @@
                     </div>
 
                 </div>
-                </div>
-            </div>
-        </div>
+        </aside>
 
         <!-- Feed principal centré -->
         <div class="feed-layout">
@@ -9512,7 +9523,24 @@
         // Ajuster la position sticky du sidebar en fonction du geo-banner
         const geoBanner = document.getElementById('geoBanner');
         const sidebarRight = document.querySelector('.feed-sidebar-right');
+        const feedLeftMenu = document.getElementById('feedLeftMenu');
+        const feedLeftMenuToggle = document.getElementById('feedLeftMenuToggle');
+        const feedLeftMenuToggleIcon = document.getElementById('feedLeftMenuToggleIcon');
         const baseTop = 170;
+
+        function setFeedMenuOpen(isOpen) {
+            if (!feedLeftMenu || !feedLeftMenuToggle) {
+                return;
+            }
+
+            feedLeftMenu.classList.toggle('is-open', isOpen);
+            feedLeftMenuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            feedLeftMenuToggle.setAttribute('aria-label', isOpen ? 'Fermer le menu' : 'Ouvrir le menu');
+
+            if (feedLeftMenuToggleIcon) {
+                feedLeftMenuToggleIcon.className = isOpen ? 'fas fa-chevron-left' : 'fas fa-bars';
+            }
+        }
 
         function adjustSidebarPosition() {
             if (geoBanner) {
@@ -9527,6 +9555,14 @@
         adjustSidebarPosition();
         window.addEventListener('scroll', adjustSidebarPosition, { passive: true });
         window.addEventListener('resize', adjustSidebarPosition, { passive: true });
+
+        if (feedLeftMenuToggle) {
+            feedLeftMenuToggle.addEventListener('click', () => {
+                setFeedMenuOpen(!(feedLeftMenu?.classList.contains('is-open')));
+            });
+        }
+
+        setFeedMenuOpen(false);
 
         const citySelect = document.getElementById('citySelect');
         const customCityWrapper = document.getElementById('customCityWrapper');
