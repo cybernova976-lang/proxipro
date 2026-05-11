@@ -355,27 +355,34 @@
         gap: 0;
     }
 
+    :root {
+        --feed-header-offset: 90px;
+    }
+
     .feed-drawer-trigger-wrap {
         display: flex;
         justify-content: flex-start;
         max-width: 1120px;
         margin: 0 auto 18px;
         padding: 0 4px;
+        position: relative;
+        overflow: visible;
     }
 
     .feed-drawer-trigger {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 12px 16px;
+        padding: 11px 15px;
         border: none;
         border-radius: 999px;
         background: linear-gradient(135deg, var(--primary), var(--primary-dark));
         color: white;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 700;
         box-shadow: 0 12px 30px rgba(79, 70, 229, 0.25);
         transition: transform 0.2s ease, box-shadow 0.2s ease;
+        margin-left: -52px;
     }
 
     .feed-drawer-trigger:hover {
@@ -384,16 +391,22 @@
     }
 
     .feed-left-menu-panel {
-        width: min(360px, 92vw);
+        width: min(308px, 86vw);
+        top: var(--feed-header-offset);
+        height: calc(100vh - var(--feed-header-offset));
+        border-top-right-radius: 18px;
+        border-right: 1px solid #e2e8f0;
+        box-shadow: 18px 0 40px rgba(15, 23, 42, 0.08);
+        z-index: 1035;
     }
 
     .feed-left-menu-panel .offcanvas-header {
         border-bottom: 1px solid #e2e8f0;
-        padding: 18px 20px;
+        padding: 16px 18px;
     }
 
     .feed-left-menu-panel .offcanvas-body {
-        padding: 18px;
+        padding: 16px;
         background: var(--bg-body);
     }
 
@@ -428,20 +441,34 @@
         .feed-drawer-trigger-wrap {
             max-width: 980px;
         }
+        .feed-drawer-trigger {
+            margin-left: -24px;
+        }
         .feed-sidebar-right { display: none; }
     }
 
     @media (max-width: 992px) {
+        :root {
+            --feed-header-offset: 64px;
+        }
+
         .feed-layout {
             max-width: 680px;
         }
         .feed-drawer-trigger-wrap {
             max-width: 680px;
         }
+        .feed-drawer-trigger {
+            margin-left: 0;
+        }
         .feed-sidebar-right { display: none; }
     }
 
     @media (max-width: 640px) {
+        :root {
+            --feed-header-offset: 56px;
+        }
+
         .content-container { padding: 16px 12px; }
         .feed-layout { max-width: 100%; }
         .feed-drawer-trigger-wrap {
@@ -450,8 +477,12 @@
             padding: 0;
         }
         .feed-drawer-trigger {
-            padding: 10px 14px;
-            font-size: 0.85rem;
+            padding: 10px 13px;
+            font-size: 0.82rem;
+            margin-left: 0;
+        }
+        .feed-left-menu-panel {
+            width: min(292px, 88vw);
         }
     }
 
