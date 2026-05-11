@@ -11,17 +11,6 @@
             </a>
             
             @auth
-            @php
-                $lostItemsCountHeader = \App\Models\LostItem::where('status', 'active')->count();
-            @endphp
-            @if(request()->routeIs('feed'))
-            <div class="feed-sidebar-trigger-wrapper d-flex mx-2 mx-lg-3">
-                <button type="button" class="feed-sidebar-trigger" data-bs-toggle="offcanvas" data-bs-target="#feedSideMenu" aria-controls="feedSideMenu">
-                    <i class="fas fa-bars"></i>
-                    <span>Menu</span>
-                </button>
-            </div>
-            @else
             <!-- Navigation centrale -->
             <div class="d-none d-lg-flex align-items-center gap-1 mx-4">
                 <a href="{{ route('feed') }}" class="nav-link-modern active">
@@ -33,6 +22,9 @@
                 <a href="{{ route('ads.index') }}" class="nav-link-modern">
                     <i class="fas fa-bullhorn"></i>Annonces
                 </a>
+                @php
+                    $lostItemsCountHeader = \App\Models\LostItem::where('status', 'active')->count();
+                @endphp
                 <a href="{{ route('lost-items.index') }}" class="nav-link-modern nav-link-lost position-relative">
                     <i class="fas fa-search-location"></i>Objets perdus
                     @if($lostItemsCountHeader > 0)
@@ -50,7 +42,6 @@
                     </ul>
                 </div>
             </div>
-            @endif
 
             <!-- Actions droite -->
             <div class="d-flex align-items-center gap-2">
@@ -165,28 +156,6 @@
     </div>
 </header>
 
-@auth
-@if(request()->routeIs('feed'))
-<div class="offcanvas offcanvas-start feed-side-menu" tabindex="-1" id="feedSideMenu" aria-labelledby="feedSideMenuLabel">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="feedSideMenuLabel"><i class="fas fa-compass me-2"></i>Menu</h5>
-        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-    </div>
-    <div class="offcanvas-body">
-        <div class="feed-side-menu-links">
-            <a href="{{ route('feed') }}" class="feed-side-link {{ request()->routeIs('feed') ? 'active' : '' }}"><i class="fas fa-home"></i>Accueil</a>
-            <a href="{{ route('home') }}" class="feed-side-link"><i class="fas fa-th-large"></i>Dashboard</a>
-            <a href="{{ route('ads.index') }}" class="feed-side-link"><i class="fas fa-bullhorn"></i>Annonces</a>
-            <a href="{{ route('lost-items.index') }}" class="feed-side-link"><i class="fas fa-search-location"></i>Objets perdus @if($lostItemsCountHeader > 0)<span class="feed-side-badge">{{ $lostItemsCountHeader }}</span>@endif</a>
-            <a href="{{ route('tools.pdf-converter') }}" class="feed-side-link"><i class="fas fa-file-pdf text-danger"></i>Convertisseur PDF</a>
-            <a href="{{ route('tools.image-compressor') }}" class="feed-side-link"><i class="fas fa-compress text-primary"></i>Compresseur d'images</a>
-            <a href="{{ route('tools.qr-generator') }}" class="feed-side-link"><i class="fas fa-qrcode text-dark"></i>Générateur QR Code</a>
-        </div>
-    </div>
-</div>
-@endif
-@endauth
-
 <style>
     /* ===== HEADER MODERNE ===== */
     .main-header-modern {
@@ -285,93 +254,6 @@
     .nav-link-modern i {
         font-size: 0.9rem;
         opacity: 0.8;
-    }
-
-    .feed-sidebar-trigger {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
-        color: #334155;
-        border-radius: 10px;
-        padding: 8px 12px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        transition: all 0.2s ease;
-    }
-
-    .feed-sidebar-trigger:hover {
-        background: #f8fafc;
-        border-color: #cbd5e1;
-        color: #0f172a;
-    }
-
-    .feed-side-menu {
-        width: 300px;
-        border-right: 1px solid #e2e8f0;
-    }
-
-    .feed-side-menu .offcanvas-header {
-        border-bottom: 1px solid #eef2f7;
-        padding: 16px 18px;
-    }
-
-    .feed-side-menu .offcanvas-title {
-        font-weight: 700;
-        color: #0f172a;
-    }
-
-    .feed-side-menu-links {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .feed-side-link {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 12px;
-        border-radius: 10px;
-        color: #334155;
-        text-decoration: none;
-        font-size: 0.9rem;
-        font-weight: 600;
-        transition: all 0.2s ease;
-    }
-
-    .feed-side-link:hover {
-        background: #f1f5f9;
-        color: #0f172a;
-    }
-
-    .feed-side-link.active {
-        background: #eef2ff;
-        color: #4338ca;
-    }
-
-    .feed-side-badge {
-        margin-left: auto;
-        background: #ea580c;
-        color: #ffffff;
-        border-radius: 10px;
-        font-size: 0.7rem;
-        line-height: 1;
-        padding: 3px 6px;
-        font-weight: 700;
-    }
-
-    @media (max-width: 576px) {
-        .feed-sidebar-trigger {
-            padding: 8px;
-            min-width: 36px;
-            justify-content: center;
-        }
-
-        .feed-sidebar-trigger span {
-            display: none;
-        }
     }
     
     .nav-icon-btn {

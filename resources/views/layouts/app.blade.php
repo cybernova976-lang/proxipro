@@ -98,6 +98,82 @@
         text-align: center;
     }
 
+    .feed-sidebar-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #334155;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .feed-sidebar-trigger:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #0f172a;
+    }
+
+    .feed-side-menu {
+        width: 300px;
+        border-right: 1px solid #e2e8f0;
+    }
+
+    .feed-side-menu .offcanvas-header {
+        border-bottom: 1px solid #eef2f7;
+        padding: 16px 18px;
+    }
+
+    .feed-side-menu .offcanvas-title {
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .feed-side-menu-links {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .feed-side-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        color: #334155;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .feed-side-link:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .feed-side-link.active {
+        background: #eef2ff;
+        color: #4338ca;
+    }
+
+    .feed-side-badge {
+        margin-left: auto;
+        background: #ea580c;
+        color: #ffffff;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        line-height: 1;
+        padding: 3px 6px;
+        font-weight: 700;
+    }
+
     @media (max-width: 991px) {
         .header-nav-buttons {
             display: none;
@@ -182,6 +258,14 @@
         }
         .header-modern .container-fluid {
             padding: 0 8px 0 0 !important;
+        }
+        .feed-sidebar-trigger {
+            padding: 8px;
+            min-width: 36px;
+            justify-content: center;
+        }
+        .feed-sidebar-trigger span {
+            display: none;
         }
         .mobile-brand-group {
             gap: 10px !important;
@@ -6499,17 +6583,39 @@
                             <div class="brand-logo">P</div>
                             <span class="brand-text d-none d-sm-inline">ProxiPro</span>
                         </a>
+                        @auth
+                        @if(request()->routeIs('feed'))
+                        <button type="button" class="feed-sidebar-trigger" data-bs-toggle="offcanvas" data-bs-target="#feedSideMenu" aria-controls="feedSideMenu">
+                            <i class="fas fa-bars"></i>
+                            <span>Menu</span>
+                        </button>
+                        @else
                         <a href="{{ route('feed') }}" class="header-home-link d-lg-none">
                             <i class="fas fa-home"></i>
                             <span>Accueil</span>
                         </a>
+                        @endif
+                        @else
+                        <a href="{{ route('feed') }}" class="header-home-link d-lg-none">
+                            <i class="fas fa-home"></i>
+                            <span>Accueil</span>
+                        </a>
+                        @endauth
                     </div>
                     @auth
                     @if(!request()->routeIs('feed.test'))
+                    @php
+                        $lostItemsCountHeader = \App\Models\LostItem::where('status', 'active')->count();
+                    @endphp
                     <!-- DROITE : Nav + Actions (regroupés) -->
                     <div class="d-flex align-items-center gap-2">
                         <!-- Navigation principale desktop -->
                         <div class="d-none d-lg-flex align-items-center gap-1 me-3">
+                            @if(request()->routeIs('feed'))
+                            <button type="button" class="feed-sidebar-trigger" data-bs-toggle="offcanvas" data-bs-target="#feedSideMenu" aria-controls="feedSideMenu">
+                                <i class="fas fa-bars"></i><span>Menu</span>
+                            </button>
+                            @else
                             <a href="{{ route('feed') }}" class="header-nav-btn {{ request()->routeIs('feed') ? 'active' : '' }}">
                                 <i class="fas fa-home"></i><span>Accueil</span>
                             </a>
@@ -6522,6 +6628,7 @@
                             <a href="{{ route('contact.index') }}" class="header-nav-btn">
                                 <i class="fas fa-headset"></i><span>Contact</span>
                             </a>
+                            @endif
                         </div>
                         <!-- Actions utilisateur -->
                         <div class="d-flex align-items-center gap-3 mobile-actions-group">
@@ -6800,6 +6907,27 @@
                 </div>
             </div>
         </header>
+
+        @auth
+        @if(request()->routeIs('feed'))
+        <div class="offcanvas offcanvas-start feed-side-menu" tabindex="-1" id="feedSideMenu" aria-labelledby="feedSideMenuLabel">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="feedSideMenuLabel"><i class="fas fa-compass me-2"></i>Menu</h5>
+                <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <div class="feed-side-menu-links">
+                    <a href="{{ route('feed') }}" class="feed-side-link active"><i class="fas fa-home"></i>Accueil</a>
+                    <a href="{{ route('home') }}" class="feed-side-link"><i class="fas fa-th-large"></i>Tableau de bord</a>
+                    <a href="{{ route('ads.index') }}" class="feed-side-link"><i class="fas fa-bullhorn"></i>Annonces</a>
+                    <a href="{{ route('ads.create') }}" class="feed-side-link"><i class="fas fa-plus-circle"></i>Demander un service</a>
+                    <a href="{{ route('lost-items.index') }}" class="feed-side-link"><i class="fas fa-search-location"></i>Objets perdus @if($lostItemsCountHeader > 0)<span class="feed-side-badge">{{ $lostItemsCountHeader }}</span>@endif</a>
+                    <a href="{{ route('contact.index') }}" class="feed-side-link"><i class="fas fa-headset"></i>Contact</a>
+                </div>
+            </div>
+        </div>
+        @endif
+        @endauth
 
         {{-- Navigation secondaire supprimée --}}
 
