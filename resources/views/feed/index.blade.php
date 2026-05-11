@@ -356,10 +356,11 @@
     }
 
     .feed-drawer-trigger-wrap {
-        position: fixed;
-        top: 145px;
-        left: 16px;
-        z-index: 1040;
+        display: flex;
+        justify-content: flex-start;
+        max-width: 1120px;
+        margin: 0 auto 18px;
+        padding: 0 4px;
     }
 
     .feed-drawer-trigger {
@@ -374,6 +375,7 @@
         font-size: 0.9rem;
         font-weight: 700;
         box-shadow: 0 12px 30px rgba(79, 70, 229, 0.25);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .feed-drawer-trigger:hover {
@@ -414,10 +416,16 @@
         .feed-layout {
             max-width: 1120px;
         }
+        .feed-drawer-trigger-wrap {
+            max-width: 1120px;
+        }
     }
 
     @media (max-width: 1200px) {
         .feed-layout {
+            max-width: 980px;
+        }
+        .feed-drawer-trigger-wrap {
             max-width: 980px;
         }
         .feed-sidebar-right { display: none; }
@@ -427,6 +435,9 @@
         .feed-layout {
             max-width: 680px;
         }
+        .feed-drawer-trigger-wrap {
+            max-width: 680px;
+        }
         .feed-sidebar-right { display: none; }
     }
 
@@ -434,8 +445,9 @@
         .content-container { padding: 16px 12px; }
         .feed-layout { max-width: 100%; }
         .feed-drawer-trigger-wrap {
-            top: 132px;
-            left: 12px;
+            max-width: 100%;
+            margin-bottom: 14px;
+            padding: 0;
         }
         .feed-drawer-trigger {
             padding: 10px 14px;
@@ -5825,7 +5837,7 @@
             </button>
         </div>
 
-        <div class="offcanvas offcanvas-start feed-left-menu-panel" tabindex="-1" id="feedLeftMenu" aria-labelledby="feedLeftMenuLabel">
+        <div class="offcanvas offcanvas-start feed-left-menu-panel" tabindex="-1" id="feedLeftMenu" aria-labelledby="feedLeftMenuLabel" data-bs-backdrop="false" data-bs-scroll="true">
             <div class="offcanvas-header">
                 <div style="font-weight: 700; font-size: 1.1rem; color: #0f172a;" id="feedLeftMenuLabel">
                     <i class="fas fa-compass me-2" style="color: var(--primary);"></i> Menu
