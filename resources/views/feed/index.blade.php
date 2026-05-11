@@ -350,10 +350,11 @@
         margin: 0 auto;
     }
 
-    .feed-sidebar-left {
-        /* This is now handled by offcanvas */
+    .feed-sidepanel-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
     }
-    .feed-sidebar-left::-webkit-scrollbar { display: none; }
 
     .feed-sidebar-right {
         position: sticky;
@@ -5821,25 +5822,22 @@
             </p>
         </div>
         
-        <!-- Layout principal: Feed centré et Offcanvas pour le menu -->
-        <div class="feed-layout">
-            
-            <div class="mb-3 d-flex justify-content-start w-100 px-3 px-md-0">
-                <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#userSidebarMenu" aria-controls="userSidebarMenu" style="border-radius: 20px; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);">
-                    <i class="fas fa-bars me-2"></i> Menu
-                </button>
-            </div>
+        <div class="mb-3 d-flex justify-content-start px-3 px-md-0" style="max-width: 900px; margin: 0 auto;">
+            <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#userSidebarMenu" aria-controls="userSidebarMenu" style="border-radius: 20px; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);">
+                <i class="fas fa-bars me-2"></i> Menu
+            </button>
+        </div>
 
-            <!-- Sidebar utilisateur transformée en Offcanvas -->
-            <div class="offcanvas offcanvas-start" tabindex="-1" id="userSidebarMenu" aria-labelledby="userSidebarMenuLabel">
-                <div class="offcanvas-header border-bottom">
-                    <div style="font-weight: 700; font-size: 1.1rem; color: #0f172a;" id="userSidebarMenuLabel">
-                        <i class="fas fa-compass me-2" style="color: var(--primary);"></i> Navigation
-                    </div>
-                    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        <!-- Sidebar utilisateur transformée en Offcanvas -->
+        <div class="offcanvas offcanvas-start" tabindex="-1" id="userSidebarMenu" aria-labelledby="userSidebarMenuLabel">
+            <div class="offcanvas-header border-bottom">
+                <div style="font-weight: 700; font-size: 1.1rem; color: #0f172a;" id="userSidebarMenuLabel">
+                    <i class="fas fa-compass me-2" style="color: var(--primary);"></i> Navigation
                 </div>
-                <div class="offcanvas-body" style="background-color: var(--bg-body);">
-                    <div class="feed-sidebar-left" style="display: flex; flex-direction: column; gap: 0;">
+                <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body" style="background-color: var(--bg-body);">
+                <div class="feed-sidepanel-content">
                 {{-- Verification status alert in sidebar --}}
                 @php
                     $feedVerification = \App\Models\IdentityVerification::where('user_id', Auth::id())->latest()->first();
@@ -6035,9 +6033,11 @@
                     </div>
 
                 </div>
-                <!-- Fin contenu Offcanvas-body -->
-                </div>
             </div>
+            </div>
+
+            <!-- Layout principal: feed centré uniquement -->
+            <div class="feed-layout">
 
             <!-- Colonne principale: Feed des missions -->
             <div class="feed-main">
@@ -9520,7 +9520,6 @@
     document.addEventListener('DOMContentLoaded', () => {
         // Ajuster la position sticky du sidebar en fonction du geo-banner
         const geoBanner = document.getElementById('geoBanner');
-        const sidebarLeft = document.querySelector('.feed-sidebar-left');
         const sidebarRight = document.querySelector('.feed-sidebar-right');
         const baseTop = 170;
 
@@ -9530,7 +9529,6 @@
                 const bannerBottom = bannerRect.bottom;
                 const newTop = bannerBottom > baseTop ? (bannerBottom + 10) + 'px' : baseTop + 'px';
                 const newMaxH = bannerBottom > baseTop ? 'calc(100vh - ' + (bannerBottom + 30) + 'px)' : 'calc(100vh - 190px)';
-                if (sidebarLeft) { sidebarLeft.style.top = newTop; sidebarLeft.style.maxHeight = newMaxH; }
                 if (sidebarRight) { sidebarRight.style.top = newTop; sidebarRight.style.maxHeight = newMaxH; }
             }
         }
