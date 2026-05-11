@@ -356,6 +356,45 @@
         gap: 0;
     }
 
+    .feed-drawer-trigger-wrap {
+        position: fixed;
+        top: 150px;
+        left: 16px;
+        z-index: 1040;
+    }
+
+    .feed-drawer-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border: none;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: #fff;
+        font-size: 0.9rem;
+        font-weight: 700;
+        box-shadow: 0 12px 30px rgba(79, 70, 229, 0.25);
+    }
+
+    .feed-drawer-trigger:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 16px 36px rgba(79, 70, 229, 0.32);
+    }
+
+    .feed-left-menu-panel {
+        width: min(360px, 92vw);
+    }
+
+    .feed-left-menu-panel .offcanvas-header {
+        border-bottom: 1px solid #e2e8f0;
+        padding: 18px 20px;
+    }
+
+    .feed-left-menu-panel .offcanvas-body {
+        padding: 18px;
+    }
+
     .feed-sidebar-right {
         position: sticky;
         top: 170px;
@@ -394,6 +433,14 @@
     @media (max-width: 640px) {
         .content-container { padding: 16px 12px; }
         .feed-layout { max-width: 100%; }
+        .feed-drawer-trigger-wrap {
+            top: 132px;
+            left: 12px;
+        }
+        .feed-drawer-trigger {
+            padding: 10px 14px;
+            font-size: 0.85rem;
+        }
     }
 
     /* ===== SIDEBAR DROITE - MENU UTILISATEUR ===== */
@@ -5822,14 +5869,15 @@
             </p>
         </div>
         
-        <div class="mb-3 d-flex justify-content-start px-3 px-md-0" style="max-width: 900px; margin: 0 auto;">
-            <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#userSidebarMenu" aria-controls="userSidebarMenu" style="border-radius: 20px; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);">
-                <i class="fas fa-bars me-2"></i> Menu
+        <div class="feed-drawer-trigger-wrap">
+            <button class="feed-drawer-trigger" type="button" data-bs-toggle="offcanvas" data-bs-target="#userSidebarMenu" aria-controls="userSidebarMenu">
+                <i class="fas fa-bars"></i>
+                <span>Menu</span>
             </button>
         </div>
 
         <!-- Sidebar utilisateur transformée en Offcanvas -->
-        <div class="offcanvas offcanvas-start" tabindex="-1" id="userSidebarMenu" aria-labelledby="userSidebarMenuLabel">
+        <div class="offcanvas offcanvas-start feed-left-menu-panel" tabindex="-1" id="userSidebarMenu" aria-labelledby="userSidebarMenuLabel">
             <div class="offcanvas-header border-bottom">
                 <div style="font-weight: 700; font-size: 1.1rem; color: #0f172a;" id="userSidebarMenuLabel">
                     <i class="fas fa-compass me-2" style="color: var(--primary);"></i> Navigation
