@@ -127,8 +127,11 @@ class FeedController extends Controller
                 });
             });
         }
-        // Toujours prioriser : boostées > épinglées > récentes
-        $allAdsQuery->orderByRaw("CASE WHEN is_boosted = true AND boost_end > ? THEN 0 ELSE 1 END", [now()])
+        // Toujours prioriser : annonces boostées ou urgentes > épinglées > récentes
+        $allAdsQuery->orderByRaw(
+            "CASE WHEN (is_boosted = true AND boost_end > ?) OR (is_urgent = true AND (urgent_until IS NULL OR urgent_until > ?)) THEN 0 ELSE 1 END",
+            [now(), now()]
+        )
                      ->orderBy('is_pinned', 'desc')
                      ->orderBy('created_at', 'desc');
         $ads = $allAdsQuery->paginate(12)->withQueryString();
@@ -328,6 +331,38 @@ class FeedController extends Controller
             ->take(10)
             ->get();
 
+        $homeShowcaseAds = $urgentAds
+            ->merge($boostedAds)
+            ->merge($ads->getCollection())
+            ->merge($featuredAds)
+            ->unique('id')
+            ->sortByDesc(function ($ad) {
+                $priority = 0;
+                $isBoosted = $ad->is_boosted && $ad->boost_end && $ad->boost_end > now();
+                $isUrgent = $ad->is_urgent && (!$ad->urgent_until || $ad->urgent_until > now());
+
+                if ($isUrgent) {
+                    $priority += 100;
+                }
+                if ($isBoosted) {
+                    $priority += 90;
+                    if ($ad->boost_type === 'vip') {
+                        $priority += 12;
+                    } elseif ($ad->boost_type === 'premium') {
+                        $priority += 8;
+                    }
+                }
+                if ($ad->is_pinned) {
+                    $priority += 10;
+                }
+
+                return ($priority * 10000000000) + optional($ad->created_at)->timestamp;
+            })
+            ->take(8)
+            ->values();
+        $homeShowcaseAdIds = $homeShowcaseAds->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+        $homeShowcasePros = $featuredProfessionals->take(4)->values();
+
         // Annonces sidebar (toutes les urgent + boostées combinées pour le sidebar gauche)
         $sidebarAds = $urgentAds->merge($boostedAds)
             ->sortByDesc(function ($ad) {
@@ -428,6 +463,9 @@ class FeedController extends Controller
             'premiumPros',
             'featuredProfessionals',
             'featuredProsJson',
+            'homeShowcaseAds',
+            'homeShowcaseAdIds',
+            'homeShowcasePros',
             'userStats',
             'popularCategories',
             'sort',
@@ -1177,8 +1215,11 @@ class FeedController extends Controller
             $query->where('price', '<=', $priceMax);
         }
 
-        // Apply sorting — always prioritize boosted first
-        $query->orderByRaw("CASE WHEN is_boosted = true AND boost_end > ? THEN 0 ELSE 1 END", [now()]);
+        // Apply sorting — always prioritize boosted and urgent ads first
+        $query->orderByRaw(
+            "CASE WHEN (is_boosted = true AND boost_end > ?) OR (is_urgent = true AND (urgent_until IS NULL OR urgent_until > ?)) THEN 0 ELSE 1 END",
+            [now(), now()]
+        );
         switch ($sort) {
             case 'urgent':
                 $query->orderBy('is_urgent', 'desc');

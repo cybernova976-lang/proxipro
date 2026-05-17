@@ -841,6 +841,367 @@
         overflow: hidden;
         border-radius: 0.75rem;
     }
+    .home-showcase-section {
+        margin: 0 0 26px;
+    }
+    .home-showcase-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 14px;
+    }
+    .home-showcase-header h2 {
+        margin: 0;
+        color: #0f172a;
+        font-size: 1.35rem;
+        font-weight: 850;
+        line-height: 1.18;
+    }
+    .home-showcase-header p {
+        margin: 5px 0 0;
+        color: #64748b;
+        font-size: 0.88rem;
+        line-height: 1.45;
+    }
+    .home-showcase-link,
+    .home-showcase-row-title a {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: #2563eb;
+        font-size: 0.82rem;
+        font-weight: 800;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .home-showcase-link:hover,
+    .home-showcase-row-title a:hover {
+        color: #1d4ed8;
+    }
+    .home-showcase-ads-grid,
+    .home-showcase-pro-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+    }
+    .home-showcase-ad-card {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        min-height: 100%;
+        overflow: hidden;
+        border-radius: 8px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        color: inherit;
+        text-decoration: none;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .home-showcase-ad-card:hover {
+        transform: translateY(-3px);
+        color: inherit;
+        border-color: #bfdbfe;
+        box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
+    }
+    .home-showcase-ad-card.is-urgent {
+        border-color: #fecaca;
+    }
+    .home-showcase-ad-card.is-boosted {
+        border-color: #bfdbfe;
+    }
+    .home-showcase-ad-media {
+        position: relative;
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+        background: #eef2f7;
+    }
+    .home-showcase-ad-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.35s ease;
+    }
+    .home-showcase-ad-card:hover .home-showcase-ad-media img {
+        transform: scale(1.04);
+    }
+    .home-showcase-ad-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        font-size: 2rem;
+        background: linear-gradient(135deg, #e0f2fe, #f1f5f9 58%, #ecfdf5);
+    }
+    .home-showcase-ad-flags {
+        position: absolute;
+        left: 8px;
+        top: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        max-width: calc(100% - 16px);
+        z-index: 2;
+    }
+    .home-showcase-flag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        min-height: 22px;
+        padding: 4px 7px;
+        border-radius: 999px;
+        color: #fff;
+        font-size: 0.58rem;
+        font-weight: 850;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        box-shadow: 0 5px 12px rgba(15, 23, 42, 0.16);
+    }
+    .home-showcase-flag.flag-urgent {
+        background: #dc2626;
+    }
+    .home-showcase-flag.flag-boost {
+        background: #2563eb;
+    }
+    .home-showcase-price {
+        position: absolute;
+        right: 8px;
+        bottom: 8px;
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        padding: 5px 9px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.86);
+        color: #fff;
+        font-size: 0.76rem;
+        font-weight: 850;
+        backdrop-filter: blur(7px);
+    }
+    .home-showcase-ad-body {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 11px;
+        flex: 1;
+    }
+    .home-showcase-ad-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        min-height: 16px;
+        color: #64748b;
+        font-size: 0.62rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .home-showcase-ad-meta span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .home-showcase-ad-body h3 {
+        margin: 0;
+        color: #0f172a;
+        font-size: 0.92rem;
+        font-weight: 850;
+        line-height: 1.25;
+        min-height: 2.3em;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .home-showcase-ad-body p {
+        margin: 0;
+        color: #475569;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        min-height: 3.15em;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .home-showcase-ad-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding-top: 9px;
+        margin-top: auto;
+        border-top: 1px solid #eef2f7;
+        color: #64748b;
+        font-size: 0.68rem;
+        font-weight: 700;
+    }
+    .home-showcase-author,
+    .home-showcase-location {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .home-showcase-author img,
+    .home-showcase-author span {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .home-showcase-author img {
+        object-fit: cover;
+    }
+    .home-showcase-author span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-size: 0.68rem;
+        font-weight: 850;
+    }
+    .home-showcase-pro-row {
+        margin-top: 18px;
+    }
+    .home-showcase-row-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 10px;
+    }
+    .home-showcase-row-title h3 {
+        margin: 0;
+        color: #0f172a;
+        font-size: 1rem;
+        font-weight: 850;
+    }
+    .home-showcase-pro-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        min-height: 92px;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        color: inherit;
+        text-decoration: none;
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .home-showcase-pro-card:hover {
+        transform: translateY(-3px);
+        color: inherit;
+        border-color: #bbf7d0;
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.11);
+    }
+    .home-showcase-pro-card.is-premium {
+        border-color: #facc15;
+        background: linear-gradient(135deg, #fff7ed, #ffffff 58%);
+    }
+    .home-showcase-pro-avatar {
+        width: 58px;
+        height: 58px;
+        border-radius: 8px;
+        overflow: hidden;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, #0f766e, #2563eb);
+    }
+    .home-showcase-pro-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .home-showcase-pro-avatar span {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 1.2rem;
+        font-weight: 850;
+    }
+    .home-showcase-pro-content {
+        min-width: 0;
+        flex: 1;
+    }
+    .home-showcase-pro-name {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        margin-bottom: 4px;
+    }
+    .home-showcase-pro-name strong {
+        min-width: 0;
+        color: #0f172a;
+        font-size: 0.84rem;
+        font-weight: 850;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .home-showcase-pro-name span {
+        flex-shrink: 0;
+        padding: 3px 6px;
+        border-radius: 999px;
+        font-size: 0.55rem;
+        font-weight: 850;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .home-showcase-pro-name .badge-premium {
+        background: #f59e0b;
+        color: #fff;
+    }
+    .home-showcase-pro-name .badge-provider {
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+    .home-showcase-pro-content p {
+        margin: 0 0 7px;
+        color: #475569;
+        font-size: 0.74rem;
+        line-height: 1.3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .home-showcase-pro-foot {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        color: #64748b;
+        font-size: 0.66rem;
+        font-weight: 750;
+    }
+    .home-showcase-pro-foot span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .home-showcase-pro-foot .fa-star {
+        color: #f59e0b;
+    }
     .recommendations-strip {
         background: transparent;
         border: none;
@@ -1116,6 +1477,33 @@
     @media (max-width: 1280px) {
         .recommendations-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+    @media (max-width: 1180px) {
+        .home-showcase-ads-grid,
+        .home-showcase-pro-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (max-width: 640px) {
+        .home-showcase-header,
+        .home-showcase-row-title {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .home-showcase-header h2 {
+            font-size: 1.14rem;
+        }
+        .home-showcase-ads-grid,
+        .home-showcase-pro-grid {
+            grid-template-columns: 1fr;
+        }
+        .home-showcase-ads-grid {
+            margin-top: 72px;
+        }
+        .home-showcase-ad-media {
+            aspect-ratio: 16 / 9;
         }
     }
     .saved-search-banner {
@@ -6111,81 +6499,18 @@
                 {{-- Smart suggestions pour les professionnels --}}
                 @include('partials.pro-suggestions')
 
-                {{-- === URGENT ADS HORIZONTAL CAROUSEL === --}}
-                @if(isset($urgentAds) && $urgentAds->count() > 0)
-                <div class="urgent-carousel-section">
-                    <div class="urgent-carousel-header">
-                        <h3><i class="fas fa-fire"></i> Publications urgentes</h3>
-                    </div>
-                    <div class="urgent-carousel-track-wrapper">
-                        <button class="urgent-carousel-btn prev-btn" onclick="scrollUrgentCarousel(-1)" id="urgentPrev" title="Précédent">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <button class="urgent-carousel-btn next-btn" onclick="scrollUrgentCarousel(1)" id="urgentNext" title="Suivant">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                        <div class="urgent-carousel-track" id="urgentCarouselTrack">
-                            @foreach($urgentAds as $uAd)
-                            @php
-                                $uPhotos = $uAd->photos ?? [];
-                                if (is_string($uPhotos)) {
-                                    $dec = json_decode($uPhotos, true);
-                                    $uPhotos = is_array($dec) ? $dec : (trim($uPhotos) !== '' ? [$uPhotos] : []);
-                                }
-                                $urgentDaysLeft = $uAd->urgent_until ? (int) now()->diffInDays($uAd->urgent_until, false) : null;
-                            @endphp
-                            <a href="{{ route('ads.show', $uAd) }}" class="urgent-card">
-                                <div class="urgent-card-badge">
-                                    <i class="fas fa-fire"></i> URGENT
-                                </div>
-                                @if($urgentDaysLeft !== null)
-                                <div class="urgent-card-countdown">
-                                    <i class="fas fa-clock"></i>
-                                    {{ $urgentDaysLeft > 0 ? $urgentDaysLeft . 'j restant' . ($urgentDaysLeft > 1 ? 's' : '') : 'Dernier jour' }}
-                                </div>
-                                @endif
-                                <div class="urgent-card-img">
-                                    @if(count($uPhotos) > 0)
-                                        <img src="{{ storage_url($uPhotos[0]) }}" alt="{{ $uAd->title }}">
-                                    @else
-                                        <i class="fas fa-image"></i>
-                                    @endif
-                                </div>
-                                <div class="urgent-card-body">
-                                    <div class="urgent-card-title">{{ $uAd->title }}</div>
-                                    <div class="urgent-card-meta">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        {{ Str::limit($uAd->location ?? $uAd->city ?? 'Non précisé', 20) }}
-                                    </div>
-                                    @if($uAd->price)
-                                    <div class="urgent-card-price">{{ number_format($uAd->price, 0, ',', ' ') }} €</div>
-                                    @endif
-                                </div>
-                            </a>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
-                @endif
-
                 @php
-                    $showcasePros = $featuredProfessionals ?? ($premiumPros ?? collect());
-                    $recommendedFeedAdIds = collect($recommendedAds ?? collect())
-                        ->pluck('id')
-                        ->filter()
+                    $homeShowcaseFeedAdIds = collect($homeShowcaseAdIds ?? [])
                         ->map(fn ($id) => (int) $id)
                         ->unique()
                         ->values()
                         ->all();
                 @endphp
 
-                {{-- === ANNONCES BOOSTÉES / URGENTES : intégrées directement dans le feed principal === --}}
-                {{-- Supprimé : grille dupliquée - les annonces boostées/urgentes apparaissent déjà dans le feed principal grâce à l'orderBy --}}
-
-                {{-- === CAROUSEL PUBLICATIONS À LA UNE : supprimé pour simplifier le feed === --}}
-                {{-- Les publications importantes apparaissent directement dans le feed principal --}}
-
-                @include('feed.partials.recommended-ads', ['recommendedAds' => $recommendedAds ?? collect()])
+                @include('feed.partials.home-showcase', [
+                    'homeShowcaseAds' => $homeShowcaseAds ?? collect(),
+                    'homeShowcasePros' => $homeShowcasePros ?? collect(),
+                ])
 
                 @include('feed.partials.ads-map', ['adsMapData' => $adsMapData ?? collect(), 'geoEnabled' => $geoEnabled ?? false, 'geoCity' => $geoCity ?? null])
 
@@ -6195,13 +6520,8 @@
                 <div class="missions-feed" id="missionsGrid">
             @forelse($ads as $loopIndex => $ad)
 
-            {{-- Les publications urgentes s'affichent UNIQUEMENT dans le carousel horizontal, SAUF si elles sont boostées --}}
-            @if($ad->is_urgent && !($ad->is_boosted && $ad->boost_end > now()))
-                @continue
-            @endif
-
-            {{-- Exclure les annonces deja affichees dans le bloc "Pour vous" --}}
-            @if(in_array((int) $ad->id, $recommendedFeedAdIds, true))
+            {{-- Exclure les annonces deja affichees dans la vitrine d'accueil --}}
+            @if(in_array((int) $ad->id, $homeShowcaseFeedAdIds, true))
                 @continue
             @endif
 
@@ -6489,54 +6809,7 @@
             @endforelse
             </div>
 
-            <div id="featuredProsContainer">
-                @if(isset($showcasePros) && $showcasePros->count() > 0)
-                <div class="featured-pros-section">
-                    <div class="featured-pros-header">
-                        <h2><i class="fas fa-user-shield" style="color: var(--primary, #4f46e5); margin-right: 6px;"></i> Profils professionnels à la une</h2>
-                    </div>
-                    <div class="providers-grid" id="featuredProfessionalsGrid">
-                        @foreach($showcasePros->take(4) as $sPro)
-                        <a href="{{ route('profile.public', $sPro->id) }}" class="provider-card">
-                            <div class="provider-image-wrapper">
-                                @if($sPro->avatar)
-                                    <img src="{{ storage_url($sPro->avatar) }}" alt="{{ $sPro->name }}">
-                                @else
-                                    <div class="provider-image-placeholder">{{ strtoupper(substr($sPro->name, 0, 1)) }}</div>
-                                @endif
-                                <div class="provider-badge-top">
-                                    <i class="fas fa-briefcase"></i> {{ Str::limit($sPro->profession ?? $sPro->bio ?? 'Professionnel', 15) }}
-                                </div>
-                            </div>
-                            <div class="provider-card-info">
-                                <div class="provider-info-header">
-                                    <h3 class="provider-name">
-                                        {{ Str::limit($sPro->name, 16) }}
-                                        @if($sPro->hasActiveProSubscription())
-                                            <span class="badge-pro">PRO</span>
-                                        @else
-                                            <span class="badge-pro" style="background:#e2e8f0; color:#475569;">Prestataire</span>
-                                        @endif
-                                    </h3>
-                                    @if($sPro->hourly_rate && ($sPro->show_hourly_rate ?? true))
-                                        <span class="provider-price">{{ number_format((float) $sPro->hourly_rate, 0, ',', ' ') }} €/h</span>
-                                    @endif
-                                </div>
-                                <div class="provider-rating">
-                                    <span class="star-icon">★</span>
-                                    <span class="rating-value">{{ $sPro->verified_reviews_avg ? number_format($sPro->verified_reviews_avg, 1, ',', '') : 'Nouveau' }}</span>
-                                    @if($sPro->verified_reviews_count ?? 0 > 0)
-                                    <span class="reviews-count">({{ $sPro->verified_reviews_count }} avis)</span>
-                                    @endif
-                                </div>
-                                <p class="provider-category">{{ Str::limit($sPro->profession ?? $sPro->bio ?? 'Professionnel', 30) }}</p>
-                            </div>
-                        </a>
-                        @endforeach
-                    </div>
-                </div>
-                @endif
-            </div>
+            <div id="featuredProsContainer"></div>
 
             {{-- Infinite scroll trigger --}}
             <div class="infinite-scroll-trigger" id="infiniteScrollTrigger">
@@ -9840,10 +10113,10 @@
         `;
     }
 
-    function getRecommendationAdIdSet() {
+    function getShowcaseAdIdSet() {
         const ids = new Set();
-        document.querySelectorAll('.recommendation-card[data-recommendation-ad-id]').forEach((card) => {
-            const value = Number(card.getAttribute('data-recommendation-ad-id'));
+        document.querySelectorAll('.home-showcase-ad-card[data-showcase-ad-id]').forEach((card) => {
+            const value = Number(card.getAttribute('data-showcase-ad-id'));
             if (Number.isFinite(value) && value > 0) {
                 ids.add(value);
             }
@@ -9868,12 +10141,12 @@
     function renderMissions(missions) {
         const grid = document.getElementById('missionsGrid');
         const featuredContainer = document.getElementById('featuredProsContainer');
-        const recommendationAdIds = getRecommendationAdIdSet();
+        const showcaseAdIds = getShowcaseAdIdSet();
         const seenMissionIds = new Set();
         const filteredMissions = (missions || []).filter((ad) => {
             const adId = Number(ad.id);
             if (!Number.isFinite(adId) || adId <= 0) return false;
-            if (recommendationAdIds.has(adId)) return false;
+            if (showcaseAdIds.has(adId)) return false;
             if (seenMissionIds.has(adId)) return false;
             seenMissionIds.add(adId);
             return true;
@@ -9897,10 +10170,6 @@
         
         let html = '';
         filteredMissions.forEach((ad) => {
-
-            // Les publications urgentes s'affichent uniquement dans le carousel horizontal (sauf si boostées)
-            if (ad.is_urgent && !(ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date())) return;
-
             const userAvatar = ad.user && ad.user.avatar 
                 ? `<img src="${buildStorageUrl(ad.user.avatar)}" alt="${(ad.user.name||'').replace(/"/g,'')}">` 
                 : `<div class="fb-post-avatar-placeholder">${(ad.user?.name || 'U').charAt(0).toUpperCase()}</div>`;
@@ -10020,7 +10289,7 @@
         
         grid.innerHTML = html;
         if (featuredContainer) {
-            featuredContainer.innerHTML = buildFeaturedProsBlockHtml();
+            featuredContainer.innerHTML = '';
         }
     }
     
@@ -10583,13 +10852,13 @@
                 });
                 const data = await response.json();
                 const ads = data.ads?.data || data.ads || [];
-                const recommendationAdIds = getRecommendationAdIdSet();
+                const showcaseAdIds = getShowcaseAdIdSet();
                 const alreadyRenderedAdIds = getRenderedFeedAdIdSet();
                 const seenBatchIds = new Set();
                 const uniqueAds = ads.filter((ad) => {
                     const adId = Number(ad.id);
                     if (!Number.isFinite(adId) || adId <= 0) return false;
-                    if (recommendationAdIds.has(adId)) return false;
+                    if (showcaseAdIds.has(adId)) return false;
                     if (alreadyRenderedAdIds.has(adId)) return false;
                     if (seenBatchIds.has(adId)) return false;
                     seenBatchIds.add(adId);
@@ -10636,11 +10905,9 @@
 
         // Construire un élément post simplifié pour le scroll infini
         function buildInfiniteScrollPost(ad) {
-            // Les publications urgentes s'affichent uniquement dans le carousel horizontal (sauf si boostées)
-            if (ad.is_urgent && !(ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date())) return null;
             const adId = Number(ad.id);
             if (!Number.isFinite(adId) || adId <= 0) return null;
-            if (getRecommendationAdIdSet().has(adId)) return null;
+            if (getShowcaseAdIdSet().has(adId)) return null;
             if (getRenderedFeedAdIdSet().has(adId)) return null;
 
             const div = document.createElement('div');
@@ -10655,7 +10922,10 @@
                 else if (typeof ad.photos === 'string') { try { photos = JSON.parse(ad.photos); } catch(e) { photos = [ad.photos]; } }
             }
             photos = photos.filter(p => p).map(p => buildPhotoUrl(p));
-            div.className = 'fb-post' + (ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date() ? ' boosted-post' : '') + (photos.length > 0 ? ' has-visual' : '');
+            div.className = 'fb-post'
+                + (ad.is_urgent ? ' urgent-flow' : '')
+                + (ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date() ? ' boosted-post' : '')
+                + (photos.length > 0 ? ' has-visual' : '');
             div.setAttribute('data-ad-id', ad.id);
             try { div.setAttribute('data-ad-json', JSON.stringify(ad)); } catch(e) {}
 
