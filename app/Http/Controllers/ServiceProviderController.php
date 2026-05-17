@@ -8,7 +8,10 @@ use App\Models\ProSubscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Stripe\Stripe;
 use Stripe\Checkout\Session as StripeSession;
 
@@ -82,6 +85,34 @@ class ServiceProviderController extends Controller
             ], 422);
         }
 
+        if ($request->boolean('enforce_profile_completion')) {
+            $missingProfileFields = [];
+
+            if (blank($user->name)) {
+                $missingProfileFields[] = 'nom';
+            }
+            if (blank($user->phone)) {
+                $missingProfileFields[] = 'téléphone';
+            }
+            if (blank($user->city) && blank($user->detected_city)) {
+                $missingProfileFields[] = 'ville';
+            }
+            if (blank($user->country) && blank($user->detected_country)) {
+                $missingProfileFields[] = 'pays';
+            }
+            if (blank($user->avatar)) {
+                $missingProfileFields[] = 'photo de profil';
+            }
+
+            if (!empty($missingProfileFields)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Complétez d’abord votre profil prestataire : ' . implode(', ', $missingProfileFields) . '.',
+                    'missing_profile_fields' => $missingProfileFields,
+                ], 422);
+            }
+        }
+
         try {
             DB::beginTransaction();
 
@@ -101,11 +132,38 @@ class ServiceProviderController extends Controller
                 );
             }
 
+            $mainCategories = collect($request->services)
+                ->pluck('main_category')
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+
+            $subcategories = collect($request->services)
+                ->pluck('subcategory')
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+
             // Activer le statut prestataire
-            $user->update([
+            $profileUpdate = [
                 'is_service_provider' => true,
                 'service_provider_since' => $user->service_provider_since ?? now(),
-            ]);
+                'profile_completed' => true,
+                'profile_completed_at' => $user->profile_completed_at ?? now(),
+                'pro_onboarding_completed' => true,
+                'pro_onboarding_step' => max((int) ($user->pro_onboarding_step ?? 0), 4),
+                'pro_service_categories' => $mainCategories,
+                'service_category' => implode(', ', $mainCategories),
+                'service_subcategories' => $subcategories,
+            ];
+
+            if (blank($user->profession) && !empty($subcategories)) {
+                $profileUpdate['profession'] = $subcategories[0];
+            }
+
+            $user->update($profileUpdate);
 
             // Enregistrer les préférences de notification si fournies
             if ($request->has('notification_preferences')) {
@@ -424,15 +482,47 @@ class ServiceProviderController extends Controller
     }
 
     /**
-     * Met à jour des champs de profil individuels (city, address, GPS, notifications)
+     * Met à jour des champs de profil individuels pour le parcours prestataire.
      */
     public function updateProfileFields(Request $request)
     {
         $user = Auth::user();
         $data = [];
 
-        $allowed = ['name', 'phone', 'city', 'address', 'country', 'postal_code', 'latitude', 'longitude',
-                     'pro_notifications_email', 'pro_notifications_realtime', 'pro_notifications_sms'];
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|required|string|max:255',
+            'phone' => 'sometimes|required|string|max:30',
+            'city' => 'sometimes|required|string|max:100',
+            'address' => 'nullable|string|max:500',
+            'country' => 'sometimes|required|string|max:100',
+            'postal_code' => 'nullable|string|max:30',
+            'bio' => 'nullable|string|max:500',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'pro_notifications_email' => 'nullable|boolean',
+            'pro_notifications_realtime' => 'nullable|boolean',
+            'pro_notifications_sms' => 'nullable|boolean',
+        ], [
+            'name.required' => 'Le nom est obligatoire.',
+            'phone.required' => 'Le téléphone est obligatoire.',
+            'city.required' => 'La ville est obligatoire.',
+            'country.required' => 'Le pays est obligatoire.',
+            'avatar.image' => 'La photo de profil doit être une image.',
+            'avatar.mimes' => 'La photo doit être au format JPG, PNG ou WEBP.',
+            'avatar.max' => 'La photo ne doit pas dépasser 5 Mo.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $allowed = ['name', 'phone', 'city', 'address', 'country', 'postal_code', 'bio', 'latitude', 'longitude',
+            'pro_notifications_email', 'pro_notifications_realtime', 'pro_notifications_sms'];
 
         foreach ($allowed as $field) {
             if ($request->has($field)) {
@@ -444,6 +534,39 @@ class ServiceProviderController extends Controller
                 } else {
                     $data[$field] = is_string($value) ? mb_substr($value, 0, 255) : null;
                 }
+            }
+        }
+
+        if ($request->hasFile('avatar')) {
+            try {
+                $defaultDisk = config('filesystems.default', 'public');
+
+                if ($user->avatar && !str_starts_with($user->avatar, 'http')) {
+                    try {
+                        Storage::disk($defaultDisk)->delete($user->avatar);
+                    } catch (\Throwable $e) {
+                        Log::warning('Impossible de supprimer l’ancien avatar prestataire.', [
+                            'user_id' => $user->id,
+                            'avatar' => $user->avatar,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+
+                $extension = $request->file('avatar')->extension() ?: 'jpg';
+                $path = 'avatars/' . Str::uuid() . '.' . $extension;
+                Storage::disk($defaultDisk)->putFileAs('avatars', $request->file('avatar'), basename($path));
+                $data['avatar'] = $path;
+            } catch (\Throwable $e) {
+                Log::error('Erreur upload avatar parcours prestataire: ' . $e->getMessage(), [
+                    'user_id' => $user->id,
+                    'exception' => get_class($e),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur lors du téléchargement de la photo. Veuillez réessayer.',
+                ], 500);
             }
         }
 

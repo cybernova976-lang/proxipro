@@ -6971,6 +6971,11 @@
                     <i class="fas fa-check-circle"></i> <span></span>
                 </div>
 
+                <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:0.75rem; color:#1e40af; display:flex; gap:8px; align-items:flex-start;">
+                    <i class="fas fa-id-card" style="margin-top:2px;"></i>
+                    <span>Ce parcours crée ou complète votre profil prestataire. Il ne publie aucune annonce.</span>
+                </div>
+
                 <div style="max-height: 380px; overflow-y: auto; padding-right: 4px;">
                     {{-- Nom --}}
                     <div class="wizard-field-row">
@@ -6994,7 +6999,7 @@
                     <div class="wizard-field-row">
                         <div class="wizard-field-icon" style="background:#10b98115; color:#10b981;"><i class="fas fa-phone"></i></div>
                         <div class="wizard-field-body">
-                            <label class="wizard-field-label">Téléphone</label>
+                            <label class="wizard-field-label">Téléphone <span style="color:#ef4444;">*</span></label>
                             <input type="tel" id="wizProfilePhone" class="wizard-field-input" value="{{ $user->phone ?? '' }}" placeholder="Ex: 0639 12 34 56">
                         </div>
                     </div>
@@ -7003,8 +7008,17 @@
                     <div class="wizard-field-row">
                         <div class="wizard-field-icon" style="background:#ef444415; color:#ef4444;"><i class="fas fa-map-marker-alt"></i></div>
                         <div class="wizard-field-body">
-                            <label class="wizard-field-label">Ville</label>
+                            <label class="wizard-field-label">Ville <span style="color:#ef4444;">*</span></label>
                             <input type="text" id="wizProfileCity" class="wizard-field-input" value="{{ $user->city ?? $user->detected_city ?? '' }}" placeholder="Votre ville">
+                        </div>
+                    </div>
+
+                    {{-- Pays --}}
+                    <div class="wizard-field-row">
+                        <div class="wizard-field-icon" style="background:#0ea5e915; color:#0284c7;"><i class="fas fa-globe"></i></div>
+                        <div class="wizard-field-body">
+                            <label class="wizard-field-label">Pays <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="wizProfileCountry" class="wizard-field-input" value="{{ $user->country ?? $user->detected_country ?? 'France' }}" placeholder="Votre pays">
                         </div>
                     </div>
 
@@ -7030,7 +7044,7 @@
                     <div class="wizard-field-row">
                         <div class="wizard-field-icon" style="background:#06b6d415; color:#06b6d4;"><i class="fas fa-camera"></i></div>
                         <div class="wizard-field-body">
-                            <label class="wizard-field-label">Photo de profil</label>
+                            <label class="wizard-field-label">Photo de profil <span style="color:#ef4444;">*</span></label>
                             <div style="display:flex; align-items:center; gap:10px;">
                                 <div id="wizProfileAvatarPreview" style="width:36px; height:36px; border-radius:50%; background:#e5e7eb; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
                                     @if($user->avatar)
@@ -7041,9 +7055,10 @@
                                 </div>
                                 <label style="cursor:pointer; font-size:0.78rem; color:#7c3aed; font-weight:600; display:flex; align-items:center; gap:4px;">
                                     <i class="fas fa-upload" style="font-size:0.7rem;"></i> Changer la photo
-                                    <input type="file" id="wizProfileAvatar" accept="image/jpeg,image/png,image/jpg" style="display:none;" onchange="previewWizardAvatar(this)">
+                                    <input type="file" id="wizProfileAvatar" accept="image/jpeg,image/png,image/jpg,image/webp" style="display:none;" onchange="previewWizardAvatar(this)">
                                 </label>
                             </div>
+                            <div style="font-size:0.7rem; color:#64748b; margin-top:4px;">Un visage, logo ou visuel clair augmente la confiance avant contact.</div>
                         </div>
                     </div>
 
@@ -7198,7 +7213,7 @@
                 </div>
                 @else
                 {{-- L'utilisateur n'a pas d'abonnement --}}
-                <p style="font-size:0.78rem; color:#6b7280; margin-bottom:14px;">Passez Pro pour apparaître en priorité et recevoir plus de demandes clients.</p>
+                <p style="font-size:0.78rem; color:#6b7280; margin-bottom:14px;">Votre profil prestataire peut être actif gratuitement. L'abonnement sert à le mettre en avant sur la page d'accueil et dans les recommandations.</p>
 
                 {{-- Recap rapide --}}
                 <div style="background:#f8fafc; border-radius:10px; padding:12px 14px; margin-bottom:14px; border:1px solid #e5e7eb;">
@@ -7213,18 +7228,18 @@
                 <div class="sub-popup-plans">
                     <div class="sub-popup-plan" id="planFree" onclick="selectProPlan('free')">
                         <div class="sub-popup-plan-price">0€</div>
-                        <div class="sub-popup-plan-name">Gratuit</div>
-                        <div class="sub-popup-plan-desc">Visibilité de base</div>
+                        <div class="sub-popup-plan-name">Profil simple</div>
+                        <div class="sub-popup-plan-desc">Visible sans priorité</div>
                     </div>
                     <div class="sub-popup-plan selected" id="planMonthly" onclick="selectProPlan('monthly')">
                         <span class="sub-popup-plan-popular">Populaire</span>
                         <div class="sub-popup-plan-price">9,99€ <small>/mois</small></div>
-                        <div class="sub-popup-plan-name">Pro Mensuel</div>
+                        <div class="sub-popup-plan-name">Mise en avant mensuelle</div>
                         <div class="sub-popup-plan-desc">Sans engagement</div>
                     </div>
                     <div class="sub-popup-plan" id="planAnnual" onclick="selectProPlan('annual')">
                         <div class="sub-popup-plan-price">85€ <small>/an</small></div>
-                        <div class="sub-popup-plan-name">Pro Annuel</div>
+                        <div class="sub-popup-plan-name">Mise en avant annuelle</div>
                         <div class="sub-popup-plan-desc">Soit 7,08€/mois</div>
                         <div class="sub-popup-plan-savings"><i class="fas fa-tag"></i> -30%</div>
                     </div>
@@ -7232,13 +7247,13 @@
 
                 {{-- Avantages Pro --}}
                 <div style="margin:14px 0 12px;">
-                    <div style="font-size:0.78rem; font-weight:600; color:#111827; margin-bottom:8px;">Avantages de l'abonnement Pro :</div>
+                    <div style="font-size:0.78rem; font-weight:600; color:#111827; margin-bottom:8px;">Avantages de la mise en avant :</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-                        <div style="display:flex; align-items:center; gap:6px; font-size:0.72rem; color:#374151;"><i class="fas fa-check" style="color:#10b981; font-size:0.65rem;"></i> Profil mis en avant</div>
-                        <div style="display:flex; align-items:center; gap:6px; font-size:0.72rem; color:#374151;"><i class="fas fa-check" style="color:#10b981; font-size:0.65rem;"></i> Badge Pro vérifié</div>
-                        <div style="display:flex; align-items:center; gap:6px; font-size:0.72rem; color:#374151;"><i class="fas fa-check" style="color:#10b981; font-size:0.65rem;"></i> Alertes e-mail clients</div>
-                        <div style="display:flex; align-items:center; gap:6px; font-size:0.72rem; color:#374151;"><i class="fas fa-check" style="color:#10b981; font-size:0.65rem;"></i> Jusqu'à 4 photos/annonce</div>
-                        <div style="display:flex; align-items:center; gap:6px; font-size:0.72rem; color:#374151;"><i class="fas fa-check" style="color:#10b981; font-size:0.65rem;"></i> 3x plus de contacts</div>
+                        <div style="display:flex; align-items:center; gap:6px; font-size:0.72rem; color:#374151;"><i class="fas fa-check" style="color:#10b981; font-size:0.65rem;"></i> Profil prioritaire accueil</div>
+                        <div style="display:flex; align-items:center; gap:6px; font-size:0.72rem; color:#374151;"><i class="fas fa-check" style="color:#10b981; font-size:0.65rem;"></i> Badge Pro Premium</div>
+                        <div style="display:flex; align-items:center; gap:6px; font-size:0.72rem; color:#374151;"><i class="fas fa-check" style="color:#10b981; font-size:0.65rem;"></i> Recommandations renforcées</div>
+                        <div style="display:flex; align-items:center; gap:6px; font-size:0.72rem; color:#374151;"><i class="fas fa-check" style="color:#10b981; font-size:0.65rem;"></i> Profil plus crédible</div>
+                        <div style="display:flex; align-items:center; gap:6px; font-size:0.72rem; color:#374151;"><i class="fas fa-check" style="color:#10b981; font-size:0.65rem;"></i> Plus de contacts clients</div>
                         <div style="display:flex; align-items:center; gap:6px; font-size:0.72rem; color:#374151;"><i class="fas fa-check" style="color:#10b981; font-size:0.65rem;"></i> Support prioritaire</div>
                     </div>
                 </div>
@@ -7255,7 +7270,7 @@
                 <div class="sub-popup-testimonial">
                     <div class="sub-popup-testimonial-avatar">MA</div>
                     <div class="sub-popup-testimonial-text">
-                        « Depuis que je suis Pro, je reçois 3 à 5 demandes par semaine. Mon profil est vu par des centaines de clients. »
+                        « Depuis que mon profil est mis en avant, je reçois 3 à 5 demandes par semaine. Les clients me trouvent sans publier d'annonce. »
                         <strong>— Mohamed A., Plombier à Mamoudzou</strong>
                     </div>
                 </div>
@@ -8751,12 +8766,15 @@
     let currentWizardStep = 1;
     const totalWizardSteps = 4;
     let wizCatTreeBuilt = false;
+    let wizardUserHasAvatar = {{ Auth::check() && Auth::user()->avatar ? 'true' : 'false' }};
+    const wizardServiceCategories = @json(config('categories.services'));
+    const wizardExistingSubcategories = @json(Auth::check() ? (Auth::user()->service_subcategories ?? []) : []);
 
     const wizardStepConfig = {
-        1: { icon: 'fas fa-user-edit', title: 'Votre profil professionnel', desc: 'Complétez ou vérifiez vos informations.' },
-        2: { icon: 'fas fa-th-large', title: 'Vos domaines d\'activité', desc: 'Sélectionnez vos catégories et sous-catégories.' },
+        1: { icon: 'fas fa-user-edit', title: 'Votre profil prestataire', desc: 'Vérifiez vos informations, ajoutez une photo et rassurez les clients.' },
+        2: { icon: 'fas fa-th-large', title: 'Vos domaines d\'activité', desc: 'Choisissez vos catégories et sous-catégories de prestation.' },
         3: { icon: 'fas fa-bell', title: 'Notifications & alertes', desc: 'Configurez comment recevoir les demandes clients.' },
-        4: { icon: 'fas fa-rocket', title: 'Boostez votre profil', desc: 'Passez Pro pour être mis en avant et recevoir plus de demandes.' }
+        4: { icon: 'fas fa-rocket', title: 'Mettez votre profil en avant', desc: 'Un abonnement augmente la visibilité de votre profil sur l\'accueil.' }
     };
 
     function handleProposerServices() {
@@ -8778,6 +8796,8 @@
 
     function openSubPopup(startStep) {
         currentWizardStep = startStep || 1;
+        wizardSelectedSubcats = {};
+        selectedProPlan = 'monthly';
 
         // Build category tree if not built yet
         if (!wizCatTreeBuilt) {
@@ -8785,28 +8805,29 @@
             wizCatTreeBuilt = true;
         }
 
-        // Pre-select user's existing service categories
+        document.querySelectorAll('.wiz-cat-subcat.selected').forEach(chip => chip.classList.remove('selected'));
+
+        // Pre-select user's existing service subcategories
         @auth
-        @if(Auth::user()->pro_service_categories)
-        const existingCats = @json(Auth::user()->pro_service_categories ?? []);
-        if (Array.isArray(existingCats)) {
-            existingCats.forEach(cat => {
-                // Try to find as subcategory
-                for (const [catName, catData] of Object.entries(categoriesData)) {
-                    if (catData.subcategories && catData.subcategories.includes(cat)) {
+        if (Array.isArray(wizardExistingSubcategories)) {
+            wizardExistingSubcategories.forEach(subcat => {
+                for (const [catName, catData] of Object.entries(wizardServiceCategories)) {
+                    if ((catData.subcategories || []).includes(subcat)) {
                         if (!wizardSelectedSubcats[catName]) wizardSelectedSubcats[catName] = [];
-                        if (!wizardSelectedSubcats[catName].includes(cat)) {
-                            wizardSelectedSubcats[catName].push(cat);
-                            const chip = document.querySelector(`.wiz-cat-subcat[data-subcat="${CSS.escape(cat)}"][data-parent="${CSS.escape(catName)}"]`);
+                        if (!wizardSelectedSubcats[catName].includes(subcat)) {
+                            wizardSelectedSubcats[catName].push(subcat);
+                            const chip = document.querySelector(`.wiz-cat-subcat[data-subcat="${CSS.escape(subcat)}"][data-parent="${CSS.escape(catName)}"]`);
                             if (chip) chip.classList.add('selected');
                         }
+                        break;
                     }
                 }
             });
-            refreshCatGroupStates();
-            updateWizSelectedCount();
         }
-        @endif
+        refreshCatGroupStates();
+        updateWizSelectedCount();
+        document.querySelectorAll('.sub-popup-plan').forEach(el => el.classList.remove('selected'));
+        document.getElementById('planMonthly')?.classList.add('selected');
 
         // Pre-fill notification toggles
         const notifEmail = document.getElementById('notifEmail');
@@ -8864,6 +8885,7 @@
     // ---- Step 1: Save profile inline ----
     function previewWizardAvatar(input) {
         if (input.files && input.files[0]) {
+            window._wizardAvatarSelected = true;
             const reader = new FileReader();
             reader.onload = function(e) {
                 const preview = document.getElementById('wizProfileAvatarPreview');
@@ -8891,55 +8913,56 @@
 
     function saveWizardProfileAndNext() {
         const name = document.getElementById('wizProfileName')?.value.trim();
-        if (!name) {
-            showToast('Le nom est obligatoire', 'error');
+        const phone = document.getElementById('wizProfilePhone')?.value.trim();
+        const city = document.getElementById('wizProfileCity')?.value.trim();
+        const country = document.getElementById('wizProfileCountry')?.value.trim();
+        const avatarInput = document.getElementById('wizProfileAvatar');
+
+        if (!name || !phone || !city || !country) {
+            showToast('Nom, téléphone, ville et pays sont obligatoires pour devenir prestataire.', 'error');
+            return;
+        }
+
+        if (!wizardUserHasAvatar && !(avatarInput?.files?.length)) {
+            showToast('Ajoutez une photo de profil avant de continuer.', 'error');
             return;
         }
 
         const formData = new FormData();
-        formData.append('_method', 'PUT');
         formData.append('name', name);
-        formData.append('email', '{{ Auth::user()->email ?? '' }}');
-        const phone = document.getElementById('wizProfilePhone')?.value.trim();
-        if (phone) formData.append('phone', phone);
+        formData.append('phone', phone);
+        formData.append('city', city);
+        formData.append('country', country);
+
         const bio = document.getElementById('wizProfileBio')?.value.trim();
         if (bio) formData.append('bio', bio);
 
-        // City & address → location field
-        const city = document.getElementById('wizProfileCity')?.value.trim();
         const address = document.getElementById('wizProfileAddress')?.value.trim();
-        if (city || address) formData.append('location', address || city);
+        if (address) formData.append('address', address);
 
-        // Avatar
-        const avatarInput = document.getElementById('wizProfileAvatar');
         if (avatarInput?.files?.length) {
             formData.append('avatar', avatarInput.files[0]);
         }
 
-        fetch('{{ route("profile.update") }}', {
+        if (window._wizGpsLat && window._wizGpsLng) {
+            formData.append('latitude', window._wizGpsLat);
+            formData.append('longitude', window._wizGpsLng);
+        }
+
+        fetch('{{ route("service-provider.update-profile-fields") }}', {
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
             body: formData
         })
-        .then(r => {
-            if (!r.ok && r.status !== 302) throw new Error('HTTP ' + r.status);
-            return r.text();
+        .then(async r => {
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok || data.success === false) {
+                throw new Error(data.message || 'HTTP ' + r.status);
+            }
+            return data;
         })
         .then(() => {
-            // Also save city separately if needed
-            const cityVal = document.getElementById('wizProfileCity')?.value.trim();
-            if (cityVal) {
-                fetch('/service-provider/update-profile-fields', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
-                    body: JSON.stringify({
-                        city: cityVal,
-                        address: document.getElementById('wizProfileAddress')?.value.trim() || null,
-                        latitude: window._wizGpsLat || null,
-                        longitude: window._wizGpsLng || null
-                    })
-                }).catch(() => {});
-            }
+            wizardUserHasAvatar = true;
 
             const msg = document.getElementById('wizardProfileSaveMsg');
             if (msg) {
@@ -8949,8 +8972,8 @@
             }
             setTimeout(() => goToWizardStep(2), 600);
         })
-        .catch(() => {
-            showToast('Erreur lors de la sauvegarde du profil', 'error');
+        .catch((error) => {
+            showToast(error.message || 'Erreur lors de la sauvegarde du profil', 'error');
         });
     }
 
@@ -8960,10 +8983,7 @@
         if (!container) return;
         container.innerHTML = '';
 
-        // Only use service categories (not marketplace)
-        const serviceCats = @json(config('categories.services'));
-
-        for (const [catName, catData] of Object.entries(serviceCats)) {
+        for (const [catName, catData] of Object.entries(wizardServiceCategories)) {
             const group = document.createElement('div');
             group.className = 'wiz-cat-group';
             group.setAttribute('data-cat', catName);
@@ -9133,10 +9153,10 @@
         const icon = document.querySelector('#subPopupSubmitBtn i');
         if (!label || !icon) return;
         if (selectedProPlan === 'free') {
-            label.textContent = 'Continuer gratuitement';
+            label.textContent = 'Finaliser sans mise en avant';
             icon.className = 'fas fa-arrow-right';
         } else {
-            label.textContent = selectedProPlan === 'annual' ? 'S\'abonner — 85€/an' : 'S\'abonner — 9,99€/mois';
+            label.textContent = selectedProPlan === 'annual' ? 'Mettre en avant — 85€/an' : 'Mettre en avant — 9,99€/mois';
             icon.className = 'fas fa-rocket';
         }
     }
@@ -9158,8 +9178,11 @@
         }
 
         if (services.length === 0) {
-            const firstCat = Object.keys(categoriesData)[0];
-            services.push({ main_category: firstCat, subcategory: firstCat, experience_years: 0, description: '' });
+            showToast('Sélectionnez au moins une sous-catégorie avant de finaliser votre profil.', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-rocket"></i> <span id="subPopupSubmitLabel">Réessayer</span>';
+            updateSubmitLabel();
+            return;
         }
 
         const notifPrefs = {
@@ -9174,6 +9197,7 @@
             body: JSON.stringify({
                 services: services,
                 plan: userHasSubscription ? null : (selectedProPlan === 'free' ? null : selectedProPlan),
+                enforce_profile_completion: true,
                 notification_preferences: notifPrefs
             })
         })
