@@ -274,7 +274,7 @@ class FeedController extends Controller
         $featuredProfessionals = $this->buildFeaturedProfessionals($user, 8);
 
         // Données JSON-ready pour injection JS du bloc "Professionnels à la une"
-        $featuredProsJson = $featuredProfessionals->take(4)->map(function ($pro) {
+        $featuredProsJson = $featuredProfessionals->take(8)->map(function ($pro) {
             return [
                 'id' => $pro->id,
                 'name' => $pro->name,
@@ -358,10 +358,10 @@ class FeedController extends Controller
 
                 return ($priority * 10000000000) + optional($ad->created_at)->timestamp;
             })
-            ->take(8)
+            ->take(6)
             ->values();
         $homeShowcaseAdIds = $homeShowcaseAds->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
-        $homeShowcasePros = $featuredProfessionals->take(4)->values();
+        $homeShowcasePros = $featuredProfessionals->take(8)->values();
 
         // Annonces sidebar (toutes les urgent + boostées combinées pour le sidebar gauche)
         $sidebarAds = $urgentAds->merge($boostedAds)

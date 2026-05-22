@@ -1,13 +1,13 @@
 @php
-    $showcaseAds = collect($homeShowcaseAds ?? [])->take(8)->values();
-    $showcasePros = collect($homeShowcasePros ?? [])->take(4)->values();
+    $showcaseAds = collect($homeShowcaseAds ?? [])->take(6)->values();
+    $showcasePros = collect($homeShowcasePros ?? [])->take(8)->values();
 @endphp
 
 @if($showcaseAds->isNotEmpty() || $showcasePros->isNotEmpty())
 <section class="home-showcase-section" aria-labelledby="homeShowcaseTitle">
     <div class="home-showcase-header">
         <div>
-            <h2 id="homeShowcaseTitle">À la une près de chez vous</h2>
+            <h2 id="homeShowcaseTitle">Annonces à la une près de chez vous</h2>
         </div>
         <a href="#missionsGrid" class="home-showcase-link">Tout voir <i class="fas fa-arrow-down"></i></a>
     </div>
@@ -97,7 +97,7 @@
     @if($showcasePros->isNotEmpty())
     <div class="home-showcase-pro-row">
         <div class="home-showcase-row-title">
-            <h3>Professionnels mis en avant</h3>
+            <h3>Prestataires évalués et qualifiés</h3>
             <a href="javascript:void(0)" onclick="setViewMode('providers'); window.scrollTo({top: 0, behavior: 'smooth'});">Voir les profils <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="home-showcase-pro-grid" data-showcase-pros-count="{{ $showcasePros->count() }}">
@@ -105,29 +105,53 @@
             @php
                 $isPremiumProfile = (bool) ($pro->is_featured_premium ?? false);
                 $isProAccount = $pro->user_type === 'professionnel' || $pro->hasActiveProSubscription() || $pro->hasCompletedProOnboarding();
-                $rating = $pro->verified_reviews_avg ? number_format((float) $pro->verified_reviews_avg, 1, ',', '') : null;
-                $reviewsCount = (int) ($pro->verified_reviews_count ?? 0);
-                $profession = $pro->profession ?? $pro->service_category ?? $pro->bio ?? 'Prestataire de services';
+                $ratingRaw = $pro->verified_reviews_avg ?? $pro->reviews_avg_rating ?? null;
+                $rating = $ratingRaw ? rtrim(rtrim(number_format((float) $ratingRaw, 2, ',', ''), '0'), ',') : null;
+                $reviewsCount = (int) ($pro->verified_reviews_count ?? $pro->reviews_count ?? 0);
+                $primaryService = $pro->relationLoaded('services') ? $pro->services->first() : null;
+                $profession = $pro->profession ?? $pro->service_category ?? $primaryService?->subcategory ?? $primaryService?->main_category ?? $pro->bio ?? 'Prestataire de services';
+                $hourlyRate = $pro->hourly_rate ?? $primaryService?->hourly_rate ?? null;
+                $city = $pro->city ?? $pro->location_preference ?? $pro->country ?? null;
+                $qualityTags = collect([
+                    ($pro->is_verified ?? false) ? 'Profil vérifié' : null,
+                    $isPremiumProfile ? 'Mis en avant' : null,
+                    ($pro->ads_count ?? 0) > 0 ? (($pro->ads_count ?? 0) . ' annonce' . (($pro->ads_count ?? 0) > 1 ? 's' : '') . ' active' . (($pro->ads_count ?? 0) > 1 ? 's' : '')) : null,
+                    $city ? Str::limit($city, 22) : 'Service local',
+                ])->filter()->take(3);
             @endphp
             <a href="{{ route('profile.public', $pro->id) }}" class="home-showcase-pro-card{{ $isPremiumProfile ? ' is-premium' : '' }}" data-showcase-pro-id="{{ $pro->id }}">
                 <div class="home-showcase-pro-avatar">
                     @if($pro->avatar)
                         <img src="{{ storage_url($pro->avatar) }}" alt="{{ $pro->name }}" loading="lazy">
                     @else
-                        <span>{{ strtoupper(substr($pro->name, 0, 1)) }}</span>
+                        <span class="home-showcase-pro-initial">{{ strtoupper(substr($pro->name, 0, 1)) }}</span>
                     @endif
+                    <span class="home-showcase-pro-ribbon"><i class="fas fa-heart"></i> {{ $isPremiumProfile ? 'Top prestataire' : 'Prestataire' }}</span>
                 </div>
                 <div class="home-showcase-pro-content">
-                    <div class="home-showcase-pro-name">
-                        <strong>{{ Str::limit($pro->name, 18) }}</strong>
-                        <span class="{{ $isPremiumProfile ? 'badge-premium' : 'badge-provider' }}">
-                            {{ $isPremiumProfile ? 'Mis en avant' : ($isProAccount ? 'Pro' : 'Prestataire') }}
-                        </span>
+                    <div class="home-showcase-pro-name-row">
+                        <div class="home-showcase-pro-title">
+                            <strong>{{ Str::limit($pro->name, 18) }}</strong>
+                            @if($isProAccount)
+                                <span class="home-showcase-pro-badge">PRO</span>
+                            @endif
+                        </div>
+                        @if($hourlyRate)
+                            <span class="home-showcase-pro-price">{{ number_format((float) $hourlyRate, 0, ',', ' ') }} €/h</span>
+                        @endif
                     </div>
-                    <p>{{ Str::limit($profession, 38) }}</p>
-                    <div class="home-showcase-pro-foot">
-                        <span><i class="fas fa-star"></i> {{ $rating ?: 'Nouveau' }}{{ $reviewsCount > 0 ? ' (' . $reviewsCount . ')' : '' }}</span>
-                        <span><i class="fas fa-map-marker-alt"></i> {{ Str::limit($pro->city ?? $pro->country ?? 'Local', 16) }}</span>
+                    <p class="home-showcase-pro-profession">{{ Str::limit($profession, 42) }}</p>
+                    <div class="home-showcase-pro-rating">
+                        <i class="fas fa-star"></i>
+                        <strong>{{ $rating ?: 'Nouveau' }}</strong>
+                        @if($reviewsCount > 0)
+                            <span>({{ $reviewsCount }} avis)</span>
+                        @endif
+                    </div>
+                    <div class="home-showcase-pro-tags">
+                        @foreach($qualityTags as $tag)
+                            <span>{{ $tag }}</span>
+                        @endforeach
                     </div>
                 </div>
             </a>

@@ -86,7 +86,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             'boost_end' => now()->addDay(),
         ]);
 
-        collect(range(1, 4))->each(function ($index) {
+        collect(range(1, 6))->each(function ($index) {
             User::factory()->create([
                 'name' => 'Prestataire ' . $index,
                 'user_type' => 'particulier',
@@ -103,7 +103,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         preg_match_all('/data-showcase-ad-id="(\d+)"/', $content, $adMatches);
         $showcaseAdIds = array_map('intval', $adMatches[1]);
 
-        $this->assertCount(8, $showcaseAdIds);
+        $this->assertCount(6, $showcaseAdIds);
         $this->assertContains($urgentAd->id, $showcaseAdIds);
         $this->assertContains($boostedAd->id, $showcaseAdIds);
         $this->assertNotContains($oldNormalAds->last()->id, $showcaseAdIds);
@@ -111,7 +111,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         preg_match_all('/data-showcase-pro-id="(\d+)"/', $content, $proMatches);
         $showcaseProIds = array_map('intval', $proMatches[1]);
 
-        $this->assertCount(4, $showcaseProIds);
+        $this->assertCount(8, $showcaseProIds);
         $this->assertContains($premiumPro->id, $showcaseProIds);
         $this->assertContains($boostedPro->id, $showcaseProIds);
         $this->assertLessThan(

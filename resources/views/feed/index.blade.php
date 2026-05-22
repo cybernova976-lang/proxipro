@@ -6000,6 +6000,361 @@
         color: #166534;
     }
     .sub-popup-free-note i { color: #10b981; font-size: 0.9rem; flex-shrink: 0; }
+
+    /* ===== FEED ACCUEIL - Alignement visuel Emergent + cartes prestataires ===== */
+    .feed-layout,
+    .feed-main {
+        max-width: 1280px;
+    }
+
+    .feed-page-heading {
+        max-width: 1280px;
+        margin: 0 auto 32px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .feed-page-eyebrow {
+        color: #5C6B52;
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+
+    .feed-page-heading h1 {
+        margin: 0;
+        color: #1F2421;
+        font-size: 3rem;
+        line-height: 1.08;
+        font-weight: 850;
+    }
+
+    .feed-page-heading p {
+        margin: 10px 0 0;
+        color: #7B8374;
+        font-size: 0.98rem;
+        line-height: 1.5;
+    }
+
+    .home-showcase-section {
+        margin: 0 0 34px;
+    }
+
+    .home-showcase-header {
+        margin-bottom: 18px;
+    }
+
+    .home-showcase-header h2,
+    .home-showcase-row-title h3 {
+        color: #1F2421;
+        font-weight: 850;
+    }
+
+    .home-showcase-header h2 {
+        font-size: 1.55rem;
+    }
+
+    .home-showcase-ads-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+    }
+
+    .home-showcase-ad-card {
+        border-color: #E2E2DC;
+        border-radius: 16px;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    }
+
+    .home-showcase-ad-media {
+        aspect-ratio: 4 / 3;
+    }
+
+    .home-showcase-ad-body {
+        padding: 16px;
+    }
+
+    .home-showcase-ad-body h3 {
+        font-size: 1rem;
+    }
+
+    .home-showcase-pro-row {
+        margin-top: 34px;
+    }
+
+    .home-showcase-pro-grid,
+    .providers-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .home-showcase-pro-card,
+    .provider-card {
+        display: block;
+        min-height: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        box-shadow: none;
+        color: inherit;
+        text-decoration: none;
+        transition: transform 0.2s ease;
+    }
+
+    .home-showcase-pro-card:hover,
+    .provider-card:hover {
+        transform: translateY(-4px);
+        color: inherit;
+        border-color: transparent;
+        box-shadow: none;
+    }
+
+    .home-showcase-pro-card.is-premium {
+        border-color: transparent;
+        background: transparent;
+    }
+
+    .home-showcase-pro-avatar,
+    .provider-image-wrapper {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        height: auto;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #e8eaee;
+        box-shadow: none;
+        margin: 0 0 8px;
+    }
+
+    .home-showcase-pro-avatar img,
+    .provider-image-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .home-showcase-pro-initial,
+    .provider-image-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #5C6B52, #2A9D8F);
+        color: #fff;
+        font-size: 2.4rem;
+        font-weight: 850;
+    }
+
+    .home-showcase-pro-ribbon,
+    .provider-badge-top {
+        position: absolute;
+        left: 8px;
+        bottom: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        max-width: calc(100% - 16px);
+        min-height: 22px;
+        padding: 4px 9px;
+        border-radius: 999px;
+        background: #8A3FFC;
+        color: #fff;
+        font-size: 0.68rem;
+        font-weight: 800;
+        line-height: 1;
+        box-shadow: 0 5px 14px rgba(45, 23, 92, 0.24);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .home-showcase-pro-avatar .home-showcase-pro-ribbon {
+        width: auto;
+        height: auto;
+        justify-content: flex-start;
+        background: #8A3FFC;
+        font-size: 0.68rem;
+        font-weight: 800;
+    }
+
+    .home-showcase-pro-content,
+    .provider-card-info {
+        padding: 0 1px;
+        min-width: 0;
+    }
+
+    .home-showcase-pro-name-row,
+    .provider-info-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 2px;
+    }
+
+    .home-showcase-pro-title,
+    .provider-name {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        margin: 0;
+        color: #050505;
+        font-size: 0.95rem;
+        line-height: 1.25;
+        font-weight: 750;
+    }
+
+    .home-showcase-pro-title strong,
+    .provider-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .home-showcase-pro-badge,
+    .badge-pro {
+        flex-shrink: 0;
+        padding: 2px 5px;
+        border-radius: 3px;
+        background: #0077ff;
+        color: #fff;
+        font-size: 0.58rem;
+        font-weight: 850;
+        letter-spacing: 0;
+        text-transform: uppercase;
+    }
+
+    .home-showcase-pro-price,
+    .provider-price {
+        flex-shrink: 0;
+        color: #050505;
+        font-size: 0.9rem;
+        font-weight: 800;
+        line-height: 1.25;
+    }
+
+    .home-showcase-pro-profession,
+    .provider-profession,
+    .provider-category {
+        margin: 0 0 4px;
+        color: #4b5563;
+        font-size: 0.8rem;
+        line-height: 1.25;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .home-showcase-pro-rating,
+    .provider-rating {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: #1f2937;
+        font-size: 0.78rem;
+        line-height: 1.25;
+        margin-bottom: 7px;
+    }
+
+    .home-showcase-pro-rating i,
+    .star-icon {
+        color: #F59E0B;
+        font-size: 0.72rem;
+        margin-right: 0;
+    }
+
+    .home-showcase-pro-rating strong,
+    .rating-value {
+        font-weight: 800;
+        color: #111827;
+    }
+
+    .home-showcase-pro-rating span,
+    .reviews-count {
+        color: #4b5563;
+        margin-left: 0;
+    }
+
+    .home-showcase-pro-tags,
+    .provider-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .home-showcase-pro-tags span,
+    .provider-tags span {
+        display: inline-flex;
+        align-items: center;
+        min-height: 20px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #F3F4F6;
+        color: #111827;
+        font-size: 0.68rem;
+        line-height: 1;
+        font-weight: 650;
+        max-width: 100%;
+    }
+
+    @media (max-width: 1180px) {
+        .home-showcase-ads-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .home-showcase-pro-grid,
+        .providers-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 768px) {
+        .feed-page-heading {
+            margin-bottom: 24px;
+        }
+
+        .feed-page-heading h1 {
+            font-size: 2.25rem;
+        }
+
+        .home-showcase-pro-grid,
+        .providers-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 640px) {
+        .home-showcase-header,
+        .home-showcase-row-title {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .home-showcase-ads-grid {
+            grid-template-columns: 1fr;
+            margin-top: 0;
+        }
+    }
+
+    @media (max-width: 420px) {
+        .feed-page-heading h1 {
+            font-size: 1.9rem;
+        }
+
+        .home-showcase-pro-grid,
+        .providers-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 @endpush
 
@@ -6199,12 +6554,28 @@
     <!-- Section Prestataires (cachée par défaut) -->
     <div id="providersSection" style="display: none;">
         <div class="text-center mb-4">
-            <h2 class="fw-bold mb-1" id="providersSectionTitle">Nos meilleurs prestataires</h2>
-            <p class="text-muted mb-0" id="providersSectionSubtitle">Professionnels vérifiés et recommandés</p>
+            <h2 class="fw-bold mb-1" id="providersSectionTitle">Prestataires évalués et qualifiés</h2>
+            <p class="text-muted mb-0" id="providersSectionSubtitle">Profils professionnels présentés sous forme de cartes</p>
         </div>
         <div class="providers-grid" id="providersGrid">
             @if(isset($premiumPros) && $premiumPros->count() > 0)
                 @foreach($premiumPros as $pro)
+                @php
+                    $isProAccount = $pro->user_type === 'professionnel' || $pro->hasActiveProSubscription() || $pro->hasCompletedProOnboarding();
+                    $ratingRaw = $pro->reviews_avg_rating ?? $pro->verified_reviews_avg ?? null;
+                    $rating = $ratingRaw ? rtrim(rtrim(number_format((float) $ratingRaw, 2, ',', ''), '0'), ',') : null;
+                    $reviewsCount = (int) ($pro->reviews_count ?? $pro->verified_reviews_count ?? 0);
+                    $primaryService = $pro->relationLoaded('services') ? $pro->services->first() : null;
+                    $profession = $pro->profession ?? $pro->service_category ?? $primaryService?->subcategory ?? $primaryService?->main_category ?? $pro->bio ?? 'Prestataire de services';
+                    $hourlyRate = $pro->hourly_rate ?? $primaryService?->hourly_rate ?? null;
+                    $city = $pro->city ?? $pro->location_preference ?? $pro->country ?? null;
+                    $providerTags = collect([
+                        ($pro->is_verified ?? false) ? 'Profil vérifié' : null,
+                        $isProAccount ? 'Pro actif' : 'Prestataire local',
+                        ($pro->ads_count ?? 0) > 0 ? (($pro->ads_count ?? 0) . ' annonce' . (($pro->ads_count ?? 0) > 1 ? 's' : '') . ' active' . (($pro->ads_count ?? 0) > 1 ? 's' : '')) : null,
+                        $city ? Str::limit($city, 22) : null,
+                    ])->filter()->take(3);
+                @endphp
                 <a href="{{ route('profile.public', $pro->id) }}" class="provider-card">
                     <div class="provider-image-wrapper">
                         @if($pro->avatar)
@@ -6214,32 +6585,33 @@
                                 {{ strtoupper(substr($pro->name, 0, 1)) }}
                             </div>
                         @endif
-                        @if($pro->profession)
-                        <div class="provider-badge-top"><i class="fas fa-briefcase"></i> {{ Str::limit($pro->profession, 25) }}</div>
-                        @elseif($pro->service_category)
-                        <div class="provider-badge-top"><i class="fas fa-briefcase"></i> {{ Str::limit($pro->service_category, 25) }}</div>
-                        @endif
+                        <div class="provider-badge-top"><i class="fas fa-heart"></i> {{ $isProAccount ? 'Top prestataire' : 'Prestataire' }}</div>
                     </div>
                     <div class="provider-card-info">
                         <div class="provider-info-header">
                             <h3 class="provider-name">
                                 {{ Str::limit($pro->name, 18) }}
-                                @if($pro->user_type === 'professionnel' || $pro->hasActiveProSubscription() || $pro->hasCompletedProOnboarding())
+                                @if($isProAccount)
                                 <span class="badge-pro">PRO</span>
                                 @endif
                             </h3>
-                            @if($pro->hourly_rate)
-                            <span class="provider-price">{{ $pro->hourly_rate }} €/h</span>
+                            @if($hourlyRate)
+                            <span class="provider-price">{{ number_format((float) $hourlyRate, 0, ',', ' ') }} €/h</span>
                             @endif
                         </div>
+                        <p class="provider-profession">{{ Str::limit($profession, 42) }}</p>
                         <div class="provider-rating">
                             <span class="star-icon">★</span>
-                            <span class="rating-value">{{ $pro->reviews_avg_rating ? number_format($pro->reviews_avg_rating, 1, ',', '') : 'Nouveau' }}</span>
-                            <span class="reviews-count">({{ $pro->reviews_count ?? 0 }} avis)</span>
+                            <span class="rating-value">{{ $rating ?: 'Nouveau' }}</span>
+                            @if($reviewsCount > 0)
+                                <span class="reviews-count">({{ $reviewsCount }} avis)</span>
+                            @endif
                         </div>
-                        @if($pro->bio)
-                        <p class="provider-category">{{ Str::limit($pro->bio, 40) }}</p>
-                        @endif
+                        <div class="provider-tags">
+                            @foreach($providerTags as $tag)
+                                <span>{{ $tag }}</span>
+                            @endforeach
+                        </div>
                     </div>
                 </a>
                 @endforeach
@@ -6256,18 +6628,11 @@
     <!-- Section Missions (affichée par défaut) -->
     <div id="missionsSection">
         
-        <div class="text-center mb-4" style="max-width: 1060px; margin: 0 auto;">
-            <h2 class="fw-bold mb-1" style="color: var(--text-dark); font-size: 1.5rem;" id="missionsSectionTitle">
-                <i class="fas fa-fire" style="color: var(--accent); margin-right: 6px;"></i>
-                @if(($filterType ?? 'all') === 'demandes')
-                    Dernières demandes de clients
-                @elseif(($filterType ?? 'all') === 'offres')
-                    Offres de professionnels
-                @else
-                    Dernières publications
-                @endif
-            </h2>
-            <p class="text-muted mb-0" style="font-size: 0.9rem;" id="missionsSectionSubtitle">
+        <div class="feed-page-heading">
+            <div>
+                <div class="feed-page-eyebrow">Feed local</div>
+                <h1 id="missionsSectionTitle">Ce qui se passe près de vous</h1>
+                <p id="missionsSectionSubtitle">
                 @if(($filterType ?? 'all') === 'demandes')
                     Des particuliers recherchent vos compétences
                 @elseif(($filterType ?? 'all') === 'offres')
@@ -6275,7 +6640,8 @@
                 @else
                     Trouvez des opportunités près de chez vous
                 @endif
-            </p>
+                </p>
+            </div>
         </div>
         
         <aside class="feed-left-menu-shell" id="feedLeftMenu">
@@ -10012,41 +10378,64 @@
             return;
         }
         
+        const escapeHtml = (value = '') => String(value).replace(/[&<>"']/g, (char) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        }[char]));
+        const truncate = (value = '', limit = 40) => {
+            const text = String(value || '');
+            return text.length > limit ? `${text.substring(0, limit - 1)}…` : text;
+        };
+        const formatRating = (value) => {
+            const rating = Number(value);
+            if (!Number.isFinite(rating) || rating <= 0) return 'Nouveau';
+            return rating.toFixed(2).replace(/\.?0+$/, '').replace('.', ',');
+        };
+
         let html = '';
         providers.forEach(pro => {
             const avatar = pro.avatar 
-                ? `<img src="${buildStorageUrl(pro.avatar)}" alt="${pro.name}">`
-                : `<div class="provider-image-placeholder">${pro.name.charAt(0).toUpperCase()}</div>`;
+                ? `<img src="${buildStorageUrl(pro.avatar)}" alt="${escapeHtml(pro.name)}">`
+                : `<div class="provider-image-placeholder">${escapeHtml((pro.name || 'P').charAt(0).toUpperCase())}</div>`;
             
-            const badge = pro.profession 
-                ? `<div class="provider-badge-top"><i class="fas fa-briefcase"></i> ${pro.profession.substring(0, 25)}</div>` 
-                : (pro.service_category ? `<div class="provider-badge-top"><i class="fas fa-briefcase"></i> ${pro.service_category.substring(0, 25)}</div>` : '');
-            
-            const proBadge = (pro.user_type === 'professionnel' || pro.pro_onboarding_completed || pro.has_active_pro_subscription)
+            const isProAccount = pro.user_type === 'professionnel' || pro.pro_onboarding_completed || pro.has_active_pro_subscription;
+            const proBadge = isProAccount
                 ? '<span class="badge-pro">PRO</span>' 
                 : '';
             
             const price = pro.hourly_rate 
                 ? `<span class="provider-price">${pro.hourly_rate} €/h</span>` 
                 : '';
+
+            const profession = pro.profession || pro.service_category || pro.bio || 'Prestataire de services';
+            const reviewsCount = Number(pro.reviews_count || 0);
+            const tags = [
+                isProAccount ? 'Pro actif' : 'Prestataire local',
+                Number(pro.ads_count || 0) > 0 ? `${pro.ads_count} annonce${Number(pro.ads_count) > 1 ? 's' : ''} active${Number(pro.ads_count) > 1 ? 's' : ''}` : '',
+                pro.location || ''
+            ].filter(Boolean).slice(0, 3).map(tag => `<span>${escapeHtml(truncate(tag, 22))}</span>`).join('');
             
             html += `
                 <a href="/user/${pro.id}" class="provider-card">
                     <div class="provider-image-wrapper">
                         ${avatar}
-                        ${badge}
+                        <div class="provider-badge-top"><i class="fas fa-heart"></i> ${isProAccount ? 'Top prestataire' : 'Prestataire'}</div>
                     </div>
                     <div class="provider-card-info">
                         <div class="provider-info-header">
-                            <h3 class="provider-name">${pro.name.substring(0, 18)} ${proBadge}</h3>
+                            <h3 class="provider-name">${escapeHtml(truncate(pro.name, 18))} ${proBadge}</h3>
                             ${price}
                         </div>
+                        <p class="provider-profession">${escapeHtml(truncate(profession, 42))}</p>
                         <div class="provider-rating">
                             <span class="star-icon">★</span>
-                            <span class="rating-value">${(pro.rating || (Math.random() * 0.5 + 4.5)).toFixed(1).replace('.', ',')}</span>
-                            <span class="reviews-count">(${pro.reviews_count || Math.floor(Math.random() * 500 + 50)} avis)</span>
+                            <span class="rating-value">${formatRating(pro.rating)}</span>
+                            ${reviewsCount > 0 ? `<span class="reviews-count">(${reviewsCount} avis)</span>` : ''}
                         </div>
-                        ${pro.bio ? `<p class="provider-category">${pro.bio.substring(0, 40)}</p>` : ''}
+                        <div class="provider-tags">${tags}</div>
                     </div>
                 </a>
             `;
