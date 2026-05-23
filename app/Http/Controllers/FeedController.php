@@ -73,7 +73,7 @@ class FeedController extends Controller
                 ->orWhereHas('user', function($q3) {
                     $q3->whereNotNull('plan')
                         ->where('plan', '!=', '')
-                        ->where('plan', '!=', 'free')
+                        ->whereRaw('LOWER(plan) != ?', ['free'])
                         ->where(function($q4) {
                             $q4->whereNull('subscription_end')
                                 ->orWhere('subscription_end', '>', now());
@@ -244,7 +244,7 @@ class FeedController extends Controller
             ->where(function($q) {
                 $q->whereNotNull('plan')
                   ->where('plan', '!=', '')
-                  ->where('plan', '!=', 'free')
+                  ->whereRaw('LOWER(plan) != ?', ['free'])
                   ->where(function($q2) {
                       $q2->whereNull('subscription_end')
                          ->orWhere('subscription_end', '>', now());
@@ -331,37 +331,27 @@ class FeedController extends Controller
             ->take(10)
             ->get();
 
-        $homeShowcaseAds = $urgentAds
-            ->merge($boostedAds)
-            ->merge($ads->getCollection())
-            ->merge($featuredAds)
-            ->unique('id')
-            ->sortByDesc(function ($ad) {
-                $priority = 0;
-                $isBoosted = $ad->is_boosted && $ad->boost_end && $ad->boost_end > now();
-                $isUrgent = $ad->is_urgent && (!$ad->urgent_until || $ad->urgent_until > now());
+        $homePersonalRequests = $this->buildHomeShowcaseAds(
+            serviceType: 'demande',
+            currentUser: $user,
+            limit: 6,
+            authorKind: 'particulier'
+        );
+        $homeProfessionalOffers = $this->buildHomeShowcaseAds(
+            serviceType: 'offre',
+            currentUser: $user,
+            limit: 6,
+            authorKind: 'professional'
+        );
+        $homeProfessionalProfiles = $this->buildHighlightedProfessionalProfiles($user, 6);
 
-                if ($isUrgent) {
-                    $priority += 100;
-                }
-                if ($isBoosted) {
-                    $priority += 90;
-                    if ($ad->boost_type === 'vip') {
-                        $priority += 12;
-                    } elseif ($ad->boost_type === 'premium') {
-                        $priority += 8;
-                    }
-                }
-                if ($ad->is_pinned) {
-                    $priority += 10;
-                }
-
-                return ($priority * 10000000000) + optional($ad->created_at)->timestamp;
-            })
-            ->take(6)
-            ->values();
-        $homeShowcaseAdIds = $homeShowcaseAds->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
-        $homeShowcasePros = $featuredProfessionals->take(8)->values();
+        $homeShowcaseAdIds = $homePersonalRequests
+            ->pluck('id')
+            ->merge($homeProfessionalOffers->pluck('id'))
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
 
         // Annonces sidebar (toutes les urgent + boostées combinées pour le sidebar gauche)
         $sidebarAds = $urgentAds->merge($boostedAds)
@@ -463,9 +453,10 @@ class FeedController extends Controller
             'premiumPros',
             'featuredProfessionals',
             'featuredProsJson',
-            'homeShowcaseAds',
+            'homePersonalRequests',
+            'homeProfessionalOffers',
+            'homeProfessionalProfiles',
             'homeShowcaseAdIds',
-            'homeShowcasePros',
             'userStats',
             'popularCategories',
             'sort',
@@ -529,6 +520,155 @@ class FeedController extends Controller
         ]);
     }
 
+    private function buildHomeShowcaseAds(string $serviceType, $currentUser, int $limit = 6, ?string $authorKind = null)
+    {
+        $query = Ad::where('status', 'active')
+            ->where('service_type', $serviceType)
+            ->with('user');
+
+        $this->applyHomeShowcaseVisibility($query, $currentUser);
+
+        if ($authorKind === 'particulier') {
+            $query->whereHas('user', function ($q) {
+                $q->where(function ($q2) {
+                    $q2->where('user_type', 'particulier')
+                        ->orWhereNull('user_type');
+                })->where(function ($q2) {
+                    $q2->where('is_service_provider', false)
+                        ->orWhereNull('is_service_provider');
+                });
+            });
+        }
+
+        if ($authorKind === 'professional') {
+            $query->whereHas('user', function ($q) {
+                $this->scopeProfessionalUsers($q);
+            });
+        }
+
+        return $query
+            ->orderByRaw(
+                "CASE WHEN is_urgent = true AND (urgent_until IS NULL OR urgent_until > ?) THEN 0 ELSE 1 END",
+                [now()]
+            )
+            ->orderByRaw(
+                "CASE WHEN is_boosted = true AND boost_end > ? THEN 0 ELSE 1 END",
+                [now()]
+            )
+            ->orderByRaw("CASE WHEN boost_type = 'vip' THEN 0 WHEN boost_type = 'premium' THEN 1 ELSE 2 END")
+            ->orderBy('is_pinned', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->take($limit)
+            ->get()
+            ->values();
+    }
+
+    private function applyHomeShowcaseVisibility($query, $currentUser): void
+    {
+        $query->where(function ($q) use ($currentUser) {
+            $q->where('visibility', 'public')
+                ->orWhereNull('visibility');
+
+            if ($currentUser && ($currentUser->user_type === 'professionnel' || $currentUser->is_service_provider)) {
+                $q->orWhere('visibility', 'pro_targeted');
+            }
+
+            $q->orWhere(function ($q2) {
+                $q2->where('is_boosted', true)
+                    ->where('boost_end', '>', now());
+            });
+        });
+    }
+
+    private function buildHighlightedProfessionalProfiles($currentUser, int $limit = 6)
+    {
+        $profiles = \App\Models\User::query()
+            ->where(function ($q) {
+                $this->scopeProfessionalUsers($q);
+            })
+            ->when($currentUser, fn($q) => $q->where('id', '!=', $currentUser->id))
+            ->where(function ($q) {
+                $this->scopeHighlightedProfiles($q);
+            })
+            ->with(['services' => fn($q) => $q->where('is_active', true)->limit(2)])
+            ->withCount([
+                'verifiedReviewsReceived as verified_reviews_count',
+                'ads as ads_count' => fn($q) => $q->where('status', 'active'),
+            ])
+            ->withAvg(['verifiedReviewsReceived as verified_reviews_avg' => fn($q) => $q], 'rating')
+            ->orderByDesc('verified_reviews_avg')
+            ->orderByDesc('verified_reviews_count')
+            ->orderByDesc('ads_count')
+            ->orderByDesc('updated_at')
+            ->take($limit)
+            ->get()
+            ->values();
+
+        $topProviderIds = $profiles
+            ->filter(fn($pro) => (int) ($pro->verified_reviews_count ?? 0) > 0 && (float) ($pro->verified_reviews_avg ?? 0) >= 4.5)
+            ->sortByDesc(fn($pro) => ((float) ($pro->verified_reviews_avg ?? 0) * 100000) + (int) ($pro->verified_reviews_count ?? 0))
+            ->take(3)
+            ->pluck('id')
+            ->all();
+
+        return $profiles->map(function ($pro) use ($topProviderIds) {
+            $pro->setAttribute('is_featured_premium', true);
+            $pro->setAttribute('is_top_provider', in_array($pro->id, $topProviderIds, true));
+
+            return $pro;
+        });
+    }
+
+    private function scopeProfessionalUsers($query): void
+    {
+        $query->where(function ($q) {
+            $q->where('user_type', 'professionnel')
+                ->orWhere('is_service_provider', true)
+                ->orWhere('pro_onboarding_completed', true)
+                ->orWhereHas('proSubscriptions', function ($q2) {
+                    $q2->where('status', 'active')
+                        ->where(function ($q3) {
+                            $q3->whereNull('ends_at')
+                                ->orWhere('ends_at', '>', now());
+                        });
+                })
+                ->orWhere(function ($q2) {
+                    $q2->whereNotNull('plan')
+                        ->where('plan', '!=', '')
+                        ->whereRaw('LOWER(plan) != ?', ['free'])
+                        ->where(function ($q3) {
+                            $q3->whereNull('subscription_end')
+                                ->orWhere('subscription_end', '>', now());
+                        });
+                });
+        });
+    }
+
+    private function scopeHighlightedProfiles($query): void
+    {
+        $query->where(function ($q) {
+            $q->whereHas('ads', function ($q2) {
+                $q2->where('status', 'active')
+                    ->where('is_boosted', true)
+                    ->where('boost_end', '>', now());
+            })->orWhereHas('proSubscriptions', function ($q2) {
+                $q2->where('status', 'active')
+                    ->where(function ($q3) {
+                        $q3->whereNull('ends_at')
+                            ->orWhere('ends_at', '>', now());
+                    });
+            })->orWhere(function ($q2) {
+                $q2->whereNotNull('plan')
+                    ->where('plan', '!=', '')
+                    ->whereRaw('LOWER(plan) != ?', ['free'])
+                    ->where(function ($q3) {
+                        $q3->whereNull('subscription_end')
+                            ->orWhere('subscription_end', '>', now());
+                    });
+            });
+        });
+    }
+
     private function buildFeaturedProfessionals($currentUser, int $limit = 8)
     {
         $baseProsFilter = function ($query) use ($currentUser) {
@@ -559,7 +699,7 @@ class FeedController extends Controller
             })->orWhere(function ($q) {
                 $q->whereNotNull('plan')
                   ->where('plan', '!=', '')
-                  ->where('plan', '!=', 'free')
+                  ->whereRaw('LOWER(plan) != ?', ['free'])
                   ->where(function ($q2) {
                       $q2->whereNull('subscription_end')
                          ->orWhere('subscription_end', '>', now());
@@ -1031,7 +1171,7 @@ class FeedController extends Controller
             ->where(function($q) {
                 $q->whereNotNull('plan')
                   ->where('plan', '!=', '')
-                  ->where('plan', '!=', 'free')
+                  ->whereRaw('LOWER(plan) != ?', ['free'])
                   ->where(function($q2) {
                       $q2->whereNull('subscription_end')
                          ->orWhere('subscription_end', '>', now());
@@ -1143,7 +1283,7 @@ class FeedController extends Controller
             ->orWhereHas('user', function($q3) {
                 $q3->whereNotNull('plan')
                     ->where('plan', '!=', '')
-                    ->where('plan', '!=', 'free')
+                    ->whereRaw('LOWER(plan) != ?', ['free'])
                     ->where(function($q4) {
                         $q4->whereNull('subscription_end')
                             ->orWhere('subscription_end', '>', now());
@@ -1387,7 +1527,7 @@ class FeedController extends Controller
             ->where(function($q) {
                 $q->whereNotNull('plan')
                   ->where('plan', '!=', '')
-                  ->where('plan', '!=', 'free')
+                  ->whereRaw('LOWER(plan) != ?', ['free'])
                   ->where(function($q2) {
                       $q2->whereNull('subscription_end')
                          ->orWhere('subscription_end', '>', now());

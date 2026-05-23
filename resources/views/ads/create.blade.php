@@ -135,6 +135,19 @@
         border-color: #00a884;
         background: linear-gradient(135deg, rgba(0, 168, 132, 0.08), rgba(37, 211, 102, 0.08));
     }
+
+    .type-option.is-disabled {
+        cursor: not-allowed;
+        opacity: 0.72;
+        background: #f3f4f6;
+    }
+
+    .type-option.is-disabled:hover {
+        border-color: #e9edef;
+        background: #f3f4f6;
+        transform: none;
+        box-shadow: none;
+    }
     
     .type-option input {
         position: absolute;
@@ -156,6 +169,15 @@
         margin: 0;
         font-size: 0.85rem;
         color: #667781;
+    }
+
+    .type-option-note {
+        display: block;
+        margin-top: 10px;
+        color: #b45309;
+        font-size: 0.76rem;
+        font-weight: 600;
+        line-height: 1.35;
     }
     
     /* Category Grid */
@@ -896,7 +918,46 @@
     
     <form method="POST" action="{{ route('ads.store') }}" enctype="multipart/form-data" class="form-card">
         @csrf
-        <input type="hidden" name="service_type" id="service_type" value="offre">
+        @php
+            $publishUser = Auth::user();
+            $hasPaidPlan = $publishUser && !in_array(strtolower((string) ($publishUser->plan ?? '')), ['', 'free'], true);
+            $canPublishProfessionalOffer = $publishUser && (
+                $publishUser->user_type === 'professionnel'
+                || $publishUser->is_service_provider
+                || $publishUser->hasActiveProSubscription()
+                || $publishUser->hasCompletedProOnboarding()
+                || $hasPaidPlan
+            );
+            $selectedServiceType = old('service_type', $canPublishProfessionalOffer ? 'offre' : 'demande');
+        @endphp
+        <input type="hidden" name="service_type" id="service_type" value="{{ $selectedServiceType }}">
+
+        <!-- Architecture de publication -->
+        <div class="form-section">
+            <div class="section-header">
+                <div class="section-icon"><i class="fas fa-layer-group"></i></div>
+                <h4 class="section-title">Type de publication</h4>
+            </div>
+
+            <div class="type-selector" data-can-professional-offer="{{ $canPublishProfessionalOffer ? '1' : '0' }}">
+                <label class="type-option {{ $selectedServiceType === 'demande' ? 'selected' : '' }}" data-service-type="demande">
+                    <input type="radio" name="service_type_choice" value="demande" {{ $selectedServiceType === 'demande' ? 'checked' : '' }}>
+                    <div class="type-option-icon"><i class="fas fa-search"></i></div>
+                    <h6>Demande de particulier</h6>
+                    <p>Vous cherchez un professionnel pour un travail, un dépannage ou un service.</p>
+                </label>
+
+                <label class="type-option {{ $selectedServiceType === 'offre' ? 'selected' : '' }} {{ !$canPublishProfessionalOffer ? 'is-disabled' : '' }}" data-service-type="offre" aria-disabled="{{ $canPublishProfessionalOffer ? 'false' : 'true' }}">
+                    <input type="radio" name="service_type_choice" value="offre" {{ $selectedServiceType === 'offre' ? 'checked' : '' }}>
+                    <div class="type-option-icon"><i class="fas fa-briefcase"></i></div>
+                    <h6>Offre professionnelle</h6>
+                    <p>Vous proposez un service, une location de matériel, une promotion ou un recrutement.</p>
+                    @unless($canPublishProfessionalOffer)
+                        <span class="type-option-note">Réservé aux comptes professionnels ou prestataires valides.</span>
+                    @endunless
+                </label>
+            </div>
+        </div>
 
         <!-- Catégorie -->
         <div class="form-section" id="category-section">
@@ -1275,12 +1336,70 @@
     }
 
     // ===== TYPE SELECTION =====
+    const canPublishProfessionalOffer = {{ $canPublishProfessionalOffer ? 'true' : 'false' }};
+
+    function applyServiceTypeContext(type) {
+        const isDemand = type === 'demande';
+        const pageTitle = document.getElementById('page-title');
+        const pageSubtitle = document.getElementById('page-subtitle');
+        const categoryTitle = document.getElementById('category-section-title');
+        const titleField = document.getElementById('title');
+        const descField = document.getElementById('description');
+
+        if (pageTitle) {
+            pageTitle.innerHTML = isDemand
+                ? '<i class="fas fa-search me-2"></i>Publier une demande'
+                : '<i class="fas fa-briefcase me-2"></i>Publier une offre professionnelle';
+        }
+        if (pageSubtitle) {
+            pageSubtitle.textContent = isDemand
+                ? 'Décrivez votre besoin pour trouver le professionnel idéal'
+                : 'Présentez une offre claire pour vos futurs clients ou candidats';
+        }
+        if (categoryTitle) {
+            categoryTitle.textContent = isDemand
+                ? 'Quel service recherchez-vous ?'
+                : 'Dans quel domaine publiez-vous votre offre ?';
+        }
+        if (titleField) {
+            titleField.placeholder = isDemand
+                ? 'Ex: Recherche plombier pour fuite urgente à Mamoudzou'
+                : 'Ex: Location de bétonnière ou dépannage électrique disponible';
+        }
+        if (descField) {
+            descField.placeholder = isDemand
+                ? 'Décrivez précisément ce dont vous avez besoin : type de travaux, lieu, urgence, budget...'
+                : 'Décrivez votre offre : prestations, conditions, zone d’intervention, disponibilité ou tarif...';
+        }
+    }
+
+    function setServiceType(type, options = {}) {
+        if (type === 'offre' && !canPublishProfessionalOffer) {
+            if (options.notify !== false) {
+                alert('Les offres professionnelles sont réservées aux comptes professionnels ou prestataires. Complétez votre profil prestataire avant de publier ce type d’offre.');
+            }
+            type = 'demande';
+        }
+
+        const hiddenServiceType = document.getElementById('service_type');
+        if (hiddenServiceType) hiddenServiceType.value = type;
+
+        document.querySelectorAll('.type-option').forEach(option => {
+            const optionType = option.dataset.serviceType;
+            const radio = option.querySelector('input[type="radio"]');
+            const selected = optionType === type;
+
+            option.classList.toggle('selected', selected);
+            if (radio) radio.checked = selected;
+        });
+
+        applyServiceTypeContext(type);
+    }
+
     document.querySelectorAll('.type-option').forEach(option => {
-        option.addEventListener('click', function() {
-            document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
-            this.classList.add('selected');
-            const radio = this.querySelector('input[type="radio"]');
-            if (radio) radio.checked = true;
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            setServiceType(this.dataset.serviceType || 'demande');
         });
     });
 
@@ -1427,6 +1546,13 @@
             document.getElementById('category-section').scrollIntoView({ behavior: 'smooth' });
             return false;
         }
+
+        if (document.getElementById('service_type')?.value === 'offre' && !canPublishProfessionalOffer) {
+            e.preventDefault();
+            alert('Les offres professionnelles sont réservées aux comptes professionnels ou prestataires.');
+            document.querySelector('.type-selector')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+        }
         
         // Final update of file input before submit
         updateFileInput();
@@ -1454,20 +1580,11 @@
 
         // Set service type
         if (paramType === 'demande') {
-            document.getElementById('service_type').value = 'demande';
-            document.getElementById('page-title').innerHTML = '<i class="fas fa-search me-2"></i>Publier une demande';
-            document.getElementById('page-subtitle').textContent = 'D\u00e9crivez votre besoin pour trouver le professionnel id\u00e9al';
-            document.getElementById('category-section-title').textContent = 'Quel service recherchez-vous ?';
-            // Update placeholders for demande context
-            const titleField = document.getElementById('title');
-            const descField = document.getElementById('description');
-            if (titleField) titleField.placeholder = 'Ex: Recherche plombier pour fuite urgente à Mamoudzou';
-            if (descField) descField.placeholder = 'Décrivez précisément ce dont vous avez besoin : type de travaux, lieu, urgence, budget...';
-        } else if (paramType === 'service') {
-            document.getElementById('service_type').value = 'offre';
-            document.getElementById('page-title').innerHTML = '<i class="fas fa-briefcase me-2"></i>Proposer mes services';
-            document.getElementById('page-subtitle').textContent = 'Présentez votre expertise pour attirer de nouveaux clients';
-            document.getElementById('category-section-title').textContent = 'Quel service proposez-vous ?';
+            setServiceType('demande', { notify: false });
+        } else if (paramType === 'service' || paramType === 'offre') {
+            setServiceType('offre');
+        } else {
+            setServiceType(document.getElementById('service_type')?.value || 'demande', { notify: false });
         }
 
         // Auto-select category from URL

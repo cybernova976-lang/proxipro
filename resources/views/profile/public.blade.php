@@ -35,14 +35,14 @@
                     <div class="position-relative d-inline-block mb-4">
                         @if($user->avatar)
                             <img src="{{ storage_url($user->avatar) }}" alt="Avatar" id="profileAvatarImg"
-                                class="shadow" style="width: 140px; height: 140px; object-fit: cover; border-radius: 50%; border: 4px solid #e2e8f0;">
+                                class="shadow" style="width: 180px; height: 220px; max-width: 100%; object-fit: cover; border-radius: 14px; border: 1px solid #e2e8f0;">
                         @else
                             <div class="bg-primary text-white d-inline-flex align-items-center justify-content-center shadow" id="profileAvatarPlaceholder"
-                                style="width: 140px; height: 140px; font-size: 56px; border-radius: 50%; border: 4px solid #e2e8f0;">
+                                style="width: 180px; height: 220px; max-width: 100%; font-size: 64px; border-radius: 14px; border: 1px solid #e2e8f0;">
                                 {{ strtoupper(substr($user->name, 0, 1)) }}
                             </div>
                             <img src="" alt="Avatar" id="profileAvatarImg" class="shadow d-none"
-                                style="width: 140px; height: 140px; object-fit: cover; border-radius: 50%; border: 4px solid #e2e8f0;">
+                                style="width: 180px; height: 220px; max-width: 100%; object-fit: cover; border-radius: 14px; border: 1px solid #e2e8f0;">
                         @endif
                         @auth
                             @if(auth()->id() === $user->id)

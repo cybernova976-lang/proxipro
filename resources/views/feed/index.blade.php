@@ -879,11 +879,61 @@
     .home-showcase-row-title a:hover {
         color: #1d4ed8;
     }
+    .home-showcase-block {
+        padding: 16px 0 20px;
+        border-top: 1px solid #e8eef5;
+    }
+    .home-showcase-block:first-of-type {
+        border-top: 0;
+        padding-top: 0;
+    }
+    .home-showcase-block + .home-showcase-block {
+        margin-top: 8px;
+    }
+    .home-showcase-block-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+    .home-showcase-block-header h3 {
+        margin: 4px 0 0;
+        color: #0f172a;
+        font-size: 1.04rem;
+        font-weight: 850;
+    }
+    .home-showcase-block-header p {
+        margin: 4px 0 0;
+        color: #64748b;
+        font-size: 0.8rem;
+        line-height: 1.35;
+    }
+    .home-showcase-block-header a {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: #2563eb;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .home-showcase-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #0f766e;
+        font-size: 0.68rem;
+        font-weight: 850;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
     .home-showcase-ads-grid,
     .home-showcase-pro-grid {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 14px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
     }
     .home-showcase-ad-card {
         display: flex;
@@ -913,7 +963,7 @@
     }
     .home-showcase-ad-media {
         position: relative;
-        aspect-ratio: 4 / 3;
+        aspect-ratio: 16 / 10;
         overflow: hidden;
         background: #eef2f7;
     }
@@ -1007,7 +1057,8 @@
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-    .home-showcase-ad-body h3 {
+    .home-showcase-ad-body h3,
+    .home-showcase-ad-body h4 {
         margin: 0;
         color: #0f172a;
         font-size: 0.92rem;
@@ -1018,6 +1069,15 @@
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
+    }
+    .home-showcase-type-badge {
+        flex-shrink: 0;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: #ecfdf5;
+        color: #047857;
+        font-size: 0.58rem;
+        font-weight: 850;
     }
     .home-showcase-ad-body p {
         margin: 0;
@@ -1070,6 +1130,18 @@
         color: #1d4ed8;
         font-size: 0.68rem;
         font-weight: 850;
+    }
+    .home-showcase-author-pro {
+        width: auto !important;
+        height: auto !important;
+        min-height: 16px;
+        padding: 2px 5px;
+        border-radius: 3px !important;
+        background: #2563eb !important;
+        color: #fff !important;
+        font-size: 0.54rem !important;
+        line-height: 1;
+        letter-spacing: 0;
     }
     .home-showcase-pro-row {
         margin-top: 18px;
@@ -1135,6 +1207,25 @@
         color: #fff;
         font-size: 1.2rem;
         font-weight: 850;
+    }
+    .home-showcase-top-provider {
+        position: absolute;
+        left: 6px;
+        bottom: 6px;
+        width: auto !important;
+        height: auto !important;
+        min-height: 20px;
+        padding: 4px 7px;
+        border-radius: 999px;
+        background: #111827;
+        color: #fff;
+        font-size: 0.6rem !important;
+        font-weight: 850;
+        line-height: 1;
+        display: inline-flex !important;
+        align-items: center;
+        gap: 4px;
+        box-shadow: 0 5px 12px rgba(15, 23, 42, 0.18);
     }
     .home-showcase-pro-content {
         min-width: 0;
@@ -1487,7 +1578,8 @@
     }
     @media (max-width: 640px) {
         .home-showcase-header,
-        .home-showcase-row-title {
+        .home-showcase-row-title,
+        .home-showcase-block-header {
             align-items: flex-start;
             flex-direction: column;
             gap: 8px;
@@ -1500,7 +1592,7 @@
             grid-template-columns: 1fr;
         }
         .home-showcase-ads-grid {
-            margin-top: 72px;
+            margin-top: 0;
         }
         .home-showcase-ad-media {
             aspect-ratio: 16 / 9;
@@ -6041,44 +6133,135 @@
     }
 
     .home-showcase-section {
-        margin: 0 0 34px;
+        margin: 0 0 28px;
     }
 
     .home-showcase-header {
-        margin-bottom: 18px;
+        margin-bottom: 14px;
     }
 
     .home-showcase-header h2,
-    .home-showcase-row-title h3 {
+    .home-showcase-row-title h3,
+    .home-showcase-block-header h3 {
         color: #1F2421;
         font-weight: 850;
     }
 
     .home-showcase-header h2 {
-        font-size: 1.55rem;
+        font-size: 1.42rem;
+    }
+
+    .home-showcase-block {
+        padding: 15px 0 18px;
+        border-top: 1px solid #E2E2DC;
+    }
+
+    .home-showcase-block:first-of-type {
+        border-top: 0;
+        padding-top: 0;
+    }
+
+    .home-showcase-block + .home-showcase-block {
+        margin-top: 6px;
+    }
+
+    .home-showcase-block-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+
+    .home-showcase-block-header h3 {
+        margin: 4px 0 0;
+        font-size: 1.02rem;
+        line-height: 1.2;
+    }
+
+    .home-showcase-block-header p {
+        margin: 4px 0 0;
+        color: #6A7266;
+        font-size: 0.8rem;
+        line-height: 1.35;
+        max-width: 680px;
+    }
+
+    .home-showcase-block-header a {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: #2A6F62;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .home-showcase-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #2A6F62;
+        font-size: 0.66rem;
+        font-weight: 850;
+        letter-spacing: 0.06em;
+        line-height: 1;
+        text-transform: uppercase;
     }
 
     .home-showcase-ads-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 24px;
+        gap: 14px;
     }
 
     .home-showcase-ad-card {
         border-color: #E2E2DC;
-        border-radius: 16px;
+        border-radius: 10px;
         box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
     }
 
     .home-showcase-ad-media {
-        aspect-ratio: 4 / 3;
+        aspect-ratio: 16 / 10;
     }
 
     .home-showcase-ad-body {
-        padding: 16px;
+        gap: 7px;
+        padding: 12px;
     }
 
-    .home-showcase-ad-body h3 {
-        font-size: 1rem;
+    .home-showcase-ad-body h3,
+    .home-showcase-ad-body h4 {
+        font-size: 0.94rem;
+        min-height: 2.25em;
+    }
+
+    .home-showcase-ad-body p {
+        min-height: 2.7em;
+        -webkit-line-clamp: 2;
+    }
+
+    .home-showcase-type-badge {
+        flex-shrink: 0;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: #EAF6F1;
+        color: #2A6F62;
+        font-size: 0.58rem;
+        font-weight: 850;
+        letter-spacing: 0;
+    }
+
+    .home-showcase-author-pro {
+        width: auto !important;
+        height: auto !important;
+        min-height: 16px;
+        padding: 2px 5px;
+        border-radius: 3px !important;
+        background: #0077ff !important;
+        color: #fff !important;
+        font-size: 0.54rem !important;
+        line-height: 1;
     }
 
     .home-showcase-pro-row {
@@ -6087,7 +6270,7 @@
 
     .home-showcase-pro-grid,
     .providers-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 14px;
     }
 
@@ -6122,7 +6305,7 @@
     .provider-image-wrapper {
         position: relative;
         width: 100%;
-        aspect-ratio: 1 / 1;
+        aspect-ratio: 4 / 3;
         height: auto;
         border-radius: 8px;
         overflow: hidden;
@@ -6153,6 +6336,7 @@
     }
 
     .home-showcase-pro-ribbon,
+    .home-showcase-top-provider,
     .provider-badge-top {
         position: absolute;
         left: 8px;
@@ -6182,6 +6366,15 @@
         background: #8A3FFC;
         font-size: 0.68rem;
         font-weight: 800;
+    }
+
+    .home-showcase-pro-avatar .home-showcase-top-provider {
+        width: auto;
+        height: auto;
+        justify-content: flex-start;
+        background: #1F2421;
+        font-size: 0.66rem;
+        font-weight: 850;
     }
 
     .home-showcase-pro-content,
@@ -6305,6 +6498,19 @@
         max-width: 100%;
     }
 
+    .home-showcase-pro-bio,
+    .provider-bio {
+        margin: 0;
+        color: #4b5563;
+        font-size: 0.76rem;
+        line-height: 1.35;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        white-space: normal;
+    }
+
     @media (max-width: 1180px) {
         .home-showcase-ads-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -6333,7 +6539,8 @@
 
     @media (max-width: 640px) {
         .home-showcase-header,
-        .home-showcase-row-title {
+        .home-showcase-row-title,
+        .home-showcase-block-header {
             align-items: flex-start;
             flex-direction: column;
             gap: 8px;
@@ -6568,13 +6775,8 @@
                     $primaryService = $pro->relationLoaded('services') ? $pro->services->first() : null;
                     $profession = $pro->profession ?? $pro->service_category ?? $primaryService?->subcategory ?? $primaryService?->main_category ?? $pro->bio ?? 'Prestataire de services';
                     $hourlyRate = $pro->hourly_rate ?? $primaryService?->hourly_rate ?? null;
-                    $city = $pro->city ?? $pro->location_preference ?? $pro->country ?? null;
-                    $providerTags = collect([
-                        ($pro->is_verified ?? false) ? 'Profil vérifié' : null,
-                        $isProAccount ? 'Pro actif' : 'Prestataire local',
-                        ($pro->ads_count ?? 0) > 0 ? (($pro->ads_count ?? 0) . ' annonce' . (($pro->ads_count ?? 0) > 1 ? 's' : '') . ' active' . (($pro->ads_count ?? 0) > 1 ? 's' : '')) : null,
-                        $city ? Str::limit($city, 22) : null,
-                    ])->filter()->take(3);
+                    $isTopProvider = $reviewsCount > 0 && (float) ($ratingRaw ?? 0) >= 4.5;
+                    $providerBio = $pro->bio ?: 'Prestataire professionnel disponible pour vos demandes locales.';
                 @endphp
                 <a href="{{ route('profile.public', $pro->id) }}" class="provider-card">
                     <div class="provider-image-wrapper">
@@ -6585,7 +6787,9 @@
                                 {{ strtoupper(substr($pro->name, 0, 1)) }}
                             </div>
                         @endif
-                        <div class="provider-badge-top"><i class="fas fa-heart"></i> {{ $isProAccount ? 'Top prestataire' : 'Prestataire' }}</div>
+                        @if($isTopProvider)
+                            <div class="provider-badge-top"><i class="fas fa-star"></i> Top prestataire</div>
+                        @endif
                     </div>
                     <div class="provider-card-info">
                         <div class="provider-info-header">
@@ -6602,16 +6806,14 @@
                         <p class="provider-profession">{{ Str::limit($profession, 42) }}</p>
                         <div class="provider-rating">
                             <span class="star-icon">★</span>
-                            <span class="rating-value">{{ $rating ?: 'Nouveau' }}</span>
-                            @if($reviewsCount > 0)
-                                <span class="reviews-count">({{ $reviewsCount }} avis)</span>
+                            @if($reviewsCount > 0 && $rating)
+                                <span class="rating-value">{{ $rating }}</span>
+                                <span class="reviews-count">{{ $reviewsCount }} avis</span>
+                            @else
+                                <span class="reviews-count">0 avis</span>
                             @endif
                         </div>
-                        <div class="provider-tags">
-                            @foreach($providerTags as $tag)
-                                <span>{{ $tag }}</span>
-                            @endforeach
-                        </div>
+                        <p class="provider-bio">{{ Str::limit($providerBio, 86) }}</p>
                     </div>
                 </a>
                 @endforeach
@@ -6752,7 +6954,7 @@
                         <button type="button" onclick="handleProposerServices()" class="pro-widget-cta pro-widget-cta-active" style="margin-bottom: 8px;">
                             <i class="fas fa-hand-holding-heart"></i> Proposer mes services
                         </button>
-                        <a href="{{ route('ads.create') }}" class="pro-widget-cta" style="background: #f3f4f6; border-color: #e5e7eb; color: #374151; text-decoration:none; text-align:center;">
+                        <a href="{{ route('ads.create', ['type' => 'service']) }}" class="pro-widget-cta" style="background: #f3f4f6; border-color: #e5e7eb; color: #374151; text-decoration:none; text-align:center;">
                             <i class="fas fa-bullhorn"></i> Publier une offre
                         </a>
                     </div>
@@ -6790,7 +6992,7 @@
 
                     <!-- Call to action: Demander un service -->
                     <div style="margin-bottom: 20px;">
-                        <a href="{{ route('ads.create') }}" style="display: flex; align-items: center; justify-content: center; width: 100%; padding: 12px; background: #E76F51; color: white; border-radius: 9999px; font-weight: 600; text-decoration: none; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(231,111,81,0.3); transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 8px -1px rgba(231,111,81,0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(231,111,81,0.3)';">
+                        <a href="{{ route('ads.create', ['type' => 'demande']) }}" style="display: flex; align-items: center; justify-content: center; width: 100%; padding: 12px; background: #E76F51; color: white; border-radius: 9999px; font-weight: 600; text-decoration: none; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(231,111,81,0.3); transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 8px -1px rgba(231,111,81,0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(231,111,81,0.3)';">
                             <i class="fas fa-plus-circle" style="margin-right: 8px;"></i> Demander un service
                         </a>
                     </div>
@@ -6874,8 +7076,9 @@
                 @endphp
 
                 @include('feed.partials.home-showcase', [
-                    'homeShowcaseAds' => $homeShowcaseAds ?? collect(),
-                    'homeShowcasePros' => $homeShowcasePros ?? collect(),
+                    'homePersonalRequests' => $homePersonalRequests ?? collect(),
+                    'homeProfessionalOffers' => $homeProfessionalOffers ?? collect(),
+                    'homeProfessionalProfiles' => $homeProfessionalProfiles ?? collect(),
                 ])
 
                 @include('feed.partials.ads-map', ['adsMapData' => $adsMapData ?? collect(), 'geoEnabled' => $geoEnabled ?? false, 'geoCity' => $geoCity ?? null])
@@ -10391,7 +10594,7 @@
         };
         const formatRating = (value) => {
             const rating = Number(value);
-            if (!Number.isFinite(rating) || rating <= 0) return 'Nouveau';
+            if (!Number.isFinite(rating) || rating <= 0) return '';
             return rating.toFixed(2).replace(/\.?0+$/, '').replace('.', ',');
         };
 
@@ -10412,17 +10615,21 @@
 
             const profession = pro.profession || pro.service_category || pro.bio || 'Prestataire de services';
             const reviewsCount = Number(pro.reviews_count || 0);
-            const tags = [
-                isProAccount ? 'Pro actif' : 'Prestataire local',
-                Number(pro.ads_count || 0) > 0 ? `${pro.ads_count} annonce${Number(pro.ads_count) > 1 ? 's' : ''} active${Number(pro.ads_count) > 1 ? 's' : ''}` : '',
-                pro.location || ''
-            ].filter(Boolean).slice(0, 3).map(tag => `<span>${escapeHtml(truncate(tag, 22))}</span>`).join('');
+            const ratingText = formatRating(pro.rating);
+            const isTopProvider = reviewsCount > 0 && Number(pro.rating || 0) >= 4.5;
+            const topProviderBadge = isTopProvider
+                ? '<div class="provider-badge-top"><i class="fas fa-star"></i> Top prestataire</div>'
+                : '';
+            const ratingHtml = reviewsCount > 0 && ratingText
+                ? `<span class="rating-value">${ratingText}</span><span class="reviews-count">${reviewsCount} avis</span>`
+                : '<span class="reviews-count">0 avis</span>';
+            const providerBio = pro.bio || 'Prestataire professionnel disponible pour vos demandes locales.';
             
             html += `
                 <a href="/user/${pro.id}" class="provider-card">
                     <div class="provider-image-wrapper">
                         ${avatar}
-                        <div class="provider-badge-top"><i class="fas fa-heart"></i> ${isProAccount ? 'Top prestataire' : 'Prestataire'}</div>
+                        ${topProviderBadge}
                     </div>
                     <div class="provider-card-info">
                         <div class="provider-info-header">
@@ -10432,10 +10639,9 @@
                         <p class="provider-profession">${escapeHtml(truncate(profession, 42))}</p>
                         <div class="provider-rating">
                             <span class="star-icon">★</span>
-                            <span class="rating-value">${formatRating(pro.rating)}</span>
-                            ${reviewsCount > 0 ? `<span class="reviews-count">(${reviewsCount} avis)</span>` : ''}
+                            ${ratingHtml}
                         </div>
-                        <div class="provider-tags">${tags}</div>
+                        <p class="provider-bio">${escapeHtml(truncate(providerBio, 86))}</p>
                     </div>
                 </a>
             `;

@@ -180,6 +180,12 @@ class AdController extends Controller
             'target_categories.*' => 'string'
         ]);
 
+        if ($request->service_type === 'offre' && !$this->canPublishProfessionalOffer(Auth::user())) {
+            return back()
+                ->withErrors(['service_type' => 'Les offres professionnelles sont réservées aux comptes professionnels ou prestataires.'])
+                ->withInput();
+        }
+
         // Déterminer la localisation finale
         $finalLocation = $request->location;
         if (empty($finalLocation) && $request->city && $request->city !== '__other__') {
@@ -311,6 +317,15 @@ class AdController extends Controller
             'photos' => 'nullable|array|max:' . $maxPhotos,
             'photos.*' => 'image|mimes:jpeg,png,webp|max:5120',
         ]);
+
+        if ($request->service_type === 'offre' && !$this->canPublishProfessionalOffer(Auth::user())) {
+            return response()->json([
+                'success' => false,
+                'errors' => [
+                    'service_type' => ['Les offres professionnelles sont réservées aux comptes professionnels ou prestataires.'],
+                ],
+            ], 422);
+        }
 
         $finalLocation = $request->location;
         if (empty($finalLocation) && $request->city && $request->city !== '__other__') {
@@ -465,6 +480,12 @@ class AdController extends Controller
             'target_categories.*' => 'string',
         ]);
 
+        if ($request->service_type === 'offre' && !$this->canPublishProfessionalOffer(Auth::user())) {
+            return back()
+                ->withErrors(['service_type' => 'Les offres professionnelles sont réservées aux comptes professionnels ou prestataires.'])
+                ->withInput();
+        }
+
         // Déterminer la localisation finale
         $finalLocation = $request->location;
         if (empty($finalLocation) && $request->city && $request->city !== '__other__') {
@@ -611,6 +632,21 @@ class AdController extends Controller
         $ad->delete();
         
         return redirect()->back()->with('success', 'Annonce supprimée avec succès.');
+    }
+
+    private function canPublishProfessionalOffer(?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        $hasPaidPlan = !in_array(strtolower((string) ($user->plan ?? '')), ['', 'free'], true);
+
+        return $user->user_type === 'professionnel'
+            || (bool) $user->is_service_provider
+            || $user->hasActiveProSubscription()
+            || $user->hasCompletedProOnboarding()
+            || $hasPaidPlan;
     }
 
     /**
