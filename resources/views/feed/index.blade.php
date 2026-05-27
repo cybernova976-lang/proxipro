@@ -6103,13 +6103,18 @@
         padding-top: 26px;
     }
 
+    :root {
+        --feed-home-width: min(1120px, calc(100vw - 144px));
+    }
+
     .feed-layout,
     .feed-main {
-        max-width: 1280px;
+        max-width: none;
     }
 
     .feed-page-heading {
-        max-width: 1280px;
+        width: var(--feed-home-width);
+        max-width: 1120px;
         margin: 0 auto 18px;
         display: flex;
         align-items: flex-end;
@@ -6129,7 +6134,7 @@
     .feed-page-heading h1 {
         margin: 0;
         color: #1F2421;
-        font-size: 3.05rem;
+        font-size: 2.85rem;
         line-height: 1.08;
         font-weight: 850;
     }
@@ -6205,22 +6210,34 @@
         z-index: 1045;
     }
 
-    @media (min-width: 992px) {
-        .feed-page-heading,
-        .feed-layout {
-            width: min(1280px, calc(100vw - clamp(120px, 18vw, 312px) - 72px));
-            max-width: none;
-            margin-left: clamp(120px, 18vw, 312px);
-            margin-right: auto;
+    .feed-page-heading,
+    .feed-layout {
+        width: var(--feed-home-width);
+        max-width: 1120px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .feed-main {
+        width: 100%;
+    }
+
+    @media (min-width: 1440px) {
+        :root {
+            --feed-home-width: min(1180px, calc(100vw - 180px));
         }
 
-        .feed-main {
-            max-width: none;
-            width: 100%;
+        .feed-page-heading,
+        .feed-layout {
+            max-width: 1180px;
         }
     }
 
     @media (max-width: 991px) {
+        :root {
+            --feed-home-width: calc(100vw - 32px);
+        }
+
         .feed-page-heading {
             padding-left: 48px;
         }
@@ -10265,14 +10282,19 @@
     function setViewMode(mode) {
         currentFilters.mode = mode;
         
-        // Mettre à jour les boutons toggle
-        document.getElementById('togglePro').classList.toggle('active', mode === 'providers');
-        document.getElementById('toggleOffres').classList.toggle('active', mode === 'missions');
-        document.getElementById('toggleDemandes').classList.remove('active');
+        const togglePro = document.getElementById('togglePro');
+        const toggleOffres = document.getElementById('toggleOffres');
+        const toggleDemandes = document.getElementById('toggleDemandes');
+        const providersSection = document.getElementById('providersSection');
+        const missionsSection = document.getElementById('missionsSection');
+
+        if (togglePro) togglePro.classList.toggle('active', mode === 'providers');
+        if (toggleOffres) toggleOffres.classList.toggle('active', mode === 'missions');
+        if (toggleDemandes) toggleDemandes.classList.remove('active');
         
         // Afficher/Masquer les sections
-        document.getElementById('providersSection').style.display = mode === 'providers' ? 'block' : 'none';
-        document.getElementById('missionsSection').style.display = mode === 'missions' ? 'block' : 'none';
+        if (providersSection) providersSection.style.display = mode === 'providers' ? 'block' : 'none';
+        if (missionsSection) missionsSection.style.display = mode === 'missions' ? 'block' : 'none';
         
         // Recharger les données
         loadData();
