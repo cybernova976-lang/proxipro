@@ -6094,6 +6094,15 @@
     .sub-popup-free-note i { color: #10b981; font-size: 0.9rem; flex-shrink: 0; }
 
     /* ===== FEED ACCUEIL - Alignement visuel Emergent + cartes prestataires ===== */
+    .filter-bar-container,
+    .filter-bar-spacer {
+        display: none !important;
+    }
+
+    .content-container {
+        padding-top: 26px;
+    }
+
     .feed-layout,
     .feed-main {
         max-width: 1280px;
@@ -6101,7 +6110,7 @@
 
     .feed-page-heading {
         max-width: 1280px;
-        margin: 0 auto 32px;
+        margin: 0 auto 18px;
         display: flex;
         align-items: flex-end;
         justify-content: space-between;
@@ -6120,7 +6129,7 @@
     .feed-page-heading h1 {
         margin: 0;
         color: #1F2421;
-        font-size: 3rem;
+        font-size: 3.05rem;
         line-height: 1.08;
         font-weight: 850;
     }
@@ -6130,6 +6139,91 @@
         color: #7B8374;
         font-size: 0.98rem;
         line-height: 1.5;
+    }
+
+    .create-post-card {
+        border-color: #D8E1EA;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.04);
+    }
+
+    .create-post-inner {
+        gap: 12px;
+    }
+
+    .create-post-avatar {
+        width: 44px;
+        height: 44px;
+    }
+
+    .create-post-input {
+        display: flex;
+        align-items: center;
+        min-height: 46px;
+        padding: 0 18px;
+        font-size: 0.95rem;
+        border-color: #DDE6EF;
+        background: #F8FAFC;
+    }
+
+    .create-post-filters {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .create-post-divider {
+        width: 1px;
+        height: 36px;
+        background: #DDE6EF;
+        margin: 0 2px;
+    }
+
+    .create-post-card .filter-dropdown {
+        position: relative;
+    }
+
+    .create-post-card .filter-btn {
+        min-height: 44px;
+        padding: 0 16px;
+        border-radius: 22px;
+        background: #F8FAFC;
+        border-color: #DDE6EF;
+        color: #475569;
+        box-shadow: none;
+    }
+
+    .create-post-card .filter-btn:hover {
+        background: #F1F5F9;
+        border-color: #CBD5E1;
+    }
+
+    .create-post-card .filter-menu {
+        z-index: 1045;
+    }
+
+    @media (min-width: 992px) {
+        .feed-page-heading,
+        .feed-layout {
+            width: min(1280px, calc(100vw - clamp(120px, 18vw, 312px) - 72px));
+            max-width: none;
+            margin-left: clamp(120px, 18vw, 312px);
+            margin-right: auto;
+        }
+
+        .feed-main {
+            max-width: none;
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 991px) {
+        .feed-page-heading {
+            padding-left: 48px;
+        }
     }
 
     .home-showcase-section {
@@ -6531,6 +6625,31 @@
             font-size: 2.25rem;
         }
 
+        .create-post-inner {
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+
+        .create-post-input {
+            flex-basis: calc(100% - 56px);
+        }
+
+        .create-post-filters {
+            width: 100%;
+            overflow-x: auto;
+            padding-top: 10px;
+            border-top: 1px solid #EEF2F7;
+            scrollbar-width: none;
+        }
+
+        .create-post-filters::-webkit-scrollbar {
+            display: none;
+        }
+
+        .create-post-divider {
+            display: none;
+        }
+
         .home-showcase-pro-grid,
         .providers-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -6584,63 +6703,6 @@
         </div>
 
         <div class="filter-separator"></div>
-
-        <!-- Catégorie -->
-        <div class="filter-dropdown" id="categoryDropdown">
-            <button class="filter-btn" onclick="toggleDropdown('categoryDropdown')">
-                <i class="fas fa-folder"></i>
-                <span id="categoryLabel">Catégorie</span>
-                <i class="fas fa-chevron-down chevron"></i>
-            </button>
-            <div class="filter-menu" id="categoryMenu">
-                <div class="filter-menu-item selected" data-value="" onclick="selectCategory('')">
-                    <i class="fas fa-check"></i> Toutes les catégories
-                </div>
-                @foreach($missionCategories as $catName => $catData)
-                <div class="filter-menu-item" data-value="{{ $catName }}" onclick="selectCategory('{{ $catName }}')">
-                    <i class="{{ $catData['icon'] ?? 'fas fa-folder' }}"></i> {{ $catName }}
-                    <span class="ms-auto text-muted small">{{ $catData['total'] ?? 0 }}</span>
-                </div>
-                @endforeach
-            </div>
-        </div>
-
-        <!-- Sous-catégorie -->
-        <div class="filter-dropdown" id="subcategoryDropdown" style="display: none;">
-            <button class="filter-btn" onclick="toggleDropdown('subcategoryDropdown')">
-                <i class="fas fa-tags"></i>
-                <span id="subcategoryLabel">Sous-catégorie</span>
-                <i class="fas fa-chevron-down chevron"></i>
-            </button>
-            <div class="filter-menu" id="subcategoryMenu">
-                <!-- Rempli dynamiquement -->
-            </div>
-        </div>
-
-        <!-- Filtre par -->
-        <div class="filter-dropdown" id="sortDropdown">
-            <button class="filter-btn" onclick="toggleDropdown('sortDropdown')">
-                <i class="fas fa-sort-amount-down"></i>
-                <span id="sortLabel">Trier</span>
-                <i class="fas fa-chevron-down chevron"></i>
-            </button>
-            <div class="filter-menu">
-                <div class="filter-menu-item selected" data-value="recommended" onclick="selectSort('recommended')">
-                    <i class="fas fa-star"></i> Recommandé
-                </div>
-                <div class="filter-menu-item" data-value="recent" onclick="selectSort('recent')">
-                    <i class="fas fa-clock"></i> Plus récent
-                </div>
-                <div class="filter-menu-item" data-value="urgent" onclick="selectSort('urgent')">
-                    <i class="fas fa-bolt"></i> Urgent
-                </div>
-                @if($geoEnabled ?? false)
-                <div class="filter-menu-item" data-value="proximity" onclick="selectSort('proximity')">
-                    <i class="fas fa-map-marker-alt"></i> Proximité
-                </div>
-                @endif
-            </div>
-        </div>
 
         <!-- Plus de filtres -->
         <button class="filter-btn more-filters-btn" onclick="toggleMoreFilters()">
@@ -6832,7 +6894,6 @@
         
         <div class="feed-page-heading">
             <div>
-                <div class="feed-page-eyebrow">Feed local</div>
                 <h1 id="missionsSectionTitle">Ce qui se passe près de vous</h1>
                 <p id="missionsSectionSubtitle">
                 @if(($filterType ?? 'all') === 'demandes')
@@ -7048,21 +7109,84 @@
             <!-- Colonne principale: Feed des missions -->
             <div class="feed-main">
 
-                {{-- Barre "De quoi avez-vous besoin ?" + popup catégories --}}
-                @auth
+                {{-- Barre "De quoi avez-vous besoin ?" + filtres principaux --}}
                 <div class="create-post-card">
                     <div class="create-post-inner">
                         <div class="create-post-avatar">
+                            @auth
                             @if(Auth::user()->avatar)
                                 <img src="{{ storage_url(Auth::user()->avatar) }}" alt="{{ Auth::user()->name }}">
                             @else
                                 <div class="create-post-avatar-placeholder">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</div>
                             @endif
+                            @else
+                                <div class="create-post-avatar-placeholder">P</div>
+                            @endauth
                         </div>
-                        <a href="{{ route('demand.create') }}" class="create-post-input" style="text-decoration:none;">De quoi avez-vous besoin ?</a>
+                        <a href="{{ Auth::check() ? route('demand.create') : route('login') }}" class="create-post-input" style="text-decoration:none;">De quoi avez-vous besoin ?</a>
+
+                        <div class="create-post-filters" aria-label="Filtres principaux">
+                            <div class="create-post-divider"></div>
+
+                            <!-- Catégorie -->
+                            <div class="filter-dropdown" id="categoryDropdown">
+                                <button class="filter-btn" onclick="toggleDropdown('categoryDropdown')">
+                                    <i class="fas fa-folder"></i>
+                                    <span id="categoryLabel">Catégorie</span>
+                                    <i class="fas fa-chevron-down chevron"></i>
+                                </button>
+                                <div class="filter-menu" id="categoryMenu">
+                                    <div class="filter-menu-item selected" data-value="" onclick="selectCategory('')">
+                                        <i class="fas fa-check"></i> Toutes les catégories
+                                    </div>
+                                    @foreach($missionCategories as $catName => $catData)
+                                    <div class="filter-menu-item" data-value="{{ $catName }}" onclick="selectCategory('{{ $catName }}')">
+                                        <i class="{{ $catData['icon'] ?? 'fas fa-folder' }}"></i> {{ $catName }}
+                                        <span class="ms-auto text-muted small">{{ $catData['total'] ?? 0 }}</span>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <!-- Sous-catégorie -->
+                            <div class="filter-dropdown" id="subcategoryDropdown" style="display: none;">
+                                <button class="filter-btn" onclick="toggleDropdown('subcategoryDropdown')">
+                                    <i class="fas fa-tags"></i>
+                                    <span id="subcategoryLabel">Sous-catégorie</span>
+                                    <i class="fas fa-chevron-down chevron"></i>
+                                </button>
+                                <div class="filter-menu" id="subcategoryMenu">
+                                    <!-- Rempli dynamiquement -->
+                                </div>
+                            </div>
+
+                            <!-- Filtre par -->
+                            <div class="filter-dropdown" id="sortDropdown">
+                                <button class="filter-btn" onclick="toggleDropdown('sortDropdown')">
+                                    <i class="fas fa-sort-amount-down"></i>
+                                    <span id="sortLabel">Trier</span>
+                                    <i class="fas fa-chevron-down chevron"></i>
+                                </button>
+                                <div class="filter-menu">
+                                    <div class="filter-menu-item selected" data-value="recommended" onclick="selectSort('recommended')">
+                                        <i class="fas fa-star"></i> Recommandé
+                                    </div>
+                                    <div class="filter-menu-item" data-value="recent" onclick="selectSort('recent')">
+                                        <i class="fas fa-clock"></i> Plus récent
+                                    </div>
+                                    <div class="filter-menu-item" data-value="urgent" onclick="selectSort('urgent')">
+                                        <i class="fas fa-bolt"></i> Urgent
+                                    </div>
+                                    @if($geoEnabled ?? false)
+                                    <div class="filter-menu-item" data-value="proximity" onclick="selectSort('proximity')">
+                                        <i class="fas fa-map-marker-alt"></i> Proximité
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                @endauth
 
                 {{-- Smart suggestions pour les professionnels --}}
                 @include('partials.pro-suggestions')
