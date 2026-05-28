@@ -31,6 +31,12 @@ class FeedController extends Controller
         $geoCity = $userGeo['city'] ?? $user->getDisplayCity() ?? null;
         $geoCountry = $userGeo['country'] ?? $user->getDisplayCountry() ?? null;
         $geoSource = $userGeo['source'] ?? 'unknown';
+        $feedScope = $request->get('scope', $geoEnabled ? 'nearby' : 'all');
+        if (!in_array($feedScope, ['nearby', 'all'], true)) {
+            $feedScope = $geoEnabled ? 'nearby' : 'all';
+        }
+        $useNearbyScope = $geoEnabled && $feedScope === 'nearby';
+        $geoFallbackUsed = false;
 
         // Catégories principales pour le mega menu "Trouver un Pro"
         // Catégories principales pour le mega menu "Trouver un Pro"
@@ -44,7 +50,7 @@ class FeedController extends Controller
         $proOffersQuery = Ad::where('status', 'active')
             ->where('service_type', 'offre')
             ->with('user');
-        if ($geoEnabled) {
+        if ($useNearbyScope) {
             $proOffersQuery->withinRadius($userLat, $userLng, $userRadius);
         } else {
             $proOffersQuery->orderBy('is_pinned', 'desc')->orderBy('created_at', 'desc');
@@ -55,7 +61,7 @@ class FeedController extends Controller
         $clientRequestsQuery = Ad::where('status', 'active')
             ->where('service_type', 'demande')
             ->with('user');
-        if ($geoEnabled) {
+        if ($useNearbyScope) {
             $clientRequestsQuery->withinRadius($userLat, $userLng, $userRadius);
         } else {
             $clientRequestsQuery->orderBy('created_at', 'desc');
@@ -71,15 +77,21 @@ class FeedController extends Controller
         }
 
         // ===== SECTION "LES DERNIÈRES PÉPITES" - filtrée par proximité =====
-        $allAdsQuery = $this->buildMainFeedAdsQuery($user, $filterType, $geoEnabled, $userLat, $userLng, $userRadius);
-        $this->orderMainFeedAds($allAdsQuery, $geoEnabled);
+        $allAdsQuery = $this->buildMainFeedAdsQuery($user, $filterType, $useNearbyScope, $userLat, $userLng, $userRadius);
+        $this->orderMainFeedAds($allAdsQuery, $useNearbyScope);
         $feedMapQuery = clone $allAdsQuery;
         $ads = $allAdsQuery->paginate(12)->withQueryString();
         
         // Si peu de résultats, élargir automatiquement le rayon
         $radiusWasExpanded = false;
         $originalRadius = $userRadius;
-        if ($geoEnabled && $ads->total() < 3 && $userRadius < 200) {
+        if ($useNearbyScope && $ads->total() === 0) {
+            $fallbackQuery = $this->buildMainFeedAdsQuery($user, $filterType, false, null, null, $userRadius);
+            $this->orderMainFeedAds($fallbackQuery, false);
+            $feedMapQuery = clone $fallbackQuery;
+            $ads = $fallbackQuery->paginate(12)->withQueryString();
+            $geoFallbackUsed = true;
+        } elseif ($useNearbyScope && $ads->total() < 3 && $userRadius < 200) {
             $expandedRadius = min($userRadius * 3, 500);
             $expandedQuery = $this->buildMainFeedAdsQuery($user, $filterType, true, $userLat, $userLng, $expandedRadius);
             $this->orderMainFeedAds($expandedQuery, true);
@@ -121,19 +133,32 @@ class FeedController extends Controller
 
         // Handle specific subcategory filter (from pill buttons) using 'search' param as category override
         if ($request->has('search')) {
-            $searchAds = Ad::where('status', 'active')->with('user')
-                ->where(function($q) use ($request) {
+            $buildSearchAdsQuery = function (bool $nearby) use ($request, $userLat, $userLng, $userRadius) {
+                $query = Ad::where('status', 'active')->with('user')
+                    ->where(function($q) use ($request) {
                     $q->where('category', $request->search)
                       ->orWhere('title', 'LIKE', '%' . $request->search . '%');
                 });
 
-            if ($geoEnabled) {
-                $this->applyAdGeoScope($searchAds, (float) $userLat, (float) $userLng, $userRadius);
-            }
+                if ($nearby) {
+                    $this->applyAdGeoScope($query, (float) $userLat, (float) $userLng, $userRadius);
+                }
 
-            $this->orderMainFeedAds($searchAds, $geoEnabled);
+                $this->orderMainFeedAds($query, $nearby);
+
+                return $query;
+            };
+
+            $searchAds = $buildSearchAdsQuery($useNearbyScope);
             $feedMapQuery = clone $searchAds;
             $ads = $searchAds->paginate(12)->withQueryString();
+
+            if ($useNearbyScope && $ads->total() === 0) {
+                $searchFallbackQuery = $buildSearchAdsQuery(false);
+                $feedMapQuery = clone $searchFallbackQuery;
+                $ads = $searchFallbackQuery->paginate(12)->withQueryString();
+                $geoFallbackUsed = true;
+            }
         }
 
         // Toutes les annonces pour le feed principal
@@ -280,18 +305,18 @@ class FeedController extends Controller
             currentUser: $user,
             limit: 6,
             authorKind: 'particulier',
-            userLat: $geoEnabled ? (float) $userLat : null,
-            userLng: $geoEnabled ? (float) $userLng : null,
-            userRadius: $geoEnabled ? $userRadius : null
+            userLat: $useNearbyScope && !$geoFallbackUsed ? (float) $userLat : null,
+            userLng: $useNearbyScope && !$geoFallbackUsed ? (float) $userLng : null,
+            userRadius: $useNearbyScope && !$geoFallbackUsed ? $userRadius : null
         );
         $homeProfessionalOffers = $this->buildHomeShowcaseAds(
             serviceType: 'offre',
             currentUser: $user,
             limit: 6,
             authorKind: 'professional',
-            userLat: $geoEnabled ? (float) $userLat : null,
-            userLng: $geoEnabled ? (float) $userLng : null,
-            userRadius: $geoEnabled ? $userRadius : null
+            userLat: $useNearbyScope && !$geoFallbackUsed ? (float) $userLat : null,
+            userLng: $useNearbyScope && !$geoFallbackUsed ? (float) $userLng : null,
+            userRadius: $useNearbyScope && !$geoFallbackUsed ? $userRadius : null
         );
         $homeProfessionalProfiles = $this->buildHighlightedProfessionalProfiles($user, 6);
 
@@ -358,6 +383,7 @@ class FeedController extends Controller
             'latitude' => $userLat,
             'longitude' => $userLng,
             'radius' => $userRadius,
+            'scope' => $feedScope,
         ]);
 
         $adsMapData = $this->buildAdsMapData(
@@ -408,6 +434,9 @@ class FeedController extends Controller
             'geoCity',
             'geoCountry',
             'geoSource',
+            'feedScope',
+            'useNearbyScope',
+            'geoFallbackUsed',
             'radiusWasExpanded',
             'originalRadius',
             'showOnboardingModal',
@@ -1331,51 +1360,77 @@ class FeedController extends Controller
         }
         $radius = (int) ($radius ?: 50);
 
+        $scope = $request->get('scope', ($userLat && $userLng) ? 'nearby' : 'all');
+        if (!in_array($scope, ['nearby', 'all'], true)) {
+            $scope = ($userLat && $userLng) ? 'nearby' : 'all';
+        }
+
         $user = Auth::user();
-        $geoApplied = (bool) ($userLat && $userLng && !$location);
-        $query = $this->buildMainFeedAdsQuery(
+        $geoApplied = (bool) ($userLat && $userLng && !$location && $scope === 'nearby');
+        $geoFallbackUsed = false;
+
+        $buildFilteredAdsQuery = function (bool $nearby) use (
             $user,
-            'all',
-            $geoApplied,
-            $geoApplied ? (float) $userLat : null,
-            $geoApplied ? (float) $userLng : null,
+            $category,
+            $subcategory,
+            $location,
+            $priceMin,
+            $priceMax,
+            $missionCategories,
+            $userLat,
+            $userLng,
             $radius
-        );
+        ) {
+            $query = $this->buildMainFeedAdsQuery(
+                $user,
+                'all',
+                $nearby,
+                $nearby ? (float) $userLat : null,
+                $nearby ? (float) $userLng : null,
+                $radius
+            );
 
-        // Apply category filter
-        if ($category && $category !== 'all') {
-            if (isset($missionCategories[$category])) {
-                $subNames = collect($missionCategories[$category]['subs'])->pluck('name')->toArray();
-                $subNames[] = $category;
-                $query->whereIn('category', $subNames);
-            } else {
-                $query->where('category', $category);
+            if ($category && $category !== 'all') {
+                if (isset($missionCategories[$category])) {
+                    $subNames = collect($missionCategories[$category]['subs'])->pluck('name')->toArray();
+                    $subNames[] = $category;
+                    $query->whereIn('category', $subNames);
+                } else {
+                    $query->where('category', $category);
+                }
             }
-        }
 
-        // Apply subcategory filter (more specific)
-        if ($subcategory) {
-            $query->where(function($q) use ($subcategory) {
-                $q->where('category', $subcategory)
-                  ->orWhere('title', 'LIKE', '%' . $subcategory . '%');
-            });
-        }
+            if ($subcategory) {
+                $query->where(function($q) use ($subcategory) {
+                    $q->where('category', $subcategory)
+                      ->orWhere('title', 'LIKE', '%' . $subcategory . '%');
+                });
+            }
 
-        // Apply location filter (text-based, overrides geo)
-        if ($location) {
-            $query->where(function($q) use ($location) {
-                $q->where('location', 'LIKE', '%' . $location . '%')
-                  ->orWhere('city', 'LIKE', '%' . $location . '%')
-                  ->orWhere('postal_code', 'LIKE', '%' . $location . '%');
-            });
-        }
+            if ($location) {
+                $query->where(function($q) use ($location) {
+                    $q->where('location', 'LIKE', '%' . $location . '%')
+                      ->orWhere('city', 'LIKE', '%' . $location . '%')
+                      ->orWhere('postal_code', 'LIKE', '%' . $location . '%');
+                });
+            }
 
-        // Apply price filter
-        if ($priceMin) {
-            $query->where('price', '>=', $priceMin);
-        }
-        if ($priceMax) {
-            $query->where('price', '<=', $priceMax);
+            if ($priceMin) {
+                $query->where('price', '>=', $priceMin);
+            }
+            if ($priceMax) {
+                $query->where('price', '<=', $priceMax);
+            }
+
+            return $query;
+        };
+
+        $query = $buildFilteredAdsQuery($geoApplied);
+
+        if ($geoApplied && (clone $query)->count() === 0) {
+            $query = $buildFilteredAdsQuery(false);
+            $geoApplied = false;
+            $geoFallbackUsed = true;
         }
 
         // Apply sorting — always prioritize boosted and urgent ads first
@@ -1420,6 +1475,8 @@ class FeedController extends Controller
             return response()->json([
                 'success' => true,
                 'geo_applied' => $geoApplied,
+                'geo_fallback_used' => $geoFallbackUsed,
+                'scope' => $scope,
                 'radius' => $radius,
                 'map_markers' => $mapMarkers,
                 'ads' => $ads->map(function($ad) use ($geoApplied) {

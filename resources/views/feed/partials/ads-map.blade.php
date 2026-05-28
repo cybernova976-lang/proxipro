@@ -4,11 +4,15 @@
         <div>
             <h3 class="ads-map-title"><i class="fas fa-map-marked-alt me-2"></i>Carte des annonces</h3>
             <p class="ads-map-copy">
-                Visualisez les annonces proches sur la carte
-                @if($geoEnabled && $geoCity)
+                @if($geoFallbackUsed ?? false)
+                    Visualisez les annonces disponibles dans d'autres zones.
+                @else
+                    Visualisez les annonces proches sur la carte
+                    @if($geoEnabled && $geoCity)
                     autour de {{ $geoCity }}
+                    @endif
+                    .
                 @endif
-                .
             </p>
         </div>
     </div>

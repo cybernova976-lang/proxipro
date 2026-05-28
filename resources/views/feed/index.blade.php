@@ -6196,6 +6196,62 @@
         flex-shrink: 0;
     }
 
+    .feed-scope-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid #DDE6EF;
+        border-radius: 24px;
+        background: #F8FAFC;
+        flex-shrink: 0;
+    }
+
+    .feed-scope-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 36px;
+        padding: 0 12px;
+        border: 0;
+        border-radius: 20px;
+        background: transparent;
+        color: #64748b;
+        font-size: 0.82rem;
+        font-weight: 800;
+        white-space: nowrap;
+        transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .feed-scope-btn:hover:not(:disabled) {
+        color: #1d4ed8;
+        background: #EEF4FF;
+    }
+
+    .feed-scope-btn.active {
+        background: #2563eb;
+        color: #fff;
+        box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2);
+    }
+
+    .feed-scope-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
+    .geo-fallback-note {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 12px 2px 0;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #fff7ed;
+        color: #9a3412;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
     .create-post-divider {
         width: 1px;
         height: 36px;
@@ -7161,6 +7217,24 @@
                         <div class="create-post-filters" aria-label="Filtres principaux">
                             <div class="create-post-divider"></div>
 
+                            <div class="feed-scope-toggle" aria-label="Portée des annonces">
+                                <button type="button"
+                                        id="feedScopeNearbyBtn"
+                                        class="feed-scope-btn {{ ($feedScope ?? 'nearby') === 'nearby' ? 'active' : '' }}"
+                                        onclick="selectFeedScope('nearby')"
+                                        @if(!($geoEnabled ?? false)) disabled title="Localisation indisponible" @endif>
+                                    <i class="fas fa-location-arrow"></i>
+                                    <span>Près de moi</span>
+                                </button>
+                                <button type="button"
+                                        id="feedScopeAllBtn"
+                                        class="feed-scope-btn {{ ($feedScope ?? 'nearby') === 'all' ? 'active' : '' }}"
+                                        onclick="selectFeedScope('all')">
+                                    <i class="fas fa-globe-africa"></i>
+                                    <span>Tout voir</span>
+                                </button>
+                            </div>
+
                             <!-- Catégorie -->
                             <div class="filter-dropdown" id="categoryDropdown">
                                 <button class="filter-btn" onclick="toggleDropdown('categoryDropdown')">
@@ -7219,6 +7293,12 @@
                             </div>
                         </div>
                     </div>
+                    @if($geoFallbackUsed ?? false)
+                        <div class="geo-fallback-note" id="geoFallbackNote">
+                            <i class="fas fa-map-signs"></i>
+                            <span>Aucune annonce disponible dans votre zone pour le moment. Nous affichons les annonces disponibles ailleurs.</span>
+                        </div>
+                    @endif
                 </div>
 
                 {{-- Smart suggestions pour les professionnels --}}
@@ -7238,7 +7318,7 @@
                     'homeProfessionalProfiles' => $homeProfessionalProfiles ?? collect(),
                 ])
 
-                @include('feed.partials.ads-map', ['adsMapData' => $adsMapData ?? collect(), 'geoEnabled' => $geoEnabled ?? false, 'geoCity' => $geoCity ?? null])
+                @include('feed.partials.ads-map', ['adsMapData' => $adsMapData ?? collect(), 'geoEnabled' => $geoEnabled ?? false, 'geoCity' => $geoCity ?? null, 'geoFallbackUsed' => $geoFallbackUsed ?? false])
 
                 @php
                     $seenMainFeedAdIds = [];
@@ -8397,6 +8477,24 @@
         const mapSection = document.querySelector('.ads-map-section');
         if (mapSection) {
             mapSection.style.display = hasMarkers ? '' : 'none';
+        }
+    }
+
+    function setGeoFallbackNotice(show) {
+        let note = document.getElementById('geoFallbackNote');
+        if (!show) {
+            if (note) note.remove();
+            return;
+        }
+
+        if (!note) {
+            const card = document.querySelector('.create-post-card');
+            if (!card) return;
+            note = document.createElement('div');
+            note.id = 'geoFallbackNote';
+            note.className = 'geo-fallback-note';
+            note.innerHTML = '<i class="fas fa-map-signs"></i><span>Aucune annonce disponible dans votre zone pour le moment. Nous affichons les annonces disponibles ailleurs.</span>';
+            card.appendChild(note);
         }
     }
 
@@ -10283,7 +10381,8 @@
         lat: {{ $userLat ?? 'null' }},
         lng: {{ $userLng ?? 'null' }},
         radius: {{ $userRadius ?? 50 }},
-        geoEnabled: {{ ($geoEnabled ?? false) ? 'true' : 'false' }}
+        geoEnabled: {{ ($geoEnabled ?? false) ? 'true' : 'false' }},
+        scope: @json($feedScope ?? (($geoEnabled ?? false) ? 'nearby' : 'all'))
     };
 
     // Données des catégories
@@ -10310,6 +10409,29 @@
             document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('open'));
         }
     });
+
+    function updateFeedScopeToggle() {
+        const nearbyBtn = document.getElementById('feedScopeNearbyBtn');
+        const allBtn = document.getElementById('feedScopeAllBtn');
+        if (nearbyBtn) {
+            nearbyBtn.disabled = !currentFilters.geoEnabled;
+            nearbyBtn.classList.toggle('active', currentFilters.scope === 'nearby' && currentFilters.geoEnabled);
+        }
+        if (allBtn) {
+            allBtn.classList.toggle('active', currentFilters.scope === 'all' || !currentFilters.geoEnabled);
+        }
+    }
+
+    function selectFeedScope(scope) {
+        if (scope === 'nearby' && !currentFilters.geoEnabled) {
+            requestBrowserGeolocation();
+            return;
+        }
+
+        currentFilters.scope = scope === 'all' ? 'all' : 'nearby';
+        updateFeedScopeToggle();
+        loadData();
+    }
 
     /**
      * Changer le mode de vue (prestataires / missions)
@@ -10743,8 +10865,9 @@
         }
         if (currentFilters.priceMin) params.append('price_min', currentFilters.priceMin);
         if (currentFilters.priceMax) params.append('price_max', currentFilters.priceMax);
+        params.append('scope', currentFilters.scope || 'nearby');
         // Geo params
-        if (currentFilters.geoEnabled && currentFilters.lat && currentFilters.lng) {
+        if (currentFilters.scope === 'nearby' && currentFilters.geoEnabled && currentFilters.lat && currentFilters.lng) {
             params.append('lat', currentFilters.lat);
             params.append('lng', currentFilters.lng);
             params.append('radius', currentFilters.radius);
@@ -10765,6 +10888,7 @@
                         ? data.map_markers
                         : buildFeedMapMarkers(adsPayload);
                     renderMissions(adsPayload);
+                    setGeoFallbackNotice(!!data.geo_fallback_used);
                     updateFeedAdsMap(mapPayload);
                 }
             })
@@ -11524,6 +11648,8 @@
                 currentFilters.lat = lat;
                 currentFilters.lng = lng;
                 currentFilters.geoEnabled = true;
+                currentFilters.scope = 'nearby';
+                updateFeedScopeToggle();
 
                 // Envoyer au serveur
                 fetch('{{ route("feed.store-browser-location") }}', {
@@ -11584,6 +11710,8 @@
         currentFilters.geoEnabled = false;
         currentFilters.lat = null;
         currentFilters.lng = null;
+        currentFilters.scope = 'all';
+        updateFeedScopeToggle();
 
         // Masquer le banner
         const banner = document.getElementById('geoBanner');
@@ -11601,6 +11729,8 @@
         currentFilters.lat = {{ $userLat ?? 'null' }};
         currentFilters.lng = {{ $userLng ?? 'null' }};
         currentFilters.radius = {{ $userRadius ?? 50 }};
+        currentFilters.scope = 'nearby';
+        updateFeedScopeToggle();
 
         const banner = document.getElementById('geoBanner');
         if (banner) banner.style.display = 'flex';
@@ -11650,7 +11780,8 @@
                 else if (currentFilters.country) params.append('location', currentFilters.country);
                 if (currentFilters.priceMin) params.append('price_min', currentFilters.priceMin);
                 if (currentFilters.priceMax) params.append('price_max', currentFilters.priceMax);
-                if (currentFilters.geoEnabled && currentFilters.lat && currentFilters.lng) {
+                params.append('scope', currentFilters.scope || 'nearby');
+                if (currentFilters.scope === 'nearby' && currentFilters.geoEnabled && currentFilters.lat && currentFilters.lng) {
                     params.append('lat', currentFilters.lat);
                     params.append('lng', currentFilters.lng);
                     params.append('radius', currentFilters.radius);
@@ -11662,6 +11793,7 @@
                 const data = await response.json();
                 const ads = data.ads?.data || data.ads || [];
                 const serverMapMarkers = Array.isArray(data.map_markers) ? data.map_markers : null;
+                setGeoFallbackNotice(!!data.geo_fallback_used);
                 const showcaseAdIds = getShowcaseAdIdSet();
                 const alreadyRenderedAdIds = getRenderedFeedAdIdSet();
                 const seenBatchIds = new Set();
@@ -11827,6 +11959,11 @@
                 function(pos) {
                     currentFilters.lat = pos.coords.latitude;
                     currentFilters.lng = pos.coords.longitude;
+                    currentFilters.geoEnabled = true;
+                    if (currentFilters.scope !== 'all') {
+                        currentFilters.scope = 'nearby';
+                    }
+                    updateFeedScopeToggle();
                     // Envoyer au serveur silencieusement
                     fetch('{{ route("feed.store-browser-location") }}', {
                         method: 'POST',
