@@ -74,7 +74,7 @@ class VerificationController extends Controller
         
         $pendingPayment = IdentityVerification::where('user_id', $user->id)
             ->where('payment_status', 'pending')
-            ->where('status', 'pending')
+            ->whereIn('status', ['awaiting_payment', 'pending'])
             ->first();
 
         return response()->json([
@@ -139,7 +139,7 @@ class VerificationController extends Controller
         // Vérifier si une demande est déjà en cours
         $existingVerification = IdentityVerification::where('user_id', $user->id)
             ->where('type', $request->type)
-            ->where('status', 'pending')
+            ->whereIn('status', ['awaiting_payment', 'pending'])
             ->first();
 
         if ($existingVerification) {
@@ -189,7 +189,7 @@ class VerificationController extends Controller
             'professional_document_status' => $professionalDocument ? 'pending' : null,
             'payment_amount' => $price,
             'payment_status' => 'pending',
-            'status' => 'pending',
+            'status' => 'awaiting_payment',
             'submitted_at' => now(),
         ]);
 
@@ -286,9 +286,11 @@ class VerificationController extends Controller
 
         Stripe::setApiKey(config('services.stripe.secret'));
 
-        $productName = $verification->type === 'profile_verification' 
-            ? 'Vérification de profil ProxiPro (10€ / 20 points)'
-            : 'Badge Prestataire Vérifié ProxiPro (10€ / 20 points)';
+        $priceLabel = number_format((float) $verification->payment_amount, 2, ',', ' ') . '€';
+        $pointsLabel = IdentityVerification::getVerificationPointsCost($verification->type) . ' points';
+        $productName = $verification->type === 'profile_verification'
+            ? "Vérification de profil ProxiPro ({$priceLabel} / {$pointsLabel})"
+            : "Badge Prestataire Vérifié ProxiPro ({$priceLabel} / {$pointsLabel})";
 
         try {
             $session = Session::create([
@@ -363,6 +365,8 @@ class VerificationController extends Controller
             'payment_status' => 'paid',
             'payment_id' => 'points_' . $pointsCost,
             'paid_at' => now(),
+            'status' => 'pending',
+            'submitted_at' => now(),
         ]);
 
         return response()->json([
@@ -378,6 +382,7 @@ class VerificationController extends Controller
     public function paymentSuccess(Request $request, $id)
     {
         $verification = IdentityVerification::findOrFail($id);
+        $paymentConfirmed = false;
         
         if ($verification->user_id !== Auth::id()) {
             abort(403);
@@ -396,11 +401,18 @@ class VerificationController extends Controller
                         'payment_status' => 'paid',
                         'payment_id' => $session->payment_intent,
                         'paid_at' => now(),
+                        'status' => 'pending',
+                        'submitted_at' => now(),
                     ]);
+                    $paymentConfirmed = true;
                 }
             } catch (\Exception $e) {
                 \Log::error('Erreur vérification paiement: ' . $e->getMessage());
             }
+        }
+
+        if (!$paymentConfirmed && $verification->payment_status !== 'paid') {
+            return redirect()->route('profile.show')->with('error', 'Le paiement n\'a pas pu être validé. Votre demande n\'a pas été envoyée à l\'administration.');
         }
 
         $message = $verification->type === 'profile_verification'
@@ -543,7 +555,7 @@ class VerificationController extends Controller
         $user = Auth::user();
         
         $verification = IdentityVerification::where('user_id', $user->id)
-            ->where('status', 'pending')
+            ->whereIn('status', ['awaiting_payment', 'pending'])
             ->first();
 
         if ($verification) {

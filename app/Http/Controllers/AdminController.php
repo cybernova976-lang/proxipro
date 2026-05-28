@@ -33,7 +33,7 @@ class AdminController extends Controller
             'pending_ads' => Ad::where('status', 'pending')->count(),
             'new_users_today' => User::whereDate('created_at', today())->count(),
             'verified_users' => User::where('is_verified', true)->count(),
-            'pending_verifications' => IdentityVerification::where('status', 'pending')->count(),
+            'pending_verifications' => IdentityVerification::where('status', 'pending')->where('payment_status', 'paid')->count(),
         ];
 
         // Graphique des inscriptions (7 derniers jours)
@@ -1057,8 +1057,9 @@ class AdminController extends Controller
                 $query->where('status', $request->status);
             }
         } else {
-            // Par défaut, montrer toutes les demandes non traitées (pending + returned)
-            $query->whereIn('status', ['pending', 'returned']);
+            // Par défaut, montrer uniquement les demandes payées à traiter.
+            $query->whereIn('status', ['pending', 'returned'])
+                ->where('payment_status', 'paid');
         }
 
         // Filtrer par statut de paiement
@@ -1083,15 +1084,15 @@ class AdminController extends Controller
         $verifications = $query->latest('submitted_at')->paginate(15);
 
         $stats = [
-            'pending' => IdentityVerification::where('status', 'pending')->count(),
+            'pending' => IdentityVerification::where('status', 'pending')->where('payment_status', 'paid')->count(),
             'pending_paid' => IdentityVerification::where('status', 'pending')->where('payment_status', 'paid')->count(),
-            'pending_unpaid' => IdentityVerification::where('status', 'pending')->where('payment_status', '!=', 'paid')->count(),
+            'pending_unpaid' => IdentityVerification::whereIn('status', ['awaiting_payment', 'pending'])->where('payment_status', '!=', 'paid')->count(),
             'returned' => IdentityVerification::where('status', 'returned')->count(),
             'resubmitted' => IdentityVerification::where('status', 'pending')->where('resubmission_count', '>', 0)->count(),
             'approved' => IdentityVerification::where('status', 'approved')->count(),
             'rejected' => IdentityVerification::where('status', 'rejected')->count(),
             'total' => IdentityVerification::count(),
-            'to_process' => IdentityVerification::whereIn('status', ['pending', 'returned'])->count(),
+            'to_process' => IdentityVerification::whereIn('status', ['pending', 'returned'])->where('payment_status', 'paid')->count(),
         ];
 
         return view('admin.verifications.index', compact('verifications', 'stats'));

@@ -81,6 +81,7 @@ class FeedFilterAdsMapDataTest extends TestCase
 
         $response = $this->withoutMiddleware()->actingAs($viewer)->get(route('feed.filter-ads', [
             'format' => 'json',
+            'scope' => 'nearby',
             'lat' => -12.7806,
             'lng' => 45.2279,
             'radius' => 20,
@@ -91,6 +92,54 @@ class FeedFilterAdsMapDataTest extends TestCase
         $response->assertJsonPath('ads.0.id', $nearAd->id);
         $response->assertJsonMissing(['title' => 'Annonce boostee trop loin']);
         $response->assertJsonPath('map_markers.0.id', $nearAd->id);
+    }
+
+    public function test_filter_ads_nearby_scope_matches_user_city_when_ad_has_no_coordinates(): void
+    {
+        $viewer = User::factory()->create([
+            'city' => 'Mamoudzou',
+            'country' => 'Mayotte',
+        ]);
+        $author = User::factory()->create([
+            'plan' => 'pro',
+        ]);
+
+        $localAd = Ad::create([
+            'title' => 'Annonce locale sans coordonnees',
+            'description' => 'Visible grace a la ville du profil',
+            'category' => 'Plomberie',
+            'location' => 'Mamoudzou',
+            'price' => 80,
+            'service_type' => 'offre',
+            'status' => 'active',
+            'visibility' => 'public',
+            'user_id' => $author->id,
+            'country' => 'Mayotte',
+        ]);
+
+        Ad::create([
+            'title' => 'Annonce autre ville',
+            'description' => 'Ne doit pas etre locale',
+            'category' => 'Electricite',
+            'location' => 'Paris',
+            'price' => 200,
+            'service_type' => 'offre',
+            'status' => 'active',
+            'visibility' => 'public',
+            'user_id' => $author->id,
+            'country' => 'France',
+        ]);
+
+        $response = $this->withoutMiddleware()->actingAs($viewer)->get(route('feed.filter-ads', [
+            'format' => 'json',
+            'scope' => 'nearby',
+        ]));
+
+        $response->assertOk();
+        $response->assertJsonPath('geo_applied', true);
+        $response->assertJsonPath('geo_fallback_used', false);
+        $response->assertJsonPath('ads.0.id', $localAd->id);
+        $response->assertJsonMissing(['title' => 'Annonce autre ville']);
     }
 
     public function test_filter_ads_can_show_all_ads_when_user_disables_nearby_scope(): void

@@ -27,13 +27,13 @@ class FeedController extends Controller
         $userLat = $userGeo['latitude'] ?? null;
         $userLng = $userGeo['longitude'] ?? null;
         $userRadius = (int) ($request->get('radius') ?? $user->geo_radius ?? 50);
-        $geoEnabled = $userLat && $userLng;
         $geoCity = $userGeo['city'] ?? $user->getDisplayCity() ?? null;
         $geoCountry = $userGeo['country'] ?? $user->getDisplayCountry() ?? null;
+        $geoEnabled = ($userLat !== null && $userLng !== null) || $geoCity || $geoCountry;
         $geoSource = $userGeo['source'] ?? 'unknown';
-        $feedScope = $request->get('scope', $geoEnabled ? 'nearby' : 'all');
+        $feedScope = $request->get('scope', 'all');
         if (!in_array($feedScope, ['nearby', 'all'], true)) {
-            $feedScope = $geoEnabled ? 'nearby' : 'all';
+            $feedScope = 'all';
         }
         $useNearbyScope = $geoEnabled && $feedScope === 'nearby';
         $geoFallbackUsed = false;
@@ -51,7 +51,8 @@ class FeedController extends Controller
             ->where('service_type', 'offre')
             ->with('user');
         if ($useNearbyScope) {
-            $proOffersQuery->withinRadius($userLat, $userLng, $userRadius);
+            $this->applyAdGeoScope($proOffersQuery, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null, $userRadius, $geoCity, $geoCountry);
+            $proOffersQuery->orderByRaw('CASE WHEN distance IS NULL THEN 1 ELSE 0 END')->orderBy('distance')->orderBy('created_at', 'desc');
         } else {
             $proOffersQuery->orderBy('is_pinned', 'desc')->orderBy('created_at', 'desc');
         }
@@ -62,7 +63,8 @@ class FeedController extends Controller
             ->where('service_type', 'demande')
             ->with('user');
         if ($useNearbyScope) {
-            $clientRequestsQuery->withinRadius($userLat, $userLng, $userRadius);
+            $this->applyAdGeoScope($clientRequestsQuery, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null, $userRadius, $geoCity, $geoCountry);
+            $clientRequestsQuery->orderByRaw('CASE WHEN distance IS NULL THEN 1 ELSE 0 END')->orderBy('distance')->orderBy('created_at', 'desc');
         } else {
             $clientRequestsQuery->orderBy('created_at', 'desc');
         }
@@ -77,7 +79,7 @@ class FeedController extends Controller
         }
 
         // ===== SECTION "LES DERNIÈRES PÉPITES" - filtrée par proximité =====
-        $allAdsQuery = $this->buildMainFeedAdsQuery($user, $filterType, $useNearbyScope, $userLat, $userLng, $userRadius);
+        $allAdsQuery = $this->buildMainFeedAdsQuery($user, $filterType, $useNearbyScope, $userLat, $userLng, $userRadius, $geoCity, $geoCountry);
         $this->orderMainFeedAds($allAdsQuery, $useNearbyScope);
         $feedMapQuery = clone $allAdsQuery;
         $ads = $allAdsQuery->paginate(12)->withQueryString();
@@ -86,14 +88,14 @@ class FeedController extends Controller
         $radiusWasExpanded = false;
         $originalRadius = $userRadius;
         if ($useNearbyScope && $ads->total() === 0) {
-            $fallbackQuery = $this->buildMainFeedAdsQuery($user, $filterType, false, null, null, $userRadius);
+            $fallbackQuery = $this->buildMainFeedAdsQuery($user, $filterType, false, null, null, $userRadius, $geoCity, $geoCountry);
             $this->orderMainFeedAds($fallbackQuery, false);
             $feedMapQuery = clone $fallbackQuery;
             $ads = $fallbackQuery->paginate(12)->withQueryString();
             $geoFallbackUsed = true;
         } elseif ($useNearbyScope && $ads->total() < 3 && $userRadius < 200) {
             $expandedRadius = min($userRadius * 3, 500);
-            $expandedQuery = $this->buildMainFeedAdsQuery($user, $filterType, true, $userLat, $userLng, $expandedRadius);
+            $expandedQuery = $this->buildMainFeedAdsQuery($user, $filterType, true, $userLat, $userLng, $expandedRadius, $geoCity, $geoCountry);
             $this->orderMainFeedAds($expandedQuery, true);
             $expandedMapQuery = clone $expandedQuery;
             $adsExp = $expandedQuery->paginate(12)->withQueryString();
@@ -133,7 +135,7 @@ class FeedController extends Controller
 
         // Handle specific subcategory filter (from pill buttons) using 'search' param as category override
         if ($request->has('search')) {
-            $buildSearchAdsQuery = function (bool $nearby) use ($request, $userLat, $userLng, $userRadius) {
+            $buildSearchAdsQuery = function (bool $nearby) use ($request, $userLat, $userLng, $userRadius, $geoCity, $geoCountry) {
                 $query = Ad::where('status', 'active')->with('user')
                     ->where(function($q) use ($request) {
                     $q->where('category', $request->search)
@@ -141,7 +143,7 @@ class FeedController extends Controller
                 });
 
                 if ($nearby) {
-                    $this->applyAdGeoScope($query, (float) $userLat, (float) $userLng, $userRadius);
+                    $this->applyAdGeoScope($query, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null, $userRadius, $geoCity, $geoCountry);
                 }
 
                 $this->orderMainFeedAds($query, $nearby);
@@ -303,22 +305,26 @@ class FeedController extends Controller
         $homePersonalRequests = $this->buildHomeShowcaseAds(
             serviceType: 'demande',
             currentUser: $user,
-            limit: 6,
             authorKind: 'particulier',
-            userLat: $useNearbyScope && !$geoFallbackUsed ? (float) $userLat : null,
-            userLng: $useNearbyScope && !$geoFallbackUsed ? (float) $userLng : null,
-            userRadius: $useNearbyScope && !$geoFallbackUsed ? $userRadius : null
+            limit: 18,
+            userLat: $useNearbyScope && !$geoFallbackUsed && $userLat !== null ? (float) $userLat : null,
+            userLng: $useNearbyScope && !$geoFallbackUsed && $userLng !== null ? (float) $userLng : null,
+            userRadius: $useNearbyScope && !$geoFallbackUsed ? $userRadius : null,
+            geoCity: $useNearbyScope && !$geoFallbackUsed ? $geoCity : null,
+            geoCountry: $useNearbyScope && !$geoFallbackUsed ? $geoCountry : null
         );
         $homeProfessionalOffers = $this->buildHomeShowcaseAds(
             serviceType: 'offre',
             currentUser: $user,
-            limit: 6,
             authorKind: 'professional',
-            userLat: $useNearbyScope && !$geoFallbackUsed ? (float) $userLat : null,
-            userLng: $useNearbyScope && !$geoFallbackUsed ? (float) $userLng : null,
-            userRadius: $useNearbyScope && !$geoFallbackUsed ? $userRadius : null
+            limit: 18,
+            userLat: $useNearbyScope && !$geoFallbackUsed && $userLat !== null ? (float) $userLat : null,
+            userLng: $useNearbyScope && !$geoFallbackUsed && $userLng !== null ? (float) $userLng : null,
+            userRadius: $useNearbyScope && !$geoFallbackUsed ? $userRadius : null,
+            geoCity: $useNearbyScope && !$geoFallbackUsed ? $geoCity : null,
+            geoCountry: $useNearbyScope && !$geoFallbackUsed ? $geoCountry : null
         );
-        $homeProfessionalProfiles = $this->buildHighlightedProfessionalProfiles($user, 6);
+        $homeProfessionalProfiles = $this->buildHighlightedProfessionalProfiles($user, 18);
 
         $homeShowcaseAdIds = $homePersonalRequests
             ->pluck('id')
@@ -450,26 +456,38 @@ class FeedController extends Controller
         ));
     }
 
-    private function buildMainFeedAdsQuery($user, string $filterType, bool $geoEnabled = false, ?float $userLat = null, ?float $userLng = null, int $userRadius = 50)
+    private function buildMainFeedAdsQuery(
+        $user,
+        string $filterType,
+        bool $geoEnabled = false,
+        ?float $userLat = null,
+        ?float $userLng = null,
+        int $userRadius = 50,
+        ?string $geoCity = null,
+        ?string $geoCountry = null,
+        bool $requireFeaturedVisibility = true
+    )
     {
         $query = Ad::where('status', 'active')->with('user');
 
-        // Annonces visibles sur le feed principal : payées, boostées ou portées par un compte abonné.
-        $query->where(function($q) {
-            $q->where(function($q2) {
-                $q2->where('is_boosted', true)
-                    ->where('boost_end', '>', now());
-            })
-            ->orWhereHas('user', function($q3) {
-                $q3->whereNotNull('plan')
-                    ->where('plan', '!=', '')
-                    ->whereRaw('LOWER(plan) != ?', ['free'])
-                    ->where(function($q4) {
-                        $q4->whereNull('subscription_end')
-                            ->orWhere('subscription_end', '>', now());
-                    });
+        if ($requireFeaturedVisibility) {
+            // Annonces visibles sur le feed principal : payées, boostées ou portées par un compte abonné.
+            $query->where(function($q) {
+                $q->where(function($q2) {
+                    $q2->where('is_boosted', true)
+                        ->where('boost_end', '>', now());
+                })
+                ->orWhereHas('user', function($q3) {
+                    $q3->whereNotNull('plan')
+                        ->where('plan', '!=', '')
+                        ->whereRaw('LOWER(plan) != ?', ['free'])
+                        ->where(function($q4) {
+                            $q4->whereNull('subscription_end')
+                                ->orWhere('subscription_end', '>', now());
+                        });
+                });
             });
-        });
+        }
 
         $query->where(function($q) use ($user) {
             $q->where('visibility', 'public')
@@ -490,22 +508,47 @@ class FeedController extends Controller
             $query->where('service_type', 'demande');
         }
 
-        if ($geoEnabled && $userLat !== null && $userLng !== null) {
-            $this->applyAdGeoScope($query, $userLat, $userLng, $userRadius);
+        if ($geoEnabled) {
+            $this->applyAdGeoScope($query, $userLat, $userLng, $userRadius, $geoCity, $geoCountry);
         }
 
         return $query;
     }
 
-    private function applyAdGeoScope($query, float $lat, float $lng, int $radius): void
+    private function applyAdGeoScope($query, ?float $lat, ?float $lng, int $radius, ?string $city = null, ?string $country = null): void
     {
         $distanceSql = $this->geoDistanceSql();
+        $hasCoordinates = $lat !== null && $lng !== null;
+        $city = trim((string) $city);
+        $country = trim((string) $country);
 
-        $query->select('ads.*')
-            ->selectRaw("{$distanceSql} AS distance", [$lat, $lng, $lat])
-            ->whereNotNull('latitude')
-            ->whereNotNull('longitude')
-            ->whereRaw("{$distanceSql} <= ?", [$lat, $lng, $lat, $radius]);
+        if ($hasCoordinates) {
+            $query->select('ads.*')
+                ->selectRaw("CASE WHEN latitude IS NOT NULL AND longitude IS NOT NULL THEN {$distanceSql} ELSE NULL END AS distance", [$lat, $lng, $lat]);
+        } else {
+            $query->select('ads.*')
+                ->selectRaw('NULL AS distance');
+        }
+
+        $query->where(function ($q) use ($hasCoordinates, $distanceSql, $lat, $lng, $radius, $city, $country) {
+            if ($hasCoordinates) {
+                $q->where(function ($geo) use ($distanceSql, $lat, $lng, $radius) {
+                    $geo->whereNotNull('latitude')
+                        ->whereNotNull('longitude')
+                        ->whereRaw("{$distanceSql} <= ?", [$lat, $lng, $lat, $radius]);
+                });
+            }
+
+            if ($city !== '') {
+                $q->orWhere(function ($text) use ($city) {
+                    $text->where('location', 'LIKE', '%' . $city . '%')
+                        ->orWhere('address', 'LIKE', '%' . $city . '%')
+                        ->orWhere('postal_code', 'LIKE', '%' . $city . '%');
+                });
+            } elseif ($country !== '') {
+                $q->orWhere('country', 'LIKE', '%' . $country . '%');
+            }
+        });
     }
 
     private function orderMainFeedAds($query, bool $geoApplied): void
@@ -516,7 +559,8 @@ class FeedController extends Controller
         );
 
         if ($geoApplied) {
-            $query->orderBy('distance');
+            $query->orderByRaw('CASE WHEN distance IS NULL THEN 1 ELSE 0 END')
+                ->orderBy('distance');
         }
 
         $query->orderBy('is_pinned', 'desc')
@@ -601,7 +645,9 @@ class FeedController extends Controller
         ?string $authorKind = null,
         ?float $userLat = null,
         ?float $userLng = null,
-        ?int $userRadius = null
+        ?int $userRadius = null,
+        ?string $geoCity = null,
+        ?string $geoCountry = null
     )
     {
         $query = Ad::where('status', 'active')
@@ -628,9 +674,9 @@ class FeedController extends Controller
             });
         }
 
-        $geoScoped = $userLat !== null && $userLng !== null && $userRadius !== null;
+        $geoScoped = ($userLat !== null && $userLng !== null && $userRadius !== null) || $geoCity || $geoCountry;
         if ($geoScoped) {
-            $this->applyAdGeoScope($query, $userLat, $userLng, $userRadius);
+            $this->applyAdGeoScope($query, $userLat, $userLng, $userRadius ?? 50, $geoCity, $geoCountry);
         }
 
         return $query
@@ -643,7 +689,7 @@ class FeedController extends Controller
                 [now()]
             )
             ->orderByRaw("CASE WHEN boost_type = 'vip' THEN 0 WHEN boost_type = 'premium' THEN 1 ELSE 2 END")
-            ->when($geoScoped, fn($q) => $q->orderBy('distance'))
+            ->when($geoScoped, fn($q) => $q->orderByRaw('CASE WHEN distance IS NULL THEN 1 ELSE 0 END')->orderBy('distance'))
             ->orderBy('is_pinned', 'desc')
             ->orderBy('created_at', 'desc')
             ->take($limit)
@@ -1359,14 +1405,17 @@ class FeedController extends Controller
             $radius = Auth::user()->geo_radius ?? 50;
         }
         $radius = (int) ($radius ?: 50);
+        $user = Auth::user();
+        $geoCity = $userGeo['city'] ?? $user?->getDisplayCity() ?? null;
+        $geoCountry = $userGeo['country'] ?? $user?->getDisplayCountry() ?? null;
 
-        $scope = $request->get('scope', ($userLat && $userLng) ? 'nearby' : 'all');
+        $scope = $request->get('scope', 'all');
         if (!in_array($scope, ['nearby', 'all'], true)) {
-            $scope = ($userLat && $userLng) ? 'nearby' : 'all';
+            $scope = 'all';
         }
 
-        $user = Auth::user();
-        $geoApplied = (bool) ($userLat && $userLng && !$location && $scope === 'nearby');
+        $hasLocalReference = ($userLat !== null && $userLng !== null) || $geoCity || $geoCountry;
+        $geoApplied = (bool) ($hasLocalReference && !$location && $scope === 'nearby');
         $geoFallbackUsed = false;
 
         $buildFilteredAdsQuery = function (bool $nearby) use (
@@ -1379,15 +1428,20 @@ class FeedController extends Controller
             $missionCategories,
             $userLat,
             $userLng,
-            $radius
+            $radius,
+            $geoCity,
+            $geoCountry
         ) {
             $query = $this->buildMainFeedAdsQuery(
                 $user,
                 'all',
                 $nearby,
-                $nearby ? (float) $userLat : null,
-                $nearby ? (float) $userLng : null,
-                $radius
+                $nearby && $userLat !== null ? (float) $userLat : null,
+                $nearby && $userLng !== null ? (float) $userLng : null,
+                $radius,
+                $nearby ? $geoCity : null,
+                $nearby ? $geoCountry : null,
+                false
             );
 
             if ($category && $category !== 'all') {
@@ -1410,7 +1464,8 @@ class FeedController extends Controller
             if ($location) {
                 $query->where(function($q) use ($location) {
                     $q->where('location', 'LIKE', '%' . $location . '%')
-                      ->orWhere('city', 'LIKE', '%' . $location . '%')
+                      ->orWhere('address', 'LIKE', '%' . $location . '%')
+                      ->orWhere('country', 'LIKE', '%' . $location . '%')
                       ->orWhere('postal_code', 'LIKE', '%' . $location . '%');
                 });
             }
@@ -1439,7 +1494,8 @@ class FeedController extends Controller
             [now(), now()]
         );
         if ($geoApplied) {
-            $query->orderBy('distance');
+            $query->orderByRaw('CASE WHEN distance IS NULL THEN 1 ELSE 0 END')
+                ->orderBy('distance');
         }
         switch ($sort) {
             case 'urgent':

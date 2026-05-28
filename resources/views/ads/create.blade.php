@@ -928,7 +928,11 @@
                 || $publishUser->hasCompletedProOnboarding()
                 || $hasPaidPlan
             );
-            $selectedServiceType = old('service_type', $canPublishProfessionalOffer ? 'offre' : 'demande');
+            $requestedType = request('type');
+            $selectedServiceType = old('service_type', $requestedType === 'demande' ? 'demande' : ($canPublishProfessionalOffer ? 'offre' : 'demande'));
+            if (!$canPublishProfessionalOffer && $selectedServiceType === 'offre') {
+                $selectedServiceType = 'demande';
+            }
         @endphp
         <input type="hidden" name="service_type" id="service_type" value="{{ $selectedServiceType }}">
 
@@ -947,15 +951,14 @@
                     <p>Vous cherchez un professionnel pour un travail, un dépannage ou un service.</p>
                 </label>
 
-                <label class="type-option {{ $selectedServiceType === 'offre' ? 'selected' : '' }} {{ !$canPublishProfessionalOffer ? 'is-disabled' : '' }}" data-service-type="offre" aria-disabled="{{ $canPublishProfessionalOffer ? 'false' : 'true' }}">
-                    <input type="radio" name="service_type_choice" value="offre" {{ $selectedServiceType === 'offre' ? 'checked' : '' }}>
-                    <div class="type-option-icon"><i class="fas fa-briefcase"></i></div>
-                    <h6>Offre professionnelle</h6>
-                    <p>Vous proposez un service, une location de matériel, une promotion ou un recrutement.</p>
-                    @unless($canPublishProfessionalOffer)
-                        <span class="type-option-note">Réservé aux comptes professionnels ou prestataires valides.</span>
-                    @endunless
-                </label>
+                @if($canPublishProfessionalOffer)
+                    <label class="type-option {{ $selectedServiceType === 'offre' ? 'selected' : '' }}" data-service-type="offre" aria-disabled="false">
+                        <input type="radio" name="service_type_choice" value="offre" {{ $selectedServiceType === 'offre' ? 'checked' : '' }}>
+                        <div class="type-option-icon"><i class="fas fa-briefcase"></i></div>
+                        <h6>Offre professionnelle</h6>
+                        <p>Vous proposez un service, une location de matériel, une promotion ou un recrutement.</p>
+                    </label>
+                @endif
             </div>
         </div>
 

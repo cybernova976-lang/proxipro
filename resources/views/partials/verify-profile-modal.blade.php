@@ -10,7 +10,7 @@
                     </div>
                     <div>
                         <h5 class="modal-title mb-0" id="verifyProfileModalLabel">Vérifier mon profil</h5>
-                        <small class="opacity-75">Obtenez le badge "Profil vérifié" pour 10€</small>
+                        <small class="opacity-75">Obtenez le badge "Profil vérifié" pour 5€</small>
                     </div>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
@@ -97,7 +97,7 @@
 
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle me-2"></i>
-                            <strong>Frais de vérification : 10€</strong> - Ces frais couvrent la vérification manuelle de vos documents par notre équipe.
+                            <strong>Frais de vérification : 5€</strong> - Ces frais couvrent la vérification manuelle de vos documents par notre équipe.
                         </div>
                     </form>
                 </div>
@@ -117,19 +117,19 @@
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <span>Vérification de profil</span>
-                                    <span class="fw-bold text-primary">10,00 €</span>
+                                    <span class="fw-bold text-primary">5,00 €</span>
                                 </div>
                                 <hr>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span class="fw-bold">Total</span>
-                                    <span class="fw-bold fs-4 text-success">10,00 €</span>
+                                    <span class="fw-bold fs-4 text-success">5,00 €</span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="mt-4">
                             <button type="button" id="payVerificationBtn" class="btn btn-success btn-lg px-5">
-                                <i class="fas fa-lock me-2"></i>Payer 10€ maintenant
+                                <i class="fas fa-lock me-2"></i>Payer 5€ maintenant
                             </button>
                             <p class="text-muted small mt-2">
                                 <i class="fab fa-stripe me-1"></i>Paiement sécurisé par Stripe
@@ -462,17 +462,17 @@
                         } else {
                             alert(data.message || 'Erreur lors de la création du paiement.');
                             btn.disabled = false;
-                            btn.innerHTML = '<i class="fas fa-lock me-2"></i>Payer 10€ maintenant';
+                            btn.innerHTML = '<i class="fas fa-lock me-2"></i>Payer 5€ maintenant';
                         }
                     } catch (e) {
                         alert('Erreur lors du traitement de la réponse.');
                         btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-lock me-2"></i>Payer 10€ maintenant';
+                        btn.innerHTML = '<i class="fas fa-lock me-2"></i>Payer 5€ maintenant';
                     }
                 } else {
                     alert('Erreur serveur: ' + xhr.status);
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-lock me-2"></i>Payer 10€ maintenant';
+                    btn.innerHTML = '<i class="fas fa-lock me-2"></i>Payer 5€ maintenant';
                 }
             }
         };

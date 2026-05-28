@@ -181,9 +181,9 @@ class IdentityVerification extends Model
     public static function getVerificationPrice($type)
     {
         return match($type) {
-            'profile_verification' => 10.00,
+            'profile_verification' => 5.00,
             'service_provider' => 10.00,
-            default => 10.00,
+            default => 5.00,
         };
     }
 
@@ -191,9 +191,9 @@ class IdentityVerification extends Model
     public static function getVerificationPointsCost($type)
     {
         return match($type) {
-            'profile_verification' => 20,
+            'profile_verification' => 10,
             'service_provider' => 20,
-            default => 20,
+            default => 10,
         };
     }
 }

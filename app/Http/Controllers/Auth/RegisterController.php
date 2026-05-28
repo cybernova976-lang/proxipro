@@ -185,6 +185,8 @@ class RegisterController extends Controller
         $rules = [
             'email' => ['required', 'string', 'email:rfc,dns', 'max:255', Rule::unique('users', 'email')->whereNull('deleted_at')],
             'referral_code' => ['nullable', 'string', 'max:20', Rule::exists('users', 'referral_code')],
+            'country' => ['required', 'string', 'max:100'],
+            'city' => ['required', 'string', 'max:100'],
             'password' => [
                 'required',
                 'string',
@@ -256,6 +258,8 @@ class RegisterController extends Controller
             'email.email' => 'Veuillez entrer une adresse e-mail valide.',
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
             'referral_code.exists' => 'Code de parrainage invalide.',
+            'country.required' => 'Le pays est obligatoire pour afficher les offres proches de vous.',
+            'city.required' => 'La ville est obligatoire pour afficher les offres proches de vous.',
             'password.required' => 'Le mot de passe est obligatoire.',
             'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
             'password.max' => 'Le mot de passe ne peut pas dépasser 40 caractères.',
@@ -329,6 +333,8 @@ class RegisterController extends Controller
             'newsletter_subscribed' => isset($data['newsletter']),
             'is_service_provider' => $isProfessionnel,
             'service_provider_since' => $isProfessionnel ? now() : null,
+            'country' => $data['country'],
+            'city' => $data['city'],
         ]);
 
         // Set protected fields explicitly (not mass-assignable for security)

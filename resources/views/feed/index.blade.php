@@ -404,6 +404,20 @@
         .feed-left-menu-shell:focus-within .feed-left-menu-toggle {
             right: var(--feed-menu-toggle-gap);
         }
+
+        .feed-left-menu-shell.is-click-collapsed:hover,
+        .feed-left-menu-shell.is-click-collapsed:focus-within {
+            transform: translateX(-100%);
+            background: transparent;
+            border-right-color: transparent;
+            box-shadow: none;
+            backdrop-filter: none;
+        }
+
+        .feed-left-menu-shell.is-click-collapsed:hover .feed-left-menu-toggle,
+        .feed-left-menu-shell.is-click-collapsed:focus-within .feed-left-menu-toggle {
+            right: calc(0px - var(--feed-menu-toggle-size) - var(--feed-menu-toggle-gap));
+        }
     }
 
     .feed-left-menu-toggle {
@@ -6457,6 +6471,70 @@
         gap: 14px;
     }
 
+    .home-showcase-carousel-shell {
+        position: relative;
+        isolation: isolate;
+    }
+
+    .home-showcase-scroll-track {
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scroll-behavior: smooth;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        padding: 2px 2px 8px;
+    }
+
+    .home-showcase-scroll-track::-webkit-scrollbar {
+        display: none;
+    }
+
+    .home-showcase-ads-grid.home-showcase-scroll-track,
+    .home-showcase-pro-grid.home-showcase-scroll-track {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: calc((100% - 28px) / 3);
+        grid-template-columns: none;
+        grid-template-rows: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .home-showcase-scroll-track > * {
+        scroll-snap-align: start;
+    }
+
+    .home-showcase-scroll-btn {
+        position: absolute;
+        top: 50%;
+        z-index: 3;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border: 1px solid #D6E0EA;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.96);
+        color: #0f172a;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+        transform: translateY(-50%);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .home-showcase-scroll-btn:hover {
+        background: #fff;
+        box-shadow: 0 16px 32px rgba(15, 23, 42, 0.2);
+        transform: translateY(-50%) scale(1.04);
+    }
+
+    .home-showcase-scroll-btn--left {
+        left: -10px;
+    }
+
+    .home-showcase-scroll-btn--right {
+        right: -10px;
+    }
+
     .home-showcase-pro-card,
     .provider-card {
         display: block;
@@ -6699,6 +6777,11 @@
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
+        .home-showcase-ads-grid.home-showcase-scroll-track,
+        .home-showcase-pro-grid.home-showcase-scroll-track {
+            grid-auto-columns: calc((100% - 14px) / 2);
+        }
+
         .home-showcase-pro-grid,
         .providers-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -6757,6 +6840,19 @@
         .home-showcase-ads-grid {
             grid-template-columns: 1fr;
             margin-top: 0;
+        }
+
+        .home-showcase-ads-grid.home-showcase-scroll-track,
+        .home-showcase-pro-grid.home-showcase-scroll-track {
+            grid-auto-columns: min(86vw, 360px);
+        }
+
+        .home-showcase-scroll-btn--left {
+            left: 2px;
+        }
+
+        .home-showcase-scroll-btn--right {
+            right: 2px;
         }
     }
 
@@ -7220,7 +7316,7 @@
                             <div class="feed-scope-toggle" aria-label="Portée des annonces">
                                 <button type="button"
                                         id="feedScopeNearbyBtn"
-                                        class="feed-scope-btn {{ ($feedScope ?? 'nearby') === 'nearby' ? 'active' : '' }}"
+                                        class="feed-scope-btn {{ ($feedScope ?? 'all') === 'nearby' ? 'active' : '' }}"
                                         onclick="selectFeedScope('nearby')"
                                         @if(!($geoEnabled ?? false)) disabled title="Localisation indisponible" @endif>
                                     <i class="fas fa-location-arrow"></i>
@@ -7228,7 +7324,7 @@
                                 </button>
                                 <button type="button"
                                         id="feedScopeAllBtn"
-                                        class="feed-scope-btn {{ ($feedScope ?? 'nearby') === 'all' ? 'active' : '' }}"
+                                        class="feed-scope-btn {{ ($feedScope ?? 'all') === 'all' ? 'active' : '' }}"
                                         onclick="selectFeedScope('all')">
                                     <i class="fas fa-globe-africa"></i>
                                     <span>Tout voir</span>
@@ -8497,6 +8593,15 @@
             card.appendChild(note);
         }
     }
+
+    window.scrollHomeShowcase = function(button, direction) {
+        const shell = button?.closest('.home-showcase-carousel-shell');
+        const track = shell?.querySelector('.home-showcase-scroll-track');
+        if (!track) return;
+
+        const scrollAmount = Math.max(track.clientWidth * 0.88, 280);
+        track.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+    };
 
     function updateFeedAdsMap(markers) {
         const mapElement = document.getElementById('adsFeedMap');
@@ -10382,7 +10487,7 @@
         lng: {{ $userLng ?? 'null' }},
         radius: {{ $userRadius ?? 50 }},
         geoEnabled: {{ ($geoEnabled ?? false) ? 'true' : 'false' }},
-        scope: @json($feedScope ?? (($geoEnabled ?? false) ? 'nearby' : 'all'))
+        scope: @json($feedScope ?? 'all')
     };
 
     // Données des catégories
@@ -10422,6 +10527,25 @@
         }
     }
 
+    function hasActiveMissionFilters() {
+        return currentFilters.mode !== 'missions'
+            || !!currentFilters.category
+            || !!currentFilters.subcategory
+            || (currentFilters.sort && currentFilters.sort !== 'recommended')
+            || !!currentFilters.country
+            || !!currentFilters.city
+            || !!currentFilters.priceMin
+            || !!currentFilters.priceMax
+            || currentFilters.scope === 'nearby';
+    }
+
+    function updateHomeShowcaseVisibility() {
+        const showcase = document.querySelector('.home-showcase-section');
+        if (showcase) {
+            showcase.style.display = hasActiveMissionFilters() ? 'none' : '';
+        }
+    }
+
     function selectFeedScope(scope) {
         if (scope === 'nearby' && !currentFilters.geoEnabled) {
             requestBrowserGeolocation();
@@ -10430,6 +10554,7 @@
 
         currentFilters.scope = scope === 'all' ? 'all' : 'nearby';
         updateFeedScopeToggle();
+        updateHomeShowcaseVisibility();
         loadData();
     }
 
@@ -10452,6 +10577,7 @@
         // Afficher/Masquer les sections
         if (providersSection) providersSection.style.display = mode === 'providers' ? 'block' : 'none';
         if (missionsSection) missionsSection.style.display = mode === 'missions' ? 'block' : 'none';
+        updateHomeShowcaseVisibility();
         
         // Recharger les données
         loadData();
@@ -10532,8 +10658,14 @@
         const labels = {
             'recommended': 'Recommandé',
             'recent': 'Plus récent',
-            'urgent': 'Urgent'
+            'urgent': 'Urgent',
+            'proximity': 'Proximité'
         };
+
+        if (sort === 'proximity' && currentFilters.geoEnabled) {
+            currentFilters.scope = 'nearby';
+            updateFeedScopeToggle();
+        }
         
         document.getElementById('sortLabel').textContent = labels[sort] || 'Trier';
         
@@ -10711,7 +10843,7 @@
         const hoverMenuQuery = window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 992px)');
         let feedMenuPinned = false;
 
-        function setFeedMenuOpen(isOpen, pinState = feedMenuPinned) {
+        function setFeedMenuOpen(isOpen, pinState = feedMenuPinned, suppressHoverOpen = false) {
             if (!feedLeftMenu || !feedLeftMenuToggle) {
                 return;
             }
@@ -10719,6 +10851,7 @@
             feedMenuPinned = pinState;
             feedLeftMenu.classList.toggle('is-open', isOpen);
             feedLeftMenu.classList.toggle('is-pinned', feedMenuPinned);
+            feedLeftMenu.classList.toggle('is-click-collapsed', suppressHoverOpen && !isOpen);
             feedLeftMenuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
             feedLeftMenuToggle.setAttribute('aria-label', isOpen ? 'Fermer le menu' : 'Ouvrir le menu');
 
@@ -10744,7 +10877,7 @@
         if (feedLeftMenuToggle) {
             feedLeftMenuToggle.addEventListener('click', () => {
                 if (feedLeftMenu?.classList.contains('is-pinned')) {
-                    setFeedMenuOpen(false, false);
+                    setFeedMenuOpen(false, false, true);
                 } else {
                     setFeedMenuOpen(true, true);
                 }
@@ -10753,12 +10886,17 @@
 
         if (feedLeftMenu) {
             feedLeftMenu.addEventListener('mouseenter', () => {
+                if (feedLeftMenu.classList.contains('is-click-collapsed')) {
+                    return;
+                }
+
                 if (hoverMenuQuery.matches) {
                     setFeedMenuOpen(true, feedMenuPinned);
                 }
             });
 
             feedLeftMenu.addEventListener('mouseleave', () => {
+                feedLeftMenu.classList.remove('is-click-collapsed');
                 if (hoverMenuQuery.matches && !feedMenuPinned) {
                     setFeedMenuOpen(false, false);
                 }
@@ -10839,6 +10977,7 @@
      * Charger les données avec les filtres
      */
     function loadData() {
+        updateHomeShowcaseVisibility();
         const overlay = document.getElementById('loadingOverlay');
         overlay.classList.add('active');
         
@@ -10865,9 +11004,9 @@
         }
         if (currentFilters.priceMin) params.append('price_min', currentFilters.priceMin);
         if (currentFilters.priceMax) params.append('price_max', currentFilters.priceMax);
-        params.append('scope', currentFilters.scope || 'nearby');
+        params.append('scope', currentFilters.scope || 'all');
         // Geo params
-        if (currentFilters.scope === 'nearby' && currentFilters.geoEnabled && currentFilters.lat && currentFilters.lng) {
+        if (currentFilters.scope === 'nearby' && currentFilters.geoEnabled && currentFilters.lat !== null && currentFilters.lng !== null) {
             params.append('lat', currentFilters.lat);
             params.append('lng', currentFilters.lng);
             params.append('radius', currentFilters.radius);
@@ -10888,7 +11027,7 @@
                         ? data.map_markers
                         : buildFeedMapMarkers(adsPayload);
                     renderMissions(adsPayload);
-                    setGeoFallbackNotice(!!data.geo_fallback_used);
+                    setGeoFallbackNotice(!!data.geo_fallback_used && currentFilters.scope === 'nearby');
                     updateFeedAdsMap(mapPayload);
                 }
             })
@@ -11074,7 +11213,7 @@
     function renderMissions(missions) {
         const grid = document.getElementById('missionsGrid');
         const featuredContainer = document.getElementById('featuredProsContainer');
-        const showcaseAdIds = getShowcaseAdIdSet();
+        const showcaseAdIds = hasActiveMissionFilters() ? new Set() : getShowcaseAdIdSet();
         const seenMissionIds = new Set();
         const filteredMissions = (missions || []).filter((ad) => {
             const adId = Number(ad.id);
@@ -11780,8 +11919,8 @@
                 else if (currentFilters.country) params.append('location', currentFilters.country);
                 if (currentFilters.priceMin) params.append('price_min', currentFilters.priceMin);
                 if (currentFilters.priceMax) params.append('price_max', currentFilters.priceMax);
-                params.append('scope', currentFilters.scope || 'nearby');
-                if (currentFilters.scope === 'nearby' && currentFilters.geoEnabled && currentFilters.lat && currentFilters.lng) {
+                params.append('scope', currentFilters.scope || 'all');
+                if (currentFilters.scope === 'nearby' && currentFilters.geoEnabled && currentFilters.lat !== null && currentFilters.lng !== null) {
                     params.append('lat', currentFilters.lat);
                     params.append('lng', currentFilters.lng);
                     params.append('radius', currentFilters.radius);
@@ -11793,8 +11932,8 @@
                 const data = await response.json();
                 const ads = data.ads?.data || data.ads || [];
                 const serverMapMarkers = Array.isArray(data.map_markers) ? data.map_markers : null;
-                setGeoFallbackNotice(!!data.geo_fallback_used);
-                const showcaseAdIds = getShowcaseAdIdSet();
+                setGeoFallbackNotice(!!data.geo_fallback_used && currentFilters.scope === 'nearby');
+                const showcaseAdIds = hasActiveMissionFilters() ? new Set() : getShowcaseAdIdSet();
                 const alreadyRenderedAdIds = getRenderedFeedAdIdSet();
                 const seenBatchIds = new Set();
                 const uniqueAds = ads.filter((ad) => {
@@ -11851,7 +11990,7 @@
         function buildInfiniteScrollPost(ad) {
             const adId = Number(ad.id);
             if (!Number.isFinite(adId) || adId <= 0) return null;
-            if (getShowcaseAdIdSet().has(adId)) return null;
+            if (!hasActiveMissionFilters() && getShowcaseAdIdSet().has(adId)) return null;
             if (getRenderedFeedAdIdSet().has(adId)) return null;
 
             const div = document.createElement('div');

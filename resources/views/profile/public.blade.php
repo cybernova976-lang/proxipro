@@ -78,6 +78,17 @@
                             </span>
                         @endif
                     </div>
+                    <div class="mb-2">
+                        @if($user->is_verified || $user->identity_verified)
+                            <span class="badge bg-success px-3 py-2">
+                                <i class="fas fa-check-circle me-1"></i>Profil vérifié
+                            </span>
+                        @else
+                            <span class="badge bg-secondary px-3 py-2" style="opacity: 0.85;">
+                                <i class="fas fa-user-times me-1"></i>Profil non vérifié
+                            </span>
+                        @endif
+                    </div>
                     
                     <!-- Job Title / Profession -->
                     <p class="text-primary fw-semibold mb-1" style="word-break: break-word; overflow-wrap: break-word;">

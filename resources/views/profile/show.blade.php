@@ -10,6 +10,12 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>{{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
     <div class="row">
         <!-- Profile Card -->
@@ -36,6 +42,15 @@
                     </div>
                     
                     <h4 class="fw-bold mb-1">{{ $user->name }}</h4>
+                    @if($user->is_verified || $user->identity_verified)
+                        <span class="badge bg-success px-3 py-2 mb-3">
+                            <i class="fas fa-check-circle me-1"></i>Profil vérifié
+                        </span>
+                    @else
+                        <span class="badge bg-secondary px-3 py-2 mb-3" style="opacity: 0.85;">
+                            <i class="fas fa-user-times me-1"></i>Profil non vérifié
+                        </span>
+                    @endif
                     
                     {{-- Profession/Métier --}}
                     @if($user->profession)
