@@ -8358,13 +8358,26 @@
 
     let feedAdsMap = null;
     let feedAdsMapLayer = null;
+    const MAX_FEED_MAP_MARKERS = 120;
+
+    function escapeMapHtml(value = '') {
+        return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        }[char]));
+    }
 
     function buildFeedMapMarkers(ads) {
-        if (!Array.isArray(ads)) {
+        const source = Array.isArray(ads) ? ads : (Array.isArray(ads?.data) ? ads.data : []);
+        if (!Array.isArray(source)) {
             return [];
         }
 
-        return ads.filter(ad => Number.isFinite(Number(ad.latitude)) && Number.isFinite(Number(ad.longitude)))
+        return source.filter(ad => Number.isFinite(Number(ad.latitude)) && Number.isFinite(Number(ad.longitude)))
+            .slice(0, MAX_FEED_MAP_MARKERS)
             .map(ad => ({
                 id: ad.id,
                 title: ad.title,
@@ -8376,6 +8389,7 @@
                 is_urgent: !!ad.is_urgent,
                 is_boosted: !!ad.is_boosted,
                 url: ad.url || `/ads/${ad.id}`,
+                distance_km: ad.distance_km,
             }));
     }
 
@@ -8392,7 +8406,7 @@
             return;
         }
 
-        const normalizedMarkers = Array.isArray(markers) ? markers : [];
+        const normalizedMarkers = (Array.isArray(markers) ? markers : []).slice(0, MAX_FEED_MAP_MARKERS);
         setFeedMapVisibility(normalizedMarkers.length > 0);
 
         if (normalizedMarkers.length === 0) {
@@ -8400,7 +8414,7 @@
         }
 
         if (!feedAdsMap) {
-            feedAdsMap = L.map(mapElement, { scrollWheelZoom: false });
+            feedAdsMap = L.map(mapElement, { scrollWheelZoom: false, preferCanvas: true });
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(feedAdsMap);
@@ -8434,12 +8448,17 @@
             });
 
             const price = marker.price ? new Intl.NumberFormat('fr-FR').format(marker.price) + ' €' : 'Sur devis';
+            const distance = Number(marker.distance_km);
+            const distanceLine = Number.isFinite(distance)
+                ? `<div style="font-size:12px;color:#047857;font-weight:700;margin-bottom:8px;">A ${distance.toFixed(1).replace('.', ',')} km</div>`
+                : '';
             const popup = `
                 <div style="min-width:220px;">
-                    <div style="font-weight:800;color:#0f172a;margin-bottom:6px;">${marker.title || ''}</div>
-                    <div style="font-size:12px;color:#475569;margin-bottom:6px;">${marker.category || 'Annonce'} · ${marker.location || 'Lieu non precise'}</div>
+                    <div style="font-weight:800;color:#0f172a;margin-bottom:6px;">${escapeMapHtml(marker.title || '')}</div>
+                    <div style="font-size:12px;color:#475569;margin-bottom:6px;">${escapeMapHtml(marker.category || 'Annonce')} · ${escapeMapHtml(marker.location || 'Lieu non precise')}</div>
                     <div style="font-size:13px;font-weight:700;color:#1e3a8a;margin-bottom:10px;">${price}</div>
-                    <a href="${marker.url}" style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;background:#2563eb;color:#fff;text-decoration:none;font-size:12px;font-weight:700;">Voir l'annonce</a>
+                    ${distanceLine}
+                    <a href="${escapeMapHtml(marker.url)}" style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;background:#2563eb;color:#fff;text-decoration:none;font-size:12px;font-weight:700;">Voir l'annonce</a>
                 </div>
             `;
 
@@ -10741,8 +10760,12 @@
                 if (currentFilters.mode === 'providers') {
                     renderProviders(data.professionals || data);
                 } else {
-                    renderMissions(data.ads || data);
-                    updateFeedAdsMap(buildFeedMapMarkers(data.ads || data));
+                    const adsPayload = data.ads || data;
+                    const mapPayload = Array.isArray(data.map_markers)
+                        ? data.map_markers
+                        : buildFeedMapMarkers(adsPayload);
+                    renderMissions(adsPayload);
+                    updateFeedAdsMap(mapPayload);
                 }
             })
             .catch(err => {
@@ -11638,6 +11661,7 @@
                 });
                 const data = await response.json();
                 const ads = data.ads?.data || data.ads || [];
+                const serverMapMarkers = Array.isArray(data.map_markers) ? data.map_markers : null;
                 const showcaseAdIds = getShowcaseAdIdSet();
                 const alreadyRenderedAdIds = getRenderedFeedAdIdSet();
                 const seenBatchIds = new Set();
@@ -11661,7 +11685,9 @@
                     const existingMarkers = feedAdsMapLayer
                         ? feedAdsMapLayer.getLayers().map(layer => layer.getLatLng()).length
                         : 0;
-                    if (currentMarkers.length > 0 || existingMarkers > 0) {
+                    if (serverMapMarkers) {
+                        updateFeedAdsMap(serverMapMarkers);
+                    } else if (currentMarkers.length > 0 || existingMarkers > 0) {
                         const currentMapMarkers = [];
                         document.querySelectorAll('#missionsGrid .fb-post[data-ad-json]').forEach((post) => {
                             try {

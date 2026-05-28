@@ -62,37 +62,6 @@ class FeedController extends Controller
         }
         $clientRequests = $clientRequestsQuery->take(8)->get();
 
-        // ===== SECTION "LES DERNIÈRES PÉPITES" - filtrée par proximité =====
-        // N'afficher que les annonces des utilisateurs abonnés (plan actif) ou boostées
-        $allAdsQuery = Ad::where('status', 'active')->with('user')
-            ->where(function($q) {
-                $q->where(function($q2) {
-                    $q2->where('is_boosted', true)
-                        ->where('boost_end', '>', now());
-                })
-                ->orWhereHas('user', function($q3) {
-                    $q3->whereNotNull('plan')
-                        ->where('plan', '!=', '')
-                        ->whereRaw('LOWER(plan) != ?', ['free'])
-                        ->where(function($q4) {
-                            $q4->whereNull('subscription_end')
-                                ->orWhere('subscription_end', '>', now());
-                        });
-                });
-            });
-
-        // Filtre visibilité : pro_targeted visible uniquement par les pros, SAUF annonces boostées
-        $allAdsQuery->where(function($q) use ($user) {
-            $q->where('visibility', 'public');
-            if ($user && ($user->user_type === 'professionnel' || $user->is_service_provider)) {
-                $q->orWhere('visibility', 'pro_targeted');
-            }
-            // Les annonces boostées sont toujours visibles quelle que soit leur visibilité
-            $q->orWhere(function($q2) {
-                $q2->where('is_boosted', true)->where('boost_end', '>', now());
-            });
-        });
-
         // Appliquer le filtre de type si présent
         $filterType = $request->get('type', 'all'); // all, offres, demandes
         if ($filterType === 'all' && !$request->has('type')) {
@@ -100,40 +69,11 @@ class FeedController extends Controller
                 $filterType = 'demandes';
             }
         }
-        // Filtre de type : ne s'applique PAS aux annonces boostées (visibilité payée)
-        if ($filterType === 'offres') {
-            $allAdsQuery->where(function($q) {
-                $q->where('service_type', 'offre')
-                  ->orWhere(function($q2) {
-                      $q2->where('is_boosted', true)->where('boost_end', '>', now());
-                  });
-            });
-        } elseif ($filterType === 'demandes') {
-            $allAdsQuery->where(function($q) {
-                $q->where('service_type', 'demande')
-                  ->orWhere(function($q2) {
-                      $q2->where('is_boosted', true)->where('boost_end', '>', now());
-                  });
-            });
-        }
-        // Filtre géo : ne s'applique PAS aux annonces boostées (visibilité payée)
-        if ($geoEnabled) {
-            $allAdsQuery->where(function($q) use ($userLat, $userLng, $userRadius) {
-                $q->whereRaw(
-                    "(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) <= ?",
-                    [$userLat, $userLng, $userLat, $userRadius]
-                )->orWhere(function($q2) {
-                    $q2->where('is_boosted', true)->where('boost_end', '>', now());
-                });
-            });
-        }
-        // Toujours prioriser : annonces boostées ou urgentes > épinglées > récentes
-        $allAdsQuery->orderByRaw(
-            "CASE WHEN (is_boosted = true AND boost_end > ?) OR (is_urgent = true AND (urgent_until IS NULL OR urgent_until > ?)) THEN 0 ELSE 1 END",
-            [now(), now()]
-        )
-                     ->orderBy('is_pinned', 'desc')
-                     ->orderBy('created_at', 'desc');
+
+        // ===== SECTION "LES DERNIÈRES PÉPITES" - filtrée par proximité =====
+        $allAdsQuery = $this->buildMainFeedAdsQuery($user, $filterType, $geoEnabled, $userLat, $userLng, $userRadius);
+        $this->orderMainFeedAds($allAdsQuery, $geoEnabled);
+        $feedMapQuery = clone $allAdsQuery;
         $ads = $allAdsQuery->paginate(12)->withQueryString();
         
         // Si peu de résultats, élargir automatiquement le rayon
@@ -141,13 +81,13 @@ class FeedController extends Controller
         $originalRadius = $userRadius;
         if ($geoEnabled && $ads->total() < 3 && $userRadius < 200) {
             $expandedRadius = min($userRadius * 3, 500);
-            $expandedQuery = Ad::where('status', 'active')->with('user');
-            if ($filterType === 'offres') $expandedQuery->where('service_type', 'offre');
-            elseif ($filterType === 'demandes') $expandedQuery->where('service_type', 'demande');
-            $expandedQuery->withinRadius($userLat, $userLng, $expandedRadius);
+            $expandedQuery = $this->buildMainFeedAdsQuery($user, $filterType, true, $userLat, $userLng, $expandedRadius);
+            $this->orderMainFeedAds($expandedQuery, true);
+            $expandedMapQuery = clone $expandedQuery;
             $adsExp = $expandedQuery->paginate(12)->withQueryString();
             if ($adsExp->total() > $ads->total()) {
                 $ads = $adsExp;
+                $feedMapQuery = $expandedMapQuery;
                 $userRadius = $expandedRadius;
                 $radiusWasExpanded = true;
             }
@@ -185,11 +125,15 @@ class FeedController extends Controller
                 ->where(function($q) use ($request) {
                     $q->where('category', $request->search)
                       ->orWhere('title', 'LIKE', '%' . $request->search . '%');
-                })
-                ->orderBy('created_at', 'desc')
-                ->paginate(12)
-                ->withQueryString();
-            $ads = $searchAds;
+                });
+
+            if ($geoEnabled) {
+                $this->applyAdGeoScope($searchAds, (float) $userLat, (float) $userLng, $userRadius);
+            }
+
+            $this->orderMainFeedAds($searchAds, $geoEnabled);
+            $feedMapQuery = clone $searchAds;
+            $ads = $searchAds->paginate(12)->withQueryString();
         }
 
         // Toutes les annonces pour le feed principal
@@ -335,13 +279,19 @@ class FeedController extends Controller
             serviceType: 'demande',
             currentUser: $user,
             limit: 6,
-            authorKind: 'particulier'
+            authorKind: 'particulier',
+            userLat: $geoEnabled ? (float) $userLat : null,
+            userLng: $geoEnabled ? (float) $userLng : null,
+            userRadius: $geoEnabled ? $userRadius : null
         );
         $homeProfessionalOffers = $this->buildHomeShowcaseAds(
             serviceType: 'offre',
             currentUser: $user,
             limit: 6,
-            authorKind: 'professional'
+            authorKind: 'professional',
+            userLat: $geoEnabled ? (float) $userLat : null,
+            userLng: $geoEnabled ? (float) $userLng : null,
+            userRadius: $geoEnabled ? $userRadius : null
         );
         $homeProfessionalProfiles = $this->buildHighlightedProfessionalProfiles($user, 6);
 
@@ -410,23 +360,13 @@ class FeedController extends Controller
             'radius' => $userRadius,
         ]);
 
-        $adsMapData = $ads->getCollection()
-            ->filter(fn ($ad) => $ad->latitude !== null && $ad->longitude !== null)
-            ->map(function ($ad) {
-                return [
-                    'id' => $ad->id,
-                    'title' => $ad->title,
-                    'category' => $ad->category,
-                    'location' => $ad->location,
-                    'price' => $ad->price,
-                    'latitude' => (float) $ad->latitude,
-                    'longitude' => (float) $ad->longitude,
-                    'is_urgent' => (bool) $ad->is_urgent,
-                    'is_boosted' => (bool) $ad->is_boosted,
-                    'url' => route('ads.show', $ad),
-                ];
-            })
-            ->values();
+        $adsMapData = $this->buildAdsMapData(
+            (clone $feedMapQuery)
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->limit(120)
+                ->get()
+        );
 
         $currentSearchSnapshot = $this->savedSearchService->buildSnapshot($request->all(), $user, [
             'city' => $geoCity,
@@ -481,6 +421,111 @@ class FeedController extends Controller
         ));
     }
 
+    private function buildMainFeedAdsQuery($user, string $filterType, bool $geoEnabled = false, ?float $userLat = null, ?float $userLng = null, int $userRadius = 50)
+    {
+        $query = Ad::where('status', 'active')->with('user');
+
+        // Annonces visibles sur le feed principal : payées, boostées ou portées par un compte abonné.
+        $query->where(function($q) {
+            $q->where(function($q2) {
+                $q2->where('is_boosted', true)
+                    ->where('boost_end', '>', now());
+            })
+            ->orWhereHas('user', function($q3) {
+                $q3->whereNotNull('plan')
+                    ->where('plan', '!=', '')
+                    ->whereRaw('LOWER(plan) != ?', ['free'])
+                    ->where(function($q4) {
+                        $q4->whereNull('subscription_end')
+                            ->orWhere('subscription_end', '>', now());
+                    });
+            });
+        });
+
+        $query->where(function($q) use ($user) {
+            $q->where('visibility', 'public')
+                ->orWhereNull('visibility');
+
+            if ($user && ($user->user_type === 'professionnel' || $user->is_service_provider)) {
+                $q->orWhere('visibility', 'pro_targeted');
+            }
+
+            $q->orWhere(function($q2) {
+                $q2->where('is_boosted', true)->where('boost_end', '>', now());
+            });
+        });
+
+        if ($filterType === 'offres') {
+            $query->where('service_type', 'offre');
+        } elseif ($filterType === 'demandes') {
+            $query->where('service_type', 'demande');
+        }
+
+        if ($geoEnabled && $userLat !== null && $userLng !== null) {
+            $this->applyAdGeoScope($query, $userLat, $userLng, $userRadius);
+        }
+
+        return $query;
+    }
+
+    private function applyAdGeoScope($query, float $lat, float $lng, int $radius): void
+    {
+        $distanceSql = $this->geoDistanceSql();
+
+        $query->select('ads.*')
+            ->selectRaw("{$distanceSql} AS distance", [$lat, $lng, $lat])
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->whereRaw("{$distanceSql} <= ?", [$lat, $lng, $lat, $radius]);
+    }
+
+    private function orderMainFeedAds($query, bool $geoApplied): void
+    {
+        $query->orderByRaw(
+            "CASE WHEN (is_boosted = true AND boost_end > ?) OR (is_urgent = true AND (urgent_until IS NULL OR urgent_until > ?)) THEN 0 ELSE 1 END",
+            [now(), now()]
+        );
+
+        if ($geoApplied) {
+            $query->orderBy('distance');
+        }
+
+        $query->orderBy('is_pinned', 'desc')
+            ->orderBy('created_at', 'desc');
+    }
+
+    private function geoDistanceSql(): string
+    {
+        return "(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))";
+    }
+
+    private function buildAdsMapData($ads)
+    {
+        return collect($ads)
+            ->filter(fn ($ad) => $ad->latitude !== null && $ad->longitude !== null)
+            ->map(function ($ad) {
+                $marker = [
+                    'id' => $ad->id,
+                    'title' => $ad->title,
+                    'category' => $ad->category,
+                    'location' => $ad->location,
+                    'price' => $ad->price,
+                    'latitude' => (float) $ad->latitude,
+                    'longitude' => (float) $ad->longitude,
+                    'is_urgent' => (bool) $ad->is_urgent,
+                    'is_boosted' => (bool) $ad->is_boosted,
+                    'url' => route('ads.show', $ad),
+                ];
+
+                if (isset($ad->distance)) {
+                    $marker['distance_km'] = round((float) $ad->distance, 1);
+                }
+
+                return $marker;
+            })
+            ->values();
+    }
+
     /**
      * Soumettre une candidature / marquer son intérêt pour une annonce
      */
@@ -520,7 +565,15 @@ class FeedController extends Controller
         ]);
     }
 
-    private function buildHomeShowcaseAds(string $serviceType, $currentUser, int $limit = 6, ?string $authorKind = null)
+    private function buildHomeShowcaseAds(
+        string $serviceType,
+        $currentUser,
+        int $limit = 6,
+        ?string $authorKind = null,
+        ?float $userLat = null,
+        ?float $userLng = null,
+        ?int $userRadius = null
+    )
     {
         $query = Ad::where('status', 'active')
             ->where('service_type', $serviceType)
@@ -546,6 +599,11 @@ class FeedController extends Controller
             });
         }
 
+        $geoScoped = $userLat !== null && $userLng !== null && $userRadius !== null;
+        if ($geoScoped) {
+            $this->applyAdGeoScope($query, $userLat, $userLng, $userRadius);
+        }
+
         return $query
             ->orderByRaw(
                 "CASE WHEN is_urgent = true AND (urgent_until IS NULL OR urgent_until > ?) THEN 0 ELSE 1 END",
@@ -556,6 +614,7 @@ class FeedController extends Controller
                 [now()]
             )
             ->orderByRaw("CASE WHEN boost_type = 'vip' THEN 0 WHEN boost_type = 'premium' THEN 1 ELSE 2 END")
+            ->when($geoScoped, fn($q) => $q->orderBy('distance'))
             ->orderBy('is_pinned', 'desc')
             ->orderBy('created_at', 'desc')
             ->take($limit)
@@ -1272,52 +1331,16 @@ class FeedController extends Controller
         }
         $radius = (int) ($radius ?: 50);
 
-        $query = Ad::where('status', 'active')->with('user');
-
-        // N'afficher que les annonces des utilisateurs abonnés (plan actif) ou boostées
-        $query->where(function($q) {
-            $q->where(function($q2) {
-                $q2->where('is_boosted', true)
-                    ->where('boost_end', '>', now());
-            })
-            ->orWhereHas('user', function($q3) {
-                $q3->whereNotNull('plan')
-                    ->where('plan', '!=', '')
-                    ->whereRaw('LOWER(plan) != ?', ['free'])
-                    ->where(function($q4) {
-                        $q4->whereNull('subscription_end')
-                            ->orWhere('subscription_end', '>', now());
-                    });
-            });
-        });
-
-        // ===== FILTRE VISIBILITÉ =====
-        // Les annonces "pro_targeted" ne sont visibles que par les pros, SAUF annonces boostées
         $user = Auth::user();
-        $query->where(function($q) use ($user) {
-            $q->where('visibility', 'public');
-            if ($user && ($user->user_type === 'professionnel' || $user->is_service_provider)) {
-                $q->orWhere('visibility', 'pro_targeted');
-            }
-            $q->orWhere(function($q2) {
-                $q2->where('is_boosted', true)->where('boost_end', '>', now());
-            });
-        });
-
-        // ===== FILTRE PROXIMITÉ GÉOGRAPHIQUE =====
-        // Ne s'applique PAS aux annonces boostées (visibilité payée)
-        $geoApplied = false;
-        if ($userLat && $userLng && !$location) {
-            $query->where(function($q) use ($userLat, $userLng, $radius) {
-                $q->whereRaw(
-                    "(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) <= ?",
-                    [(float) $userLat, (float) $userLng, (float) $userLat, $radius]
-                )->orWhere(function($q2) {
-                    $q2->where('is_boosted', true)->where('boost_end', '>', now());
-                });
-            });
-            $geoApplied = true;
-        }
+        $geoApplied = (bool) ($userLat && $userLng && !$location);
+        $query = $this->buildMainFeedAdsQuery(
+            $user,
+            'all',
+            $geoApplied,
+            $geoApplied ? (float) $userLat : null,
+            $geoApplied ? (float) $userLng : null,
+            $radius
+        );
 
         // Apply category filter
         if ($category && $category !== 'all') {
@@ -1360,6 +1383,9 @@ class FeedController extends Controller
             "CASE WHEN (is_boosted = true AND boost_end > ?) OR (is_urgent = true AND (urgent_until IS NULL OR urgent_until > ?)) THEN 0 ELSE 1 END",
             [now(), now()]
         );
+        if ($geoApplied) {
+            $query->orderBy('distance');
+        }
         switch ($sort) {
             case 'urgent':
                 $query->orderBy('is_urgent', 'desc');
@@ -1368,16 +1394,24 @@ class FeedController extends Controller
                 $query->orderBy('is_pinned', 'desc')->orderBy('views', 'desc');
                 break;
             case 'proximity':
-                if ($geoApplied) {
-                    break;
-                }
+                break;
             case 'recent':
             default:
                 if (!$geoApplied) {
-                    $query->orderBy('is_pinned', 'desc')->orderBy('created_at', 'desc');
+                    $query->orderBy('is_pinned', 'desc');
                 }
                 break;
         }
+
+        $query->orderBy('created_at', 'desc');
+
+        $mapMarkers = $this->buildAdsMapData(
+            (clone $query)
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->limit(120)
+                ->get()
+        );
 
         $ads = $query->withCount('comments')->paginate(12);
 
@@ -1387,6 +1421,7 @@ class FeedController extends Controller
                 'success' => true,
                 'geo_applied' => $geoApplied,
                 'radius' => $radius,
+                'map_markers' => $mapMarkers,
                 'ads' => $ads->map(function($ad) use ($geoApplied) {
                     $data = [
                         'id' => $ad->id,
