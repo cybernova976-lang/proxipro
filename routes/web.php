@@ -35,17 +35,16 @@ use Illuminate\Support\Facades\Mail;
 // Page d'accueil publique
 Route::get('/', [HomePageController::class, 'index'])->name('homepage');
 
-// Test route pour vérifier les cartes de publication
-Route::get('/test-card', function() {
-    return view('feed.test-card');
-})->name('test-card');
-
-// Test route for provider button
-Route::get('/test-provider', function() {
-    return view('test-provider-button');
-})->middleware('auth')->name('test-provider');
-
 if (app()->environment('local')) {
+    // Routes de test visibles uniquement en développement local.
+    Route::get('/test-card', function() {
+        return view('feed.test-card');
+    })->name('test-card');
+
+    Route::get('/test-provider', function() {
+        return view('test-provider-button');
+    })->middleware('auth')->name('test-provider');
+
     Route::get('/test-mail', function () {
         $to = request('to', config('mail.from.address'));
 
@@ -658,7 +657,7 @@ Route::get('/boost-diagnostic', function () {
         'ads_matching_feed_query' => $feedMatchIds,
         'total_feed_ads' => $totalFeed,
     ], 200, [], JSON_PRETTY_PRINT);
-});
+})->middleware(['auth', 'admin']);
 
 // Diagnostic de stockage (admin uniquement)
 Route::get('/storage-diagnostic', function () {
@@ -695,7 +694,7 @@ Route::get('/storage-diagnostic', function () {
     }
 
     return response()->json($results, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-})->middleware('auth');
+})->middleware(['auth', 'admin']);
 
 // Route de secours pour les images (disque local uniquement)
 // Quand FILESYSTEM_DISK=s3, les images sont servies directement par R2/S3.
@@ -736,4 +735,3 @@ Route::get('/politique-confidentialite', function() {
 Route::get('/politique-cookies', function() {
     return view('legal.cookies');
 })->name('legal.cookies');
-

@@ -88,6 +88,28 @@
                                        value="{{ Auth::user()->email }}" disabled
                                        style="border-radius: 10px; padding: 10px 14px; background: #f1f5f9;">
                             </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold" style="font-size: 0.88rem;">
+                                    <i class="fas fa-camera text-info me-1"></i>Photo de profil <span class="text-danger">*</span>
+                                </label>
+                                <div class="provider-avatar-picker" id="providerAvatarPicker">
+                                    <div class="provider-avatar-preview" id="providerAvatarPreview">
+                                        @if(Auth::user()->avatar)
+                                            <img src="{{ storage_url(Auth::user()->avatar) }}" alt="{{ Auth::user()->name }}">
+                                        @else
+                                            <i class="fas fa-user"></i>
+                                        @endif
+                                    </div>
+                                    <div class="provider-avatar-copy">
+                                        <strong>Ajoutez une photo claire</strong>
+                                        <span>Un visage, logo ou visuel professionnel améliore la confiance avant contact.</span>
+                                    </div>
+                                    <label class="provider-avatar-action">
+                                        <i class="fas fa-upload"></i> Choisir
+                                        <input type="file" id="providerProfileAvatar" accept="image/jpeg,image/png,image/jpg,image/webp">
+                                    </label>
+                                </div>
+                            </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold" style="font-size: 0.88rem;">
                                     <i class="fas fa-phone text-success me-1"></i>Téléphone <span class="text-danger">*</span>
@@ -348,6 +370,84 @@
     background: #f8fafc;
     max-height: 60vh;
     overflow-y: auto;
+}
+
+.provider-avatar-picker {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f8fafc;
+}
+
+.provider-avatar-picker.is-missing {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.provider-avatar-preview {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #e0f2fe, #eef2ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.provider-avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.provider-avatar-copy {
+    min-width: 0;
+}
+
+.provider-avatar-copy strong {
+    display: block;
+    color: #1e293b;
+    font-size: 0.9rem;
+}
+
+.provider-avatar-copy span {
+    display: block;
+    color: #64748b;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    margin-top: 2px;
+}
+
+.provider-avatar-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid #bae6fd;
+    background: #f0f9ff;
+    color: #0369a1;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.provider-avatar-action:hover {
+    background: #e0f2fe;
+}
+
+.provider-avatar-action input {
+    display: none;
 }
 
 /* Steps Indicator */
@@ -924,6 +1024,15 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .provider-avatar-picker {
+        grid-template-columns: 48px minmax(0, 1fr);
+    }
+
+    .provider-avatar-action {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
     .categories-grid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -948,7 +1057,7 @@
 
 @php
     $providerCurrentUser = Auth::check()
-        ? Auth::user()->only(['name', 'email', 'phone', 'city', 'country', 'address', 'postal_code', 'detected_city', 'detected_country'])
+        ? Auth::user()->only(['name', 'email', 'phone', 'city', 'country', 'address', 'postal_code', 'detected_city', 'detected_country', 'avatar'])
         : [];
 @endphp
 
@@ -961,6 +1070,7 @@
     let selectedCategories = {};
     let selectedServices = [];
     let selectedPlan = null;
+    let providerUserHasAvatar = Boolean(@json(Auth::check() ? Auth::user()->avatar : null));
     
     // User info for recap (editable copy)
     const currentUser = @json($providerCurrentUser);
@@ -983,6 +1093,9 @@
     const btnSubmit = document.getElementById('btnSubmitProvider');
     const errorMessage = document.getElementById('providerErrorMessage');
     const errorText = document.getElementById('providerErrorText');
+    const providerAvatarInput = document.getElementById('providerProfileAvatar');
+    const providerAvatarPreview = document.getElementById('providerAvatarPreview');
+    const providerAvatarPicker = document.getElementById('providerAvatarPicker');
     
     // Load categories when modal opens
     modal.addEventListener('show.bs.modal', loadCategories);
@@ -991,6 +1104,34 @@
     btnNext.addEventListener('click', nextStep);
     btnPrev.addEventListener('click', prevStep);
     btnSubmit.addEventListener('click', submitProvider);
+
+    if (providerAvatarInput && providerAvatarPreview) {
+        providerAvatarInput.addEventListener('change', function() {
+            const file = this.files && this.files[0] ? this.files[0] : null;
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                this.value = '';
+                showError('La photo ne doit pas dépasser 5 Mo.');
+                return;
+            }
+
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                this.value = '';
+                showError('La photo doit être au format JPG, PNG ou WEBP.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = e => {
+                providerAvatarPreview.innerHTML = `<img src="${e.target.result}" alt="Aperçu photo de profil">`;
+            };
+            reader.readAsDataURL(file);
+            providerAvatarPicker?.classList.remove('is-missing');
+            hideError();
+        });
+    }
     
     // Collect profile data from form inputs
     function collectProfileData() {
@@ -1020,6 +1161,9 @@
         if (!profile.phone) errors.push('Le téléphone est obligatoire pour que les clients puissent vous contacter');
         if (!profile.city) errors.push('La ville est obligatoire');
         if (!profile.country) errors.push('Le pays est obligatoire');
+        if (!providerUserHasAvatar && !(providerAvatarInput?.files?.length)) {
+            errors.push('Ajoutez une photo de profil pour rassurer les clients');
+        }
         
         return errors;
     }
@@ -1043,6 +1187,8 @@
                 el.style.boxShadow = '';
             }
         });
+
+        providerAvatarPicker?.classList.toggle('is-missing', !providerUserHasAvatar && !(providerAvatarInput?.files?.length));
     }
     
     async function loadCategories() {
@@ -1316,7 +1462,7 @@
         servicesSummary.innerHTML = html;
     }
     
-    function nextStep() {
+    async function nextStep() {
         hideError();
         
         if (currentStep === 1) {
@@ -1327,8 +1473,14 @@
                 showError(profileErrors[0]);
                 return;
             }
-            // Save profile data to server
-            saveProfileFields();
+            btnNext.disabled = true;
+            btnNext.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+            const saved = await saveProfileFields();
+            btnNext.disabled = false;
+            btnNext.innerHTML = 'Continuer <i class="fas fa-arrow-right"></i>';
+            if (!saved) {
+                return;
+            }
             goToStep(2);
         } else if (currentStep === 2) {
             // Validate at least one category selected
@@ -1367,24 +1519,44 @@
     // Save profile fields to server (async, non-blocking)
     async function saveProfileFields() {
         const profile = collectProfileData();
+        const formData = new FormData();
+        formData.append('name', profile.name);
+        formData.append('phone', profile.phone);
+        formData.append('city', profile.city);
+        formData.append('country', profile.country);
+        formData.append('postal_code', profile.postal_code);
+        formData.append('address', profile.address);
+
+        if (providerAvatarInput?.files?.length) {
+            formData.append('avatar', providerAvatarInput.files[0]);
+        }
+
         try {
-            await fetch('{{ route("service-provider.update-profile-fields") }}', {
+            const response = await fetch('{{ route("service-provider.update-profile-fields") }}', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
                 },
-                body: JSON.stringify({
-                    name: profile.name,
-                    phone: profile.phone,
-                    city: profile.city,
-                    country: profile.country,
-                    postal_code: profile.postal_code,
-                    address: profile.address
-                })
+                body: formData
             });
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.success === false) {
+                showError(data.message || 'Impossible d’enregistrer votre profil. Veuillez réessayer.');
+                return false;
+            }
+
+            if (providerAvatarInput?.files?.length) {
+                providerUserHasAvatar = true;
+                providerAvatarPicker?.classList.remove('is-missing');
+            }
+
+            return true;
         } catch (e) {
             console.warn('Profile save in background failed:', e);
+            showError('Erreur de connexion pendant l’enregistrement du profil.');
+            return false;
         }
     }
     
@@ -1435,7 +1607,7 @@
             });
         }
         
-        const bodyData = { services };
+        const bodyData = { services, enforce_profile_completion: true };
         if (selectedPlan) {
             bodyData.plan = selectedPlan;
         }
@@ -1596,6 +1768,7 @@
             const el = document.getElementById(id);
             if (el) { el.style.borderColor = ''; el.style.boxShadow = ''; }
         });
+        providerAvatarPicker?.classList.remove('is-missing');
         
         goToStep(1);
     });

@@ -390,6 +390,22 @@
         backdrop-filter: none;
     }
 
+    @media (hover: hover) and (pointer: fine) and (min-width: 992px) {
+        .feed-left-menu-shell:hover,
+        .feed-left-menu-shell:focus-within {
+            transform: translateX(0);
+            background: rgba(248, 250, 252, 0.98);
+            border-right-color: #e2e8f0;
+            box-shadow: 24px 0 48px rgba(15, 23, 42, 0.12);
+            backdrop-filter: blur(12px);
+        }
+
+        .feed-left-menu-shell:hover .feed-left-menu-toggle,
+        .feed-left-menu-shell:focus-within .feed-left-menu-toggle {
+            right: var(--feed-menu-toggle-gap);
+        }
+    }
+
     .feed-left-menu-toggle {
         position: absolute;
         top: 14px;
@@ -7140,7 +7156,7 @@
                                 <div class="create-post-avatar-placeholder">P</div>
                             @endauth
                         </div>
-                        <a href="{{ Auth::check() ? route('demand.create') : route('login') }}" class="create-post-input" style="text-decoration:none;">De quoi avez-vous besoin ?</a>
+                        <button type="button" class="create-post-input" onclick="openCategoryPopup()">De quoi avez-vous besoin ?</button>
 
                         <div class="create-post-filters" aria-label="Filtres principaux">
                             <div class="create-post-divider"></div>
@@ -10551,12 +10567,17 @@
         const feedLeftMenuToggleIcon = document.getElementById('feedLeftMenuToggleIcon');
         const baseTop = 170;
 
-        function setFeedMenuOpen(isOpen) {
+        const hoverMenuQuery = window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 992px)');
+        let feedMenuPinned = false;
+
+        function setFeedMenuOpen(isOpen, pinState = feedMenuPinned) {
             if (!feedLeftMenu || !feedLeftMenuToggle) {
                 return;
             }
 
+            feedMenuPinned = pinState;
             feedLeftMenu.classList.toggle('is-open', isOpen);
+            feedLeftMenu.classList.toggle('is-pinned', feedMenuPinned);
             feedLeftMenuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
             feedLeftMenuToggle.setAttribute('aria-label', isOpen ? 'Fermer le menu' : 'Ouvrir le menu');
 
@@ -10581,11 +10602,35 @@
 
         if (feedLeftMenuToggle) {
             feedLeftMenuToggle.addEventListener('click', () => {
-                setFeedMenuOpen(!(feedLeftMenu?.classList.contains('is-open')));
+                if (feedLeftMenu?.classList.contains('is-pinned')) {
+                    setFeedMenuOpen(false, false);
+                } else {
+                    setFeedMenuOpen(true, true);
+                }
             });
         }
 
-        setFeedMenuOpen(false);
+        if (feedLeftMenu) {
+            feedLeftMenu.addEventListener('mouseenter', () => {
+                if (hoverMenuQuery.matches) {
+                    setFeedMenuOpen(true, feedMenuPinned);
+                }
+            });
+
+            feedLeftMenu.addEventListener('mouseleave', () => {
+                if (hoverMenuQuery.matches && !feedMenuPinned) {
+                    setFeedMenuOpen(false, false);
+                }
+            });
+
+            hoverMenuQuery.addEventListener?.('change', event => {
+                if (!event.matches && !feedMenuPinned) {
+                    setFeedMenuOpen(false, false);
+                }
+            });
+        }
+
+        setFeedMenuOpen(false, false);
 
         const citySelect = document.getElementById('citySelect');
         const customCityWrapper = document.getElementById('customCityWrapper');
