@@ -140,7 +140,7 @@
             <div>
                 <span class="home-showcase-kicker"><i class="fas fa-user-tie"></i> Profils</span>
                 <h3>Profils de professionnels</h3>
-                <p>Des prestataires qui ont choisi de mettre leur profil en avant sur Massiwani.</p>
+                <p>Des prestataires locaux, avec les profils abonnés ou boostés affichés en priorité.</p>
             </div>
             <a href="javascript:void(0)" onclick="setViewMode('providers'); window.scrollTo({top: 0, behavior: 'smooth'});">Voir les profils <i class="fas fa-arrow-right"></i></a>
         </div>

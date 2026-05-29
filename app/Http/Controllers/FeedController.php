@@ -732,27 +732,53 @@ class FeedController extends Controller
 
     private function buildHighlightedProfessionalProfiles($currentUser, int $limit = 6)
     {
-        $profiles = \App\Models\User::query()
-            ->where(function ($q) {
-                $this->scopeProfessionalUsers($q);
-            })
-            ->when($currentUser, fn($q) => $q->where('id', '!=', $currentUser->id))
-            ->where(function ($q) {
+        $baseQuery = function () use ($currentUser) {
+            return \App\Models\User::query()
+                ->where(function ($q) {
+                    $this->scopeProfessionalUsers($q);
+                })
+                ->when($currentUser, fn($q) => $q->where('id', '!=', $currentUser->id))
+                ->with(['services' => fn($q) => $q->where('is_active', true)->limit(2)])
+                ->withCount([
+                    'verifiedReviewsReceived as verified_reviews_count',
+                    'ads as ads_count' => fn($q) => $q->where('status', 'active'),
+                ])
+                ->withAvg(['verifiedReviewsReceived as verified_reviews_avg' => fn($q) => $q], 'rating');
+        };
+
+        $rankProfiles = function ($query, int $take) {
+            return $query
+                ->orderByDesc('verified_reviews_avg')
+                ->orderByDesc('verified_reviews_count')
+                ->orderByDesc('ads_count')
+                ->orderByDesc('updated_at')
+                ->take($take)
+                ->get()
+                ->values();
+        };
+
+        $highlightedProfiles = $rankProfiles(
+            $baseQuery()->where(function ($q) {
                 $this->scopeHighlightedProfiles($q);
-            })
-            ->with(['services' => fn($q) => $q->where('is_active', true)->limit(2)])
-            ->withCount([
-                'verifiedReviewsReceived as verified_reviews_count',
-                'ads as ads_count' => fn($q) => $q->where('status', 'active'),
-            ])
-            ->withAvg(['verifiedReviewsReceived as verified_reviews_avg' => fn($q) => $q], 'rating')
-            ->orderByDesc('verified_reviews_avg')
-            ->orderByDesc('verified_reviews_count')
-            ->orderByDesc('ads_count')
-            ->orderByDesc('updated_at')
-            ->take($limit)
-            ->get()
+            }),
+            $limit
+        );
+
+        $remainingSlots = max(0, $limit - $highlightedProfiles->count());
+        $fallbackProfiles = collect();
+
+        if ($remainingSlots > 0) {
+            $fallbackProfiles = $rankProfiles(
+                $baseQuery()->whereNotIn('id', $highlightedProfiles->pluck('id')->all()),
+                $remainingSlots
+            );
+        }
+
+        $profiles = $highlightedProfiles
+            ->concat($fallbackProfiles)
             ->values();
+
+        $highlightedProfileIds = $highlightedProfiles->pluck('id')->all();
 
         $topProviderIds = $profiles
             ->filter(fn($pro) => (int) ($pro->verified_reviews_count ?? 0) > 0 && (float) ($pro->verified_reviews_avg ?? 0) >= 4.5)
@@ -761,8 +787,8 @@ class FeedController extends Controller
             ->pluck('id')
             ->all();
 
-        return $profiles->map(function ($pro) use ($topProviderIds) {
-            $pro->setAttribute('is_featured_premium', true);
+        return $profiles->map(function ($pro) use ($topProviderIds, $highlightedProfileIds) {
+            $pro->setAttribute('is_featured_premium', in_array($pro->id, $highlightedProfileIds, true));
             $pro->setAttribute('is_top_provider', in_array($pro->id, $topProviderIds, true));
 
             return $pro;
