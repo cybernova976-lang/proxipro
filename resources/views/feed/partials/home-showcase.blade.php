@@ -1,7 +1,7 @@
 @php
-    $personalRequestAds = collect($homePersonalRequests ?? [])->values();
-    $professionalOfferAds = collect($homeProfessionalOffers ?? [])->values();
-    $professionalProfiles = collect($homeProfessionalProfiles ?? [])->values();
+    $personalRequestAds = collect($homePersonalRequests ?? [])->take(6)->values();
+    $professionalOfferAds = collect($homeProfessionalOffers ?? [])->take(6)->values();
+    $professionalProfiles = collect($homeProfessionalProfiles ?? [])->take(6)->values();
 
     $adSections = collect([
         [
@@ -45,13 +45,7 @@
             </div>
         </div>
 
-        <div class="home-showcase-carousel-shell">
-            @if($section['ads']->count() > 6)
-                <button class="home-showcase-scroll-btn home-showcase-scroll-btn--left" type="button" onclick="scrollHomeShowcase(this, -1)" aria-label="Voir les annonces précédentes">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-            @endif
-        <div class="home-showcase-ads-grid home-showcase-scroll-track" data-showcase-ads-count="{{ $section['ads']->count() }}">
+        <div class="home-showcase-ads-grid" data-showcase-ads-count="{{ $section['ads']->count() }}">
             @foreach($section['ads'] as $ad)
             @php
                 $photos = $ad->photos ?? [];
@@ -137,12 +131,6 @@
             </a>
             @endforeach
         </div>
-            @if($section['ads']->count() > 6)
-                <button class="home-showcase-scroll-btn home-showcase-scroll-btn--right" type="button" onclick="scrollHomeShowcase(this, 1)" aria-label="Voir les annonces suivantes">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-            @endif
-        </div>
     </div>
     @endforeach
 
@@ -157,13 +145,7 @@
             <a href="javascript:void(0)" onclick="setViewMode('providers'); window.scrollTo({top: 0, behavior: 'smooth'});">Voir les profils <i class="fas fa-arrow-right"></i></a>
         </div>
 
-        <div class="home-showcase-carousel-shell">
-            @if($professionalProfiles->count() > 6)
-                <button class="home-showcase-scroll-btn home-showcase-scroll-btn--left" type="button" onclick="scrollHomeShowcase(this, -1)" aria-label="Voir les profils précédents">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-            @endif
-        <div class="home-showcase-pro-grid home-showcase-scroll-track" data-showcase-pros-count="{{ $professionalProfiles->count() }}">
+        <div class="home-showcase-pro-grid" data-showcase-pros-count="{{ $professionalProfiles->count() }}">
             @foreach($professionalProfiles as $pro)
             @php
                 $ratingRaw = $pro->verified_reviews_avg ?? $pro->reviews_avg_rating ?? null;
@@ -209,12 +191,6 @@
                 </div>
             </a>
             @endforeach
-        </div>
-            @if($professionalProfiles->count() > 6)
-                <button class="home-showcase-scroll-btn home-showcase-scroll-btn--right" type="button" onclick="scrollHomeShowcase(this, 1)" aria-label="Voir les profils suivants">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-            @endif
         </div>
     </div>
     @endif

@@ -88,11 +88,27 @@ class FeedController extends Controller
         $radiusWasExpanded = false;
         $originalRadius = $userRadius;
         if ($useNearbyScope && $ads->total() === 0) {
-            $fallbackQuery = $this->buildMainFeedAdsQuery($user, $filterType, false, null, null, $userRadius, $geoCity, $geoCountry);
-            $this->orderMainFeedAds($fallbackQuery, false);
-            $feedMapQuery = clone $fallbackQuery;
-            $ads = $fallbackQuery->paginate(12)->withQueryString();
-            $geoFallbackUsed = true;
+            $nearbyAvailabilityQuery = $this->buildMainFeedAdsQuery(
+                $user,
+                $filterType,
+                true,
+                $userLat,
+                $userLng,
+                $userRadius,
+                $geoCity,
+                $geoCountry,
+                false
+            );
+
+            if ((clone $nearbyAvailabilityQuery)->count() > 0) {
+                $feedMapQuery = clone $nearbyAvailabilityQuery;
+            } else {
+                $fallbackQuery = $this->buildMainFeedAdsQuery($user, $filterType, false, null, null, $userRadius, $geoCity, $geoCountry);
+                $this->orderMainFeedAds($fallbackQuery, false);
+                $feedMapQuery = clone $fallbackQuery;
+                $ads = $fallbackQuery->paginate(12)->withQueryString();
+                $geoFallbackUsed = true;
+            }
         } elseif ($useNearbyScope && $ads->total() < 3 && $userRadius < 200) {
             $expandedRadius = min($userRadius * 3, 500);
             $expandedQuery = $this->buildMainFeedAdsQuery($user, $filterType, true, $userLat, $userLng, $expandedRadius, $geoCity, $geoCountry);
