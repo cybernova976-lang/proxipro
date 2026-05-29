@@ -2595,6 +2595,76 @@
         margin: 0;
     }
 
+    .feed-results-section {
+        margin-top: 22px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .feed-results-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 14px;
+    }
+
+    .feed-results-header h3 {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #111827;
+    }
+
+    .feed-results-header p {
+        margin: 4px 0 0;
+        color: #64748b;
+        font-size: 0.86rem;
+    }
+
+    .feed-results-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .feed-results-grid .filtered-feed-card {
+        min-height: 100%;
+    }
+
+    .feed-results-empty {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 34px 18px;
+        color: #64748b;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+    }
+
+    .feed-results-empty i {
+        display: block;
+        margin-bottom: 10px;
+        color: #94a3b8;
+        font-size: 1.6rem;
+    }
+
+    @media (max-width: 900px) {
+        .feed-results-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 640px) {
+        .feed-results-header {
+            display: block;
+        }
+
+        .feed-results-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
     /* --- Post container --- */
     .fb-post {
         background: white;
@@ -7304,11 +7374,21 @@
 
                 @include('feed.partials.ads-map', ['adsMapData' => $adsMapData ?? collect(), 'geoEnabled' => $geoEnabled ?? false, 'geoCity' => $geoCity ?? null, 'geoFallbackUsed' => $geoFallbackUsed ?? false])
 
-                @php
-                    $seenMainFeedAdIds = [];
-                @endphp
-                <div class="missions-feed" id="missionsGrid">
-            @forelse($ads as $loopIndex => $ad)
+                <section class="feed-results-section" id="feedResultsSection" hidden aria-live="polite">
+                    <div class="feed-results-header">
+                        <div>
+                            <span class="home-showcase-kicker"><i class="fas fa-filter"></i> Résultats</span>
+                            <h3 id="feedResultsTitle">Annonces trouvées</h3>
+                            <p id="feedResultsSubtitle">Annonces correspondant à vos filtres.</p>
+                        </div>
+                    </div>
+
+                    @php
+                        $seenMainFeedAdIds = [];
+                    @endphp
+                    <div class="missions-feed feed-results-grid" id="missionsGrid">
+            {{-- Les resultats sont injectes en cartes compactes par renderMissions() quand un filtre est utilise. --}}
+            @forelse(collect() as $loopIndex => $ad)
 
             {{-- Exclure les annonces deja affichees dans la vitrine d'accueil --}}
             @if(in_array((int) $ad->id, $homeShowcaseFeedAdIds, true))
@@ -7597,12 +7677,13 @@
                 </a>
             </div>
             @endforelse
-            </div>
+                    </div>
+                </section>
 
             <div id="featuredProsContainer"></div>
 
             {{-- Infinite scroll trigger --}}
-            <div class="infinite-scroll-trigger" id="infiniteScrollTrigger">
+            <div class="infinite-scroll-trigger" id="infiniteScrollTrigger" style="display: none;" aria-hidden="true">
                 @if($ads->hasMorePages())
                 <div class="infinite-scroll-spinner" id="infiniteSpinner"></div>
                 @else
@@ -10442,8 +10523,9 @@
         if (providersSection) providersSection.style.display = mode === 'providers' ? 'block' : 'none';
         if (missionsSection) missionsSection.style.display = mode === 'missions' ? 'block' : 'none';
         
-        // Recharger les données
-        loadData();
+        if (mode === 'providers') {
+            loadData();
+        }
     }
 
     /**
@@ -11033,7 +11115,7 @@
 
     function getRenderedFeedAdIdSet() {
         const ids = new Set();
-        document.querySelectorAll('#missionsGrid .fb-post[data-ad-id]').forEach((post) => {
+        document.querySelectorAll('#missionsGrid [data-ad-id]').forEach((post) => {
             const value = Number(post.getAttribute('data-ad-id'));
             if (Number.isFinite(value) && value > 0) {
                 ids.add(value);
@@ -11042,12 +11124,78 @@
         return ids;
     }
 
+    function truncateText(value = '', limit = 90) {
+        const text = String(value || '').trim();
+        return text.length > limit ? `${text.substring(0, limit - 3)}...` : text;
+    }
+
+    function buildCompactFeedAdCard(ad) {
+        const adId = Number(ad.id);
+        if (!Number.isFinite(adId) || adId <= 0) return '';
+
+        let photos = [];
+        if (ad.photos) {
+            if (Array.isArray(ad.photos)) {
+                photos = ad.photos;
+            } else if (typeof ad.photos === 'string') {
+                try {
+                    const parsed = JSON.parse(ad.photos);
+                    photos = Array.isArray(parsed) ? parsed : [ad.photos];
+                } catch {
+                    photos = [ad.photos];
+                }
+            }
+        }
+
+        const firstPhoto = photos.filter(Boolean).map((photo) => buildPhotoUrl(photo)).find(Boolean);
+        const isBoosted = !!ad.is_boosted && (!ad.boost_end || new Date(ad.boost_end) > new Date());
+        const price = ad.price
+            ? `${new Intl.NumberFormat('fr-FR').format(ad.price)} €`
+            : 'Sur devis';
+        const authorName = ad.user?.name || 'Utilisateur';
+        const authorInitial = authorName.charAt(0).toUpperCase();
+        const authorAvatar = ad.user?.avatar
+            ? `<img src="${escapeHtml(buildStorageUrl(ad.user.avatar))}" alt="${escapeHtml(authorName)}">`
+            : `<span>${escapeHtml(authorInitial)}</span>`;
+        const media = firstPhoto
+            ? `<img src="${escapeHtml(firstPhoto)}" alt="${escapeHtml(ad.title || 'Annonce')}" loading="lazy" onerror="this.closest('.home-showcase-ad-media').innerHTML='<div class=&quot;home-showcase-ad-placeholder&quot;><i class=&quot;fas fa-image&quot;></i></div>';">`
+            : '<div class="home-showcase-ad-placeholder"><i class="fas fa-image"></i></div>';
+        const flags = [
+            ad.is_urgent ? '<span class="home-showcase-flag flag-urgent"><i class="fas fa-fire"></i> Urgent</span>' : '',
+            isBoosted ? '<span class="home-showcase-flag flag-boost"><i class="fas fa-rocket"></i> Boosté</span>' : '',
+        ].join('');
+
+        return `
+            <a href="${escapeHtml(ad.url || `/ads/${adId}`)}"
+               class="home-showcase-ad-card filtered-feed-card${ad.is_urgent ? ' is-urgent' : ''}${isBoosted ? ' is-boosted' : ''}"
+               data-ad-id="${adId}">
+                <div class="home-showcase-ad-media">
+                    ${media}
+                    ${flags ? `<div class="home-showcase-ad-flags">${flags}</div>` : ''}
+                    <span class="home-showcase-price">${escapeHtml(price)}</span>
+                </div>
+                <div class="home-showcase-ad-body">
+                    <div class="home-showcase-ad-meta">
+                        <span class="home-showcase-type-badge">${escapeHtml(ad.category || 'Annonce')}</span>
+                    </div>
+                    <h3>${escapeHtml(truncateText(ad.title || 'Annonce', 58))}</h3>
+                    <p>${escapeHtml(truncateText(ad.description || '', 92))}</p>
+                    <div class="home-showcase-ad-footer">
+                        <span class="home-showcase-author">${authorAvatar} ${escapeHtml(truncateText(authorName, 18))}</span>
+                        <span class="home-showcase-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(truncateText(ad.location || ad.city || 'Local', 18))}</span>
+                    </div>
+                </div>
+            </a>
+        `;
+    }
+
     /**
      * Rendu des publications - Format Facebook
      */
     function renderMissions(missions) {
         const grid = document.getElementById('missionsGrid');
         const featuredContainer = document.getElementById('featuredProsContainer');
+        const resultsSection = document.getElementById('feedResultsSection');
         const showcaseAdIds = getShowcaseAdIdSet();
         const seenMissionIds = new Set();
         const filteredMissions = (missions || []).filter((ad) => {
@@ -11059,18 +11207,43 @@
             return true;
         });
         updateFeedAdsMap(buildFeedMapMarkers(filteredMissions));
+
+        if (resultsSection) {
+            resultsSection.hidden = false;
+        }
         
         if (!filteredMissions || filteredMissions.length === 0) {
             if (featuredContainer) featuredContainer.innerHTML = '';
             grid.innerHTML = `
-                <div style="text-align: center; padding: 60px 20px; color: #65676b;">
-                    <i class="fas fa-briefcase" style="font-size: 2.5rem; color: #bec3c9; margin-bottom: 12px;"></i>
-                    <h3 style="font-weight: 600; color: #050505;">Aucune publication trouvée</h3>
+                <div class="feed-results-empty">
+                    <i class="fas fa-briefcase"></i>
+                    <h3>Aucune annonce trouvée</h3>
                     <p>Essayez d'autres critères de recherche</p>
                 </div>
             `;
             return;
         }
+
+        const resultsTitle = document.getElementById('feedResultsTitle');
+        const resultsSubtitle = document.getElementById('feedResultsSubtitle');
+        if (resultsTitle) {
+            resultsTitle.textContent = `${filteredMissions.length} annonce${filteredMissions.length > 1 ? 's' : ''} trouvée${filteredMissions.length > 1 ? 's' : ''}`;
+        }
+        if (resultsSubtitle) {
+            const activeParts = [];
+            if (currentFilters.category) activeParts.push(currentFilters.category);
+            if (currentFilters.subcategory) activeParts.push(currentFilters.subcategory);
+            if (currentFilters.scope === 'nearby') activeParts.push('près de vous');
+            resultsSubtitle.textContent = activeParts.length
+                ? `Résultats filtrés : ${activeParts.join(' · ')}.`
+                : 'Annonces correspondant aux filtres sélectionnés.';
+        }
+
+        grid.innerHTML = filteredMissions.map((ad) => buildCompactFeedAdCard(ad)).join('');
+        if (featuredContainer) {
+            featuredContainer.innerHTML = '';
+        }
+        return;
         
         const isAuth = {{ Auth::check() ? 'true' : 'false' }};
         const authUser = isAuth ? {!! json_encode(['name' => Auth::user()?->name, 'avatar' => Auth::user()?->avatar]) !!} : null;
@@ -11716,8 +11889,13 @@
     document.addEventListener('DOMContentLoaded', function() {
         console.log('DOM chargé, initialisation des boutons...');
         
-        // La vue par défaut est "missions"
-        setViewMode('missions');
+        // Vue initiale: l'accueil compact reste visible sans charger l'ancien flux social.
+        currentFilters.mode = 'missions';
+        updateFeedScopeToggle();
+        const initialProvidersSection = document.getElementById('providersSection');
+        const initialMissionsSection = document.getElementById('missionsSection');
+        if (initialProvidersSection) initialProvidersSection.style.display = 'none';
+        if (initialMissionsSection) initialMissionsSection.style.display = 'block';
 
         // ===== INFINITE SCROLL =====
         let isLoadingMore = false;

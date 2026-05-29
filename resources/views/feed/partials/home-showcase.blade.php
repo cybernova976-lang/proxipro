@@ -32,7 +32,7 @@
             <h2 id="homeShowcaseTitle">Le meilleur de Massiwani</h2>
             <p>Des annonces triées par intention, puis les profils professionnels mis en avant.</p>
         </div>
-        <a href="#missionsGrid" class="home-showcase-link">Voir le feed <i class="fas fa-arrow-down"></i></a>
+        <a href="#adsFeedMap" class="home-showcase-link">Voir la carte <i class="fas fa-arrow-down"></i></a>
     </div>
 
     @foreach($adSections as $section)

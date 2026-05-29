@@ -150,6 +150,9 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $content = $response->getContent();
         $showcaseHtml = $this->extractHomeShowcaseHtml($content);
 
+        $this->assertStringContainsString('id="feedResultsSection" hidden', $content);
+        $this->assertStringContainsString('id="infiniteScrollTrigger" style="display: none;"', $content);
+
         $this->assertStringContainsString('Offres des particuliers', $showcaseHtml);
         $this->assertStringContainsString('Offres de professionnels', $showcaseHtml);
         $this->assertStringContainsString('Profils de professionnels', $showcaseHtml);
