@@ -111,9 +111,9 @@
                             </span>
                         @else
                             {{-- Profil non vérifié - bouton pour vérifier --}}
-                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 border-0" data-bs-toggle="modal" data-bs-target="#verifyProfileModal" style="cursor: pointer; font-size: 0.85rem;">
+                            <a href="{{ route('verification.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 border-0" style="cursor: pointer; font-size: 0.85rem;">
                                 <i class="fas fa-shield-alt me-1"></i><span>Vérifier mon profil</span>
-                            </button>
+                            </a>
                         @endif
                     </div>
                     

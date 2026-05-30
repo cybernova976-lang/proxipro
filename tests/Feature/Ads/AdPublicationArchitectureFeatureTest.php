@@ -11,7 +11,7 @@ class AdPublicationArchitectureFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_create_form_shows_publication_architecture_selector(): void
+    public function test_particular_create_form_only_shows_personal_request_option(): void
     {
         $user = User::factory()->create([
             'user_type' => 'particulier',
@@ -23,8 +23,22 @@ class AdPublicationArchitectureFeatureTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Demande de particulier');
+        $response->assertDontSee('Offre professionnelle');
+        $response->assertDontSee('Vous proposez un service, une location de matériel, une promotion ou un recrutement.');
+    }
+
+    public function test_professional_create_form_shows_professional_offer_option(): void
+    {
+        $user = User::factory()->create([
+            'user_type' => 'professionnel',
+            'plan' => 'FREE',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('ads.create'));
+
+        $response->assertOk();
+        $response->assertSee('Demande de particulier');
         $response->assertSee('Offre professionnelle');
-        $response->assertSee('Réservé aux comptes professionnels ou prestataires valides.');
     }
 
     public function test_particular_user_cannot_publish_professional_offer(): void

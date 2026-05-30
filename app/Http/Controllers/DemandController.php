@@ -71,6 +71,8 @@ class DemandController extends Controller
             return back()->withErrors(['location' => 'Veuillez indiquer une ville.'])->withInput();
         }
 
+        $selectedCity = $request->city && $request->city !== '__other__' ? $request->city : $finalLocation;
+
         // Géocodage
         $fullAddress = $finalLocation . ', ' . $request->country;
         $geocodingService = new GeocodingService();
@@ -81,6 +83,7 @@ class DemandController extends Controller
         $ad->description = $request->description;
         $ad->category = $request->category;
         $ad->location = $finalLocation;
+        $ad->city = $selectedCity;
         $ad->price = $request->price;
         $ad->service_type = 'demande';
         $ad->radius_km = 50;

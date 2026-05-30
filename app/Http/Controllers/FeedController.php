@@ -537,6 +537,8 @@ class FeedController extends Controller
         $hasCoordinates = $lat !== null && $lng !== null;
         $city = trim((string) $city);
         $country = trim((string) $country);
+        $cityNeedles = $this->geoTextNeedles($city);
+        $countryNeedles = $this->geoTextNeedles($country);
 
         if ($hasCoordinates) {
             $query->select('ads.*')
@@ -546,7 +548,7 @@ class FeedController extends Controller
                 ->selectRaw('NULL AS distance');
         }
 
-        $query->where(function ($q) use ($hasCoordinates, $distanceSql, $lat, $lng, $radius, $city, $country) {
+        $query->where(function ($q) use ($hasCoordinates, $distanceSql, $lat, $lng, $radius, $cityNeedles, $countryNeedles) {
             if ($hasCoordinates) {
                 $q->where(function ($geo) use ($distanceSql, $lat, $lng, $radius) {
                     $geo->whereNotNull('latitude')
@@ -555,16 +557,46 @@ class FeedController extends Controller
                 });
             }
 
-            if ($city !== '') {
-                $q->orWhere(function ($text) use ($city) {
-                    $text->where('location', 'LIKE', '%' . $city . '%')
-                        ->orWhere('address', 'LIKE', '%' . $city . '%')
-                        ->orWhere('postal_code', 'LIKE', '%' . $city . '%');
+            if (!empty($cityNeedles)) {
+                $q->orWhere(function ($text) use ($cityNeedles) {
+                    foreach ($cityNeedles as $needle) {
+                        $text->orWhereRaw('LOWER(location) LIKE ?', [$needle])
+                            ->orWhereRaw('LOWER(city) LIKE ?', [$needle])
+                            ->orWhereRaw('LOWER(address) LIKE ?', [$needle])
+                            ->orWhereRaw('LOWER(postal_code) LIKE ?', [$needle]);
+                    }
                 });
-            } elseif ($country !== '') {
-                $q->orWhere('country', 'LIKE', '%' . $country . '%');
+            } elseif (!empty($countryNeedles)) {
+                $q->orWhere(function ($text) use ($countryNeedles) {
+                    foreach ($countryNeedles as $needle) {
+                        $text->orWhereRaw('LOWER(country) LIKE ?', [$needle])
+                            ->orWhereRaw('LOWER(location) LIKE ?', [$needle])
+                            ->orWhereRaw('LOWER(address) LIKE ?', [$needle]);
+                    }
+                });
             }
         });
+    }
+
+    private function geoTextNeedles(?string $value): array
+    {
+        $normalized = mb_strtolower(trim((string) $value));
+        if ($normalized === '') {
+            return [];
+        }
+
+        $terms = [$normalized];
+
+        if (preg_match('/^(.)\1/u', $normalized) === 1) {
+            $terms[] = mb_substr($normalized, 1);
+        }
+
+        return collect($terms)
+            ->filter()
+            ->unique()
+            ->map(fn($term) => '%' . $term . '%')
+            ->values()
+            ->all();
     }
 
     private function orderMainFeedAds($query, bool $geoApplied): void
@@ -1505,10 +1537,13 @@ class FeedController extends Controller
 
             if ($location) {
                 $query->where(function($q) use ($location) {
-                    $q->where('location', 'LIKE', '%' . $location . '%')
-                      ->orWhere('address', 'LIKE', '%' . $location . '%')
-                      ->orWhere('country', 'LIKE', '%' . $location . '%')
-                      ->orWhere('postal_code', 'LIKE', '%' . $location . '%');
+                    $locationNeedle = '%' . mb_strtolower(trim((string) $location)) . '%';
+
+                    $q->whereRaw('LOWER(location) LIKE ?', [$locationNeedle])
+                      ->orWhereRaw('LOWER(city) LIKE ?', [$locationNeedle])
+                      ->orWhereRaw('LOWER(address) LIKE ?', [$locationNeedle])
+                      ->orWhereRaw('LOWER(country) LIKE ?', [$locationNeedle])
+                      ->orWhereRaw('LOWER(postal_code) LIKE ?', [$locationNeedle]);
                 });
             }
 

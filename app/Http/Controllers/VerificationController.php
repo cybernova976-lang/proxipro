@@ -470,6 +470,12 @@ class VerificationController extends Controller
             $verification->selfie = $newPath;
         }
 
+        if ($verification->professional_document && Storage::disk(config('filesystems.default', 'public'))->exists($verification->professional_document)) {
+            $newPath = str_replace('verifications-temp/', 'verifications/', $verification->professional_document);
+            Storage::disk(config('filesystems.default', 'public'))->move($verification->professional_document, $newPath);
+            $verification->professional_document = $newPath;
+        }
+
         $verification->save();
     }
 
@@ -502,26 +508,26 @@ class VerificationController extends Controller
         $request->validate($rules);
 
         $existingVerification = IdentityVerification::where('user_id', $user->id)
-            ->where('status', 'pending')
+            ->whereIn('status', ['awaiting_payment', 'pending'])
             ->first();
 
         if ($existingVerification) {
             return redirect()->back()->with('error', 'Vous avez déjà une demande de vérification en cours.');
         }
 
-        $documentFront = $request->file('document_front')->store('verifications/' . $user->id, config('filesystems.default', 'public'));
+        $documentFront = $request->file('document_front')->store('verifications-temp/' . $user->id, config('filesystems.default', 'public'));
         
         $documentBack = null;
         if ($request->hasFile('document_back')) {
-            $documentBack = $request->file('document_back')->store('verifications/' . $user->id, config('filesystems.default', 'public'));
+            $documentBack = $request->file('document_back')->store('verifications-temp/' . $user->id, config('filesystems.default', 'public'));
         }
         
-        $selfie = $request->file('selfie')->store('verifications/' . $user->id, config('filesystems.default', 'public'));
+        $selfie = $request->file('selfie')->store('verifications-temp/' . $user->id, config('filesystems.default', 'public'));
 
         $professionalDocument = null;
         $professionalDocumentType = null;
         if ($request->hasFile('professional_document')) {
-            $professionalDocument = $request->file('professional_document')->store('verifications/' . $user->id, config('filesystems.default', 'public'));
+            $professionalDocument = $request->file('professional_document')->store('verifications-temp/' . $user->id, config('filesystems.default', 'public'));
             $professionalDocumentType = $request->professional_document_type;
         }
 
@@ -540,11 +546,11 @@ class VerificationController extends Controller
             'professional_document_status' => $professionalDocument ? 'pending' : null,
             'payment_amount' => IdentityVerification::getVerificationPrice('profile_verification'),
             'payment_status' => 'pending',
-            'status' => 'pending',
+            'status' => 'awaiting_payment',
             'submitted_at' => now(),
         ]);
 
-        return redirect()->route('verification.index')->with('success', 'Vos documents de vérification ont été envoyés avec succès ! Ils seront examinés dans les plus brefs délais.');
+        return redirect()->route('verification.index')->with('success', 'Vos documents sont prêts. Le paiement doit être validé avant l\'envoi à l\'administration.');
     }
 
     /**

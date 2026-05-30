@@ -1,7 +1,7 @@
 @php
-    $personalRequestAds = collect($homePersonalRequests ?? [])->take(6)->values();
-    $professionalOfferAds = collect($homeProfessionalOffers ?? [])->take(6)->values();
-    $professionalProfiles = collect($homeProfessionalProfiles ?? [])->take(6)->values();
+    $personalRequestAds = collect($homePersonalRequests ?? [])->values();
+    $professionalOfferAds = collect($homeProfessionalOffers ?? [])->values();
+    $professionalProfiles = collect($homeProfessionalProfiles ?? [])->values();
 
     $adSections = collect([
         [
@@ -36,6 +36,9 @@
     </div>
 
     @foreach($adSections as $section)
+    @php
+        $isScrollableSection = $section['ads']->count() > 6;
+    @endphp
     <div class="home-showcase-block home-showcase-block--{{ $section['kind'] }}" data-showcase-block="{{ $section['kind'] }}">
         <div class="home-showcase-block-header">
             <div>
@@ -45,7 +48,15 @@
             </div>
         </div>
 
-        <div class="home-showcase-ads-grid" data-showcase-ads-count="{{ $section['ads']->count() }}">
+        <div class="home-showcase-carousel{{ $isScrollableSection ? ' is-scrollable' : '' }}" data-showcase-carousel>
+            @if($isScrollableSection)
+                <button type="button" class="home-showcase-carousel-arrow home-showcase-carousel-arrow--prev" data-showcase-scroll-dir="-1" aria-label="Annonces précédentes">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            @endif
+
+            <div class="home-showcase-scroll" data-showcase-scroll>
+                <div class="home-showcase-ads-grid{{ $isScrollableSection ? ' home-showcase-scroll-grid' : '' }}" data-showcase-ads-count="{{ $section['ads']->count() }}">
             @foreach($section['ads'] as $ad)
             @php
                 $photos = $ad->photos ?? [];
@@ -130,11 +141,22 @@
                 </div>
             </a>
             @endforeach
+                </div>
+            </div>
+
+            @if($isScrollableSection)
+                <button type="button" class="home-showcase-carousel-arrow home-showcase-carousel-arrow--next" data-showcase-scroll-dir="1" aria-label="Annonces suivantes">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            @endif
         </div>
     </div>
     @endforeach
 
     @if($professionalProfiles->isNotEmpty())
+    @php
+        $isProfilesScrollable = $professionalProfiles->count() > 6;
+    @endphp
     <div class="home-showcase-block home-showcase-block--professional-profiles" data-showcase-block="professional-profiles">
         <div class="home-showcase-block-header">
             <div>
@@ -145,7 +167,15 @@
             <a href="javascript:void(0)" onclick="setViewMode('providers'); window.scrollTo({top: 0, behavior: 'smooth'});">Voir les profils <i class="fas fa-arrow-right"></i></a>
         </div>
 
-        <div class="home-showcase-pro-grid" data-showcase-pros-count="{{ $professionalProfiles->count() }}">
+        <div class="home-showcase-carousel{{ $isProfilesScrollable ? ' is-scrollable' : '' }}" data-showcase-carousel>
+            @if($isProfilesScrollable)
+                <button type="button" class="home-showcase-carousel-arrow home-showcase-carousel-arrow--prev" data-showcase-scroll-dir="-1" aria-label="Profils précédents">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            @endif
+
+            <div class="home-showcase-scroll" data-showcase-scroll>
+                <div class="home-showcase-pro-grid{{ $isProfilesScrollable ? ' home-showcase-scroll-grid' : '' }}" data-showcase-pros-count="{{ $professionalProfiles->count() }}">
             @foreach($professionalProfiles as $pro)
             @php
                 $ratingRaw = $pro->verified_reviews_avg ?? $pro->reviews_avg_rating ?? null;
@@ -191,6 +221,14 @@
                 </div>
             </a>
             @endforeach
+                </div>
+            </div>
+
+            @if($isProfilesScrollable)
+                <button type="button" class="home-showcase-carousel-arrow home-showcase-carousel-arrow--next" data-showcase-scroll-dir="1" aria-label="Profils suivants">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            @endif
         </div>
     </div>
     @endif

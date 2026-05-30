@@ -196,6 +196,8 @@ class AdController extends Controller
             return back()->withErrors(['location' => 'Veuillez sélectionner une ville ou saisir une adresse.'])->withInput();
         }
 
+        $selectedCity = $request->city && $request->city !== '__other__' ? $request->city : $finalLocation;
+
         // Construire l'adresse complète pour le géocodage
         $fullAddress = $finalLocation . ', ' . $request->country;
 
@@ -214,6 +216,7 @@ class AdController extends Controller
         $ad->description = $request->description;
         $ad->category = $request->category;
         $ad->location = $finalLocation;
+        $ad->city = $selectedCity;
         $ad->price = $request->price;
         $ad->service_type = $request->service_type;
         $ad->radius_km = $request->radius_km ?? 10;
@@ -336,6 +339,8 @@ class AdController extends Controller
             return response()->json(['success' => false, 'errors' => ['location' => ['Veuillez sélectionner une ville.']]], 422);
         }
 
+        $selectedCity = $request->city && $request->city !== '__other__' ? $request->city : $finalLocation;
+
         $fullAddress = $finalLocation . ', ' . $request->country;
         $coordinates = null;
         try {
@@ -350,6 +355,7 @@ class AdController extends Controller
         $ad->description = $request->description;
         $ad->category = $request->category;
         $ad->location = $finalLocation;
+        $ad->city = $selectedCity;
         $ad->price = $request->price;
         $ad->service_type = $request->service_type;
         $ad->radius_km = 10;
@@ -496,6 +502,8 @@ class AdController extends Controller
             return back()->withErrors(['location' => 'Veuillez sélectionner une ville ou saisir une adresse.'])->withInput();
         }
 
+        $selectedCity = $request->city && $request->city !== '__other__' ? $request->city : $finalLocation;
+
         // Re-géocoder si la localisation ou le pays a changé
         if ($ad->location !== $finalLocation || $ad->country !== $request->country) {
             try {
@@ -518,6 +526,7 @@ class AdController extends Controller
         $ad->description = $request->description;
         $ad->category = $request->category;
         $ad->location = $finalLocation;
+        $ad->city = $selectedCity;
         $ad->country = $request->country;
         $ad->price = $request->price;
         $ad->service_type = $request->service_type;

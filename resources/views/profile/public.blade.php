@@ -194,6 +194,11 @@
                                 <button type="button" class="btn btn-outline-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                                     <i class="fas fa-pen me-2"></i>Modifier le profil
                                 </button>
+                                @if(!($user->is_verified || $user->identity_verified))
+                                    <a href="{{ route('verification.index') }}" class="btn btn-outline-success w-100 mb-2">
+                                        <i class="fas fa-shield-alt me-2"></i>Vérifier mon profil
+                                    </a>
+                                @endif
                                 <button type="button" class="btn btn-outline-success w-100" data-bs-toggle="modal" data-bs-target="#editCategoriesModal">
                                     <i class="fas fa-th-large me-2"></i>Gérer mes catégories
                                 </button>

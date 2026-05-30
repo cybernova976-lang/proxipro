@@ -12,7 +12,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_feed_home_showcase_is_split_into_three_limited_prioritized_blocks(): void
+    public function test_feed_home_showcase_is_split_into_three_prioritized_scrollable_blocks(): void
     {
         $viewer = User::factory()->create();
         $particular = User::factory()->create([
@@ -156,30 +156,34 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString('Offres des particuliers', $showcaseHtml);
         $this->assertStringContainsString('Offres de professionnels', $showcaseHtml);
         $this->assertStringContainsString('Profils de professionnels', $showcaseHtml);
+        $this->assertSame(3, substr_count($showcaseHtml, 'home-showcase-carousel is-scrollable'));
+        $this->assertSame(6, substr_count($showcaseHtml, 'data-showcase-scroll-dir='));
 
         preg_match_all('/data-showcase-kind="personal-request"\s+data-showcase-ad-id="(\d+)"/', $showcaseHtml, $personalMatches);
         $personalRequestIds = array_map('intval', $personalMatches[1]);
 
-        $this->assertCount(6, $personalRequestIds);
+        $this->assertCount(8, $personalRequestIds);
+        $this->assertSame($urgentPersonalRequest->id, $personalRequestIds[0]);
         $this->assertContains($urgentPersonalRequest->id, $personalRequestIds);
-        $this->assertNotContains($oldPersonalRequests->last()->id, $personalRequestIds);
+        $this->assertContains($oldPersonalRequests->last()->id, $personalRequestIds);
 
         preg_match_all('/data-showcase-kind="professional-offer"\s+data-showcase-ad-id="(\d+)"/', $showcaseHtml, $professionalMatches);
         $professionalOfferIds = array_map('intval', $professionalMatches[1]);
 
-        $this->assertCount(6, $professionalOfferIds);
+        $this->assertCount(7, $professionalOfferIds);
+        $this->assertSame($boostedProfessionalOffer->id, $professionalOfferIds[0]);
         $this->assertContains($boostedProfessionalOffer->id, $professionalOfferIds);
-        $this->assertNotContains($oldProfessionalOffers->last()->id, $professionalOfferIds);
+        $this->assertContains($oldProfessionalOffers->last()->id, $professionalOfferIds);
         $this->assertNotContains($freeParticularOffer->id, $professionalOfferIds);
 
         preg_match_all('/data-showcase-kind="professional-profile"\s+data-showcase-pro-id="(\d+)"/', $showcaseHtml, $profileMatches);
         $profileIds = array_map('intval', $profileMatches[1]);
 
-        $this->assertCount(6, $profileIds);
+        $this->assertCount(8, $profileIds);
         $this->assertContains($topProfessionalProfile->id, $profileIds);
         $this->assertContains($professional->id, $profileIds);
         $this->assertNotEmpty(array_intersect($paidProfiles->pluck('id')->all(), $profileIds));
-        $this->assertNotContains($freeProvider->id, $profileIds);
+        $this->assertContains($freeProvider->id, $profileIds);
 
         $this->assertStringContainsString('Top Artisan', $showcaseHtml);
         $this->assertStringContainsString('PRO', $showcaseHtml);

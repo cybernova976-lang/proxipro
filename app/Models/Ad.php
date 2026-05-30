@@ -12,6 +12,7 @@ class Ad extends Model
         'description',
         'category',
         'location',
+        'city',
         'price',
         'service_type',
         'status',

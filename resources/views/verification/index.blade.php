@@ -229,6 +229,8 @@
                                 Votre identité a été vérifiée le {{ $user->identity_verified_at?->format('d/m/Y') }}
                             @elseif($verification && $verification->isReturned())
                                 Votre demande nécessite des corrections
+                            @elseif($verification && $verification->status === 'awaiting_payment')
+                                Paiement requis avant envoi à l'administration
                             @elseif($verification && $verification->isPending())
                                 Votre demande est en cours d'examen
                             @elseif($verification && $verification->isRejected())
@@ -246,6 +248,10 @@
                         @elseif($verification && $verification->isReturned())
                             <span class="status-badge status-returned">
                                 <i class="fas fa-undo-alt"></i> Corrections requises
+                            </span>
+                        @elseif($verification && $verification->status === 'awaiting_payment')
+                            <span class="status-badge status-pending">
+                                <i class="fas fa-credit-card"></i> Paiement requis
                             </span>
                         @elseif($verification && $verification->isPending())
                             <span class="status-badge status-pending">
@@ -561,6 +567,51 @@
                     </form>
                     @endif
                 </div>
+
+            {{-- ===============================
+                 AWAITING PAYMENT
+                 =============================== --}}
+            @elseif($verification && $verification->status === 'awaiting_payment')
+            <div class="verification-card">
+                <div class="text-center mb-4">
+                    <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 78px; height: 78px; background: rgba(37, 99, 235, 0.12);">
+                        <i class="fas fa-credit-card fa-2x" style="color: #2563eb;"></i>
+                    </div>
+                    <h4 class="fw-bold mb-2">Finaliser le paiement</h4>
+                    <p class="text-muted mb-0">
+                        Vos documents sont enregistrés temporairement. Ils seront transmis à l'administration uniquement après validation du paiement.
+                    </p>
+                </div>
+
+                <div class="p-4 mb-4" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <div class="fw-bold mb-1">Vérification de profil</div>
+                            <div class="text-muted small">Badge public “Profil vérifié” après validation administrateur.</div>
+                        </div>
+                        <div class="fs-4 fw-bold text-primary">
+                            {{ number_format((float) $verification->payment_amount, 2, ',', ' ') }} €
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary btn-lg" onclick="startVerificationStripePayment({{ $verification->id }}, this)">
+                        <i class="fas fa-lock me-2"></i>Payer par carte
+                    </button>
+                    @if(($user->available_points ?? 0) >= \App\Models\IdentityVerification::getVerificationPointsCost($verification->type))
+                    <button type="button" class="btn btn-outline-primary" onclick="payVerificationWithPoints({{ $verification->id }}, this)">
+                        <i class="fas fa-coins me-2"></i>Payer avec mes points
+                    </button>
+                    @endif
+                    <form action="{{ route('verification.cancel') }}" method="POST" class="mt-2">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-times me-2"></i>Annuler cette demande
+                        </button>
+                    </form>
+                </div>
+            </div>
 
             {{-- ===============================
                  NEW FORM - First submission  
@@ -936,6 +987,81 @@
     // Fallback full resubmission form
     setupFilePreview('resub_all_document_front', 'resubAllFrontPreview', 'resubFrontZoneAll');
     setupFilePreview('resub_all_selfie', 'resubAllSelfiePreview', 'resubSelfieZoneAll');
+
+    function setVerificationPaymentButtonLoading(button, loadingText) {
+        if (!button) return;
+        button.disabled = true;
+        button.dataset.originalHtml = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>' + loadingText;
+    }
+
+    function restoreVerificationPaymentButton(button) {
+        if (!button) return;
+        button.disabled = false;
+        if (button.dataset.originalHtml) {
+            button.innerHTML = button.dataset.originalHtml;
+        }
+    }
+
+    function showVerificationPaymentError(message) {
+        alert(message || 'Impossible de lancer le paiement. Veuillez réessayer.');
+    }
+
+    function startVerificationStripePayment(verificationId, button) {
+        setVerificationPaymentButtonLoading(button, 'Ouverture du paiement...');
+
+        fetch('{{ route("verification.create.payment") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ verification_id: verificationId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.checkout_url) {
+                window.location.href = data.checkout_url;
+                return;
+            }
+
+            restoreVerificationPaymentButton(button);
+            showVerificationPaymentError(data.message);
+        })
+        .catch(() => {
+            restoreVerificationPaymentButton(button);
+            showVerificationPaymentError('Erreur de connexion au service de paiement.');
+        });
+    }
+
+    function payVerificationWithPoints(verificationId, button) {
+        setVerificationPaymentButtonLoading(button, 'Validation...');
+
+        fetch('{{ route("verification.pay.points") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ verification_id: verificationId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+                return;
+            }
+
+            restoreVerificationPaymentButton(button);
+            showVerificationPaymentError(data.message);
+        })
+        .catch(() => {
+            restoreVerificationPaymentButton(button);
+            showVerificationPaymentError('Erreur de connexion pendant le paiement par points.');
+        });
+    }
 
     // Custom form validation — browser native validation fails silently on hidden inputs
     document.querySelectorAll('form[action*="verification"]').forEach(function(form) {

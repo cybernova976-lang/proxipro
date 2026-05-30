@@ -1598,6 +1598,79 @@
             aspect-ratio: 16 / 9;
         }
     }
+    .home-showcase-carousel {
+        position: relative;
+    }
+    .home-showcase-scroll {
+        overflow-x: visible;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+    }
+    .home-showcase-scroll::-webkit-scrollbar {
+        display: none;
+    }
+    .home-showcase-carousel.is-scrollable .home-showcase-scroll {
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        overscroll-behavior-x: contain;
+    }
+    .home-showcase-carousel.is-scrollable .home-showcase-scroll-grid {
+        grid-auto-flow: column;
+        grid-template-columns: none !important;
+        grid-template-rows: repeat(2, minmax(0, auto));
+        grid-auto-columns: calc((100% - 28px) / 3);
+        align-items: stretch;
+        padding: 2px 0;
+    }
+    .home-showcase-carousel.is-scrollable .home-showcase-scroll-grid > * {
+        scroll-snap-align: start;
+    }
+    .home-showcase-carousel-arrow {
+        position: absolute;
+        top: 50%;
+        z-index: 5;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border: 1px solid #dbeafe;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.96);
+        color: #1d4ed8;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+        transform: translateY(-50%);
+        transition: opacity 0.18s ease, transform 0.18s ease, background 0.18s ease;
+    }
+    .home-showcase-carousel-arrow:hover:not(:disabled) {
+        background: #eff6ff;
+        transform: translateY(-50%) scale(1.04);
+    }
+    .home-showcase-carousel-arrow:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        transform: translateY(-50%);
+    }
+    .home-showcase-carousel-arrow--prev {
+        left: 6px;
+    }
+    .home-showcase-carousel-arrow--next {
+        right: 6px;
+    }
+    @media (max-width: 1180px) {
+        .home-showcase-carousel.is-scrollable .home-showcase-scroll-grid {
+            grid-auto-columns: calc((100% - 14px) / 2);
+        }
+    }
+    @media (max-width: 640px) {
+        .home-showcase-carousel.is-scrollable .home-showcase-scroll-grid {
+            grid-auto-columns: 100%;
+        }
+        .home-showcase-carousel-arrow {
+            width: 32px;
+            height: 32px;
+        }
+    }
     .saved-search-banner {
         display: flex;
         justify-content: space-between;
@@ -6459,7 +6532,8 @@
     }
 
     .home-showcase-ad-media {
-        aspect-ratio: 16 / 10;
+        aspect-ratio: 16 / 7;
+        max-height: 170px;
     }
 
     .home-showcase-ad-body {
@@ -6811,6 +6885,11 @@
         .home-showcase-ads-grid {
             grid-template-columns: 1fr;
             margin-top: 0;
+        }
+
+        .home-showcase-ad-media {
+            aspect-ratio: 16 / 9;
+            max-height: none;
         }
     }
 
@@ -7301,7 +7380,7 @@
                                         <i class="fas fa-check"></i> Toutes les catégories
                                     </div>
                                     @foreach($missionCategories as $catName => $catData)
-                                    <div class="filter-menu-item" data-value="{{ $catName }}" onclick="selectCategory('{{ $catName }}')">
+                                    <div class="filter-menu-item" data-value="{{ $catName }}" onclick="selectCategory(@js($catName))">
                                         <i class="{{ $catData['icon'] ?? 'fas fa-folder' }}"></i> {{ $catName }}
                                         <span class="ms-auto text-muted small">{{ $catData['total'] ?? 0 }}</span>
                                     </div>
@@ -8656,6 +8735,40 @@
     }
 
     document.addEventListener('DOMContentLoaded', initializeFeedAdsMap);
+
+    function initHomeShowcaseCarousels() {
+        document.querySelectorAll('[data-showcase-carousel]').forEach((carousel) => {
+            const scroller = carousel.querySelector('[data-showcase-scroll]');
+            const prevBtn = carousel.querySelector('[data-showcase-scroll-dir="-1"]');
+            const nextBtn = carousel.querySelector('[data-showcase-scroll-dir="1"]');
+
+            if (!scroller || !prevBtn || !nextBtn) {
+                return;
+            }
+
+            const updateButtons = () => {
+                const maxScroll = scroller.scrollWidth - scroller.clientWidth;
+                prevBtn.disabled = scroller.scrollLeft <= 4;
+                nextBtn.disabled = scroller.scrollLeft >= maxScroll - 4;
+            };
+
+            carousel.querySelectorAll('[data-showcase-scroll-dir]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const direction = Number(button.getAttribute('data-showcase-scroll-dir')) || 1;
+                    scroller.scrollBy({
+                        left: direction * Math.max(scroller.clientWidth * 0.92, 280),
+                        behavior: 'smooth',
+                    });
+                });
+            });
+
+            scroller.addEventListener('scroll', updateButtons, { passive: true });
+            window.addEventListener('resize', updateButtons, { passive: true });
+            updateButtons();
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', initHomeShowcaseCarousels);
     
     // =========================================
     // SYSTÈME DE PUBLICATION SOCIALE AMÉLIORÉ
@@ -10818,14 +10931,20 @@
         window.addEventListener('resize', adjustSidebarPosition, { passive: true });
 
         if (feedLeftMenuToggle) {
-            feedLeftMenuToggle.addEventListener('click', () => {
-                if (feedLeftMenu?.classList.contains('is-pinned')) {
-                    setFeedMenuOpen(false, false);
-                } else {
-                    setFeedMenuOpen(true, true);
-                }
+            feedLeftMenuToggle.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const isOpen = feedLeftMenu?.classList.contains('is-open') ?? false;
+                setFeedMenuOpen(!isOpen, !isOpen);
             });
         }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && feedLeftMenu?.classList.contains('is-open')) {
+                setFeedMenuOpen(false, false);
+            }
+        });
 
         setFeedMenuOpen(false, false);
 
@@ -12133,7 +12252,9 @@
                         }
                         const badge = document.getElementById('geoSourceBadge');
                         if (badge) badge.textContent = 'GPS';
-                        loadData();
+                        if (currentFilters.scope === 'nearby') {
+                            loadData();
+                        }
                     })
                     .catch(() => {});
                 },

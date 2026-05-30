@@ -142,6 +142,56 @@ class FeedFilterAdsMapDataTest extends TestCase
         $response->assertJsonMissing(['title' => 'Annonce autre ville']);
     }
 
+    public function test_filter_ads_nearby_scope_matches_city_column_case_insensitively(): void
+    {
+        $viewer = User::factory()->create([
+            'city' => 'MMAMOUDZOU',
+            'country' => 'Mayotte',
+        ]);
+        $author = User::factory()->create([
+            'plan' => 'pro',
+        ]);
+
+        $localAd = Ad::create([
+            'title' => 'Annonce avec ville normalisee',
+            'description' => 'Visible grace a la colonne city meme si location ne contient pas la ville',
+            'category' => 'Plomberie',
+            'location' => 'Quartier centre',
+            'city' => 'Mamoudzou',
+            'price' => 80,
+            'service_type' => 'offre',
+            'status' => 'active',
+            'visibility' => 'public',
+            'user_id' => $author->id,
+            'country' => 'Mayotte',
+        ]);
+
+        Ad::create([
+            'title' => 'Annonce autre commune',
+            'description' => 'Ne doit pas apparaitre dans la zone locale',
+            'category' => 'Electricite',
+            'location' => 'Dzaoudzi',
+            'city' => 'Dzaoudzi',
+            'price' => 200,
+            'service_type' => 'offre',
+            'status' => 'active',
+            'visibility' => 'public',
+            'user_id' => $author->id,
+            'country' => 'Mayotte',
+        ]);
+
+        $response = $this->withoutMiddleware()->actingAs($viewer)->get(route('feed.filter-ads', [
+            'format' => 'json',
+            'scope' => 'nearby',
+        ]));
+
+        $response->assertOk();
+        $response->assertJsonPath('geo_applied', true);
+        $response->assertJsonPath('geo_fallback_used', false);
+        $response->assertJsonPath('ads.0.id', $localAd->id);
+        $response->assertJsonMissing(['title' => 'Annonce autre commune']);
+    }
+
     public function test_filter_ads_can_show_all_ads_when_user_disables_nearby_scope(): void
     {
         $viewer = User::factory()->create();
