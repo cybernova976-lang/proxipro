@@ -94,6 +94,9 @@ class VerificationPaymentFlowTest extends TestCase
         $owner = User::factory()->create([
             'identity_verified' => false,
             'is_verified' => false,
+            'profession' => 'Plombier',
+            'service_category' => 'Plombier',
+            'service_subcategories' => ['Plombier', 'Electricien'],
         ]);
         $viewer = User::factory()->create();
 
@@ -105,7 +108,17 @@ class VerificationPaymentFlowTest extends TestCase
         $this->actingAs($owner)
             ->get(route('profile.public', $owner->id))
             ->assertOk()
-            ->assertSee('Profil non vérifié')
+            ->assertDontSee('Profil non vérifié')
             ->assertSee('Vérifier mon profil');
+
+        $profilePage = $this->actingAs($owner)->get(route('profile.show'));
+
+        $profilePage
+            ->assertOk()
+            ->assertDontSee('Profil non vérifié')
+            ->assertSee('Vérifier mon profil')
+            ->assertSee('Electricien');
+
+        $this->assertSame(1, substr_count($profilePage->getContent(), 'Plombier'));
     }
 }

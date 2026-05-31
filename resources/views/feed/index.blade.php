@@ -1094,6 +1094,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-wrap: wrap;
         gap: 8px;
         padding-top: 9px;
         margin-top: auto;
@@ -1103,6 +1104,7 @@
         font-weight: 700;
     }
     .home-showcase-author,
+    .home-showcase-published-at,
     .home-showcase-location {
         display: inline-flex;
         align-items: center;
@@ -1111,6 +1113,13 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+    .home-showcase-published-at {
+        flex-shrink: 0;
+        color: #64748b;
+    }
+    .home-showcase-location {
+        margin-left: auto;
     }
     .home-showcase-author img,
     .home-showcase-author span {
@@ -11269,8 +11278,9 @@
         const firstPhoto = photos.filter(Boolean).map((photo) => buildPhotoUrl(photo)).find(Boolean);
         const isBoosted = !!ad.is_boosted && (!ad.boost_end || new Date(ad.boost_end) > new Date());
         const price = ad.price
-            ? `${new Intl.NumberFormat('fr-FR').format(ad.price)} €`
+            ? `${new Intl.NumberFormat('fr-FR').format(ad.price)} ${ad.service_type === 'demande' ? '€/h' : '€'}`
             : 'Sur devis';
+        const publishedAt = ad.published_at || ad.created_at_date || ad.created_at_human || '';
         const authorName = ad.user?.name || 'Utilisateur';
         const authorInitial = authorName.charAt(0).toUpperCase();
         const authorAvatar = ad.user?.avatar
@@ -11301,6 +11311,7 @@
                     <p>${escapeHtml(truncateText(ad.description || '', 92))}</p>
                     <div class="home-showcase-ad-footer">
                         <span class="home-showcase-author">${authorAvatar} ${escapeHtml(truncateText(authorName, 18))}</span>
+                        ${publishedAt ? `<span class="home-showcase-published-at"><i class="far fa-calendar-alt"></i> ${escapeHtml(publishedAt)}</span>` : ''}
                         <span class="home-showcase-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(truncateText(ad.location || ad.city || 'Local', 18))}</span>
                     </div>
                 </div>

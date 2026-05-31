@@ -25,6 +25,17 @@
 @endpush
 
 @section('content')
+@php
+    $isOwnProfile = auth()->check() && auth()->id() === $user->id;
+    $profileVerified = (bool) ($user->is_verified || $user->identity_verified);
+    $primaryService = $user->relationLoaded('services') ? $user->services->first() : null;
+    $displayProfession = $user->profession
+        ?: ($primaryService?->subcategory ?? $primaryService?->category ?? null);
+    $serviceCategory = trim((string) ($user->service_category ?? ''));
+    $normalizedProfession = mb_strtolower(trim((string) $displayProfession));
+    $normalizedCategory = mb_strtolower($serviceCategory);
+    $showServiceCategory = $serviceCategory !== '' && $normalizedCategory !== $normalizedProfession;
+@endphp
 <div class="container py-4">
     <div class="row">
         <!-- Profile Card - Sidebar gauche -->
@@ -79,10 +90,14 @@
                         @endif
                     </div>
                     <div class="mb-2">
-                        @if($user->is_verified || $user->identity_verified)
+                        @if($profileVerified)
                             <span class="badge bg-success px-3 py-2">
                                 <i class="fas fa-check-circle me-1"></i>Profil vérifié
                             </span>
+                        @elseif($isOwnProfile)
+                            <a href="{{ route('verification.index') }}" class="btn btn-sm btn-outline-success rounded-pill px-3 py-2">
+                                <i class="fas fa-shield-alt me-1"></i>Vérifier mon profil
+                            </a>
                         @else
                             <span class="badge bg-secondary px-3 py-2" style="opacity: 0.85;">
                                 <i class="fas fa-user-times me-1"></i>Profil non vérifié
@@ -92,17 +107,15 @@
                     
                     <!-- Job Title / Profession -->
                     <p class="text-primary fw-semibold mb-1" style="word-break: break-word; overflow-wrap: break-word;">
-                        @if($user->profession)
-                            <i class="fas fa-briefcase me-1"></i>{{ Str::limit($user->profession, 80) }}
-                        @elseif($user->is_service_provider && $user->services && $user->services->count() > 0)
-                            <i class="fas fa-briefcase me-1"></i>{{ Str::limit($user->services->first()->subcategory ?? $user->services->first()->category ?? 'Prestataire de services', 80) }}
+                        @if($displayProfession)
+                            <i class="fas fa-briefcase me-1"></i>{{ Str::limit($displayProfession, 80) }}
                         @endif
                     </p>
                     
                     {{-- Catégorie de service --}}
-                    @if($user->service_category)
+                    @if($showServiceCategory)
                         <p class="text-muted small mb-1" style="word-break: break-word; overflow-wrap: break-word;">
-                            <i class="fas fa-th-large me-1"></i>{{ Str::limit($user->service_category, 120) }}
+                            <i class="fas fa-th-large me-1"></i>{{ Str::limit($serviceCategory, 120) }}
                         </p>
                     @endif
 
@@ -118,7 +131,15 @@
                     {{-- Métiers / Sous-catégories (exclure celles identiques à la profession) --}}
                     @if($user->service_subcategories && count($user->service_subcategories) > 0)
                         @php
-                            $filteredSubcats = collect($user->service_subcategories)->filter(fn($s) => $s !== $user->profession);
+                            $filteredSubcats = collect($user->service_subcategories)
+                                ->filter(function ($subcat) use ($normalizedProfession, $normalizedCategory) {
+                                    $normalized = mb_strtolower(trim((string) $subcat));
+                                    return $normalized !== ''
+                                        && $normalized !== $normalizedProfession
+                                        && $normalized !== $normalizedCategory;
+                                })
+                                ->unique()
+                                ->values();
                         @endphp
                         @if($filteredSubcats->isNotEmpty())
                         <div class="d-flex flex-wrap justify-content-center gap-1 mb-2">
@@ -152,6 +173,7 @@
                         <span class="text-muted">({{ $ratingCount ?? 0 }} avis)</span>
                     </div>
                     
+                    @if($user->hasActiveProSubscription() || $user->user_type === 'professionnel' || $user->hasCompletedProOnboarding() || ($user->is_service_provider && $user->service_provider_verified))
                     <!-- Badges -->
                     <div class="mb-4">
                         @if($user->hasActiveProSubscription())
@@ -167,21 +189,14 @@
                             <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
                                 <i class="fas fa-user-check me-1"></i>Prestataire vérifié
                             </span>
-                        @elseif($user->is_verified)
-                            <span class="badge bg-success px-3 py-2">
-                                <i class="fas fa-check-circle me-1"></i>Profil vérifié
-                            </span>
-                        @else
-                            <span class="badge bg-secondary px-3 py-2" style="opacity: 0.85;">
-                                <i class="fas fa-user-times me-1"></i>Profil non vérifié
-                            </span>
                         @endif
                     </div>
+                    @endif
 
                     <!-- Contact Button -->
                     <div class="d-grid gap-2">
                         @auth
-                            @if(auth()->id() !== $user->id)
+                            @if(!$isOwnProfile)
                                 <form action="{{ route('messages.create.conversation') }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="recipient_id" value="{{ $user->id }}">
@@ -194,11 +209,6 @@
                                 <button type="button" class="btn btn-outline-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                                     <i class="fas fa-pen me-2"></i>Modifier le profil
                                 </button>
-                                @if(!($user->is_verified || $user->identity_verified))
-                                    <a href="{{ route('verification.index') }}" class="btn btn-outline-success w-100 mb-2">
-                                        <i class="fas fa-shield-alt me-2"></i>Vérifier mon profil
-                                    </a>
-                                @endif
                                 <button type="button" class="btn btn-outline-success w-100" data-bs-toggle="modal" data-bs-target="#editCategoriesModal">
                                     <i class="fas fa-th-large me-2"></i>Gérer mes catégories
                                 </button>

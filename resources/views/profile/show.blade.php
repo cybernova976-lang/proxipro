@@ -3,6 +3,25 @@
 @section('title', 'Mon Profil - ProxiPro')
 
 @section('content')
+@php
+    $profileVerified = (bool) ($user->is_verified || $user->identity_verified);
+    $primaryService = $user->relationLoaded('services') ? $user->services->first() : null;
+    $displayProfession = $user->profession
+        ?: ($primaryService?->subcategory ?? $primaryService?->category ?? null);
+    $serviceCategory = trim((string) ($user->service_category ?? ''));
+    $normalizedProfession = mb_strtolower(trim((string) $displayProfession));
+    $normalizedCategory = mb_strtolower($serviceCategory);
+    $showServiceCategory = $serviceCategory !== '' && $normalizedCategory !== $normalizedProfession;
+    $filteredSubcategories = collect($user->service_subcategories ?? [])
+        ->filter(function ($subcat) use ($normalizedProfession, $normalizedCategory) {
+            $normalized = mb_strtolower(trim((string) $subcat));
+            return $normalized !== ''
+                && $normalized !== $normalizedProfession
+                && $normalized !== $normalizedCategory;
+        })
+        ->unique()
+        ->values();
+@endphp
 <div class="container py-4">
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -42,34 +61,25 @@
                     </div>
                     
                     <h4 class="fw-bold mb-1">{{ $user->name }}</h4>
-                    @if($user->is_verified || $user->identity_verified)
-                        <span class="badge bg-success px-3 py-2 mb-3">
-                            <i class="fas fa-check-circle me-1"></i>Profil vérifié
-                        </span>
-                    @else
-                        <span class="badge bg-secondary px-3 py-2 mb-3" style="opacity: 0.85;">
-                            <i class="fas fa-user-times me-1"></i>Profil non vérifié
-                        </span>
-                    @endif
                     
                     {{-- Profession/Métier --}}
-                    @if($user->profession)
+                    @if($displayProfession)
                         <p class="text-primary fw-semibold mb-1">
-                            <i class="fas fa-briefcase me-1"></i>{{ $user->profession }}
+                            <i class="fas fa-briefcase me-1"></i>{{ $displayProfession }}
                         </p>
                     @endif
                     
                     {{-- Catégorie de service --}}
-                    @if($user->service_category)
+                    @if($showServiceCategory)
                         <p class="text-muted small mb-1">
-                            <i class="fas fa-th-large me-1"></i>{{ $user->service_category }}
+                            <i class="fas fa-th-large me-1"></i>{{ $serviceCategory }}
                         </p>
                     @endif
                     
                     {{-- Métiers / Sous-catégories --}}
-                    @if($user->service_subcategories && count($user->service_subcategories) > 0)
+                    @if($filteredSubcategories->isNotEmpty())
                         <div class="d-flex flex-wrap justify-content-center gap-1 mb-2">
-                            @foreach($user->service_subcategories as $subcat)
+                            @foreach($filteredSubcategories as $subcat)
                                 <span class="badge bg-light text-primary border px-2 py-1" style="font-size: 0.75rem;">
                                     {{ $subcat }}
                                 </span>
@@ -85,7 +95,20 @@
                     @endif
                     
                     <p class="text-muted mb-3">{{ $user->email }}</p>
+
+                    <div class="mb-4">
+                        @if($profileVerified)
+                            <span class="badge bg-success px-3 py-2">
+                                <i class="fas fa-check-circle me-1"></i>Profil vérifié
+                            </span>
+                        @else
+                            <a href="{{ route('verification.index') }}" class="btn btn-sm btn-outline-success rounded-pill px-3 py-2">
+                                <i class="fas fa-shield-alt me-1"></i>Vérifier mon profil
+                            </a>
+                        @endif
+                    </div>
                     
+                    @if($user->hasActiveProSubscription() || $user->user_type === 'professionnel' || $user->isProfessionnel() || ($user->is_service_provider && $user->service_provider_verified))
                     <!-- Badges -->
                     <div class="mb-4">
                         @if($user->hasActiveProSubscription())
@@ -104,18 +127,9 @@
                             <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
                                 <i class="fas fa-user-check me-1"></i>Prestataire particulier vérifié
                             </span>
-                        @elseif($user->is_verified)
-                            {{-- Profil vérifié uniquement --}}
-                            <span class="badge bg-success px-3 py-2">
-                                <i class="fas fa-check-circle me-1"></i>Profil vérifié
-                            </span>
-                        @else
-                            {{-- Profil non vérifié - bouton pour vérifier --}}
-                            <a href="{{ route('verification.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 border-0" style="cursor: pointer; font-size: 0.85rem;">
-                                <i class="fas fa-shield-alt me-1"></i><span>Vérifier mon profil</span>
-                            </a>
                         @endif
                     </div>
+                    @endif
                     
                     <!-- Points -->
                     <div class="bg-light rounded-3 p-3 mb-4">

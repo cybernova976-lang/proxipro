@@ -29,8 +29,8 @@
 <section class="home-showcase-section" aria-labelledby="homeShowcaseTitle">
     <div class="home-showcase-header">
         <div>
-            <h2 id="homeShowcaseTitle">Le meilleur de Massiwani</h2>
-            <p>Des annonces triées par intention, puis les profils professionnels mis en avant.</p>
+            <h2 id="homeShowcaseTitle">Pour vous</h2>
+            <p>Sélectionnés selon vos intérêts</p>
         </div>
         <a href="#adsFeedMap" class="home-showcase-link">Voir la carte <i class="fas fa-arrow-down"></i></a>
     </div>
@@ -89,6 +89,10 @@
                 $authorName = $author?->name ?? 'Utilisateur';
                 $authorInitial = strtoupper(substr($authorName, 0, 1));
                 $isProfessionalOffer = $section['dataKind'] === 'professional-offer';
+                $publishedDate = $ad->created_at?->format('d/m/Y');
+                $priceLabel = $ad->price
+                    ? number_format((float) $ad->price, 0, ',', ' ') . ($section['dataKind'] === 'personal-request' ? ' €/h' : ' €')
+                    : 'Sur devis';
             @endphp
             <a href="{{ route('ads.show', $ad) }}"
                class="home-showcase-ad-card{{ $isUrgent ? ' is-urgent' : '' }}{{ $isBoosted ? ' is-boosted' : '' }}"
@@ -113,7 +117,7 @@
                     </div>
 
                     <span class="home-showcase-price">
-                        {{ $ad->price ? number_format($ad->price, 0, ',', ' ') . ' €' : 'Sur devis' }}
+                        {{ $priceLabel }}
                     </span>
                 </div>
 
@@ -136,6 +140,9 @@
                                 <span class="home-showcase-author-pro">PRO</span>
                             @endif
                         </span>
+                        @if($publishedDate)
+                            <span class="home-showcase-published-at"><i class="far fa-calendar-alt"></i> {{ $publishedDate }}</span>
+                        @endif
                         <span class="home-showcase-location"><i class="fas fa-map-marker-alt"></i> {{ Str::limit($ad->location ?? $ad->city ?? 'Local', 18) }}</span>
                     </div>
                 </div>

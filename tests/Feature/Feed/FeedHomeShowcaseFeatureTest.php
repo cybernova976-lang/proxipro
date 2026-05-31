@@ -153,6 +153,8 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString('id="feedResultsSection" hidden', $content);
         $this->assertStringContainsString('id="infiniteScrollTrigger" style="display: none;"', $content);
 
+        $this->assertStringContainsString('Pour vous', $showcaseHtml);
+        $this->assertStringContainsString('Sélectionnés selon vos intérêts', $showcaseHtml);
         $this->assertStringContainsString('Offres des particuliers', $showcaseHtml);
         $this->assertStringContainsString('Offres de professionnels', $showcaseHtml);
         $this->assertStringContainsString('Profils de professionnels', $showcaseHtml);
@@ -166,6 +168,8 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertSame($urgentPersonalRequest->id, $personalRequestIds[0]);
         $this->assertContains($urgentPersonalRequest->id, $personalRequestIds);
         $this->assertContains($oldPersonalRequests->last()->id, $personalRequestIds);
+        $this->assertStringContainsString('120 €/h', $showcaseHtml);
+        $this->assertStringContainsString($urgentPersonalRequest->created_at->format('d/m/Y'), $showcaseHtml);
 
         preg_match_all('/data-showcase-kind="professional-offer"\s+data-showcase-ad-id="(\d+)"/', $showcaseHtml, $professionalMatches);
         $professionalOfferIds = array_map('intval', $professionalMatches[1]);
@@ -175,6 +179,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertContains($boostedProfessionalOffer->id, $professionalOfferIds);
         $this->assertContains($oldProfessionalOffers->last()->id, $professionalOfferIds);
         $this->assertNotContains($freeParticularOffer->id, $professionalOfferIds);
+        $this->assertStringContainsString('180 €', $showcaseHtml);
 
         preg_match_all('/data-showcase-kind="professional-profile"\s+data-showcase-pro-id="(\d+)"/', $showcaseHtml, $profileMatches);
         $profileIds = array_map('intval', $profileMatches[1]);
