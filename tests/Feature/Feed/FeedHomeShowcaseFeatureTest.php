@@ -152,6 +152,9 @@ class FeedHomeShowcaseFeatureTest extends TestCase
 
         $this->assertStringContainsString('id="feedResultsSection" hidden', $content);
         $this->assertStringContainsString('id="infiniteScrollTrigger" style="display: none;"', $content);
+        $this->assertStringContainsString('class="header-nav-center d-none d-lg-flex', $content);
+        $this->assertStringNotContainsString('nav-messages-btn position-relative d-none d-md-flex', $content);
+        $this->assertStringNotContainsString('title="Espace Pro"', $content);
 
         $this->assertStringContainsString('Pour vous', $showcaseHtml);
         $this->assertStringContainsString('Sélectionnés selon vos intérêts', $showcaseHtml);

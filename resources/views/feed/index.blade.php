@@ -1091,11 +1091,11 @@
         overflow: hidden;
     }
     .home-showcase-ad-footer {
-        display: flex;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
         align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 8px;
+        column-gap: 16px;
+        row-gap: 8px;
         padding-top: 9px;
         margin-top: auto;
         border-top: 1px solid #eef2f7;
@@ -1114,12 +1114,20 @@
         text-overflow: ellipsis;
         white-space: nowrap;
     }
+    .home-showcase-author {
+        grid-column: 1;
+        justify-self: start;
+    }
     .home-showcase-published-at {
+        grid-column: 2;
+        justify-self: center;
         flex-shrink: 0;
         color: #64748b;
     }
     .home-showcase-location {
-        margin-left: auto;
+        grid-column: 3;
+        justify-self: end;
+        margin-left: 0;
     }
     .home-showcase-author img,
     .home-showcase-author span {
@@ -6541,8 +6549,8 @@
     }
 
     .home-showcase-ad-media {
-        aspect-ratio: 16 / 7;
-        max-height: 170px;
+        aspect-ratio: 16 / 10;
+        max-height: 220px;
     }
 
     .home-showcase-ad-body {

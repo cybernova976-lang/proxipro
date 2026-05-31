@@ -31,6 +31,27 @@
         gap: 8px;
     }
 
+    .header-shell {
+        display: grid;
+        grid-template-columns: minmax(190px, 1fr) auto minmax(190px, 1fr);
+        align-items: center;
+        gap: 18px;
+        height: 100%;
+    }
+
+    .header-brand-area {
+        justify-self: start;
+    }
+
+    .header-nav-center {
+        justify-self: center;
+        justify-content: center;
+    }
+
+    .header-actions-area {
+        justify-self: end;
+    }
+
     .header-nav-btn {
         display: flex;
         align-items: center;
@@ -99,6 +120,12 @@
     }
 
     @media (max-width: 991px) {
+        .header-shell {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         .header-nav-buttons {
             display: none;
         }
@@ -6492,9 +6519,9 @@
     <div id="app">
         <header class="header-modern sticky-top">
             <div class="container-fluid px-4">
-                <div class="d-flex justify-content-between align-items-center h-100">
+                <div class="header-shell">
                     <!-- GAUCHE : Logo -->
-                    <div class="d-flex align-items-center gap-2 mobile-brand-group" style="min-width:0;">
+                    <div class="header-brand-area d-flex align-items-center gap-2 mobile-brand-group" style="min-width:0;">
                         <a class="navbar-brand-modern" href="{{ Auth::check() ? route('feed') : url('/') }}">
                             <div class="brand-logo">P</div>
                             <span class="brand-text d-none d-sm-inline">ProxiPro</span>
@@ -6516,26 +6543,24 @@
                     @php
                         $lostItemsCountHeader = \App\Models\LostItem::where('status', 'active')->count();
                     @endphp
-                    <!-- DROITE : Nav + Actions (regroupés) -->
-                    <div class="d-flex align-items-center gap-2">
-                        <!-- Navigation principale desktop -->
-                        <div class="d-none d-lg-flex align-items-center gap-1 me-3">
-                            <a href="{{ route('feed') }}" class="header-nav-btn {{ request()->routeIs('feed') ? 'active' : '' }}">
-                                <i class="fas fa-home"></i><span>Accueil</span>
-                            </a>
-                            <a href="{{ route('home') }}" class="header-nav-btn {{ request()->routeIs('home') ? 'active' : '' }}">
-                                <i class="fas fa-th-large"></i><span>Tableau de bord</span>
-                            </a>
-                            <a href="{{ route('ads.create') }}" class="header-nav-btn header-nav-btn-primary">
-                                <i class="fas fa-plus-circle"></i><span>Demander un service</span>
-                            </a>
-                            <a href="{{ route('contact.index') }}" class="header-nav-btn">
-                                <i class="fas fa-headset"></i><span>Contact</span>
-                            </a>
-                        </div>
-                        </div>
-                        <!-- Actions utilisateur -->
-                        <div class="d-flex align-items-center gap-3 mobile-actions-group">
+                    <!-- Navigation principale desktop -->
+                    <nav class="header-nav-center d-none d-lg-flex align-items-center gap-1" aria-label="Navigation principale">
+                        <a href="{{ route('feed') }}" class="header-nav-btn {{ request()->routeIs('feed') ? 'active' : '' }}">
+                            <i class="fas fa-home"></i><span>Accueil</span>
+                        </a>
+                        <a href="{{ route('home') }}" class="header-nav-btn {{ request()->routeIs('home') ? 'active' : '' }}">
+                            <i class="fas fa-th-large"></i><span>Tableau de bord</span>
+                        </a>
+                        <a href="{{ route('ads.create') }}" class="header-nav-btn header-nav-btn-primary">
+                            <i class="fas fa-plus-circle"></i><span>Demander un service</span>
+                        </a>
+                        <a href="{{ route('contact.index') }}" class="header-nav-btn">
+                            <i class="fas fa-headset"></i><span>Contact</span>
+                        </a>
+                    </nav>
+
+                    <!-- Actions utilisateur -->
+                    <div class="header-actions-area d-flex align-items-center gap-3 mobile-actions-group">
 
                         <!-- Bouton Devenir Prestataire / Espace Pro -->
                         @php
@@ -6544,16 +6569,10 @@
                             $isRegularParticulier = !$currentUser->isOAuthUser() && (!$currentUser->user_type || $currentUser->user_type === 'particulier') && !$currentUser->is_service_provider;
                             $isActiveParticulierProvider = $currentUser->is_service_provider && (!$currentUser->user_type || $currentUser->user_type === 'particulier');
                             $hasProSpace = $currentUser->hasCompletedProOnboarding() || $currentUser->user_type === 'professionnel' || $currentUser->isProfessionnel();
+                            $showProviderHeaderAction = !$hasProSpace && ($isOAuthWithoutProfile || $isRegularParticulier || $isActiveParticulierProvider);
+                            $unreadCount = Auth::user()->unreadMessagesCount();
                         @endphp
-                        @if($hasProSpace)
-                            <div class="mobile-header-item">
-                                <a href="{{ route('pro.dashboard') }}" class="btn-provider-badge header-mobile-action" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none;" title="Espace Pro">
-                                    <i class="fas fa-briefcase"></i>
-                                    <span class="d-none d-sm-inline">Espace Pro</span>
-                                </a>
-                                <span class="mobile-header-label d-sm-none">Pro</span>
-                            </div>
-                        @elseif($isOAuthWithoutProfile)
+                        @if($isOAuthWithoutProfile)
                             <div class="mobile-header-item">
                                 <button type="button" class="btn-become-provider header-mobile-action" data-bs-toggle="modal" data-bs-target="#becomeProviderOAuthModal">
                                     <i class="fas fa-rocket"></i>
@@ -6580,22 +6599,12 @@
                         @endif
 
                         <!-- Séparateur -->
-                        <div class="header-separator d-none d-md-block"></div>
+                        @if($showProviderHeaderAction)
+                            <div class="header-separator d-none d-md-block"></div>
+                        @endif
 
-                        <!-- Groupe icônes : Messages, Points, Alertes boost, Notifications -->
+                        <!-- Groupe icônes : Alertes boost, Notifications -->
                         <div class="d-flex align-items-center gap-2">
-                            <!-- Messages -->
-                            <a href="{{ route('messages.index') }}" class="nav-messages-btn position-relative d-none d-md-flex" title="Messages">
-                                <i class="fas fa-envelope"></i>
-                                <span class="d-none d-md-inline">Messages</span>
-                                @php
-                                    $unreadCount = Auth::user()->unreadMessagesCount();
-                                @endphp
-                                @if($unreadCount > 0)
-                                    <span class="messages-counter">{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>
-                                @endif
-                            </a>
-
                             <!-- Boost Expiration Alerts -->
                             @php
                                 $boostAlerts = \App\Http\Controllers\BoostController::getExpiringAlerts(Auth::user());
@@ -6804,7 +6813,6 @@
                             </ul>
                             <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
                         </div>
-                    </div>
                     </div>
                     @endif
                     @endauth
@@ -9853,6 +9861,3 @@
     @endauth
 </body>
 </html>
-
-
-
