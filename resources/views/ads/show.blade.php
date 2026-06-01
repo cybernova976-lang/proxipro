@@ -367,7 +367,7 @@
                                     @elseif($restriction === 'verified_only')
                                         <div class="mt-2">
                                             <a href="{{ route('verification.index') }}" class="btn btn-sm btn-success" style="font-size: 0.8rem;">
-                                                <i class="fas fa-shield-alt me-1"></i>Vérifier mon profil
+                                                <i class="fas fa-shield-alt me-1"></i><span translate="no">Vérifier mon profil</span>
                                             </a>
                                         </div>
                                     @endif

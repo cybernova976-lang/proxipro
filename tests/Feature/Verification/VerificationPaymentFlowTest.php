@@ -115,8 +115,12 @@ class VerificationPaymentFlowTest extends TestCase
 
         $profilePage
             ->assertOk()
+            ->assertSee('Devenir prestataire')
+            ->assertSeeInOrder(['Devenir prestataire', 'Modifier mon profil'])
             ->assertDontSee('Profil non vérifié')
             ->assertSee('Vérifier mon profil')
+            ->assertDontSee('Prestataire de devenir')
+            ->assertDontSee('profil de vérification mon')
             ->assertSee('Electricien');
 
         $this->assertSame(1, substr_count($profilePage->getContent(), 'Plombier'));

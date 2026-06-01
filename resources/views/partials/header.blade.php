@@ -45,34 +45,6 @@
 
             <!-- Actions droite -->
             <div class="d-flex align-items-center gap-2">
-                <!-- Bouton Devenir Prestataire -->
-                @php
-                    $user = Auth::user();
-                    $isOAuthWithoutProfile = $user->isOAuthUser() && !$user->profile_completed && !$user->is_service_provider;
-                    $isRegularParticulier = !$user->isOAuthUser() && $user->user_type === 'particulier' && !$user->is_service_provider;
-                    $isActiveProvider = $user->is_service_provider;
-                @endphp
-                
-                {{-- Utilisateur OAuth sans profil complété : Modal spécial --}}
-                @if($isOAuthWithoutProfile)
-                <button type="button" class="btn-become-provider d-none d-md-flex" data-bs-toggle="modal" data-bs-target="#becomeProviderOAuthModal">
-                    <i class="fas fa-rocket"></i>
-                    <span>Devenir prestataire</span>
-                </button>
-                {{-- Particulier classique (inscription normale) sans statut prestataire --}}
-                @elseif($isRegularParticulier)
-                <button type="button" class="btn-become-provider d-none d-md-flex" data-bs-toggle="modal" data-bs-target="#becomeProviderModal">
-                    <i class="fas fa-user-plus"></i>
-                    <span>Devenir prestataire</span>
-                </button>
-                {{-- Prestataire actif (particulier) : gérer ses services --}}
-                @elseif($isActiveProvider && $user->user_type === 'particulier')
-                <button type="button" class="btn-provider-badge d-none d-md-flex" data-bs-toggle="modal" data-bs-target="#becomeProviderModal" title="Gérer mes services">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Prestataire</span>
-                </button>
-                @endif
-
                 <!-- Messages -->
                 <a href="{{ route('messages.index') }}" class="nav-messages-btn position-relative" title="Messages">
                     <i class="fas fa-envelope"></i>

@@ -21,6 +21,29 @@
         })
         ->unique()
         ->values();
+    $providerAction = null;
+    if ($user->isOAuthUser() && !$user->profile_completed && !$user->is_service_provider) {
+        $providerAction = [
+            'target' => '#becomeProviderOAuthModal',
+            'icon' => 'fas fa-rocket',
+            'label' => 'Devenir prestataire',
+            'class' => 'btn-success',
+        ];
+    } elseif (!$user->isOAuthUser() && (!$user->user_type || $user->user_type === 'particulier') && !$user->is_service_provider) {
+        $providerAction = [
+            'target' => '#becomeProviderModal',
+            'icon' => 'fas fa-user-plus',
+            'label' => 'Devenir prestataire',
+            'class' => 'btn-success',
+        ];
+    } elseif ($user->is_service_provider && (!$user->user_type || $user->user_type === 'particulier')) {
+        $providerAction = [
+            'target' => '#becomeProviderModal',
+            'icon' => 'fas fa-check-circle',
+            'label' => 'Gérer mes services',
+            'class' => 'btn-outline-success',
+        ];
+    }
 @endphp
 <div class="container py-4">
     @if(session('success'))
@@ -103,7 +126,7 @@
                             </span>
                         @else
                             <a href="{{ route('verification.index') }}" class="btn btn-sm btn-outline-success rounded-pill px-3 py-2">
-                                <i class="fas fa-shield-alt me-1"></i>Vérifier mon profil
+                                <i class="fas fa-shield-alt me-1"></i><span translate="no">Vérifier mon profil</span>
                             </a>
                         @endif
                     </div>
@@ -142,8 +165,13 @@
                     
                     <!-- Actions -->
                     <div class="d-grid gap-2">
+                        @if($providerAction)
+                            <button type="button" class="btn {{ $providerAction['class'] }}" data-bs-toggle="modal" data-bs-target="{{ $providerAction['target'] }}">
+                                <i class="{{ $providerAction['icon'] }} me-2"></i><span translate="no">{{ $providerAction['label'] }}</span>
+                            </button>
+                        @endif
                         <a href="{{ route('profile.edit') }}" class="btn btn-primary">
-                            <i class="fas fa-edit me-2"></i>Modifier le profil
+                            <i class="fas fa-edit me-2"></i>Modifier mon profil
                         </a>
                         <a href="{{ route('settings.index') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-cog me-2"></i>Paramètres

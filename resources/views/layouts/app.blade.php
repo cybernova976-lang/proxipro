@@ -6562,46 +6562,9 @@
                     <!-- Actions utilisateur -->
                     <div class="header-actions-area d-flex align-items-center gap-3 mobile-actions-group">
 
-                        <!-- Bouton Devenir Prestataire / Espace Pro -->
                         @php
-                            $currentUser = Auth::user();
-                            $isOAuthWithoutProfile = $currentUser->isOAuthUser() && !$currentUser->profile_completed && !$currentUser->is_service_provider;
-                            $isRegularParticulier = !$currentUser->isOAuthUser() && (!$currentUser->user_type || $currentUser->user_type === 'particulier') && !$currentUser->is_service_provider;
-                            $isActiveParticulierProvider = $currentUser->is_service_provider && (!$currentUser->user_type || $currentUser->user_type === 'particulier');
-                            $hasProSpace = $currentUser->hasCompletedProOnboarding() || $currentUser->user_type === 'professionnel' || $currentUser->isProfessionnel();
-                            $showProviderHeaderAction = !$hasProSpace && ($isOAuthWithoutProfile || $isRegularParticulier || $isActiveParticulierProvider);
                             $unreadCount = Auth::user()->unreadMessagesCount();
                         @endphp
-                        @if($isOAuthWithoutProfile)
-                            <div class="mobile-header-item">
-                                <button type="button" class="btn-become-provider header-mobile-action" data-bs-toggle="modal" data-bs-target="#becomeProviderOAuthModal">
-                                    <i class="fas fa-rocket"></i>
-                                    <span class="d-none d-sm-inline">Devenir prestataire</span>
-                                </button>
-                                <span class="mobile-header-label d-sm-none">Pro</span>
-                            </div>
-                        @elseif($isRegularParticulier)
-                            <div class="mobile-header-item">
-                                <button type="button" class="btn-become-provider header-mobile-action" data-bs-toggle="modal" data-bs-target="#becomeProviderModal">
-                                    <i class="fas fa-user-plus"></i>
-                                    <span class="d-none d-sm-inline">Devenir prestataire</span>
-                                </button>
-                                <span class="mobile-header-label d-sm-none">Pro</span>
-                            </div>
-                        @elseif($isActiveParticulierProvider)
-                            <div class="mobile-header-item">
-                                <button type="button" class="btn-provider-badge header-mobile-action" data-bs-toggle="modal" data-bs-target="#becomeProviderModal" title="Gérer mes services">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span class="d-none d-sm-inline">Prestataire</span>
-                                </button>
-                                <span class="mobile-header-label d-sm-none">Pro</span>
-                            </div>
-                        @endif
-
-                        <!-- Séparateur -->
-                        @if($showProviderHeaderAction)
-                            <div class="header-separator d-none d-md-block"></div>
-                        @endif
 
                         <!-- Groupe icônes : Alertes boost, Notifications -->
                         <div class="d-flex align-items-center gap-2">

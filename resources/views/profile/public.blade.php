@@ -35,6 +35,31 @@
     $normalizedProfession = mb_strtolower(trim((string) $displayProfession));
     $normalizedCategory = mb_strtolower($serviceCategory);
     $showServiceCategory = $serviceCategory !== '' && $normalizedCategory !== $normalizedProfession;
+    $providerAction = null;
+    if ($isOwnProfile) {
+        if ($user->isOAuthUser() && !$user->profile_completed && !$user->is_service_provider) {
+            $providerAction = [
+                'target' => '#becomeProviderOAuthModal',
+                'icon' => 'fas fa-rocket',
+                'label' => 'Devenir prestataire',
+                'class' => 'btn-success',
+            ];
+        } elseif (!$user->isOAuthUser() && (!$user->user_type || $user->user_type === 'particulier') && !$user->is_service_provider) {
+            $providerAction = [
+                'target' => '#becomeProviderModal',
+                'icon' => 'fas fa-user-plus',
+                'label' => 'Devenir prestataire',
+                'class' => 'btn-success',
+            ];
+        } elseif ($user->is_service_provider && (!$user->user_type || $user->user_type === 'particulier')) {
+            $providerAction = [
+                'target' => '#becomeProviderModal',
+                'icon' => 'fas fa-check-circle',
+                'label' => 'Gérer mes services',
+                'class' => 'btn-outline-success',
+            ];
+        }
+    }
 @endphp
 <div class="container py-4">
     <div class="row">
@@ -96,7 +121,7 @@
                             </span>
                         @elseif($isOwnProfile)
                             <a href="{{ route('verification.index') }}" class="btn btn-sm btn-outline-success rounded-pill px-3 py-2">
-                                <i class="fas fa-shield-alt me-1"></i>Vérifier mon profil
+                                <i class="fas fa-shield-alt me-1"></i><span translate="no">Vérifier mon profil</span>
                             </a>
                         @else
                             <span class="badge bg-secondary px-3 py-2" style="opacity: 0.85;">
@@ -206,8 +231,13 @@
                                     </button>
                                 </form>
                             @else
+                                @if($providerAction)
+                                    <button type="button" class="btn {{ $providerAction['class'] }} w-100 mb-2" data-bs-toggle="modal" data-bs-target="{{ $providerAction['target'] }}">
+                                        <i class="{{ $providerAction['icon'] }} me-2"></i><span translate="no">{{ $providerAction['label'] }}</span>
+                                    </button>
+                                @endif
                                 <button type="button" class="btn btn-outline-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                                    <i class="fas fa-pen me-2"></i>Modifier le profil
+                                    <i class="fas fa-pen me-2"></i>Modifier mon profil
                                 </button>
                                 <button type="button" class="btn btn-outline-success w-100" data-bs-toggle="modal" data-bs-target="#editCategoriesModal">
                                     <i class="fas fa-th-large me-2"></i>Gérer mes catégories

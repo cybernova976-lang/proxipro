@@ -76,7 +76,7 @@
                             </span>
                         @else
                             <a href="{{ route('verification.index') }}" class="badge bg-secondary px-3 py-2 text-decoration-none">
-                                <i class="fas fa-shield-alt me-1"></i>Vérifier mon profil
+                                <i class="fas fa-shield-alt me-1"></i><span translate="no">Vérifier mon profil</span>
                             </a>
                         @endif
                     </div>
