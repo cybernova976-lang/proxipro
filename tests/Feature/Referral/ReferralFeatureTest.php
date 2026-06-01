@@ -80,4 +80,18 @@ class ReferralFeatureTest extends TestCase
         $response->assertSee('name="referral_code"', false);
         $response->assertSee('value="ABCD1234"', false);
     }
+
+    public function test_register_page_uses_shared_location_selects(): void
+    {
+        $response = $this->get(route('register'));
+
+        $response->assertOk();
+        $response->assertSee('name="country"', false);
+        $response->assertSee('name="city"', false);
+        $response->assertSee('Guadeloupe', false);
+        $response->assertSee('Bulgarie', false);
+        $response->assertSee('Bénin', false);
+        $response->assertSee('registerCitiesByCountry', false);
+        $response->assertSee('Mamoudzou', false);
+    }
 }

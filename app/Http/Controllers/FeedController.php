@@ -23,14 +23,14 @@ class FeedController extends Controller
         $user = Auth::user();
         
         // ===== GÉOLOCALISATION AUTOMATIQUE =====
-        $userGeo = $request->attributes->get('user_geo') ?? [];
-        $userLat = $userGeo['latitude'] ?? null;
-        $userLng = $userGeo['longitude'] ?? null;
-        $userRadius = (int) ($request->get('radius') ?? $user->geo_radius ?? 50);
-        $geoCity = $userGeo['city'] ?? $user->getDisplayCity() ?? null;
-        $geoCountry = $userGeo['country'] ?? $user->getDisplayCountry() ?? null;
+        $geoContext = $this->resolveFeedGeoContext($request, $user);
+        $userLat = $geoContext['latitude'];
+        $userLng = $geoContext['longitude'];
+        $userRadius = (int) ($request->get('radius') ?? $user?->geo_radius ?? 50);
+        $geoCity = $geoContext['city'];
+        $geoCountry = $geoContext['country'];
         $geoEnabled = ($userLat !== null && $userLng !== null) || $geoCity || $geoCountry;
-        $geoSource = $userGeo['source'] ?? 'unknown';
+        $geoSource = $geoContext['source'];
         $feedScope = $request->get('scope', 'all');
         if (!in_array($feedScope, ['nearby', 'all'], true)) {
             $feedScope = 'all';
@@ -52,7 +52,8 @@ class FeedController extends Controller
             ->with('user');
         if ($useNearbyScope) {
             $this->applyAdGeoScope($proOffersQuery, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null, $userRadius, $geoCity, $geoCountry);
-            $proOffersQuery->orderByRaw('CASE WHEN distance IS NULL THEN 1 ELSE 0 END')->orderBy('distance')->orderBy('created_at', 'desc');
+            $this->orderByGeoDistance($proOffersQuery, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null);
+            $proOffersQuery->orderBy('created_at', 'desc');
         } else {
             $proOffersQuery->orderBy('is_pinned', 'desc')->orderBy('created_at', 'desc');
         }
@@ -64,7 +65,8 @@ class FeedController extends Controller
             ->with('user');
         if ($useNearbyScope) {
             $this->applyAdGeoScope($clientRequestsQuery, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null, $userRadius, $geoCity, $geoCountry);
-            $clientRequestsQuery->orderByRaw('CASE WHEN distance IS NULL THEN 1 ELSE 0 END')->orderBy('distance')->orderBy('created_at', 'desc');
+            $this->orderByGeoDistance($clientRequestsQuery, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null);
+            $clientRequestsQuery->orderBy('created_at', 'desc');
         } else {
             $clientRequestsQuery->orderBy('created_at', 'desc');
         }
@@ -80,7 +82,7 @@ class FeedController extends Controller
 
         // ===== SECTION "LES DERNIÈRES PÉPITES" - filtrée par proximité =====
         $allAdsQuery = $this->buildMainFeedAdsQuery($user, $filterType, $useNearbyScope, $userLat, $userLng, $userRadius, $geoCity, $geoCountry);
-        $this->orderMainFeedAds($allAdsQuery, $useNearbyScope);
+        $this->orderMainFeedAds($allAdsQuery, $useNearbyScope, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null);
         $feedMapQuery = clone $allAdsQuery;
         $ads = $allAdsQuery->paginate(12)->withQueryString();
         
@@ -112,7 +114,7 @@ class FeedController extends Controller
         } elseif ($useNearbyScope && $ads->total() < 3 && $userRadius < 200) {
             $expandedRadius = min($userRadius * 3, 500);
             $expandedQuery = $this->buildMainFeedAdsQuery($user, $filterType, true, $userLat, $userLng, $expandedRadius, $geoCity, $geoCountry);
-            $this->orderMainFeedAds($expandedQuery, true);
+            $this->orderMainFeedAds($expandedQuery, true, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null);
             $expandedMapQuery = clone $expandedQuery;
             $adsExp = $expandedQuery->paginate(12)->withQueryString();
             if ($adsExp->total() > $ads->total()) {
@@ -162,7 +164,7 @@ class FeedController extends Controller
                     $this->applyAdGeoScope($query, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null, $userRadius, $geoCity, $geoCountry);
                 }
 
-                $this->orderMainFeedAds($query, $nearby);
+                $this->orderMainFeedAds($query, $nearby, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null);
 
                 return $query;
             };
@@ -578,6 +580,25 @@ class FeedController extends Controller
         });
     }
 
+    private function resolveFeedGeoContext(Request $request, $user): array
+    {
+        $userGeo = $request->attributes->get('user_geo') ?? [];
+        $hasProfileCoordinates = $user && method_exists($user, 'hasGeoLocation') && $user->hasGeoLocation();
+
+        $profileCity = trim((string) ($user?->city ?? ''));
+        $profileCountry = trim((string) ($user?->country ?? ''));
+        $detectedCity = trim((string) ($user?->detected_city ?? ''));
+        $detectedCountry = trim((string) ($user?->detected_country ?? ''));
+
+        return [
+            'latitude' => $hasProfileCoordinates ? $user->latitude : ($userGeo['latitude'] ?? null),
+            'longitude' => $hasProfileCoordinates ? $user->longitude : ($userGeo['longitude'] ?? null),
+            'city' => $profileCity !== '' ? $profileCity : ($detectedCity !== '' ? $detectedCity : ($userGeo['city'] ?? null)),
+            'country' => $profileCountry !== '' ? $profileCountry : ($detectedCountry !== '' ? $detectedCountry : ($userGeo['country'] ?? null)),
+            'source' => $hasProfileCoordinates ? 'profile' : ($userGeo['source'] ?? 'unknown'),
+        ];
+    }
+
     private function geoTextNeedles(?string $value): array
     {
         $normalized = mb_strtolower(trim((string) $value));
@@ -599,7 +620,7 @@ class FeedController extends Controller
             ->all();
     }
 
-    private function orderMainFeedAds($query, bool $geoApplied): void
+    private function orderMainFeedAds($query, bool $geoApplied, ?float $lat = null, ?float $lng = null): void
     {
         $query->orderByRaw(
             "CASE WHEN (is_boosted = true AND boost_end > ?) OR (is_urgent = true AND (urgent_until IS NULL OR urgent_until > ?)) THEN 0 ELSE 1 END",
@@ -607,12 +628,25 @@ class FeedController extends Controller
         );
 
         if ($geoApplied) {
-            $query->orderByRaw('CASE WHEN distance IS NULL THEN 1 ELSE 0 END')
-                ->orderBy('distance');
+            $this->orderByGeoDistance($query, $lat, $lng);
         }
 
         $query->orderBy('is_pinned', 'desc')
             ->orderBy('created_at', 'desc');
+    }
+
+    private function orderByGeoDistance($query, ?float $lat, ?float $lng): void
+    {
+        if ($lat === null || $lng === null) {
+            return;
+        }
+
+        $distanceSql = $this->geoDistanceSql();
+
+        $query->orderByRaw(
+            "CASE WHEN ({$distanceSql}) IS NULL THEN 1 ELSE 0 END",
+            [$lat, $lng, $lat]
+        )->orderBy('distance');
     }
 
     private function geoDistanceSql(): string
@@ -737,7 +771,7 @@ class FeedController extends Controller
                 [now()]
             )
             ->orderByRaw("CASE WHEN boost_type = 'vip' THEN 0 WHEN boost_type = 'premium' THEN 1 ELSE 2 END")
-            ->when($geoScoped, fn($q) => $q->orderByRaw('CASE WHEN distance IS NULL THEN 1 ELSE 0 END')->orderBy('distance'))
+            ->when($geoScoped && $userLat !== null && $userLng !== null, fn($q) => $this->orderByGeoDistance($q, (float) $userLat, (float) $userLng))
             ->orderBy('is_pinned', 'desc')
             ->orderBy('created_at', 'desc')
             ->take($limit)
@@ -1469,19 +1503,19 @@ class FeedController extends Controller
         $userLng = $request->get('lng');
         $missionCategories = $this->getHomeMegaCategories();
 
-        // Récupérer la géolocalisation depuis le middleware ou les paramètres
-        $userGeo = $request->attributes->get('user_geo');
-        if (!$userLat && $userGeo) {
-            $userLat = $userGeo['latitude'] ?? null;
-            $userLng = $userGeo['longitude'] ?? null;
+        // Récupérer la géolocalisation depuis le profil, le middleware ou les paramètres
+        $user = Auth::user();
+        $geoContext = $this->resolveFeedGeoContext($request, $user);
+        if (!$userLat) {
+            $userLat = $geoContext['latitude'];
+            $userLng = $geoContext['longitude'];
         }
         if (!$radius && Auth::check()) {
             $radius = Auth::user()->geo_radius ?? 50;
         }
         $radius = (int) ($radius ?: 50);
-        $user = Auth::user();
-        $geoCity = $userGeo['city'] ?? $user?->getDisplayCity() ?? null;
-        $geoCountry = $userGeo['country'] ?? $user?->getDisplayCountry() ?? null;
+        $geoCity = $geoContext['city'];
+        $geoCountry = $geoContext['country'];
 
         $scope = $request->get('scope', 'all');
         if (!in_array($scope, ['nearby', 'all'], true)) {
@@ -1571,8 +1605,7 @@ class FeedController extends Controller
             [now(), now()]
         );
         if ($geoApplied) {
-            $query->orderByRaw('CASE WHEN distance IS NULL THEN 1 ELSE 0 END')
-                ->orderBy('distance');
+            $this->orderByGeoDistance($query, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null);
         }
         switch ($sort) {
             case 'urgent':

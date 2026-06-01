@@ -90,6 +90,10 @@ class RegisterController extends Controller
             }
         }
 
+        if ($request->input('city') === '__other__' && $request->filled('city_manual')) {
+            $request->merge(['city' => trim((string) $request->input('city_manual'))]);
+        }
+
         // Proceed with normal registration (from RegistersUsers trait)
         $this->validator($request->all())->validate();
         
@@ -185,8 +189,9 @@ class RegisterController extends Controller
         $rules = [
             'email' => ['required', 'string', 'email:rfc,dns', 'max:255', Rule::unique('users', 'email')->whereNull('deleted_at')],
             'referral_code' => ['nullable', 'string', 'max:20', Rule::exists('users', 'referral_code')],
-            'country' => ['required', 'string', 'max:100'],
-            'city' => ['required', 'string', 'max:100'],
+            'country' => ['required', 'string', 'max:100', Rule::in(array_keys(config('locations.countries', [])))],
+            'city' => ['required', 'string', 'max:100', Rule::notIn(['__other__'])],
+            'city_manual' => ['nullable', 'string', 'max:100'],
             'password' => [
                 'required',
                 'string',
@@ -259,7 +264,9 @@ class RegisterController extends Controller
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
             'referral_code.exists' => 'Code de parrainage invalide.',
             'country.required' => 'Le pays est obligatoire pour afficher les offres proches de vous.',
+            'country.in' => 'Veuillez choisir un pays ou département dans la liste proposée.',
             'city.required' => 'La ville est obligatoire pour afficher les offres proches de vous.',
+            'city.not_in' => 'Veuillez sélectionner une ville ou saisir votre ville.',
             'password.required' => 'Le mot de passe est obligatoire.',
             'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
             'password.max' => 'Le mot de passe ne peut pas dépasser 40 caractères.',

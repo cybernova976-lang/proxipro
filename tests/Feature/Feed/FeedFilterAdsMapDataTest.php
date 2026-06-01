@@ -142,6 +142,56 @@ class FeedFilterAdsMapDataTest extends TestCase
         $response->assertJsonMissing(['title' => 'Annonce autre ville']);
     }
 
+    public function test_filter_ads_nearby_scope_prefers_profile_city_over_detected_city(): void
+    {
+        $viewer = User::factory()->create([
+            'city' => 'Mamoudzou',
+            'country' => 'Mayotte',
+            'detected_city' => 'Paris',
+            'detected_country' => 'France',
+        ]);
+        $author = User::factory()->create([
+            'plan' => 'pro',
+        ]);
+
+        $localAd = Ad::create([
+            'title' => 'Annonce Mamoudzou profil',
+            'description' => 'Visible grace a la ville saisie dans le profil',
+            'category' => 'Plomberie',
+            'location' => 'Mamoudzou',
+            'price' => 80,
+            'service_type' => 'offre',
+            'status' => 'active',
+            'visibility' => 'public',
+            'user_id' => $author->id,
+            'country' => 'Mayotte',
+        ]);
+
+        Ad::create([
+            'title' => 'Annonce detectee Paris',
+            'description' => 'Ne doit pas remplacer la ville du profil',
+            'category' => 'Electricite',
+            'location' => 'Paris',
+            'price' => 200,
+            'service_type' => 'offre',
+            'status' => 'active',
+            'visibility' => 'public',
+            'user_id' => $author->id,
+            'country' => 'France',
+        ]);
+
+        $response = $this->withoutMiddleware()->actingAs($viewer)->get(route('feed.filter-ads', [
+            'format' => 'json',
+            'scope' => 'nearby',
+        ]));
+
+        $response->assertOk();
+        $response->assertJsonPath('geo_applied', true);
+        $response->assertJsonPath('geo_fallback_used', false);
+        $response->assertJsonPath('ads.0.id', $localAd->id);
+        $response->assertJsonMissing(['title' => 'Annonce detectee Paris']);
+    }
+
     public function test_filter_ads_nearby_scope_matches_city_column_case_insensitively(): void
     {
         $viewer = User::factory()->create([

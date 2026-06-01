@@ -1088,19 +1088,9 @@
                     <label for="country" class="form-label">Pays / Département <span class="text-danger">*</span></label>
                     <select class="form-select @error('country') is-invalid @enderror" id="country" name="country" required>
                         <option value="">-- Sélectionner un pays / département --</option>
-                        <option value="France" {{ old('country') == 'France' ? 'selected' : '' }}>🇫🇷 France</option>
-                        <option value="Mayotte" {{ old('country') == 'Mayotte' ? 'selected' : '' }}>🇾🇹 Mayotte</option>
-                        <option value="Madagascar" {{ old('country') == 'Madagascar' ? 'selected' : '' }}>🇲🇬 Madagascar</option>
-                        <option value="La Réunion" {{ old('country') == 'La Réunion' ? 'selected' : '' }}>🇷🇪 La Réunion</option>
-                        <option value="Maurice" {{ old('country') == 'Maurice' ? 'selected' : '' }}>🇲🇺 Maurice</option>
-                        <option value="Belgique" {{ old('country') == 'Belgique' ? 'selected' : '' }}>🇧🇪 Belgique</option>
-                        <option value="Suisse" {{ old('country') == 'Suisse' ? 'selected' : '' }}>🇨🇭 Suisse</option>
-                        <option value="Canada" {{ old('country') == 'Canada' ? 'selected' : '' }}>🇨🇦 Canada</option>
-                        <option value="Sénégal" {{ old('country') == 'Sénégal' ? 'selected' : '' }}>🇸🇳 Sénégal</option>
-                        <option value="Côte d'Ivoire" {{ old('country') == "Côte d'Ivoire" ? 'selected' : '' }}>🇨🇮 Côte d'Ivoire</option>
-                        <option value="Maroc" {{ old('country') == 'Maroc' ? 'selected' : '' }}>🇲🇦 Maroc</option>
-                        <option value="Tunisie" {{ old('country') == 'Tunisie' ? 'selected' : '' }}>🇹🇳 Tunisie</option>
-                        <option value="Algérie" {{ old('country') == 'Algérie' ? 'selected' : '' }}>🇩🇿 Algérie</option>
+                        @foreach(config('locations.countries', []) as $countryName => $flag)
+                            <option value="{{ $countryName }}" {{ old('country') == $countryName ? 'selected' : '' }}>{{ $flag }} {{ $countryName }}</option>
+                        @endforeach
                     </select>
                     @error('country')
                         <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -1654,26 +1644,14 @@
     });
 
     // ===== CITIES DATA BY COUNTRY =====
-    const citiesByCountry = {
-        "France": ["Paris", "Marseille", "Lyon", "Toulouse", "Nice", "Nantes", "Strasbourg", "Montpellier", "Bordeaux", "Lille", "Rennes", "Reims", "Le Havre", "Saint-Étienne", "Toulon", "Grenoble", "Dijon", "Angers", "Nîmes", "Villeurbanne", "Clermont-Ferrand", "Le Mans", "Aix-en-Provence", "Brest", "Tours", "Amiens", "Limoges", "Perpignan", "Metz", "Besançon", "Orléans", "Rouen", "Mulhouse", "Caen", "Nancy", "Argenteuil", "Saint-Denis", "Montreuil", "Roubaix", "Avignon"],
-        "Mayotte": ["Mamoudzou", "Koungou", "Dzaoudzi", "Dembeni", "Bandraboua", "Tsingoni", "Sada", "Ouangani", "Chiconi", "Pamandzi", "Mtsamboro", "Acoua", "Chirongui", "Bouéni", "Kani-Kéli", "Bandrélé", "M'Tsangamouji"],
-        "Madagascar": ["Antananarivo", "Toamasina", "Antsirabe", "Fianarantsoa", "Mahajanga", "Toliara", "Antsiranana", "Ambatondrazaka", "Antalaha", "Nosy Be", "Sainte-Marie", "Morondava", "Ambositra", "Mananjary", "Sambava"],
-        "La Réunion": ["Saint-Denis", "Saint-Paul", "Saint-Pierre", "Le Tampon", "Saint-André", "Saint-Louis", "Saint-Benoît", "Le Port", "Saint-Joseph", "Sainte-Marie", "Sainte-Suzanne", "Saint-Leu", "La Possession", "Bras-Panon", "Cilaos", "Salazie"],
-        "Maurice": ["Port-Louis", "Beau Bassin-Rose Hill", "Vacoas-Phoenix", "Curepipe", "Quatre Bornes", "Triolet", "Goodlands", "Centre de Flacq", "Mahébourg", "Grand Baie", "Flic en Flac", "Tamarin"],
-        "Belgique": ["Bruxelles", "Anvers", "Gand", "Charleroi", "Liège", "Bruges", "Namur", "Louvain", "Mons", "Alost", "Malines", "La Louvière", "Courtrai", "Ostende", "Hasselt", "Tournai", "Genk", "Seraing", "Verviers", "Mouscron"],
-        "Suisse": ["Zurich", "Genève", "Bâle", "Lausanne", "Berne", "Winterthour", "Lucerne", "Saint-Gall", "Lugano", "Bienne", "Thoune", "Köniz", "Fribourg", "Schaffhouse", "Neuchâtel", "Sion"],
-        "Canada": ["Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton", "Ottawa", "Winnipeg", "Québec", "Hamilton", "Kitchener", "London", "Victoria", "Halifax", "Oshawa", "Windsor", "Saskatoon", "Regina", "Sherbrooke", "Laval", "Gatineau"],
-        "Sénégal": ["Dakar", "Thiès", "Rufisque", "Kaolack", "M'Bour", "Saint-Louis", "Ziguinchor", "Diourbel", "Louga", "Tambacounda", "Kolda", "Richard-Toll", "Tivaouane", "Touba", "Kédougou"],
-        "Côte d'Ivoire": ["Abidjan", "Bouaké", "Yamoussoukro", "Korhogo", "San-Pédro", "Man", "Divo", "Daloa", "Gagnoa", "Abengourou", "Anyama", "Agboville", "Dabou", "Grand-Bassam", "Bingerville"],
-        "Maroc": ["Casablanca", "Rabat", "Fès", "Marrakech", "Tanger", "Agadir", "Meknès", "Oujda", "Kénitra", "Tétouan", "Safi", "El Jadida", "Nador", "Béni Mellal", "Essaouira", "Ouarzazate"],
-        "Tunisie": ["Tunis", "Sfax", "Sousse", "Kairouan", "Bizerte", "Gabès", "Ariana", "Gafsa", "El Mourouj", "Kasserine", "Monastir", "La Marsa", "Hammamet", "Djerba", "Tozeur"],
-        "Algérie": ["Alger", "Oran", "Constantine", "Annaba", "Blida", "Batna", "Sétif", "Djelfa", "Sidi Bel Abbès", "Biskra", "Tébessa", "Skikda", "Tiaret", "Béjaïa", "Tlemcen", "Ouargla"]
-    };
+    const citiesByCountry = @json(config('locations.cities', []));
 
     // ===== COUNTRY/CITY SELECTION =====
     const countrySelect = document.getElementById('country');
     const citySelect = document.getElementById('city');
     const locationInput = document.getElementById('location');
+    const selectedCityFromOldInput = @json(old('city'));
+    const selectedManualLocationFromOldInput = @json(old('location'));
 
     countrySelect.addEventListener('change', function() {
         const country = this.value;
@@ -1714,6 +1692,29 @@
             locationInput.style.display = 'none';
             locationInput.value = '';
         }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!countrySelect.value) {
+            return;
+        }
+
+        countrySelect.dispatchEvent(new Event('change'));
+
+        const requestedCity = selectedCityFromOldInput || selectedManualLocationFromOldInput;
+        if (!requestedCity) {
+            return;
+        }
+
+        if (citiesByCountry[countrySelect.value]?.includes(requestedCity)) {
+            citySelect.value = requestedCity;
+            citySelect.dispatchEvent(new Event('change'));
+            return;
+        }
+
+        citySelect.value = '__other__';
+        citySelect.dispatchEvent(new Event('change'));
+        locationInput.value = requestedCity;
     });
 
     // ===== GEOLOCATION =====

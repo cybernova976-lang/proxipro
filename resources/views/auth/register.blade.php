@@ -231,33 +231,52 @@
 
                 </div>
 
+                @php
+                    $locationCountries = config('locations.countries', []);
+                    $locationCities = config('locations.cities', []);
+                    $selectedCountry = old('country', 'Mayotte');
+                    $selectedCity = old('city');
+                    $selectedCityIsListed = $selectedCountry && in_array($selectedCity, $locationCities[$selectedCountry] ?? [], true);
+                @endphp
+
                 <!-- Champs communs -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label for="country" class="block text-sm font-medium text-gray-700 mb-1.5">Pays *</label>
-                        <input
+                        <select
                             id="country"
                             name="country"
-                            type="text"
                             required
-                            placeholder="Mayotte"
-                            value="{{ old('country', 'Mayotte') }}"
-                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400 @error('country') border-red-400 @enderror"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white @error('country') border-red-400 @enderror"
                         >
+                            <option value="">-- Sélectionner un pays / département --</option>
+                            @foreach($locationCountries as $countryName => $flag)
+                                <option value="{{ $countryName }}" {{ $selectedCountry === $countryName ? 'selected' : '' }}>{{ $flag }} {{ $countryName }}</option>
+                            @endforeach
+                        </select>
                         @error('country')
                             <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
                         <label for="city" class="block text-sm font-medium text-gray-700 mb-1.5">Ville *</label>
-                        <input
+                        <select
                             id="city"
                             name="city"
-                            type="text"
                             required
-                            placeholder="Mamoudzou"
-                            value="{{ old('city') }}"
-                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400 @error('city') border-red-400 @enderror"
+                            data-selected-city="{{ $selectedCityIsListed ? $selectedCity : ($selectedCity ? '__other__' : '') }}"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white @error('city') border-red-400 @enderror"
+                        >
+                            <option value="">-- Sélectionnez d'abord un pays --</option>
+                        </select>
+                        <input
+                            id="city_manual"
+                            name="city_manual"
+                            type="text"
+                            placeholder="Saisir votre ville"
+                            value="{{ $selectedCity && !$selectedCityIsListed ? $selectedCity : old('city_manual') }}"
+                            class="mt-2 w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400"
+                            style="display: {{ $selectedCity && !$selectedCityIsListed ? 'block' : 'none' }};"
                         >
                         @error('city')
                             <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
@@ -372,7 +391,54 @@
 </div>
 
 <script>
+    const registerCitiesByCountry = @json($locationCities);
+
     let currentAccountType = 'particulier';
+
+    function populateRegisterCities() {
+        const countrySelect = document.getElementById('country');
+        const citySelect = document.getElementById('city');
+        const manualCityInput = document.getElementById('city_manual');
+        if (!countrySelect || !citySelect || !manualCityInput) return;
+
+        const selectedCountry = countrySelect.value;
+        const requestedCity = citySelect.dataset.selectedCity || '';
+        const cities = registerCitiesByCountry[selectedCountry] || [];
+
+        citySelect.innerHTML = '<option value="">-- Sélectionner une ville --</option>';
+        cities.forEach(city => {
+            const option = document.createElement('option');
+            option.value = city;
+            option.textContent = city;
+            citySelect.appendChild(option);
+        });
+
+        const otherOption = document.createElement('option');
+        otherOption.value = '__other__';
+        otherOption.textContent = 'Autre ville';
+        citySelect.appendChild(otherOption);
+
+        citySelect.disabled = cities.length === 0;
+        if (requestedCity) {
+            citySelect.value = requestedCity;
+        }
+
+        toggleManualCityInput();
+    }
+
+    function toggleManualCityInput() {
+        const citySelect = document.getElementById('city');
+        const manualCityInput = document.getElementById('city_manual');
+        if (!citySelect || !manualCityInput) return;
+
+        const needsManualCity = citySelect.value === '__other__';
+        manualCityInput.style.display = needsManualCity ? 'block' : 'none';
+        manualCityInput.required = needsManualCity;
+
+        if (!needsManualCity) {
+            manualCityInput.value = '';
+        }
+    }
 
     function setAccountType(type) {
         currentAccountType = type;
@@ -565,6 +631,22 @@
     document.addEventListener('DOMContentLoaded', function() {
         const oldAccountType = document.getElementById('account_type').value;
         const oldBusinessType = document.getElementById('business_type').value;
+        const countrySelect = document.getElementById('country');
+        const citySelect = document.getElementById('city');
+
+        populateRegisterCities();
+
+        countrySelect?.addEventListener('change', function() {
+            if (citySelect) {
+                citySelect.dataset.selectedCity = '';
+            }
+            populateRegisterCities();
+        });
+
+        citySelect?.addEventListener('change', function() {
+            this.dataset.selectedCity = this.value;
+            toggleManualCityInput();
+        });
 
         // Restore account type
         if (oldAccountType === 'professionnel') {

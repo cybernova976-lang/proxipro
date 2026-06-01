@@ -19,24 +19,7 @@ class BecomeProviderController extends Controller
      */
     private function getCountries(): array
     {
-        return [
-            'France' => '🇫🇷',
-            'Mayotte' => '🇾🇹',
-            'Madagascar' => '🇲🇬',
-            'La Réunion' => '🇷🇪',
-            'Maurice' => '🇲🇺',
-            'Belgique' => '🇧🇪',
-            'Suisse' => '🇨🇭',
-            'Canada' => '🇨🇦',
-            'Sénégal' => '🇸🇳',
-            'Côte d\'Ivoire' => '🇨🇮',
-            'Maroc' => '🇲🇦',
-            'Tunisie' => '🇹🇳',
-            'Algérie' => '🇩🇿',
-            'Cameroun' => '🇨🇲',
-            'Luxembourg' => '🇱🇺',
-            'Monaco' => '🇲🇨',
-        ];
+        return config('locations.countries', []);
     }
 
     /**
@@ -44,79 +27,7 @@ class BecomeProviderController extends Controller
      */
     private function getCitiesByCountry(): array
     {
-        return [
-            'France' => [
-                'Paris', 'Marseille', 'Lyon', 'Toulouse', 'Nice', 'Nantes', 'Strasbourg', 
-                'Montpellier', 'Bordeaux', 'Lille', 'Rennes', 'Reims', 'Saint-Étienne',
-                'Toulon', 'Le Havre', 'Grenoble', 'Dijon', 'Angers', 'Nîmes', 'Villeurbanne',
-                'Clermont-Ferrand', 'Le Mans', 'Aix-en-Provence', 'Brest', 'Tours', 'Amiens',
-                'Limoges', 'Perpignan', 'Metz', 'Besançon', 'Orléans', 'Rouen', 'Mulhouse',
-                'Caen', 'Nancy', 'Saint-Denis', 'Argenteuil', 'Roubaix', 'Tourcoing', 'Avignon'
-            ],
-            'Mayotte' => [
-                'Mamoudzou', 'Koungou', 'Dzaoudzi', 'Dembeni', 'Bandraboua', 'Tsingoni',
-                'Sada', 'Ouangani', 'Chiconi', 'Pamandzi', 'Mtsamboro', 'Acoua',
-                'Chirongui', 'Bouéni', 'Kani-Kéli', 'Bandrélé', 'M\'Tsangamouji'
-            ],
-            'La Réunion' => [
-                'Saint-Denis', 'Saint-Paul', 'Saint-Pierre', 'Le Tampon', 'Saint-André',
-                'Saint-Louis', 'Saint-Benoît', 'Le Port', 'Saint-Joseph', 'Sainte-Marie',
-                'Sainte-Suzanne', 'Saint-Leu', 'La Possession', 'Bras-Panon', 'Cilaos', 'Salazie'
-            ],
-            'Maurice' => [
-                'Port-Louis', 'Beau Bassin-Rose Hill', 'Vacoas-Phoenix', 'Curepipe',
-                'Quatre Bornes', 'Triolet', 'Goodlands', 'Centre de Flacq', 'Mahébourg',
-                'Grand Baie', 'Flic en Flac', 'Tamarin'
-            ],
-            'Belgique' => [
-                'Bruxelles', 'Anvers', 'Gand', 'Charleroi', 'Liège', 'Bruges', 'Namur',
-                'Louvain', 'Mons', 'Ostende', 'Tournai', 'Hasselt', 'Courtrai'
-            ],
-            'Suisse' => [
-                'Zurich', 'Genève', 'Bâle', 'Lausanne', 'Berne', 'Winterthour', 'Lucerne',
-                'Saint-Gall', 'Lugano', 'Bienne', 'Fribourg', 'Neuchâtel', 'Sion'
-            ],
-            'Canada' => [
-                'Montréal', 'Toronto', 'Vancouver', 'Calgary', 'Edmonton', 'Ottawa',
-                'Winnipeg', 'Québec', 'Hamilton', 'Kitchener', 'London', 'Victoria',
-                'Halifax', 'Gatineau', 'Saskatoon', 'Regina', 'Laval', 'Longueuil'
-            ],
-            'Maroc' => [
-                'Casablanca', 'Rabat', 'Fès', 'Marrakech', 'Tanger', 'Agadir', 'Meknès',
-                'Oujda', 'Kénitra', 'Tétouan', 'Safi', 'El Jadida', 'Nador', 'Mohammedia'
-            ],
-            'Algérie' => [
-                'Alger', 'Oran', 'Constantine', 'Annaba', 'Blida', 'Batna', 'Djelfa',
-                'Sétif', 'Sidi Bel Abbès', 'Biskra', 'Tébessa', 'El Oued', 'Skikda'
-            ],
-            'Tunisie' => [
-                'Tunis', 'Sfax', 'Sousse', 'Kairouan', 'Bizerte', 'Gabès', 'Ariana',
-                'Gafsa', 'Monastir', 'Ben Arous', 'Kasserine', 'Médenine', 'Nabeul'
-            ],
-            'Sénégal' => [
-                'Dakar', 'Thiès', 'Saint-Louis', 'Kaolack', 'Ziguinchor', 'Rufisque',
-                'Tambacounda', 'Louga', 'Diourbel', 'Kolda', 'Matam', 'Fatick'
-            ],
-            'Côte d\'Ivoire' => [
-                'Abidjan', 'Bouaké', 'Daloa', 'Yamoussoukro', 'Korhogo', 'San-Pédro',
-                'Divo', 'Man', 'Gagnoa', 'Abengourou', 'Anyama', 'Séguéla'
-            ],
-            'Cameroun' => [
-                'Douala', 'Yaoundé', 'Garoua', 'Bamenda', 'Maroua', 'Bafoussam',
-                'Ngaoundéré', 'Bertoua', 'Limbe', 'Kribi', 'Ebolowa', 'Buea'
-            ],
-            'Madagascar' => [
-                'Antananarivo', 'Toamasina', 'Antsirabe', 'Fianarantsoa', 'Mahajanga',
-                'Toliara', 'Antsiranana', 'Ambovombe', 'Moramanga', 'Manakara'
-            ],
-            'Luxembourg' => [
-                'Luxembourg', 'Esch-sur-Alzette', 'Differdange', 'Dudelange', 
-                'Ettelbruck', 'Diekirch', 'Wiltz', 'Echternach', 'Rumelange'
-            ],
-            'Monaco' => [
-                'Monaco', 'Monte-Carlo', 'La Condamine', 'Fontvieille', 'Moneghetti'
-            ],
-        ];
+        return config('locations.cities', []);
     }
 
     /**

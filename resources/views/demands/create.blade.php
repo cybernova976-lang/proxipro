@@ -361,19 +361,9 @@ body { background: #f0f2f5; }
                             <div>
                                 <select name="country" id="demandCountry" onchange="updateDemandCities()">
                                     <option value="">-- Pays --</option>
-                                    <option value="France" {{ (old('country') ?? Auth::user()->country ?? '') == 'France' ? 'selected' : '' }}>🇫🇷 France</option>
-                                    <option value="Mayotte" {{ (old('country') ?? Auth::user()->country ?? '') == 'Mayotte' ? 'selected' : '' }}>🇾🇹 Mayotte</option>
-                                    <option value="Madagascar" {{ (old('country') ?? Auth::user()->country ?? '') == 'Madagascar' ? 'selected' : '' }}>🇲🇬 Madagascar</option>
-                                    <option value="La Réunion" {{ (old('country') ?? Auth::user()->country ?? '') == 'La Réunion' ? 'selected' : '' }}>🇷🇪 La Réunion</option>
-                                    <option value="Maurice" {{ (old('country') ?? Auth::user()->country ?? '') == 'Maurice' ? 'selected' : '' }}>🇲🇺 Maurice</option>
-                                    <option value="Belgique" {{ (old('country') ?? Auth::user()->country ?? '') == 'Belgique' ? 'selected' : '' }}>🇧🇪 Belgique</option>
-                                    <option value="Suisse" {{ (old('country') ?? Auth::user()->country ?? '') == 'Suisse' ? 'selected' : '' }}>🇨🇭 Suisse</option>
-                                    <option value="Canada" {{ (old('country') ?? Auth::user()->country ?? '') == 'Canada' ? 'selected' : '' }}>🇨🇦 Canada</option>
-                                    <option value="Sénégal" {{ (old('country') ?? Auth::user()->country ?? '') == 'Sénégal' ? 'selected' : '' }}>🇸🇳 Sénégal</option>
-                                    <option value="Côte d'Ivoire" {{ (old('country') ?? Auth::user()->country ?? '') == "Côte d'Ivoire" ? 'selected' : '' }}>🇨🇮 Côte d'Ivoire</option>
-                                    <option value="Maroc" {{ (old('country') ?? Auth::user()->country ?? '') == 'Maroc' ? 'selected' : '' }}>🇲🇦 Maroc</option>
-                                    <option value="Tunisie" {{ (old('country') ?? Auth::user()->country ?? '') == 'Tunisie' ? 'selected' : '' }}>🇹🇳 Tunisie</option>
-                                    <option value="Algérie" {{ (old('country') ?? Auth::user()->country ?? '') == 'Algérie' ? 'selected' : '' }}>🇩🇿 Algérie</option>
+                                    @foreach(config('locations.countries', []) as $countryName => $flag)
+                                        <option value="{{ $countryName }}" {{ (old('country') ?? Auth::user()->country ?? '') == $countryName ? 'selected' : '' }}>{{ $flag }} {{ $countryName }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                             <div>
@@ -488,21 +478,7 @@ let selectedCat = null;
 let selectedSub = null;
 let demandPhotos = [];
 
-const citiesByCountry = {
-    "France": ["Paris","Marseille","Lyon","Toulouse","Nice","Nantes","Strasbourg","Montpellier","Bordeaux","Lille","Rennes","Reims","Le Havre","Grenoble","Dijon","Angers","Nîmes","Clermont-Ferrand"],
-    "Mayotte": ["Mamoudzou","Koungou","Dzaoudzi","Dembeni","Bandraboua","Tsingoni","Sada","Ouangani","Chiconi","Pamandzi","Mtsamboro","Acoua","Chirongui","Bouéni","Kani-Kéli","Bandrélé","M'Tsangamouji"],
-    "Madagascar": ["Antananarivo","Toamasina","Antsirabe","Fianarantsoa","Mahajanga","Toliara","Antsiranana","Nosy Be"],
-    "La Réunion": ["Saint-Denis","Saint-Paul","Saint-Pierre","Le Tampon","Saint-André","Saint-Louis","Saint-Benoît","Le Port"],
-    "Maurice": ["Port-Louis","Beau Bassin-Rose Hill","Vacoas-Phoenix","Curepipe","Quatre Bornes","Grand Baie"],
-    "Belgique": ["Bruxelles","Anvers","Gand","Charleroi","Liège","Bruges","Namur","Louvain","Mons"],
-    "Suisse": ["Zurich","Genève","Bâle","Lausanne","Berne","Lucerne","Fribourg","Neuchâtel"],
-    "Canada": ["Toronto","Montréal","Vancouver","Calgary","Edmonton","Ottawa","Québec"],
-    "Sénégal": ["Dakar","Thiès","Rufisque","Kaolack","Saint-Louis","Ziguinchor","Touba"],
-    "Côte d'Ivoire": ["Abidjan","Bouaké","Yamoussoukro","Korhogo","San-Pédro","Daloa"],
-    "Maroc": ["Casablanca","Rabat","Fès","Marrakech","Tanger","Agadir","Meknès"],
-    "Tunisie": ["Tunis","Sfax","Sousse","Kairouan","Bizerte","Gabès","Monastir"],
-    "Algérie": ["Alger","Oran","Constantine","Annaba","Blida","Batna","Sétif"]
-};
+const citiesByCountry = @json(config('locations.cities', []));
 
 // ─── Step navigation ───
 function updateStepUI() {

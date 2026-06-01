@@ -6962,32 +6962,9 @@
                     <label class="form-label small text-muted mb-1">Pays</label>
                     <select class="form-select form-select-sm mb-2" id="countrySelect" onchange="updateFilterCities()">
                         <option value="">-- Sélectionner un pays --</option>
-                        <optgroup label="France - Outre-mer">
-                            <option value="Mayotte">Mayotte</option>
-                            <option value="La Réunion">La Réunion</option>
-                            <option value="Guadeloupe">Guadeloupe</option>
-                            <option value="Martinique">Martinique</option>
-                            <option value="Guyane">Guyane</option>
-                        </optgroup>
-                        <optgroup label="Océan Indien">
-                            <option value="Madagascar">Madagascar</option>
-                            <option value="Maurice">Maurice</option>
-                        </optgroup>
-                        <optgroup label="Europe">
-                            <option value="France">France</option>
-                            <option value="Belgique">Belgique</option>
-                            <option value="Suisse">Suisse</option>
-                        </optgroup>
-                        <optgroup label="Afrique">
-                            <option value="Sénégal">Sénégal</option>
-                            <option value="Côte d'Ivoire">Côte d'Ivoire</option>
-                            <option value="Maroc">Maroc</option>
-                            <option value="Tunisie">Tunisie</option>
-                            <option value="Algérie">Algérie</option>
-                        </optgroup>
-                        <optgroup label="Amérique">
-                            <option value="Canada">Canada</option>
-                        </optgroup>
+                        @foreach(config('locations.countries', []) as $countryName => $flag)
+                            <option value="{{ $countryName }}">{{ $flag }} {{ $countryName }}</option>
+                        @endforeach
                     </select>
                     
                     <label class="form-label small text-muted mb-1">Ville</label>
@@ -9714,21 +9691,7 @@
     }
 
     // === STEP 3 : Formulaire complet de publication ===
-    const popupCitiesByCountry = {
-        "France": ["Paris", "Marseille", "Lyon", "Toulouse", "Nice", "Nantes", "Strasbourg", "Montpellier", "Bordeaux", "Lille", "Rennes", "Reims", "Le Havre", "Saint-Étienne", "Toulon", "Grenoble", "Dijon", "Angers", "Nîmes"],
-        "Mayotte": ["Mamoudzou", "Koungou", "Dzaoudzi", "Dembeni", "Bandraboua", "Tsingoni", "Sada", "Ouangani", "Chiconi", "Pamandzi", "Mtsamboro", "Acoua", "Chirongui", "Bouéni", "Kani-Kéli", "Bandrélé", "M'Tsangamouji"],
-        "Madagascar": ["Antananarivo", "Toamasina", "Antsirabe", "Fianarantsoa", "Mahajanga", "Toliara", "Antsiranana", "Ambatondrazaka", "Antalaha", "Nosy Be"],
-        "La Réunion": ["Saint-Denis", "Saint-Paul", "Saint-Pierre", "Le Tampon", "Saint-André", "Saint-Louis", "Saint-Benoît", "Le Port", "Saint-Joseph", "Sainte-Marie"],
-        "Maurice": ["Port-Louis", "Beau Bassin-Rose Hill", "Vacoas-Phoenix", "Curepipe", "Quatre Bornes", "Triolet", "Goodlands", "Centre de Flacq", "Mahébourg", "Grand Baie"],
-        "Belgique": ["Bruxelles", "Anvers", "Gand", "Charleroi", "Liège", "Bruges", "Namur", "Louvain", "Mons"],
-        "Suisse": ["Zurich", "Genève", "Bâle", "Lausanne", "Berne", "Lucerne", "Fribourg", "Neuchâtel", "Sion"],
-        "Canada": ["Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton", "Ottawa", "Winnipeg", "Québec"],
-        "Sénégal": ["Dakar", "Thiès", "Rufisque", "Kaolack", "M'Bour", "Saint-Louis", "Ziguinchor", "Touba"],
-        "Côte d'Ivoire": ["Abidjan", "Bouaké", "Yamoussoukro", "Korhogo", "San-Pédro", "Man", "Daloa"],
-        "Maroc": ["Casablanca", "Rabat", "Fès", "Marrakech", "Tanger", "Agadir", "Meknès", "Oujda"],
-        "Tunisie": ["Tunis", "Sfax", "Sousse", "Kairouan", "Bizerte", "Gabès", "Monastir"],
-        "Algérie": ["Alger", "Oran", "Constantine", "Annaba", "Blida", "Batna", "Sétif", "Djelfa"]
-    };
+    const popupCitiesByCountry = @json(config('locations.cities', []));
 
     let popupSelectedPhotos = [];
     const popupMaxPhotos = 2;
@@ -9801,19 +9764,9 @@
                     <div>
                         <select class="popup-form-select" id="popupCountry" onchange="updatePopupCities()">
                             <option value="">-- Pays --</option>
-                            <option value="France">🇫🇷 France</option>
-                            <option value="Mayotte">🇾🇹 Mayotte</option>
-                            <option value="Madagascar">🇲🇬 Madagascar</option>
-                            <option value="La Réunion">🇷🇪 La Réunion</option>
-                            <option value="Maurice">🇲🇺 Maurice</option>
-                            <option value="Belgique">🇧🇪 Belgique</option>
-                            <option value="Suisse">🇨🇭 Suisse</option>
-                            <option value="Canada">🇨🇦 Canada</option>
-                            <option value="Sénégal">🇸🇳 Sénégal</option>
-                            <option value="Côte d'Ivoire">🇨🇮 Côte d'Ivoire</option>
-                            <option value="Maroc">🇲🇦 Maroc</option>
-                            <option value="Tunisie">🇹🇳 Tunisie</option>
-                            <option value="Algérie">🇩🇿 Algérie</option>
+                            @foreach(config('locations.countries', []) as $countryName => $flag)
+                            <option value="{{ $countryName }}">{{ $flag }} {{ $countryName }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div>
@@ -10858,24 +10811,7 @@
     }
 
     // ===== CITIES DATA BY COUNTRY FOR FILTER =====
-    const filterCitiesByCountry = {
-        "France": ["Paris", "Marseille", "Lyon", "Toulouse", "Nice", "Nantes", "Strasbourg", "Montpellier", "Bordeaux", "Lille", "Rennes", "Reims", "Le Havre", "Saint-Étienne", "Toulon", "Grenoble", "Dijon", "Angers", "Nîmes", "Villeurbanne", "Clermont-Ferrand", "Le Mans", "Aix-en-Provence", "Brest", "Tours", "Amiens", "Limoges", "Perpignan", "Metz", "Besançon", "Orléans", "Rouen", "Mulhouse", "Caen", "Nancy"],
-        "Mayotte": ["Mamoudzou", "Koungou", "Dzaoudzi", "Dembeni", "Bandraboua", "Tsingoni", "Sada", "Ouangani", "Chiconi", "Pamandzi", "Mtsamboro", "Acoua", "Chirongui", "Bouéni", "Kani-Kéli", "Bandrélé", "M'Tsangamouji"],
-        "Madagascar": ["Antananarivo", "Toamasina", "Antsirabe", "Fianarantsoa", "Mahajanga", "Toliara", "Antsiranana", "Ambatondrazaka", "Antalaha", "Nosy Be", "Sainte-Marie", "Morondava", "Ambositra", "Mananjary", "Sambava"],
-        "La Réunion": ["Saint-Denis", "Saint-Paul", "Saint-Pierre", "Le Tampon", "Saint-André", "Saint-Louis", "Saint-Benoît", "Le Port", "Saint-Joseph", "Sainte-Marie", "Sainte-Suzanne", "Saint-Leu", "La Possession", "Bras-Panon", "Cilaos", "Salazie"],
-        "Maurice": ["Port-Louis", "Beau Bassin-Rose Hill", "Vacoas-Phoenix", "Curepipe", "Quatre Bornes", "Triolet", "Goodlands", "Centre de Flacq", "Mahébourg", "Grand Baie", "Flic en Flac", "Tamarin"],
-        "Belgique": ["Bruxelles", "Anvers", "Gand", "Charleroi", "Liège", "Bruges", "Namur", "Louvain", "Mons", "Alost", "Malines", "La Louvière", "Courtrai", "Ostende", "Hasselt", "Tournai", "Genk", "Seraing", "Verviers", "Mouscron"],
-        "Suisse": ["Zurich", "Genève", "Bâle", "Lausanne", "Berne", "Winterthour", "Lucerne", "Saint-Gall", "Lugano", "Bienne", "Thoune", "Köniz", "Fribourg", "Schaffhouse", "Neuchâtel", "Sion"],
-        "Canada": ["Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton", "Ottawa", "Winnipeg", "Québec", "Hamilton", "Kitchener", "London", "Victoria", "Halifax", "Oshawa", "Windsor", "Saskatoon", "Regina", "Sherbrooke", "Laval", "Gatineau"],
-        "Sénégal": ["Dakar", "Thiès", "Rufisque", "Kaolack", "M'Bour", "Saint-Louis", "Ziguinchor", "Diourbel", "Louga", "Tambacounda", "Kolda", "Richard-Toll", "Tivaouane", "Touba", "Kédougou"],
-        "Côte d'Ivoire": ["Abidjan", "Bouaké", "Yamoussoukro", "Korhogo", "San-Pédro", "Man", "Divo", "Daloa", "Gagnoa", "Abengourou", "Anyama", "Agboville", "Dabou", "Grand-Bassam", "Bingerville"],
-        "Maroc": ["Casablanca", "Rabat", "Fès", "Marrakech", "Tanger", "Agadir", "Meknès", "Oujda", "Kénitra", "Tétouan", "Safi", "El Jadida", "Nador", "Béni Mellal", "Essaouira", "Ouarzazate"],
-        "Tunisie": ["Tunis", "Sfax", "Sousse", "Kairouan", "Bizerte", "Gabès", "Ariana", "Gafsa", "El Mourouj", "Kasserine", "Monastir", "La Marsa", "Hammamet", "Djerba", "Tozeur"],
-        "Algérie": ["Alger", "Oran", "Constantine", "Annaba", "Blida", "Batna", "Sétif", "Djelfa", "Sidi Bel Abbès", "Biskra", "Tébessa", "Skikda", "Tiaret", "Béjaïa", "Tlemcen", "Ouargla"],
-        "Guadeloupe": ["Pointe-à-Pitre", "Les Abymes", "Baie-Mahault", "Le Gosier", "Petit-Bourg", "Sainte-Anne", "Le Moule", "Sainte-Rose", "Capesterre-Belle-Eau", "Basse-Terre"],
-        "Martinique": ["Fort-de-France", "Le Lamentin", "Le Robert", "Schoelcher", "Sainte-Marie", "Le François", "Ducos", "Saint-Joseph", "La Trinité", "Rivière-Pilote"],
-        "Guyane": ["Cayenne", "Saint-Laurent-du-Maroni", "Kourou", "Matoury", "Rémire-Montjoly", "Macouria", "Mana", "Maripasoula", "Apatou", "Iracoubo"]
-    };
+    const filterCitiesByCountry = @json(config('locations.cities', []));
 
     function updateFilterCities() {
         const countrySelect = document.getElementById('countrySelect');
