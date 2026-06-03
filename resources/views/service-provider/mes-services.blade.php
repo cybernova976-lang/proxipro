@@ -68,7 +68,7 @@
             @endif
             <div class="mt-3">
                 <a href="{{ route('profile.show') }}" class="btn btn-sm btn-outline-primary" style="border-radius: 8px;">
-                    <i class="fas fa-user-edit me-1"></i> Modifier mon profil
+                    <i class="fas fa-user-edit me-1"></i><span translate="no">Modifier mon profil</span>
                 </a>
                 <a href="{{ route('profile.public', $user->id) }}" class="btn btn-sm btn-outline-secondary ms-1" style="border-radius: 8px;">
                     <i class="fas fa-eye me-1"></i> Voir mon profil public
@@ -205,8 +205,8 @@
                         <i class="fas fa-crown"></i>
                     </div>
                     <div class="flex-grow-1">
-                        <h6 class="fw-bold mb-0">Abonnement {{ $subscription->plan === 'annual' ? 'Annuel' : 'Mensuel' }} actif</h6>
-                        <small class="text-muted">Expire le {{ $subscription->ends_at->format('d/m/Y') }} · {{ $subscription->plan === 'annual' ? '85€/an' : '9,99€/mois' }}</small>
+                        <h6 class="fw-bold mb-0">Abonnement {{ $subscription->getPlanLabel() }} actif</h6>
+                        <small class="text-muted">Expire le {{ $subscription->ends_at->format('d/m/Y') }} · {{ number_format((float) $subscription->amount, 2, ',', ' ') }} €</small>
                     </div>
                     <a href="{{ route('pro.subscription') }}" class="btn btn-sm btn-outline-warning" style="border-radius: 8px;">
                         <i class="fas fa-cog me-1"></i> Gérer

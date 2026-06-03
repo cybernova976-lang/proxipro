@@ -61,36 +61,44 @@
 {{-- ===== SECTION 1: Plans d'abonnement (compact) ===== --}}
 <div class="pro-card sub-page-card mb-4">
     <h6 class="fw-bold mb-3"><i class="fas fa-crown me-2" style="color: #f59e0b;"></i>Plans d'abonnement</h6>
+    @php $providerSubscriptionPlans = \App\Support\ProviderSubscriptionPlans::active(); @endphp
     <div class="row g-3">
-        {{-- Monthly --}}
+        @foreach($providerSubscriptionPlans as $planKey => $plan)
         <div class="col-md-6">
-            <div class="sub-plan-card {{ $subscription && $subscription->isActive() && $subscription->plan === 'monthly' ? 'sub-plan-active' : '' }}">
+            <div class="sub-plan-card {{ !empty($plan['recommended']) ? 'sub-plan-recommended' : '' }} {{ $subscription && $subscription->isActive() && $subscription->plan === $planKey ? 'sub-plan-active' : '' }}">
+                @if(!empty($plan['badge']))
+                    <div class="sub-plan-badge">{{ $plan['badge'] }}</div>
+                @endif
                 <div class="d-flex align-items-center gap-3">
-                    <div class="sub-plan-icon" style="background: linear-gradient(135deg, #a855f7, #6366f1);">
-                        <i class="fas fa-calendar-alt"></i>
+                    <div class="sub-plan-icon" style="background: {{ !empty($plan['recommended']) ? 'linear-gradient(135deg, #f59e0b, #ef4444)' : 'linear-gradient(135deg, #a855f7, #6366f1)' }};">
+                        <i class="fas {{ !empty($plan['recommended']) ? 'fa-crown' : 'fa-calendar-alt' }}"></i>
                     </div>
                     <div class="flex-grow-1">
                         <div class="d-flex align-items-baseline gap-2 mb-1">
-                            <h6 class="fw-bold mb-0">Mensuel</h6>
-                            <span class="text-muted" style="font-size: 0.75rem;">Sans engagement</span>
+                            <h6 class="fw-bold mb-0">{{ $plan['label'] }}</h6>
+                            @if(!empty($plan['original_price']))
+                                <span class="text-muted text-decoration-line-through" style="font-size: 0.72rem;">{{ $plan['original_price'] }}</span>
+                            @endif
+                            @if(!empty($plan['subtitle']))
+                                <span class="text-success fw-semibold" style="font-size: 0.72rem;">{{ $plan['subtitle'] }}</span>
+                            @endif
                         </div>
                         <div class="d-flex flex-wrap gap-1" style="font-size: 0.72rem; color: #64748b;">
-                            <span><i class="fas fa-check text-success me-1"></i>Profil vérifié</span>
-                            <span><i class="fas fa-check text-success me-1"></i>Devis & factures</span>
-                            <span><i class="fas fa-check text-success me-1"></i>Badge pro</span>
-                            <span><i class="fas fa-check text-success me-1"></i>Support prioritaire</span>
+                            @foreach(array_slice($plan['features'] ?? [], 0, 4) as $feature)
+                                <span><i class="fas {{ !empty($plan['recommended']) ? 'fa-star text-warning' : 'fa-check text-success' }} me-1"></i>{{ $feature }}</span>
+                            @endforeach
                         </div>
                     </div>
                     <div class="text-end" style="min-width: 100px;">
-                        <div class="fw-bold" style="font-size: 1.5rem; color: var(--pro-primary); line-height: 1;">9,99€</div>
-                        <div class="text-muted" style="font-size: 0.72rem;">/mois</div>
+                        <div class="fw-bold" style="font-size: 1.5rem; color: var(--pro-primary); line-height: 1;">{{ $plan['price'] }}</div>
+                        <div class="text-muted" style="font-size: 0.72rem;">{{ $plan['period'] }}</div>
                     </div>
                 </div>
                 <form method="POST" action="{{ route('pro.onboarding.subscribe') }}" class="mt-2">
                     @csrf
-                    <input type="hidden" name="plan" value="monthly">
-                    <button type="submit" class="btn btn-sm {{ $subscription && $subscription->isActive() && $subscription->plan === 'monthly' ? 'btn-outline-success' : 'btn-outline-primary' }} w-100" style="border-radius: 8px; font-size: 0.8rem; padding: 6px;">
-                        @if($subscription && $subscription->isActive() && $subscription->plan === 'monthly')
+                    <input type="hidden" name="plan" value="{{ $planKey }}">
+                    <button type="submit" class="btn btn-sm {{ $subscription && $subscription->isActive() && $subscription->plan === $planKey ? 'btn-outline-success' : (!empty($plan['recommended']) ? 'btn-pro-primary' : 'btn-outline-primary') }} w-100" style="border-radius: 8px; font-size: 0.8rem; padding: 6px;">
+                        @if($subscription && $subscription->isActive() && $subscription->plan === $planKey)
                             <i class="fas fa-check me-1"></i> Plan actuel
                         @else
                             Choisir ce plan
@@ -99,46 +107,7 @@
                 </form>
             </div>
         </div>
-
-        {{-- Annual --}}
-        <div class="col-md-6">
-            <div class="sub-plan-card sub-plan-recommended {{ $subscription && $subscription->isActive() && $subscription->plan === 'annual' ? 'sub-plan-active' : '' }}">
-                <div class="sub-plan-badge">-30%</div>
-                <div class="d-flex align-items-center gap-3">
-                    <div class="sub-plan-icon" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">
-                        <i class="fas fa-crown"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="d-flex align-items-baseline gap-2 mb-1">
-                            <h6 class="fw-bold mb-0">Annuel</h6>
-                            <span class="text-muted text-decoration-line-through" style="font-size: 0.72rem;">119,88€</span>
-                            <span class="text-success fw-semibold" style="font-size: 0.72rem;">7,08€/mois</span>
-                        </div>
-                        <div class="d-flex flex-wrap gap-1" style="font-size: 0.72rem; color: #64748b;">
-                            <span><i class="fas fa-star text-warning me-1"></i>Stats avancées</span>
-                            <span><i class="fas fa-star text-warning me-1"></i>Priorité recherche</span>
-                            <span><i class="fas fa-star text-warning me-1"></i>Pro Premium</span>
-                            <span><i class="fas fa-star text-warning me-1"></i>Support 7j/7</span>
-                        </div>
-                    </div>
-                    <div class="text-end" style="min-width: 100px;">
-                        <div class="fw-bold" style="font-size: 1.5rem; color: var(--pro-primary); line-height: 1;">85€</div>
-                        <div class="text-muted" style="font-size: 0.72rem;">/an</div>
-                    </div>
-                </div>
-                <form method="POST" action="{{ route('pro.onboarding.subscribe') }}" class="mt-2">
-                    @csrf
-                    <input type="hidden" name="plan" value="annual">
-                    <button type="submit" class="btn btn-sm {{ $subscription && $subscription->isActive() && $subscription->plan === 'annual' ? 'btn-outline-success' : 'btn-pro-primary' }} w-100" style="border-radius: 8px; font-size: 0.8rem; padding: 6px;">
-                        @if($subscription && $subscription->isActive() && $subscription->plan === 'annual')
-                            <i class="fas fa-crown me-1"></i> Plan actuel
-                        @else
-                            <i class="fas fa-crown me-1"></i> Choisir ce plan
-                        @endif
-                    </button>
-                </form>
-            </div>
-        </div>
+        @endforeach
     </div>
 </div>
 

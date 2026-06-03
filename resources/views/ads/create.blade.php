@@ -522,6 +522,38 @@
     }
     
     /* Price Input */
+    .price-mode-selector {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .price-mode-option {
+        border: 2px solid #e9edef;
+        background: #fff;
+        border-radius: 12px;
+        padding: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        color: #344054;
+        transition: all 0.2s ease;
+    }
+
+    .price-mode-option input {
+        margin: 0;
+    }
+
+    .price-mode-option.selected {
+        border-color: #2563eb;
+        background: #eff6ff;
+        color: #1d4ed8;
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+    }
+
     .price-input-group {
         display: flex;
         gap: 0;
@@ -541,6 +573,10 @@
         align-items: center;
         font-weight: 600;
         color: #667781;
+    }
+
+    .price-input-group.is-disabled {
+        opacity: 0.55;
     }
     
     /* Disclaimer */
@@ -829,6 +865,10 @@
         .type-selector {
             grid-template-columns: 1fr;
         }
+
+        .price-mode-selector {
+            grid-template-columns: 1fr;
+        }
         
         .category-grid {
             grid-template-columns: repeat(3, 1fr);
@@ -932,6 +972,10 @@
             $selectedServiceType = old('service_type', $requestedType === 'demande' ? 'demande' : ($canPublishProfessionalOffer ? 'offre' : 'demande'));
             if (!$canPublishProfessionalOffer && $selectedServiceType === 'offre') {
                 $selectedServiceType = 'demande';
+            }
+            $selectedPriceType = old('price_type', old('price') !== null ? ($selectedServiceType === 'demande' ? 'hourly' : 'fixed') : 'negotiable');
+            if (!in_array($selectedPriceType, ['fixed', 'hourly', 'negotiable'], true)) {
+                $selectedPriceType = 'negotiable';
             }
         @endphp
         <input type="hidden" name="service_type" id="service_type" value="{{ $selectedServiceType }}">
@@ -1140,19 +1184,35 @@
             </div>
             
             <div class="row">
-                <div class="col-md-6">
-                    <label for="price" class="form-label">Tarif horaire</label>
-                    <div class="price-input-group">
+                <div class="col-lg-8">
+                    <label class="form-label">Mode de rémunération</label>
+                    <div class="price-mode-selector" id="price-mode-selector">
+                        <label class="price-mode-option {{ $selectedPriceType === 'fixed' ? 'selected' : '' }}" data-price-type="fixed">
+                            <input type="radio" name="price_type" value="fixed" {{ $selectedPriceType === 'fixed' ? 'checked' : '' }}>
+                            <span>Prix global</span>
+                        </label>
+                        <label class="price-mode-option {{ $selectedPriceType === 'hourly' ? 'selected' : '' }}" data-price-type="hourly">
+                            <input type="radio" name="price_type" value="hourly" {{ $selectedPriceType === 'hourly' ? 'checked' : '' }}>
+                            <span>Tarif horaire</span>
+                        </label>
+                        <label class="price-mode-option {{ $selectedPriceType === 'negotiable' ? 'selected' : '' }}" data-price-type="negotiable">
+                            <input type="radio" name="price_type" value="negotiable" {{ $selectedPriceType === 'negotiable' ? 'checked' : '' }}>
+                            <span>À négocier</span>
+                        </label>
+                    </div>
+
+                    <label for="price" class="form-label" id="price-input-label">Montant</label>
+                    <div class="price-input-group" id="price-input-group">
                         <input type="number" step="0.01" min="0" 
                                class="form-control @error('price') is-invalid @enderror" 
                                id="price" name="price" value="{{ old('price') }}" 
                                placeholder="Ex : 10, 15, 25...">
-                        <span class="input-suffix">€/h</span>
+                        <span class="input-suffix" id="price-input-suffix">€</span>
                     </div>
                     @error('price')
                         <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
-                    <p class="form-hint">Indiquez votre tarif horaire. Laissez vide si le prix est à discuter.</p>
+                    <p class="form-hint" id="price-input-hint">Choisissez un mode de rémunération. Sélectionnez “À négocier” si le montant doit être discuté.</p>
                 </div>
             </div>
         </div>
@@ -1396,6 +1456,52 @@
         });
     });
 
+    function setPriceType(type) {
+        if (!['fixed', 'hourly', 'negotiable'].includes(type)) {
+            type = 'negotiable';
+        }
+
+        const priceInput = document.getElementById('price');
+        const priceGroup = document.getElementById('price-input-group');
+        const suffix = document.getElementById('price-input-suffix');
+        const label = document.getElementById('price-input-label');
+        const hint = document.getElementById('price-input-hint');
+
+        document.querySelectorAll('.price-mode-option').forEach(option => {
+            const selected = option.dataset.priceType === type;
+            option.classList.toggle('selected', selected);
+            const radio = option.querySelector('input[type="radio"]');
+            if (radio) radio.checked = selected;
+        });
+
+        if (type === 'negotiable') {
+            priceInput.value = '';
+            priceInput.disabled = true;
+            priceInput.required = false;
+            priceGroup.classList.add('is-disabled');
+            suffix.textContent = '';
+            label.textContent = 'Montant';
+            hint.textContent = 'Le prix sera affiché comme “À négocier”.';
+            return;
+        }
+
+        priceInput.disabled = false;
+        priceInput.required = true;
+        priceGroup.classList.remove('is-disabled');
+        suffix.textContent = type === 'hourly' ? '€/h' : '€';
+        label.textContent = type === 'hourly' ? 'Tarif horaire' : 'Prix global';
+        hint.textContent = type === 'hourly'
+            ? 'Indiquez le montant facturé par heure.'
+            : 'Indiquez le montant total demandé ou proposé.';
+    }
+
+    document.querySelectorAll('.price-mode-option').forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            setPriceType(this.dataset.priceType || 'negotiable');
+        });
+    });
+
     // ===== PHOTO UPLOAD =====
     const uploadArea = document.getElementById('photo-upload-area');
     const photoInput = document.getElementById('photo-input');
@@ -1546,6 +1652,16 @@
             document.querySelector('.type-selector')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return false;
         }
+
+        const selectedPriceType = document.querySelector('input[name="price_type"]:checked')?.value || 'negotiable';
+        if (selectedPriceType === 'negotiable') {
+            document.getElementById('price').value = '';
+        } else if (!document.getElementById('price').value) {
+            e.preventDefault();
+            alert('Veuillez indiquer un montant ou choisir “À négocier”.');
+            document.getElementById('price')?.focus();
+            return false;
+        }
         
         // Final update of file input before submit
         updateFileInput();
@@ -1579,6 +1695,8 @@
         } else {
             setServiceType(document.getElementById('service_type')?.value || 'demande', { notify: false });
         }
+
+        setPriceType(document.querySelector('input[name="price_type"]:checked')?.value || @json($selectedPriceType));
 
         // Auto-select category from URL
         if (paramCategory && !oldMainCat) {

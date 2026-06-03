@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\UserService;
 use App\Models\ProSubscription;
+use App\Support\ProviderSubscriptionPlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -148,8 +149,15 @@ class BecomeProviderController extends Controller
             // Si un plan est sélectionné, rediriger vers Stripe pour le paiement
             if ($request->filled('plan') && in_array($request->plan, ['monthly', 'annual'])) {
                 $planType = $request->plan;
-                $amount = $planType === 'annual' ? 85.00 : 9.99;
-                $planLabel = $planType === 'annual' ? 'Abonnement ProxiPro Annuel' : 'Abonnement ProxiPro Mensuel';
+                $planConfig = ProviderSubscriptionPlans::get($planType);
+                if (!$planConfig || empty($planConfig['enabled'])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Cet abonnement n’est pas disponible pour le moment.',
+                    ], 422);
+                }
+                $amount = ProviderSubscriptionPlans::amount($planType);
+                $planLabel = ProviderSubscriptionPlans::stripeLabel($planType);
 
                 // Sauvegarder les données pour finaliser après paiement
                 session([
@@ -181,9 +189,7 @@ class BecomeProviderController extends Controller
                                 'currency' => 'eur',
                                 'product_data' => [
                                     'name' => $planLabel,
-                                    'description' => $planType === 'annual'
-                                        ? 'Accès complet pendant 1 an (soit 7,08€/mois)'
-                                        : 'Accès complet pendant 1 mois, renouvelable',
+                                    'description' => ProviderSubscriptionPlans::description($planType),
                                 ],
                                 'unit_amount' => (int) round($amount * 100),
                             ],
@@ -275,7 +281,7 @@ class BecomeProviderController extends Controller
 
             $data = session('become_provider_subscription', []);
             $plan = $data['plan'] ?? $session->metadata->plan ?? 'monthly';
-            $amount = $plan === 'annual' ? 85.00 : 9.99;
+            $amount = ProviderSubscriptionPlans::amount($plan);
             $category = $data['category'] ?? null;
 
             DB::beginTransaction();

@@ -500,6 +500,38 @@
     }
     
     /* Price Input */
+    .price-mode-selector {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .price-mode-option {
+        border: 2px solid #e9edef;
+        background: #fff;
+        border-radius: 12px;
+        padding: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        color: #344054;
+        transition: all 0.2s ease;
+    }
+
+    .price-mode-option input {
+        margin: 0;
+    }
+
+    .price-mode-option.selected {
+        border-color: #2563eb;
+        background: #eff6ff;
+        color: #1d4ed8;
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+    }
+
     .price-input-group {
         display: flex;
         gap: 0;
@@ -519,6 +551,10 @@
         align-items: center;
         font-weight: 600;
         color: #667781;
+    }
+
+    .price-input-group.is-disabled {
+        opacity: 0.55;
     }
     
     /* Disclaimer */
@@ -641,6 +677,10 @@
         .type-selector {
             grid-template-columns: 1fr;
         }
+
+        .price-mode-selector {
+            grid-template-columns: 1fr;
+        }
         
         .category-grid {
             grid-template-columns: repeat(3, 1fr);
@@ -689,26 +729,50 @@
     <form method="POST" action="{{ route('ads.update', $ad) }}" enctype="multipart/form-data" class="form-card">
         @csrf
         @method('PUT')
-<!-- Type de service -->
+        @php
+            $publishUser = Auth::user();
+            $hasPaidPlan = $publishUser && !in_array(strtolower((string) ($publishUser->plan ?? '')), ['', 'free'], true);
+            $canPublishProfessionalOffer = $publishUser && (
+                $publishUser->user_type === 'professionnel'
+                || $publishUser->is_service_provider
+                || $publishUser->hasActiveProSubscription()
+                || $publishUser->hasCompletedProOnboarding()
+                || $hasPaidPlan
+            );
+            $selectedServiceType = old('service_type', $ad->service_type);
+            if (!$canPublishProfessionalOffer && $selectedServiceType === 'offre') {
+                $selectedServiceType = 'demande';
+            }
+            $selectedPriceType = old('price_type', $ad->price_type ?: ($ad->price !== null ? ($ad->service_type === 'demande' ? 'hourly' : 'fixed') : 'negotiable'));
+            if (!in_array($selectedPriceType, ['fixed', 'hourly', 'negotiable'], true)) {
+                $selectedPriceType = 'negotiable';
+            }
+        @endphp
+        <input type="hidden" name="service_type" id="service_type" value="{{ $selectedServiceType }}">
+
+        <!-- Architecture de publication -->
         <div class="form-section">
             <div class="section-header">
-                <div class="section-icon"><i class="fas fa-hand-holding-heart"></i></div>
-                <h4 class="section-title">Quel type de service ?</h4>
+                <div class="section-icon"><i class="fas fa-layer-group"></i></div>
+                <h4 class="section-title" id="publication-type-title">Type de publication</h4>
             </div>
             
-            <div class="type-selector">
-                <label class="type-option {{ old('service_type', $ad->service_type) == 'offre' ? 'selected' : '' }}">
-                    <input type="radio" name="service_type" value="offre" {{ old('service_type', $ad->service_type) == 'offre' ? 'checked' : '' }} required>
-                    <div class="type-option-icon">🤝</div>
-                    <h6>Je propose un service</h6>
-                    <p>Partagez vos compétences</p>
+            <div class="type-selector" data-can-professional-offer="{{ $canPublishProfessionalOffer ? '1' : '0' }}">
+                <label class="type-option {{ $selectedServiceType === 'demande' ? 'selected' : '' }}" data-service-type="demande">
+                    <input type="radio" name="service_type_choice" value="demande" {{ $selectedServiceType === 'demande' ? 'checked' : '' }}>
+                    <div class="type-option-icon"><i class="fas fa-search"></i></div>
+                    <h6>Demande de particulier</h6>
+                    <p>Vous cherchez un professionnel pour un travail, un dépannage ou un service.</p>
                 </label>
-                <label class="type-option {{ old('service_type', $ad->service_type) == 'demande' ? 'selected' : '' }}">
-                    <input type="radio" name="service_type" value="demande" {{ old('service_type', $ad->service_type) == 'demande' ? 'checked' : '' }}>
-                    <div class="type-option-icon">🔍</div>
-                    <h6>Je recherche un service</h6>
-                    <p>Trouvez de l'aide</p>
-                </label>
+
+                @if($canPublishProfessionalOffer)
+                    <label class="type-option {{ $selectedServiceType === 'offre' ? 'selected' : '' }}" data-service-type="offre" aria-disabled="false">
+                        <input type="radio" name="service_type_choice" value="offre" {{ $selectedServiceType === 'offre' ? 'checked' : '' }}>
+                        <div class="type-option-icon"><i class="fas fa-briefcase"></i></div>
+                        <h6>Offre professionnelle</h6>
+                        <p>Vous proposez un service, une location de matériel, une promotion ou un recrutement.</p>
+                    </label>
+                @endif
             </div>
         </div>
         
@@ -917,19 +981,35 @@
             </div>
             
             <div class="row">
-                <div class="col-md-6">
-                    <label for="price" class="form-label">Prix</label>
-                    <div class="price-input-group">
+                <div class="col-lg-8">
+                    <label class="form-label">Mode de rémunération</label>
+                    <div class="price-mode-selector" id="price-mode-selector">
+                        <label class="price-mode-option {{ $selectedPriceType === 'fixed' ? 'selected' : '' }}" data-price-type="fixed">
+                            <input type="radio" name="price_type" value="fixed" {{ $selectedPriceType === 'fixed' ? 'checked' : '' }}>
+                            <span>Prix global</span>
+                        </label>
+                        <label class="price-mode-option {{ $selectedPriceType === 'hourly' ? 'selected' : '' }}" data-price-type="hourly">
+                            <input type="radio" name="price_type" value="hourly" {{ $selectedPriceType === 'hourly' ? 'checked' : '' }}>
+                            <span>Tarif horaire</span>
+                        </label>
+                        <label class="price-mode-option {{ $selectedPriceType === 'negotiable' ? 'selected' : '' }}" data-price-type="negotiable">
+                            <input type="radio" name="price_type" value="negotiable" {{ $selectedPriceType === 'negotiable' ? 'checked' : '' }}>
+                            <span>À négocier</span>
+                        </label>
+                    </div>
+
+                    <label for="price" class="form-label" id="price-input-label">Montant</label>
+                    <div class="price-input-group" id="price-input-group">
                         <input type="number" step="0.01" min="0" 
                                class="form-control @error('price') is-invalid @enderror" 
                                id="price" name="price" value="{{ old('price', $ad->price) }}" 
-                               placeholder="Laisser vide si gratuit">
-                        <span class="input-suffix">€</span>
+                               placeholder="Ex : 10, 15, 25...">
+                        <span class="input-suffix" id="price-input-suffix">€</span>
                     </div>
                     @error('price')
                         <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
-                    <p class="form-hint">Laissez vide si le prix est à discuter ou gratuit</p>
+                    <p class="form-hint" id="price-input-hint">Choisissez un mode de rémunération. Sélectionnez “À négocier” si le montant doit être discuté.</p>
                 </div>
             </div>
         </div>
@@ -1032,12 +1112,104 @@
     }
 
     // ===== TYPE SELECTION =====
+    const canPublishProfessionalOffer = {{ $canPublishProfessionalOffer ? 'true' : 'false' }};
+
+    function applyServiceTypeContext(type) {
+        const isDemand = type === 'demande';
+        const categoryTitle = document.querySelector('#category-section .section-title');
+        const titleField = document.getElementById('title');
+        const descField = document.getElementById('description');
+
+        if (categoryTitle) {
+            categoryTitle.textContent = isDemand
+                ? 'Quel service recherchez-vous ?'
+                : 'Dans quel domaine publiez-vous votre offre ?';
+        }
+        if (titleField) {
+            titleField.placeholder = isDemand
+                ? 'Ex: Recherche plombier pour fuite urgente à Mamoudzou'
+                : 'Ex: Location de bétonnière ou dépannage électrique disponible';
+        }
+        if (descField) {
+            descField.placeholder = isDemand
+                ? 'Décrivez précisément ce dont vous avez besoin : type de travaux, lieu, urgence, budget...'
+                : 'Décrivez votre offre : prestations, conditions, zone d’intervention, disponibilité ou tarif...';
+        }
+    }
+
+    function setServiceType(type, options = {}) {
+        if (type === 'offre' && !canPublishProfessionalOffer) {
+            if (options.notify !== false) {
+                alert('Les offres professionnelles sont réservées aux comptes professionnels ou prestataires. Complétez votre profil prestataire avant de publier ce type d’offre.');
+            }
+            type = 'demande';
+        }
+
+        const hiddenServiceType = document.getElementById('service_type');
+        if (hiddenServiceType) hiddenServiceType.value = type;
+
+        document.querySelectorAll('.type-option').forEach(option => {
+            const optionType = option.dataset.serviceType;
+            const radio = option.querySelector('input[type="radio"]');
+            const selected = optionType === type;
+
+            option.classList.toggle('selected', selected);
+            if (radio) radio.checked = selected;
+        });
+
+        applyServiceTypeContext(type);
+    }
+
     document.querySelectorAll('.type-option').forEach(option => {
-        option.addEventListener('click', function() {
-            document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
-            this.classList.add('selected');
-            const radio = this.querySelector('input[type="radio"]');
-            if (radio) radio.checked = true;
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            setServiceType(this.dataset.serviceType || 'demande');
+        });
+    });
+
+    function setPriceType(type) {
+        if (!['fixed', 'hourly', 'negotiable'].includes(type)) {
+            type = 'negotiable';
+        }
+
+        const priceInput = document.getElementById('price');
+        const priceGroup = document.getElementById('price-input-group');
+        const suffix = document.getElementById('price-input-suffix');
+        const label = document.getElementById('price-input-label');
+        const hint = document.getElementById('price-input-hint');
+
+        document.querySelectorAll('.price-mode-option').forEach(option => {
+            const selected = option.dataset.priceType === type;
+            option.classList.toggle('selected', selected);
+            const radio = option.querySelector('input[type="radio"]');
+            if (radio) radio.checked = selected;
+        });
+
+        if (type === 'negotiable') {
+            priceInput.value = '';
+            priceInput.disabled = true;
+            priceInput.required = false;
+            priceGroup.classList.add('is-disabled');
+            suffix.textContent = '';
+            label.textContent = 'Montant';
+            hint.textContent = 'Le prix sera affiché comme “À négocier”.';
+            return;
+        }
+
+        priceInput.disabled = false;
+        priceInput.required = true;
+        priceGroup.classList.remove('is-disabled');
+        suffix.textContent = type === 'hourly' ? '€/h' : '€';
+        label.textContent = type === 'hourly' ? 'Tarif horaire' : 'Prix global';
+        hint.textContent = type === 'hourly'
+            ? 'Indiquez le montant facturé par heure.'
+            : 'Indiquez le montant total demandé ou proposé.';
+    }
+
+    document.querySelectorAll('.price-mode-option').forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            setPriceType(this.dataset.priceType || 'negotiable');
         });
     });
 
@@ -1147,6 +1319,29 @@
         document.getElementById('btn-publish').disabled = !this.checked;
     });
 
+    document.querySelector('form.form-card').addEventListener('submit', function(e) {
+        if (document.getElementById('service_type')?.value === 'offre' && !canPublishProfessionalOffer) {
+            e.preventDefault();
+            alert('Les offres professionnelles sont réservées aux comptes professionnels ou prestataires.');
+            document.querySelector('.type-selector')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+        }
+
+        const selectedPriceType = document.querySelector('input[name="price_type"]:checked')?.value || 'negotiable';
+        if (selectedPriceType === 'negotiable') {
+            document.getElementById('price').value = '';
+        } else if (!document.getElementById('price').value) {
+            e.preventDefault();
+            alert('Veuillez indiquer un montant ou choisir “À négocier”.');
+            document.getElementById('price')?.focus();
+            return false;
+        }
+
+        updateFileInput();
+
+        return true;
+    });
+
     // ===== RESTORE OLD VALUES =====
     document.addEventListener('DOMContentLoaded', function() {
         const oldMainCat = document.getElementById('main_category').value;
@@ -1162,6 +1357,9 @@
         if (country) {
             document.getElementById('country').dispatchEvent(new Event('change'));
         }
+
+        setServiceType(document.getElementById('service_type')?.value || 'demande', { notify: false });
+        setPriceType(document.querySelector('input[name="price_type"]:checked')?.value || @json($selectedPriceType));
     });
 
     // ===== CITIES DATA BY COUNTRY =====

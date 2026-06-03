@@ -193,7 +193,7 @@
                                     <i class="fas fa-map-marker-alt me-1"></i>{{ Str::limit($ad->location ?? 'France', 22) }}
                                 </span>
                                 <span class="recommendation-card-price">
-                                    {{ $ad->price ? number_format($ad->price, 0, ',', ' ') . ' €' : 'Sur devis' }}
+                                    {{ $ad->formatted_price }}
                                 </span>
                             </div>
                         @endif

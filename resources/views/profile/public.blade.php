@@ -237,7 +237,7 @@
                                     </button>
                                 @endif
                                 <button type="button" class="btn btn-outline-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                                    <i class="fas fa-pen me-2"></i>Modifier mon profil
+                                    <i class="fas fa-pen me-2"></i><span translate="no">Modifier mon profil</span>
                                 </button>
                                 <button type="button" class="btn btn-outline-success w-100" data-bs-toggle="modal" data-bs-target="#editCategoriesModal">
                                     <i class="fas fa-th-large me-2"></i>Gérer mes catégories

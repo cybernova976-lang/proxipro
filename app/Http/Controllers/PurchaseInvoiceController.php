@@ -74,8 +74,8 @@ class PurchaseInvoiceController extends Controller
 
         $invoiceNumber = 'PP-ABO-' . str_pad($subscription->id, 6, '0', STR_PAD_LEFT);
         $date = $subscription->starts_at->format('d/m/Y');
-        $amount = $subscription->plan === 'annual' ? 85.00 : 9.99;
-        $planLabel = $subscription->plan === 'annual' ? 'Annuel' : 'Mensuel';
+        $amount = (float) $subscription->amount;
+        $planLabel = $subscription->getPlanLabel();
         $itemDescription = 'Abonnement Pro ProxiPro - ' . $planLabel;
         $period = $subscription->starts_at->format('d/m/Y') . ' au ' . $subscription->ends_at->format('d/m/Y');
         $itemDetail = 'Période : ' . $period;

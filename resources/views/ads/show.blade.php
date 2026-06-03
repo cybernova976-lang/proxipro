@@ -241,7 +241,7 @@
                             <div class="ad-meta-item"><i class="fas fa-calendar"></i><span>{{ $ad->created_at->diffForHumans() }}</span></div>
                             @if($ad->radius_km)<div class="ad-meta-item"><i class="fas fa-bullseye"></i><span>{{ $ad->radius_km }} km</span></div>@endif
                         </div>
-                        <div class="ad-price">@if($ad->price){{ number_format($ad->price, 2, ',', ' ') }} €/h @else Prix à discuter @endif</div>
+                        <div class="ad-price">{{ $ad->formatted_price }}</div>
                         <h6 style="color: #2d3748;" class="mb-2"><i class="fas fa-align-left me-2 text-primary"></i>Description</h6>
                         <div class="ad-description">{!! nl2br(e($ad->description)) !!}</div>
                         <div class="d-flex gap-2 flex-wrap">
@@ -465,7 +465,7 @@
                     <a href="{{ route('ads.show', $similar) }}" class="text-decoration-none">
                         <div class="similar-ad-card">
                             <div class="similar-ad-title">{{ Str::limit($similar->title, 30) }}</div>
-                            <div class="similar-ad-price">@if($similar->price){{ number_format($similar->price, 2, ',', ' ') }} €/h @else À discuter @endif</div>
+                            <div class="similar-ad-price">{{ $similar->formatted_price }}</div>
                             <div class="similar-ad-location"><i class="fas fa-map-marker-alt me-1"></i>{{ Str::limit($similar->location, 15) }}</div>
                         </div>
                     </a>

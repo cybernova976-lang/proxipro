@@ -14,6 +14,7 @@ class Ad extends Model
         'location',
         'city',
         'price',
+        'price_type',
         'service_type',
         'status',
         'photos',
@@ -54,6 +55,45 @@ class Ad extends Model
         'photos' => 'array',
         'target_categories' => 'array'
     ];
+
+    public function getEffectivePriceTypeAttribute(): string
+    {
+        $type = $this->attributes['price_type'] ?? null;
+
+        if (in_array($type, ['fixed', 'hourly', 'negotiable'], true)) {
+            return $type;
+        }
+
+        if ($this->price !== null) {
+            return $this->service_type === 'demande' ? 'hourly' : 'fixed';
+        }
+
+        return 'negotiable';
+    }
+
+    public function getFormattedPriceAttribute(): string
+    {
+        if ($this->effective_price_type === 'negotiable' || $this->price === null) {
+            return 'À négocier';
+        }
+
+        $price = (float) $this->price;
+        $decimals = floor($price) === $price ? 0 : 2;
+        $formatted = number_format($price, $decimals, ',', ' ');
+
+        return $this->effective_price_type === 'hourly'
+            ? $formatted . ' €/h'
+            : $formatted . ' €';
+    }
+
+    public function getPriceModeLabelAttribute(): string
+    {
+        return match ($this->effective_price_type) {
+            'fixed' => 'Prix global',
+            'hourly' => 'Tarif horaire',
+            default => 'À négocier',
+        };
+    }
 
     public function user()
     {

@@ -10,6 +10,7 @@ use App\Models\Advertisement;
 use App\Models\IdentityVerification;
 use App\Models\Report;
 use App\Models\ContactMessage;
+use App\Support\ProviderSubscriptionPlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
@@ -457,7 +458,31 @@ class AdminController extends Controller
         
         $plans = config('admin.plans');
         
-        return view('admin.subscriptions.index', compact('users', 'stats', 'plans'));
+        $providerSubscriptionPlans = ProviderSubscriptionPlans::all();
+
+        return view('admin.subscriptions.index', compact('users', 'stats', 'plans', 'providerSubscriptionPlans'));
+    }
+
+    public function updateProviderSubscriptionPlans(Request $request)
+    {
+        $validated = $request->validate([
+            'plans' => 'required|array',
+            'plans.*.enabled' => 'nullable|boolean',
+            'plans.*.recommended' => 'nullable|boolean',
+            'plans.*.label' => 'required|string|max:80',
+            'plans.*.price' => 'required|string|max:40',
+            'plans.*.amount' => 'required|numeric|min:0',
+            'plans.*.period' => 'required|string|max:40',
+            'plans.*.original_price' => 'nullable|string|max:40',
+            'plans.*.badge' => 'nullable|string|max:80',
+            'plans.*.subtitle' => 'nullable|string|max:120',
+            'plans.*.description' => 'nullable|string|max:255',
+            'plans.*.features' => 'required|string',
+        ]);
+
+        ProviderSubscriptionPlans::saveFromAdminInput($validated['plans']);
+
+        return back()->with('success', 'Cartes d’abonnement prestataire mises à jour.');
     }
 
     // Modifier l'abonnement d'un utilisateur

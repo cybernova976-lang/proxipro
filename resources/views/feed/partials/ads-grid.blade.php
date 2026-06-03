@@ -50,7 +50,7 @@
                     @endif
                 </div>
                 <span class="mission-price">
-                    {{ $ad->price ? number_format($ad->price, 0, ',', ' ') . ' €' : 'Sur devis' }}
+                    {{ $ad->formatted_price }}
                 </span>
             </div>
             

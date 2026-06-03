@@ -260,11 +260,7 @@
                                         <h5 class="ad-card-title">{{ $ad->title }}</h5>
                                         <p class="ad-card-location"><i class="fas fa-map-marker-alt me-1"></i>{{ Str::limit($ad->location, 25) }}</p>
                                         <div class="ad-card-price">
-                                            @if($ad->price)
-                                                {{ number_format($ad->price, 2, ',', ' ') }} €
-                                            @else
-                                                Prix à discuter
-                                            @endif
+                                            {{ $ad->formatted_price }}
                                         </div>
                                     </div>
                                     <div class="ad-card-footer">

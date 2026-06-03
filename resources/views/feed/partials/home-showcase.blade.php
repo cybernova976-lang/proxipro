@@ -8,7 +8,7 @@
             'kind' => 'personal-requests',
             'dataKind' => 'personal-request',
             'title' => 'Offres des particuliers',
-            'copy' => 'Des particuliers recherchent un professionnel disponible pour leurs travaux et services.',
+            'copy' => 'Des utilisateurs recherchent un professionnel disponible pour leurs travaux et services.',
             'badge' => 'Demande',
             'icon' => 'fas fa-search',
             'ads' => $personalRequestAds,
@@ -90,9 +90,7 @@
                 $authorInitial = strtoupper(substr($authorName, 0, 1));
                 $isProfessionalOffer = $section['dataKind'] === 'professional-offer';
                 $publishedDate = $ad->created_at?->format('d/m/Y');
-                $priceLabel = $ad->price
-                    ? number_format((float) $ad->price, 0, ',', ' ') . ($section['dataKind'] === 'personal-request' ? ' €/h' : ' €')
-                    : 'Sur devis';
+                $priceLabel = $ad->formatted_price;
             @endphp
             <a href="{{ route('ads.show', $ad) }}"
                class="home-showcase-ad-card{{ $isUrgent ? ' is-urgent' : '' }}{{ $isBoosted ? ' is-boosted' : '' }}"

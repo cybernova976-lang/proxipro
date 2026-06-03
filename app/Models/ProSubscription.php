@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ProviderSubscriptionPlans;
 use Illuminate\Database\Eloquent\Model;
 
 class ProSubscription extends Model
@@ -41,7 +42,7 @@ class ProSubscription extends Model
 
     public function getPlanLabel(): string
     {
-        return $this->plan === 'annual' ? 'Annuel (85€/an)' : 'Mensuel (9,99€/mois)';
+        return ProviderSubscriptionPlans::summaryLabel($this->plan);
     }
 
     public function daysRemaining(): int

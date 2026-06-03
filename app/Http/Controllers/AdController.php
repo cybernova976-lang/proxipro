@@ -160,6 +160,7 @@ class AdController extends Controller
     {
       try {
         $maxPhotos = Auth::user() && Auth::user()->hasActiveProSubscription() ? 4 : 2;
+        $request->merge(['price_type' => $this->resolvePriceType($request)]);
 
         // Valider les données
         $request->validate([
@@ -169,7 +170,8 @@ class AdController extends Controller
             'country' => 'required|string',
             'city' => 'nullable|string',
             'location' => 'nullable|string',
-            'price' => 'nullable|numeric|min:0',
+            'price_type' => 'required|in:fixed,hourly,negotiable',
+            'price' => 'nullable|required_unless:price_type,negotiable|numeric|min:0',
             'service_type' => 'required|in:offre,demande',
             'radius_km' => 'nullable|integer|min:1|max:100',
             'photos' => 'nullable|array|max:' . $maxPhotos,
@@ -179,6 +181,8 @@ class AdController extends Controller
             'target_categories' => 'nullable|array',
             'target_categories.*' => 'string'
         ]);
+
+        [$priceType, $price] = $this->normalizedPriceData($request);
 
         if ($request->service_type === 'offre' && !$this->canPublishProfessionalOffer(Auth::user())) {
             return back()
@@ -217,7 +221,8 @@ class AdController extends Controller
         $ad->category = $request->category;
         $ad->location = $finalLocation;
         $ad->city = $selectedCity;
-        $ad->price = $request->price;
+        $ad->price_type = $priceType;
+        $ad->price = $price;
         $ad->service_type = $request->service_type;
         $ad->radius_km = $request->radius_km ?? 10;
         $ad->user_id = Auth::id();
@@ -307,6 +312,7 @@ class AdController extends Controller
         }
 
         $maxPhotos = Auth::user()->hasActiveProSubscription() ? 4 : 2;
+        $request->merge(['price_type' => $this->resolvePriceType($request)]);
 
         $request->validate([
             'title' => 'required|string|max:255',
@@ -315,11 +321,14 @@ class AdController extends Controller
             'country' => 'required|string',
             'city' => 'nullable|string',
             'location' => 'nullable|string',
-            'price' => 'nullable|numeric|min:0',
+            'price_type' => 'required|in:fixed,hourly,negotiable',
+            'price' => 'nullable|required_unless:price_type,negotiable|numeric|min:0',
             'service_type' => 'required|in:offre,demande',
             'photos' => 'nullable|array|max:' . $maxPhotos,
             'photos.*' => 'image|mimes:jpeg,png,webp|max:5120',
         ]);
+
+        [$priceType, $price] = $this->normalizedPriceData($request);
 
         if ($request->service_type === 'offre' && !$this->canPublishProfessionalOffer(Auth::user())) {
             return response()->json([
@@ -356,7 +365,8 @@ class AdController extends Controller
         $ad->category = $request->category;
         $ad->location = $finalLocation;
         $ad->city = $selectedCity;
-        $ad->price = $request->price;
+        $ad->price_type = $priceType;
+        $ad->price = $price;
         $ad->service_type = $request->service_type;
         $ad->radius_km = 10;
         $ad->user_id = Auth::id();
@@ -467,6 +477,7 @@ class AdController extends Controller
         }
         
         $maxPhotos = Auth::user() && Auth::user()->hasActiveProSubscription() ? 4 : 2;
+        $request->merge(['price_type' => $this->resolvePriceType($request, $ad)]);
 
         $request->validate([
             'title' => 'required|string|max:255',
@@ -475,7 +486,8 @@ class AdController extends Controller
             'country' => 'required|string',
             'city' => 'nullable|string',
             'location' => 'nullable|string',
-            'price' => 'nullable|numeric|min:0',
+            'price_type' => 'required|in:fixed,hourly,negotiable',
+            'price' => 'nullable|required_unless:price_type,negotiable|numeric|min:0',
             'service_type' => 'required|in:offre,demande',
             'radius_km' => 'nullable|integer|min:1|max:100',
             'photos' => 'nullable|array|max:' . $maxPhotos,
@@ -485,6 +497,8 @@ class AdController extends Controller
             'target_categories' => 'nullable|array',
             'target_categories.*' => 'string',
         ]);
+
+        [$priceType, $price] = $this->normalizedPriceData($request);
 
         if ($request->service_type === 'offre' && !$this->canPublishProfessionalOffer(Auth::user())) {
             return back()
@@ -528,7 +542,8 @@ class AdController extends Controller
         $ad->location = $finalLocation;
         $ad->city = $selectedCity;
         $ad->country = $request->country;
-        $ad->price = $request->price;
+        $ad->price_type = $priceType;
+        $ad->price = $price;
         $ad->service_type = $request->service_type;
         $ad->radius_km = $request->input('radius_km', 10);
         $ad->reply_restriction = $request->input('reply_restriction', 'everyone');
@@ -656,6 +671,33 @@ class AdController extends Controller
             || $user->hasActiveProSubscription()
             || $user->hasCompletedProOnboarding()
             || $hasPaidPlan;
+    }
+
+    private function resolvePriceType(Request $request, ?Ad $ad = null): string
+    {
+        $type = $request->input('price_type');
+
+        if (in_array($type, ['fixed', 'hourly', 'negotiable'], true)) {
+            return $type;
+        }
+
+        if ($ad && in_array($ad->price_type, ['fixed', 'hourly', 'negotiable'], true)) {
+            return $ad->price_type;
+        }
+
+        if ($request->filled('price') || ($ad && $ad->price !== null)) {
+            return $request->input('service_type') === 'demande' ? 'hourly' : 'fixed';
+        }
+
+        return 'negotiable';
+    }
+
+    private function normalizedPriceData(Request $request): array
+    {
+        $priceType = $this->resolvePriceType($request);
+        $price = $priceType === 'negotiable' ? null : $request->input('price');
+
+        return [$priceType, $price];
     }
 
     /**

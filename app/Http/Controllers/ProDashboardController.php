@@ -9,6 +9,7 @@ use App\Models\ProInvoice;
 use App\Models\ProDocument;
 use App\Models\ProSubscription;
 use App\Models\UserService;
+use App\Support\ProviderSubscriptionPlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -928,8 +929,15 @@ class ProDashboardController extends Controller
             'longitude' => 'nullable|numeric',
         ]);
 
-        $amount = $validated['plan'] === 'annual' ? 85.00 : 9.99;
-        $planLabel = $validated['plan'] === 'annual' ? 'Abonnement ProxiPro Annuel' : 'Abonnement ProxiPro Mensuel';
+        $planConfig = ProviderSubscriptionPlans::get($validated['plan']);
+        if (!$planConfig || empty($planConfig['enabled'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cet abonnement n’est pas disponible pour le moment.',
+            ], 422);
+        }
+        $amount = ProviderSubscriptionPlans::amount($validated['plan']);
+        $planLabel = ProviderSubscriptionPlans::stripeLabel($validated['plan']);
 
         // Save onboarding data in session so we can finalize after payment
         session([
@@ -976,9 +984,7 @@ class ProDashboardController extends Controller
                         'currency' => 'eur',
                         'product_data' => [
                             'name' => $planLabel,
-                            'description' => $validated['plan'] === 'annual'
-                                ? 'Accès complet pendant 1 an (soit 7,08€/mois)'
-                                : 'Accès complet pendant 1 mois, renouvelable',
+                            'description' => ProviderSubscriptionPlans::description($validated['plan']),
                         ],
                         'unit_amount' => (int) round($amount * 100), // Stripe uses cents
                     ],
@@ -1053,7 +1059,7 @@ class ProDashboardController extends Controller
             // Retrieve onboarding data from session
             $data = session('pro_onboarding_data', []);
             $plan = $data['plan'] ?? $session->metadata->plan ?? 'monthly';
-            $amount = $plan === 'annual' ? 85.00 : 9.99;
+            $amount = ProviderSubscriptionPlans::amount($plan);
             $categories = $data['categories'] ?? $user->pro_service_categories ?? [];
             $interventionRadius = $data['intervention_radius'] ?? $user->pro_intervention_radius ?? 30;
 

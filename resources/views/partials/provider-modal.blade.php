@@ -1,3 +1,7 @@
+@php
+    $providerSubscriptionPlans = \App\Support\ProviderSubscriptionPlans::active();
+@endphp
+
 {{-- Modal Devenir Prestataire --}}
 <div class="modal fade" id="becomeProviderModal" tabindex="-1" aria-labelledby="becomeProviderModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
@@ -212,44 +216,34 @@
                     </p>
 
                     <div class="subscription-plans-grid">
-                        <!-- Plan Mensuel -->
-                        <div class="plan-card" data-plan="monthly" onclick="selectPlan('monthly')">
-                            <div class="plan-header-label">Mensuel</div>
-                            <div class="plan-price">9,99€</div>
-                            <div class="plan-period">/mois</div>
-                            <ul class="plan-features">
-                                <li><i class="fas fa-check"></i> Profil professionnel vérifié</li>
-                                <li><i class="fas fa-check"></i> Devis & factures illimités</li>
-                                <li><i class="fas fa-check"></i> Gestion de clientèle</li>
-                                <li><i class="fas fa-check"></i> Badge Pro visible</li>
-                                <li><i class="fas fa-check"></i> Jusqu'à 4 photos par annonce</li>
-                                <li><i class="fas fa-check"></i> Notifications en temps réel</li>
-                                <li><i class="fas fa-check"></i> Support prioritaire</li>
-                            </ul>
-                        </div>
-
-                        <!-- Plan Annuel -->
-                        <div class="plan-card plan-recommended" data-plan="annual" onclick="selectPlan('annual')">
-                            <div class="plan-badge">RECOMMANDÉ · -30%</div>
-                            <div class="plan-header-label">Annuel</div>
-                            <div class="plan-price">85€</div>
-                            <div class="plan-period">/an <span style="text-decoration: line-through; color: #94a3b8; font-size: 0.78rem;">119,88€</span></div>
-                            <div style="font-size: 0.78rem; color: #059669; font-weight: 600; margin-top: 2px;">soit 7,08€/mois</div>
-                            <ul class="plan-features">
-                                <li><i class="fas fa-check"></i> Tout le plan mensuel inclus</li>
-                                <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Statistiques avancées</li>
-                                <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Position prioritaire</li>
-                                <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Badge « Pro Premium »</li>
-                                <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Jusqu'à 4 photos par annonce</li>
-                                <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Export comptable</li>
-                                <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Support dédié 7j/7</li>
-                            </ul>
-                        </div>
+                        @foreach($providerSubscriptionPlans as $planKey => $plan)
+                            <div class="plan-card {{ !empty($plan['recommended']) ? 'plan-recommended' : '' }}" data-plan="{{ $planKey }}" onclick="selectPlan('{{ $planKey }}')">
+                                @if(!empty($plan['badge']))
+                                    <div class="plan-badge">{{ $plan['badge'] }}</div>
+                                @endif
+                                <div class="plan-header-label">{{ $plan['label'] }}</div>
+                                <div class="plan-price">{{ $plan['price'] }}</div>
+                                <div class="plan-period">
+                                    {{ $plan['period'] }}
+                                    @if(!empty($plan['original_price']))
+                                        <span class="plan-original-price">{{ $plan['original_price'] }}</span>
+                                    @endif
+                                </div>
+                                @if(!empty($plan['subtitle']))
+                                    <div class="plan-subtitle">{{ $plan['subtitle'] }}</div>
+                                @endif
+                                <ul class="plan-features">
+                                    @foreach($plan['features'] as $feature)
+                                        <li><i class="{{ !empty($plan['recommended']) ? 'fas fa-star' : 'fas fa-check' }}"></i> {{ $feature }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endforeach
                     </div>
 
                     <div class="skip-subscription-wrapper" style="text-align:center;margin-top:16px;">
                         <button type="button" class="btn btn-outline-secondary" onclick="skipSubscription()" style="font-size:0.92rem;padding:10px 28px;border-radius:10px;border:2px solid #cbd5e1;font-weight:600;">
-                            <i class="fas fa-forward me-1"></i> Continuer sans abonnement
+                            <i class="fas fa-forward"></i><span translate="no">Continuer sans abonnement</span>
                         </button>
                         <p class="skip-note" style="font-size:0.8rem;color:#94a3b8;margin-top:8px;">Vous pourrez souscrire à tout moment depuis votre espace pro.</p>
                     </div>
@@ -297,18 +291,18 @@
             <!-- Footer -->
             <div class="modal-footer provider-modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times"></i> Annuler
+                    <i class="fas fa-times"></i><span translate="no">Annuler</span>
                 </button>
                 
                 <div class="footer-nav-buttons">
                     <button type="button" class="btn btn-secondary" id="btnPrevStep" style="display: none;">
-                        <i class="fas fa-arrow-left"></i> Retour
+                        <i class="fas fa-arrow-left"></i><span translate="no">Retour</span>
                     </button>
                     <button type="button" class="btn btn-primary" id="btnNextStep">
-                        Continuer <i class="fas fa-arrow-right"></i>
+                        <span translate="no">Continuer</span><i class="fas fa-arrow-right"></i>
                     </button>
                     <button type="button" class="btn btn-success" id="btnSubmitProvider" style="display: none;">
-                        <i class="fas fa-check"></i> Confirmer
+                        <i class="fas fa-check"></i><span translate="no">Confirmer</span>
                     </button>
                 </div>
             </div>
@@ -916,7 +910,21 @@
 .plan-period {
     font-size: 0.85rem;
     color: #64748b;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
+}
+
+.plan-original-price {
+    text-decoration: line-through;
+    color: #94a3b8;
+    font-size: 0.78rem;
+    margin-left: 4px;
+}
+
+.plan-subtitle {
+    font-size: 0.78rem;
+    color: #059669;
+    font-weight: 600;
+    margin: 2px 0 14px;
 }
 
 .plan-features {
@@ -939,6 +947,10 @@
     color: #10b981;
     font-size: 0.75rem;
     flex-shrink: 0;
+}
+
+.plan-recommended .plan-features li i {
+    color: #f59e0b !important;
 }
 
 .skip-subscription-wrapper {
@@ -995,6 +1007,24 @@
     padding: 10px 20px;
     font-weight: 600;
     border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    line-height: 1.2;
+}
+
+.provider-modal-footer .btn i,
+.skip-subscription-wrapper .btn i {
+    line-height: 1;
+    margin: 0 !important;
+}
+
+.skip-subscription-wrapper .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .provider-modal-footer .btn-primary {
@@ -1074,6 +1104,14 @@
     
     // User info for recap (editable copy)
     const currentUser = @json($providerCurrentUser);
+    const providerSubscriptionPlans = @json($providerSubscriptionPlans);
+
+    function getProviderPlanLabel(plan) {
+        const config = providerSubscriptionPlans[plan];
+        if (!config) return plan || '';
+
+        return `${config.label || plan} (${config.price || ''}${config.period || ''})`;
+    }
     
     // DOM Elements
     const modal = document.getElementById('becomeProviderModal');
@@ -1354,8 +1392,8 @@
                         </div>
                         <strong style="color: #0c4a6e; font-size: 1rem;">Informations personnelles</strong>
                     </div>
-                    <button type="button" onclick="goToStep(1)" class="btn btn-sm btn-outline-primary" style="border-radius: 8px; font-size: 0.78rem;">
-                        <i class="fas fa-pen me-1"></i>Modifier
+                    <button type="button" onclick="goToStep(1)" class="btn btn-sm btn-outline-primary" style="border-radius: 8px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;" translate="no">
+                        <i class="fas fa-pen"></i><span>Modifier</span>
                     </button>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.88rem;">
@@ -1400,8 +1438,8 @@
                     </div>
                     <strong style="color: #1e293b; font-size: 1rem;">Services proposés</strong>
                 </div>
-                <button type="button" onclick="goToStep(2)" class="btn btn-sm btn-outline-success" style="border-radius: 8px; font-size: 0.78rem;">
-                    <i class="fas fa-pen me-1"></i>Modifier
+                <button type="button" onclick="goToStep(2)" class="btn btn-sm btn-outline-success" style="border-radius: 8px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;" translate="no">
+                    <i class="fas fa-pen"></i><span>Modifier</span>
                 </button>
             </div>`;
         
@@ -1436,7 +1474,7 @@
         
         // Subscription recap
         if (selectedPlan) {
-            const planLabel = selectedPlan === 'annual' ? 'Annuel (85€/an)' : 'Mensuel (9,99€/mois)';
+            const planLabel = getProviderPlanLabel(selectedPlan);
             html += `
                 <div style="margin-top: 16px; padding: 14px; background: linear-gradient(135deg, rgba(16,185,129,0.06), rgba(5,150,105,0.06)); border-radius: 12px; border: 1px solid rgba(16,185,129,0.2);">
                     <div style="display: flex; align-items: center; gap: 10px;">
@@ -1474,10 +1512,10 @@
                 return;
             }
             btnNext.disabled = true;
-            btnNext.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+            btnNext.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span translate="no">Enregistrement...</span>';
             const saved = await saveProfileFields();
             btnNext.disabled = false;
-            btnNext.innerHTML = 'Continuer <i class="fas fa-arrow-right"></i>';
+            btnNext.innerHTML = '<span translate="no">Continuer</span><i class="fas fa-arrow-right"></i>';
             if (!saved) {
                 return;
             }
@@ -1592,7 +1630,7 @@
     async function submitProvider() {
         hideError();
         btnSubmit.disabled = true;
-        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span translate="no">Enregistrement...</span>';
         
         // Build services array
         const services = [];
@@ -1627,7 +1665,7 @@
             if (data.success) {
                 // Si paiement Stripe requis, rediriger vers la page de paiement
                 if (data.requires_payment && data.checkout_url) {
-                    btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirection vers le paiement...';
+                    btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span translate="no">Redirection vers le paiement...</span>';
                     window.location.href = data.checkout_url;
                     return;
                 }
@@ -1641,7 +1679,7 @@
         }
         
         btnSubmit.disabled = false;
-        btnSubmit.innerHTML = '<i class="fas fa-check"></i> Confirmer';
+        btnSubmit.innerHTML = '<i class="fas fa-check"></i><span translate="no">Confirmer</span>';
     }
     
     // Sélection du plan d'abonnement
@@ -1686,7 +1724,7 @@
             
             let subscriptionInfo = '';
             if (result.has_subscription) {
-                const planLabel = result.plan === 'annual' ? 'Annuel (85€/an)' : 'Mensuel (9,99€/mois)';
+                const planLabel = getProviderPlanLabel(result.plan);
                 subscriptionInfo = `
                     <div style="background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(5,150,105,0.08)); border: 1px solid rgba(16,185,129,0.2); border-radius: 12px; padding: 14px; margin-bottom: 1.5rem; text-align: center;">
                         <i class="fas fa-crown" style="color: #059669; margin-right: 6px;"></i>

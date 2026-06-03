@@ -89,6 +89,22 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             'updated_at' => now()->subDays(95),
         ]);
 
+        $boostedProfessionalRequest = Ad::create([
+            'title' => 'Demande pro affichee cote particuliers',
+            'description' => 'Un compte professionnel peut aussi chercher un service',
+            'category' => 'Nettoyage',
+            'location' => 'Mamoudzou',
+            'price' => 90,
+            'service_type' => 'demande',
+            'status' => 'active',
+            'visibility' => 'public',
+            'user_id' => $professional->id,
+            'is_boosted' => true,
+            'boost_end' => now()->addDays(7),
+            'created_at' => now()->subDays(80),
+            'updated_at' => now()->subDays(80),
+        ]);
+
         $freeParticularOffer = Ad::create([
             'title' => 'Offre particulier a exclure',
             'description' => 'Une offre sans profil professionnel ne doit pas alimenter le bloc pro',
@@ -167,9 +183,10 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         preg_match_all('/data-showcase-kind="personal-request"\s+data-showcase-ad-id="(\d+)"/', $showcaseHtml, $personalMatches);
         $personalRequestIds = array_map('intval', $personalMatches[1]);
 
-        $this->assertCount(8, $personalRequestIds);
+        $this->assertCount(9, $personalRequestIds);
         $this->assertSame($urgentPersonalRequest->id, $personalRequestIds[0]);
         $this->assertContains($urgentPersonalRequest->id, $personalRequestIds);
+        $this->assertContains($boostedProfessionalRequest->id, $personalRequestIds);
         $this->assertContains($oldPersonalRequests->last()->id, $personalRequestIds);
         $this->assertStringContainsString('120 €/h', $showcaseHtml);
         $this->assertStringContainsString($urgentPersonalRequest->created_at->format('d/m/Y'), $showcaseHtml);

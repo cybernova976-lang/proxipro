@@ -510,6 +510,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     
     // Gestion des abonnements
     Route::get('/subscriptions', [AdminController::class, 'subscriptions'])->name('admin.subscriptions');
+    Route::put('/subscriptions/provider-plans', [AdminController::class, 'updateProviderSubscriptionPlans'])->name('admin.subscriptions.provider-plans.update');
     Route::put('/subscriptions/{id}', [AdminController::class, 'updateSubscription'])->name('admin.subscriptions.update');
     Route::post('/subscriptions/{id}/grant-premium', [AdminController::class, 'grantPremium'])->name('admin.subscriptions.grant-premium');
     Route::post('/subscriptions/{id}/suspend', [AdminController::class, 'suspendSubscription'])->name('admin.subscriptions.suspend');

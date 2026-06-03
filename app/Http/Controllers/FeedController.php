@@ -52,11 +52,8 @@ class FeedController extends Controller
             ->with('user');
         if ($useNearbyScope) {
             $this->applyAdGeoScope($proOffersQuery, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null, $userRadius, $geoCity, $geoCountry);
-            $this->orderByGeoDistance($proOffersQuery, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null);
-            $proOffersQuery->orderBy('created_at', 'desc');
-        } else {
-            $proOffersQuery->orderBy('is_pinned', 'desc')->orderBy('created_at', 'desc');
         }
+        $this->orderMainFeedAds($proOffersQuery, $useNearbyScope, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null);
         $proOffers = $proOffersQuery->take(8)->get();
 
         // Demandes de particuliers - filtrées par proximité
@@ -65,11 +62,8 @@ class FeedController extends Controller
             ->with('user');
         if ($useNearbyScope) {
             $this->applyAdGeoScope($clientRequestsQuery, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null, $userRadius, $geoCity, $geoCountry);
-            $this->orderByGeoDistance($clientRequestsQuery, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null);
-            $clientRequestsQuery->orderBy('created_at', 'desc');
-        } else {
-            $clientRequestsQuery->orderBy('created_at', 'desc');
         }
+        $this->orderMainFeedAds($clientRequestsQuery, $useNearbyScope, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null);
         $clientRequests = $clientRequestsQuery->take(8)->get();
 
         // Appliquer le filtre de type si présent
@@ -323,7 +317,7 @@ class FeedController extends Controller
         $homePersonalRequests = $this->buildHomeShowcaseAds(
             serviceType: 'demande',
             currentUser: $user,
-            authorKind: 'particulier',
+            authorKind: null,
             limit: 18,
             userLat: $useNearbyScope && !$geoFallbackUsed && $userLat !== null ? (float) $userLat : null,
             userLng: $useNearbyScope && !$geoFallbackUsed && $userLng !== null ? (float) $userLng : null,
@@ -665,6 +659,8 @@ class FeedController extends Controller
                     'category' => $ad->category,
                     'location' => $ad->location,
                     'price' => $ad->price,
+                    'price_type' => $ad->effective_price_type,
+                    'formatted_price' => $ad->formatted_price,
                     'latitude' => (float) $ad->latitude,
                     'longitude' => (float) $ad->longitude,
                     'is_urgent' => (bool) $ad->is_urgent,
@@ -1652,7 +1648,9 @@ class FeedController extends Controller
                         'description' => $ad->description,
                         'category' => $ad->category,
                         'service_type' => $ad->service_type,
+                        'price_type' => $ad->effective_price_type,
                         'price' => $ad->price,
+                        'formatted_price' => $ad->formatted_price,
                         'location' => $ad->location,
                         'city' => $ad->city,
                         'photos' => $ad->photos,

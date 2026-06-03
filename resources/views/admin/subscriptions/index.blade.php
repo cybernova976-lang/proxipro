@@ -99,6 +99,93 @@
     </div>
 </div>
 
+<!-- Configuration des cartes d'abonnement prestataire -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 pt-4 px-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <h5 class="fw-bold mb-1">
+                    <i class="fas fa-id-badge text-primary me-2"></i>Cartes “Devenir prestataire”
+                </h5>
+                <p class="text-muted mb-0">Modifiez les prix, badges, prix barrés et fonctionnalités affichés aux utilisateurs.</p>
+            </div>
+            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">Visible dans le parcours prestataire</span>
+        </div>
+    </div>
+    <div class="card-body px-4">
+        <form method="POST" action="{{ route('admin.subscriptions.provider-plans.update') }}">
+            @csrf
+            @method('PUT')
+            <div class="row g-4">
+                @foreach($providerSubscriptionPlans as $planKey => $providerPlan)
+                    <div class="col-lg-6">
+                        <div class="border rounded-3 p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0">{{ $providerPlan['label'] ?? ucfirst($planKey) }}</h6>
+                                <div class="d-flex gap-3">
+                                    <label class="form-check-label small">
+                                        <input type="checkbox" class="form-check-input me-1" name="plans[{{ $planKey }}][enabled]" value="1" {{ !empty($providerPlan['enabled']) ? 'checked' : '' }}>
+                                        Actif
+                                    </label>
+                                    <label class="form-check-label small">
+                                        <input type="checkbox" class="form-check-input me-1" name="plans[{{ $planKey }}][recommended]" value="1" {{ !empty($providerPlan['recommended']) ? 'checked' : '' }}>
+                                        Recommandé
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Libellé</label>
+                                    <input type="text" class="form-control" name="plans[{{ $planKey }}][label]" value="{{ $providerPlan['label'] ?? '' }}" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-semibold">Prix affiché</label>
+                                    <input type="text" class="form-control" name="plans[{{ $planKey }}][price]" value="{{ $providerPlan['price'] ?? '' }}" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-semibold">Montant Stripe</label>
+                                    <input type="number" class="form-control" name="plans[{{ $planKey }}][amount]" step="0.01" min="0" value="{{ $providerPlan['amount'] ?? 0 }}" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold">Période</label>
+                                    <input type="text" class="form-control" name="plans[{{ $planKey }}][period]" value="{{ $providerPlan['period'] ?? '' }}" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold">Prix barré</label>
+                                    <input type="text" class="form-control" name="plans[{{ $planKey }}][original_price]" value="{{ $providerPlan['original_price'] ?? '' }}" placeholder="Ex: 119,88€">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold">Badge</label>
+                                    <input type="text" class="form-control" name="plans[{{ $planKey }}][badge]" value="{{ $providerPlan['badge'] ?? '' }}" placeholder="Ex: -30%">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-semibold">Sous-texte</label>
+                                    <input type="text" class="form-control" name="plans[{{ $planKey }}][subtitle]" value="{{ $providerPlan['subtitle'] ?? '' }}" placeholder="Ex: soit 7,08€/mois">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-semibold">Description Stripe</label>
+                                    <input type="text" class="form-control" name="plans[{{ $planKey }}][description]" value="{{ $providerPlan['description'] ?? '' }}">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-semibold">Fonctionnalités affichées</label>
+                                    <textarea class="form-control" name="plans[{{ $planKey }}][features]" rows="7" required>{{ implode("\n", $providerPlan['features'] ?? []) }}</textarea>
+                                    <small class="text-muted">Une fonctionnalité par ligne.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            <div class="d-flex justify-content-end mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>Enregistrer les cartes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Filtres -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">

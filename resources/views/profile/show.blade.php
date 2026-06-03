@@ -171,7 +171,7 @@
                             </button>
                         @endif
                         <a href="{{ route('profile.edit') }}" class="btn btn-primary">
-                            <i class="fas fa-edit me-2"></i>Modifier mon profil
+                            <i class="fas fa-edit me-2"></i><span translate="no">Modifier mon profil</span>
                         </a>
                         <a href="{{ route('settings.index') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-cog me-2"></i>Paramètres

@@ -7623,8 +7623,8 @@
                             @endif
                         </div>
                     @endforeach
-                    @if($ad->price)
-                    <div class="price-overlay-badge">{{ number_format($ad->price, 0, ',', ' ') }} €</div>
+                    @if($ad->effective_price_type !== 'negotiable')
+                    <div class="price-overlay-badge">{{ $ad->formatted_price }}</div>
                     @endif
                     <div class="fb-post-media-title">{{ $ad->title }}</div>
                 </div>
@@ -7641,11 +7641,7 @@
                     @endif
                     <div class="fb-post-text">{{ Str::limit($ad->description, 300) }}</div>
                     <div class="fb-post-tags">
-                        @if($ad->price)
-                            <span class="fb-post-tag price"><i class="fas fa-tag"></i> {{ number_format($ad->price, 0, ',', ' ') }} €/h</span>
-                        @else
-                            <span class="fb-post-tag"><i class="fas fa-tag"></i> À discuter</span>
-                        @endif
+                        <span class="fb-post-tag price"><i class="fas fa-tag"></i> {{ $ad->formatted_price }}</span>
                         @if($ad->category)
                             <span class="fb-post-tag"><i class="fas fa-folder"></i> {{ $ad->category }}</span>
                         @endif
@@ -8683,7 +8679,7 @@
                 iconAnchor: [9, 9],
             });
 
-            const price = marker.price ? new Intl.NumberFormat('fr-FR').format(marker.price) + ' €' : 'Sur devis';
+            const price = marker.formatted_price || 'À négocier';
             const distance = Number(marker.distance_km);
             const distanceLine = Number.isFinite(distance)
                 ? `<div style="font-size:12px;color:#047857;font-weight:700;margin-bottom:8px;">A ${distance.toFixed(1).replace('.', ',')} km</div>`
@@ -11221,9 +11217,7 @@
 
         const firstPhoto = photos.filter(Boolean).map((photo) => buildPhotoUrl(photo)).find(Boolean);
         const isBoosted = !!ad.is_boosted && (!ad.boost_end || new Date(ad.boost_end) > new Date());
-        const price = ad.price
-            ? `${new Intl.NumberFormat('fr-FR').format(ad.price)} ${ad.service_type === 'demande' ? '€/h' : '€'}`
-            : 'Sur devis';
+        const price = ad.formatted_price || 'À négocier';
         const publishedAt = ad.published_at || ad.created_at_date || ad.created_at_human || '';
         const authorName = ad.user?.name || 'Utilisateur';
         const authorInitial = authorName.charAt(0).toUpperCase();
@@ -11338,7 +11332,7 @@
             
             let photosHtml = '';
             if (photoCount === 1) {
-                photosHtml = `<div class="fb-post-photos single" onclick="openAdDetail(this.closest('.fb-post'))"><img src="${photos[0]}" alt="" onerror="this.parentElement.style.display='none';">${ad.price ? `<div class="price-overlay-badge">${new Intl.NumberFormat('fr-FR').format(ad.price)} €</div>` : ''}<div class="fb-post-media-title">${ad.title || ''}</div></div>`;
+                photosHtml = `<div class="fb-post-photos single" onclick="openAdDetail(this.closest('.fb-post'))"><img src="${photos[0]}" alt="" onerror="this.parentElement.style.display='none';">${ad.price && ad.price_type !== 'negotiable' ? `<div class="price-overlay-badge">${ad.formatted_price || new Intl.NumberFormat('fr-FR').format(ad.price) + ' €'}</div>` : ''}<div class="fb-post-media-title">${ad.title || ''}</div></div>`;
             } else if (photoCount >= 2) {
                 const cls = photoCount === 2 ? 'two' : 'three-plus';
                 const show = photos.slice(0, Math.min(photoCount, 4));
@@ -11348,16 +11342,14 @@
                     if (i === 3 && photoCount > 4) photosHtml += `<div class="fb-photo-more-overlay">+${photoCount - 4}</div>`;
                     photosHtml += `</div>`;
                 });
-                if (ad.price) photosHtml += `<div class="price-overlay-badge">${new Intl.NumberFormat('fr-FR').format(ad.price)} €</div>`;
+                if (ad.price && ad.price_type !== 'negotiable') photosHtml += `<div class="price-overlay-badge">${ad.formatted_price || new Intl.NumberFormat('fr-FR').format(ad.price) + ' €'}</div>`;
                 photosHtml += `<div class="fb-post-media-title">${ad.title || ''}</div>`;
                 photosHtml += `</div>`;
             } else {
                 photosHtml = `<div class="fb-post-no-photo" onclick="openAdDetail(this.closest('.fb-post'))"><i class="fas fa-image"></i></div>`;
             }
 
-            const priceTag = ad.price 
-                ? `<span class="fb-post-tag price"><i class="fas fa-tag"></i> ${new Intl.NumberFormat('fr-FR').format(ad.price)} €/h</span>` 
-                : `<span class="fb-post-tag"><i class="fas fa-tag"></i> À discuter</span>`;
+            const priceTag = `<span class="fb-post-tag price"><i class="fas fa-tag"></i> ${ad.formatted_price || 'À négocier'}</span>`;
             const catTag = ad.category ? `<span class="fb-post-tag"><i class="fas fa-folder"></i> ${ad.category}</span>` : '';
             const urgentMeta = ad.is_urgent ? `<span>·</span><span style="color:#dc2626;font-weight:600;"><i class="fas fa-bolt"></i> Urgent</span>` : '';
             const boostMeta = (ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date()) ? `<span class="fb-post-sponsored-tag boost"><i class="fas fa-rocket"></i> Sponsorisé</span>` : '';
@@ -11537,9 +11529,7 @@
         badgesEl.innerHTML = badgesHtml;
 
         // Price
-        document.getElementById('adDetailPrice').textContent = ad.price
-            ? new Intl.NumberFormat('fr-FR').format(ad.price) + ' €'
-            : 'Prix à discuter';
+        document.getElementById('adDetailPrice').textContent = ad.formatted_price || 'À négocier';
 
         // Description
         document.getElementById('adDetailDescription').textContent = ad.description || '';
@@ -12103,7 +12093,7 @@
             if (photos.length === 1) {
                 photosHtml = `<div class="fb-post-photos single" onclick="openAdDetail(this.closest('.fb-post'))">
                     <img src="${photos[0]}" alt="" onerror="this.parentElement.style.display='none';">
-                    ${ad.price ? `<div class="price-overlay-badge">${new Intl.NumberFormat('fr-FR').format(ad.price)} €</div>` : ''}
+                    ${ad.price && ad.price_type !== 'negotiable' ? `<div class="price-overlay-badge">${ad.formatted_price || new Intl.NumberFormat('fr-FR').format(ad.price) + ' €'}</div>` : ''}
                     <div class="fb-post-media-title">${ad.title || ''}</div>
                 </div>`;
             } else if (photos.length >= 2) {
@@ -12114,16 +12104,14 @@
                     if (i === 3 && photos.length > 4) photosHtml += `<div class="fb-photo-more-overlay">+${photos.length - 4}</div>`;
                     photosHtml += `</div>`;
                 });
-                if (ad.price) photosHtml += `<div class="price-overlay-badge">${new Intl.NumberFormat('fr-FR').format(ad.price)} €</div>`;
+                if (ad.price && ad.price_type !== 'negotiable') photosHtml += `<div class="price-overlay-badge">${ad.formatted_price || new Intl.NumberFormat('fr-FR').format(ad.price) + ' €'}</div>`;
                 photosHtml += `<div class="fb-post-media-title">${ad.title || ''}</div>`;
                 photosHtml += `</div>`;
             } else {
                 photosHtml = `<div class="fb-post-no-photo" onclick="openAdDetail(this.closest('.fb-post'))"><i class="fas fa-image"></i></div>`;
             }
 
-            const priceTag = ad.price
-                ? `<span class="fb-post-tag price"><i class="fas fa-tag"></i> ${new Intl.NumberFormat('fr-FR').format(ad.price)} €/h</span>`
-                : `<span class="fb-post-tag"><i class="fas fa-tag"></i> À discuter</span>`;
+            const priceTag = `<span class="fb-post-tag price"><i class="fas fa-tag"></i> ${ad.formatted_price || 'À négocier'}</span>`;
             const catTag = ad.category ? `<span class="fb-post-tag"><i class="fas fa-folder"></i> ${ad.category}</span>` : '';
             const urgentMeta = ad.is_urgent ? `<span>·</span><span style="color:#dc2626;font-weight:600;"><i class="fas fa-bolt"></i> Urgent</span>` : '';
             const boostMeta = (ad.is_boosted && ad.boost_end && new Date(ad.boost_end) > new Date()) ? `<span class="fb-post-sponsored-tag boost"><i class="fas fa-rocket"></i> Sponsorisé</span>` : '';
