@@ -6920,6 +6920,93 @@
             grid-template-columns: 1fr;
         }
     }
+
+    .home-showcase-personal-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .home-showcase-fixed-row,
+    .home-showcase-row2-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .home-showcase-row2-carousel {
+        position: relative;
+    }
+
+    .home-showcase-row2-carousel.is-scrollable .home-showcase-scroll {
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        overscroll-behavior-x: contain;
+        padding: 2px 0;
+    }
+
+    .home-showcase-row2-carousel.is-scrollable .home-showcase-scroll-row-grid {
+        display: grid;
+        grid-auto-flow: column;
+        grid-template-columns: none !important;
+        grid-template-rows: 1fr;
+        grid-auto-columns: calc((100% - 28px) / 3);
+        align-items: stretch;
+    }
+
+    .home-showcase-row2-carousel.is-scrollable .home-showcase-scroll-row-grid > * {
+        scroll-snap-align: start;
+    }
+
+    @media (max-width: 1180px) {
+        .home-showcase-fixed-row,
+        .home-showcase-row2-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .home-showcase-row2-carousel.is-scrollable .home-showcase-scroll-row-grid {
+            grid-auto-columns: calc((100% - 14px) / 2);
+        }
+    }
+
+    @media (max-width: 640px) {
+        :root {
+            --feed-header-offset: 72px;
+        }
+
+        .feed-left-menu-toggle {
+            top: 18px;
+        }
+
+        .home-showcase-fixed-row,
+        .home-showcase-row2-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .home-showcase-row2-carousel.is-scrollable .home-showcase-scroll-row-grid {
+            grid-auto-columns: 100%;
+        }
+
+        .home-showcase-ad-footer {
+            grid-template-columns: minmax(0, 1fr) auto;
+            column-gap: 12px;
+        }
+
+        .home-showcase-author {
+            grid-column: 1;
+            max-width: 100%;
+        }
+
+        .home-showcase-published-at {
+            grid-column: 2;
+            justify-self: end;
+            margin-left: 12px;
+        }
+
+        .home-showcase-location {
+            grid-column: 1 / -1;
+            justify-self: start;
+            max-width: 100%;
+        }
+    }
 </style>
 @endpush
 

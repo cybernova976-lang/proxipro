@@ -328,7 +328,7 @@ class FeedController extends Controller
         $homeProfessionalOffers = $this->buildHomeShowcaseAds(
             serviceType: 'offre',
             currentUser: $user,
-            authorKind: 'professional',
+            authorKind: null,
             limit: 18,
             userLat: $useNearbyScope && !$geoFallbackUsed && $userLat !== null ? (float) $userLat : null,
             userLng: $useNearbyScope && !$geoFallbackUsed && $userLng !== null ? (float) $userLng : null,

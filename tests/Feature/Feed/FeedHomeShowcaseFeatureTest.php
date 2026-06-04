@@ -106,8 +106,8 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         ]);
 
         $freeParticularOffer = Ad::create([
-            'title' => 'Offre particulier a exclure',
-            'description' => 'Une offre sans profil professionnel ne doit pas alimenter le bloc pro',
+            'title' => 'Offre rubrique professionnelle',
+            'description' => 'Une annonce service_type offre alimente le bloc des offres professionnelles',
             'category' => 'Divers',
             'location' => 'Mamoudzou',
             'service_type' => 'offre',
@@ -177,6 +177,8 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString('Offres des particuliers', $showcaseHtml);
         $this->assertStringContainsString('Offres de professionnels', $showcaseHtml);
         $this->assertStringContainsString('Profils de professionnels', $showcaseHtml);
+        $this->assertStringContainsString('home-showcase-fixed-row', $showcaseHtml);
+        $this->assertStringContainsString('home-showcase-row2-carousel', $showcaseHtml);
         $this->assertSame(3, substr_count($showcaseHtml, 'home-showcase-carousel is-scrollable'));
         $this->assertSame(6, substr_count($showcaseHtml, 'data-showcase-scroll-dir='));
 
@@ -194,11 +196,11 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         preg_match_all('/data-showcase-kind="professional-offer"\s+data-showcase-ad-id="(\d+)"/', $showcaseHtml, $professionalMatches);
         $professionalOfferIds = array_map('intval', $professionalMatches[1]);
 
-        $this->assertCount(7, $professionalOfferIds);
+        $this->assertCount(8, $professionalOfferIds);
         $this->assertSame($boostedProfessionalOffer->id, $professionalOfferIds[0]);
         $this->assertContains($boostedProfessionalOffer->id, $professionalOfferIds);
         $this->assertContains($oldProfessionalOffers->last()->id, $professionalOfferIds);
-        $this->assertNotContains($freeParticularOffer->id, $professionalOfferIds);
+        $this->assertContains($freeParticularOffer->id, $professionalOfferIds);
         $this->assertStringContainsString('180 €', $showcaseHtml);
 
         preg_match_all('/data-showcase-kind="professional-profile"\s+data-showcase-pro-id="(\d+)"/', $showcaseHtml, $profileMatches);
