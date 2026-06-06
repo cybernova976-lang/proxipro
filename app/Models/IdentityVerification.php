@@ -161,7 +161,7 @@ class IdentityVerification extends Model
      */
     public static function requiresProfessionalDocument($user): bool
     {
-        return $user->isProfessionnel();
+        return $user->isEntreprise() || $user->isAutoEntrepreneur();
     }
 
     /**

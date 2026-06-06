@@ -100,7 +100,7 @@
                 <label class="form-label small text-muted">Type</label>
                 <select name="type" class="form-select">
                     <option value="">Tous les types</option>
-                    <option value="profile_verification" {{ request('type') == 'profile_verification' ? 'selected' : '' }}>Profil (10€)</option>
+                    <option value="profile_verification" {{ request('type') == 'profile_verification' ? 'selected' : '' }}>Profil (5 €)</option>
                     <option value="service_provider" {{ request('type') == 'service_provider' ? 'selected' : '' }}>Prestataire (10€)</option>
                 </select>
             </div>

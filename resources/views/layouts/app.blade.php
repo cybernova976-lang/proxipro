@@ -6559,6 +6559,14 @@
                         </a>
                     </nav>
 
+                    <a href="{{ route('ads.create', ['type' => 'demande']) }}"
+                       class="mobile-service-request d-lg-none"
+                       aria-label="Demander un service">
+                        <i class="fas fa-plus-circle"></i>
+                        <span class="mobile-service-request-long">Demander un service</span>
+                        <span class="mobile-service-request-short">Demander</span>
+                    </a>
+
                     <!-- Actions utilisateur -->
                     <div class="header-actions-area d-flex align-items-center gap-3 mobile-actions-group">
 
@@ -6573,7 +6581,7 @@
                                 $boostAlerts = \App\Http\Controllers\BoostController::getExpiringAlerts(Auth::user());
                             @endphp
                             @if(count($boostAlerts) > 0)
-                            <div class="dropdown mobile-header-item">
+                            <div class="dropdown mobile-header-item mobile-boost-alert">
                                 <button class="header-alert-btn header-mobile-action position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Alertes boost">
                                     <i class="fas fa-bell"></i>
                                     <span class="alert-counter">{{ count($boostAlerts) }}</span>
@@ -9742,6 +9750,154 @@
             background: linear-gradient(135deg, #e0f2fe, #bae6fd);
             transform: translateY(-1px);
         }
+
+        .mobile-service-request {
+            display: none;
+        }
+
+        @media (max-width: 991.98px) {
+            .header-modern {
+                height: 68px !important;
+                min-height: 68px !important;
+            }
+
+            .header-modern .container-fluid {
+                height: 100%;
+                padding: 0 12px !important;
+            }
+
+            .header-shell {
+                display: grid !important;
+                grid-template-columns: auto minmax(0, 1fr) auto;
+                align-items: center;
+                gap: 10px;
+                width: 100%;
+            }
+
+            .header-brand-area,
+            .header-actions-area {
+                min-width: 0;
+            }
+
+            .header-home-link {
+                display: none !important;
+            }
+
+            .header-modern .navbar-brand-modern .brand-logo {
+                width: 40px !important;
+                height: 40px !important;
+                border-radius: 11px;
+            }
+
+            .mobile-service-request {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                justify-self: center;
+                gap: 7px;
+                min-width: 0;
+                min-height: 42px;
+                max-width: 210px;
+                padding: 0 16px;
+                border-radius: 10px;
+                background: #2563eb;
+                color: #fff;
+                font-size: 0.84rem;
+                font-weight: 750;
+                line-height: 1;
+                text-decoration: none;
+                white-space: nowrap;
+                box-shadow: 0 5px 14px rgba(37, 99, 235, 0.24);
+            }
+
+            .mobile-service-request:hover,
+            .mobile-service-request:focus {
+                color: #fff;
+                background: #1d4ed8;
+            }
+
+            .mobile-service-request-short {
+                display: none;
+            }
+
+            .mobile-actions-group {
+                justify-self: end;
+                gap: 6px !important;
+            }
+
+            .mobile-header-label {
+                display: none !important;
+            }
+
+            .header-mobile-action {
+                width: 40px !important;
+                min-width: 40px !important;
+                height: 40px !important;
+                border-radius: 10px !important;
+            }
+
+            .user-menu-btn {
+                min-height: 42px;
+                padding: 2px 7px 2px 2px !important;
+            }
+
+            .user-menu-btn .user-avatar,
+            .user-menu-btn .user-avatar-placeholder {
+                width: 36px !important;
+                height: 36px !important;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header-modern .navbar-brand-modern .brand-text {
+                display: none !important;
+            }
+
+            .mobile-brand-group {
+                gap: 0 !important;
+            }
+
+            .mobile-service-request {
+                width: 100%;
+                max-width: 160px;
+                padding: 0 12px;
+            }
+
+            .mobile-actions-group > .d-flex {
+                gap: 5px !important;
+            }
+
+            .mobile-boost-alert {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 390px) {
+            .header-shell {
+                gap: 7px;
+            }
+
+            .mobile-service-request {
+                max-width: 126px;
+                padding: 0 10px;
+            }
+
+            .mobile-service-request-long {
+                display: none;
+            }
+
+            .mobile-service-request-short {
+                display: inline;
+            }
+
+            .user-menu-btn {
+                padding-right: 3px !important;
+            }
+
+            .user-menu-btn .dropdown-chevron {
+                display: none;
+            }
+        }
     </style>
 
     <!-- Bootstrap JS via CDN -->
@@ -9813,7 +9969,6 @@
     {{-- Include modals for authenticated users --}}
     @auth
         @include('partials.provider-modal')
-        @include('partials.verify-profile-modal')
         @include('partials.category-selection-modal')
         @if(Auth::user()->isOAuthUser() && !Auth::user()->profile_completed && !Auth::user()->hasCompletedProOnboarding() && !Auth::user()->hasActiveProSubscription())
             @include('partials.provider-oauth-modal')

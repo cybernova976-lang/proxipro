@@ -5,9 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\IdentityVerification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
+use Throwable;
 
 class VerificationController extends Controller
 {
@@ -98,43 +102,8 @@ class VerificationController extends Controller
      */
     public function storeAjax(Request $request)
     {
-        \Log::info('storeAjax called', [
-            'has_document_front' => $request->hasFile('document_front'),
-            'has_selfie' => $request->hasFile('selfie'),
-            'has_document_back' => $request->hasFile('document_back'),
-            'has_professional_document' => $request->hasFile('professional_document'),
-            'all_files' => array_keys($request->allFiles()),
-            'all_input' => array_keys($request->all()),
-        ]);
-        
-        $rules = [
-            'type' => 'required|in:profile_verification,service_provider',
-            'document_type' => 'required|in:cni,passport,permis,carte_sejour,id_card,driver_license',
-            'document_front' => 'required|file|mimes:jpeg,png,jpg,pdf,webp,heic,heif|max:8192',
-            'document_back' => 'nullable|file|mimes:jpeg,png,jpg,pdf,webp,heic,heif|max:8192',
-            'selfie' => 'required|file|mimes:jpeg,png,jpg,webp,heic,heif|max:8192',
-        ];
-
         $user = Auth::user();
-
-        // Professional document required for pros
-        if (IdentityVerification::requiresProfessionalDocument($user)) {
-            $rules['professional_document'] = 'required|file|mimes:jpeg,png,jpg,pdf|max:8192';
-            $rules['professional_document_type'] = 'required|in:kbis,sirene';
-        }
-
-        $request->validate($rules, [
-            'document_front.required' => 'Veuillez télécharger le recto de votre document.',
-            'document_front.mimes' => 'Le fichier doit être une image (JPG, PNG) ou un PDF.',
-            'document_front.max' => 'Le fichier ne doit pas dépasser 8 Mo.',
-            'document_back.mimes' => 'Le fichier doit être une image (JPG, PNG) ou un PDF.',
-            'document_back.max' => 'Le fichier ne doit pas dépasser 8 Mo.',
-            'selfie.required' => 'Veuillez télécharger votre selfie.',
-            'selfie.image' => 'Le selfie doit être une image.',
-            'selfie.max' => 'Le selfie ne doit pas dépasser 8 Mo.',
-            'professional_document.required' => 'Le document professionnel est obligatoire pour les professionnels.',
-            'professional_document.mimes' => 'Le document professionnel doit être une image ou un PDF.',
-        ]);
+        $files = $this->validateVerificationSubmission($request, $user, includeType: true);
 
         // Vérifier si une demande est déjà en cours
         $existingVerification = IdentityVerification::where('user_id', $user->id)
@@ -158,40 +127,26 @@ class VerificationController extends Controller
             ], 400);
         }
 
-        // Stocker les documents
-        $documentFront = $request->file('document_front')->store('verifications-temp/' . $user->id, config('filesystems.default', 'public'));
-        $documentBack = $request->hasFile('document_back') 
-            ? $request->file('document_back')->store('verifications-temp/' . $user->id, config('filesystems.default', 'public'))
-            : null;
-        $selfie = $request->file('selfie')->store('verifications-temp/' . $user->id, config('filesystems.default', 'public'));
-        
-        $professionalDocument = null;
-        $professionalDocumentType = null;
-        if ($request->hasFile('professional_document')) {
-            $professionalDocument = $request->file('professional_document')->store('verifications-temp/' . $user->id, config('filesystems.default', 'public'));
-            $professionalDocumentType = $request->professional_document_type;
-        }
-
         $price = IdentityVerification::getVerificationPrice($request->type);
+        try {
+            $verification = $this->createAwaitingPaymentVerification(
+                $user,
+                $request->type,
+                $request->document_type,
+                $files,
+                $price
+            );
+        } catch (Throwable $e) {
+            Log::error('Unable to prepare identity verification.', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
 
-        $verification = IdentityVerification::create([
-            'user_id' => $user->id,
-            'type' => $request->type,
-            'document_type' => $request->document_type,
-            'document_front' => $documentFront,
-            'document_front_status' => 'pending',
-            'document_back' => $documentBack,
-            'document_back_status' => $documentBack ? 'pending' : null,
-            'selfie' => $selfie,
-            'selfie_status' => 'pending',
-            'professional_document' => $professionalDocument,
-            'professional_document_type' => $professionalDocumentType,
-            'professional_document_status' => $professionalDocument ? 'pending' : null,
-            'payment_amount' => $price,
-            'payment_status' => 'pending',
-            'status' => 'awaiting_payment',
-            'submitted_at' => now(),
-        ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible d’enregistrer vos documents. Veuillez réessayer.',
+            ], 500);
+        }
 
         return response()->json([
             'success' => true,
@@ -284,12 +239,25 @@ class VerificationController extends Controller
             ->where('payment_status', 'pending')
             ->firstOrFail();
 
-        Stripe::setApiKey(config('services.stripe.secret'));
+        $stripeSecret = config('services.stripe.secret');
+        if (!$stripeSecret) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Le paiement est momentanément indisponible. Veuillez réessayer plus tard.',
+            ], 503);
+        }
 
-        $priceLabel = number_format((float) $verification->payment_amount, 2, ',', ' ') . '€';
+        Stripe::setApiKey($stripeSecret);
+
+        $amount = IdentityVerification::getVerificationPrice($verification->type);
+        if ((float) $verification->payment_amount !== (float) $amount) {
+            $verification->update(['payment_amount' => $amount]);
+        }
+
+        $priceLabel = number_format((float) $amount, 2, ',', ' ') . '€';
         $pointsLabel = IdentityVerification::getVerificationPointsCost($verification->type) . ' points';
         $productName = $verification->type === 'profile_verification'
-            ? "Vérification de profil ProxiPro ({$priceLabel} / {$pointsLabel})"
+            ? "Vérification de profil ProxiPro ({$priceLabel})"
             : "Badge Prestataire Vérifié ProxiPro ({$priceLabel} / {$pointsLabel})";
 
         try {
@@ -302,7 +270,7 @@ class VerificationController extends Controller
                             'name' => $productName,
                             'description' => 'Frais de vérification pour ' . $user->name,
                         ],
-                        'unit_amount' => (int)($verification->payment_amount * 100),
+                        'unit_amount' => (int) round($amount * 100),
                     ],
                     'quantity' => 1,
                 ]],
@@ -310,6 +278,7 @@ class VerificationController extends Controller
                 'success_url' => route('verification.payment.success', ['id' => $verification->id]) . '?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => route('verification.payment.cancel', ['id' => $verification->id]),
                 'customer_email' => $user->email,
+                'client_reference_id' => (string) $verification->id,
                 'metadata' => [
                     'verification_id' => $verification->id,
                     'user_id' => $user->id,
@@ -322,15 +291,21 @@ class VerificationController extends Controller
                 'checkout_url' => $session->url,
             ]);
         } catch (\Exception $e) {
+            Log::error('Unable to create verification Stripe checkout.', [
+                'verification_id' => $verification->id,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la création du paiement: ' . $e->getMessage(),
+                'message' => 'Impossible d’ouvrir le paiement sécurisé. Veuillez réessayer.',
             ], 500);
         }
     }
 
     /**
-     * Pay verification with points (20 points)
+     * Pay eligible verification types with points.
      */
     public function payWithPoints(Request $request)
     {
@@ -343,6 +318,13 @@ class VerificationController extends Controller
             ->where('user_id', $user->id)
             ->where('payment_status', 'pending')
             ->firstOrFail();
+
+        if ($verification->type === 'profile_verification') {
+            return response()->json([
+                'success' => false,
+                'message' => 'La vérification de profil nécessite un paiement sécurisé de 5 € par carte.',
+            ], 422);
+        }
 
         $pointsCost = IdentityVerification::getVerificationPointsCost($verification->type);
 
@@ -390,10 +372,22 @@ class VerificationController extends Controller
 
         if ($request->has('session_id')) {
             try {
-                Stripe::setApiKey(config('services.stripe.secret'));
+                $stripeSecret = config('services.stripe.secret');
+                if (!$stripeSecret) {
+                    throw new \RuntimeException('Stripe is not configured.');
+                }
+
+                Stripe::setApiKey($stripeSecret);
                 $session = Session::retrieve($request->session_id);
-                
-                if ($session->payment_status === 'paid') {
+                $expectedAmount = (int) round(IdentityVerification::getVerificationPrice($verification->type) * 100);
+                $metadata = $session->metadata?->toArray() ?? [];
+                $metadataMatches = (string) ($metadata['verification_id'] ?? '') === (string) $verification->id
+                    && (string) ($metadata['user_id'] ?? '') === (string) Auth::id()
+                    && (string) ($session->client_reference_id ?? '') === (string) $verification->id;
+                $amountMatches = (int) ($session->amount_total ?? 0) === $expectedAmount
+                    && strtolower((string) ($session->currency ?? '')) === 'eur';
+
+                if ($session->payment_status === 'paid' && $metadataMatches && $amountMatches) {
                     // Déplacer les documents vers dossier permanent
                     $this->moveDocumentsToPermanent($verification);
                     
@@ -407,7 +401,7 @@ class VerificationController extends Controller
                     $paymentConfirmed = true;
                 }
             } catch (\Exception $e) {
-                \Log::error('Erreur vérification paiement: ' . $e->getMessage());
+                Log::error('Erreur vérification paiement: ' . $e->getMessage());
             }
         }
 
@@ -433,13 +427,13 @@ class VerificationController extends Controller
             abort(403);
         }
 
-        // Supprimer les documents temporaires
-        Storage::disk(config('filesystems.default', 'public'))->delete($verification->document_front);
-        if ($verification->document_back) {
-            Storage::disk(config('filesystems.default', 'public'))->delete($verification->document_back);
+        if ($verification->payment_status === 'paid') {
+            return redirect()->route('profile.show')
+                ->with('error', 'Cette demande a déjà été payée et transmise à l’administration.');
         }
-        Storage::disk(config('filesystems.default', 'public'))->delete($verification->selfie);
 
+        // Supprimer les documents temporaires
+        $this->deleteVerificationFiles($verification);
         $verification->delete();
 
         return redirect()->route('profile.show')->with('error', 'Paiement annulé. Votre demande n\'a pas été envoyée.');
@@ -492,20 +486,7 @@ class VerificationController extends Controller
             return redirect()->back()->with('error', 'Veuillez compléter votre profil avant de soumettre votre vérification.');
         }
 
-        $rules = [
-            'document_type' => 'required|in:id_card,passport,driver_license,cni,permis,carte_sejour',
-            'document_front' => 'required|file|mimes:jpeg,png,jpg,pdf,webp,heic,heif|max:8192',
-            'document_back' => 'nullable|file|mimes:jpeg,png,jpg,pdf,webp,heic,heif|max:8192',
-            'selfie' => 'required|file|mimes:jpeg,png,jpg,webp,heic,heif|max:8192',
-        ];
-
-        // Professional document required for pros
-        if (IdentityVerification::requiresProfessionalDocument($user)) {
-            $rules['professional_document'] = 'required|file|mimes:jpeg,png,jpg,pdf|max:8192';
-            $rules['professional_document_type'] = 'required|in:kbis,sirene';
-        }
-
-        $request->validate($rules);
+        $files = $this->validateVerificationSubmission($request, $user);
 
         $existingVerification = IdentityVerification::where('user_id', $user->id)
             ->whereIn('status', ['awaiting_payment', 'pending'])
@@ -515,40 +496,24 @@ class VerificationController extends Controller
             return redirect()->back()->with('error', 'Vous avez déjà une demande de vérification en cours.');
         }
 
-        $documentFront = $request->file('document_front')->store('verifications-temp/' . $user->id, config('filesystems.default', 'public'));
-        
-        $documentBack = null;
-        if ($request->hasFile('document_back')) {
-            $documentBack = $request->file('document_back')->store('verifications-temp/' . $user->id, config('filesystems.default', 'public'));
-        }
-        
-        $selfie = $request->file('selfie')->store('verifications-temp/' . $user->id, config('filesystems.default', 'public'));
+        try {
+            $this->createAwaitingPaymentVerification(
+                $user,
+                'profile_verification',
+                $request->document_type,
+                $files,
+                IdentityVerification::getVerificationPrice('profile_verification')
+            );
+        } catch (Throwable $e) {
+            Log::error('Unable to prepare identity verification.', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
 
-        $professionalDocument = null;
-        $professionalDocumentType = null;
-        if ($request->hasFile('professional_document')) {
-            $professionalDocument = $request->file('professional_document')->store('verifications-temp/' . $user->id, config('filesystems.default', 'public'));
-            $professionalDocumentType = $request->professional_document_type;
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Impossible d’enregistrer vos documents. Veuillez réessayer.');
         }
-
-        IdentityVerification::create([
-            'user_id' => $user->id,
-            'type' => 'profile_verification',
-            'document_type' => $request->document_type,
-            'document_front' => $documentFront,
-            'document_front_status' => 'pending',
-            'document_back' => $documentBack,
-            'document_back_status' => $documentBack ? 'pending' : null,
-            'selfie' => $selfie,
-            'selfie_status' => 'pending',
-            'professional_document' => $professionalDocument,
-            'professional_document_type' => $professionalDocumentType,
-            'professional_document_status' => $professionalDocument ? 'pending' : null,
-            'payment_amount' => IdentityVerification::getVerificationPrice('profile_verification'),
-            'payment_status' => 'pending',
-            'status' => 'awaiting_payment',
-            'submitted_at' => now(),
-        ]);
 
         return redirect()->route('verification.index')->with('success', 'Vos documents sont prêts. Le paiement doit être validé avant l\'envoi à l\'administration.');
     }
@@ -565,15 +530,115 @@ class VerificationController extends Controller
             ->first();
 
         if ($verification) {
-            Storage::disk(config('filesystems.default', 'public'))->delete($verification->document_front);
-            if ($verification->document_back) {
-                Storage::disk(config('filesystems.default', 'public'))->delete($verification->document_back);
+            if ($verification->payment_status === 'paid') {
+                return redirect()->route('verification.index')
+                    ->with('error', 'Une demande payée et transmise ne peut plus être annulée.');
             }
-            Storage::disk(config('filesystems.default', 'public'))->delete($verification->selfie);
-            
+
+            $this->deleteVerificationFiles($verification);
             $verification->delete();
         }
 
         return redirect()->route('verification.index')->with('success', 'Votre demande de vérification a été annulée.');
+    }
+
+    private function validateVerificationSubmission(Request $request, $user, bool $includeType = false): array
+    {
+        $imageOrPdf = 'nullable|file|mimes:jpeg,png,jpg,pdf,webp,heic,heif|max:15360';
+        $image = 'nullable|file|mimes:jpeg,png,jpg,webp,heic,heif|max:15360';
+        $rules = [
+            'document_type' => 'required|in:id_card,passport,driver_license,cni,permis,carte_sejour',
+            'document_front' => $imageOrPdf,
+            'document_front_camera' => $image,
+            'document_back' => $imageOrPdf,
+            'document_back_camera' => $image,
+            'selfie' => $image,
+            'selfie_camera' => $image,
+        ];
+
+        if ($includeType) {
+            $rules['type'] = 'required|in:profile_verification,service_provider';
+        }
+
+        if (IdentityVerification::requiresProfessionalDocument($user)) {
+            $rules['professional_document'] = 'required|file|mimes:jpeg,png,jpg,pdf,webp|max:15360';
+            $rules['professional_document_type'] = 'required|in:kbis,sirene';
+        }
+
+        $request->validate($rules, [
+            '*.mimes' => 'Le fichier doit être une image compatible ou un PDF.',
+            '*.max' => 'Chaque fichier ne doit pas dépasser 15 Mo.',
+            'professional_document.required' => 'Le justificatif de votre entreprise est obligatoire.',
+        ]);
+
+        $front = $request->file('document_front') ?: $request->file('document_front_camera');
+        $back = $request->document_type === 'passport'
+            ? null
+            : ($request->file('document_back') ?: $request->file('document_back_camera'));
+        $selfie = $request->file('selfie') ?: $request->file('selfie_camera');
+
+        $errors = [];
+        if (!$front) {
+            $errors['document_front'] = 'Ajoutez la page d’identité ou le recto de votre document.';
+        }
+        if (!$selfie) {
+            $errors['selfie'] = 'Ajoutez une photo de vous tenant votre document.';
+        }
+        if ($errors) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        return [
+            'document_front' => $front,
+            'document_back' => $back,
+            'selfie' => $selfie,
+            'professional_document' => $request->file('professional_document'),
+            'professional_document_type' => IdentityVerification::getRequiredProfessionalDocumentType($user),
+        ];
+    }
+
+    private function createAwaitingPaymentVerification($user, string $type, string $documentType, array $files, float $price): IdentityVerification
+    {
+        $disk = config('filesystems.default', 'public');
+        $directory = 'verifications-temp/' . $user->id;
+        $storedPaths = [];
+
+        try {
+            foreach (['document_front', 'document_back', 'selfie', 'professional_document'] as $field) {
+                $storedPaths[$field] = $files[$field]?->store($directory, $disk);
+            }
+
+            return DB::transaction(fn () => IdentityVerification::create([
+                'user_id' => $user->id,
+                'type' => $type,
+                'document_type' => $documentType,
+                'document_front' => $storedPaths['document_front'],
+                'document_front_status' => 'pending',
+                'document_back' => $storedPaths['document_back'],
+                'document_back_status' => $storedPaths['document_back'] ? 'pending' : null,
+                'selfie' => $storedPaths['selfie'],
+                'selfie_status' => 'pending',
+                'professional_document' => $storedPaths['professional_document'],
+                'professional_document_type' => $files['professional_document_type'],
+                'professional_document_status' => $storedPaths['professional_document'] ? 'pending' : null,
+                'payment_amount' => $price,
+                'payment_status' => 'pending',
+                'status' => 'awaiting_payment',
+                'submitted_at' => null,
+            ]));
+        } catch (Throwable $e) {
+            Storage::disk($disk)->delete(array_values(array_filter($storedPaths)));
+            throw $e;
+        }
+    }
+
+    private function deleteVerificationFiles(IdentityVerification $verification): void
+    {
+        Storage::disk(config('filesystems.default', 'public'))->delete(array_values(array_filter([
+            $verification->document_front,
+            $verification->document_back,
+            $verification->selfie,
+            $verification->professional_document,
+        ])));
     }
 }

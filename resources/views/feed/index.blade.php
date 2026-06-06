@@ -7015,11 +7015,11 @@
 
     @media (max-width: 640px) {
         :root {
-            --feed-header-offset: 72px;
+            --feed-header-offset: 68px;
         }
 
         .feed-left-menu-toggle {
-            top: 18px;
+            top: 14px;
         }
 
         .home-showcase-fixed-row,

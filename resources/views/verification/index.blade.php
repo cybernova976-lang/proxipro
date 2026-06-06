@@ -184,6 +184,131 @@
         object-fit: cover;
         border: 2px solid #e2e8f0;
     }
+
+    .verification-price-note {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 16px;
+        margin-bottom: 22px;
+        border: 1px solid #bfdbfe;
+        border-radius: 12px;
+        background: #eff6ff;
+        color: #1e3a8a;
+    }
+
+    .verification-price-note strong {
+        color: #1d4ed8;
+        font-size: 1.15rem;
+        white-space: nowrap;
+    }
+
+    .verification-upload-actions {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+    }
+
+    .verification-file-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 40px;
+        padding: 8px 13px;
+        border: 1px solid #cbd5e1;
+        border-radius: 9px;
+        background: #fff;
+        color: #334155;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .verification-file-action.is-camera {
+        border-color: #bfdbfe;
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .upload-zone .verification-file-action i {
+        margin: 0 !important;
+        color: currentColor;
+        font-size: 0.9rem !important;
+        line-height: 1;
+    }
+
+    .verification-form-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding-top: 16px;
+    }
+
+    .verification-back-btn,
+    .verification-submit-btn {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 44px;
+        line-height: 1.1;
+    }
+
+    .verification-back-btn i,
+    .verification-submit-btn i {
+        margin: 0 !important;
+        line-height: 1;
+    }
+
+    @media (max-width: 576px) {
+        .verification-header {
+            padding: 22px 12px 8px;
+        }
+
+        .verification-header h1 {
+            font-size: 1.35rem;
+        }
+
+        .verification-card {
+            padding: 22px 16px;
+            border-radius: 14px;
+        }
+
+        .upload-zone {
+            padding: 24px 14px;
+        }
+
+        .verification-price-note {
+            align-items: flex-start;
+            padding: 13px 14px;
+        }
+
+        .verification-form-actions {
+            flex-direction: column-reverse;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .verification-form-actions > *,
+        .verification-submit-wrap {
+            width: 100%;
+            max-width: 280px;
+            margin-inline: auto;
+        }
+
+        .verification-back-btn,
+        .verification-submit-btn {
+            width: 100%;
+            min-height: 44px;
+            padding: 11px 16px !important;
+            font-size: 0.9rem !important;
+            border-radius: 10px !important;
+        }
+    }
 </style>
 @endpush
 
@@ -510,13 +635,13 @@
                         </div>
                         @endif
 
-                        <div class="d-flex justify-content-between align-items-center pt-3">
-                            <a href="{{ route('home') }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-2"></i>Retour
+                        <div class="verification-form-actions">
+                            <a href="{{ route('home') }}" class="btn btn-outline-secondary verification-back-btn">
+                                <i class="fas fa-arrow-left"></i><span>Retour</span>
                             </a>
-                            <button type="submit" class="btn-verify">
-                                <i class="fas fa-paper-plane me-2"></i>
-                                Resoumettre ma demande
+                            <button type="submit" class="btn-verify verification-submit-btn">
+                                <i class="fas fa-paper-plane"></i>
+                                <span>Resoumettre ma demande</span>
                             </button>
                         </div>
                     </form>
@@ -555,13 +680,13 @@
                             @enderror
                         </div>
 
-                        <div class="d-flex justify-content-between align-items-center pt-3">
-                            <a href="{{ route('home') }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-2"></i>Retour
+                        <div class="verification-form-actions">
+                            <a href="{{ route('home') }}" class="btn btn-outline-secondary verification-back-btn">
+                                <i class="fas fa-arrow-left"></i><span>Retour</span>
                             </a>
-                            <button type="submit" class="btn-verify">
-                                <i class="fas fa-paper-plane me-2"></i>
-                                Resoumettre ma demande
+                            <button type="submit" class="btn-verify verification-submit-btn">
+                                <i class="fas fa-paper-plane"></i>
+                                <span>Resoumettre ma demande</span>
                             </button>
                         </div>
                     </form>
@@ -599,11 +724,6 @@
                     <button type="button" class="btn btn-primary btn-lg" onclick="startVerificationStripePayment({{ $verification->id }}, this)">
                         <i class="fas fa-lock me-2"></i>Payer par carte
                     </button>
-                    @if(($user->available_points ?? 0) >= \App\Models\IdentityVerification::getVerificationPointsCost($verification->type))
-                    <button type="button" class="btn btn-outline-primary" onclick="payVerificationWithPoints({{ $verification->id }}, this)">
-                        <i class="fas fa-coins me-2"></i>Payer avec mes points
-                    </button>
-                    @endif
                     <form action="{{ route('verification.cancel') }}" method="POST" class="mt-2">
                         @csrf
                         <button type="submit" class="btn btn-outline-secondary w-100">
@@ -632,6 +752,11 @@
                         <li>Accédez à des fonctionnalités exclusives</li>
                         <li>Vos documents sont traités de manière confidentielle</li>
                     </ul>
+                </div>
+
+                <div class="verification-price-note">
+                    <span><i class="fas fa-lock me-2"></i>Vos documents seront transmis à l’administration uniquement après le paiement sécurisé.</span>
+                    <strong>5,00 €</strong>
                 </div>
 
                 <form id="pageVerificationForm" action="{{ route('verification.store') }}" method="POST" enctype="multipart/form-data" novalidate>
@@ -687,25 +812,43 @@
                         <label class="form-label fw-bold mb-3">2. Photos du document *</label>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="upload-zone w-100" id="pageFrontZone">
-                                    <input type="file" name="document_front" accept="image/*,.pdf,application/pdf" class="d-none" id="page_document_front" required>
+                                <div class="upload-zone w-100" id="pageFrontZone">
+                                    <input type="file" name="document_front" accept="image/*,.pdf,application/pdf" class="d-none" id="page_document_front">
+                                    <input type="file" name="document_front_camera" accept="image/*" capture="environment" class="d-none" id="page_document_front_camera">
                                     <i class="fas fa-camera d-block"></i>
-                                    <h5 class="mb-1">Recto du document</h5>
-                                    <p class="text-muted small mb-0">Cliquez pour télécharger</p>
+                                    <h5 class="mb-1">Page d’identité ou recto</h5>
+                                    <p class="text-muted small mb-0">Prenez une photo nette ou choisissez un fichier</p>
+                                    <div class="verification-upload-actions">
+                                        <button type="button" class="verification-file-action" data-file-target="page_document_front">
+                                            <i class="fas fa-folder-open"></i>Fichiers
+                                        </button>
+                                        <button type="button" class="verification-file-action is-camera" data-file-target="page_document_front_camera">
+                                            <i class="fas fa-camera"></i>Prendre une photo
+                                        </button>
+                                    </div>
                                     <img id="pageFrontPreview" class="upload-preview">
-                                </label>
+                                </div>
                                 @error('document_front')
                                     <div class="text-danger small mt-2">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <div class="col-md-6">
-                                <label class="upload-zone w-100" id="pageBackZone">
+                            <div class="col-md-6" id="pageBackColumn">
+                                <div class="upload-zone w-100" id="pageBackZone">
                                     <input type="file" name="document_back" accept="image/*,.pdf,application/pdf" class="d-none" id="page_document_back">
+                                    <input type="file" name="document_back_camera" accept="image/*" capture="environment" class="d-none" id="page_document_back_camera">
                                     <i class="fas fa-camera d-block"></i>
                                     <h5 class="mb-1">Verso du document</h5>
-                                    <p class="text-muted small mb-0">Optionnel pour passeport</p>
+                                    <p class="text-muted small mb-0">Carte d’identité, permis ou titre de séjour</p>
+                                    <div class="verification-upload-actions">
+                                        <button type="button" class="verification-file-action" data-file-target="page_document_back">
+                                            <i class="fas fa-folder-open"></i>Fichiers
+                                        </button>
+                                        <button type="button" class="verification-file-action is-camera" data-file-target="page_document_back_camera">
+                                            <i class="fas fa-camera"></i>Prendre une photo
+                                        </button>
+                                    </div>
                                     <img id="pageBackPreview" class="upload-preview">
-                                </label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -715,13 +858,22 @@
                         <label class="form-label fw-bold mb-3">3. Photo selfie avec le document *</label>
                         <div class="row">
                             <div class="col-md-6">
-                                <label class="upload-zone w-100" id="pageSelfieZone">
-                                    <input type="file" name="selfie" accept="image/*" class="d-none" id="page_selfie" required>
+                                <div class="upload-zone w-100" id="pageSelfieZone">
+                                    <input type="file" name="selfie" accept="image/*" class="d-none" id="page_selfie">
+                                    <input type="file" name="selfie_camera" accept="image/*" capture="user" class="d-none" id="page_selfie_camera">
                                     <i class="fas fa-user-circle d-block"></i>
                                     <h5 class="mb-1">Selfie avec document</h5>
                                     <p class="text-muted small mb-0">Tenez le document à côté de votre visage</p>
+                                    <div class="verification-upload-actions">
+                                        <button type="button" class="verification-file-action" data-file-target="page_selfie">
+                                            <i class="fas fa-folder-open"></i>Fichiers
+                                        </button>
+                                        <button type="button" class="verification-file-action is-camera" data-file-target="page_selfie_camera">
+                                            <i class="fas fa-camera"></i>Prendre une photo
+                                        </button>
+                                    </div>
                                     <img id="pageSelfiePreview" class="upload-preview">
-                                </label>
+                                </div>
                                 @error('selfie')
                                     <div class="text-danger small mt-2">{{ $message }}</div>
                                 @enderror
@@ -733,7 +885,7 @@
                                         <li>Assurez-vous que le document est lisible</li>
                                         <li>Bonne luminosité sans reflets</li>
                                         <li>Votre visage doit être visible</li>
-                                        <li>Format accepté : JPEG, PNG, PDF (max 8 Mo)</li>
+                                        <li>Format accepté : JPEG, PNG, PDF (max 15 Mo)</li>
                                     </ul>
                                 </div>
                             </div>
@@ -795,19 +947,19 @@
                     </div>
                     @endif
 
-                    <div class="d-flex justify-content-between align-items-center pt-3">
-                        <a href="{{ route('home') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Retour
+                    <div class="verification-form-actions">
+                        <a href="{{ route('home') }}" class="btn btn-outline-secondary verification-back-btn">
+                            <i class="fas fa-arrow-left"></i><span>Retour</span>
                         </a>
-                        <div>
+                        <div class="verification-submit-wrap">
                             @if(isset($missingFields) && count($missingFields) > 0)
                                 <div class="text-danger small mb-2 text-end">
                                     <i class="fas fa-exclamation-circle me-1"></i>Complétez votre profil pour soumettre
                                 </div>
                             @endif
-                            <button type="submit" class="btn-verify" id="submitVerificationBtn" {{ (isset($missingFields) && count($missingFields) > 0) ? 'disabled' : '' }}>
-                                <i class="fas fa-paper-plane me-2"></i>
-                                Soumettre ma demande
+                            <button type="submit" class="btn-verify verification-submit-btn" id="submitVerificationBtn" {{ (isset($missingFields) && count($missingFields) > 0) ? 'disabled' : '' }}>
+                                <i class="fas fa-lock"></i>
+                                <span>Continuer vers le paiement · 5 €</span>
                             </button>
                         </div>
                     </div>
@@ -928,6 +1080,30 @@
 
 @push('scripts')
 <script>
+    function updateDocumentBackVisibility() {
+        const selectedType = document.querySelector('#pageVerificationForm input[name="document_type"]:checked')?.value;
+        const backColumn = document.getElementById('pageBackColumn');
+        const backInput = document.getElementById('page_document_back');
+        const backCameraInput = document.getElementById('page_document_back_camera');
+        const backPreview = document.getElementById('pageBackPreview');
+        const isPassport = selectedType === 'passport';
+
+        if (!backColumn) return;
+
+        backColumn.hidden = isPassport;
+        backColumn.setAttribute('aria-hidden', isPassport ? 'true' : 'false');
+
+        if (isPassport) {
+            if (backInput) backInput.value = '';
+            if (backCameraInput) backCameraInput.value = '';
+            if (backPreview) {
+                backPreview.removeAttribute('src');
+                backPreview.style.display = 'none';
+            }
+            document.getElementById('pageBackZone')?.classList.remove('has-file', 'validation-error');
+        }
+    }
+
     // Document type selection
     document.querySelectorAll('input[name="document_type"]').forEach(input => {
         // Set initial state for old values
@@ -939,6 +1115,16 @@
             document.querySelectorAll('.document-type-card').forEach(card => card.classList.remove('selected'));
             const card = input.closest('.document-type-card');
             if (card) card.classList.add('selected');
+            updateDocumentBackVisibility();
+        });
+    });
+    updateDocumentBackVisibility();
+
+    document.querySelectorAll('[data-file-target]').forEach(button => {
+        button.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            document.getElementById(button.dataset.fileTarget)?.click();
         });
     });
 
@@ -974,8 +1160,11 @@
 
     // New submission form
     setupFilePreview('page_document_front', 'pageFrontPreview', 'pageFrontZone');
+    setupFilePreview('page_document_front_camera', 'pageFrontPreview', 'pageFrontZone');
     setupFilePreview('page_document_back', 'pageBackPreview', 'pageBackZone');
+    setupFilePreview('page_document_back_camera', 'pageBackPreview', 'pageBackZone');
     setupFilePreview('page_selfie', 'pageSelfiePreview', 'pageSelfieZone');
+    setupFilePreview('page_selfie_camera', 'pageSelfiePreview', 'pageSelfieZone');
     setupFilePreview('page_professional_document', 'pageProDocPreview', 'pageProDocZone');
 
     // Resubmission form
@@ -1099,6 +1288,33 @@
                     errors_found.push({ label: label, zone: zone });
                 }
             });
+
+            if (form.id === 'pageVerificationForm') {
+                const requiredGroups = [
+                    {
+                        inputs: ['page_document_front', 'page_document_front_camera'],
+                        label: 'la page d’identité ou le recto du document',
+                        zone: document.getElementById('pageFrontZone')
+                    },
+                    {
+                        inputs: ['page_selfie', 'page_selfie_camera'],
+                        label: 'votre selfie avec le document',
+                        zone: document.getElementById('pageSelfieZone')
+                    }
+                ];
+
+                requiredGroups.forEach(group => {
+                    const hasFile = group.inputs.some(id => {
+                        const input = document.getElementById(id);
+                        return input?.files?.length > 0;
+                    });
+
+                    if (!hasFile) {
+                        errors_found.push({ label: group.label, zone: group.zone });
+                    }
+                });
+            }
+
             const fileChecks = errors_found;
 
             fileChecks.forEach(function(check) {
