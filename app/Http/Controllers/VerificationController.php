@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
@@ -139,6 +140,8 @@ class VerificationController extends Controller
         } catch (Throwable $e) {
             Log::error('Unable to prepare identity verification.', [
                 'user_id' => $user->id,
+                'disk' => config('filesystems.default', 'public'),
+                'exception' => $e::class,
                 'error' => $e->getMessage(),
             ]);
 
@@ -507,6 +510,8 @@ class VerificationController extends Controller
         } catch (Throwable $e) {
             Log::error('Unable to prepare identity verification.', [
                 'user_id' => $user->id,
+                'disk' => config('filesystems.default', 'public'),
+                'exception' => $e::class,
                 'error' => $e->getMessage(),
             ]);
 
@@ -605,7 +610,12 @@ class VerificationController extends Controller
 
         try {
             foreach (['document_front', 'document_back', 'selfie', 'professional_document'] as $field) {
-                $storedPaths[$field] = $files[$field]?->store($directory, $disk);
+                $storedPaths[$field] = $this->storeVerificationFile(
+                    $files[$field],
+                    $directory,
+                    $disk,
+                    $field
+                );
             }
 
             return DB::transaction(fn () => IdentityVerification::create([
@@ -627,9 +637,36 @@ class VerificationController extends Controller
                 'submitted_at' => null,
             ]));
         } catch (Throwable $e) {
-            Storage::disk($disk)->delete(array_values(array_filter($storedPaths)));
+            try {
+                Storage::disk($disk)->delete(array_values(array_filter($storedPaths)));
+            } catch (Throwable $cleanupError) {
+                Log::warning('Unable to clean up failed identity verification uploads.', [
+                    'user_id' => $user->id,
+                    'disk' => $disk,
+                    'error' => $cleanupError->getMessage(),
+                ]);
+            }
             throw $e;
         }
+    }
+
+    private function storeVerificationFile($file, string $directory, string $disk, string $field): ?string
+    {
+        if (!$file) {
+            return null;
+        }
+
+        $extension = strtolower($file->guessExtension() ?: $file->getClientOriginalExtension() ?: 'bin');
+        $fileName = Str::uuid() . '-' . $field . '.' . $extension;
+
+        return retry(2, function () use ($file, $directory, $disk, $fileName, $field) {
+            $path = $file->storeAs($directory, $fileName, $disk);
+            if (!$path) {
+                throw new \RuntimeException("Storage failed for {$field}.");
+            }
+
+            return $path;
+        }, 350);
     }
 
     private function deleteVerificationFiles(IdentityVerification $verification): void

@@ -6561,10 +6561,10 @@
 
                     <a href="{{ route('ads.create', ['type' => 'demande']) }}"
                        class="mobile-service-request d-lg-none"
-                       aria-label="Demander un service">
+                       aria-label="Publier une annonce">
                         <i class="fas fa-plus-circle"></i>
-                        <span class="mobile-service-request-long">Demander un service</span>
-                        <span class="mobile-service-request-short">Demander</span>
+                        <span class="mobile-service-request-long">Publier</span>
+                        <span class="mobile-service-request-short">Publier</span>
                     </a>
 
                     <!-- Actions utilisateur -->
@@ -6726,7 +6726,9 @@
                         <div class="dropdown">
                             <button class="user-menu-btn d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 @if(Auth::user()->avatar)
-                                    <img src="{{ storage_url(Auth::user()->avatar) }}" alt="Avatar" class="user-avatar" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                    <span class="header-user-avatar-frame">
+                                        <img src="{{ storage_url(Auth::user()->avatar) }}" alt="Avatar" class="user-avatar header-user-avatar">
+                                    </span>
                                 @else
                                     <div class="user-avatar-placeholder" style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #9333ea); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 700; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                         {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
@@ -9755,6 +9757,28 @@
             display: none;
         }
 
+        .header-user-avatar-frame {
+            display: inline-flex;
+            width: 38px;
+            height: 38px;
+            flex: 0 0 38px;
+            overflow: hidden;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            background: #f8fafc;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
+        }
+
+        .header-user-avatar {
+            width: 100% !important;
+            height: 100% !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            object-fit: cover;
+            object-position: center;
+            transform: scale(1.22);
+        }
+
         @media (max-width: 991.98px) {
             .header-modern {
                 height: 68px !important;
@@ -9845,6 +9869,17 @@
             .user-menu-btn .user-avatar-placeholder {
                 width: 36px !important;
                 height: 36px !important;
+            }
+
+            .header-user-avatar-frame {
+                width: 40px;
+                height: 40px;
+                flex-basis: 40px;
+            }
+
+            .user-menu-btn .header-user-avatar {
+                width: 100% !important;
+                height: 100% !important;
             }
         }
 

@@ -177,6 +177,24 @@ class VerificationPaymentFlowTest extends TestCase
         $this->assertSame('awaiting_payment', $verification->status);
     }
 
+    public function test_verification_form_exposes_the_inline_camera_and_mobile_publish_action(): void
+    {
+        $user = User::factory()->create([
+            'identity_verified' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('verification.index'));
+
+        $response->assertOk();
+        $response->assertSee('Publier');
+        $response->assertSee('Vos documents seront transmis à l’administration uniquement après le paiement sécurisé de');
+        $response->assertSee('5,00 €');
+        $response->assertSee('data-camera-target="page_document_front"', false);
+        $response->assertSee('id="verificationCameraOverlay"', false);
+        $response->assertSee('Page d’identité du passeport');
+        $response->assertSee('maxDimension = 1800');
+    }
+
     public function test_passport_submission_does_not_store_a_back_document(): void
     {
         Storage::fake(config('filesystems.default', 'public'));

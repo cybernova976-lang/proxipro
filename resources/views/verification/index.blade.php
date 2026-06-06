@@ -188,8 +188,7 @@
     .verification-price-note {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 16px;
+        gap: 10px;
         padding: 14px 16px;
         margin-bottom: 22px;
         border: 1px solid #bfdbfe;
@@ -200,7 +199,7 @@
 
     .verification-price-note strong {
         color: #1d4ed8;
-        font-size: 1.15rem;
+        font-size: 1rem;
         white-space: nowrap;
     }
 
@@ -231,6 +230,98 @@
         border-color: #bfdbfe;
         background: #eff6ff;
         color: #1d4ed8;
+    }
+
+    .verification-file-selected {
+        margin-top: 10px;
+        color: #047857;
+        font-size: 0.78rem;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+
+    .verification-camera-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1200;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+        background: rgba(15, 23, 42, 0.88);
+    }
+
+    .verification-camera-overlay[hidden] {
+        display: none;
+    }
+
+    .verification-camera-panel {
+        width: min(100%, 520px);
+        overflow: hidden;
+        border-radius: 14px;
+        background: #0f172a;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.36);
+    }
+
+    .verification-camera-header,
+    .verification-camera-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px;
+        background: #fff;
+    }
+
+    .verification-camera-header {
+        justify-content: space-between;
+    }
+
+    .verification-camera-header strong {
+        color: #0f172a;
+        font-size: 0.95rem;
+    }
+
+    .verification-camera-close,
+    .verification-camera-switch {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border: 1px solid #cbd5e1;
+        border-radius: 9px;
+        background: #fff;
+        color: #334155;
+    }
+
+    .verification-camera-video {
+        display: block;
+        width: 100%;
+        max-height: 64vh;
+        aspect-ratio: 3 / 4;
+        object-fit: cover;
+        background: #020617;
+    }
+
+    .verification-camera-actions {
+        justify-content: center;
+    }
+
+    .verification-camera-capture {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 44px;
+        padding: 10px 18px;
+        border: 0;
+        border-radius: 9px;
+        background: #2563eb;
+        color: #fff;
+        font-weight: 750;
+    }
+
+    body.verification-camera-open {
+        overflow: hidden;
     }
 
     .upload-zone .verification-file-action i {
@@ -283,7 +374,7 @@
         }
 
         .verification-price-note {
-            align-items: flex-start;
+            display: block;
             padding: 13px 14px;
         }
 
@@ -755,8 +846,7 @@
                 </div>
 
                 <div class="verification-price-note">
-                    <span><i class="fas fa-lock me-2"></i>Vos documents seront transmis à l’administration uniquement après le paiement sécurisé.</span>
-                    <strong>5,00 €</strong>
+                    <span><i class="fas fa-lock me-2"></i>Vos documents seront transmis à l’administration uniquement après le paiement sécurisé de <strong>5,00 €</strong>.</span>
                 </div>
 
                 <form id="pageVerificationForm" action="{{ route('verification.store') }}" method="POST" enctype="multipart/form-data" novalidate>
@@ -816,13 +906,13 @@
                                     <input type="file" name="document_front" accept="image/*,.pdf,application/pdf" class="d-none" id="page_document_front">
                                     <input type="file" name="document_front_camera" accept="image/*" capture="environment" class="d-none" id="page_document_front_camera">
                                     <i class="fas fa-camera d-block"></i>
-                                    <h5 class="mb-1">Page d’identité ou recto</h5>
-                                    <p class="text-muted small mb-0">Prenez une photo nette ou choisissez un fichier</p>
+                                    <h5 class="mb-1" id="pageFrontTitle">Page d’identité ou recto</h5>
+                                    <p class="text-muted small mb-0" id="pageFrontHelp">Prenez une photo nette ou choisissez un fichier</p>
                                     <div class="verification-upload-actions">
                                         <button type="button" class="verification-file-action" data-file-target="page_document_front">
                                             <i class="fas fa-folder-open"></i>Fichiers
                                         </button>
-                                        <button type="button" class="verification-file-action is-camera" data-file-target="page_document_front_camera">
+                                        <button type="button" class="verification-file-action is-camera" data-camera-target="page_document_front" data-camera-fallback="page_document_front_camera" data-camera-facing="environment">
                                             <i class="fas fa-camera"></i>Prendre une photo
                                         </button>
                                     </div>
@@ -843,7 +933,7 @@
                                         <button type="button" class="verification-file-action" data-file-target="page_document_back">
                                             <i class="fas fa-folder-open"></i>Fichiers
                                         </button>
-                                        <button type="button" class="verification-file-action is-camera" data-file-target="page_document_back_camera">
+                                        <button type="button" class="verification-file-action is-camera" data-camera-target="page_document_back" data-camera-fallback="page_document_back_camera" data-camera-facing="environment">
                                             <i class="fas fa-camera"></i>Prendre une photo
                                         </button>
                                     </div>
@@ -868,7 +958,7 @@
                                         <button type="button" class="verification-file-action" data-file-target="page_selfie">
                                             <i class="fas fa-folder-open"></i>Fichiers
                                         </button>
-                                        <button type="button" class="verification-file-action is-camera" data-file-target="page_selfie_camera">
+                                        <button type="button" class="verification-file-action is-camera" data-camera-target="page_selfie" data-camera-fallback="page_selfie_camera" data-camera-facing="user">
                                             <i class="fas fa-camera"></i>Prendre une photo
                                         </button>
                                     </div>
@@ -1078,33 +1168,102 @@
     </div>
 </div>
 
+<div class="verification-camera-overlay" id="verificationCameraOverlay" hidden aria-hidden="true">
+    <div class="verification-camera-panel" role="dialog" aria-modal="true" aria-labelledby="verificationCameraTitle">
+        <div class="verification-camera-header">
+            <strong id="verificationCameraTitle">Prendre une photo</strong>
+            <button type="button" class="verification-camera-close" id="verificationCameraClose" aria-label="Fermer l’appareil photo">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <video class="verification-camera-video" id="verificationCameraVideo" autoplay playsinline muted></video>
+        <canvas id="verificationCameraCanvas" hidden></canvas>
+        <div class="verification-camera-actions">
+            <button type="button" class="verification-camera-switch" id="verificationCameraSwitch" title="Changer de caméra" aria-label="Changer de caméra">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button type="button" class="verification-camera-capture" id="verificationCameraCapture">
+                <i class="fas fa-camera"></i>
+                <span>Utiliser cette photo</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
-    function updateDocumentBackVisibility() {
+    const verificationImageTasks = new Set();
+    const verificationCameraState = {
+        stream: null,
+        targetId: null,
+        fallbackId: null,
+        facingMode: 'environment'
+    };
+
+    function resetVerificationUpload(inputIds, previewId, zoneId) {
+        inputIds.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) input.value = '';
+        });
+
+        const preview = document.getElementById(previewId);
+        if (preview) {
+            if (preview.dataset.objectUrl) URL.revokeObjectURL(preview.dataset.objectUrl);
+            preview.removeAttribute('src');
+            preview.removeAttribute('data-object-url');
+            preview.style.display = 'none';
+        }
+
+        const zone = document.getElementById(zoneId);
+        zone?.classList.remove('has-file', 'validation-error', 'is-processing');
+        zone?.querySelector('.verification-file-selected')?.remove();
+    }
+
+    function updateDocumentForm(options = {}) {
         const selectedType = document.querySelector('#pageVerificationForm input[name="document_type"]:checked')?.value;
         const backColumn = document.getElementById('pageBackColumn');
-        const backInput = document.getElementById('page_document_back');
-        const backCameraInput = document.getElementById('page_document_back_camera');
-        const backPreview = document.getElementById('pageBackPreview');
+        const frontTitle = document.getElementById('pageFrontTitle');
+        const frontHelp = document.getElementById('pageFrontHelp');
         const isPassport = selectedType === 'passport';
 
         if (!backColumn) return;
+
+        if (options.resetFront) {
+            resetVerificationUpload(
+                ['page_document_front', 'page_document_front_camera'],
+                'pageFrontPreview',
+                'pageFrontZone'
+            );
+        }
+
+        if (!selectedType) {
+            if (frontTitle) frontTitle.textContent = 'Page d’identité ou recto';
+            if (frontHelp) frontHelp.textContent = 'Prenez une photo nette ou choisissez un fichier';
+        } else if (isPassport) {
+            if (frontTitle) frontTitle.textContent = 'Page d’identité du passeport';
+            if (frontHelp) frontHelp.textContent = 'Page avec votre photo et vos informations';
+        } else if (selectedType === 'driver_license') {
+            if (frontTitle) frontTitle.textContent = 'Recto du permis de conduire';
+            if (frontHelp) frontHelp.textContent = 'Face avec votre photo et vos informations';
+        } else {
+            if (frontTitle) frontTitle.textContent = 'Recto de la carte d’identité';
+            if (frontHelp) frontHelp.textContent = 'Face avec votre photo et vos informations';
+        }
 
         backColumn.hidden = isPassport;
         backColumn.setAttribute('aria-hidden', isPassport ? 'true' : 'false');
 
         if (isPassport) {
-            if (backInput) backInput.value = '';
-            if (backCameraInput) backCameraInput.value = '';
-            if (backPreview) {
-                backPreview.removeAttribute('src');
-                backPreview.style.display = 'none';
-            }
-            document.getElementById('pageBackZone')?.classList.remove('has-file', 'validation-error');
+            resetVerificationUpload(
+                ['page_document_back', 'page_document_back_camera'],
+                'pageBackPreview',
+                'pageBackZone'
+            );
         }
     }
 
     // Document type selection
+    let previousDocumentType = document.querySelector('#pageVerificationForm input[name="document_type"]:checked')?.value || null;
     document.querySelectorAll('input[name="document_type"]').forEach(input => {
         // Set initial state for old values
         if (input.checked) {
@@ -1115,10 +1274,15 @@
             document.querySelectorAll('.document-type-card').forEach(card => card.classList.remove('selected'));
             const card = input.closest('.document-type-card');
             if (card) card.classList.add('selected');
-            updateDocumentBackVisibility();
+            const hasFrontFile = ['page_document_front', 'page_document_front_camera']
+                .some(id => document.getElementById(id)?.files?.length > 0);
+            const documentChanged = previousDocumentType !== input.value
+                && (previousDocumentType !== null || hasFrontFile);
+            previousDocumentType = input.value;
+            updateDocumentForm({ resetFront: documentChanged });
         });
     });
-    updateDocumentBackVisibility();
+    updateDocumentForm();
 
     document.querySelectorAll('[data-file-target]').forEach(button => {
         button.addEventListener('click', event => {
@@ -1128,7 +1292,95 @@
         });
     });
 
-    // File upload preview
+    function replaceVerificationInputFile(input, file) {
+        const transfer = new DataTransfer();
+        transfer.items.add(file);
+        input.files = transfer.files;
+    }
+
+    async function optimizeVerificationImage(file) {
+        if (!file.type.startsWith('image/') || file.type === 'image/svg+xml' || file.type === 'image/gif') {
+            return file;
+        }
+
+        let bitmap;
+        try {
+            bitmap = await createImageBitmap(file);
+        } catch (error) {
+            return file;
+        }
+
+        const maxDimension = 1800;
+        const ratio = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+        const width = Math.max(1, Math.round(bitmap.width * ratio));
+        const height = Math.max(1, Math.round(bitmap.height * ratio));
+
+        if (ratio === 1 && file.size <= 2500000) {
+            bitmap.close?.();
+            return file;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d', { alpha: false }).drawImage(bitmap, 0, 0, width, height);
+        bitmap.close?.();
+
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.84));
+        if (!blob || blob.size >= file.size) return file;
+
+        const baseName = file.name.replace(/\.[^.]+$/, '') || 'document';
+        return new File([blob], `${baseName}.jpg`, {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+        });
+    }
+
+    function renderVerificationFile(file, preview, zone) {
+        zone.querySelector('.verification-file-selected')?.remove();
+        const selected = document.createElement('div');
+        selected.className = 'verification-file-selected';
+        const selectedIcon = document.createElement('i');
+        selectedIcon.className = 'fas fa-check-circle me-1';
+        selected.append(selectedIcon, document.createTextNode(file.name));
+        zone.appendChild(selected);
+
+        if (preview.dataset.objectUrl) URL.revokeObjectURL(preview.dataset.objectUrl);
+        if (file.type.startsWith('image/')) {
+            const objectUrl = URL.createObjectURL(file);
+            preview.src = objectUrl;
+            preview.dataset.objectUrl = objectUrl;
+            preview.style.display = 'block';
+        } else {
+            preview.removeAttribute('src');
+            preview.removeAttribute('data-object-url');
+            preview.style.display = 'none';
+        }
+
+        zone.classList.add('has-file');
+        zone.classList.remove('validation-error', 'is-processing');
+    }
+
+    function processVerificationFile(input, file, preview, zone) {
+        zone.classList.add('is-processing');
+        const task = optimizeVerificationImage(file)
+            .then(optimizedFile => {
+                if (!input.files?.length || input.files[0] !== file) return;
+                if (optimizedFile !== file) replaceVerificationInputFile(input, optimizedFile);
+                renderVerificationFile(optimizedFile, preview, zone);
+            })
+            .catch(() => {
+                if (input.files?.length && input.files[0] === file) {
+                    renderVerificationFile(file, preview, zone);
+                }
+            })
+            .finally(() => verificationImageTasks.delete(task));
+
+        verificationImageTasks.add(task);
+        return task;
+    }
+
+    // File upload preview and mobile image optimization
     function setupFilePreview(inputId, previewId, zoneId) {
         const input = document.getElementById(inputId);
         const preview = document.getElementById(previewId);
@@ -1138,25 +1390,102 @@
             input.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
-                    if (file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            preview.src = e.target.result;
-                            preview.style.display = 'block';
-                            zone.classList.add('has-file');
-                        };
-                        reader.readAsDataURL(file);
-                    } else {
-                        // PDF or other non-image file
-                        preview.style.display = 'none';
-                        zone.classList.add('has-file');
-                        const h5 = zone.querySelector('h5');
-                        if (h5) h5.textContent = file.name;
-                    }
+                    processVerificationFile(input, file, preview, zone);
                 }
             });
         }
     }
+
+    function stopVerificationCamera() {
+        verificationCameraState.stream?.getTracks().forEach(track => track.stop());
+        verificationCameraState.stream = null;
+        const video = document.getElementById('verificationCameraVideo');
+        if (video) video.srcObject = null;
+    }
+
+    function closeVerificationCamera() {
+        stopVerificationCamera();
+        const overlay = document.getElementById('verificationCameraOverlay');
+        overlay.hidden = true;
+        overlay.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('verification-camera-open');
+    }
+
+    async function startVerificationCamera() {
+        const overlay = document.getElementById('verificationCameraOverlay');
+        const video = document.getElementById('verificationCameraVideo');
+
+        stopVerificationCamera();
+        verificationCameraState.stream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: {
+                facingMode: { ideal: verificationCameraState.facingMode },
+                width: { ideal: 1920 },
+                height: { ideal: 1440 }
+            }
+        });
+        video.srcObject = verificationCameraState.stream;
+        overlay.hidden = false;
+        overlay.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('verification-camera-open');
+        await video.play();
+    }
+
+    document.querySelectorAll('[data-camera-target]').forEach(button => {
+        button.addEventListener('click', async event => {
+            event.preventDefault();
+            event.stopPropagation();
+            verificationCameraState.targetId = button.dataset.cameraTarget;
+            verificationCameraState.fallbackId = button.dataset.cameraFallback;
+            verificationCameraState.facingMode = button.dataset.cameraFacing || 'environment';
+
+            if (!navigator.mediaDevices?.getUserMedia) {
+                document.getElementById(verificationCameraState.fallbackId)?.click();
+                return;
+            }
+
+            try {
+                await startVerificationCamera();
+            } catch (error) {
+                closeVerificationCamera();
+                alert('L’appareil photo n’est pas accessible. Autorisez la caméra dans votre navigateur ou utilisez le bouton Fichiers.');
+            }
+        });
+    });
+
+    document.getElementById('verificationCameraClose')?.addEventListener('click', closeVerificationCamera);
+    document.getElementById('verificationCameraSwitch')?.addEventListener('click', async () => {
+        verificationCameraState.facingMode = verificationCameraState.facingMode === 'user' ? 'environment' : 'user';
+        try {
+            await startVerificationCamera();
+        } catch (error) {
+            closeVerificationCamera();
+            alert('Impossible de changer de caméra.');
+        }
+    });
+    document.getElementById('verificationCameraCapture')?.addEventListener('click', () => {
+        const video = document.getElementById('verificationCameraVideo');
+        const canvas = document.getElementById('verificationCameraCanvas');
+        const input = document.getElementById(verificationCameraState.targetId);
+        if (!video || !canvas || !input || !video.videoWidth || !video.videoHeight) return;
+
+        const maxDimension = 1800;
+        const ratio = Math.min(1, maxDimension / Math.max(video.videoWidth, video.videoHeight));
+        canvas.width = Math.max(1, Math.round(video.videoWidth * ratio));
+        canvas.height = Math.max(1, Math.round(video.videoHeight * ratio));
+        canvas.getContext('2d', { alpha: false }).drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(blob => {
+            if (!blob) return;
+            const file = new File([blob], `verification-${Date.now()}.jpg`, {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+            });
+            replaceVerificationInputFile(input, file);
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            closeVerificationCamera();
+        }, 'image/jpeg', 0.84);
+    });
+    window.addEventListener('pagehide', stopVerificationCamera);
 
     // New submission form
     setupFilePreview('page_document_front', 'pageFrontPreview', 'pageFrontZone');
@@ -1256,6 +1585,12 @@
     document.querySelectorAll('form[action*="verification"]').forEach(function(form) {
         form.setAttribute('novalidate', 'novalidate');
         form.addEventListener('submit', function(e) {
+            if (verificationImageTasks.size > 0) {
+                e.preventDefault();
+                Promise.allSettled(Array.from(verificationImageTasks)).then(() => form.requestSubmit());
+                return;
+            }
+
             // Remove previous error messages
             form.querySelectorAll('.js-validation-error').forEach(el => el.remove());
             form.querySelectorAll('.upload-zone.validation-error').forEach(el => el.classList.remove('validation-error'));
@@ -1290,10 +1625,16 @@
             });
 
             if (form.id === 'pageVerificationForm') {
+                const selectedDocumentType = form.querySelector('input[name="document_type"]:checked')?.value;
+                const frontLabel = selectedDocumentType === 'passport'
+                    ? 'la page d’identité du passeport'
+                    : selectedDocumentType === 'driver_license'
+                        ? 'le recto du permis de conduire'
+                        : 'le recto de la carte d’identité';
                 const requiredGroups = [
                     {
                         inputs: ['page_document_front', 'page_document_front_camera'],
-                        label: 'la page d’identité ou le recto du document',
+                        label: frontLabel,
                         zone: document.getElementById('pageFrontZone')
                     },
                     {

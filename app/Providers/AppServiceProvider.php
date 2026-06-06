@@ -84,9 +84,9 @@ class AppServiceProvider extends ServiceProvider
 
         // storage_url() helper — autoloaded via composer.json "files" (app/helpers.php).
         // Generates public URLs for files stored on Cloudflare R2 (S3) or local disk.
-        // Uses FILESYSTEM_PUBLIC_DRIVER env var to select the correct URL strategy:
-        //   - 's3'   → AWS_URL + file path  (Cloudflare R2 public bucket URL)
-        //   - other  → asset('storage/' . path)  (local symlinked storage)
+        // Uses FILESYSTEM_DISK to select the correct URL strategy:
+        //   - 's3'    → AWS_URL + file path (Cloudflare R2 public bucket URL)
+        //   - 'public' → asset('storage/' . path) (local symlinked storage)
 
         // Enregistrer les fonctions mathématiques manquantes pour SQLite (Haversine).
         // Check the configured driver first (no live connection needed) to avoid

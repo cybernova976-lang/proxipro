@@ -77,6 +77,10 @@ return [
             'visibility' => 'public',
             'throw' => true,
             'report' => false,
+            'http' => [
+                'connect_timeout' => 10,
+                'timeout' => 60,
+            ],
         ],
 
     ],
