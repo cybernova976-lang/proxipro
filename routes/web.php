@@ -63,7 +63,7 @@ Route::get('login', function() {
     }
     return view('auth.login');
 })->name('login');
-Route::post('login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
+Route::post('login', [App\Http\Controllers\Auth\LoginController::class, 'login'])->name('login.attempt');
 Route::post('logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
 
 // Registration Routes...
@@ -89,6 +89,13 @@ Route::post('password/reset', [App\Http\Controllers\Auth\ResetPasswordController
 // Password Confirmation Routes
 Route::get('password/confirm', [App\Http\Controllers\Auth\ConfirmPasswordController::class, 'showConfirmForm'])->name('password.confirm');
 Route::post('password/confirm', [App\Http\Controllers\Auth\ConfirmPasswordController::class, 'confirm']);
+
+// Renouvelle le jeton d'un formulaire resté ouvert ou restauré par le navigateur mobile.
+Route::get('/auth/csrf-token', function () {
+    return response()
+        ->json(['token' => csrf_token()])
+        ->header('Cache-Control', 'no-store, private');
+})->middleware('throttle:30,1')->name('auth.csrf.refresh');
 
 // Social Authentication Routes (Google, Facebook)
 Route::get('/auth/{provider}', [App\Http\Controllers\Auth\SocialAuthController::class, 'redirect'])->name('social.redirect');

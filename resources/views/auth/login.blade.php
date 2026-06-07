@@ -72,7 +72,7 @@
             @endif
 
             <!-- Formulaire -->
-            <form method="POST" action="{{ route('login') }}" class="space-y-4" id="loginForm">
+            <form method="POST" action="{{ route('login.attempt') }}" class="space-y-4" id="loginForm">
                 @csrf
 
                 <!-- Anti-bot: Honeypot -->
@@ -128,7 +128,7 @@
                     Se connecter
                 </button>
 
-
+                <p id="loginSessionError" class="hidden text-sm text-red-600" role="alert"></p>
             </form>
         </div>
 
@@ -149,6 +149,54 @@
         f.type = f.type === 'password' ? 'text' : 'password';
     }
 
+    const loginForm = document.getElementById('loginForm');
+    const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+    const loginSessionError = document.getElementById('loginSessionError');
+    let csrfRefreshInProgress = false;
+
+    loginForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        if (csrfRefreshInProgress) {
+            return;
+        }
+
+        csrfRefreshInProgress = true;
+        loginSubmitBtn.disabled = true;
+        loginSubmitBtn.textContent = 'Connexion...';
+        loginSessionError.classList.add('hidden');
+
+        try {
+            const response = await fetch(@json(route('auth.csrf.refresh')), {
+                method: 'GET',
+                credentials: 'same-origin',
+                cache: 'no-store',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('csrf-refresh-failed');
+            }
+
+            const data = await response.json();
+            if (!data.token) {
+                throw new Error('csrf-token-missing');
+            }
+
+            loginForm.querySelector('input[name="_token"]').value = data.token;
+            document.querySelector('meta[name="csrf-token"]').setAttribute('content', data.token);
+            HTMLFormElement.prototype.submit.call(loginForm);
+        } catch (error) {
+            csrfRefreshInProgress = false;
+            loginSubmitBtn.disabled = false;
+            loginSubmitBtn.textContent = 'Se connecter';
+            loginSessionError.textContent = 'La connexion n’a pas pu être sécurisée. Vérifiez votre réseau puis réessayez.';
+            loginSessionError.classList.remove('hidden');
+        }
+    });
 
 </script>
 @endsection

@@ -41,6 +41,17 @@ class AdPublicationArchitectureFeatureTest extends TestCase
         $response->assertSee('Offre professionnelle');
     }
 
+    public function test_mobile_category_grid_uses_columns_that_fit_the_viewport(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('ads.create'));
+
+        $response->assertOk();
+        $response->assertSee('grid-template-columns: repeat(2, minmax(0, 1fr));', false);
+        $response->assertSee('overflow-wrap: anywhere;', false);
+    }
+
     public function test_particular_user_cannot_publish_professional_offer(): void
     {
         $user = User::factory()->create([

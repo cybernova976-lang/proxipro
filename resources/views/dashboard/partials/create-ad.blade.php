@@ -27,10 +27,10 @@
     .type-option h6 { margin: 0 0 4px; font-weight: 600; color: #111b21; }
     .type-option p { margin: 0; font-size: 0.85rem; color: #667781; }
     .category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-    .category-btn { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px 12px; background: #f7f8fa; border: 2px solid #e9edef; border-radius: 14px; cursor: pointer; transition: all 0.2s ease; }
+    .category-btn { display: flex; flex-direction: column; align-items: center; min-width: 0; width: 100%; gap: 10px; padding: 20px 12px; background: #f7f8fa; border: 2px solid #e9edef; border-radius: 14px; cursor: pointer; transition: all 0.2s ease; }
     .category-btn:hover { border-color: #00a884; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,168,132,0.15); }
     .category-btn .cat-icon { font-size: 2rem; }
-    .category-btn .cat-name { font-weight: 600; font-size: 0.85rem; color: #111b21; text-align: center; }
+    .category-btn .cat-name { font-weight: 600; font-size: 0.85rem; color: #111b21; text-align: center; overflow-wrap: anywhere; }
     .subcategory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
     .subcategory-btn { padding: 14px 18px; background: #f7f8fa; border: 2px solid #e9edef; border-radius: 10px; text-align: left; font-weight: 500; color: #111b21; cursor: pointer; transition: all 0.2s ease; }
     .subcategory-btn:hover { border-color: #00a884; background: #f0faf7; }
@@ -114,7 +114,8 @@
         .publish-container { padding: 20px 16px 50px; }
         .form-section { padding: 24px 20px; }
         .type-selector { grid-template-columns: 1fr; }
-        .category-grid { grid-template-columns: repeat(3, 1fr); }
+        .category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; }
+        .subcategory-grid { grid-template-columns: minmax(0, 1fr); }
         .form-actions { flex-direction: column-reverse; }
         .btn-cancel, .btn-publish { width: 100%; text-align: center; justify-content: center; }
     }

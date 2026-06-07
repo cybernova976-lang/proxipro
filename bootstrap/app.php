@@ -29,6 +29,12 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($response->getStatusCode() === 419 && request()->isMethod('post')) {
                 $email = (string) request()->input('email', '');
 
+                if (request()->routeIs('login.attempt') || request()->is('login')) {
+                    return redirect()->route('login')
+                        ->withInput(request()->only('email', 'remember'))
+                        ->with('error', 'Votre session a été renouvelée. Veuillez valider à nouveau la connexion.');
+                }
+
                 if (request()->routeIs('verification.code.verify') && $email !== '') {
                     return redirect()->route('verification.code.show', ['email' => $email])
                         ->with('error', 'Votre session a expiré pendant la vérification. Saisissez à nouveau le code pour continuer.');

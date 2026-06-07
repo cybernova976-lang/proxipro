@@ -2,6 +2,11 @@
 
 use Illuminate\Support\Str;
 
+$configuredSessionDriver = env('SESSION_DRIVER', 'database');
+$sessionDriver = env('APP_ENV') === 'production' && $configuredSessionDriver === 'cookie'
+    ? 'database'
+    : $configuredSessionDriver;
+
 return [
 
     /*
@@ -18,7 +23,7 @@ return [
     |
     */
 
-    'driver' => env('SESSION_DRIVER', 'cookie'),
+    'driver' => $sessionDriver,
 
     /*
     |--------------------------------------------------------------------------
