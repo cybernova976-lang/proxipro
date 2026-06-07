@@ -289,6 +289,9 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/verification', [VerificationController::class, 'index'])->name('verification.index');
     Route::post('/verification', [VerificationController::class, 'store'])->name('verification.store');
+    Route::get('/verification/documents/{document}', [VerificationController::class, 'showDocument'])
+        ->whereUuid('document')
+        ->name('verification.documents.show');
     Route::post('/verification/cancel', [VerificationController::class, 'cancel'])->name('verification.cancel');
     Route::post('/verification/resubmit', [VerificationController::class, 'resubmit'])->name('verification.resubmit');
     

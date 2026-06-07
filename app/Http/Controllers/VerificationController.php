@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\IdentityVerification;
+use App\Models\IdentityVerificationDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -98,6 +99,27 @@ class VerificationController extends Controller
         ]);
     }
 
+    public function showDocument(string $document)
+    {
+        $storedDocument = IdentityVerificationDocument::findOrFail($document);
+        $user = Auth::user();
+
+        abort_unless($storedDocument->user_id === $user->id || $user->isAdmin(), 403);
+
+        $content = base64_decode($storedDocument->content, true);
+        abort_if($content === false, 404);
+
+        $fileName = str_replace(['"', "\r", "\n"], '', $storedDocument->original_name);
+
+        return response($content, 200, [
+            'Content-Type' => $storedDocument->mime_type,
+            'Content-Length' => (string) strlen($content),
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+            'Cache-Control' => 'private, no-store, max-age=0',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     /**
      * Store verification documents (AJAX)
      */
@@ -140,7 +162,7 @@ class VerificationController extends Controller
         } catch (Throwable $e) {
             Log::error('Unable to prepare identity verification.', [
                 'user_id' => $user->id,
-                'disk' => config('filesystems.default', 'public'),
+                'storage' => 'database',
                 'exception' => $e::class,
                 'error' => $e->getMessage(),
             ]);
@@ -197,27 +219,27 @@ class VerificationController extends Controller
 
         $request->validate($rules);
 
-        // Replace rejected documents
-        foreach ($rejectedFields as $field) {
-            if ($request->hasFile($field)) {
-                // Delete old file
-                if ($verification->$field) {
-                    Storage::disk(config('filesystems.default', 'public'))->delete($verification->$field);
+        DB::transaction(function () use ($request, $rejectedFields, $verification, $user) {
+            foreach ($rejectedFields as $field) {
+                if (!$request->hasFile($field)) {
+                    continue;
                 }
-                // Store new file
-                $newPath = $request->file($field)->store('verifications/' . $user->id, config('filesystems.default', 'public'));
-                $verification->$field = $newPath;
+
+                $this->deleteVerificationPath($verification->$field);
+                $prepared = $this->prepareDatabaseDocument($request->file($field), $field);
+                $verification->$field = $prepared['path'];
                 $verification->{$field . '_status'} = 'pending';
                 $verification->{$field . '_rejection_reason'} = null;
+                $this->createDatabaseDocument($verification, $user->id, $field, $prepared);
             }
-        }
 
-        $verification->status = 'pending';
-        $verification->admin_message = null;
-        $verification->resubmitted_at = now();
-        $verification->resubmission_count = ($verification->resubmission_count ?? 0) + 1;
-        $verification->submitted_at = now();
-        $verification->save();
+            $verification->status = 'pending';
+            $verification->admin_message = null;
+            $verification->resubmitted_at = now();
+            $verification->resubmission_count = ($verification->resubmission_count ?? 0) + 1;
+            $verification->submitted_at = now();
+            $verification->save();
+        });
 
         // Marquer les anciennes notifications de vérification comme lues
         $user->unreadNotifications()
@@ -447,29 +469,50 @@ class VerificationController extends Controller
      */
     private function moveDocumentsToPermanent(IdentityVerification $verification)
     {
-        $userId = $verification->user_id;
+        $paths = array_filter([
+            $verification->document_front,
+            $verification->document_back,
+            $verification->selfie,
+            $verification->professional_document,
+        ]);
 
-        if (Storage::disk(config('filesystems.default', 'public'))->exists($verification->document_front)) {
+        if (collect($paths)->every(
+            fn (string $path) => IdentityVerificationDocument::isDatabasePath($path)
+        )) {
+            return;
+        }
+
+        $disk = Storage::disk(config('filesystems.default', 'public'));
+
+        if ($verification->document_front
+            && !IdentityVerificationDocument::isDatabasePath($verification->document_front)
+            && $disk->exists($verification->document_front)) {
             $newPath = str_replace('verifications-temp/', 'verifications/', $verification->document_front);
-            Storage::disk(config('filesystems.default', 'public'))->move($verification->document_front, $newPath);
+            $disk->move($verification->document_front, $newPath);
             $verification->document_front = $newPath;
         }
 
-        if ($verification->document_back && Storage::disk(config('filesystems.default', 'public'))->exists($verification->document_back)) {
+        if ($verification->document_back
+            && !IdentityVerificationDocument::isDatabasePath($verification->document_back)
+            && $disk->exists($verification->document_back)) {
             $newPath = str_replace('verifications-temp/', 'verifications/', $verification->document_back);
-            Storage::disk(config('filesystems.default', 'public'))->move($verification->document_back, $newPath);
+            $disk->move($verification->document_back, $newPath);
             $verification->document_back = $newPath;
         }
 
-        if (Storage::disk(config('filesystems.default', 'public'))->exists($verification->selfie)) {
+        if ($verification->selfie
+            && !IdentityVerificationDocument::isDatabasePath($verification->selfie)
+            && $disk->exists($verification->selfie)) {
             $newPath = str_replace('verifications-temp/', 'verifications/', $verification->selfie);
-            Storage::disk(config('filesystems.default', 'public'))->move($verification->selfie, $newPath);
+            $disk->move($verification->selfie, $newPath);
             $verification->selfie = $newPath;
         }
 
-        if ($verification->professional_document && Storage::disk(config('filesystems.default', 'public'))->exists($verification->professional_document)) {
+        if ($verification->professional_document
+            && !IdentityVerificationDocument::isDatabasePath($verification->professional_document)
+            && $disk->exists($verification->professional_document)) {
             $newPath = str_replace('verifications-temp/', 'verifications/', $verification->professional_document);
-            Storage::disk(config('filesystems.default', 'public'))->move($verification->professional_document, $newPath);
+            $disk->move($verification->professional_document, $newPath);
             $verification->professional_document = $newPath;
         }
 
@@ -510,7 +553,7 @@ class VerificationController extends Controller
         } catch (Throwable $e) {
             Log::error('Unable to prepare identity verification.', [
                 'user_id' => $user->id,
-                'disk' => config('filesystems.default', 'public'),
+                'storage' => 'database',
                 'exception' => $e::class,
                 'error' => $e->getMessage(),
             ]);
@@ -604,78 +647,98 @@ class VerificationController extends Controller
 
     private function createAwaitingPaymentVerification($user, string $type, string $documentType, array $files, float $price): IdentityVerification
     {
-        $disk = config('filesystems.default', 'public');
-        $directory = 'verifications-temp/' . $user->id;
-        $storedPaths = [];
-
-        try {
-            foreach (['document_front', 'document_back', 'selfie', 'professional_document'] as $field) {
-                $storedPaths[$field] = $this->storeVerificationFile(
-                    $files[$field],
-                    $directory,
-                    $disk,
-                    $field
-                );
+        $preparedDocuments = [];
+        foreach (['document_front', 'document_back', 'selfie', 'professional_document'] as $field) {
+            if ($files[$field]) {
+                $preparedDocuments[$field] = $this->prepareDatabaseDocument($files[$field], $field);
             }
+        }
 
-            return DB::transaction(fn () => IdentityVerification::create([
+        return DB::transaction(function () use ($user, $type, $documentType, $files, $price, $preparedDocuments) {
+            $verification = IdentityVerification::create([
                 'user_id' => $user->id,
                 'type' => $type,
                 'document_type' => $documentType,
-                'document_front' => $storedPaths['document_front'],
+                'document_front' => $preparedDocuments['document_front']['path'],
                 'document_front_status' => 'pending',
-                'document_back' => $storedPaths['document_back'],
-                'document_back_status' => $storedPaths['document_back'] ? 'pending' : null,
-                'selfie' => $storedPaths['selfie'],
+                'document_back' => $preparedDocuments['document_back']['path'] ?? null,
+                'document_back_status' => isset($preparedDocuments['document_back']) ? 'pending' : null,
+                'selfie' => $preparedDocuments['selfie']['path'],
                 'selfie_status' => 'pending',
-                'professional_document' => $storedPaths['professional_document'],
+                'professional_document' => $preparedDocuments['professional_document']['path'] ?? null,
                 'professional_document_type' => $files['professional_document_type'],
-                'professional_document_status' => $storedPaths['professional_document'] ? 'pending' : null,
+                'professional_document_status' => isset($preparedDocuments['professional_document']) ? 'pending' : null,
                 'payment_amount' => $price,
                 'payment_status' => 'pending',
                 'status' => 'awaiting_payment',
                 'submitted_at' => null,
-            ]));
-        } catch (Throwable $e) {
-            try {
-                Storage::disk($disk)->delete(array_values(array_filter($storedPaths)));
-            } catch (Throwable $cleanupError) {
-                Log::warning('Unable to clean up failed identity verification uploads.', [
-                    'user_id' => $user->id,
-                    'disk' => $disk,
-                    'error' => $cleanupError->getMessage(),
-                ]);
+            ]);
+
+            foreach ($preparedDocuments as $field => $prepared) {
+                $this->createDatabaseDocument($verification, $user->id, $field, $prepared);
             }
-            throw $e;
-        }
+
+            return $verification;
+        });
     }
 
-    private function storeVerificationFile($file, string $directory, string $disk, string $field): ?string
+    private function prepareDatabaseDocument($file, string $field): array
     {
-        if (!$file) {
-            return null;
+        $content = file_get_contents($file->getRealPath());
+        if ($content === false) {
+            throw new \RuntimeException("Unable to read {$field}.");
         }
 
         $extension = strtolower($file->guessExtension() ?: $file->getClientOriginalExtension() ?: 'bin');
-        $fileName = Str::uuid() . '-' . $field . '.' . $extension;
+        $id = (string) Str::uuid();
 
-        return retry(2, function () use ($file, $directory, $disk, $fileName, $field) {
-            $path = $file->storeAs($directory, $fileName, $disk);
-            if (!$path) {
-                throw new \RuntimeException("Storage failed for {$field}.");
-            }
+        return [
+            'id' => $id,
+            'path' => IdentityVerificationDocument::path($id, $extension),
+            'original_name' => $file->getClientOriginalName(),
+            'mime_type' => $file->getMimeType() ?: 'application/octet-stream',
+            'extension' => $extension,
+            'size' => strlen($content),
+            'content' => base64_encode($content),
+        ];
+    }
 
-            return $path;
-        }, 350);
+    private function createDatabaseDocument(
+        IdentityVerification $verification,
+        int $userId,
+        string $field,
+        array $prepared
+    ): void {
+        IdentityVerificationDocument::create([
+            'id' => $prepared['id'],
+            'identity_verification_id' => $verification->id,
+            'user_id' => $userId,
+            'field' => $field,
+            'original_name' => $prepared['original_name'],
+            'mime_type' => $prepared['mime_type'],
+            'extension' => $prepared['extension'],
+            'size' => $prepared['size'],
+            'content' => $prepared['content'],
+        ]);
     }
 
     private function deleteVerificationFiles(IdentityVerification $verification): void
     {
-        Storage::disk(config('filesystems.default', 'public'))->delete(array_values(array_filter([
-            $verification->document_front,
-            $verification->document_back,
-            $verification->selfie,
-            $verification->professional_document,
-        ])));
+        foreach (['document_front', 'document_back', 'selfie', 'professional_document'] as $field) {
+            $this->deleteVerificationPath($verification->$field);
+        }
+    }
+
+    private function deleteVerificationPath(?string $path): void
+    {
+        $databaseId = IdentityVerificationDocument::idFromPath($path);
+        if ($databaseId) {
+            IdentityVerificationDocument::whereKey($databaseId)->delete();
+            return;
+        }
+
+        if ($path) {
+            Storage::disk(config('filesystems.default', 'public'))->delete($path);
+        }
     }
 }

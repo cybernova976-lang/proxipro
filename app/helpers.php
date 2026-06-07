@@ -26,6 +26,11 @@ if (!function_exists('storage_url')) {
         // Nettoyer le préfixe storage/ si présent (restes de l'ancien stockage local)
         $path = ltrim(preg_replace('#^/?storage/#', '', $path), '/');
 
+        $verificationDocumentId = \App\Models\IdentityVerificationDocument::idFromPath($path);
+        if ($verificationDocumentId) {
+            return route('verification.documents.show', ['document' => $verificationDocumentId]);
+        }
+
         // Determine whether the active default disk is S3-based.
         // We check the default disk name (FILESYSTEM_DISK) rather than the 'public'
         // disk driver, because in production FILESYSTEM_DISK=s3 makes Storage::disk()

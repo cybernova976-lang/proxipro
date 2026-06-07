@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class IdentityVerification extends Model
 {
@@ -56,6 +57,11 @@ class IdentityVerification extends Model
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(IdentityVerificationDocument::class, 'identity_verification_id');
     }
 
     public function isPending()

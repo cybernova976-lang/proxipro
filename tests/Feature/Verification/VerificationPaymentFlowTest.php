@@ -3,6 +3,7 @@
 namespace Tests\Feature\Verification;
 
 use App\Models\IdentityVerification;
+use App\Models\IdentityVerificationDocument;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -36,7 +37,8 @@ class VerificationPaymentFlowTest extends TestCase
         $this->assertSame('pending', $verification->payment_status);
         $this->assertSame('5.00', $verification->payment_amount);
         $this->assertNull($verification->submitted_at);
-        $this->assertStringStartsWith('verifications-temp/' . $user->id, $verification->document_front);
+        $this->assertStringStartsWith('verification-documents/', $verification->document_front);
+        $this->assertDatabaseCount('identity_verification_documents', 2);
 
         $page = $this->actingAs($user)->get(route('verification.index'));
 
@@ -175,6 +177,77 @@ class VerificationPaymentFlowTest extends TestCase
         $this->assertNotNull($verification->document_front);
         $this->assertNotNull($verification->selfie);
         $this->assertSame('awaiting_payment', $verification->status);
+    }
+
+    public function test_submission_does_not_depend_on_the_remote_filesystem(): void
+    {
+        config([
+            'filesystems.default' => 's3',
+            'filesystems.disks.s3.key' => null,
+            'filesystems.disks.s3.secret' => null,
+            'filesystems.disks.s3.bucket' => null,
+            'filesystems.disks.s3.endpoint' => 'https://unreachable.invalid',
+        ]);
+
+        $user = User::factory()->create([
+            'identity_verified' => false,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('verification.store'), [
+            'document_type' => 'passport',
+            'document_front' => UploadedFile::fake()->create('passport.jpg', 256, 'image/jpeg'),
+            'selfie' => UploadedFile::fake()->create('selfie.jpg', 256, 'image/jpeg'),
+        ]);
+
+        $response->assertRedirect(route('verification.index'));
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('identity_verification_documents', 2);
+    }
+
+    public function test_verification_documents_are_private_to_the_owner_and_admin(): void
+    {
+        $owner = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $verification = IdentityVerification::create([
+            'user_id' => $owner->id,
+            'type' => 'profile_verification',
+            'document_type' => 'passport',
+            'document_front' => 'verification-documents/123e4567-e89b-12d3-a456-426614174000.jpg',
+            'document_front_status' => 'pending',
+            'selfie' => 'verification-documents/123e4567-e89b-12d3-a456-426614174001.jpg',
+            'selfie_status' => 'pending',
+            'payment_amount' => 5,
+            'payment_status' => 'pending',
+            'status' => 'awaiting_payment',
+        ]);
+
+        $document = IdentityVerificationDocument::create([
+            'id' => '123e4567-e89b-12d3-a456-426614174000',
+            'identity_verification_id' => $verification->id,
+            'user_id' => $owner->id,
+            'field' => 'document_front',
+            'original_name' => 'passport.jpg',
+            'mime_type' => 'image/jpeg',
+            'extension' => 'jpg',
+            'size' => 13,
+            'content' => base64_encode('private-image'),
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('verification.documents.show', $document->id))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/jpeg')
+            ->assertSee('private-image');
+
+        $this->actingAs($otherUser)
+            ->get(route('verification.documents.show', $document->id))
+            ->assertForbidden();
+
+        $this->actingAs($admin)
+            ->get(route('verification.documents.show', $document->id))
+            ->assertOk();
     }
 
     public function test_verification_form_exposes_the_inline_camera_and_mobile_publish_action(): void
