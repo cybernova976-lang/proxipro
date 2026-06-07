@@ -180,11 +180,15 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString('home-showcase-fixed-row', $showcaseHtml);
         $this->assertStringContainsString('home-showcase-row2-carousel', $showcaseHtml);
         $this->assertStringContainsString('home-showcase-professional-offers-carousel', $showcaseHtml);
-        $this->assertStringContainsString('data-mobile-navigation="swipe"', $showcaseHtml);
+        $this->assertSame(2, substr_count($showcaseHtml, 'data-mobile-layout="stacked-limited"'));
         $this->assertSame(3, substr_count($showcaseHtml, 'home-showcase-carousel is-scrollable'));
         $this->assertSame(6, substr_count($showcaseHtml, 'data-showcase-scroll-dir='));
         $this->assertStringContainsString(
-            '.home-showcase-professional-offers-carousel .home-showcase-professional-offers-arrow',
+            '.home-showcase-block--personal-requests .home-showcase-carousel-arrow',
+            $content
+        );
+        $this->assertStringContainsString(
+            '.home-showcase-professional-offers-carousel .home-showcase-ads-grid > :nth-child(n + 5)',
             $content
         );
 

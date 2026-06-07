@@ -1687,16 +1687,28 @@
             width: 32px;
             height: 32px;
         }
-        .home-showcase-professional-offers-carousel .home-showcase-professional-offers-arrow {
+        .home-showcase-block--personal-requests .home-showcase-carousel-arrow,
+        .home-showcase-block--professional-offers .home-showcase-carousel-arrow {
             display: none;
         }
+        .home-showcase-row2-carousel.is-scrollable .home-showcase-scroll,
         .home-showcase-professional-offers-carousel.is-scrollable .home-showcase-scroll {
-            touch-action: pan-x;
-            -webkit-overflow-scrolling: touch;
+            overflow-x: visible;
+            scroll-snap-type: none;
+            overscroll-behavior-x: auto;
+            touch-action: auto;
         }
+        .home-showcase-row2-carousel.is-scrollable .home-showcase-scroll-row-grid,
         .home-showcase-professional-offers-carousel.is-scrollable .home-showcase-scroll-grid {
-            grid-auto-columns: 90%;
-            padding-right: 10%;
+            grid-auto-flow: row;
+            grid-template-columns: 1fr !important;
+            grid-template-rows: none;
+            grid-auto-columns: auto;
+            padding: 0;
+        }
+        .home-showcase-row2-grid > :nth-child(n + 2),
+        .home-showcase-professional-offers-carousel .home-showcase-ads-grid > :nth-child(n + 5) {
+            display: none;
         }
     }
     .saved-search-banner {

@@ -53,7 +53,7 @@
         </div>
 
         @if($isPersonalRequestSection)
-            <div class="home-showcase-personal-stack">
+            <div class="home-showcase-personal-stack" data-mobile-layout="stacked-limited">
                 <div class="home-showcase-ads-grid home-showcase-fixed-row" data-showcase-ads-count="{{ $fixedPersonalAds->count() }}">
                     @foreach($fixedPersonalAds as $ad)
                         @include('feed.partials.home-showcase-ad-card', ['ad' => $ad, 'section' => $section])
@@ -85,7 +85,7 @@
                 @endif
             </div>
         @else
-            <div class="home-showcase-carousel{{ $isScrollableSection ? ' is-scrollable' : '' }} home-showcase-professional-offers-carousel" data-showcase-carousel data-mobile-navigation="swipe">
+            <div class="home-showcase-carousel{{ $isScrollableSection ? ' is-scrollable' : '' }} home-showcase-professional-offers-carousel" data-showcase-carousel data-mobile-layout="stacked-limited">
                 @if($isScrollableSection)
                     <button type="button" class="home-showcase-carousel-arrow home-showcase-carousel-arrow--prev home-showcase-professional-offers-arrow" data-showcase-scroll-dir="-1" aria-label="Annonces précédentes">
                         <i class="fas fa-chevron-left"></i>
