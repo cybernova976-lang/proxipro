@@ -179,8 +179,14 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString('Profils de professionnels', $showcaseHtml);
         $this->assertStringContainsString('home-showcase-fixed-row', $showcaseHtml);
         $this->assertStringContainsString('home-showcase-row2-carousel', $showcaseHtml);
+        $this->assertStringContainsString('home-showcase-professional-offers-carousel', $showcaseHtml);
+        $this->assertStringContainsString('data-mobile-navigation="swipe"', $showcaseHtml);
         $this->assertSame(3, substr_count($showcaseHtml, 'home-showcase-carousel is-scrollable'));
         $this->assertSame(6, substr_count($showcaseHtml, 'data-showcase-scroll-dir='));
+        $this->assertStringContainsString(
+            '.home-showcase-professional-offers-carousel .home-showcase-professional-offers-arrow',
+            $content
+        );
 
         preg_match_all('/data-showcase-kind="personal-request"\s+data-showcase-ad-id="(\d+)"/', $showcaseHtml, $personalMatches);
         $personalRequestIds = array_map('intval', $personalMatches[1]);

@@ -1687,6 +1687,17 @@
             width: 32px;
             height: 32px;
         }
+        .home-showcase-professional-offers-carousel .home-showcase-professional-offers-arrow {
+            display: none;
+        }
+        .home-showcase-professional-offers-carousel.is-scrollable .home-showcase-scroll {
+            touch-action: pan-x;
+            -webkit-overflow-scrolling: touch;
+        }
+        .home-showcase-professional-offers-carousel.is-scrollable .home-showcase-scroll-grid {
+            grid-auto-columns: 90%;
+            padding-right: 10%;
+        }
     }
     .saved-search-banner {
         display: flex;

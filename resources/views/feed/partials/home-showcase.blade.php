@@ -85,9 +85,9 @@
                 @endif
             </div>
         @else
-            <div class="home-showcase-carousel{{ $isScrollableSection ? ' is-scrollable' : '' }}" data-showcase-carousel>
+            <div class="home-showcase-carousel{{ $isScrollableSection ? ' is-scrollable' : '' }} home-showcase-professional-offers-carousel" data-showcase-carousel data-mobile-navigation="swipe">
                 @if($isScrollableSection)
-                    <button type="button" class="home-showcase-carousel-arrow home-showcase-carousel-arrow--prev" data-showcase-scroll-dir="-1" aria-label="Annonces précédentes">
+                    <button type="button" class="home-showcase-carousel-arrow home-showcase-carousel-arrow--prev home-showcase-professional-offers-arrow" data-showcase-scroll-dir="-1" aria-label="Annonces précédentes">
                         <i class="fas fa-chevron-left"></i>
                     </button>
                 @endif
@@ -101,7 +101,7 @@
                 </div>
 
                 @if($isScrollableSection)
-                    <button type="button" class="home-showcase-carousel-arrow home-showcase-carousel-arrow--next" data-showcase-scroll-dir="1" aria-label="Annonces suivantes">
+                    <button type="button" class="home-showcase-carousel-arrow home-showcase-carousel-arrow--next home-showcase-professional-offers-arrow" data-showcase-scroll-dir="1" aria-label="Annonces suivantes">
                         <i class="fas fa-chevron-right"></i>
                     </button>
                 @endif
