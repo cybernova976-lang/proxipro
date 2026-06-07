@@ -290,7 +290,8 @@ class VerificationPaymentFlowTest extends TestCase
 
         $this->assertSame('passport', $verification->document_type);
         $this->assertNull($verification->document_back);
-        $this->assertNull($verification->document_back_status);
+        $this->assertSame('pending', $verification->document_back_status);
+        $this->assertSame('pending', $verification->professional_document_status);
     }
 
     public function test_provider_without_company_structure_is_not_forced_to_upload_kbis(): void
@@ -317,5 +318,6 @@ class VerificationPaymentFlowTest extends TestCase
         $verification = IdentityVerification::where('user_id', $user->id)->firstOrFail();
         $this->assertNull($verification->professional_document);
         $this->assertNull($verification->professional_document_type);
+        $this->assertSame('pending', $verification->professional_document_status);
     }
 }
