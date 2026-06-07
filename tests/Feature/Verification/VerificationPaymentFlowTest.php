@@ -43,8 +43,12 @@ class VerificationPaymentFlowTest extends TestCase
         $page = $this->actingAs($user)->get(route('verification.index'));
 
         $page->assertOk();
-        $page->assertSee('Finaliser le paiement');
-        $page->assertSee('Payer par carte');
+        $page->assertSee('Confirmer votre demande');
+        $page->assertSee('Continuer par carte');
+        $page->assertSee('Vos documents ont bien été enregistrés');
+        $page->assertDontSee('Finaliser le paiement');
+        $page->assertDontSee('Paiement requis');
+        $page->assertDontSee('Statut de vérification');
         $page->assertDontSee('Demande en cours de traitement');
     }
 

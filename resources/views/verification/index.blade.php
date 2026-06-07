@@ -436,6 +436,7 @@
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <!-- Current Status -->
+            @unless($verification && $verification->status === 'awaiting_payment')
             <div class="verification-card mb-4">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div>
@@ -446,7 +447,7 @@
                             @elseif($verification && $verification->isReturned())
                                 Votre demande nécessite des corrections
                             @elseif($verification && $verification->status === 'awaiting_payment')
-                                Paiement requis avant envoi à l'administration
+                                Vos documents sont prêts à être transmis
                             @elseif($verification && $verification->isPending())
                                 Votre demande est en cours d'examen
                             @elseif($verification && $verification->isRejected())
@@ -467,7 +468,7 @@
                             </span>
                         @elseif($verification && $verification->status === 'awaiting_payment')
                             <span class="status-badge status-pending">
-                                <i class="fas fa-credit-card"></i> Paiement requis
+                                <i class="fas fa-check-circle"></i> Documents enregistrés
                             </span>
                         @elseif($verification && $verification->isPending())
                             <span class="status-badge status-pending">
@@ -491,6 +492,7 @@
                     </div>
                 @endif
             </div>
+            @endunless
 
             {{-- Admin message when returned --}}
             @if($verification && $verification->isReturned() && $verification->admin_message)
@@ -791,18 +793,18 @@
             <div class="verification-card">
                 <div class="text-center mb-4">
                     <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 78px; height: 78px; background: rgba(37, 99, 235, 0.12);">
-                        <i class="fas fa-credit-card fa-2x" style="color: #2563eb;"></i>
+                        <i class="fas fa-shield-alt fa-2x" style="color: #2563eb;"></i>
                     </div>
-                    <h4 class="fw-bold mb-2">Finaliser le paiement</h4>
+                    <h4 class="fw-bold mb-2">Confirmer votre demande</h4>
                     <p class="text-muted mb-0">
-                        Vos documents sont enregistrés temporairement. Ils seront transmis à l'administration uniquement après validation du paiement.
+                        Vos documents ont bien été enregistrés. Confirmez cette dernière étape pour les transmettre à l’administration.
                     </p>
                 </div>
 
                 <div class="p-4 mb-4" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;">
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                         <div>
-                            <div class="fw-bold mb-1">Vérification de profil</div>
+                            <div class="fw-bold mb-1">Frais de vérification</div>
                             <div class="text-muted small">Badge public “Profil vérifié” après validation administrateur.</div>
                         </div>
                         <div class="fs-4 fw-bold text-primary">
@@ -813,7 +815,7 @@
 
                 <div class="d-grid gap-2">
                     <button type="button" class="btn btn-primary btn-lg" onclick="startVerificationStripePayment({{ $verification->id }}, this)">
-                        <i class="fas fa-lock me-2"></i>Payer par carte
+                        <i class="fas fa-lock me-2"></i>Continuer par carte
                     </button>
                     <form action="{{ route('verification.cancel') }}" method="POST" class="mt-2">
                         @csrf
@@ -1526,7 +1528,7 @@
     }
 
     function startVerificationStripePayment(verificationId, button) {
-        setVerificationPaymentButtonLoading(button, 'Ouverture du paiement...');
+        setVerificationPaymentButtonLoading(button, 'Redirection sécurisée...');
 
         fetch('{{ route("verification.create.payment") }}', {
             method: 'POST',

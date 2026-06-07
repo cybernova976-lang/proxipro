@@ -176,7 +176,7 @@ class VerificationController extends Controller
         return response()->json([
             'success' => true,
             'verification_id' => $verification->id,
-            'message' => 'Documents téléchargés. Veuillez procéder au paiement.',
+            'message' => 'Vos documents ont bien été enregistrés.',
             'price' => $price,
         ]);
     }
@@ -563,7 +563,7 @@ class VerificationController extends Controller
                 ->with('error', 'Impossible d’enregistrer vos documents. Veuillez réessayer.');
         }
 
-        return redirect()->route('verification.index')->with('success', 'Vos documents sont prêts. Le paiement doit être validé avant l\'envoi à l\'administration.');
+        return redirect()->route('verification.index')->with('success', 'Vos documents ont bien été enregistrés.');
     }
 
     /**
