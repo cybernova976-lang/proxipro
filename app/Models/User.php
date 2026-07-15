@@ -11,7 +11,7 @@ use Laravel\Cashier\Billable;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, Billable, SoftDeletes;
+    use Billable, HasFactory, Notifiable, SoftDeletes;
 
     /**
      * Boot the model - Suppression en cascade des données liées
@@ -20,7 +20,7 @@ class User extends Authenticatable
     {
         // Lors d'un soft-delete : supprimer les annonces de l'utilisateur
         static::deleting(function (User $user) {
-            if (!$user->isForceDeleting()) {
+            if (! $user->isForceDeleting()) {
                 $user->ads()->delete();
             }
         });
@@ -29,29 +29,29 @@ class User extends Authenticatable
         static::forceDeleting(function (User $user) {
             // Supprimer les annonces de l'utilisateur
             $user->ads()->delete();
-            
+
             // Supprimer les transactions de points
             $user->pointTransactions()->delete();
-            
+
             // Supprimer les services
             $user->services()->delete();
-            
+
             // Supprimer les avis reçus et donnés
             $user->reviewsReceived()->delete();
             $user->reviewsGiven()->delete();
-            
+
             // Détacher les badges
             $user->badges()->detach();
-            
+
             // Détacher les annonces sauvegardées
             $user->savedAds()->detach();
 
             // Supprimer les alertes sauvegardées
             $user->savedSearches()->delete();
-            
+
             // Supprimer les messages envoyés
             $user->sentMessages()->delete();
-            
+
             // Supprimer les conversations où l'utilisateur participe
             Conversation::where('user1_id', $user->id)
                 ->orWhere('user2_id', $user->id)
@@ -102,6 +102,10 @@ class User extends Authenticatable
         'kbis_document',
         'id_document',
         'newsletter_subscribed',
+        'email_notifications',
+        'profile_public',
+        'show_email',
+        'show_phone',
         // Champs profil complet
         'profession',
         'country',
@@ -177,6 +181,10 @@ class User extends Authenticatable
             'identity_verified' => 'boolean',
             'identity_verified_at' => 'datetime',
             'is_active' => 'boolean',
+            'email_notifications' => 'boolean',
+            'profile_public' => 'boolean',
+            'show_email' => 'boolean',
+            'show_phone' => 'boolean',
             'preferred_categories' => 'array',
             'admin_privileges' => 'array',
             'is_service_provider' => 'boolean',
@@ -214,7 +222,7 @@ class User extends Authenticatable
      */
     public function isOAuthUser(): bool
     {
-        return !empty($this->provider);
+        return ! empty($this->provider);
     }
 
     /**
@@ -222,7 +230,7 @@ class User extends Authenticatable
      */
     public function needsProfileCompletion(): bool
     {
-        return $this->isOAuthUser() && !$this->profile_completed && !$this->is_service_provider;
+        return $this->isOAuthUser() && ! $this->profile_completed && ! $this->is_service_provider;
     }
 
     /**
@@ -307,6 +315,7 @@ class User extends Authenticatable
         } elseif ($this->isAutoEntrepreneur()) {
             return 'Auto-entrepreneur';
         }
+
         return 'Particulier';
     }
 
@@ -331,6 +340,7 @@ class User extends Authenticatable
         if ($this->isAutoEntrepreneur()) {
             return 10;
         }
+
         // Particulier: 5
         return $this->max_active_ads ?? 5;
     }
@@ -341,6 +351,7 @@ class User extends Authenticatable
     public function canPublishNewAd(): bool
     {
         $activeAdsCount = $this->ads()->where('status', 'active')->count();
+
         return $activeAdsCount < $this->getMaxActiveAds();
     }
 
@@ -367,9 +378,9 @@ class User extends Authenticatable
     {
         return $this->services()
             ->active()
-            ->where(function($q) use ($categoryOrSubcategory) {
+            ->where(function ($q) use ($categoryOrSubcategory) {
                 $q->where('main_category', $categoryOrSubcategory)
-                  ->orWhere('subcategory', $categoryOrSubcategory);
+                    ->orWhere('subcategory', $categoryOrSubcategory);
             })
             ->exists();
     }
@@ -394,6 +405,7 @@ class User extends Authenticatable
 
         // Les autres admins ont des privilèges spécifiques
         $privileges = $this->admin_privileges ?? [];
+
         return in_array($privilege, $privileges);
     }
 
@@ -435,19 +447,19 @@ class User extends Authenticatable
     public function badges()
     {
         return $this->belongsToMany(Badge::class)
-                    ->withPivot('earned_at');
+            ->withPivot('earned_at');
     }
 
     public function addPoints($points, $type, $description, $source = null)
     {
         $this->total_points += $points;
         $this->available_points += $points;
-        
+
         // Si c'est un gain quotidien
         if ($type === 'daily') {
             $this->daily_points += $points;
         }
-        
+
         $this->save();
 
         // Créer la transaction
@@ -455,7 +467,7 @@ class User extends Authenticatable
             'points' => $points,
             'type' => $type,
             'description' => $description,
-            'source' => $source
+            'source' => $source,
         ]);
 
         // Vérifier si l'utilisateur a gagné un niveau
@@ -477,7 +489,7 @@ class User extends Authenticatable
         $this->pointTransactions()->create([
             'points' => -$points,
             'type' => $type,
-            'description' => $description
+            'description' => $description,
         ]);
 
         return true;
@@ -486,24 +498,25 @@ class User extends Authenticatable
     public function checkLevelUp()
     {
         $newLevel = floor($this->total_points / 100) + 1;
-        
+
         if ($newLevel > $this->level) {
             $this->level = $newLevel;
             $this->save();
+
             return true;
         }
-        
+
         return false;
     }
 
     public function checkBadges()
     {
         $badges = Badge::where('points_required', '<=', $this->total_points)
-                       ->where('level_required', '<=', $this->level)
-                       ->get();
+            ->where('level_required', '<=', $this->level)
+            ->get();
 
         foreach ($badges as $badge) {
-            if (!$this->badges->contains($badge->id)) {
+            if (! $this->badges->contains($badge->id)) {
                 $this->badges()->attach($badge->id);
             }
         }
@@ -538,20 +551,20 @@ class User extends Authenticatable
      */
     public function receivedMessages()
     {
-        return Message::whereHas('conversation', function($query) {
+        return Message::whereHas('conversation', function ($query) {
             $query->where('user1_id', $this->id)
-                  ->orWhere('user2_id', $this->id);
+                ->orWhere('user2_id', $this->id);
         })->where('sender_id', '!=', $this->id);
     }
 
     public function unreadMessagesCount()
     {
-        return Message::whereHas('conversation', function($query) {
+        return Message::whereHas('conversation', function ($query) {
             $query->where('user1_id', $this->id)
-                  ->orWhere('user2_id', $this->id);
+                ->orWhere('user2_id', $this->id);
         })->where('sender_id', '!=', $this->id)
-          ->where('is_read', false)
-          ->count();
+            ->where('is_read', false)
+            ->count();
     }
 
     public function canSendMessage()
@@ -617,16 +630,10 @@ class User extends Authenticatable
     public function verifiedReviewsReceived()
     {
         return $this->hasMany(Review::class, 'reviewed_user_id')
-            ->whereHas('reviewer', function ($q) {
-                $q->where(function ($q2) {
-                    // Le reviewer a publié au moins une annonce
-                    $q2->whereHas('ads');
-                })->orWhere(function ($q2) {
-                    // OU le reviewer a effectué au moins un paiement
-                    $q2->whereHas('transactions', function ($q3) {
-                        $q3->where('status', 'completed');
-                    });
-                });
+            ->whereNotNull('service_order_id')
+            ->whereHas('serviceOrder', function ($query) {
+                $query->where('status', ServiceOrder::STATUS_COMPLETED)
+                    ->where('payment_status', ServiceOrder::PAYMENT_RELEASED);
             });
     }
 
@@ -661,9 +668,11 @@ class User extends Authenticatable
     {
         if ($this->hasSavedAd($ad)) {
             $this->savedAds()->detach($ad->id);
+
             return false; // Retirée
         } else {
             $this->savedAds()->attach($ad->id);
+
             return true; // Sauvegardée
         }
     }
@@ -687,6 +696,7 @@ class User extends Authenticatable
         if ($this->hasActiveProSubscription()) {
             return true;
         }
+
         return $this->canCreateFreeQuote() || ($this->paid_quotes_remaining ?? 0) > 0;
     }
 
@@ -710,6 +720,7 @@ class User extends Authenticatable
             return -1;
         }
         $free = $this->canCreateFreeQuote() ? 1 : 0;
+
         return $free + ($this->paid_quotes_remaining ?? 0);
     }
 
@@ -790,17 +801,17 @@ class User extends Authenticatable
         }
 
         // L'onboarding complet n'est pas terminé → le modal d'onboarding principal s'en charge
-        if (!$this->hasCompletedProOnboarding()) {
+        if (! $this->hasCompletedProOnboarding()) {
             return false;
         }
 
         // Si service_category est déjà rempli → pas besoin
-        if (!empty($this->service_category)) {
+        if (! empty($this->service_category)) {
             return false;
         }
 
         // Si pro_service_categories est rempli (via onboarding) → pas besoin non plus
-        if (!empty($this->pro_service_categories) && is_array($this->pro_service_categories) && count($this->pro_service_categories) > 0) {
+        if (! empty($this->pro_service_categories) && is_array($this->pro_service_categories) && count($this->pro_service_categories) > 0) {
             return false;
         }
 
@@ -824,12 +835,13 @@ class User extends Authenticatable
      */
     public function shouldShowOnboardingModal(): bool
     {
-        if (!$this->isProfessionnel() && !$this->isServiceProvider()) {
+        if (! $this->isProfessionnel() && ! $this->isServiceProvider()) {
             return false;
         }
         if ($this->hasCompletedProOnboarding()) {
             return false;
         }
+
         return true;
     }
 
@@ -840,12 +852,12 @@ class User extends Authenticatable
     {
         $suggestions = [];
 
-        if (!$this->isProfessionnel() && !$this->isServiceProvider()) {
+        if (! $this->isProfessionnel() && ! $this->isServiceProvider()) {
             return $suggestions;
         }
 
         // 1. Complete onboarding
-        if (!$this->hasCompletedProOnboarding()) {
+        if (! $this->hasCompletedProOnboarding()) {
             $step = $this->pro_onboarding_step ?? 0;
             $suggestions[] = [
                 'id' => 'complete_onboarding',
@@ -853,17 +865,17 @@ class User extends Authenticatable
                 'type' => 'warning',
                 'icon' => 'fas fa-magic',
                 'title' => $step > 0
-                    ? 'Reprendre la configuration (étape ' . $step . '/6)'
+                    ? 'Reprendre la configuration (étape '.$step.'/6)'
                     : 'Configurer votre espace professionnel',
                 'description' => 'Complétez votre profil pour recevoir des demandes de clients près de chez vous.',
-                'action' => 'openOnboardingModal(' . max($step, 1) . ')',
+                'action' => 'openOnboardingModal('.max($step, 1).')',
                 'action_label' => $step > 0 ? 'Reprendre' : 'Commencer',
                 'color' => '#6366f1',
             ];
         }
 
         // 2. No subscription
-        if (!$this->hasActiveProSubscription() && $this->hasCompletedProOnboarding()) {
+        if (! $this->hasActiveProSubscription() && $this->hasCompletedProOnboarding()) {
             $suggestions[] = [
                 'id' => 'get_subscription',
                 'priority' => 90,
@@ -871,7 +883,7 @@ class User extends Authenticatable
                 'icon' => 'fas fa-crown',
                 'title' => 'Passez à ProxiPro Premium',
                 'description' => 'Recevez 3x plus de demandes et accédez aux outils avancés. À partir de 9,99€/mois.',
-                'action' => "window.location.href='" . route('pro.subscription') . "'",
+                'action' => "window.location.href='".route('pro.subscription')."'",
                 'action_label' => 'Voir les offres',
                 'color' => '#f59e0b',
             ];
@@ -886,7 +898,7 @@ class User extends Authenticatable
                 'icon' => 'fas fa-phone',
                 'title' => 'Ajoutez votre numéro de téléphone',
                 'description' => 'Les clients préfèrent les professionnels joignables par téléphone.',
-                'action' => "window.location.href='" . route('pro.profile.edit') . "'",
+                'action' => "window.location.href='".route('pro.profile.edit')."'",
                 'action_label' => 'Ajouter',
                 'color' => '#10b981',
             ];
@@ -908,7 +920,7 @@ class User extends Authenticatable
         }
 
         // 5. No location
-        if (!$this->hasGeoLocation() && empty($this->city)) {
+        if (! $this->hasGeoLocation() && empty($this->city)) {
             $suggestions[] = [
                 'id' => 'add_location',
                 'priority' => 75,
@@ -923,7 +935,7 @@ class User extends Authenticatable
         }
 
         // 6. Profile not verified
-        if (!$this->isProVerified()) {
+        if (! $this->isProVerified()) {
             $suggestions[] = [
                 'id' => 'verify_profile',
                 'priority' => 60,
@@ -931,7 +943,7 @@ class User extends Authenticatable
                 'icon' => 'fas fa-shield-alt',
                 'title' => 'Faites vérifier votre profil',
                 'description' => 'Les profils vérifiés reçoivent 3x plus de contacts clients.',
-                'action' => "window.location.href='" . route('verification.index') . "'",
+                'action' => "window.location.href='".route('verification.index')."'",
                 'action_label' => 'Vérifier',
                 'color' => '#14b8a6',
             ];
@@ -946,7 +958,7 @@ class User extends Authenticatable
                 'icon' => 'fas fa-pen',
                 'title' => 'Ajoutez une description',
                 'description' => 'Présentez-vous pour gagner la confiance de vos futurs clients.',
-                'action' => "window.location.href='" . route('pro.profile.edit') . "'",
+                'action' => "window.location.href='".route('pro.profile.edit')."'",
                 'action_label' => 'Rédiger',
                 'color' => '#8b5cf6',
             ];
@@ -961,14 +973,14 @@ class User extends Authenticatable
                 'icon' => 'fas fa-bullhorn',
                 'title' => 'Publiez votre première annonce',
                 'description' => 'Mettez en avant vos services pour attirer plus de clients.',
-                'action' => "window.location.href='" . route('ads.create') . "'",
+                'action' => "window.location.href='".route('ads.create')."'",
                 'action_label' => 'Publier',
                 'color' => '#f97316',
             ];
         }
 
         // Sort by priority descending
-        usort($suggestions, fn($a, $b) => $b['priority'] - $a['priority']);
+        usort($suggestions, fn ($a, $b) => $b['priority'] - $a['priority']);
 
         return $suggestions;
     }
@@ -979,21 +991,22 @@ class User extends Authenticatable
     public function getProProfileCompletionPercent(): int
     {
         $fields = [
-            !empty($this->company_name) || !empty($this->name),
-            !empty($this->email),
-            !empty($this->phone),
-            !empty($this->city) || !empty($this->detected_city),
-            !empty($this->address),
-            !empty($this->bio),
-            !empty($this->pro_service_categories) && count($this->pro_service_categories ?? []) > 0,
+            ! empty($this->company_name) || ! empty($this->name),
+            ! empty($this->email),
+            ! empty($this->phone),
+            ! empty($this->city) || ! empty($this->detected_city),
+            ! empty($this->address),
+            ! empty($this->bio),
+            ! empty($this->pro_service_categories) && count($this->pro_service_categories ?? []) > 0,
             $this->hasGeoLocation(),
-            !empty($this->avatar),
+            ! empty($this->avatar),
             $this->isProVerified(),
             $this->hasActiveProSubscription(),
             $this->hasCompletedProOnboarding(),
         ];
         $total = count($fields);
         $filled = count(array_filter($fields));
+
         return (int) round(($filled / $total) * 100);
     }
 
@@ -1006,7 +1019,7 @@ class User extends Authenticatable
      */
     public function hasGeoLocation(): bool
     {
-        return !is_null($this->latitude) && !is_null($this->longitude)
+        return ! is_null($this->latitude) && ! is_null($this->longitude)
             && $this->latitude != 0 && $this->longitude != 0;
     }
 
@@ -1045,6 +1058,7 @@ class User extends Authenticatable
         if ($city && $country) {
             return "{$city}, {$country}";
         }
+
         return $city ?? $country ?? 'Position non détectée';
     }
 }

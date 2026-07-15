@@ -31,5 +31,7 @@ php artisan route:cache --no-interaction && \
 php artisan view:clear --no-interaction && \
 php artisan view:cache --no-interaction && \
 (php artisan storage:link --force --no-interaction 2>/dev/null || true) && \
+(php artisan queue:work --sleep=3 --tries=3 --timeout=120 &) && \
+(php artisan schedule:work &) && \
 php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
 """

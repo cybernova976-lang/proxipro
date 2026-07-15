@@ -3,19 +3,36 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'ProxiPro') }} - La plateforme de services entre particuliers et professionnels</title>
-    <meta name="description" content="Trouvez le prestataire idéal près de chez vous. Bricolage, ménage, cours, déménagement... Des milliers de professionnels vérifiés à votre service.">
+    <title>{{ config('app.name', 'ProxiPro') }} — Services entre particuliers et professionnels</title>
+    <meta name="description" content="Publiez votre besoin, recevez des propositions de prestataires et échangez en toute simplicité sur {{ config('app.name', 'ProxiPro') }}.">
+    <link rel="canonical" href="{{ url('/') }}">
     
     <!-- Open Graph / Social Sharing -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="{{ config('app.name', 'ProxiPro') }} - La plateforme de services entre particuliers et professionnels">
-    <meta property="og:description" content="Trouvez le prestataire idéal près de chez vous. Bricolage, ménage, cours, déménagement... Des milliers de professionnels vérifiés à votre service.">
+    <meta property="og:title" content="{{ config('app.name', 'ProxiPro') }} — Trouvez un prestataire près de chez vous">
+    <meta property="og:description" content="Décrivez votre besoin, comparez les propositions et choisissez le prestataire qui vous convient.">
     <meta property="og:url" content="{{ url('/') }}">
+    <meta property="og:image" content="{{ asset('images/social-card.svg') }}">
+    <meta property="og:image:alt" content="{{ config('app.name', 'ProxiPro') }}, services de proximité">
     <meta property="og:site_name" content="{{ config('app.name', 'ProxiPro') }}">
     <meta property="og:locale" content="fr_FR">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ config('app.name', 'ProxiPro') }} - Trouvez le bon prestataire en quelques clics">
-    <meta name="twitter:description" content="Plateforme de mise en relation entre particuliers et professionnels. Trouvez le bon professionnel partout en France.">
+    <meta name="twitter:title" content="{{ config('app.name', 'ProxiPro') }} — Services de proximité">
+    <meta name="twitter:description" content="Publiez un besoin et comparez les propositions de prestataires.">
+    <meta name="twitter:image" content="{{ asset('images/social-card.svg') }}">
+    <script type="application/ld+json">
+        {!! json_encode([
+            '@context' => 'https://schema.org',
+            '@type' => 'WebSite',
+            'name' => config('app.name', 'ProxiPro'),
+            'url' => url('/'),
+            'potentialAction' => [
+                '@type' => 'SearchAction',
+                'target' => url('/ads') . '?q={search_term_string}',
+                'query-input' => 'required name=search_term_string',
+            ],
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+    </script>
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -528,8 +545,8 @@
         <div class="container">
             <div class="nav-inner">
                 <a href="{{ url('/') }}" class="nav-brand">
-                    <span class="nav-brand-icon">P</span>
-                    ProxiPro
+                    <span class="nav-brand-icon">{{ Str::upper(Str::substr(config('app.name', 'ProxiPro'), 0, 1)) }}</span>
+                    {{ config('app.name', 'ProxiPro') }}
                 </a>
                 <ul class="nav-links">
                     <li><a href="{{ url('/ads') }}">Annonces</a></li>
@@ -581,23 +598,23 @@
                 <div class="col-lg-6 mb-5 mb-lg-0">
                     <div class="hero-label">
                         <span class="hero-label-dot"></span>
-                        Plateforme N°1 de services entre particuliers
+                        Services de proximité, simplement
                     </div>
                     <h1 class="hero-title">
-                        Trouvez le bon<br>
-                        <span class="accent">prestataire</span><br>
-                        en quelques clics
+                        Décrivez votre besoin.<br>
+                        <span class="accent">Comparez les propositions.</span><br>
+                        Choisissez sereinement.
                     </h1>
                     <p class="hero-desc">
-                        Bricolage, ménage, cours, déménagement... Connectez-vous 
-                        avec des professionnels vérifiés partout en France et au-delà.
+                        Bricolage, ménage, cours, déménagement… trouvez des prestataires
+                        disponibles près de chez vous et échangez directement avec eux.
                     </p>
                     <div class="hero-trust">
                         <div class="hero-trust-item">
                             <div class="hero-trust-icon"><i class="fas fa-shield-alt"></i></div>
                             <div>
-                                <div style="color:rgba(255,255,255,0.85);font-weight:700;font-size:0.88rem;">Profils vérifiés</div>
-                                <div style="font-size:0.75rem;">Identité contrôlée</div>
+                                <div style="color:rgba(255,255,255,0.85);font-weight:700;font-size:0.88rem;">Badge d'identité</div>
+                                <div style="font-size:0.75rem;">Visible après contrôle</div>
                             </div>
                         </div>
                         <div class="hero-trust-item">
@@ -610,8 +627,8 @@
                         <div class="hero-trust-item">
                             <div class="hero-trust-icon"><i class="fas fa-star"></i></div>
                             <div>
-                                <div style="color:rgba(255,255,255,0.85);font-weight:700;font-size:0.88rem;">Avis vérifiés</div>
-                                <div style="font-size:0.75rem;">100% authentiques</div>
+                                <div style="color:rgba(255,255,255,0.85);font-weight:700;font-size:0.88rem;">Avis liés aux missions</div>
+                                <div style="font-size:0.75rem;">Après une commande terminée</div>
                             </div>
                         </div>
                     </div>
@@ -622,7 +639,7 @@
                             <i class="fas fa-search"></i>
                             De quoi avez-vous besoin ?
                         </div>
-                        <form action="{{ route('demand.create') }}" method="GET">
+                        <form action="{{ route('ads.index') }}" method="GET">
                             <div class="search-field">
                                 <i class="fas fa-th-large"></i>
                                 <select name="category">
@@ -632,17 +649,26 @@
                                     @endforeach
                                 </select>
                             </div>
+                            <div class="search-field">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <input type="text" name="location" placeholder="Ville ou code postal" aria-label="Localisation">
+                            </div>
                             <button type="submit" class="btn-hero-search">
-                                <i class="fas fa-paper-plane"></i> Trouver un professionnel
+                                <i class="fas fa-search"></i> Rechercher des annonces
                             </button>
                         </form>
+                        <div class="text-center mt-3">
+                            <a href="{{ route('demand.create') }}" style="color:var(--primary);font-weight:700;text-decoration:none;">
+                                Ou publier gratuitement votre besoin <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
                         <div class="popular-searches">
                             <span>Populaire :</span>
-                            <a href="{{ route('demand.create') }}?category=Bricolage+%26+Travaux" class="popular-tag">Plombier</a>
-                            <a href="{{ route('demand.create') }}?category=Nettoyage+%26+Foyer" class="popular-tag">Ménage</a>
-                            <a href="{{ route('demand.create') }}?category=D%C3%A9m%C3%A9nagement+%26+Transport" class="popular-tag">Déménagement</a>
-                            <a href="{{ route('demand.create') }}?category=Cours+particuliers" class="popular-tag">Cours particuliers</a>
-                            <a href="{{ route('demand.create') }}?category=Jardinage" class="popular-tag">Jardinage</a>
+                            <a href="{{ route('ads.index', ['category' => 'Bricolage & Travaux']) }}" class="popular-tag">Bricolage</a>
+                            <a href="{{ route('ads.index', ['category' => 'Nettoyage & Entretien']) }}" class="popular-tag">Ménage</a>
+                            <a href="{{ route('ads.index', ['category' => 'Transport & Déménagement']) }}" class="popular-tag">Déménagement</a>
+                            <a href="{{ route('ads.index', ['category' => 'Cours & Formation']) }}" class="popular-tag">Cours</a>
+                            <a href="{{ route('ads.index', ['category' => 'Jardinage & Extérieur']) }}" class="popular-tag">Jardinage</a>
                         </div>
                     </div>
                 </div>
@@ -689,12 +715,12 @@
                 <div class="value-card reveal">
                     <div class="value-icon" style="background:#eef2ff;color:#4f46e5;"><i class="fas fa-user-check"></i></div>
                     <h4>Profils vérifiés</h4>
-                    <p>Chaque prestataire est vérifié. Consultez les avis, notes et certifications avant de choisir.</p>
+                    <p>Repérez les prestataires dont l'identité a été contrôlée et consultez leurs informations avant de choisir.</p>
                 </div>
                 <div class="value-card reveal">
                     <div class="value-icon" style="background:#ecfdf5;color:#10b981;"><i class="fas fa-bolt"></i></div>
                     <h4>Réponse rapide</h4>
-                    <p>Recevez des réponses en quelques minutes grâce à notre messagerie intégrée en temps réel.</p>
+                    <p>Centralisez les propositions et vos échanges dans la messagerie intégrée à la plateforme.</p>
                 </div>
                 <div class="value-card reveal">
                     <div class="value-icon" style="background:#fef3c7;color:#f59e0b;"><i class="fas fa-shield-alt"></i></div>
@@ -703,8 +729,8 @@
                 </div>
                 <div class="value-card reveal">
                     <div class="value-icon" style="background:#fce7f3;color:#ec4899;"><i class="fas fa-headset"></i></div>
-                    <h4>Support réactif</h4>
-                    <p>Notre équipe vous accompagne à chaque étape. Assistance disponible 7j/7.</p>
+                    <h4>Parcours clair</h4>
+                    <p>Suivez chaque proposition, commande et paiement depuis votre espace personnel.</p>
                 </div>
             </div>
         </div>
@@ -722,7 +748,7 @@
                 @php $shown = 0; @endphp
                 @foreach($categoriesWithSubs as $catName => $catData)
                     @if($shown < 8)
-                    <a href="{{ route('demand.create') }}?category={{ urlencode($catName) }}" class="cat-card reveal">
+                    <a href="{{ route('ads.index', ['category' => $catName]) }}" class="cat-card reveal">
                         <div class="cat-icon" style="background:{{ $catData['color'] }};"><i class="{{ $catData['icon'] }}"></i></div>
                         <div class="cat-info">
                             <h5>{{ $catName }}</h5>
@@ -734,12 +760,54 @@
                 @endforeach
             </div>
             <div class="text-center">
-                <a href="{{ route('demand.create') }}" class="btn-see-all">
+                <a href="{{ route('ads.index') }}" class="btn-see-all">
                     Voir les {{ count($categoriesWithSubs) }} catégories <i class="fas fa-arrow-right"></i>
                 </a>
             </div>
         </div>
     </section>
+
+    <!-- ===== LATEST ADS ===== -->
+    @if($latestAds->isNotEmpty())
+    <section class="section">
+        <div class="container">
+            <div class="section-head reveal">
+                <span class="section-pill">Nouveautés</span>
+                <h2 class="section-title">Les dernières annonces publiées</h2>
+                <p class="section-desc">Découvrez les besoins et services actuellement disponibles sur la plateforme.</p>
+            </div>
+            <div class="row g-4">
+                @foreach($latestAds as $ad)
+                <div class="col-md-6 col-lg-4">
+                    <a href="{{ route('ads.show', $ad) }}" class="ad-card reveal">
+                        <div class="ad-card-img">
+                            @if(!empty($ad->photos[0]))
+                                <img src="{{ storage_url($ad->photos[0]) }}" alt="{{ $ad->title }}" loading="lazy">
+                            @else
+                                <i class="fas fa-{{ $ad->service_type === 'demande' ? 'clipboard-list' : 'briefcase' }}"></i>
+                            @endif
+                            <span class="ad-card-badge">{{ $ad->service_type === 'demande' ? 'Demande' : 'Offre' }}</span>
+                        </div>
+                        <div class="ad-card-body">
+                            <h4>{{ Str::limit($ad->title, 65) }}</h4>
+                            <div class="ad-card-location">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ $ad->city ?: ($ad->location ?: 'Localisation à préciser') }}
+                            </div>
+                            <div class="ad-card-bottom">
+                                <span class="ad-card-price">{{ $ad->formatted_price }}</span>
+                                <span class="ad-card-time">{{ $ad->created_at->diffForHumans() }}</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                @endforeach
+            </div>
+            <div class="text-center">
+                <a href="{{ route('ads.index') }}" class="btn-see-all">Voir toutes les annonces <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </section>
+    @endif
 
     <!-- ===== FEATURED PROFESSIONALS ===== -->
     @if($featuredPros->count() > 0)
@@ -748,7 +816,7 @@
             <div class="section-head reveal">
                 <span class="section-pill">Prestataires</span>
                 <h2 class="section-title">Nos professionnels en vedette</h2>
-                <p class="section-desc">Des prestataires vérifiés, prêts à répondre à vos besoins</p>
+                <p class="section-desc">Des profils actifs, classés selon leurs vérifications, avis de mission et annonces publiées.</p>
             </div>
             <div class="row g-4">
                 @foreach($featuredPros as $pro)
@@ -760,8 +828,8 @@
                             @else
                                 <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.5rem;font-weight:700;margin:0 auto 12px;">{{ strtoupper(substr($pro->name, 0, 1)) }}</div>
                             @endif
-                            @if($pro->stripe_id)
-                                <span style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:2px 10px;border-radius:8px;font-size:0.72rem;font-weight:700;margin-bottom:8px;"><i class="fas fa-crown" style="font-size:0.65rem;"></i> PRO</span>
+                            @if($pro->identity_verified)
+                                <span style="display:inline-flex;align-items:center;gap:4px;background:#ecfdf5;color:#047857;padding:3px 10px;border-radius:8px;font-size:0.72rem;font-weight:700;margin-bottom:8px;"><i class="fas fa-check-circle" style="font-size:0.65rem;"></i> Identité vérifiée</span>
                             @endif
                             <h4 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin-bottom:4px;">{{ $pro->name }}</h4>
                             @if($pro->profession)
@@ -769,6 +837,12 @@
                             @endif
                             @if($pro->city || $pro->country)
                                 <div style="font-size:0.82rem;color:var(--gray-500);"><i class="fas fa-map-marker-alt me-1"></i>{{ $pro->city ?? '' }}{{ $pro->city && $pro->country ? ', ' : '' }}{{ $pro->country ?? '' }}</div>
+                            @endif
+                            @if($pro->verified_reviews_count > 0)
+                                <div style="font-size:0.82rem;color:#f59e0b;margin-top:7px;font-weight:700;">
+                                    <i class="fas fa-star"></i> {{ number_format((float) $pro->verified_reviews_avg, 1, ',', ' ') }}
+                                    <span style="color:var(--gray-400);font-weight:500;">({{ $pro->verified_reviews_count }} avis de mission)</span>
+                                </div>
                             @endif
                             @if($pro->bio)
                                 <p style="font-size:0.82rem;color:var(--gray-500);margin-top:8px;line-height:1.4;">{{ Str::limit($pro->bio, 80) }}</p>
@@ -813,57 +887,39 @@
         </div>
     </section>
 
-    <!-- ===== TESTIMONIALS ===== -->
+    <!-- ===== VERIFIED REVIEWS ===== -->
+    @if($verifiedReviews->isNotEmpty())
     <section class="section">
         <div class="container">
             <div class="section-head reveal">
-                <span class="section-pill">Témoignages</span>
-                <h2 class="section-title">Ils nous font confiance</h2>
-                <p class="section-desc">Découvrez les retours de nos utilisateurs satisfaits</p>
+                <span class="section-pill">Avis de mission</span>
+                <h2 class="section-title">Des retours issus de vraies commandes</h2>
+                <p class="section-desc">Ces avis ne sont affichés qu'après une mission terminée et un paiement libéré.</p>
             </div>
             <div class="testimonials-grid">
+                @foreach($verifiedReviews as $review)
                 <div class="testimonial-card reveal">
                     <div class="testimonial-stars">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        @for($star = 1; $star <= 5; $star++)
+                            <i class="{{ $star <= $review->rating ? 'fas' : 'far' }} fa-star"></i>
+                        @endfor
                     </div>
-                    <p class="testimonial-text">"J'ai trouvé un plombier en moins de 10 minutes. Intervention rapide, prix raisonnable. Je recommande vivement ProxiPro !"</p>
+                    <p class="testimonial-text">“{{ Str::limit($review->comment, 220) }}”</p>
                     <div class="testimonial-author">
-                        <div class="testimonial-avatar">S</div>
+                        <div class="testimonial-avatar">{{ Str::upper(Str::substr($review->reviewer?->name ?? 'M', 0, 1)) }}</div>
                         <div>
-                            <div class="testimonial-name">Sophie M.</div>
-                            <div class="testimonial-role">Particulier - Paris</div>
+                            <div class="testimonial-name">{{ Str::before($review->reviewer?->name ?? 'Membre', ' ') }}</div>
+                            <div class="testimonial-role">
+                                Mission pour {{ $review->reviewedUser?->profession ?: $review->reviewedUser?->name }}
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="testimonial-card reveal">
-                    <div class="testimonial-stars">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                    </div>
-                    <p class="testimonial-text">"En tant que prestataire, j'ai triplé ma clientèle grâce à la plateforme. L'interface est intuitive et les clients sont sérieux."</p>
-                    <div class="testimonial-author">
-                        <div class="testimonial-avatar">K</div>
-                        <div>
-                            <div class="testimonial-name">Karim B.</div>
-                            <div class="testimonial-role">Électricien - Mayotte</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="testimonial-card reveal">
-                    <div class="testimonial-stars">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
-                    </div>
-                    <p class="testimonial-text">"Super pratique pour trouver une nounou de confiance. Les avis vérifiés m'ont aidée à faire mon choix sereinement."</p>
-                    <div class="testimonial-author">
-                        <div class="testimonial-avatar">L</div>
-                        <div>
-                            <div class="testimonial-name">Léa D.</div>
-                            <div class="testimonial-role">Particulier - La Réunion</div>
-                        </div>
-                    </div>
-                </div>
+                @endforeach
             </div>
         </div>
     </section>
+    @endif
 
     <!-- ===== DUAL CTA ===== -->
     <section class="section section-bg">
@@ -882,7 +938,7 @@
                     <h3>Vous êtes professionnel ?</h3>
                     <p>Rejoignez notre réseau de prestataires et développez votre activité en trouvant de nouveaux clients chaque jour.</p>
                     <div class="d-flex gap-3 flex-wrap">
-                        <a href="{{ route('register') }}" class="btn-cta-white" style="color:var(--gray-900);">
+                        <a href="{{ route('register', ['account_type' => 'professionnel']) }}" class="btn-cta-white" style="color:var(--gray-900);">
                             Devenir prestataire <i class="fas fa-arrow-right"></i>
                         </a>
                         <a href="{{ route('contact.index') }}" class="btn-cta-outline">En savoir plus</a>
@@ -899,15 +955,17 @@
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <h4><span class="footer-brand-icon">P</span> ProxiPro</h4>
-                    <p>La plateforme de mise en relation entre particuliers et prestataires de services. Trouvez le bon professionnel en quelques clics, partout en France et à l'international.</p>
+                    <h4><span class="footer-brand-icon">{{ Str::upper(Str::substr(config('app.name', 'ProxiPro'), 0, 1)) }}</span> {{ config('app.name', 'ProxiPro') }}</h4>
+                    <p>La plateforme de mise en relation pour publier un besoin, comparer des propositions et travailler avec un prestataire près de chez vous.</p>
+                    @if(collect(config('site.social', []))->filter()->isNotEmpty())
                     <div class="footer-social">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#"><i class="fab fa-youtube"></i></a>
+                        @foreach(config('site.social') as $network => $url)
+                            @if($url)
+                                <a href="{{ $url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ ucfirst($network) }}"><i class="fab fa-{{ $network }}{{ $network === 'linkedin' ? '-in' : ($network === 'facebook' ? '-f' : '') }}"></i></a>
+                            @endif
+                        @endforeach
                     </div>
+                    @endif
                 </div>
                 <div class="footer-col">
                     <h5>Plateforme</h5>
@@ -929,15 +987,22 @@
                 <div class="footer-col">
                     <h5>Contact</h5>
                     <ul>
-                        <li><a href="mailto:contact@ProxiPro.com"><i class="fas fa-envelope me-2"></i>contact@ProxiPro.com</a></li>
-                        <li><a href="#"><i class="fas fa-phone me-2"></i>+33 1 00 00 00 00</a></li>
-                        <li><a href="#"><i class="fas fa-map-marker-alt me-2"></i>France</a></li>
+                        <li><a href="{{ route('contact.index') }}"><i class="fas fa-paper-plane me-2"></i>Formulaire de contact</a></li>
+                        @if(config('site.support_email'))
+                            <li><a href="mailto:{{ config('site.support_email') }}"><i class="fas fa-envelope me-2"></i>{{ config('site.support_email') }}</a></li>
+                        @endif
+                        @if(config('site.contact_phone'))
+                            <li><a href="tel:{{ preg_replace('/\s+/', '', config('site.contact_phone')) }}"><i class="fas fa-phone me-2"></i>{{ config('site.contact_phone') }}</a></li>
+                        @endif
+                        @if(config('site.contact_location'))
+                            <li><span><i class="fas fa-map-marker-alt me-2"></i>{{ config('site.contact_location') }}</span></li>
+                        @endif
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <span>&copy; {{ date('Y') }} ProxiPro. Tous droits réservés.</span>
-                <span>Fait avec <i class="fas fa-heart text-danger"></i> en France</span>
+                <span>&copy; {{ date('Y') }} {{ config('app.name', 'ProxiPro') }}. Tous droits réservés.</span>
+                <span>Mise en relation de proximité</span>
             </div>
         </div>
     </footer>

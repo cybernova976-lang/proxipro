@@ -416,7 +416,7 @@
 
             <!-- Leave Review Form -->
             @auth
-                @if(auth()->id() !== $user->id)
+                @if(auth()->id() !== $user->id && $reviewableOrder)
                     <div class="card border-0 shadow-sm mb-4">
                         <div class="card-header bg-transparent">
                             <h6 class="mb-0"><i class="fas fa-star me-2 text-warning"></i>Laisser un avis</h6>
@@ -424,6 +424,7 @@
                         <div class="card-body">
                             <form action="{{ route('reviews.store', $user->id) }}" method="POST">
                                 @csrf
+                                <input type="hidden" name="service_order_id" value="{{ $reviewableOrder->id }}">
                                 <div class="mb-3">
                                     <label class="form-label">Note</label>
                                     <div class="d-flex gap-2">
@@ -444,6 +445,11 @@
                                 </button>
                             </form>
                         </div>
+                    </div>
+                @elseif(auth()->id() !== $user->id)
+                    <div class="alert alert-light border mb-4">
+                        <i class="fas fa-shield-alt text-success me-2"></i>
+                        Les avis sont reserves aux utilisateurs ayant termine une prestation payee ensemble.
                     </div>
                 @endif
             @else

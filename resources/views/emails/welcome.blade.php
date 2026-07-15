@@ -70,7 +70,7 @@
                             <span style="color: #22c55e; font-weight: bold;">✓</span>
                         </td>
                         <td style="padding: 8px 0; color: #334155; font-size: 0.9rem;">
-                            <strong>Alertes en temps réel</strong> — Recevez par email les nouvelles demandes qui correspondent à vos compétences
+                            <strong>Alertes par e-mail</strong> — Recevez les nouvelles demandes qui correspondent à vos compétences
                         </td>
                     </tr>
                     <tr>

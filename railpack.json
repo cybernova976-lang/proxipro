@@ -10,6 +10,6 @@
         ]
     },
     "deploy": {
-        "startCmd": "php artisan config:cache && php artisan route:cache && php artisan view:clear && php artisan view:cache && php artisan storage:link --force && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+        "startCmd": "php artisan config:cache && php artisan route:cache && php artisan view:clear && php artisan view:cache && php artisan storage:link --force && php artisan migrate --force && (php artisan queue:work --sleep=3 --tries=3 --timeout=120 &) && (php artisan schedule:work &) && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
     }
 }

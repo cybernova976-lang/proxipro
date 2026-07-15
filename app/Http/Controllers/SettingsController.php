@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Conversation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use App\Models\Conversation;
+use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
@@ -18,6 +18,7 @@ class SettingsController extends Controller
     public function index()
     {
         $user = Auth::user();
+
         return view('settings.index', compact('user'));
     }
 
@@ -33,7 +34,7 @@ class SettingsController extends Controller
 
         $user = Auth::user();
 
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return back()->withErrors(['current_password' => 'Le mot de passe actuel est incorrect.']);
         }
 
@@ -53,8 +54,6 @@ class SettingsController extends Controller
 
         $user->update([
             'email_notifications' => $request->boolean('email_notifications'),
-            'sms_notifications' => $request->boolean('sms_notifications'),
-            'push_notifications' => $request->boolean('push_notifications'),
         ]);
 
         return back()->with('success', 'Préférences de notification mises à jour !');
@@ -89,7 +88,7 @@ class SettingsController extends Controller
         $user = Auth::user();
 
         // Les utilisateurs OAuth n'ont pas de mot de passe
-        if (!$user->isOAuthUser()) {
+        if (! $user->isOAuthUser()) {
             $rules['password'] = 'required';
         }
 
@@ -100,7 +99,7 @@ class SettingsController extends Controller
         ]);
 
         // Vérifier le mot de passe (sauf OAuth)
-        if (!$user->isOAuthUser() && !Hash::check($request->password, $user->password)) {
+        if (! $user->isOAuthUser() && ! Hash::check($request->password, $user->password)) {
             return back()->withErrors(['password' => 'Mot de passe incorrect.']);
         }
 
@@ -141,13 +140,13 @@ class SettingsController extends Controller
                         Storage::disk(config('filesystems.default', 'public'))->delete($file);
                     }
                 } catch (\Exception $e) {
-                    Log::warning('Impossible de supprimer le fichier lors de la suppression du compte: ' . $e->getMessage());
+                    Log::warning('Impossible de supprimer le fichier lors de la suppression du compte: '.$e->getMessage());
                 }
             }
 
             // Supprimer les images des annonces
             foreach ($user->ads as $ad) {
-                if (!empty($ad->photos)) {
+                if (! empty($ad->photos)) {
                     $images = is_array($ad->photos) ? $ad->photos : json_decode($ad->photos, true) ?? [];
                     foreach ($images as $image) {
                         try {
@@ -155,7 +154,7 @@ class SettingsController extends Controller
                                 Storage::disk(config('filesystems.default', 'public'))->delete($image);
                             }
                         } catch (\Exception $e) {
-                            Log::warning('Impossible de supprimer l\'image d\'annonce: ' . $e->getMessage());
+                            Log::warning('Impossible de supprimer l\'image d\'annonce: '.$e->getMessage());
                         }
                     }
                 }
@@ -203,7 +202,7 @@ class SettingsController extends Controller
             if (method_exists($user, 'proDocuments')) {
                 // Supprimer les fichiers des documents pro
                 foreach ($user->proDocuments as $doc) {
-                    if (!empty($doc->file_path) && Storage::disk(config('filesystems.default', 'public'))->exists($doc->file_path)) {
+                    if (! empty($doc->file_path) && Storage::disk(config('filesystems.default', 'public'))->exists($doc->file_path)) {
                         Storage::disk(config('filesystems.default', 'public'))->delete($doc->file_path);
                     }
                 }
@@ -215,7 +214,10 @@ class SettingsController extends Controller
 
             // Objets perdus
             if ($user->relationLoaded('lostItems') || method_exists($user, 'lostItems')) {
-                try { $user->lostItems()->delete(); } catch (\Exception $e) {}
+                try {
+                    $user->lostItems()->delete();
+                } catch (\Exception $e) {
+                }
             } else {
                 DB::table('lost_items')->where('user_id', $user->id)->delete();
             }
@@ -233,7 +235,7 @@ class SettingsController extends Controller
             // 4. Anonymiser les données personnelles de l'utilisateur avant soft-delete
             $user->forceFill([
                 'name' => 'Utilisateur supprimé',
-                'email' => 'deleted_' . $user->id . '_' . time() . '@deleted.local',
+                'email' => 'deleted_'.$user->id.'_'.time().'@deleted.local',
                 'phone' => null,
                 'address' => null,
                 'avatar' => null,

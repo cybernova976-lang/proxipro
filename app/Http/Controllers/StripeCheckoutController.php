@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use App\Models\User;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Services\ReferralService;
 use App\Services\ServiceOrderWorkflowService;
-use Stripe\Stripe;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Stripe\Checkout\Session as StripeSession;
-use Carbon\Carbon;
+use Stripe\Stripe;
 
 class StripeCheckoutController extends Controller
 {
@@ -31,19 +30,18 @@ class StripeCheckoutController extends Controller
      * Configuration des récompenses de partage social
      */
     private $socialRewards = [
-        'facebook'  => ['points' => 5, 'name' => 'Facebook'],
-        'twitter'   => ['points' => 5, 'name' => 'Twitter/X'],
+        'facebook' => ['points' => 5, 'name' => 'Facebook'],
+        'twitter' => ['points' => 5, 'name' => 'Twitter/X'],
         'instagram' => ['points' => 5, 'name' => 'Instagram'],
-        'linkedin'  => ['points' => 5, 'name' => 'LinkedIn'],
-        'whatsapp'  => ['points' => 5, 'name' => 'WhatsApp'],
-        'telegram'  => ['points' => 5, 'name' => 'Telegram'],
+        'linkedin' => ['points' => 5, 'name' => 'LinkedIn'],
+        'whatsapp' => ['points' => 5, 'name' => 'WhatsApp'],
+        'telegram' => ['points' => 5, 'name' => 'Telegram'],
     ];
 
     public function __construct(
         protected ReferralService $referralService,
         protected ServiceOrderWorkflowService $serviceOrderWorkflowService,
-    )
-    {
+    ) {
         Stripe::setApiKey(config('services.stripe.secret'));
     }
 
@@ -59,7 +57,7 @@ class StripeCheckoutController extends Controller
         $user = Auth::user();
         $productKey = $request->product_key;
 
-        if (!isset($this->products[$productKey])) {
+        if (! isset($this->products[$productKey])) {
             return response()->json(['error' => 'Produit invalide'], 400);
         }
 
@@ -68,8 +66,8 @@ class StripeCheckoutController extends Controller
         try {
             // Créer ou récupérer le customer Stripe
             $stripeCustomerId = $user->stripe_id;
-            
-            if (!$stripeCustomerId) {
+
+            if (! $stripeCustomerId) {
                 $customer = \Stripe\Customer::create([
                     'email' => $user->email,
                     'name' => $user->name,
@@ -88,17 +86,17 @@ class StripeCheckoutController extends Controller
                         'currency' => 'eur', // Euro
                         'product_data' => [
                             'name' => $product['name'],
-                            'description' => $product['type'] === 'subscription' 
-                                ? $product['points'] . ' points/mois inclus' 
-                                : 'Pack de ' . $product['points'] . ' points',
+                            'description' => $product['type'] === 'subscription'
+                                ? $product['points'].' points/mois inclus'
+                                : 'Pack de '.$product['points'].' points',
                         ],
                         'unit_amount' => $product['price'],
                     ],
                     'quantity' => 1,
                 ]],
                 'mode' => 'payment',
-                'success_url' => route('stripe.success') . '?session_id={CHECKOUT_SESSION_ID}&product=' . $productKey,
-                'cancel_url' => route('pricing.index') . '?canceled=true',
+                'success_url' => route('stripe.success').'?session_id={CHECKOUT_SESSION_ID}&product='.$productKey,
+                'cancel_url' => route('pricing.index').'?canceled=true',
                 'metadata' => [
                     'user_id' => $user->id,
                     'product_key' => $productKey,
@@ -113,7 +111,8 @@ class StripeCheckoutController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Stripe Checkout error: ' . $e->getMessage());
+            \Log::error('Stripe Checkout error: '.$e->getMessage());
+
             return response()->json(['error' => 'Erreur lors de la création du paiement'], 500);
         }
     }
@@ -124,15 +123,14 @@ class StripeCheckoutController extends Controller
     public function success(Request $request)
     {
         $sessionId = $request->get('session_id');
-        $productKey = $request->get('product');
 
-        if (!$sessionId) {
+        if (! $sessionId) {
             return redirect()->route('pricing.index')->with('error', 'Session de paiement invalide');
         }
 
         try {
             $session = StripeSession::retrieve($sessionId);
-            
+
             if ($session->payment_status !== 'paid') {
                 return redirect()->route('pricing.index')->with('error', 'Paiement non confirmé');
             }
@@ -140,7 +138,7 @@ class StripeCheckoutController extends Controller
             if (($session->metadata->type ?? null) === 'service_order') {
                 $serviceOrder = $this->serviceOrderWorkflowService->markPaidFromCheckoutSession($session);
 
-                if (!$serviceOrder) {
+                if (! $serviceOrder) {
                     return redirect()->route('service-orders.index')->with('error', 'Commande introuvable pour ce paiement.');
                 }
 
@@ -148,19 +146,27 @@ class StripeCheckoutController extends Controller
                     ->with('success', 'Paiement Stripe confirme. Les fonds sont bloques jusqu\'a liberation ou litige.');
             }
 
-            if (!$productKey) {
+            // Le produit et le beneficiaire proviennent exclusivement des
+            // metadonnees Stripe signees, jamais des parametres de retour.
+            $productKey = $session->metadata->product_key ?? null;
+
+            if (! $productKey) {
                 return redirect()->route('pricing.index')->with('error', 'Produit invalide');
             }
 
             $userId = $session->metadata->user_id;
             $product = $this->products[$productKey] ?? null;
 
-            if (!$product) {
+            if (! $product) {
                 return redirect()->route('pricing.index')->with('error', 'Produit invalide');
             }
 
+            if ((int) $userId !== (int) Auth::id()) {
+                return redirect()->route('pricing.index')->with('error', 'Cette session de paiement ne correspond pas a votre compte.');
+            }
+
             $user = User::find($userId);
-            if (!$user) {
+            if (! $user) {
                 return redirect()->route('pricing.index')->with('error', 'Utilisateur non trouvé');
             }
 
@@ -174,12 +180,13 @@ class StripeCheckoutController extends Controller
             // Traiter le paiement
             $this->processPayment($user, $product, $productKey, $session);
 
-            $message = '🎉 ' . $product['points'] . ' points ajoutés à votre compte !';
+            $message = '🎉 '.$product['points'].' points ajoutés à votre compte !';
 
             return redirect()->route('pricing.index')->with('success', $message);
 
         } catch (\Exception $e) {
-            \Log::error('Stripe success callback error: ' . $e->getMessage());
+            \Log::error('Stripe success callback error: '.$e->getMessage());
+
             return redirect()->route('pricing.index')->with('error', 'Erreur lors de la confirmation du paiement');
         }
     }
@@ -194,13 +201,13 @@ class StripeCheckoutController extends Controller
             'user_id' => $user->id,
             'amount' => $product['price'] / 100,
             'type' => 'POINTS',
-            'description' => 'Achat de ' . $product['points'] . ' points',
+            'description' => 'Achat de '.$product['points'].' points',
             'status' => 'completed',
             'stripe_session_id' => $session->id,
         ]);
 
         // Créditer les points (via available_points et total_points)
-        $user->addPoints($product['points'], 'purchase', 'Achat de ' . $product['points'] . ' points', 'stripe');
+        $user->addPoints($product['points'], 'purchase', 'Achat de '.$product['points'].' points', 'stripe');
         $this->referralService->grantFirstPurchaseRewards($user->fresh(), $transaction);
     }
 
@@ -214,13 +221,19 @@ class StripeCheckoutController extends Controller
         $endpointSecret = config('services.stripe.webhook_secret');
 
         try {
-            if ($endpointSecret) {
-                $event = \Stripe\Webhook::constructEvent($payload, $sigHeader, $endpointSecret);
-            } else {
-                $event = json_decode($payload);
+            if (! $endpointSecret || ! $sigHeader) {
+                \Log::warning('Stripe webhook refused because signature verification is not configured.');
+
+                return response()->json(['error' => 'Webhook signature unavailable'], 400);
             }
+
+            $event = \Stripe\Webhook::constructEvent($payload, $sigHeader, $endpointSecret);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            \Log::warning('Stripe webhook signature verification failed.', [
+                'exception' => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Invalid webhook signature'], 400);
         }
 
         // Gérer les événements
@@ -233,16 +246,16 @@ class StripeCheckoutController extends Controller
 
                 return response()->json(['received' => true]);
             }
-            
+
             $user = User::find($metadata->user_id ?? null);
             $productKey = $metadata->product_key ?? null;
-            
+
             if ($user && $productKey && isset($this->products[$productKey])) {
                 $product = $this->products[$productKey];
-                
+
                 // Vérifier si pas déjà traité
                 $existingTransaction = Transaction::where('stripe_session_id', $session->id)->first();
-                if (!$existingTransaction) {
+                if (! $existingTransaction) {
                     $this->processPayment($user, $product, $productKey, $session);
                 }
             }
@@ -276,14 +289,14 @@ class StripeCheckoutController extends Controller
             ]);
 
             $user = Auth::user();
-            
-            if (!$user) {
+
+            if (! $user) {
                 return response()->json(['error' => 'Utilisateur non connecté'], 401);
             }
-            
+
             $platform = $request->platform;
 
-            if (!isset($this->socialRewards[$platform])) {
+            if (! isset($this->socialRewards[$platform])) {
                 return response()->json(['error' => 'Plateforme invalide'], 400);
             }
 
@@ -298,7 +311,7 @@ class StripeCheckoutController extends Controller
             if ($alreadyClaimed) {
                 return response()->json([
                     'success' => false,
-                    'error' => 'Vous avez déjà récupéré vos points ' . $reward['name'],
+                    'error' => 'Vous avez déjà récupéré vos points '.$reward['name'],
                     'already_claimed' => true,
                 ]);
             }
@@ -314,7 +327,7 @@ class StripeCheckoutController extends Controller
             ]);
 
             // Créditer les points en utilisant la méthode du modèle User
-            $user->addPoints($reward['points'], 'social_share', 'Partage sur ' . $reward['name']);
+            $user->addPoints($reward['points'], 'social_share', 'Partage sur '.$reward['name']);
 
             // Calculer le total gagné via partage
             $totalEarned = \DB::table('social_shares')
@@ -326,17 +339,17 @@ class StripeCheckoutController extends Controller
                 'points_earned' => $reward['points'],
                 'total_social_points' => $totalEarned,
                 'new_balance' => $user->fresh()->available_points,
-                'message' => '🎉 +' . $reward['points'] . ' points grâce à ' . $reward['name'] . ' !',
+                'message' => '🎉 +'.$reward['points'].' points grâce à '.$reward['name'].' !',
             ]);
         } catch (\Exception $e) {
-            \Log::error('Social share error: ' . $e->getMessage(), [
+            \Log::error('Social share error: '.$e->getMessage(), [
                 'user_id' => Auth::id(),
                 'platform' => $request->platform ?? null,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
-                'error' => 'Erreur lors du traitement: ' . $e->getMessage()
+                'error' => 'Erreur lors du traitement: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -359,7 +372,7 @@ class StripeCheckoutController extends Controller
 
         $availablePlatforms = collect($this->socialRewards)
             ->filter(function ($value, $key) use ($claimedPlatforms) {
-                return !in_array($key, $claimedPlatforms);
+                return ! in_array($key, $claimedPlatforms);
             })
             ->map(function ($value, $key) {
                 return array_merge(['platform' => $key], $value);

@@ -95,7 +95,7 @@
             <!-- Formulaire -->
             <form method="POST" action="{{ route('register') }}" class="space-y-5" id="registerForm">
                 @csrf
-                <input type="hidden" name="account_type" id="account_type" value="{{ old('account_type', 'particulier') }}">
+                <input type="hidden" name="account_type" id="account_type" value="{{ old('account_type', request('account_type') === 'professionnel' ? 'professionnel' : 'particulier') }}">
                 
                 <!-- Anti-bot: Token de timing (chiffré) -->
                 <input type="hidden" name="_form_token" value="{{ encrypt(time()) }}">

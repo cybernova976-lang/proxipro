@@ -2,22 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\ProClient;
-use App\Models\ProQuote;
-use App\Models\ProInvoice;
 use App\Models\ProDocument;
+use App\Models\ProInvoice;
+use App\Models\ProQuote;
 use App\Models\ProSubscription;
-use App\Models\UserService;
+use App\Models\User;
 use App\Support\ProviderSubscriptionPlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
-use Stripe\Stripe;
 use Stripe\Checkout\Session as StripeSession;
+use Stripe\Stripe;
 
 class ProDashboardController extends Controller
 {
@@ -33,12 +30,13 @@ class ProDashboardController extends Controller
     private function ensurePro()
     {
         $user = Auth::user();
-        if (!$user->isProfessionnel() && !$user->isServiceProvider()) {
+        if (! $user->isProfessionnel() && ! $user->isServiceProvider()) {
             throw new \Illuminate\Http\Exceptions\HttpResponseException(
                 redirect()->route('pro.dashboard')
                     ->with('warning', 'Cette fonctionnalité est réservée aux prestataires enregistrés. Vous devez d\'abord vous inscrire en tant que prestataire pour utiliser les outils de l\'Espace Pro.')
             );
         }
+
         return $user;
     }
 
@@ -52,15 +50,15 @@ class ProDashboardController extends Controller
         $isPro = $user->isProfessionnel() || $user->isServiceProvider();
 
         // Accessible à tous : les non-pros voient un teaser
-        if (!$isPro) {
+        if (! $isPro) {
             return view('pro.dashboard', [
-                'user'           => $user,
-                'isPro'          => false,
-                'stats'          => [],
-                'recentClients'  => collect(),
-                'recentQuotes'   => collect(),
+                'user' => $user,
+                'isPro' => false,
+                'stats' => [],
+                'recentClients' => collect(),
+                'recentQuotes' => collect(),
                 'recentInvoices' => collect(),
-                'subscription'   => null,
+                'subscription' => null,
             ]);
         }
 
@@ -117,7 +115,7 @@ class ProDashboardController extends Controller
         // Convert comma-separated specialties string to array
         if ($request->has('specialties') && is_string($request->input('specialties'))) {
             $specialties = array_filter(array_map('trim', explode(',', $request->input('specialties'))));
-            $request->merge(['specialties' => !empty($specialties) ? array_values($specialties) : null]);
+            $request->merge(['specialties' => ! empty($specialties) ? array_values($specialties) : null]);
         }
 
         $validated = $request->validate([
@@ -254,6 +252,7 @@ class ProDashboardController extends Controller
 
         $items = collect($validated['items'])->map(function ($item) {
             $item['total'] = round($item['quantity'] * $item['unit_price'], 2);
+
             return $item;
         });
 
@@ -284,7 +283,7 @@ class ProDashboardController extends Controller
         // Auto-create client if doesn't exist
         if (empty($validated['client_id']) && $validated['client_name']) {
             $existingClient = $user->proClients()->where('name', $validated['client_name'])->first();
-            if (!$existingClient) {
+            if (! $existingClient) {
                 $client = ProClient::create([
                     'provider_id' => $user->id,
                     'name' => $validated['client_name'],
@@ -358,6 +357,7 @@ class ProDashboardController extends Controller
 
         $items = collect($validated['items'])->map(function ($item) {
             $item['total'] = round($item['quantity'] * $item['unit_price'], 2);
+
             return $item;
         });
 
@@ -402,7 +402,7 @@ class ProDashboardController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pro.quote-pdf', compact('user', 'quote'));
         $pdf->setPaper('a4');
 
-        return $pdf->download('Devis_' . $quote->quote_number . '.pdf');
+        return $pdf->download('Devis_'.$quote->quote_number.'.pdf');
     }
 
     public function sendQuoteEmail(Request $request, $id)
@@ -424,8 +424,8 @@ class ProDashboardController extends Controller
             'customMessage' => $request->message,
         ], function ($mail) use ($request, $quote, $user, $pdf) {
             $mail->to($request->email)
-                ->subject('Devis ' . $quote->quote_number . ' - ' . ($user->company_name ?? $user->name))
-                ->attachData($pdf->output(), 'Devis_' . $quote->quote_number . '.pdf', [
+                ->subject('Devis '.$quote->quote_number.' - '.($user->company_name ?? $user->name))
+                ->attachData($pdf->output(), 'Devis_'.$quote->quote_number.'.pdf', [
                     'mime' => 'application/pdf',
                 ]);
         });
@@ -435,7 +435,7 @@ class ProDashboardController extends Controller
             $quote->update(['status' => 'sent']);
         }
 
-        return redirect()->route('pro.quotes.show', $id)->with('success', 'Devis envoyé par email à ' . $request->email);
+        return redirect()->route('pro.quotes.show', $id)->with('success', 'Devis envoyé par email à '.$request->email);
     }
 
     public function sendQuoteMessage(Request $request, $id)
@@ -451,34 +451,36 @@ class ProDashboardController extends Controller
         $recipient = User::findOrFail($request->recipient_id);
 
         // Get or create conversation
-        $conversation = \App\Models\Conversation::getOrCreate($user->id, $recipient->id, 'Devis ' . $quote->quote_number);
+        $conversation = \App\Models\Conversation::getOrCreate($user->id, $recipient->id, 'Devis '.$quote->quote_number);
 
         // Build quote summary message
-        $content = "📄 *Devis " . $quote->quote_number . "*\n\n"
-            . "📋 Objet : " . $quote->subject . "\n"
-            . "💰 Montant TTC : " . number_format($quote->total, 2, ',', ' ') . "€\n"
-            . "📅 Date : " . $quote->created_at->format('d/m/Y') . "\n";
+        $content = '📄 *Devis '.$quote->quote_number."*\n\n"
+            .'📋 Objet : '.$quote->subject."\n"
+            .'💰 Montant TTC : '.number_format($quote->total, 2, ',', ' ')."€\n"
+            .'📅 Date : '.$quote->created_at->format('d/m/Y')."\n";
         if ($quote->valid_until) {
-            $content .= "⏳ Valide jusqu'au : " . $quote->valid_until->format('d/m/Y') . "\n";
+            $content .= "⏳ Valide jusqu'au : ".$quote->valid_until->format('d/m/Y')."\n";
         }
-        $content .= "\n🔗 Lien : " . route('pro.quotes.show', $quote->id);
+        $content .= "\n🔗 Lien : ".route('pro.quotes.show', $quote->id);
 
         if ($request->message) {
-            $content .= "\n\n💬 Message :\n" . $request->message;
+            $content .= "\n\n💬 Message :\n".$request->message;
         }
 
-        \App\Models\Message::create([
+        $message = \App\Models\Message::create([
             'conversation_id' => $conversation->id,
             'sender_id' => $user->id,
             'content' => $content,
         ]);
+
+        $recipient->notify(new \App\Notifications\NewMessageNotification($message, $conversation, $user));
 
         // Mark as sent
         if ($quote->status === 'draft') {
             $quote->update(['status' => 'sent']);
         }
 
-        return redirect()->route('pro.quotes.show', $id)->with('success', 'Devis envoyé via la messagerie à ' . $recipient->name);
+        return redirect()->route('pro.quotes.show', $id)->with('success', 'Devis envoyé via la messagerie à '.$recipient->name);
     }
 
     // =========================================
@@ -527,6 +529,7 @@ class ProDashboardController extends Controller
 
         $items = collect($validated['items'])->map(function ($item) {
             $item['total'] = round($item['quantity'] * $item['unit_price'], 2);
+
             return $item;
         });
 
@@ -574,7 +577,7 @@ class ProDashboardController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pro.invoice-pdf', compact('user', 'invoice'));
         $pdf->setPaper('a4');
 
-        return $pdf->download('Facture_' . $invoice->invoice_number . '.pdf');
+        return $pdf->download('Facture_'.$invoice->invoice_number.'.pdf');
     }
 
     public function destroyInvoice($id)
@@ -647,6 +650,7 @@ class ProDashboardController extends Controller
 
         $items = collect($validated['items'])->map(function ($item) {
             $item['total'] = round($item['quantity'] * $item['unit_price'], 2);
+
             return $item;
         });
 
@@ -699,7 +703,7 @@ class ProDashboardController extends Controller
         ]);
 
         $file = $request->file('file');
-        $path = $file->store('pro-documents/' . $user->id, config('filesystems.default', 'public'));
+        $path = $file->store('pro-documents/'.$user->id, config('filesystems.default', 'public'));
 
         ProDocument::create([
             'user_id' => $user->id,
@@ -735,6 +739,7 @@ class ProDashboardController extends Controller
     public function accountStatus()
     {
         $user = $this->ensurePro();
+
         return view('pro.account-status', compact('user'));
     }
 
@@ -806,6 +811,7 @@ class ProDashboardController extends Controller
                 'pro_onboarding_skipped' => true,
                 'pro_onboarding_step' => $step,
             ]);
+
             return response()->json(['success' => true, 'redirect' => route('feed')]);
         }
 
@@ -816,8 +822,12 @@ class ProDashboardController extends Controller
 
             // Save per-step data
             if ($step >= 2) {
-                if ($request->filled('address')) $updateData['address'] = $request->input('address');
-                if ($request->filled('postal_code')) $updateData['postal_code'] = $request->input('postal_code');
+                if ($request->filled('address')) {
+                    $updateData['address'] = $request->input('address');
+                }
+                if ($request->filled('postal_code')) {
+                    $updateData['postal_code'] = $request->input('postal_code');
+                }
                 if ($request->filled('city')) {
                     $updateData['city'] = $request->input('city');
                     $updateData['detected_city'] = $request->input('city');
@@ -826,8 +836,12 @@ class ProDashboardController extends Controller
                     $updateData['country'] = $request->input('country');
                     $updateData['detected_country'] = $request->input('country');
                 }
-                if ($request->filled('phone')) $updateData['phone'] = $request->input('phone');
-                if ($request->filled('intervention_radius')) $updateData['pro_intervention_radius'] = (int) $request->input('intervention_radius');
+                if ($request->filled('phone')) {
+                    $updateData['phone'] = $request->input('phone');
+                }
+                if ($request->filled('intervention_radius')) {
+                    $updateData['pro_intervention_radius'] = (int) $request->input('intervention_radius');
+                }
             }
             if ($step >= 3 && $request->has('categories')) {
                 $updateData['pro_service_categories'] = $request->input('categories');
@@ -836,13 +850,22 @@ class ProDashboardController extends Controller
                 }
             }
             if ($step >= 4) {
-                if ($request->has('notifications_realtime')) $updateData['pro_notifications_realtime'] = (bool) $request->input('notifications_realtime');
-                if ($request->has('notifications_email')) $updateData['pro_notifications_email'] = (bool) $request->input('notifications_email');
-                if ($request->has('notifications_sms')) $updateData['pro_notifications_sms'] = (bool) $request->input('notifications_sms');
-                if ($request->filled('phone_sms')) $updateData['pro_phone_sms'] = $request->input('phone_sms');
+                if ($request->has('notifications_realtime')) {
+                    $updateData['pro_notifications_realtime'] = (bool) $request->input('notifications_realtime');
+                }
+                if ($request->has('notifications_email')) {
+                    $updateData['pro_notifications_email'] = (bool) $request->input('notifications_email');
+                }
+                if ($request->has('notifications_sms')) {
+                    $updateData['pro_notifications_sms'] = (bool) $request->input('notifications_sms');
+                }
+                if ($request->filled('phone_sms')) {
+                    $updateData['pro_phone_sms'] = $request->input('phone_sms');
+                }
             }
 
             $user->update($updateData);
+
             return response()->json(['success' => true, 'step' => $step]);
         }
 
@@ -871,31 +894,47 @@ class ProDashboardController extends Controller
                 'profile_completed_at' => now(),
             ];
 
-            if (!empty($validated['categories'])) {
+            if (! empty($validated['categories'])) {
                 $updateData['pro_service_categories'] = $validated['categories'];
                 // Synchroniser service_category avec la première catégorie sélectionnée
                 $updateData['service_category'] = $validated['categories'][0] ?? null;
             }
-            if (!empty($validated['subcategories'])) {
+            if (! empty($validated['subcategories'])) {
                 $updateData['service_subcategories'] = $validated['subcategories'];
                 // Synchroniser profession avec la première sous-catégorie
                 if (empty($user->profession)) {
                     $updateData['profession'] = $validated['subcategories'][0] ?? null;
                 }
             }
-            if (!empty($validated['intervention_radius'])) $updateData['pro_intervention_radius'] = $validated['intervention_radius'];
-            if (isset($validated['notifications_realtime'])) $updateData['pro_notifications_realtime'] = $validated['notifications_realtime'];
-            if (isset($validated['notifications_email'])) $updateData['pro_notifications_email'] = $validated['notifications_email'];
-            if (isset($validated['notifications_sms'])) $updateData['pro_notifications_sms'] = $validated['notifications_sms'];
-            if (!empty($validated['phone_sms'])) $updateData['pro_phone_sms'] = $validated['phone_sms'];
-            if (!empty($validated['address'])) $updateData['address'] = $validated['address'];
-            if (!empty($validated['postal_code'])) $updateData['postal_code'] = $validated['postal_code'];
-            if (!empty($validated['phone'])) $updateData['phone'] = $validated['phone'];
-            if (!empty($validated['city'])) {
+            if (! empty($validated['intervention_radius'])) {
+                $updateData['pro_intervention_radius'] = $validated['intervention_radius'];
+            }
+            if (isset($validated['notifications_realtime'])) {
+                $updateData['pro_notifications_realtime'] = $validated['notifications_realtime'];
+            }
+            if (isset($validated['notifications_email'])) {
+                $updateData['pro_notifications_email'] = $validated['notifications_email'];
+            }
+            if (isset($validated['notifications_sms'])) {
+                $updateData['pro_notifications_sms'] = $validated['notifications_sms'];
+            }
+            if (! empty($validated['phone_sms'])) {
+                $updateData['pro_phone_sms'] = $validated['phone_sms'];
+            }
+            if (! empty($validated['address'])) {
+                $updateData['address'] = $validated['address'];
+            }
+            if (! empty($validated['postal_code'])) {
+                $updateData['postal_code'] = $validated['postal_code'];
+            }
+            if (! empty($validated['phone'])) {
+                $updateData['phone'] = $validated['phone'];
+            }
+            if (! empty($validated['city'])) {
                 $updateData['city'] = $validated['city'];
                 $updateData['detected_city'] = $validated['city'];
             }
-            if (!empty($validated['country'])) {
+            if (! empty($validated['country'])) {
                 $updateData['country'] = $validated['country'];
                 $updateData['detected_country'] = $validated['country'];
             }
@@ -930,7 +969,7 @@ class ProDashboardController extends Controller
         ]);
 
         $planConfig = ProviderSubscriptionPlans::get($validated['plan']);
-        if (!$planConfig || empty($planConfig['enabled'])) {
+        if (! $planConfig || empty($planConfig['enabled'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cet abonnement n’est pas disponible pour le moment.',
@@ -965,7 +1004,7 @@ class ProDashboardController extends Controller
 
             // Create or retrieve Stripe customer
             $stripeCustomerId = $user->stripe_id;
-            if (!$stripeCustomerId) {
+            if (! $stripeCustomerId) {
                 $customer = \Stripe\Customer::create([
                     'email' => $user->email,
                     'name' => $user->company_name ?? $user->name,
@@ -991,7 +1030,7 @@ class ProDashboardController extends Controller
                     'quantity' => 1,
                 ]],
                 'mode' => 'payment',
-                'success_url' => route('pro.onboarding.payment.success') . '?session_id={CHECKOUT_SESSION_ID}',
+                'success_url' => route('pro.onboarding.payment.success').'?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => route('pro.onboarding.payment.cancel'),
                 'metadata' => [
                     'user_id' => $user->id,
@@ -1002,7 +1041,7 @@ class ProDashboardController extends Controller
             ]);
 
             // For standard form submissions (e.g. subscription page), redirect directly to Stripe
-            if (!$request->expectsJson() && !$request->ajax()) {
+            if (! $request->expectsJson() && ! $request->ajax()) {
                 return redirect()->away($session->url);
             }
 
@@ -1013,14 +1052,14 @@ class ProDashboardController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Stripe Checkout creation error (pro onboarding): ' . $e->getMessage(), [
+            \Log::error('Stripe Checkout creation error (pro onboarding): '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'user_id' => $user->id,
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la création du paiement : ' . $e->getMessage(),
+                'message' => 'Erreur lors de la création du paiement : '.$e->getMessage(),
             ], 500);
         }
     }
@@ -1033,7 +1072,7 @@ class ProDashboardController extends Controller
         $sessionId = $request->get('session_id');
         $user = Auth::user();
 
-        if (!$sessionId || !$user) {
+        if (! $sessionId || ! $user) {
             return redirect()->route('pro.onboarding')->with('error', 'Session de paiement invalide.');
         }
 
@@ -1098,26 +1137,34 @@ class ProDashboardController extends Controller
                     'pro_status' => 'active',
                 ];
 
-                if (!empty($data['phone_sms'])) $updateData['pro_phone_sms'] = $data['phone_sms'];
-                if (!empty($data['address'])) $updateData['address'] = $data['address'];
-                if (!empty($data['postal_code'])) $updateData['postal_code'] = $data['postal_code'];
-                if (!empty($data['phone'])) $updateData['phone'] = $data['phone'];
-                if (!empty($data['city'])) {
+                if (! empty($data['phone_sms'])) {
+                    $updateData['pro_phone_sms'] = $data['phone_sms'];
+                }
+                if (! empty($data['address'])) {
+                    $updateData['address'] = $data['address'];
+                }
+                if (! empty($data['postal_code'])) {
+                    $updateData['postal_code'] = $data['postal_code'];
+                }
+                if (! empty($data['phone'])) {
+                    $updateData['phone'] = $data['phone'];
+                }
+                if (! empty($data['city'])) {
                     $updateData['city'] = $data['city'];
                     $updateData['detected_city'] = $data['city'];
                 }
-                if (!empty($data['country'])) {
+                if (! empty($data['country'])) {
                     $updateData['country'] = $data['country'];
                     $updateData['detected_country'] = $data['country'];
                 }
-                if (!empty($data['subcategories'])) {
+                if (! empty($data['subcategories'])) {
                     $updateData['service_subcategories'] = $data['subcategories'];
                 }
 
                 $user->update($updateData);
 
                 // Update geolocation if provided
-                if (!empty($data['latitude']) && !empty($data['longitude'])) {
+                if (! empty($data['latitude']) && ! empty($data['longitude'])) {
                     $user->update([
                         'latitude' => $data['latitude'],
                         'longitude' => $data['longitude'],
@@ -1135,19 +1182,21 @@ class ProDashboardController extends Controller
 
             } catch (\Exception $e) {
                 DB::rollBack();
-                \Log::error('Pro subscription creation after payment error: ' . $e->getMessage(), [
+                \Log::error('Pro subscription creation after payment error: '.$e->getMessage(), [
                     'trace' => $e->getTraceAsString(),
                     'user_id' => $user->id,
                     'session_id' => $sessionId,
                 ]);
+
                 return redirect()->route('pro.onboarding')->with('error', 'Le paiement a été effectué mais une erreur est survenue. Veuillez contacter le support.');
             }
 
         } catch (\Exception $e) {
-            \Log::error('Stripe session retrieval error (pro onboarding): ' . $e->getMessage(), [
+            \Log::error('Stripe session retrieval error (pro onboarding): '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'user_id' => $user->id,
             ]);
+
             return redirect()->route('pro.onboarding')->with('error', 'Erreur lors de la vérification du paiement. Veuillez réessayer.');
         }
     }
@@ -1169,7 +1218,7 @@ class ProDashboardController extends Controller
         $user = Auth::user();
 
         // If not a professional, redirect
-        if (!$user->isProfessionnel() && !$user->isServiceProvider()) {
+        if (! $user->isProfessionnel() && ! $user->isServiceProvider()) {
             return redirect()->route('feed');
         }
 
@@ -1312,8 +1361,8 @@ class ProDashboardController extends Controller
             ->get()
             ->map(function ($quote) {
                 return [
-                    'id' => 'quote_' . $quote->id,
-                    'title' => $quote->title ?? ('Devis #' . $quote->quote_number),
+                    'id' => 'quote_'.$quote->id,
+                    'title' => $quote->title ?? ('Devis #'.$quote->quote_number),
                     'client' => $quote->client->name ?? 'Client inconnu',
                     'type' => 'quote',
                     'date' => $quote->valid_until ?? $quote->created_at,
@@ -1332,8 +1381,8 @@ class ProDashboardController extends Controller
             ->get()
             ->map(function ($invoice) {
                 return [
-                    'id' => 'invoice_' . $invoice->id,
-                    'title' => 'Facture #' . $invoice->invoice_number,
+                    'id' => 'invoice_'.$invoice->id,
+                    'title' => 'Facture #'.$invoice->invoice_number,
                     'client' => $invoice->client->name ?? 'Client inconnu',
                     'type' => 'invoice',
                     'date' => $invoice->due_date ?? $invoice->created_at,
@@ -1351,8 +1400,8 @@ class ProDashboardController extends Controller
             ->get()
             ->map(function ($client) {
                 return [
-                    'id' => 'client_' . $client->id,
-                    'title' => 'Interaction: ' . $client->name,
+                    'id' => 'client_'.$client->id,
+                    'title' => 'Interaction: '.$client->name,
                     'client' => $client->name,
                     'type' => 'interaction',
                     'date' => $client->last_interaction_at,
@@ -1433,11 +1482,12 @@ class ProDashboardController extends Controller
         $categories = [];
         foreach (config('categories.services') as $name => $data) {
             $categories[$name] = [
-                'icon'           => $data['icon'],
-                'color'          => $data['color'],
-                'subcategories'  => $data['subcategories'],
+                'icon' => $data['icon'],
+                'color' => $data['color'],
+                'subcategories' => $data['subcategories'],
             ];
         }
+
         return $categories;
     }
 }

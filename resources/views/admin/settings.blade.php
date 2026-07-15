@@ -48,7 +48,7 @@
                     
                     <div class="mb-3">
                         <label class="form-label">Email de contact public</label>
-                        <input type="email" class="form-control" name="contact_email" value="{{ $settings['general']['contact_email'] ?? 'contact@ProxiPro.com' }}">
+                        <input type="email" class="form-control" name="contact_email" value="{{ $settings['general']['contact_email'] ?? config('site.support_email') }}" placeholder="support@votre-domaine.fr">
                         <small class="text-muted">Adresse affichée aux utilisateurs pour joindre la plateforme.</small>
                     </div>
                     
@@ -173,7 +173,7 @@
                     <div class="row g-3 small">
                         <div class="col-md-6">
                             <div class="text-muted text-uppercase fw-semibold mb-1">Contact public</div>
-                            <div>{{ $settings['general']['contact_email'] ?? 'contact@ProxiPro.com' }}</div>
+                            <div>{{ $settings['general']['contact_email'] ?? config('site.support_email') ?? 'Non configuré' }}</div>
                             <div class="text-muted">Visible sur le site</div>
                         </div>
                         <div class="col-md-6">

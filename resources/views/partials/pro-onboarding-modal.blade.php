@@ -610,7 +610,7 @@
                             <i class="fas fa-bolt"></i>
                         </div>
                         <div class="obm-notif-text">
-                            <strong>Notifications instantanées</strong>
+                            <strong>Alertes dans la plateforme</strong>
                             <span>Alerte dès qu'un client publie dans votre zone.</span>
                         </div>
                         <div class="form-check form-switch">
@@ -623,31 +623,14 @@
                             <i class="fas fa-envelope"></i>
                         </div>
                         <div class="obm-notif-text">
-                            <strong>Récapitulatif par email</strong>
-                            <span>Résumé quotidien des nouvelles demandes.</span>
+                            <strong>Alertes par e-mail</strong>
+                            <span>Nouvelles demandes correspondant à votre activité.</span>
                         </div>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="obmNotifEmail" checked style="width: 44px; height: 22px;" onclick="event.stopPropagation()">
                         </div>
                     </label>
 
-                    <label class="obm-notif-option" onclick="event.stopPropagation(); var cb = document.getElementById('obmNotifSms'); cb.checked = !cb.checked; document.getElementById('obmSmsPhoneField').style.display = cb.checked ? '' : 'none';">
-                        <div class="obm-notif-icon" style="background: rgba(168,85,247,0.1); color: #a855f7;">
-                            <i class="fas fa-sms"></i>
-                        </div>
-                        <div class="obm-notif-text">
-                            <strong>Alerte SMS (optionnel)</strong>
-                            <span>SMS pour les demandes urgentes.</span>
-                        </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="obmNotifSms" style="width: 44px; height: 22px;" onclick="event.stopPropagation(); document.getElementById('obmSmsPhoneField').style.display = this.checked ? '' : 'none';">
-                        </div>
-                    </label>
-
-                    <div class="obm-sms-phone" id="obmSmsPhoneField">
-                        <label class="obm-label">Numéro pour les SMS</label>
-                        <input type="tel" class="obm-input" id="obmPhoneSms" placeholder="06 12 34 56 78" value="{{ Auth::user()->pro_phone_sms ?? Auth::user()->phone ?? '' }}">
-                    </div>
                 </div>
 
 
@@ -700,7 +683,7 @@
                                 <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Badge « Pro Premium »</li>
                                 <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Jusqu'à 4 photos par annonce</li>
                                 <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Export comptable</li>
-                                <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Support 7j/7</li>
+                                <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Assistance via formulaire</li>
                             </ul>
                         </div>
                     </div>

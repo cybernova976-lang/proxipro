@@ -187,7 +187,7 @@
                                 <li><i class="fas fa-check"></i> Gestion de clientèle</li>
                                 <li><i class="fas fa-check"></i> Badge Pro visible</li>
                                 <li><i class="fas fa-check"></i> Jusqu'à 4 photos par annonce</li>
-                                <li><i class="fas fa-check"></i> Notifications en temps réel</li>
+                                <li><i class="fas fa-check"></i> Alertes dans la plateforme</li>
                                 <li><i class="fas fa-check"></i> Support prioritaire</li>
                             </ul>
                         </div>
@@ -205,7 +205,7 @@
                                 <li><i class="fas fa-star" style="color:#f59e0b!important;"></i> Badge « Pro Premium »</li>
                                 <li><i class="fas fa-star" style="color:#f59e0b!important;"></i> Jusqu'à 4 photos par annonce</li>
                                 <li><i class="fas fa-star" style="color:#f59e0b!important;"></i> Export comptable</li>
-                                <li><i class="fas fa-star" style="color:#f59e0b!important;"></i> Support dédié 7j/7</li>
+                                <li><i class="fas fa-star" style="color:#f59e0b!important;"></i> Assistance via formulaire</li>
                             </ul>
                         </div>
                     </div>

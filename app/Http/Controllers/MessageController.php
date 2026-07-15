@@ -10,6 +10,7 @@ use App\Notifications\NewMessageNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class MessageController extends Controller
 {
@@ -22,7 +23,7 @@ class MessageController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
+
         $conversations = Conversation::with(['user1', 'user2', 'lastMessage.sender'])
             ->where('user1_id', $user->id)
             ->orWhere('user2_id', $user->id)
@@ -37,9 +38,9 @@ class MessageController extends Controller
     {
         $user = Auth::user();
         $conversation = Conversation::with(['user1', 'user2'])->findOrFail($id);
-        
+
         // Vérifier l'accès
-        if (!in_array($user->id, [$conversation->user1_id, $conversation->user2_id])) {
+        if (! in_array($user->id, [$conversation->user1_id, $conversation->user2_id])) {
             abort(403);
         }
 
@@ -67,19 +68,19 @@ class MessageController extends Controller
     {
         $request->validate([
             'conversation_id' => 'required|exists:conversations,id',
-            'content' => 'required|string|max:3000'
+            'content' => 'required|string|max:3000',
         ]);
 
         $user = Auth::user();
         $conversation = Conversation::findOrFail($request->conversation_id);
 
         // Vérifier les permissions
-        if (!in_array($user->id, [$conversation->user1_id, $conversation->user2_id])) {
+        if (! in_array($user->id, [$conversation->user1_id, $conversation->user2_id])) {
             return response()->json(['error' => 'Accès non autorisé'], 403);
         }
 
         // Vérifier si la conversation est bloquée
-        if (!$conversation->canSendMessage($user->id)) {
+        if (! $conversation->canSendMessage($user->id)) {
             return response()->json(['error' => 'Cette conversation est bloquée'], 403);
         }
 
@@ -87,7 +88,7 @@ class MessageController extends Controller
         $message = Message::create([
             'conversation_id' => $conversation->id,
             'sender_id' => $user->id,
-            'content' => $request->content
+            'content' => $request->content,
         ]);
 
         // Notifier le destinataire par email et notification interne
@@ -99,7 +100,7 @@ class MessageController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $message->load('sender')
+            'message' => $message->load('sender'),
         ]);
     }
 
@@ -109,7 +110,7 @@ class MessageController extends Controller
         $request->validate([
             'recipient_id' => 'required|exists:users,id',
             'ad_id' => 'nullable|exists:ads,id',
-            'message' => 'required|string|max:3000'
+            'message' => 'required|string|max:3000',
         ]);
 
         $currentUser = Auth::user();
@@ -130,13 +131,13 @@ class MessageController extends Controller
                     $isPro = $currentUser->user_type === 'professionnel'
                           || $currentUser->hasActiveProSubscription()
                           || $currentUser->hasCompletedProOnboarding();
-                    if (!$isPro) {
+                    if (! $isPro) {
                         return back()->with('error', 'Cette annonce est réservée aux professionnels. Seuls les comptes Pro peuvent contacter l\'annonceur.');
                     }
                 }
 
                 if ($restriction === 'verified_only') {
-                    if (!$currentUser->is_verified) {
+                    if (! $currentUser->is_verified) {
                         return back()->with('error', 'Cette annonce est réservée aux profils vérifiés. Veuillez vérifier votre identité pour contacter l\'annonceur.');
                     }
                 }
@@ -144,20 +145,20 @@ class MessageController extends Controller
         }
 
         DB::beginTransaction();
-        
+
         try {
             // Créer ou récupérer la conversation
             $conversation = Conversation::getOrCreate(
                 $currentUser->id,
                 $otherUser->id,
-                $request->ad_id ? "Annonce #" . $request->ad_id : null
+                $request->ad_id ? 'Annonce #'.$request->ad_id : null
             );
 
             // Envoyer le premier message
             $message = Message::create([
                 'conversation_id' => $conversation->id,
                 'sender_id' => $currentUser->id,
-                'content' => $request->message
+                'content' => $request->message,
             ]);
 
             // Notifier le destinataire par email et notification interne
@@ -166,11 +167,17 @@ class MessageController extends Controller
             DB::commit();
 
             return redirect()->route('messages.show', $conversation->id)
-                           ->with('success', 'Message envoyé avec succès !');
+                ->with('success', 'Message envoyé avec succès !');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Erreur lors de l\'envoi du message: ' . $e->getMessage());
+            Log::error('Echec de creation d une conversation', [
+                'user_id' => $currentUser->id,
+                'recipient_id' => $otherUser->id,
+                'exception' => $e,
+            ]);
+
+            return back()->with('error', 'Le message n a pas pu etre envoye. Veuillez reessayer.');
         }
     }
 
@@ -180,13 +187,13 @@ class MessageController extends Controller
         $conversation = Conversation::findOrFail($id);
         $user = Auth::user();
 
-        if (!in_array($user->id, [$conversation->user1_id, $conversation->user2_id])) {
+        if (! in_array($user->id, [$conversation->user1_id, $conversation->user2_id])) {
             abort(403);
         }
 
         $conversation->update([
             'is_blocked' => true,
-            'blocked_by' => $user->id
+            'blocked_by' => $user->id,
         ]);
 
         return response()->json(['success' => true]);
@@ -198,13 +205,13 @@ class MessageController extends Controller
         $conversation = Conversation::findOrFail($id);
         $user = Auth::user();
 
-        if (!in_array($user->id, [$conversation->user1_id, $conversation->user2_id])) {
+        if (! in_array($user->id, [$conversation->user1_id, $conversation->user2_id])) {
             abort(403);
         }
 
         $conversation->update([
             'is_blocked' => false,
-            'blocked_by' => null
+            'blocked_by' => null,
         ]);
 
         return response()->json(['success' => true]);
@@ -216,7 +223,7 @@ class MessageController extends Controller
         $conversation = Conversation::findOrFail($id);
         $user = Auth::user();
 
-        if (!in_array($user->id, [$conversation->user1_id, $conversation->user2_id])) {
+        if (! in_array($user->id, [$conversation->user1_id, $conversation->user2_id])) {
             abort(403);
         }
 
@@ -229,7 +236,7 @@ class MessageController extends Controller
     public function markAllAsRead()
     {
         $user = Auth::user();
-        
+
         $conversations = Conversation::where('user1_id', $user->id)
             ->orWhere('user2_id', $user->id)
             ->get();
@@ -246,14 +253,14 @@ class MessageController extends Controller
     {
         $user = Auth::user();
         $conversation = Conversation::findOrFail($id);
-        
+
         // Vérifier l'accès
-        if (!in_array($user->id, [$conversation->user1_id, $conversation->user2_id])) {
+        if (! in_array($user->id, [$conversation->user1_id, $conversation->user2_id])) {
             return response()->json(['error' => 'Accès non autorisé'], 403);
         }
 
         $lastId = $request->input('last_id', 0);
-        
+
         // Récupérer les nouveaux messages
         $messages = Message::where('conversation_id', $id)
             ->where('id', '>', $lastId)
@@ -268,7 +275,7 @@ class MessageController extends Controller
 
         return response()->json([
             'success' => true,
-            'messages' => $messages
+            'messages' => $messages,
         ]);
     }
 
@@ -276,7 +283,7 @@ class MessageController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'content' => 'required|string|max:3000'
+            'content' => 'required|string|max:3000',
         ]);
 
         $user = Auth::user();
@@ -291,12 +298,12 @@ class MessageController extends Controller
         }
 
         $message->update([
-            'content' => $request->content
+            'content' => $request->content,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => $message
+            'message' => $message,
         ]);
     }
 

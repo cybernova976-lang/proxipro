@@ -6,10 +6,11 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class NewMessageNotification extends Notification
+class NewMessageNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -17,11 +18,27 @@ class NewMessageNotification extends Notification
         protected Message $message,
         protected Conversation $conversation,
         protected User $sender
-    ) {}
+    ) {
+        $this->afterCommit();
+    }
 
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        $channels = ['database'];
+
+        if ($notifiable->email_notifications !== false && filled($notifiable->email)) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
+    }
+
+    public function viaConnections(): array
+    {
+        return [
+            'database' => 'sync',
+            'mail' => config('queue.default', 'database'),
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -29,8 +46,8 @@ class NewMessageNotification extends Notification
         $preview = \Illuminate\Support\Str::limit($this->message->content, 100);
         $supportEmail = config('mail.reply_to.address')
             ?: config('mail.admin_email')
-            ?: config('mail.from.address')
-            ?: 'support@proxipro.fr';
+            ?: config('site.support_email')
+            ?: config('mail.from.address');
 
         return (new MailMessage)
             ->subject("💬 Nouveau message de {$this->sender->name}")

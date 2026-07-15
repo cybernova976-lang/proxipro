@@ -225,7 +225,7 @@
         <div style="font-size: 2.5rem;">🚀</div>
         <div class="flex-grow-1">
             <h5 class="fw-bold mb-1">Activez votre abonnement Pro</h5>
-            <p class="text-muted mb-0">Recevez des demandes de clients en temps réel et développez votre activité.</p>
+            <p class="text-muted mb-0">Retrouvez les demandes de clients et développez votre activité.</p>
         </div>
         <a href="{{ route('pro.subscription') }}" class="btn btn-pro-primary">
             <i class="fas fa-crown me-1"></i> S'abonner
@@ -318,7 +318,7 @@
                 Développez votre activité professionnelle
             </h4>
             <p style="opacity: 0.8; font-size: 0.82rem; margin: 0; line-height: 1.5;">
-                Devis, facturation, gestion clients et alertes en temps réel — tout en un.
+                Devis, facturation, gestion clients et alertes centralisées — tout en un.
             </p>
         </div>
         <div class="d-flex gap-2 flex-wrap flex-shrink-0">
@@ -384,7 +384,7 @@
             <div class="feature-item">
                 <div class="feature-icon" style="background: rgba(124,58,237,0.1); color: #7c3aed;"><i class="fas fa-bell"></i></div>
                 <div>
-                    <div class="fw-bold" style="font-size: 0.9rem;">Alertes temps réel</div>
+                    <div class="fw-bold" style="font-size: 0.9rem;">Alertes centralisées</div>
                     <div class="text-muted" style="font-size: 0.8rem;">Recevez des notifications instantanées dès qu'une annonce correspond à votre métier.</div>
                 </div>
             </div>

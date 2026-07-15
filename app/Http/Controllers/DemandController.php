@@ -10,22 +10,17 @@ use App\Services\SavedSearchService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class DemandController extends Controller
 {
-    public function __construct(private SavedSearchService $savedSearchService)
-    {
-    }
+    public function __construct(private SavedSearchService $savedSearchService) {}
 
     /**
      * Affiche le formulaire simplifié de demande de service
      */
     public function create(Request $request)
     {
-        if (!Auth::check()) {
-            return redirect()->route('login')->with('error', 'Connectez-vous pour publier une demande.');
-        }
-
         $categoriesData = [];
         foreach (config('categories.services') as $name => $data) {
             $categoriesData[$name] = [
@@ -48,11 +43,19 @@ class DemandController extends Controller
      */
     public function store(Request $request)
     {
+        $services = config('categories.services', []);
+        $mainCategories = array_keys($services);
+        $subcategories = collect($services)
+            ->flatMap(fn (array $category) => $category['subcategories'] ?? [])
+            ->unique()
+            ->values()
+            ->all();
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:2000',
-            'main_category' => 'required|string|max:100',
-            'category' => 'required|string|max:100',
+            'main_category' => ['required', 'string', Rule::in($mainCategories)],
+            'category' => ['required', 'string', Rule::in($subcategories)],
             'country' => 'required|string',
             'city' => 'nullable|string',
             'location' => 'nullable|string',
@@ -61,6 +64,12 @@ class DemandController extends Controller
             'photos' => 'nullable|array|max:2',
             'photos.*' => 'image|mimes:jpeg,png,webp|max:5120',
         ]);
+
+        if (! in_array($request->category, $services[$request->main_category]['subcategories'] ?? [], true)) {
+            return back()->withErrors([
+                'category' => 'Le service selectionne ne correspond pas a la categorie choisie.',
+            ])->withInput();
+        }
 
         $finalLocation = $request->location;
         if (empty($finalLocation) && $request->city && $request->city !== '__other__') {
@@ -74,11 +83,11 @@ class DemandController extends Controller
         $selectedCity = $request->city && $request->city !== '__other__' ? $request->city : $finalLocation;
 
         // Géocodage
-        $fullAddress = $finalLocation . ', ' . $request->country;
-        $geocodingService = new GeocodingService();
+        $fullAddress = $finalLocation.', '.$request->country;
+        $geocodingService = new GeocodingService;
         $coordinates = $geocodingService->geocode($fullAddress);
 
-        $ad = new Ad();
+        $ad = new Ad;
         $ad->title = $request->title;
         $ad->description = $request->description;
         $ad->category = $request->category;
@@ -116,7 +125,7 @@ class DemandController extends Controller
         try {
             app(AdController::class)->notifyMatchingProfessionals($ad);
         } catch (\Exception $e) {
-            Log::error('Demand matching notification failed: ' . $e->getMessage(), [
+            Log::error('Demand matching notification failed: '.$e->getMessage(), [
                 'ad_id' => $ad->id,
                 'category' => $ad->category,
                 'exception' => get_class($e),
@@ -126,7 +135,7 @@ class DemandController extends Controller
         try {
             $this->savedSearchService->processNewAd($ad);
         } catch (\Throwable $exception) {
-            Log::warning('Saved search matching failed for demand #' . $ad->id . ': ' . $exception->getMessage());
+            Log::warning('Saved search matching failed for demand #'.$ad->id.': '.$exception->getMessage());
         }
 
         return redirect()->route('demand.matching', $ad);
@@ -137,6 +146,8 @@ class DemandController extends Controller
      */
     public function matching(Ad $ad)
     {
+        abort_unless(Auth::id() === $ad->user_id || Auth::user()?->isAdmin(), 403);
+
         if ($ad->service_type !== 'demande') {
             return redirect()->route('feed');
         }
@@ -148,7 +159,7 @@ class DemandController extends Controller
         $serviceUserIds = UserService::where('is_active', true)
             ->where(function ($q) use ($category) {
                 $q->where('main_category', $category)
-                  ->orWhere('subcategory', $category);
+                    ->orWhere('subcategory', $category);
             })
             ->where('user_id', '!=', $ad->user_id)
             ->pluck('user_id')
@@ -158,13 +169,14 @@ class DemandController extends Controller
         $profileProIds = User::where('id', '!=', $ad->user_id)
             ->where(function ($q) {
                 $q->where('user_type', 'professionnel')
-                  ->orWhere('is_service_provider', true);
+                    ->orWhere('is_service_provider', true);
             })
             ->get()
             ->filter(function ($user) use ($category) {
                 $proCats = $user->pro_service_categories ?? [];
                 $subCats = $user->service_subcategories ?? [];
-                return in_array($category, $proCats) 
+
+                return in_array($category, $proCats)
                     || in_array($category, is_array($subCats) ? $subCats : [])
                     || $user->profession === $category;
             })
@@ -174,12 +186,12 @@ class DemandController extends Controller
         $adProIds = User::where('id', '!=', $ad->user_id)
             ->where(function ($q) {
                 $q->where('user_type', 'professionnel')
-                  ->orWhere('is_service_provider', true);
+                    ->orWhere('is_service_provider', true);
             })
             ->whereHas('ads', function ($q) use ($category) {
                 $q->where('status', 'active')
-                  ->where('service_type', 'offre')
-                  ->where('category', $category);
+                    ->where('service_type', 'offre')
+                    ->where('category', $category);
             })
             ->pluck('id');
 
@@ -195,8 +207,13 @@ class DemandController extends Controller
                 ->sortByDesc(function ($user) {
                     // Trier : abonnés Pro > prestataires > ancienneté
                     $score = 0;
-                    if ($user->hasActiveProSubscription()) $score += 100;
-                    if ($user->is_service_provider) $score += 50;
+                    if ($user->hasActiveProSubscription()) {
+                        $score += 100;
+                    }
+                    if ($user->is_service_provider) {
+                        $score += 50;
+                    }
+
                     return $score;
                 });
         }
@@ -238,6 +255,8 @@ class DemandController extends Controller
      */
     public function matchingApi(Ad $ad)
     {
+        abort_unless(Auth::id() === $ad->user_id || Auth::user()?->isAdmin(), 403);
+
         if ($ad->service_type !== 'demande') {
             return response()->json(['success' => false], 400);
         }
@@ -247,7 +266,7 @@ class DemandController extends Controller
         $serviceUserIds = UserService::where('is_active', true)
             ->where(function ($q) use ($category) {
                 $q->where('main_category', $category)
-                  ->orWhere('subcategory', $category);
+                    ->orWhere('subcategory', $category);
             })
             ->where('user_id', '!=', $ad->user_id)
             ->pluck('user_id')
@@ -256,12 +275,13 @@ class DemandController extends Controller
         $profileProIds = User::where('id', '!=', $ad->user_id)
             ->where(function ($q) {
                 $q->where('user_type', 'professionnel')
-                  ->orWhere('is_service_provider', true);
+                    ->orWhere('is_service_provider', true);
             })
             ->get()
             ->filter(function ($user) use ($category) {
                 $proCats = $user->pro_service_categories ?? [];
                 $subCats = $user->service_subcategories ?? [];
+
                 return in_array($category, $proCats)
                     || in_array($category, is_array($subCats) ? $subCats : []);
             })

@@ -7687,6 +7687,7 @@
                  data-ad-json="{{ htmlspecialchars(json_encode([
                     'id' => $ad->id, 'title' => $ad->title, 'description' => $ad->description,
                     'category' => $ad->category, 'price' => $ad->price, 'location' => $ad->location,
+                    'service_type' => $ad->service_type,
                     'photos' => $photos, 'is_urgent' => (bool)$ad->is_urgent,
                     'reply_restriction' => $ad->reply_restriction ?? 'everyone',
                     'visibility' => $ad->visibility ?? 'public',
@@ -7976,9 +7977,10 @@
             <div class="col-lg-3 col-md-6 mb-4">
                 <h5 class="footer-title">Contact</h5>
                 <ul class="footer-contact">
-                    <li><i class="fas fa-envelope"></i> contact@ProxiPro.com</li>
-                    <li><i class="fas fa-phone"></i> +262 693 00 00 00</li>
-                    <li><i class="fas fa-map-marker-alt"></i> Mayotte, France</li>
+                    <li><a href="{{ route('contact.index') }}"><i class="fas fa-paper-plane"></i> Formulaire de contact</a></li>
+                    @if(config('site.support_email'))<li><i class="fas fa-envelope"></i> {{ config('site.support_email') }}</li>@endif
+                    @if(config('site.contact_phone'))<li><i class="fas fa-phone"></i> {{ config('site.contact_phone') }}</li>@endif
+                    @if(config('site.contact_location'))<li><i class="fas fa-map-marker-alt"></i> {{ config('site.contact_location') }}</li>@endif
                 </ul>
             </div>
         </div>
@@ -8228,26 +8230,12 @@
             <div class="ad-detail-description" id="adDetailDescription"></div>
         </div>
 
-        <!-- Bouton Postuler / Envoyer candidature -->
+        <!-- Accès au parcours unifié proposition / commande -->
         @auth
         <div class="ad-detail-candidature" id="adDetailCandidature">
-            <div class="candidature-collapsed" id="candidatureCollapsed">
-                <button type="button" class="btn-candidature" onclick="toggleCandidatureForm()">
-                    <i class="fas fa-hand-paper"></i> Je suis intéressé(e) — Envoyer ma candidature
-                </button>
-            </div>
-            <div class="candidature-form" id="candidatureForm" style="display:none;">
-                <h5 style="font-size:0.9rem;font-weight:600;color:#1e293b;margin-bottom:8px;">
-                    <i class="fas fa-paper-plane" style="color:#3b82f6;margin-right:6px;"></i>Envoyer votre candidature
-                </h5>
-                <textarea id="candidatureMessage" class="candidature-textarea" placeholder="Présentez-vous en quelques mots... (optionnel)" maxlength="1000"></textarea>
-                <div style="display:flex;gap:8px;justify-content:flex-end;">
-                    <button type="button" class="btn-candidature-cancel" onclick="toggleCandidatureForm()">Annuler</button>
-                    <button type="button" class="btn-candidature-send" id="btnSendCandidature" onclick="submitCandidature()">
-                        <i class="fas fa-paper-plane"></i> Envoyer
-                    </button>
-                </div>
-            </div>
+            <a href="#" class="btn-candidature" id="adDetailMarketplaceAction" style="text-decoration:none;">
+                <i class="fas fa-external-link-alt"></i> Ouvrir l'annonce
+            </a>
         </div>
         @endauth
 
@@ -8516,8 +8504,8 @@
                     <div class="sub-popup-notif-info">
                         <i class="fas fa-bolt" style="color:#f59e0b;"></i>
                         <div>
-                            <strong>Alertes en temps réel</strong>
-                            <small>Notification instantanée sur le site</small>
+                            <strong>Alertes dans la plateforme</strong>
+                            <small>Notification disponible dans votre espace</small>
                         </div>
                     </div>
                     <label class="sub-popup-toggle">
@@ -8526,19 +8514,6 @@
                     </label>
                 </div>
 
-                <div class="sub-popup-notif-row">
-                    <div class="sub-popup-notif-info">
-                        <i class="fas fa-mobile-alt" style="color:#10b981;"></i>
-                        <div>
-                            <strong>Notifications SMS</strong>
-                            <small>Recevez un SMS pour les demandes urgentes</small>
-                        </div>
-                    </div>
-                    <label class="sub-popup-toggle">
-                        <input type="checkbox" id="notifSms">
-                        <span class="sub-popup-toggle-slider"></span>
-                    </label>
-                </div>
 
                 <div style="background:#f0fdf4; border-radius:10px; padding:10px 14px; margin-top:14px; font-size:0.75rem; color:#166534; display:flex; align-items:center; gap:8px;">
                     <i class="fas fa-info-circle"></i>
@@ -11714,7 +11689,8 @@
             </a>
         `;
 
-        // Candidature section: reset and show/hide based on ownership
+        // Parcours marketplace : la page complète applique les règles de
+        // proposition chiffrée (demande) ou de commande sécurisée (offre).
         const candidatureDiv = document.getElementById('adDetailCandidature');
         if (candidatureDiv) {
             const isOwnAd = ad.user_id == {{ Auth::id() ?? 'null' }};
@@ -11722,17 +11698,12 @@
                 candidatureDiv.style.display = 'none';
             } else {
                 candidatureDiv.style.display = 'block';
-                const collapsed = document.getElementById('candidatureCollapsed');
-                const form = document.getElementById('candidatureForm');
-                if (collapsed) collapsed.style.display = 'block';
-                if (form) form.style.display = 'none';
-                const msgInput = document.getElementById('candidatureMessage');
-                if (msgInput) msgInput.value = '';
-                // Reset collapsed button content
-                if (collapsed) {
-                    collapsed.innerHTML = `<button type="button" class="btn-candidature" onclick="toggleCandidatureForm()">
-                        <i class="fas fa-hand-paper"></i> Je suis intéressé(e) — Envoyer ma candidature
-                    </button>`;
+                const marketplaceAction = document.getElementById('adDetailMarketplaceAction');
+                if (marketplaceAction) {
+                    marketplaceAction.href = `/ads/${ad.id}`;
+                    marketplaceAction.innerHTML = ad.service_type === 'demande'
+                        ? '<i class="fas fa-file-signature"></i> Envoyer une proposition chiffrée'
+                        : '<i class="fas fa-shield-alt"></i> Réserver ou contacter';
                 }
             }
         }
@@ -11888,6 +11859,7 @@
             fakeEl.setAttribute('data-ad-json', JSON.stringify({
                 id: ad.id, title: ad.title, description: ad.description,
                 category: ad.category, price: ad.price, location: ad.location,
+                service_type: ad.service_type,
                 photos: ad.photos || [], is_urgent: !!ad.is_urgent,
                 reply_restriction: ad.reply_restriction || 'everyone',
                 visibility: ad.visibility || 'public',
@@ -11900,68 +11872,6 @@
         } catch (e) {
             console.error('openAdDetailPopup error:', e);
             window.location.href = `/ads/${adId}`;
-        }
-    }
-
-    // =========================================
-    // CANDIDATURE FUNCTIONS
-    // =========================================
-    function toggleCandidatureForm() {
-        const collapsed = document.getElementById('candidatureCollapsed');
-        const form = document.getElementById('candidatureForm');
-        if (!collapsed || !form) return;
-        if (form.style.display === 'none') {
-            form.style.display = 'block';
-            collapsed.style.display = 'none';
-        } else {
-            form.style.display = 'none';
-            collapsed.style.display = 'block';
-        }
-    }
-
-    async function submitCandidature() {
-        if (!currentPopupAdId) return;
-        const btn = document.getElementById('btnSendCandidature');
-        const msgInput = document.getElementById('candidatureMessage');
-        const message = msgInput?.value?.trim() || '';
-
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi...';
-
-        try {
-            const response = await fetch(`/ads/${currentPopupAdId}/candidature`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ message: message })
-            });
-            const data = await response.json();
-            if (data.success) {
-                showToast(data.message || 'Candidature envoyée !', 'success');
-                // Remplacer le formulaire par un message de confirmation
-                const candidatureDiv = document.getElementById('adDetailCandidature');
-                if (candidatureDiv) {
-                    candidatureDiv.innerHTML = `
-                        <div style="padding:14px;background:#ecfdf5;border:1px solid #86efac;border-radius:10px;text-align:center;">
-                            <i class="fas fa-check-circle" style="color:#059669;font-size:1.2rem;margin-bottom:4px;"></i>
-                            <div style="font-weight:600;color:#065f46;font-size:0.9rem;">Candidature envoyée !</div>
-                            <div style="font-size:0.78rem;color:#047857;">L'annonceur a été notifié et recevra un e-mail.</div>
-                        </div>
-                    `;
-                }
-            } else {
-                showToast(data.message || 'Erreur lors de l\'envoi', 'error');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer';
-            }
-        } catch (error) {
-            console.error('submitCandidature error:', error);
-            showToast('Erreur lors de l\'envoi de la candidature', 'error');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer';
         }
     }
 

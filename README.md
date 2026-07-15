@@ -118,3 +118,22 @@ Important:
 - seller payouts via Stripe Connect can still be tested with Express test onboarding
 - admin refund and dispute flows should also be tested against Stripe test mode only
 - switch to live keys only once the legal/business setup and production launch are actually ready
+
+## Production checklist
+
+The application needs three long-running responsibilities: the web server, a
+queue worker for queued emails, and Laravel's scheduler. The Railway start
+configuration launches all three for a single replica.
+
+Before deployment, complete the public contact and legal variables documented
+in `.env.example`, then run:
+
+```bash
+php artisan app:production-check --strict
+php artisan test
+npm run build
+```
+
+The production check deliberately fails when HTTPS, persistent storage,
+Stripe webhooks, mail, queueing, secure cookies or legal identity information
+is missing.

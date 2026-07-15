@@ -61,7 +61,7 @@ SESSION_DRIVER=database
 SESSION_SECURE_COOKIE=true
 SESSION_SAME_SITE=lax
 CACHE_STORE=file
-QUEUE_CONNECTION=sync
+QUEUE_CONNECTION=database
 ```
 
 > **Important:** generate `APP_KEY` once with `php artisan key:generate --show`,
@@ -74,6 +74,19 @@ QUEUE_CONNECTION=sync
 Trigger a new deployment (push a commit or click **Redeploy** in Railway).
 The start command runs `php artisan migrate --force` against your PostgreSQL
 database before the server starts, so the schema is always up to date.
+It also starts the queue worker (emails and notifications) and the scheduler
+(daily points reset, cleanup and expiry alerts). Keep one web replica with this
+combined setup; for horizontal scaling, move those two processes to dedicated
+Railway services.
+
+Before opening production traffic, run:
+
+```bash
+php artisan app:production-check --strict
+```
+
+Complete every reported legal, mail, Stripe and security variable. Do not
+replace missing legal information with fictitious values.
 
 ---
 

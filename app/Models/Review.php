@@ -10,6 +10,7 @@ class Review extends Model
         'reviewer_id',
         'reviewed_user_id',
         'ad_id',
+        'service_order_id',
         'rating',
         'comment',
     ];
@@ -31,5 +32,10 @@ class Review extends Model
     public function ad()
     {
         return $this->belongsTo(Ad::class);
+    }
+
+    public function serviceOrder()
+    {
+        return $this->belongsTo(ServiceOrder::class);
     }
 }

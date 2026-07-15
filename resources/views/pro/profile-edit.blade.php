@@ -171,7 +171,7 @@
                 <div class="form-check form-switch mb-2">
                     <input class="form-check-input" type="checkbox" name="pro_notifications_realtime" value="1" id="notifRealtime"
                         {{ $user->pro_notifications_realtime ? 'checked' : '' }}>
-                    <label class="form-check-label" for="notifRealtime" style="font-size: 0.85rem;">Notifications en temps réel</label>
+                    <label class="form-check-label" for="notifRealtime" style="font-size: 0.85rem;">Alertes dans la plateforme</label>
                 </div>
                 <small class="text-muted">Recevez une alerte dès qu'un client vous contacte ou laisse un avis.</small>
             </div>

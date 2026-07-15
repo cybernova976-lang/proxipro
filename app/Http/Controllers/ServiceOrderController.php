@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Ad;
 use App\Models\ServiceOrder;
 use App\Notifications\ServiceOrderRequestedNotification;
-use App\Services\StripeConnectService;
 use App\Services\ServiceOrderWorkflowService;
+use App\Services\StripeConnectService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -18,8 +18,7 @@ class ServiceOrderController extends Controller
     public function __construct(
         protected ServiceOrderWorkflowService $workflowService,
         protected StripeConnectService $stripeConnectService,
-    )
-    {
+    ) {
         Stripe::setApiKey(config('services.stripe.secret'));
     }
 
@@ -38,7 +37,7 @@ class ServiceOrderController extends Controller
             ->get();
 
         $needsStripeConnectOnboarding = $ordersAsSeller->count() > 0
-            && (!$user->stripe_connect_account_id || !$user->stripe_connect_payouts_enabled);
+            && (! $user->stripe_connect_account_id || ! $user->stripe_connect_payouts_enabled);
 
         return view('service-orders.index', compact('ordersAsBuyer', 'ordersAsSeller', 'needsStripeConnectOnboarding'));
     }
@@ -48,6 +47,7 @@ class ServiceOrderController extends Controller
         $user = Auth::user();
 
         abort_if($ad->user_id === $user->id, 403);
+        abort_unless($ad->service_type === 'offre' && $ad->status === 'active', 422);
 
         $request->validate([
             'amount' => 'required|numeric|min:1',
@@ -56,11 +56,12 @@ class ServiceOrderController extends Controller
         ]);
 
         $amount = round((float) $request->amount, 2);
-        $commissionAmount = round($amount * 0.10, 2);
+        $commissionRate = max(0, min(100, (float) config('marketplace.commission_percent', 10))) / 100;
+        $commissionAmount = round($amount * $commissionRate, 2);
         $sellerAmount = round($amount - $commissionAmount, 2);
 
         $serviceOrder = ServiceOrder::create([
-            'order_number' => 'CMD-' . now()->format('Ymd') . '-' . Str::upper(Str::random(6)),
+            'order_number' => 'CMD-'.now()->format('Ymd').'-'.Str::upper(Str::random(6)),
             'ad_id' => $ad->id,
             'buyer_id' => $user->id,
             'seller_id' => $ad->user_id,
@@ -118,9 +119,9 @@ class ServiceOrderController extends Controller
             'payment_method_types' => ['card'],
             'line_items' => [[
                 'price_data' => [
-                    'currency' => 'eur',
+                    'currency' => config('marketplace.currency', 'eur'),
                     'product_data' => [
-                        'name' => 'Commande securisee ' . $serviceOrder->order_number,
+                        'name' => 'Commande securisee '.$serviceOrder->order_number,
                         'description' => $serviceOrder->ad->title,
                     ],
                     'unit_amount' => (int) round(((float) $serviceOrder->amount) * 100),
@@ -128,8 +129,8 @@ class ServiceOrderController extends Controller
                 'quantity' => 1,
             ]],
             'mode' => 'payment',
-            'success_url' => route('stripe.success') . '?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => route('service-orders.index') . '?payment=canceled&order=' . $serviceOrder->id,
+            'success_url' => route('stripe.success').'?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url' => route('service-orders.index').'?payment=canceled&order='.$serviceOrder->id,
             'metadata' => [
                 'type' => 'service_order',
                 'service_order_id' => $serviceOrder->id,

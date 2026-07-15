@@ -266,6 +266,19 @@ body { background: #f0f2f5; }
         <p>Décrivez votre besoin en 2 minutes et trouvez les professionnels disponibles près de chez vous.</p>
     </div>
 
+    @guest
+    <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:12px;padding:14px 18px;margin-bottom:18px;color:#3730a3;display:flex;gap:12px;align-items:flex-start;">
+        <i class="fas fa-info-circle" style="margin-top:3px;"></i>
+        <div>
+            <strong>Un compte gratuit est nécessaire pour publier.</strong>
+            <div style="font-size:.88rem;margin-top:3px;">Vous pouvez préparer votre demande ci-dessous. Connectez-vous avant l'envoi pour suivre les propositions reçues.</div>
+            <a href="{{ route('login') }}" style="display:inline-block;margin-top:7px;font-weight:700;color:#3730a3;">Se connecter</a>
+            <span aria-hidden="true"> · </span>
+            <a href="{{ route('register') }}" style="font-weight:700;color:#3730a3;">Créer un compte</a>
+        </div>
+    </div>
+    @endguest
+
     <!-- Steps indicator -->
     <div class="demand-steps" id="demandSteps">
         <div class="demand-step">
@@ -452,12 +465,17 @@ body { background: #f0f2f5; }
                 <button type="button" class="demand-btn demand-btn-next" id="demandBtnNext" onclick="nextDemandStep()" disabled>
                     Continuer <i class="fas fa-arrow-right"></i>
                 </button>
-                <button type="submit" class="demand-btn demand-btn-submit" id="demandBtnSubmit" style="display:none;">
+                <button @guest type="button" onclick="window.location.href='{{ route('login') }}'" @else type="submit" @endguest class="demand-btn demand-btn-submit" id="demandBtnSubmit" style="display:none;">
                     <span class="demand-btn-submit-content">
-                        <i class="fas fa-paper-plane"></i>
+                        <i class="fas fa-{{ auth()->check() ? 'paper-plane' : 'sign-in-alt' }}"></i>
                         <span class="demand-btn-submit-text">
+                            @guest
+                            <span>Se connecter</span>
+                            <span>pour publier</span>
+                            @else
                             <span>Publier</span>
                             <span>et trouver des pros</span>
+                            @endguest
                         </span>
                     </span>
                 </button>

@@ -1,47 +1,49 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AdController;
-use App\Http\Controllers\HomePageController;
+use App\Http\Controllers\Admin\AdminServiceOrderController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\PointController;
+use App\Http\Controllers\BoostController;
+use App\Http\Controllers\CommentController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FeedController;
+use App\Http\Controllers\HomePageController;
+use App\Http\Controllers\LostItemController;
 use App\Http\Controllers\MessageController;
-use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PointController;
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\LostItemController;
-use App\Http\Controllers\ToolController;
-use App\Http\Controllers\StripeCheckoutController;
-use App\Http\Controllers\ContactController;
-use App\Http\Controllers\VerificationController;
-use App\Http\Controllers\BoostController;
-use App\Http\Controllers\SavedAdController;
-use App\Http\Controllers\SavedSearchController;
-use App\Http\Controllers\ServiceOrderController;
-use App\Http\Controllers\Admin\AdminServiceOrderController;
-use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\ServiceProviderController;
-use App\Http\Controllers\CommentController;
 use App\Http\Controllers\PurchaseInvoiceController;
 use App\Http\Controllers\QuoteToolController;
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\SavedAdController;
+use App\Http\Controllers\SavedSearchController;
+use App\Http\Controllers\SeoController;
+use App\Http\Controllers\ServiceOrderController;
+use App\Http\Controllers\ServiceProposalController;
+use App\Http\Controllers\ServiceProviderController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\StripeCheckoutController;
+use App\Http\Controllers\ToolController;
+use App\Http\Controllers\VerificationController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Route;
 
 // Page d'accueil publique
 Route::get('/', [HomePageController::class, 'index'])->name('homepage');
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 
 if (app()->environment('local')) {
     // Routes de test visibles uniquement en développement local.
-    Route::get('/test-card', function() {
+    Route::get('/test-card', function () {
         return view('feed.test-card');
     })->name('test-card');
 
-    Route::get('/test-provider', function() {
+    Route::get('/test-provider', function () {
         return view('test-provider-button');
     })->middleware('auth')->name('test-provider');
 
@@ -57,20 +59,22 @@ if (app()->environment('local')) {
 }
 
 // Authentication Routes...
-Route::get('login', function() {
+Route::get('login', function () {
     if (Auth::check()) {
         return redirect()->route('feed');
     }
+
     return view('auth.login');
 })->name('login');
 Route::post('login', [App\Http\Controllers\Auth\LoginController::class, 'login'])->name('login.attempt');
 Route::post('logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
 
 // Registration Routes...
-Route::get('register', function() {
+Route::get('register', function () {
     if (Auth::check()) {
         return redirect()->route('feed');
     }
+
     return view('auth.register');
 })->name('register');
 Route::post('register', [App\Http\Controllers\Auth\RegisterController::class, 'register'])
@@ -98,8 +102,12 @@ Route::get('/auth/csrf-token', function () {
 })->middleware('throttle:30,1')->name('auth.csrf.refresh');
 
 // Social Authentication Routes (Google, Facebook)
-Route::get('/auth/{provider}', [App\Http\Controllers\Auth\SocialAuthController::class, 'redirect'])->name('social.redirect');
-Route::get('/auth/{provider}/callback', [App\Http\Controllers\Auth\SocialAuthController::class, 'callback'])->name('social.callback');
+Route::get('/auth/{provider}', [App\Http\Controllers\Auth\SocialAuthController::class, 'redirect'])
+    ->whereIn('provider', ['google', 'facebook'])
+    ->name('social.redirect');
+Route::get('/auth/{provider}/callback', [App\Http\Controllers\Auth\SocialAuthController::class, 'callback'])
+    ->whereIn('provider', ['google', 'facebook'])
+    ->name('social.callback');
 
 // Email Verification Code Routes (code-based, before login)
 Route::get('/email/verify-code', [App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'show'])
@@ -116,11 +124,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/email/verify', function () {
         return view('auth.verify');
     })->name('verification.notice');
-    
+
     Route::get('/email/verify/{id}/{hash}', [App\Http\Controllers\Auth\VerificationController::class, 'verify'])
         ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
-    
+
     Route::post('/email/verification-notification', [App\Http\Controllers\Auth\VerificationController::class, 'resend'])
         ->middleware('throttle:3,1')
         ->name('verification.resend');
@@ -130,9 +138,10 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/ads/my-ads', [AdController::class, 'myAds'])->name('ads.myads');
     Route::post('/ads/store-from-popup', [AdController::class, 'storeFromPopup'])->name('ads.storeFromPopup');
+    Route::resource('ads', AdController::class)->except(['index', 'show']);
+    Route::delete('/ads/{ad}/photos/{index}', [AdController::class, 'deletePhoto'])->name('ads.photos.delete');
 });
-Route::resource('ads', AdController::class);
-Route::delete('/ads/{ad}/photos/{index}', [AdController::class, 'deletePhoto'])->middleware('auth')->name('ads.photos.delete');
+Route::resource('ads', AdController::class)->only(['index', 'show']);
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::get('/home/export-transactions-pdf', [App\Http\Controllers\HomeController::class, 'exportTransactionsPdf'])->middleware('auth')->name('home.export-transactions-pdf');
@@ -157,12 +166,12 @@ Route::get('/purchase/invoice', [PurchaseInvoiceController::class, 'download'])-
 Route::middleware(['auth', 'geo'])->group(function () {
     Route::get('/feed', [FeedController::class, 'index'])->name('feed');
     Route::get('/feed-test', [FeedController::class, 'indexTest'])->name('feed.test');
-    
+
     // AJAX endpoints for category filtering
     Route::get('/feed/filter-ads', [FeedController::class, 'filterAds'])->name('feed.filter-ads');
     Route::get('/feed/subcategories', [FeedController::class, 'getSubcategories'])->name('feed.subcategories');
     Route::get('/feed/professionals', [FeedController::class, 'getProfessionalsByCategory'])->name('feed.professionals');
-    
+
     // AJAX endpoint pour stocker la position du navigateur
     Route::post('/feed/store-browser-location', [FeedController::class, 'storeBrowserLocation'])->name('feed.store-browser-location');
     // AJAX endpoint pour mettre à jour le rayon
@@ -174,7 +183,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/saved-ads', [SavedAdController::class, 'index'])->name('saved-ads.index');
     Route::post('/ads/{ad}/toggle-save', [SavedAdController::class, 'toggle'])->name('ads.toggle-save');
     Route::get('/ads/{ad}/check-saved', [SavedAdController::class, 'check'])->name('ads.check-saved');
-    Route::post('/ads/{ad}/candidature', [FeedController::class, 'submitCandidature'])->name('ads.candidature');
     Route::get('/saved-searches', [SavedSearchController::class, 'index'])->name('saved-searches.index');
     Route::post('/saved-searches', [SavedSearchController::class, 'store'])->name('saved-searches.store');
     Route::delete('/saved-searches/{savedSearch}', [SavedSearchController::class, 'destroy'])->name('saved-searches.destroy');
@@ -187,6 +195,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/service-orders/{serviceOrder}/dispute', [ServiceOrderController::class, 'dispute'])->name('service-orders.dispute');
     Route::get('/service-orders/connect/onboarding', [ServiceOrderController::class, 'connectOnboarding'])->name('service-orders.connect.onboarding');
     Route::get('/service-orders/connect/return', [ServiceOrderController::class, 'connectReturn'])->name('service-orders.connect.return');
+    Route::get('/propositions', [ServiceProposalController::class, 'index'])->name('proposals.index');
+    Route::post('/ads/{ad}/propositions', [ServiceProposalController::class, 'store'])->name('proposals.store');
+    Route::post('/propositions/{proposal}/accepter', [ServiceProposalController::class, 'accept'])->name('proposals.accept');
+    Route::post('/propositions/{proposal}/refuser', [ServiceProposalController::class, 'refuse'])->name('proposals.refuse');
+    Route::post('/propositions/{proposal}/retirer', [ServiceProposalController::class, 'withdraw'])->name('proposals.withdraw');
 });
 
 // Routes pour les commentaires
@@ -220,8 +233,8 @@ Route::middleware(['auth'])->prefix('become-provider')->name('become-provider.')
 });
 
 // Routes pour publier une demande simplifiée + matching
+Route::get('/demande', [\App\Http\Controllers\DemandController::class, 'create'])->name('demand.create');
 Route::middleware(['auth'])->prefix('demande')->name('demand.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\DemandController::class, 'create'])->name('create');
     Route::post('/', [\App\Http\Controllers\DemandController::class, 'store'])->name('store');
     Route::get('/{ad}/professionnels', [\App\Http\Controllers\DemandController::class, 'matching'])->name('matching');
     Route::get('/{ad}/matching-api', [\App\Http\Controllers\DemandController::class, 'matchingApi'])->name('matching.api');
@@ -286,9 +299,11 @@ Route::middleware(['auth'])->prefix('outils')->name('quote-tool.')->group(functi
 });
 
 // Routes de contact
+Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
+Route::post('/contact', [ContactController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('contact.store');
 Route::middleware(['auth'])->group(function () {
-    Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
-    Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
     Route::get('/contact/mes-messages', [ContactController::class, 'myMessages'])->name('contact.my-messages');
 });
 
@@ -301,7 +316,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('verification.documents.show');
     Route::post('/verification/cancel', [VerificationController::class, 'cancel'])->name('verification.cancel');
     Route::post('/verification/resubmit', [VerificationController::class, 'resubmit'])->name('verification.resubmit');
-    
+
     // Routes AJAX pour vérification avec paiement
     Route::get('/verification/status', [VerificationController::class, 'getStatus'])->name('verification.status');
     Route::post('/verification/submit-ajax', [VerificationController::class, 'storeAjax'])->name('verification.submit.ajax');
@@ -309,16 +324,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/verification/pay-with-points', [VerificationController::class, 'payWithPoints'])->name('verification.pay.points');
     Route::get('/verification/payment/success/{id}', [VerificationController::class, 'paymentSuccess'])->name('verification.payment.success');
     Route::get('/verification/payment/cancel/{id}', [VerificationController::class, 'paymentCancel'])->name('verification.payment.cancel');
-    
+
     // Notifications
-    Route::post('/notifications/{id}/mark-read', function($id) {
+    Route::post('/notifications/{id}/mark-read', function ($id) {
         $notification = Auth::user()->notifications()->findOrFail($id);
         $notification->markAsRead();
+
         return response()->json(['success' => true]);
     })->name('notifications.mark-read');
 
-    Route::post('/notifications/mark-all-read', function() {
+    Route::post('/notifications/mark-all-read', function () {
         Auth::user()->unreadNotifications->markAsRead();
+
         return response()->json(['success' => true]);
     })->name('notifications.mark-all-read');
 });
@@ -339,16 +356,18 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Recherche d'utilisateurs (AJAX)
-Route::middleware(['auth'])->get('/api/users/search', function (\Illuminate\Http\Request $request) {
+Route::middleware(['auth', 'throttle:20,1'])->get('/api/users/search', function (\Illuminate\Http\Request $request) {
     $q = $request->query('q', '');
-    if (strlen($q) < 2) return response()->json([]);
+    if (strlen($q) < 2) {
+        return response()->json([]);
+    }
 
     $users = \App\Models\User::where('id', '!=', auth()->id())
         ->where(function ($query) use ($q) {
-            $query->where('name', 'LIKE', '%' . $q . '%')
-                  ->orWhere('email', 'LIKE', '%' . $q . '%');
+            $query->where('name', 'LIKE', '%'.$q.'%')
+                ->orWhere('profession', 'LIKE', '%'.$q.'%');
         })
-        ->select('id', 'name', 'email', 'profile_photo')
+        ->select('id', 'name', 'avatar', 'profession', 'city', 'is_verified')
         ->limit(10)
         ->get();
 
@@ -493,19 +512,19 @@ Route::middleware(['auth'])->prefix('pro')->name('pro.')->group(function () {
 // Routes Admin (protégées par middleware admin)
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-    
+
     // Gestion des utilisateurs
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::get('/users/{id}', [AdminController::class, 'showUser'])->name('admin.users.show');
     Route::put('/users/{id}', [AdminController::class, 'updateUser'])->name('admin.users.update');
     Route::delete('/users/{id}', [AdminController::class, 'deleteUser'])->name('admin.users.delete');
-    
+
     // Gestion des annonces
     Route::get('/ads', [AdminController::class, 'ads'])->name('admin.ads');
     Route::get('/ads/{id}', [AdminController::class, 'showAd'])->name('admin.ads.show');
     Route::put('/ads/{id}', [AdminController::class, 'updateAd'])->name('admin.ads.update');
     Route::delete('/ads/{id}', [AdminController::class, 'deleteAd'])->name('admin.ads.delete');
-    
+
     // Gestion des boosts / urgents
     Route::get('/boosts', [AdminController::class, 'boosts'])->name('admin.boosts');
     Route::post('/ads/{id}/grant-boost', [AdminController::class, 'grantBoost'])->name('admin.ads.grant-boost');
@@ -517,7 +536,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/deleted-accounts', [AdminController::class, 'deletedAccounts'])->name('admin.deleted-accounts');
     Route::post('/deleted-accounts/{id}/restore', [AdminController::class, 'restoreAccount'])->name('admin.accounts.restore');
     Route::delete('/deleted-accounts/{id}/force', [AdminController::class, 'forceDeleteAccount'])->name('admin.accounts.force-delete');
-    
+
     // Gestion des abonnements
     Route::get('/subscriptions', [AdminController::class, 'subscriptions'])->name('admin.subscriptions');
     Route::put('/subscriptions/provider-plans', [AdminController::class, 'updateProviderSubscriptionPlans'])->name('admin.subscriptions.provider-plans.update');
@@ -525,10 +544,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/subscriptions/{id}/grant-premium', [AdminController::class, 'grantPremium'])->name('admin.subscriptions.grant-premium');
     Route::post('/subscriptions/{id}/suspend', [AdminController::class, 'suspendSubscription'])->name('admin.subscriptions.suspend');
     Route::post('/subscriptions/{id}/cancel', [AdminController::class, 'cancelSubscription'])->name('admin.subscriptions.cancel');
-    
+
     // Statistiques
     Route::get('/stats', [AdminController::class, 'stats'])->name('admin.stats');
-    
+
     // Paramètres
     Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
     Route::post('/settings/general', [AdminController::class, 'updateSettingsGeneral'])->name('admin.settings.general');
@@ -539,13 +558,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/settings/security', [AdminController::class, 'updateSettingsSecurity'])->name('admin.settings.security');
     Route::post('/settings/system', [AdminController::class, 'updateSettingsSystem'])->name('admin.settings.system');
 
-    
     // Gestion des administrateurs (réservé à l'admin principal)
     Route::get('/admins', [AdminController::class, 'admins'])->name('admin.admins');
     Route::post('/admins/{id}/promote', [AdminController::class, 'promoteToAdmin'])->name('admin.admins.promote');
     Route::post('/admins/{id}/revoke', [AdminController::class, 'revokeAdmin'])->name('admin.admins.revoke');
     Route::put('/admins/{id}/privileges', [AdminController::class, 'updateAdminPrivileges'])->name('admin.admins.privileges');
-    
+
     // Gestion des vérifications de profil
     Route::get('/verifications', [AdminController::class, 'verifications'])->name('admin.verifications');
     Route::get('/verifications/{id}', [AdminController::class, 'showVerification'])->name('admin.verifications.show');
@@ -553,7 +571,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/verifications/{id}/reject', [AdminController::class, 'rejectVerification'])->name('admin.verifications.reject');
     Route::post('/verifications/{id}/review-documents', [AdminController::class, 'reviewDocuments'])->name('admin.verifications.review-documents');
     Route::post('/verifications/{id}/return', [AdminController::class, 'returnVerification'])->name('admin.verifications.return');
-    
+
     // Gestion des publicités
     Route::get('/advertisements', [AdminController::class, 'advertisements'])->name('admin.advertisements');
     Route::get('/advertisements/create', [AdminController::class, 'createAdvertisement'])->name('admin.advertisements.create');
@@ -585,13 +603,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
 // Diagnostic boost (admin uniquement) - TEMPORAIRE
 Route::get('/boost-diagnostic', function () {
-    if (!Auth::check() || (Auth::user()->role ?? '') !== 'admin') {
+    if (! Auth::check() || (Auth::user()->role ?? '') !== 'admin') {
         abort(403);
     }
 
     $email = request('email', 'fatima.abdou009@gmail.com');
     $user = \App\Models\User::where('email', $email)->first();
-    if (!$user) return response()->json(['error' => 'User not found: ' . $email]);
+    if (! $user) {
+        return response()->json(['error' => 'User not found: '.$email]);
+    }
 
     $userData = [
         'id' => $user->id,
@@ -603,7 +623,7 @@ Route::get('/boost-diagnostic', function () {
         'is_service_provider' => $user->is_service_provider ?? false,
     ];
 
-    $ads = \App\Models\Ad::where('user_id', $user->id)->get()->map(function($a) {
+    $ads = \App\Models\Ad::where('user_id', $user->id)->get()->map(function ($a) {
         return [
             'id' => $a->id,
             'title' => $a->title,
@@ -624,19 +644,19 @@ Route::get('/boost-diagnostic', function () {
 
     // Simulate feed query for this user's ads
     $feedQuery = \App\Models\Ad::where('status', 'active')
-        ->where(function($q) {
-            $q->where(function($q2) {
+        ->where(function ($q) {
+            $q->where(function ($q2) {
                 $q2->where('is_boosted', true)->where('boost_end', '>', now());
             })
-            ->orWhereHas('user', function($q3) {
-                $q3->whereNotNull('plan')
-                    ->where('plan', '!=', '')
-                    ->where('plan', '!=', 'free')
-                    ->where(function($q4) {
-                        $q4->whereNull('subscription_end')
-                            ->orWhere('subscription_end', '>', now());
-                    });
-            });
+                ->orWhereHas('user', function ($q3) {
+                    $q3->whereNotNull('plan')
+                        ->where('plan', '!=', '')
+                        ->where('plan', '!=', 'free')
+                        ->where(function ($q4) {
+                            $q4->whereNull('subscription_end')
+                                ->orWhere('subscription_end', '>', now());
+                        });
+                });
         })
         ->where('user_id', $user->id)
         ->get();
@@ -645,19 +665,19 @@ Route::get('/boost-diagnostic', function () {
 
     // Total feed count
     $totalFeed = \App\Models\Ad::where('status', 'active')
-        ->where(function($q) {
-            $q->where(function($q2) {
+        ->where(function ($q) {
+            $q->where(function ($q2) {
                 $q2->where('is_boosted', true)->where('boost_end', '>', now());
             })
-            ->orWhereHas('user', function($q3) {
-                $q3->whereNotNull('plan')
-                    ->where('plan', '!=', '')
-                    ->where('plan', '!=', 'free')
-                    ->where(function($q4) {
-                        $q4->whereNull('subscription_end')
-                            ->orWhere('subscription_end', '>', now());
-                    });
-            });
+                ->orWhereHas('user', function ($q3) {
+                    $q3->whereNotNull('plan')
+                        ->where('plan', '!=', '')
+                        ->where('plan', '!=', 'free')
+                        ->where(function ($q4) {
+                            $q4->whereNull('subscription_end')
+                                ->orWhere('subscription_end', '>', now());
+                        });
+                });
         })->count();
 
     return response()->json([
@@ -672,14 +692,14 @@ Route::get('/boost-diagnostic', function () {
 
 // Diagnostic de stockage (admin uniquement)
 Route::get('/storage-diagnostic', function () {
-    if (!Auth::check() || (Auth::user()->role ?? '') !== 'admin') {
+    if (! Auth::check() || (Auth::user()->role ?? '') !== 'admin') {
         abort(403);
     }
 
     $defaultDisk = config('filesystems.default', 'public');
     $disk = \Illuminate\Support\Facades\Storage::disk($defaultDisk);
-    $driver = config('filesystems.disks.' . $defaultDisk . '.driver');
-    $url = config('filesystems.disks.' . $defaultDisk . '.url');
+    $driver = config('filesystems.disks.'.$defaultDisk.'.driver');
+    $url = config('filesystems.disks.'.$defaultDisk.'.url');
 
     $results = [
         'default_disk' => $defaultDisk,
@@ -692,8 +712,8 @@ Route::get('/storage-diagnostic', function () {
     ];
 
     try {
-        $testFile = '_diagnostic_test_' . time() . '.txt';
-        $disk->put($testFile, 'test-' . now());
+        $testFile = '_diagnostic_test_'.time().'.txt';
+        $disk->put($testFile, 'test-'.now());
         $results['write_test'] = 'OK';
         $results['file_url'] = $disk->url($testFile);
         $content = $disk->get($testFile);
@@ -716,33 +736,34 @@ Route::get('storage/{path}', function ($path) {
     }
 
     $defaultDisk = config('filesystems.default', 'public');
-    $defaultDriver = config('filesystems.disks.' . $defaultDisk . '.driver', 'local');
+    $defaultDriver = config('filesystems.disks.'.$defaultDisk.'.driver', 'local');
 
     // Si le disque par défaut est S3, rediriger vers l'URL S3
     if ($defaultDriver === 's3') {
         return redirect(\Illuminate\Support\Facades\Storage::disk($defaultDisk)->url($path));
     }
 
-    $filePath = storage_path('app/public/' . $path);
-    if (!file_exists($filePath)) {
+    $filePath = storage_path('app/public/'.$path);
+    if (! file_exists($filePath)) {
         abort(404);
     }
+
     return response()->file($filePath);
 })->where('path', '.*');
 
 // Pages légales
-Route::get('/mentions-legales', function() {
+Route::get('/mentions-legales', function () {
     return view('legal.mentions');
 })->name('legal.mentions');
 
-Route::get('/conditions-utilisation', function() {
+Route::get('/conditions-utilisation', function () {
     return view('legal.terms');
 })->name('legal.terms');
 
-Route::get('/politique-confidentialite', function() {
+Route::get('/politique-confidentialite', function () {
     return view('legal.privacy');
 })->name('legal.privacy');
 
-Route::get('/politique-cookies', function() {
+Route::get('/politique-cookies', function () {
     return view('legal.cookies');
 })->name('legal.cookies');

@@ -160,6 +160,10 @@
                 
                 <form action="{{ route('contact.store') }}" method="POST">
                     @csrf
+                    <div aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden;">
+                        <label for="website">Ne pas remplir ce champ</label>
+                        <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                    </div>
                     
                     <div class="row g-4">
                         <div class="col-md-6">
@@ -233,15 +237,17 @@
                     Informations de contact
                 </h4>
                 
+                @if(config('site.support_email'))
                 <div class="contact-info-item">
                     <div class="contact-info-icon">
                         <i class="fas fa-envelope"></i>
                     </div>
                     <div class="contact-info-content">
                         <h5>Email</h5>
-                        <p>support@ProxiPro.com</p>
+                        <p><a href="mailto:{{ config('site.support_email') }}">{{ config('site.support_email') }}</a></p>
                     </div>
                 </div>
+                @endif
                 
                 <div class="contact-info-item">
                     <div class="contact-info-icon">
@@ -249,36 +255,33 @@
                     </div>
                     <div class="contact-info-content">
                         <h5>Délai de réponse</h5>
-                        <p>24 à 48 heures ouvrées</p>
+                        <p>{{ config('site.response_time') }}</p>
                     </div>
                 </div>
                 
-                <div class="contact-info-item">
-                    <div class="contact-info-icon">
-                        <i class="fas fa-question-circle"></i>
-                    </div>
-                    <div class="contact-info-content">
-                        <h5>FAQ</h5>
-                        <p>Consultez notre FAQ pour des réponses rapides</p>
-                    </div>
-                </div>
-                
+                @if(collect(config('site.social', []))->filter()->isNotEmpty())
                 <hr class="my-4">
-                
                 <div class="text-center">
                     <p class="text-muted small mb-3">Suivez-nous sur les réseaux</p>
                     <div class="d-flex justify-content-center gap-3">
-                        <a href="#" class="btn btn-outline-secondary btn-sm rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                        @if(config('site.social.facebook'))
+                        <a href="{{ config('site.social.facebook') }}" rel="noopener noreferrer" target="_blank" aria-label="Facebook" class="btn btn-outline-secondary btn-sm rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                             <i class="fab fa-facebook-f"></i>
                         </a>
-                        <a href="#" class="btn btn-outline-secondary btn-sm rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a href="#" class="btn btn-outline-secondary btn-sm rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                        @endif
+                        @if(config('site.social.instagram'))
+                        <a href="{{ config('site.social.instagram') }}" rel="noopener noreferrer" target="_blank" aria-label="Instagram" class="btn btn-outline-secondary btn-sm rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                             <i class="fab fa-instagram"></i>
                         </a>
+                        @endif
+                        @if(config('site.social.linkedin'))
+                        <a href="{{ config('site.social.linkedin') }}" rel="noopener noreferrer" target="_blank" aria-label="LinkedIn" class="btn btn-outline-secondary btn-sm rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        @endif
                     </div>
                 </div>
+                @endif
             </div>
         </div>
     </div>

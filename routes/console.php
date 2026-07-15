@@ -46,3 +46,9 @@ Schedule::command('boosts:send-expiring-alerts')
     ->everySixHours()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/boosts-alerts.log'));
+
+// Remet à zéro les compteurs de points quotidiens avant une nouvelle journée.
+Schedule::command('points:daily-reset')
+    ->dailyAt('00:05')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/points-daily-reset.log'));

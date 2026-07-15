@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">ProxiPro</title>
+  <desc id="desc">Services de proximité entre particuliers et professionnels</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="0.55" stop-color="#312e81"/>
+      <stop offset="1" stop-color="#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#818cf8"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="1070" cy="70" r="260" fill="#fff" opacity=".04"/>
+  <circle cx="1030" cy="610" r="330" fill="#818cf8" opacity=".08"/>
+  <rect x="96" y="118" width="108" height="108" rx="30" fill="url(#mark)"/>
+  <text x="150" y="194" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="64" font-weight="800">P</text>
+  <text x="232" y="190" fill="#fff" font-family="Arial, sans-serif" font-size="68" font-weight="800">ProxiPro</text>
+  <text x="96" y="330" fill="#fff" font-family="Arial, sans-serif" font-size="55" font-weight="750">Le bon service, près de chez vous.</text>
+  <text x="96" y="405" fill="#c7d2fe" font-family="Arial, sans-serif" font-size="31">Publiez un besoin. Comparez. Choisissez.</text>
+  <rect x="96" y="475" width="438" height="68" rx="18" fill="#fff" opacity=".11"/>
+  <text x="126" y="520" fill="#fff" font-family="Arial, sans-serif" font-size="25" font-weight="700">Particuliers ↔ professionnels</text>
+</svg>

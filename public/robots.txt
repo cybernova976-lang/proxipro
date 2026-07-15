@@ -1,2 +1,11 @@
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /admin
+Disallow: /messages
+Disallow: /settings
+Disallow: /profile/edit
+Disallow: /service-orders
+Disallow: /propositions
+Disallow: /api/
+
+Sitemap: /sitemap.xml

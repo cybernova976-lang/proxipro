@@ -1,70 +1,43 @@
 @extends('layouts.app')
 
-@section('title', 'Politique de confidentialité - ProxiPro')
+@section('title', 'Politique de confidentialité - ' . config('app.name', 'ProxiPro'))
+@section('meta_description', 'Comment ' . config('app.name', 'ProxiPro') . ' collecte, utilise et protège vos données personnelles.')
 
 @section('content')
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <nav aria-label="breadcrumb" class="mb-3">
-                <ol class="breadcrumb small">
-                    <li class="breadcrumb-item"><a href="{{ url('/') }}" class="text-decoration-none"><i class="fas fa-home me-1"></i>Accueil</a></li>
-                    <li class="breadcrumb-item active">Confidentialité</li>
-                </ol>
-            </nav>
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-5">
-                    <h1 class="mb-4">Politique de confidentialité</h1>
-                    
-                    <h4 class="mt-4">1. Collecte des données</h4>
-                    <p>Nous collectons les données personnelles suivantes :</p>
-                    <ul>
-                        <li>Nom et prénom</li>
-                        <li>Adresse email</li>
-                        <li>Numéro de téléphone (optionnel)</li>
-                        <li>Localisation (optionnel)</li>
-                        <li>Photo de profil (optionnel)</li>
-                    </ul>
-                    
-                    <h4 class="mt-4">2. Utilisation des données</h4>
-                    <p>Vos données sont utilisées pour :</p>
-                    <ul>
-                        <li>Gérer votre compte utilisateur</li>
-                        <li>Permettre la mise en relation avec d'autres utilisateurs</li>
-                        <li>Améliorer nos services</li>
-                        <li>Vous envoyer des communications relatives à notre service</li>
-                    </ul>
-                    
-                    <h4 class="mt-4">3. Protection des données</h4>
-                    <p>Nous mettons en œuvre des mesures de sécurité appropriées pour protéger vos données personnelles contre tout accès non autorisé, modification, divulgation ou destruction.</p>
-                    
-                    <h4 class="mt-4">4. Partage des données</h4>
-                    <p>Vos données ne sont pas vendues à des tiers. Elles peuvent être partagées uniquement dans les cas suivants :</p>
-                    <ul>
-                        <li>Avec votre consentement explicite</li>
-                        <li>Pour répondre à une obligation légale</li>
-                        <li>Avec nos prestataires de services (hébergement, paiement)</li>
-                    </ul>
-                    
-                    <h4 class="mt-4">5. Vos droits</h4>
-                    <p>Conformément au RGPD, vous disposez des droits suivants :</p>
-                    <ul>
-                        <li>Droit d'accès à vos données</li>
-                        <li>Droit de rectification</li>
-                        <li>Droit à l'effacement</li>
-                        <li>Droit à la portabilité</li>
-                        <li>Droit d'opposition</li>
-                    </ul>
-                    
-                    <h4 class="mt-4">6. Contact</h4>
-                    <p>Pour toute question concernant vos données personnelles, contactez-nous à : <a href="mailto:contact@ProxiPro.com">contact@ProxiPro.com</a></p>
-                    
-                    <div class="mt-5 text-muted">
-                        <p><small>Dernière mise à jour : {{ date('d/m/Y') }}</small></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<div class="container py-5"><div class="row justify-content-center"><div class="col-lg-8">
+    <nav aria-label="breadcrumb" class="mb-3"><ol class="breadcrumb small"><li class="breadcrumb-item"><a href="{{ url('/') }}">Accueil</a></li><li class="breadcrumb-item active">Confidentialité</li></ol></nav>
+    <div class="card border-0 shadow-sm"><div class="card-body p-4 p-md-5">
+        <h1 class="mb-4">Politique de confidentialité</h1>
+
+        <h4 class="mt-4">1. Responsable et contact</h4>
+        <p>Le responsable du traitement est {{ config('legal.entity_name') ?: 'l’entité éditrice indiquée dans les mentions légales' }}. Pour exercer vos droits, utilisez le <a href="{{ route('contact.index') }}">formulaire de contact</a>@if(config('legal.privacy_contact')) ou écrivez à <a href="mailto:{{ config('legal.privacy_contact') }}">{{ config('legal.privacy_contact') }}</a>@endif.</p>
+
+        <h4 class="mt-4">2. Données traitées</h4>
+        <ul>
+            <li>compte et profil : identité, coordonnées, photo, profession, zone d’activité et préférences ;</li>
+            <li>contenus et échanges : annonces, propositions, messages, commentaires, avis, signalements et pièces jointes ;</li>
+            <li>vérification : documents d’identité ou professionnels transmis et état de leur contrôle ;</li>
+            <li>transactions : références de commande, montants, statut du paiement et identifiants fournis par Stripe — la plateforme ne conserve pas les numéros complets de carte ;</li>
+            <li>données techniques et de sécurité : adresse IP, journaux, appareil, session et cookies strictement nécessaires ;</li>
+            <li>localisation saisie ou, avec votre autorisation, position utilisée pour une recherche de proximité.</li>
+        </ul>
+
+        <h4 class="mt-4">3. Finalités et bases</h4>
+        <p>Ces données servent à créer et sécuriser les comptes, publier et rechercher des annonces, mettre les utilisateurs en relation, exécuter les commandes et paiements, prévenir la fraude, modérer les contenus, répondre au support et respecter les obligations légales. Les traitements reposent selon le cas sur l’exécution du service, l’obligation légale, l’intérêt légitime de sécurisation ou votre consentement.</p>
+
+        <h4 class="mt-4">4. Destinataires</h4>
+        <p>Les données utiles au profil ou à une annonce sont visibles selon vos paramètres de confidentialité. Elles peuvent aussi être transmises aux prestataires indispensables au service, notamment l’hébergeur, le service d’envoi d’e-mails, Stripe pour les paiements et les autorités légalement habilitées. Elles ne sont pas vendues.</p>
+
+        <h4 class="mt-4">5. Durées de conservation</h4>
+        <p>Les données du compte sont conservées pendant son utilisation puis pendant les délais nécessaires à la gestion des litiges et obligations légales. Les pièces de transaction sont conservées selon les durées comptables applicables. Les documents sensibles de vérification doivent faire l’objet d’une durée limitée et d’un accès restreint. Un calendrier précis de conservation doit être validé par l’éditeur avant le lancement commercial.</p>
+
+        <h4 class="mt-4">6. Vos droits</h4>
+        <p>Vous pouvez demander l’accès, la rectification, l’effacement, la limitation, l’opposition ou la portabilité de vos données lorsque ces droits s’appliquent, retirer un consentement et introduire une réclamation auprès de l’autorité de contrôle compétente.</p>
+
+        <h4 class="mt-4">7. Sécurité et transferts</h4>
+        <p>Des mesures organisationnelles et techniques protègent les accès, sessions, documents et paiements. Certains prestataires peuvent traiter des données hors de votre territoire ; l’éditeur doit alors vérifier les garanties contractuelles et juridiques applicables.</p>
+
+        <p class="mt-5 text-muted small">Dernière mise à jour : {{ config('legal.last_updated') ?: date('d/m/Y') }}</p>
+    </div></div>
+</div></div></div>
 @endsection

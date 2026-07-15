@@ -10,19 +10,31 @@ class ServiceOrder extends Model
     use HasFactory;
 
     public const STATUS_PENDING_ACCEPTANCE = 'pending_acceptance';
+
     public const STATUS_AWAITING_PAYMENT = 'awaiting_payment';
+
     public const STATUS_FUNDED = 'funded';
+
     public const STATUS_COMPLETED = 'completed';
+
     public const STATUS_REFUSED = 'refused';
+
     public const STATUS_DISPUTED = 'disputed';
+
     public const STATUS_REFUNDED = 'refunded';
 
     public const PAYMENT_AWAITING = 'awaiting_payment';
+
     public const PAYMENT_CHECKOUT_OPEN = 'checkout_open';
+
     public const PAYMENT_PAID = 'paid';
+
     public const PAYMENT_RELEASED = 'released';
+
     public const PAYMENT_CANCELED = 'canceled';
+
     public const PAYMENT_DISPUTED = 'disputed';
+
     public const PAYMENT_REFUNDED = 'refunded';
 
     protected $fillable = [
@@ -146,5 +158,10 @@ class ServiceOrder extends Model
     public function seller()
     {
         return $this->belongsTo(User::class, 'seller_id');
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
     }
 }

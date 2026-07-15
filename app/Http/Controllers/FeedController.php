@@ -3,25 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ad;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use App\Services\IpGeolocationService;
 use App\Services\RecommendationService;
 use App\Services\SavedSearchService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class FeedController extends Controller
 {
     public function __construct(
         private RecommendationService $recommendationService,
         private SavedSearchService $savedSearchService
-    )
-    {
-    }
+    ) {}
 
     public function index(Request $request)
     {
         $user = Auth::user();
-        
+
         // ===== GÉOLOCALISATION AUTOMATIQUE =====
         $geoContext = $this->resolveFeedGeoContext($request, $user);
         $userLat = $geoContext['latitude'];
@@ -32,7 +29,7 @@ class FeedController extends Controller
         $geoEnabled = ($userLat !== null && $userLng !== null) || $geoCity || $geoCountry;
         $geoSource = $geoContext['source'];
         $feedScope = $request->get('scope', 'all');
-        if (!in_array($feedScope, ['nearby', 'all'], true)) {
+        if (! in_array($feedScope, ['nearby', 'all'], true)) {
             $feedScope = 'all';
         }
         $useNearbyScope = $geoEnabled && $feedScope === 'nearby';
@@ -68,7 +65,7 @@ class FeedController extends Controller
 
         // Appliquer le filtre de type si présent
         $filterType = $request->get('type', 'all'); // all, offres, demandes
-        if ($filterType === 'all' && !$request->has('type')) {
+        if ($filterType === 'all' && ! $request->has('type')) {
             if ($user && ($user->user_type === 'professionnel' || $user->is_service_provider)) {
                 $filterType = 'demandes';
             }
@@ -79,7 +76,7 @@ class FeedController extends Controller
         $this->orderMainFeedAds($allAdsQuery, $useNearbyScope, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null);
         $feedMapQuery = clone $allAdsQuery;
         $ads = $allAdsQuery->paginate(12)->withQueryString();
-        
+
         // Si peu de résultats, élargir automatiquement le rayon
         $radiusWasExpanded = false;
         $originalRadius = $userRadius;
@@ -124,7 +121,7 @@ class FeedController extends Controller
         if ($request->has('category')) {
             $cat = $request->category;
             $categoryQuery = Ad::where('status', 'active')->with('user');
-            
+
             // Si c'est une catégorie principale, on inclut toutes ses sous-catégories
             if (isset($missionCategories[$cat])) {
                 $subNames = collect($missionCategories[$cat]['subs'])->pluck('name')->toArray();
@@ -133,7 +130,7 @@ class FeedController extends Controller
             } else {
                 $categoryQuery->where('category', $cat);
             }
-            
+
             // Appliquer le tri
             $sort = $request->get('sort', 'recent');
             if ($sort === 'popular') {
@@ -141,7 +138,7 @@ class FeedController extends Controller
             } else {
                 $categoryQuery->orderBy('is_pinned', 'desc')->orderBy('created_at', 'desc');
             }
-            
+
             $categoryFilteredAds = $categoryQuery->get();
         }
 
@@ -149,10 +146,10 @@ class FeedController extends Controller
         if ($request->has('search')) {
             $buildSearchAdsQuery = function (bool $nearby) use ($request, $userLat, $userLng, $userRadius, $geoCity, $geoCountry) {
                 $query = Ad::where('status', 'active')->with('user')
-                    ->where(function($q) use ($request) {
-                    $q->where('category', $request->search)
-                      ->orWhere('title', 'LIKE', '%' . $request->search . '%');
-                });
+                    ->where(function ($q) use ($request) {
+                        $q->where('category', $request->search)
+                            ->orWhere('title', 'LIKE', '%'.$request->search.'%');
+                    });
 
                 if ($nearby) {
                     $this->applyAdGeoScope($query, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null, $userRadius, $geoCity, $geoCountry);
@@ -179,18 +176,18 @@ class FeedController extends Controller
         $sort = $request->get('sort', 'recent');
 
         // Top Pros - Classement par avis VÉRIFIÉS (uniquement des utilisateurs ayant publié une annonce ou effectué un paiement)
-        $topPros = \App\Models\User::where(function($q) {
-                $q->where('user_type', 'professionnel')
-                  ->orWhere(function($q2) {
-                      $q2->where('user_type', 'particulier')
-                         ->where('is_service_provider', true);
-                  });
-            })
+        $topPros = \App\Models\User::where(function ($q) {
+            $q->where('user_type', 'professionnel')
+                ->orWhere(function ($q2) {
+                    $q2->where('user_type', 'particulier')
+                        ->where('is_service_provider', true);
+                });
+        })
             ->where('id', '!=', $user->id)
             ->whereHas('verifiedReviewsReceived') // Au moins 1 avis vérifié
             ->withCount(['verifiedReviewsReceived as verified_reviews_count'])
-            ->withAvg(['verifiedReviewsReceived as verified_reviews_avg' => fn($q) => $q], 'rating')
-            ->withCount(['ads as ads_count' => fn($q) => $q->where('status', 'active')])
+            ->withAvg(['verifiedReviewsReceived as verified_reviews_avg' => fn ($q) => $q], 'rating')
+            ->withCount(['ads as ads_count' => fn ($q) => $q->where('status', 'active')])
             ->orderByDesc('verified_reviews_avg')   // Meilleure note d'abord
             ->orderByDesc('verified_reviews_count')  // Puis le plus d'avis
             ->take(6)
@@ -198,43 +195,43 @@ class FeedController extends Controller
 
         // Premium Pros - Utilisateurs avec annonces boostées ou abonnement actif
         // Inclut professionnels ET particuliers prestataires
-        $usersWithBoostedAds = \App\Models\User::where(function($q) {
-                $q->where('user_type', 'professionnel')
-                  ->orWhere(function($q2) {
-                      $q2->where('user_type', 'particulier')
-                         ->where('is_service_provider', true);
-                  });
-            })
-            ->whereHas('ads', fn($q) => $q->where('is_boosted', true)->where('boost_end', '>', now()))
-            ->with(['ads' => fn($q) => $q->where('status', 'active')
-                                        ->where('is_boosted', true)
-                                        ->where('boost_end', '>', now())
-                                        ->latest()
-                                        ->take(1)])
-            ->withCount(['ads as ads_count' => fn($q) => $q->where('status', 'active')])
+        $usersWithBoostedAds = \App\Models\User::where(function ($q) {
+            $q->where('user_type', 'professionnel')
+                ->orWhere(function ($q2) {
+                    $q2->where('user_type', 'particulier')
+                        ->where('is_service_provider', true);
+                });
+        })
+            ->whereHas('ads', fn ($q) => $q->where('is_boosted', true)->where('boost_end', '>', now()))
+            ->with(['ads' => fn ($q) => $q->where('status', 'active')
+            ->where('is_boosted', true)
+            ->where('boost_end', '>', now())
+            ->latest()
+            ->take(1)])
+            ->withCount(['ads as ads_count' => fn ($q) => $q->where('status', 'active')])
             ->get();
 
         $boostedUserIds = $usersWithBoostedAds->pluck('id')->toArray();
-        
-        $subscribedPros = \App\Models\User::where(function($q) {
-                $q->where('user_type', 'professionnel')
-                  ->orWhere(function($q2) {
-                      $q2->where('user_type', 'particulier')
-                         ->where('is_service_provider', true);
-                  });
-            })
+
+        $subscribedPros = \App\Models\User::where(function ($q) {
+            $q->where('user_type', 'professionnel')
+                ->orWhere(function ($q2) {
+                    $q2->where('user_type', 'particulier')
+                        ->where('is_service_provider', true);
+                });
+        })
             ->whereNotIn('id', $boostedUserIds)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNotNull('plan')
-                  ->where('plan', '!=', '')
-                  ->whereRaw('LOWER(plan) != ?', ['free'])
-                  ->where(function($q2) {
-                      $q2->whereNull('subscription_end')
-                         ->orWhere('subscription_end', '>', now());
-                  });
+                    ->where('plan', '!=', '')
+                    ->whereRaw('LOWER(plan) != ?', ['free'])
+                    ->where(function ($q2) {
+                        $q2->whereNull('subscription_end')
+                            ->orWhere('subscription_end', '>', now());
+                    });
             })
-            ->withCount(['ads as ads_count' => fn($q) => $q->where('status', 'active')])
-            ->with(['ads' => fn($q) => $q->where('status', 'active')->latest()->take(1)])
+            ->withCount(['ads as ads_count' => fn ($q) => $q->where('status', 'active')])
+            ->with(['ads' => fn ($q) => $q->where('status', 'active')->latest()->take(1)])
             ->inRandomOrder()
             ->take(20 - count($boostedUserIds))
             ->get();
@@ -244,8 +241,8 @@ class FeedController extends Controller
             ->where('is_service_provider', true)
             ->whereNotIn('id', $boostedUserIds)
             ->whereNotIn('id', $subscribedPros->pluck('id')->toArray())
-            ->withCount(['ads as ads_count' => fn($q) => $q->where('status', 'active')])
-            ->with(['services' => fn($q) => $q->where('is_active', true)->limit(3)])
+            ->withCount(['ads as ads_count' => fn ($q) => $q->where('status', 'active')])
+            ->with(['services' => fn ($q) => $q->where('is_active', true)->limit(3)])
             ->orderByDesc('service_provider_since')
             ->take(10)
             ->get();
@@ -284,12 +281,12 @@ class FeedController extends Controller
             ->with('user')
             ->where(function ($q) {
                 $q->where('is_boosted', false)
-                  ->orWhereNull('boost_end')
-                  ->orWhere('boost_end', '<=', now());
+                    ->orWhereNull('boost_end')
+                    ->orWhere('boost_end', '<=', now());
             })
             ->where(function ($q) {
                 $q->where('is_urgent', false)
-                  ->orWhere('is_urgent', 0);
+                    ->orWhere('is_urgent', 0);
             })
             ->orderByRaw("
                 CASE WHEN user_id IN (
@@ -305,7 +302,7 @@ class FeedController extends Controller
             ->where('is_urgent', true)
             ->where(function ($q) {
                 $q->whereNull('urgent_until')
-                  ->orWhere('urgent_until', '>', now());
+                    ->orWhere('urgent_until', '>', now());
             })
             ->with('user')
             ->whereNotIn('id', $boostedAds->pluck('id'))
@@ -319,22 +316,22 @@ class FeedController extends Controller
             currentUser: $user,
             authorKind: null,
             limit: 18,
-            userLat: $useNearbyScope && !$geoFallbackUsed && $userLat !== null ? (float) $userLat : null,
-            userLng: $useNearbyScope && !$geoFallbackUsed && $userLng !== null ? (float) $userLng : null,
-            userRadius: $useNearbyScope && !$geoFallbackUsed ? $userRadius : null,
-            geoCity: $useNearbyScope && !$geoFallbackUsed ? $geoCity : null,
-            geoCountry: $useNearbyScope && !$geoFallbackUsed ? $geoCountry : null
+            userLat: $useNearbyScope && ! $geoFallbackUsed && $userLat !== null ? (float) $userLat : null,
+            userLng: $useNearbyScope && ! $geoFallbackUsed && $userLng !== null ? (float) $userLng : null,
+            userRadius: $useNearbyScope && ! $geoFallbackUsed ? $userRadius : null,
+            geoCity: $useNearbyScope && ! $geoFallbackUsed ? $geoCity : null,
+            geoCountry: $useNearbyScope && ! $geoFallbackUsed ? $geoCountry : null
         );
         $homeProfessionalOffers = $this->buildHomeShowcaseAds(
             serviceType: 'offre',
             currentUser: $user,
             authorKind: null,
             limit: 18,
-            userLat: $useNearbyScope && !$geoFallbackUsed && $userLat !== null ? (float) $userLat : null,
-            userLng: $useNearbyScope && !$geoFallbackUsed && $userLng !== null ? (float) $userLng : null,
-            userRadius: $useNearbyScope && !$geoFallbackUsed ? $userRadius : null,
-            geoCity: $useNearbyScope && !$geoFallbackUsed ? $geoCity : null,
-            geoCountry: $useNearbyScope && !$geoFallbackUsed ? $geoCountry : null
+            userLat: $useNearbyScope && ! $geoFallbackUsed && $userLat !== null ? (float) $userLat : null,
+            userLng: $useNearbyScope && ! $geoFallbackUsed && $userLng !== null ? (float) $userLng : null,
+            userRadius: $useNearbyScope && ! $geoFallbackUsed ? $userRadius : null,
+            geoCity: $useNearbyScope && ! $geoFallbackUsed ? $geoCity : null,
+            geoCountry: $useNearbyScope && ! $geoFallbackUsed ? $geoCountry : null
         );
         $homeProfessionalProfiles = $this->buildHighlightedProfessionalProfiles($user, 18);
 
@@ -351,12 +348,19 @@ class FeedController extends Controller
             ->sortByDesc(function ($ad) {
                 // Trier: urgent premium d'abord, puis boosté VIP, puis boosté premium, puis le reste
                 $priority = 0;
-                if ($ad->is_urgent) $priority += 100;
-                if ($ad->is_boosted) {
-                    if ($ad->boost_type === 'vip') $priority += 50;
-                    elseif ($ad->boost_type === 'premium') $priority += 30;
-                    else $priority += 10;
+                if ($ad->is_urgent) {
+                    $priority += 100;
                 }
+                if ($ad->is_boosted) {
+                    if ($ad->boost_type === 'vip') {
+                        $priority += 50;
+                    } elseif ($ad->boost_type === 'premium') {
+                        $priority += 30;
+                    } else {
+                        $priority += 10;
+                    }
+                }
+
                 return $priority;
             })
             ->values()
@@ -369,14 +373,14 @@ class FeedController extends Controller
             'unread_messages' => $user->unreadMessagesCount(),
             'available_points' => $user->available_points ?? 0,
             'saved_ads' => $user->savedAds()->count(),
-            'profile_views' => $user->profile_views ?? 0, 
+            'profile_views' => $user->profile_views ?? 0,
         ];
 
         // Catégories populaires avec compteurs
         $popularCategories = collect($missionCategories)
             ->sortByDesc('total')
             ->take(6)
-            ->map(function($cat, $name) {
+            ->map(function ($cat, $name) {
                 return ['name' => $name, 'icon' => $cat['icon'] ?? 'fas fa-folder', 'color' => $cat['color'] ?? '#64748b', 'total' => $cat['total'] ?? 0];
             })->values();
 
@@ -391,9 +395,9 @@ class FeedController extends Controller
             $proSuggestions = $user->getProSuggestions();
             $proProfileCompletion = $user->getProProfileCompletionPercent();
 
-            // Always load categories for pro users (needed by onboarding modal 
+            // Always load categories for pro users (needed by onboarding modal
             // when opened from suggestions, not just auto-show)
-            $proCtrl = new \App\Http\Controllers\ProDashboardController();
+            $proCtrl = new \App\Http\Controllers\ProDashboardController;
             $onboardingCategories = $proCtrl->getServiceCategoriesPublic();
         }
 
@@ -478,30 +482,29 @@ class FeedController extends Controller
         ?string $geoCity = null,
         ?string $geoCountry = null,
         bool $requireFeaturedVisibility = true
-    )
-    {
+    ) {
         $query = Ad::where('status', 'active')->with('user');
 
         if ($requireFeaturedVisibility) {
             // Annonces visibles sur le feed principal : payées, boostées ou portées par un compte abonné.
-            $query->where(function($q) {
-                $q->where(function($q2) {
+            $query->where(function ($q) {
+                $q->where(function ($q2) {
                     $q2->where('is_boosted', true)
                         ->where('boost_end', '>', now());
                 })
-                ->orWhereHas('user', function($q3) {
-                    $q3->whereNotNull('plan')
-                        ->where('plan', '!=', '')
-                        ->whereRaw('LOWER(plan) != ?', ['free'])
-                        ->where(function($q4) {
-                            $q4->whereNull('subscription_end')
-                                ->orWhere('subscription_end', '>', now());
-                        });
-                });
+                    ->orWhereHas('user', function ($q3) {
+                        $q3->whereNotNull('plan')
+                            ->where('plan', '!=', '')
+                            ->whereRaw('LOWER(plan) != ?', ['free'])
+                            ->where(function ($q4) {
+                                $q4->whereNull('subscription_end')
+                                    ->orWhere('subscription_end', '>', now());
+                            });
+                    });
             });
         }
 
-        $query->where(function($q) use ($user) {
+        $query->where(function ($q) use ($user) {
             $q->where('visibility', 'public')
                 ->orWhereNull('visibility');
 
@@ -509,7 +512,7 @@ class FeedController extends Controller
                 $q->orWhere('visibility', 'pro_targeted');
             }
 
-            $q->orWhere(function($q2) {
+            $q->orWhere(function ($q2) {
                 $q2->where('is_boosted', true)->where('boost_end', '>', now());
             });
         });
@@ -553,7 +556,7 @@ class FeedController extends Controller
                 });
             }
 
-            if (!empty($cityNeedles)) {
+            if (! empty($cityNeedles)) {
                 $q->orWhere(function ($text) use ($cityNeedles) {
                     foreach ($cityNeedles as $needle) {
                         $text->orWhereRaw('LOWER(location) LIKE ?', [$needle])
@@ -562,7 +565,7 @@ class FeedController extends Controller
                             ->orWhereRaw('LOWER(postal_code) LIKE ?', [$needle]);
                     }
                 });
-            } elseif (!empty($countryNeedles)) {
+            } elseif (! empty($countryNeedles)) {
                 $q->orWhere(function ($text) use ($countryNeedles) {
                     foreach ($countryNeedles as $needle) {
                         $text->orWhereRaw('LOWER(country) LIKE ?', [$needle])
@@ -609,7 +612,7 @@ class FeedController extends Controller
         return collect($terms)
             ->filter()
             ->unique()
-            ->map(fn($term) => '%' . $term . '%')
+            ->map(fn ($term) => '%'.$term.'%')
             ->values()
             ->all();
     }
@@ -617,7 +620,7 @@ class FeedController extends Controller
     private function orderMainFeedAds($query, bool $geoApplied, ?float $lat = null, ?float $lng = null): void
     {
         $query->orderByRaw(
-            "CASE WHEN (is_boosted = true AND boost_end > ?) OR (is_urgent = true AND (urgent_until IS NULL OR urgent_until > ?)) THEN 0 ELSE 1 END",
+            'CASE WHEN (is_boosted = true AND boost_end > ?) OR (is_urgent = true AND (urgent_until IS NULL OR urgent_until > ?)) THEN 0 ELSE 1 END',
             [now(), now()]
         );
 
@@ -645,7 +648,7 @@ class FeedController extends Controller
 
     private function geoDistanceSql(): string
     {
-        return "(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))";
+        return '(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))';
     }
 
     private function buildAdsMapData($ads)
@@ -677,45 +680,6 @@ class FeedController extends Controller
             ->values();
     }
 
-    /**
-     * Soumettre une candidature / marquer son intérêt pour une annonce
-     */
-    public function submitCandidature(Request $request, Ad $ad)
-    {
-        $user = Auth::user();
-
-        if ($user->id === $ad->user_id) {
-            return response()->json(['success' => false, 'message' => 'Vous ne pouvez pas postuler à votre propre annonce.'], 422);
-        }
-
-        $request->validate([
-            'message' => 'nullable|string|max:1000',
-        ]);
-
-        try {
-            // Notifier l'annonceur (notification database + mail)
-            $ad->user->notify(new \App\Notifications\AdCandidatureNotification($ad, $user, $request->input('message')));
-        } catch (\Exception $e) {
-            // Si l'envoi du mail échoue, enregistrer uniquement la notification en base
-            \Illuminate\Support\Facades\Log::warning('Candidature mail failed, saving DB notification only: ' . $e->getMessage());
-            try {
-                $notification = new \App\Notifications\AdCandidatureNotification($ad, $user, $request->input('message'));
-                $ad->user->notifications()->create([
-                    'id' => \Illuminate\Support\Str::uuid()->toString(),
-                    'type' => get_class($notification),
-                    'data' => $notification->toArray($ad->user),
-                ]);
-            } catch (\Exception $e2) {
-                \Illuminate\Support\Facades\Log::error('Candidature DB notification also failed: ' . $e2->getMessage());
-            }
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Votre candidature a été envoyée avec succès ! L\'annonceur a été notifié.',
-        ]);
-    }
-
     private function buildHomeShowcaseAds(
         string $serviceType,
         $currentUser,
@@ -726,8 +690,7 @@ class FeedController extends Controller
         ?int $userRadius = null,
         ?string $geoCity = null,
         ?string $geoCountry = null
-    )
-    {
+    ) {
         $query = Ad::where('status', 'active')
             ->where('service_type', $serviceType)
             ->with('user');
@@ -759,15 +722,15 @@ class FeedController extends Controller
 
         return $query
             ->orderByRaw(
-                "CASE WHEN is_urgent = true AND (urgent_until IS NULL OR urgent_until > ?) THEN 0 ELSE 1 END",
+                'CASE WHEN is_urgent = true AND (urgent_until IS NULL OR urgent_until > ?) THEN 0 ELSE 1 END',
                 [now()]
             )
             ->orderByRaw(
-                "CASE WHEN is_boosted = true AND boost_end > ? THEN 0 ELSE 1 END",
+                'CASE WHEN is_boosted = true AND boost_end > ? THEN 0 ELSE 1 END',
                 [now()]
             )
             ->orderByRaw("CASE WHEN boost_type = 'vip' THEN 0 WHEN boost_type = 'premium' THEN 1 ELSE 2 END")
-            ->when($geoScoped && $userLat !== null && $userLng !== null, fn($q) => $this->orderByGeoDistance($q, (float) $userLat, (float) $userLng))
+            ->when($geoScoped && $userLat !== null && $userLng !== null, fn ($q) => $this->orderByGeoDistance($q, (float) $userLat, (float) $userLng))
             ->orderBy('is_pinned', 'desc')
             ->orderBy('created_at', 'desc')
             ->take($limit)
@@ -799,13 +762,13 @@ class FeedController extends Controller
                 ->where(function ($q) {
                     $this->scopeProfessionalUsers($q);
                 })
-                ->when($currentUser, fn($q) => $q->where('id', '!=', $currentUser->id))
-                ->with(['services' => fn($q) => $q->where('is_active', true)->limit(2)])
+                ->when($currentUser, fn ($q) => $q->where('id', '!=', $currentUser->id))
+                ->with(['services' => fn ($q) => $q->where('is_active', true)->limit(2)])
                 ->withCount([
                     'verifiedReviewsReceived as verified_reviews_count',
-                    'ads as ads_count' => fn($q) => $q->where('status', 'active'),
+                    'ads as ads_count' => fn ($q) => $q->where('status', 'active'),
                 ])
-                ->withAvg(['verifiedReviewsReceived as verified_reviews_avg' => fn($q) => $q], 'rating');
+                ->withAvg(['verifiedReviewsReceived as verified_reviews_avg' => fn ($q) => $q], 'rating');
         };
 
         $rankProfiles = function ($query, int $take) {
@@ -843,8 +806,8 @@ class FeedController extends Controller
         $highlightedProfileIds = $highlightedProfiles->pluck('id')->all();
 
         $topProviderIds = $profiles
-            ->filter(fn($pro) => (int) ($pro->verified_reviews_count ?? 0) > 0 && (float) ($pro->verified_reviews_avg ?? 0) >= 4.5)
-            ->sortByDesc(fn($pro) => ((float) ($pro->verified_reviews_avg ?? 0) * 100000) + (int) ($pro->verified_reviews_count ?? 0))
+            ->filter(fn ($pro) => (int) ($pro->verified_reviews_count ?? 0) > 0 && (float) ($pro->verified_reviews_avg ?? 0) >= 4.5)
+            ->sortByDesc(fn ($pro) => ((float) ($pro->verified_reviews_avg ?? 0) * 100000) + (int) ($pro->verified_reviews_count ?? 0))
             ->take(3)
             ->pluck('id')
             ->all();
@@ -912,10 +875,10 @@ class FeedController extends Controller
         $baseProsFilter = function ($query) use ($currentUser) {
             $query->where(function ($q) {
                 $q->where('user_type', 'professionnel')
-                  ->orWhere(function ($q2) {
-                      $q2->where('user_type', 'particulier')
-                         ->where('is_service_provider', true);
-                  });
+                    ->orWhere(function ($q2) {
+                        $q2->where('user_type', 'particulier')
+                            ->where('is_service_provider', true);
+                    });
             });
 
             if ($currentUser) {
@@ -926,22 +889,22 @@ class FeedController extends Controller
         $premiumFilter = function ($query) {
             $query->whereHas('ads', function ($q) {
                 $q->where('status', 'active')
-                  ->where('is_boosted', true)
-                  ->where('boost_end', '>', now());
+                    ->where('is_boosted', true)
+                    ->where('boost_end', '>', now());
             })->orWhereHas('proSubscriptions', function ($q) {
                 $q->where('status', 'active')
-                  ->where(function ($q2) {
-                      $q2->whereNull('ends_at')
-                         ->orWhere('ends_at', '>', now());
-                  });
+                    ->where(function ($q2) {
+                        $q2->whereNull('ends_at')
+                            ->orWhere('ends_at', '>', now());
+                    });
             })->orWhere(function ($q) {
                 $q->whereNotNull('plan')
-                  ->where('plan', '!=', '')
-                  ->whereRaw('LOWER(plan) != ?', ['free'])
-                  ->where(function ($q2) {
-                      $q2->whereNull('subscription_end')
-                         ->orWhere('subscription_end', '>', now());
-                  });
+                    ->where('plan', '!=', '')
+                    ->whereRaw('LOWER(plan) != ?', ['free'])
+                    ->where(function ($q2) {
+                        $q2->whereNull('subscription_end')
+                            ->orWhere('subscription_end', '>', now());
+                    });
             });
         };
 
@@ -949,14 +912,14 @@ class FeedController extends Controller
             return $query
                 ->withCount([
                     'verifiedReviewsReceived as verified_reviews_count',
-                    'ads as ads_count' => fn($q) => $q->where('status', 'active'),
+                    'ads as ads_count' => fn ($q) => $q->where('status', 'active'),
                 ])
-                ->withAvg(['verifiedReviewsReceived as verified_reviews_avg' => fn($q) => $q], 'rating')
+                ->withAvg(['verifiedReviewsReceived as verified_reviews_avg' => fn ($q) => $q], 'rating')
                 ->orderByDesc('verified_reviews_count')
                 ->orderByDesc('ads_count')
                 ->orderByDesc('updated_at')
                 ->get()
-                ->sortByDesc(fn($pro) => (float) ($pro->verified_reviews_avg ?? 0))
+                ->sortByDesc(fn ($pro) => (float) ($pro->verified_reviews_avg ?? 0))
                 ->take($take)
                 ->values();
         };
@@ -968,6 +931,7 @@ class FeedController extends Controller
             $limit
         )->map(function ($pro) {
             $pro->setAttribute('is_featured_premium', true);
+
             return $pro;
         });
 
@@ -983,6 +947,7 @@ class FeedController extends Controller
                 $remaining
             )->map(function ($pro) {
                 $pro->setAttribute('is_featured_premium', false);
+
                 return $pro;
             });
         }
@@ -994,13 +959,14 @@ class FeedController extends Controller
             $fallbackPros = \App\Models\User::query()
                 ->where($baseProsFilter)
                 ->whereNotIn('id', $selected->pluck('id')->all())
-                ->withCount(['ads as ads_count' => fn($q) => $q->where('status', 'active')])
+                ->withCount(['ads as ads_count' => fn ($q) => $q->where('status', 'active')])
                 ->orderByDesc('ads_count')
                 ->orderByDesc('updated_at')
                 ->take($remaining)
                 ->get()
                 ->map(function ($pro) {
                     $pro->setAttribute('is_featured_premium', false);
+
                     return $pro;
                 });
 
@@ -1009,7 +975,7 @@ class FeedController extends Controller
 
         return $selected->take($limit);
     }
-    
+
     /**
      * Construire la liste des proCategories depuis config/categories.php
      * Format : tableau indexé [{name, icon, color, description, subcategories: [{name, icon, count}]}]
@@ -1021,19 +987,20 @@ class FeedController extends Controller
             $subs = [];
             foreach (array_slice($data['subcategories'], 0, 5) as $sub) {
                 $subs[] = [
-                    'name'  => $sub,
-                    'icon'  => $this->getSubcategoryIcon($sub, $data['fa_icon']),
+                    'name' => $sub,
+                    'icon' => $this->getSubcategoryIcon($sub, $data['fa_icon']),
                     'count' => Ad::where('category', $sub)->where('service_type', 'offre')->count(),
                 ];
             }
             $categories[] = [
-                'name'           => $name,
-                'icon'           => $data['fa_icon'],
-                'color'          => $data['color'],
-                'description'    => $data['description'],
-                'subcategories'  => $subs,
+                'name' => $name,
+                'icon' => $data['fa_icon'],
+                'color' => $data['color'],
+                'description' => $data['description'],
+                'subcategories' => $subs,
             ];
         }
+
         return $categories;
     }
 
@@ -1199,6 +1166,7 @@ class FeedController extends Controller
                 return $icon;
             }
         }
+
         return $parentIcon;
     }
 
@@ -1219,16 +1187,17 @@ class FeedController extends Controller
         $result = [];
         foreach ($allCategories as $name => $data) {
             $result[] = [
-                'name'           => $name,
-                'icon'           => $data['fa_icon'],
-                'color'          => $colorMap[$data['color']] ?? 'primary',
-                'subcategories'  => $data['subcategories'],
-                'count'          => Ad::where('main_category', $name)->count(),
+                'name' => $name,
+                'icon' => $data['fa_icon'],
+                'color' => $colorMap[$data['color']] ?? 'primary',
+                'subcategories' => $data['subcategories'],
+                'count' => Ad::where('main_category', $name)->count(),
             ];
         }
+
         return $result;
     }
-    
+
     /**
      * Page d'accueil alternative v2 avec nouveau design
      */
@@ -1236,35 +1205,35 @@ class FeedController extends Controller
     {
         // Récupérer l'utilisateur connecté
         $user = Auth::user();
-        
+
         // Catégories avec sous-catégories
         $categories = $this->getCategoriesWithSubcategories();
-        
+
         // Annonces à afficher dans le feed
         $feedQuery = Ad::where('status', 'active')
-                      ->with('user');
-        
+            ->with('user');
+
         // Filtrer par catégorie si spécifiée
         if ($request->has('category')) {
             $feedQuery->where('category', $request->category);
         }
-        
+
         // Filtrer par localisation de l'utilisateur
         if ($user->location_preference) {
             $feedQuery->where('location', 'LIKE', "%{$user->location_preference}%");
         }
-        
+
         // Trier : annonces épinglées d'abord, puis les plus récentes
         $ads = $feedQuery->orderBy('is_pinned', 'desc')
-                        ->orderBy('created_at', 'desc')
-                        ->paginate(15);
-        
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+
         // Annonces épinglées (boostées) pour la section spéciale
         $pinnedAds = Ad::where('is_pinned', true)
-                      ->where('status', 'active')
-                      ->take(5)
-                      ->get();
-        
+            ->where('status', 'active')
+            ->take(5)
+            ->get();
+
         // Statistiques pour l'utilisateur
         $userStats = [
             'total_ads' => $user->ads()->count(),
@@ -1272,7 +1241,7 @@ class FeedController extends Controller
             'available_points' => $user->available_points ?? 0,
             'saved_ads' => 0,
         ];
-        
+
         // Prestataires suggérés (utilisateurs avec le plus d'annonces actives)
         $suggestedPrestataires = \App\Models\User::select('users.*')
             ->selectRaw('COUNT(ads.id) as ads_count')
@@ -1283,7 +1252,7 @@ class FeedController extends Controller
             ->orderByDesc('ads_count')
             ->take(5)
             ->get();
-        
+
         return view('feed.index-v2', compact('ads', 'categories', 'pinnedAds', 'userStats', 'suggestedPrestataires'));
     }
 
@@ -1293,7 +1262,7 @@ class FeedController extends Controller
     public function indexTest(Request $request)
     {
         $user = Auth::user();
-        
+
         // Catégories principales pour le mega menu "Trouver un Pro"
         $proCategories = $this->buildProCategories();
 
@@ -1319,7 +1288,7 @@ class FeedController extends Controller
 
         // ===== SECTION "LES DERNIÈRES PÉPITES" - TOUJOURS SANS FILTRE DE CATÉGORIE =====
         $allAdsQuery = Ad::where('status', 'active')->with('user');
-        
+
         // Appliquer le filtre de type si présent
         $filterType = $request->get('type', 'all'); // all, offres, demandes
         if ($filterType === 'offres') {
@@ -1327,10 +1296,10 @@ class FeedController extends Controller
         } elseif ($filterType === 'demandes') {
             $allAdsQuery->where('service_type', 'demande');
         }
-        
+
         // Toujours trier par épinglé puis récent
         $allAdsQuery->orderBy('is_pinned', 'desc')->orderBy('created_at', 'desc');
-        
+
         // Récupérer TOUTES les annonces pour la section "Dernières pépites"
         $ads = $allAdsQuery->paginate(12)->withQueryString();
 
@@ -1339,7 +1308,7 @@ class FeedController extends Controller
         if ($request->has('category')) {
             $cat = $request->category;
             $categoryQuery = Ad::where('status', 'active')->with('user');
-            
+
             // Si c'est une catégorie principale, on inclut toutes ses sous-catégories
             if (isset($missionCategories[$cat])) {
                 $subNames = collect($missionCategories[$cat]['subs'])->pluck('name')->toArray();
@@ -1348,7 +1317,7 @@ class FeedController extends Controller
             } else {
                 $categoryQuery->where('category', $cat);
             }
-            
+
             // Appliquer le tri
             $sort = $request->get('sort', 'recent');
             if ($sort === 'popular') {
@@ -1356,7 +1325,7 @@ class FeedController extends Controller
             } else {
                 $categoryQuery->orderBy('is_pinned', 'desc')->orderBy('created_at', 'desc');
             }
-            
+
             $categoryFilteredAds = $categoryQuery->get();
         }
 
@@ -1364,9 +1333,9 @@ class FeedController extends Controller
         if ($request->has('search')) {
             // Cette partie reste inchangée pour le filtre de sous-catégorie
             $searchAds = Ad::where('status', 'active')->with('user')
-                ->where(function($q) use ($request) {
+                ->where(function ($q) use ($request) {
                     $q->where('category', $request->search)
-                      ->orWhere('title', 'LIKE', '%' . $request->search . '%');
+                        ->orWhere('title', 'LIKE', '%'.$request->search.'%');
                 })
                 ->orderBy('created_at', 'desc')
                 ->paginate(12)
@@ -1380,7 +1349,7 @@ class FeedController extends Controller
         // Top Pros
         $topPros = \App\Models\User::where('user_type', 'professionnel')
             ->where('id', '!=', $user->id)
-            ->withCount(['ads as ads_count' => fn($q) => $q->where('status', 'active')])
+            ->withCount(['ads as ads_count' => fn ($q) => $q->where('status', 'active')])
             ->orderByDesc('ads_count')
             ->take(6)
             ->get();
@@ -1388,35 +1357,35 @@ class FeedController extends Controller
         // Premium Professionals (users with active subscription OR boosted ads)
         // Priorité 1: Utilisateurs avec annonces boostées
         $usersWithBoostedAds = \App\Models\User::where('user_type', 'professionnel')
-            ->whereHas('ads', function($q) {
+            ->whereHas('ads', function ($q) {
                 $q->where('status', 'active')
-                  ->where('is_boosted', true)
-                  ->where('boost_end', '>', now());
+                    ->where('is_boosted', true)
+                    ->where('boost_end', '>', now());
             })
-            ->with(['ads' => fn($q) => $q->where('status', 'active')
-                                        ->where('is_boosted', true)
-                                        ->where('boost_end', '>', now())
-                                        ->latest()
-                                        ->take(1)])
-            ->withCount(['ads as ads_count' => fn($q) => $q->where('status', 'active')])
+            ->with(['ads' => fn ($q) => $q->where('status', 'active')
+                ->where('is_boosted', true)
+                ->where('boost_end', '>', now())
+                ->latest()
+                ->take(1)])
+            ->withCount(['ads as ads_count' => fn ($q) => $q->where('status', 'active')])
             ->get();
 
         // Priorité 2: Utilisateurs avec abonnement premium (sans doublon)
         $boostedUserIds = $usersWithBoostedAds->pluck('id')->toArray();
-        
+
         $subscribedPros = \App\Models\User::where('user_type', 'professionnel')
             ->whereNotIn('id', $boostedUserIds)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNotNull('plan')
-                  ->where('plan', '!=', '')
-                  ->whereRaw('LOWER(plan) != ?', ['free'])
-                  ->where(function($q2) {
-                      $q2->whereNull('subscription_end')
-                         ->orWhere('subscription_end', '>', now());
-                  });
+                    ->where('plan', '!=', '')
+                    ->whereRaw('LOWER(plan) != ?', ['free'])
+                    ->where(function ($q2) {
+                        $q2->whereNull('subscription_end')
+                            ->orWhere('subscription_end', '>', now());
+                    });
             })
-            ->withCount(['ads as ads_count' => fn($q) => $q->where('status', 'active')])
-            ->with(['ads' => fn($q) => $q->where('status', 'active')->latest()->take(1)])
+            ->withCount(['ads as ads_count' => fn ($q) => $q->where('status', 'active')])
+            ->with(['ads' => fn ($q) => $q->where('status', 'active')->latest()->take(1)])
             ->inRandomOrder()
             ->take(20 - count($boostedUserIds))
             ->get();
@@ -1461,9 +1430,9 @@ class FeedController extends Controller
                 ];
             }
             $categoriesWithSubs[$name] = [
-                'icon'  => $data['fa_icon'],
+                'icon' => $data['fa_icon'],
                 'color' => $data['color'],
-                'subs'  => $subs,
+                'subs' => $subs,
             ];
         }
 
@@ -1502,11 +1471,11 @@ class FeedController extends Controller
         // Récupérer la géolocalisation depuis le profil, le middleware ou les paramètres
         $user = Auth::user();
         $geoContext = $this->resolveFeedGeoContext($request, $user);
-        if (!$userLat) {
+        if (! $userLat) {
             $userLat = $geoContext['latitude'];
             $userLng = $geoContext['longitude'];
         }
-        if (!$radius && Auth::check()) {
+        if (! $radius && Auth::check()) {
             $radius = Auth::user()->geo_radius ?? 50;
         }
         $radius = (int) ($radius ?: 50);
@@ -1514,12 +1483,12 @@ class FeedController extends Controller
         $geoCountry = $geoContext['country'];
 
         $scope = $request->get('scope', 'all');
-        if (!in_array($scope, ['nearby', 'all'], true)) {
+        if (! in_array($scope, ['nearby', 'all'], true)) {
             $scope = 'all';
         }
 
         $hasLocalReference = ($userLat !== null && $userLng !== null) || $geoCity || $geoCountry;
-        $geoApplied = (bool) ($hasLocalReference && !$location && $scope === 'nearby');
+        $geoApplied = (bool) ($hasLocalReference && ! $location && $scope === 'nearby');
         $geoFallbackUsed = false;
 
         $buildFilteredAdsQuery = function (bool $nearby) use (
@@ -1559,21 +1528,21 @@ class FeedController extends Controller
             }
 
             if ($subcategory) {
-                $query->where(function($q) use ($subcategory) {
+                $query->where(function ($q) use ($subcategory) {
                     $q->where('category', $subcategory)
-                      ->orWhere('title', 'LIKE', '%' . $subcategory . '%');
+                        ->orWhere('title', 'LIKE', '%'.$subcategory.'%');
                 });
             }
 
             if ($location) {
-                $query->where(function($q) use ($location) {
-                    $locationNeedle = '%' . mb_strtolower(trim((string) $location)) . '%';
+                $query->where(function ($q) use ($location) {
+                    $locationNeedle = '%'.mb_strtolower(trim((string) $location)).'%';
 
                     $q->whereRaw('LOWER(location) LIKE ?', [$locationNeedle])
-                      ->orWhereRaw('LOWER(city) LIKE ?', [$locationNeedle])
-                      ->orWhereRaw('LOWER(address) LIKE ?', [$locationNeedle])
-                      ->orWhereRaw('LOWER(country) LIKE ?', [$locationNeedle])
-                      ->orWhereRaw('LOWER(postal_code) LIKE ?', [$locationNeedle]);
+                        ->orWhereRaw('LOWER(city) LIKE ?', [$locationNeedle])
+                        ->orWhereRaw('LOWER(address) LIKE ?', [$locationNeedle])
+                        ->orWhereRaw('LOWER(country) LIKE ?', [$locationNeedle])
+                        ->orWhereRaw('LOWER(postal_code) LIKE ?', [$locationNeedle]);
                 });
             }
 
@@ -1597,7 +1566,7 @@ class FeedController extends Controller
 
         // Apply sorting — always prioritize boosted and urgent ads first
         $query->orderByRaw(
-            "CASE WHEN (is_boosted = true AND boost_end > ?) OR (is_urgent = true AND (urgent_until IS NULL OR urgent_until > ?)) THEN 0 ELSE 1 END",
+            'CASE WHEN (is_boosted = true AND boost_end > ?) OR (is_urgent = true AND (urgent_until IS NULL OR urgent_until > ?)) THEN 0 ELSE 1 END',
             [now(), now()]
         );
         if ($geoApplied) {
@@ -1614,7 +1583,7 @@ class FeedController extends Controller
                 break;
             case 'recent':
             default:
-                if (!$geoApplied) {
+                if (! $geoApplied) {
                     $query->orderBy('is_pinned', 'desc');
                 }
                 break;
@@ -1641,7 +1610,7 @@ class FeedController extends Controller
                 'scope' => $scope,
                 'radius' => $radius,
                 'map_markers' => $mapMarkers,
-                'ads' => $ads->map(function($ad) use ($geoApplied) {
+                'ads' => $ads->map(function ($ad) use ($geoApplied) {
                     $data = [
                         'id' => $ad->id,
                         'title' => $ad->title,
@@ -1679,6 +1648,7 @@ class FeedController extends Controller
                     if ($geoApplied && isset($ad->distance)) {
                         $data['distance_km'] = round($ad->distance, 1);
                     }
+
                     return $data;
                 }),
                 'total' => $ads->total(),
@@ -1703,7 +1673,7 @@ class FeedController extends Controller
             return response()->json([
                 'success' => true,
                 'subcategories' => $missionCategories[$category]['subs'],
-                'category' => $category
+                'category' => $category,
             ]);
         }
 
@@ -1722,7 +1692,7 @@ class FeedController extends Controller
 
         // Build the list of categories to search for
         $categoriesToSearch = [];
-        
+
         if ($subcategory) {
             // Specific subcategory selected
             $categoriesToSearch[] = $subcategory;
@@ -1733,13 +1703,13 @@ class FeedController extends Controller
         }
 
         // Base query: professionals OR particuliers prestataires
-        $baseQuery = function() {
-            return \App\Models\User::where(function($q) {
+        $baseQuery = function () {
+            return \App\Models\User::where(function ($q) {
                 $q->where('user_type', 'professionnel')
-                  ->orWhere(function($q2) {
-                      $q2->where('user_type', 'particulier')
-                         ->where('is_service_provider', true);
-                  });
+                    ->orWhere(function ($q2) {
+                        $q2->where('user_type', 'particulier')
+                            ->where('is_service_provider', true);
+                    });
             });
         };
 
@@ -1747,35 +1717,35 @@ class FeedController extends Controller
         $query = $baseQuery();
 
         // Filter by category if specified
-        if (!empty($categoriesToSearch)) {
-            $query->where(function($q) use ($categoriesToSearch) {
+        if (! empty($categoriesToSearch)) {
+            $query->where(function ($q) use ($categoriesToSearch) {
                 // Soit ils ont des annonces dans cette catégorie
-                $q->whereHas('ads', function($adsQ) use ($categoriesToSearch) {
+                $q->whereHas('ads', function ($adsQ) use ($categoriesToSearch) {
                     $adsQ->where('status', 'active')
-                         ->whereIn('category', $categoriesToSearch);
+                        ->whereIn('category', $categoriesToSearch);
                 })
                 // Soit ils ont des services enregistrés dans cette catégorie (particuliers prestataires)
-                ->orWhereHas('services', function($servQ) use ($categoriesToSearch) {
-                    $servQ->where('is_active', true)
-                          ->where(function($catQ) use ($categoriesToSearch) {
-                              $catQ->whereIn('main_category', $categoriesToSearch)
-                                   ->orWhereIn('subcategory', $categoriesToSearch);
-                          });
-                });
+                    ->orWhereHas('services', function ($servQ) use ($categoriesToSearch) {
+                        $servQ->where('is_active', true)
+                            ->where(function ($catQ) use ($categoriesToSearch) {
+                                $catQ->whereIn('main_category', $categoriesToSearch)
+                                    ->orWhereIn('subcategory', $categoriesToSearch);
+                            });
+                    });
             });
         }
 
         // Get users with boosted ads first
         $usersWithBoostedAds = (clone $query)
-            ->whereHas('ads', fn($q) => $q->where('is_boosted', true)->where('boost_end', '>', now()))
-            ->with(['ads' => function($q) use ($categoriesToSearch) {
+            ->whereHas('ads', fn ($q) => $q->where('is_boosted', true)->where('boost_end', '>', now()))
+            ->with(['ads' => function ($q) use ($categoriesToSearch) {
                 $q->where('status', 'active');
-                if (!empty($categoriesToSearch)) {
+                if (! empty($categoriesToSearch)) {
                     $q->whereIn('category', $categoriesToSearch);
                 }
                 $q->latest()->take(1);
-            }, 'services' => fn($q) => $q->where('is_active', true)->limit(3)])
-            ->withCount(['ads as ads_count' => fn($q) => $q->where('status', 'active')])
+            }, 'services' => fn ($q) => $q->where('is_active', true)->limit(3)])
+            ->withCount(['ads as ads_count' => fn ($q) => $q->where('status', 'active')])
             ->get();
 
         $boostedUserIds = $usersWithBoostedAds->pluck('id')->toArray();
@@ -1783,47 +1753,47 @@ class FeedController extends Controller
         // Get subscribed professionals (not already in boosted)
         $subscribedPros = (clone $query)
             ->whereNotIn('id', $boostedUserIds)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNotNull('plan')
-                  ->where('plan', '!=', '')
-                  ->whereRaw('LOWER(plan) != ?', ['free'])
-                  ->where(function($q2) {
-                      $q2->whereNull('subscription_end')
-                         ->orWhere('subscription_end', '>', now());
-                  });
+                    ->where('plan', '!=', '')
+                    ->whereRaw('LOWER(plan) != ?', ['free'])
+                    ->where(function ($q2) {
+                        $q2->whereNull('subscription_end')
+                            ->orWhere('subscription_end', '>', now());
+                    });
             })
-            ->with(['ads' => function($q) use ($categoriesToSearch) {
+            ->with(['ads' => function ($q) use ($categoriesToSearch) {
                 $q->where('status', 'active');
-                if (!empty($categoriesToSearch)) {
+                if (! empty($categoriesToSearch)) {
                     $q->whereIn('category', $categoriesToSearch);
                 }
                 $q->latest()->take(1);
-            }, 'services' => fn($q) => $q->where('is_active', true)->limit(3)])
-            ->withCount(['ads as ads_count' => fn($q) => $q->where('status', 'active')])
+            }, 'services' => fn ($q) => $q->where('is_active', true)->limit(3)])
+            ->withCount(['ads as ads_count' => fn ($q) => $q->where('status', 'active')])
             ->inRandomOrder()
             ->take(20 - count($boostedUserIds))
             ->get();
 
         // Get new service providers (particuliers prestataires récents)
         $existingIds = array_merge($boostedUserIds, $subscribedPros->pluck('id')->toArray());
-        
+
         $newProviders = $baseQuery()
             ->where('is_service_provider', true)
             ->whereNotIn('id', $existingIds);
-            
-        if (!empty($categoriesToSearch)) {
-            $newProviders->whereHas('services', function($q) use ($categoriesToSearch) {
+
+        if (! empty($categoriesToSearch)) {
+            $newProviders->whereHas('services', function ($q) use ($categoriesToSearch) {
                 $q->where('is_active', true)
-                  ->where(function($catQ) use ($categoriesToSearch) {
-                      $catQ->whereIn('main_category', $categoriesToSearch)
-                           ->orWhereIn('subcategory', $categoriesToSearch);
-                  });
+                    ->where(function ($catQ) use ($categoriesToSearch) {
+                        $catQ->whereIn('main_category', $categoriesToSearch)
+                            ->orWhereIn('subcategory', $categoriesToSearch);
+                    });
             });
         }
-        
+
         $newProviders = $newProviders
-            ->with(['services' => fn($q) => $q->where('is_active', true)->limit(3)])
-            ->withCount(['ads as ads_count' => fn($q) => $q->where('status', 'active')])
+            ->with(['services' => fn ($q) => $q->where('is_active', true)->limit(3)])
+            ->withCount(['ads as ads_count' => fn ($q) => $q->where('status', 'active')])
             ->orderByDesc('service_provider_since')
             ->take(10)
             ->get();
@@ -1834,7 +1804,7 @@ class FeedController extends Controller
         if ($request->get('format') === 'json' || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'professionals' => $premiumPros->map(function($pro) {
+                'professionals' => $premiumPros->map(function ($pro) {
                     return [
                         'id' => $pro->id,
                         'name' => $pro->name,
@@ -1898,7 +1868,7 @@ class FeedController extends Controller
                 'longitude' => $lng,
                 'source' => 'browser',
                 'detected_at' => now()->toISOString(),
-            ]
+            ],
         ]);
 
         // Mettre à jour le profil utilisateur
@@ -1926,7 +1896,7 @@ class FeedController extends Controller
                     'country' => $reverseResult['country'] ?? null,
                     'source' => 'browser',
                     'detected_at' => now()->toISOString(),
-                ]
+                ],
             ]);
         }
 

@@ -469,7 +469,7 @@
                             </div>
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-900 mb-1">Support réactif</h3>
-                                <p class="text-gray-600">Notre équipe vous accompagne 7j/7 en cas de besoin.</p>
+                                <p class="text-gray-600">Contactez l'équipe depuis le formulaire d'assistance en cas de besoin.</p>
                             </div>
                         </div>
                     </div>

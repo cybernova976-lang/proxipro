@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\ContactMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 
 class ContactController extends Controller
 {
@@ -27,9 +26,10 @@ class ContactController extends Controller
             'email' => 'required|email|max:255',
             'subject' => 'required|string|max:255',
             'message' => 'required|string|min:10|max:5000',
+            'website' => 'nullable|max:0',
         ]);
 
-        $contactMessage = ContactMessage::create([
+        ContactMessage::create([
             'user_id' => Auth::id(),
             'name' => $request->name,
             'email' => $request->email,
@@ -38,10 +38,7 @@ class ContactController extends Controller
             'status' => 'pending',
         ]);
 
-        // Optionally send email notification to admin
-        // Mail::to(config('mail.admin_email'))->send(new NewContactMessage($contactMessage));
-
-        return redirect()->route('contact.index')->with('success', 'Votre message a été envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.');
+        return redirect()->route('contact.index')->with('success', 'Votre message a bien été enregistré.');
     }
 
     /**

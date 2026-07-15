@@ -107,29 +107,16 @@
                                 
                                 <div class="form-check form-switch mb-4">
                                     <input class="form-check-input" type="checkbox" id="email_notifications" name="email_notifications" 
-                                           {{ $user->email_notifications ?? true ? 'checked' : '' }}>
+                                           {{ ($user->email_notifications ?? true) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="email_notifications">
                                         <strong>Notifications par email</strong>
                                         <p class="text-muted mb-0 small">Recevoir les notifications importantes par email</p>
                                     </label>
                                 </div>
                                 
-                                <div class="form-check form-switch mb-4">
-                                    <input class="form-check-input" type="checkbox" id="sms_notifications" name="sms_notifications" 
-                                           {{ $user->sms_notifications ?? false ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="sms_notifications">
-                                        <strong>Notifications par SMS</strong>
-                                        <p class="text-muted mb-0 small">Recevoir les alertes urgentes par SMS</p>
-                                    </label>
-                                </div>
-                                
-                                <div class="form-check form-switch mb-4">
-                                    <input class="form-check-input" type="checkbox" id="push_notifications" name="push_notifications" 
-                                           {{ $user->push_notifications ?? true ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="push_notifications">
-                                        <strong>Notifications push</strong>
-                                        <p class="text-muted mb-0 small">Recevoir des notifications dans votre navigateur</p>
-                                    </label>
+                                <div class="alert alert-light border mb-4 small text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Les notifications dans l'espace personnel restent actives. Les alertes SMS et navigateur ne sont pas encore proposées.
                                 </div>
                                 
                                 <button type="submit" class="btn btn-primary">
@@ -152,7 +139,7 @@
                                 
                                 <div class="form-check form-switch mb-4">
                                     <input class="form-check-input" type="checkbox" id="profile_public" name="profile_public" 
-                                           {{ $user->profile_public ?? true ? 'checked' : '' }}>
+                                           {{ ($user->profile_public ?? true) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="profile_public">
                                         <strong>Profil public</strong>
                                         <p class="text-muted mb-0 small">Permettre aux autres utilisateurs de voir votre profil</p>
@@ -161,7 +148,7 @@
                                 
                                 <div class="form-check form-switch mb-4">
                                     <input class="form-check-input" type="checkbox" id="show_email" name="show_email" 
-                                           {{ $user->show_email ?? false ? 'checked' : '' }}>
+                                           {{ ($user->show_email ?? false) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="show_email">
                                         <strong>Afficher mon email</strong>
                                         <p class="text-muted mb-0 small">Afficher votre email sur votre profil public</p>
@@ -170,7 +157,7 @@
                                 
                                 <div class="form-check form-switch mb-4">
                                     <input class="form-check-input" type="checkbox" id="show_phone" name="show_phone" 
-                                           {{ $user->show_phone ?? true ? 'checked' : '' }}>
+                                           {{ ($user->show_phone ?? false) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="show_phone">
                                         <strong>Afficher mon téléphone</strong>
                                         <p class="text-muted mb-0 small">Afficher votre numéro sur vos annonces</p>

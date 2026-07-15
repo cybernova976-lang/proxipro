@@ -563,7 +563,7 @@
         <!-- ========================================================= -->
         <div class="ob-step-content" id="obStep4" style="display:none;">
             <div class="ob-card">
-                <div class="ob-card-title">🔔 Notifications en temps réel</div>
+                <div class="ob-card-title">🔔 Alertes dans la plateforme</div>
                 <div class="ob-card-subtitle">
                     Choisissez comment vous souhaitez être informé des nouvelles demandes de clients.
                 </div>
@@ -573,8 +573,8 @@
                         <i class="fas fa-bolt"></i>
                     </div>
                     <div class="ob-notif-text">
-                        <strong>Notifications instantanées</strong>
-                        <span>Recevez une alerte dès qu'un client potentiel publie une demande dans votre zone et votre catégorie.</span>
+                        <strong>Alertes dans la plateforme</strong>
+                        <span>Recevez une alerte lorsqu'un client potentiel publie une demande dans votre zone et votre catégorie.</span>
                     </div>
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="notifRealtime" checked style="width: 48px; height: 24px;">
@@ -586,26 +586,14 @@
                         <i class="fas fa-envelope"></i>
                     </div>
                     <div class="ob-notif-text">
-                        <strong>Récapitulatif par email</strong>
-                        <span>Recevez un résumé quotidien des nouvelles demandes dans votre secteur.</span>
+                        <strong>Alertes par e-mail</strong>
+                        <span>Recevez par e-mail les nouvelles demandes correspondant à votre secteur.</span>
                     </div>
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="notifEmail" checked style="width: 48px; height: 24px;">
                     </div>
                 </label>
 
-                <label class="ob-notif-option" onclick="document.getElementById('notifSms').checked = !document.getElementById('notifSms').checked">
-                    <div class="ob-notif-icon" style="background: rgba(168,85,247,0.1); color: #a855f7;">
-                        <i class="fas fa-sms"></i>
-                    </div>
-                    <div class="ob-notif-text">
-                        <strong>Alerte SMS (optionnel)</strong>
-                        <span>Recevez un SMS pour les demandes urgentes. Nécessite un numéro de téléphone valide.</span>
-                    </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="notifSms" style="width: 48px; height: 24px;">
-                    </div>
-                </label>
             </div>
 
             {{-- Verification block --}}
@@ -687,7 +675,7 @@
                             <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Badge « Pro Premium »</li>
                             <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Jusqu'à 4 photos par annonce</li>
                             <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Export comptable</li>
-                            <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Support dédié 7j/7</li>
+                            <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Assistance via formulaire de contact</li>
                         </ul>
                     </div>
                 </div>
@@ -720,7 +708,7 @@
                         <span class="ob-recap-value" id="recapCategories">—</span>
                     </div>
                     <div class="ob-recap-row">
-                        <span class="ob-recap-label"><i class="fas fa-bell me-2"></i>Notifications temps réel</span>
+                        <span class="ob-recap-label"><i class="fas fa-bell me-2"></i>Alertes sur la plateforme</span>
                         <span class="ob-recap-value" id="recapNotif">—</span>
                     </div>
                     <div class="ob-recap-row" style="border-bottom: 2px solid var(--ob-border);">

@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Ad;
+use App\Models\ServiceOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use App\Models\Ad;
-use App\Models\Review;
 
 class ProfileController extends Controller
 {
@@ -20,13 +20,13 @@ class ProfileController extends Controller
         // Forcer le rechargement depuis la base de données
         $user = \App\Models\User::with('services')->where('id', Auth::id())->firstOrFail();
         $user->refresh(); // Force le rafraîchissement des données depuis la DB
-        
+
         // Récupérer les annonces de l'utilisateur
         $ads = Ad::where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->take(6)
             ->get();
-        
+
         // Statistiques
         $stats = [
             'total_ads' => Ad::where('user_id', $user->id)->count(),
@@ -46,6 +46,7 @@ class ProfileController extends Controller
     public function edit()
     {
         $user = Auth::user();
+
         return view('profile.edit', compact('user'));
     }
 
@@ -58,7 +59,7 @@ class ProfileController extends Controller
 
         $rules = [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'required|email|max:255|unique:users,email,'.$user->id,
             'phone' => 'nullable|string|max:20',
             'bio' => 'nullable|string|max:500',
             'location' => 'nullable|string|max:255',
@@ -83,10 +84,10 @@ class ProfileController extends Controller
         if ($request->filled('avatar_cropped')) {
             try {
                 $defaultDisk = config('filesystems.default', 'public');
-                $diskDriver  = config('filesystems.disks.' . $defaultDisk . '.driver', 'local');
+                $diskDriver = config('filesystems.disks.'.$defaultDisk.'.driver', 'local');
                 $rawImage = (string) $request->input('avatar_cropped');
 
-                if (!preg_match('/^data:image\/(jpeg|jpg|png|webp);base64,/', $rawImage)) {
+                if (! preg_match('/^data:image\/(jpeg|jpg|png|webp);base64,/', $rawImage)) {
                     return back()->withErrors(['avatar' => 'Format d\'image recadrée invalide.'])->withInput();
                 }
 
@@ -101,62 +102,64 @@ class ProfileController extends Controller
                     return back()->withErrors(['avatar' => 'L\'image recadrée est trop volumineuse (max 5 Mo).'])->withInput();
                 }
 
-                Log::info('Avatar cropped upload — disk: ' . $defaultDisk . ', driver: ' . $diskDriver, [
-                    'user_id'   => $user->id,
+                Log::info('Avatar cropped upload — disk: '.$defaultDisk.', driver: '.$diskDriver, [
+                    'user_id' => $user->id,
                     'file_size' => strlen($binary),
                 ]);
 
-                if ($user->avatar && !str_starts_with($user->avatar, 'http')) {
+                if ($user->avatar && ! str_starts_with($user->avatar, 'http')) {
                     try {
                         Storage::disk($defaultDisk)->delete($user->avatar);
                     } catch (\Exception $e) {
-                        Log::warning('Impossible de supprimer l\'ancien avatar: ' . $e->getMessage(), [
+                        Log::warning('Impossible de supprimer l\'ancien avatar: '.$e->getMessage(), [
                             'user_id' => $user->id,
-                            'avatar'  => $user->avatar,
+                            'avatar' => $user->avatar,
                         ]);
                     }
                 }
 
                 $extension = str_contains($meta, 'image/png') ? 'png' : (str_contains($meta, 'image/webp') ? 'webp' : 'jpg');
-                $path = 'avatars/' . Str::uuid() . '.' . $extension;
+                $path = 'avatars/'.Str::uuid().'.'.$extension;
                 $saved = Storage::disk($defaultDisk)->put($path, $binary);
 
-                if (!$saved) {
+                if (! $saved) {
                     Log::error('Avatar cropped put() returned false', [
                         'user_id' => $user->id,
-                        'disk'    => $defaultDisk,
+                        'disk' => $defaultDisk,
                     ]);
+
                     return back()->withErrors(['avatar' => 'Erreur lors du téléchargement de la photo. Veuillez réessayer.'])->withInput();
                 }
 
                 $data['avatar'] = $path;
             } catch (\Exception $e) {
-                Log::error('Erreur upload avatar recadré: ' . $e->getMessage(), [
-                    'user_id'   => $user->id,
+                Log::error('Erreur upload avatar recadré: '.$e->getMessage(), [
+                    'user_id' => $user->id,
                     'exception' => get_class($e),
-                    'trace'     => $e->getTraceAsString(),
+                    'trace' => $e->getTraceAsString(),
                 ]);
+
                 return back()->withErrors(['avatar' => 'Erreur lors du téléchargement de la photo. Veuillez réessayer.'])->withInput();
             }
         } elseif ($request->hasFile('avatar')) {
             try {
                 $defaultDisk = config('filesystems.default', 'public');
-                $diskDriver  = config('filesystems.disks.' . $defaultDisk . '.driver', 'local');
+                $diskDriver = config('filesystems.disks.'.$defaultDisk.'.driver', 'local');
 
-                Log::info('Avatar upload — disk: ' . $defaultDisk . ', driver: ' . $diskDriver, [
-                    'user_id'   => $user->id,
+                Log::info('Avatar upload — disk: '.$defaultDisk.', driver: '.$diskDriver, [
+                    'user_id' => $user->id,
                     'file_size' => $request->file('avatar')->getSize(),
                     'mime_type' => $request->file('avatar')->getMimeType(),
                 ]);
 
                 // Supprimer l'ancien avatar
-                if ($user->avatar && !str_starts_with($user->avatar, 'http')) {
+                if ($user->avatar && ! str_starts_with($user->avatar, 'http')) {
                     try {
                         Storage::disk($defaultDisk)->delete($user->avatar);
                     } catch (\Exception $e) {
-                        Log::warning('Impossible de supprimer l\'ancien avatar: ' . $e->getMessage(), [
+                        Log::warning('Impossible de supprimer l\'ancien avatar: '.$e->getMessage(), [
                             'user_id' => $user->id,
-                            'avatar'  => $user->avatar,
+                            'avatar' => $user->avatar,
                         ]);
                     }
                 }
@@ -169,17 +172,19 @@ class ProfileController extends Controller
                 } else {
                     Log::error('Avatar store() returned empty path', [
                         'user_id' => $user->id,
-                        'disk'    => $defaultDisk,
-                        'driver'  => $diskDriver,
+                        'disk' => $defaultDisk,
+                        'driver' => $diskDriver,
                     ]);
+
                     return back()->withErrors(['avatar' => 'Erreur lors du téléchargement de la photo. Veuillez réessayer.'])->withInput();
                 }
             } catch (\Exception $e) {
-                Log::error('Erreur upload avatar: ' . $e->getMessage(), [
-                    'user_id'   => $user->id,
+                Log::error('Erreur upload avatar: '.$e->getMessage(), [
+                    'user_id' => $user->id,
                     'exception' => get_class($e),
-                    'trace'     => $e->getTraceAsString(),
+                    'trace' => $e->getTraceAsString(),
                 ]);
+
                 return back()->withErrors(['avatar' => 'Erreur lors du téléchargement de la photo. Veuillez réessayer.'])->withInput();
             }
         }
@@ -220,7 +225,7 @@ class ProfileController extends Controller
         // Si l'utilisateur avait déjà une catégorie différente, on garde les deux (séparées par virgule)
         if ($existingCategory && $existingCategory !== $newCategory) {
             $existingCats = array_map('trim', explode(',', $existingCategory));
-            if (!in_array($newCategory, $existingCats)) {
+            if (! in_array($newCategory, $existingCats)) {
                 $existingCats[] = $newCategory;
             }
             $user->service_category = implode(', ', $existingCats);
@@ -265,34 +270,55 @@ class ProfileController extends Controller
         // Forcer le rechargement depuis la base de données (sans cache)
         $user = \App\Models\User::with('services')->where('id', $id)->firstOrFail();
         $user->refresh(); // Force le rafraîchissement des données depuis la DB
-        
+
+        $canViewPrivateProfile = Auth::check()
+            && (Auth::id() === $user->id || (bool) (Auth::user()->is_admin ?? false));
+        abort_if(! $user->profile_public && ! $canViewPrivateProfile, 404);
+
         // Incrémenter le compteur de vues du profil (seulement si un autre utilisateur visite)
-        if (!Auth::check() || Auth::id() !== $user->id) {
+        if (! Auth::check() || Auth::id() !== $user->id) {
             $user->increment('profile_views');
         }
-        
+
         // Récupérer les annonces actives de l'utilisateur
         $ads = Ad::where('user_id', $user->id)
             ->where('status', 'active')
             ->orderBy('created_at', 'desc')
             ->paginate(12);
-        
+
         // Statistiques publiques
         $stats = [
             'total_ads' => Ad::where('user_id', $user->id)->where('status', 'active')->count(),
             'member_since' => $user->created_at->format('M Y'),
         ];
 
-        $reviews = Review::where('reviewed_user_id', $user->id)
-            ->with('reviewer')
+        $verifiedReviews = $user->verifiedReviewsReceived();
+        $reviews = (clone $verifiedReviews)
+            ->with(['reviewer', 'serviceOrder.ad'])
             ->orderBy('created_at', 'desc')
             ->take(10)
             ->get();
 
-        $ratingCount = Review::where('reviewed_user_id', $user->id)->count();
-        $ratingAverage = Review::where('reviewed_user_id', $user->id)->avg('rating');
+        $ratingCount = (clone $verifiedReviews)->count();
+        $ratingAverage = (clone $verifiedReviews)->avg('rating');
         $ratingAverage = $ratingAverage ? round($ratingAverage, 1) : 0;
 
-        return view('profile.public', compact('user', 'ads', 'stats', 'reviews', 'ratingCount', 'ratingAverage'));
+        $reviewableOrder = null;
+        if (Auth::check() && Auth::id() !== $user->id) {
+            $reviewableOrder = ServiceOrder::query()
+                ->where('status', ServiceOrder::STATUS_COMPLETED)
+                ->where('payment_status', ServiceOrder::PAYMENT_RELEASED)
+                ->where(function ($query) use ($user) {
+                    $query->where(function ($pair) use ($user) {
+                        $pair->where('buyer_id', Auth::id())->where('seller_id', $user->id);
+                    })->orWhere(function ($pair) use ($user) {
+                        $pair->where('seller_id', Auth::id())->where('buyer_id', $user->id);
+                    });
+                })
+                ->latest('released_at')
+                ->first();
+        }
+
+        return view('profile.public', compact('user', 'ads', 'stats', 'reviews', 'ratingCount', 'ratingAverage', 'reviewableOrder'));
     }
 }

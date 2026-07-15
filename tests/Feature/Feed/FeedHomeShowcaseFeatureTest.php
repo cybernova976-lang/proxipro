@@ -4,6 +4,7 @@ namespace Tests\Feature\Feed;
 
 use App\Models\Ad;
 use App\Models\Review;
+use App\Models\ServiceOrder;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -26,7 +27,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
 
         $oldPersonalRequests = collect(range(1, 6))->map(function ($index) use ($particular) {
             return Ad::create([
-                'title' => 'Demande particulier ' . $index,
+                'title' => 'Demande particulier '.$index,
                 'description' => 'Besoin d un professionnel pour une mission locale',
                 'category' => 'Plomberie',
                 'location' => 'Mamoudzou',
@@ -58,7 +59,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
 
         $oldProfessionalOffers = collect(range(1, 6))->map(function ($index) use ($professional) {
             return Ad::create([
-                'title' => 'Offre professionnelle ' . $index,
+                'title' => 'Offre professionnelle '.$index,
                 'description' => 'Prestation ou materiel propose par un professionnel',
                 'category' => 'Bricolage',
                 'location' => 'Koungou',
@@ -117,7 +118,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         ]);
 
         $reviewer = User::factory()->create();
-        Ad::create([
+        $reviewedAd = Ad::create([
             'title' => 'Annonce du reviewer',
             'description' => 'Annonce permettant de verifier les avis',
             'category' => 'Service',
@@ -136,20 +137,35 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             'bio' => 'Intervient rapidement pour les depannages et petits travaux.',
         ]);
 
+        $completedOrder = ServiceOrder::create([
+            'order_number' => 'TEST-SHOWCASE-REVIEW',
+            'ad_id' => $reviewedAd->id,
+            'buyer_id' => $reviewer->id,
+            'seller_id' => $topProfessionalProfile->id,
+            'amount' => 100,
+            'commission_amount' => 10,
+            'seller_amount' => 90,
+            'status' => ServiceOrder::STATUS_COMPLETED,
+            'payment_status' => ServiceOrder::PAYMENT_RELEASED,
+            'released_at' => now(),
+        ]);
+
         Review::create([
             'reviewer_id' => $reviewer->id,
             'reviewed_user_id' => $topProfessionalProfile->id,
+            'ad_id' => $reviewedAd->id,
+            'service_order_id' => $completedOrder->id,
             'rating' => 5,
             'comment' => 'Tres bon service',
         ]);
 
         $paidProfiles = collect(range(1, 5))->map(function ($index) {
             return User::factory()->create([
-                'name' => 'Pro visible ' . $index,
+                'name' => 'Pro visible '.$index,
                 'user_type' => 'professionnel',
                 'plan' => 'pro',
-                'profession' => 'Metier ' . $index,
-                'bio' => 'Description courte du profil professionnel ' . $index,
+                'profession' => 'Metier '.$index,
+                'bio' => 'Description courte du profil professionnel '.$index,
             ]);
         });
 

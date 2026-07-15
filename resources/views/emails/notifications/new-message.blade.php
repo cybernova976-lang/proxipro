@@ -36,9 +36,11 @@
                     Vous pouvez répondre directement depuis la messagerie de la plateforme.
                 </p>
 
+                @if($supportEmail)
                 <p style="margin:0;font-size:13px;line-height:1.7;color:#64748b;">
                     Besoin d'aide ? Contactez-nous à <a href="mailto:{{ $supportEmail }}" style="color:#15803d;text-decoration:none;font-weight:600;">{{ $supportEmail }}</a>.
                 </p>
+                @endif
             </div>
         </div>
     </div>

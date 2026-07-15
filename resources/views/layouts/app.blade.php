@@ -9,6 +9,17 @@
 
     <title>@yield('title', config('app.name', 'ProxiPro'))</title>
 
+    <meta name="description" content="@yield('meta_description', 'Publiez un besoin, comparez les propositions et trouvez un prestataire près de chez vous.')">
+    <link rel="canonical" href="{{ url()->current() }}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="@yield('title', config('app.name', 'ProxiPro'))">
+    <meta property="og:description" content="@yield('meta_description', 'Publiez un besoin, comparez les propositions et trouvez un prestataire près de chez vous.')">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:image" content="{{ asset('images/social-card.svg') }}">
+    @if(request()->routeIs('login', 'register', 'password.*', 'settings.*', 'messages.*', 'admin.*'))
+        <meta name="robots" content="noindex,nofollow">
+    @endif
+
     <!-- Open Graph / Social Sharing Meta Tags -->
     @stack('meta')
 

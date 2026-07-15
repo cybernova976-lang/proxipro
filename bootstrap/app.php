@@ -13,12 +13,19 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
-        
+
+        // Stripe signe lui-meme ses webhooks. Ils ne peuvent pas fournir de
+        // jeton CSRF de session, mais restent verifies par leur signature.
+        $middleware->validateCsrfTokens(except: [
+            'stripe/webhook',
+        ]);
+
         // Détection appareil (mobile/tablet/desktop) sur toutes les requêtes web
         $middleware->web(append: [
             \App\Http\Middleware\DetectDevice::class,
+            \App\Http\Middleware\SecurityHeaders::class,
         ]);
-        
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'geo' => \App\Http\Middleware\DetectUserGeolocation::class,
@@ -47,13 +54,14 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             if ($response->getStatusCode() >= 500) {
-                \Illuminate\Support\Facades\Log::error('Server error: ' . $e->getMessage(), [
+                \Illuminate\Support\Facades\Log::error('Server error: '.$e->getMessage(), [
                     'exception' => get_class($e),
                     'file' => $e->getFile(),
                     'line' => $e->getLine(),
                     'url' => request()->fullUrl(),
                 ]);
             }
+
             return $response;
         });
     })->create();

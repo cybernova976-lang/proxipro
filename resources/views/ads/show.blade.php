@@ -315,6 +315,7 @@
                                 $restriction = $ad->reply_restriction ?? 'everyone';
                                 $canReply = true;
                                 $restrictionMsg = '';
+                                $viewerIsProvider = Auth::user()->isProfessionnel() || Auth::user()->isServiceProvider();
 
                                 if ($restriction === 'pro_only') {
                                     $isPro = Auth::user()->user_type === 'professionnel'
@@ -334,26 +335,19 @@
 
                             @if($canReply)
                                 <button class="btn btn-contact btn-contact-primary" data-bs-toggle="modal" data-bs-target="#contactModal"><i class="fas fa-paper-plane me-2"></i>Contacter</button>
-                                <button class="btn btn-contact" style="background: linear-gradient(135deg, #0f766e, #0f766e); color: white; border: none;" data-bs-toggle="modal" data-bs-target="#secureOrderModal">
-                                    <i class="fas fa-shield-alt me-2"></i>Commande securisee
-                                </button>
-                                <button class="btn btn-contact" id="btnCandidatureShow" onclick="toggleCandidatureShowForm()" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none;">
-                                    <i class="fas fa-hand-paper me-2"></i>Envoyer ma candidature
-                                </button>
-                                <div id="candidatureShowForm" style="display:none; margin-bottom: 10px;">
-                                    <div style="padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
-                                        <h6 style="font-size: 0.88rem; font-weight: 600; color: #1e293b; margin-bottom: 8px;">
-                                            <i class="fas fa-paper-plane" style="color: #3b82f6; margin-right: 6px;"></i>Envoyer votre candidature
-                                        </h6>
-                                        <textarea id="candidatureShowMessage" class="form-control mb-2" rows="3" placeholder="Présentez-vous en quelques mots... (optionnel)" maxlength="1000" style="font-size: 0.85rem; border-radius: 8px;"></textarea>
-                                        <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleCandidatureShowForm()">Annuler</button>
-                                            <button type="button" class="btn btn-sm btn-primary" id="btnSendCandidatureShow" onclick="submitCandidatureShow()">
-                                                <i class="fas fa-paper-plane me-1"></i>Envoyer
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                                @if($ad->service_type === 'offre')
+                                    <button class="btn btn-contact" style="background:#0f766e;color:white;border:none;" data-bs-toggle="modal" data-bs-target="#secureOrderModal">
+                                        <i class="fas fa-shield-alt me-2"></i>Reserver avec paiement securise
+                                    </button>
+                                @elseif($viewerIsProvider)
+                                    <button class="btn btn-contact" style="background:#2563eb;color:white;border:none;" data-bs-toggle="modal" data-bs-target="#proposalModal">
+                                        <i class="fas fa-file-signature me-2"></i>Envoyer une proposition chiffree
+                                    </button>
+                                @else
+                                    <a href="{{ route('pro.dashboard') }}" class="btn btn-contact" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;">
+                                        <i class="fas fa-briefcase me-2"></i>Activer mon profil prestataire
+                                    </a>
+                                @endif
                             @else
                                 <div class="mb-2 p-3 rounded-3 text-center" style="background: #fef3c7; border: 1px solid #fcd34d;">
                                     <i class="fas fa-lock me-1" style="color: #d97706;"></i>
@@ -640,7 +634,7 @@ Cordialement,
     @endauth
 
     @auth
-    @if(Auth::id() !== $ad->user_id)
+    @if(Auth::id() !== $ad->user_id && $ad->service_type === 'offre')
     <div class="modal fade" id="secureOrderModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -676,6 +670,48 @@ Cordialement,
                     <div class="modal-footer border-0 pt-0">
                         <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
                         <button type="submit" class="btn btn-success"><i class="fas fa-lock me-1"></i>Envoyer la commande</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+    @endauth
+
+    @auth
+    @if(Auth::id() !== $ad->user_id && $ad->service_type === 'demande' && (Auth::user()->isProfessionnel() || Auth::user()->isServiceProvider()))
+    <div class="modal fade" id="proposalModal" tabindex="-1" aria-labelledby="proposalModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title" id="proposalModalLabel"><i class="fas fa-file-signature me-2 text-primary"></i>Votre proposition</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <form action="{{ route('proposals.store', $ad) }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="alert alert-primary" style="border-radius:12px;">
+                            Le client pourra comparer votre prix, votre message et votre profil avant d’accepter.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-light" for="proposalAmount">Prix propose</label>
+                            <div class="input-group">
+                                <input id="proposalAmount" type="number" step="0.01" min="1" max="999999.99" name="amount" class="form-control form-control-dark" value="{{ old('amount', $ad->price ? number_format((float)$ad->price, 2, '.', '') : '') }}" required>
+                                <span class="input-group-text">€</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-light" for="proposalDate">Date ou disponibilite</label>
+                            <input id="proposalDate" type="date" name="scheduled_for" class="form-control form-control-dark" min="{{ now()->toDateString() }}" value="{{ old('scheduled_for') }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-light" for="proposalMessage">Details de la prestation</label>
+                            <textarea id="proposalMessage" name="message" class="form-control form-control-dark" rows="5" minlength="20" maxlength="1500" required placeholder="Expliquez ce qui est inclus, votre disponibilite et les conditions de votre intervention.">{{ old('message') }}</textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i>Envoyer la proposition</button>
                     </div>
                 </form>
             </div>
@@ -945,64 +981,6 @@ Cordialement,
         }
     })();
 
-    // Candidature functions for show page
-    function toggleCandidatureShowForm() {
-        const form = document.getElementById('candidatureShowForm');
-        const btn = document.getElementById('btnCandidatureShow');
-        if (!form) return;
-        if (form.style.display === 'none') {
-            form.style.display = 'block';
-            if (btn) btn.style.display = 'none';
-        } else {
-            form.style.display = 'none';
-            if (btn) btn.style.display = 'block';
-        }
-    }
-
-    async function submitCandidatureShow() {
-        const btn = document.getElementById('btnSendCandidatureShow');
-        const msgInput = document.getElementById('candidatureShowMessage');
-        const message = msgInput?.value?.trim() || '';
-        const adId = {{ $ad->id }};
-
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Envoi...';
-
-        try {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-            const response = await fetch(`/ads/${adId}/candidature`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ message: message })
-            });
-            const data = await response.json();
-            if (data.success) {
-                const form = document.getElementById('candidatureShowForm');
-                if (form) {
-                    form.innerHTML = `
-                        <div style="padding:14px;background:#ecfdf5;border:1px solid #86efac;border-radius:12px;text-align:center;">
-                            <i class="fas fa-check-circle" style="color:#059669;font-size:1.2rem;margin-bottom:4px;"></i>
-                            <div style="font-weight:600;color:#065f46;font-size:0.9rem;">Candidature envoyée !</div>
-                            <div style="font-size:0.78rem;color:#047857;">L'annonceur a été notifié.</div>
-                        </div>
-                    `;
-                }
-            } else {
-                alert(data.message || 'Erreur lors de l\'envoi');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Envoyer';
-            }
-        } catch (error) {
-            console.error('submitCandidatureShow error:', error);
-            alert('Erreur lors de l\'envoi de la candidature');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Envoyer';
-        }
-    }
 </script>
 <style>
     @keyframes fadeIn {
