@@ -3,17 +3,17 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Mail\WelcomeMail;
 use App\Mail\EmailVerificationCode;
+use App\Mail\WelcomeMail;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\ReferralService;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class RegisterController extends Controller
@@ -62,6 +62,7 @@ class RegisterController extends Controller
                 'email' => $request->input('email'),
                 'user_agent' => $request->userAgent(),
             ]);
+
             // Return a fake success to confuse bots
             return redirect($this->redirectPath())
                 ->with('status', 'Inscription réussie !');
@@ -79,6 +80,7 @@ class RegisterController extends Controller
                         'elapsed_seconds' => $elapsed,
                         'email' => $request->input('email'),
                     ]);
+
                     return redirect($this->redirectPath())
                         ->with('status', 'Inscription réussie !');
                 }
@@ -96,7 +98,7 @@ class RegisterController extends Controller
 
         // Proceed with normal registration (from RegistersUsers trait)
         $this->validator($request->all())->validate();
-        
+
         event(new \Illuminate\Auth\Events\Registered($user = $this->create($request->all())));
 
         // Check if email verification is enabled in admin settings
@@ -110,6 +112,8 @@ class RegisterController extends Controller
         }
 
         if ($verificationEnabled) {
+            $request->session()->put(EmailVerificationCodeController::PENDING_USER_SESSION_KEY, $user->id);
+
             // Generate 6-digit verification code
             $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             $user->email_verification_code = Hash::make($code);
@@ -130,7 +134,7 @@ class RegisterController extends Controller
                 $emailSent = true;
                 Log::info('Verification code email sent successfully', ['email' => $user->email]);
             } catch (\Exception $e) {
-                Log::error('Verification code email FAILED: ' . $e->getMessage(), [
+                Log::error('Verification code email FAILED: '.$e->getMessage(), [
                     'user_id' => $user->id,
                     'email' => $user->email,
                     'exception' => get_class($e),
@@ -150,6 +154,7 @@ class RegisterController extends Controller
                 'user_id' => $user->id,
                 'email' => $user->email,
             ]);
+
             return redirect()->route('verification.code.show', ['email' => $user->email])
                 ->with('warning', 'L\'envoi du code a échoué. Veuillez cliquer sur "Renvoyer le code" pour réessayer.');
         } else {
@@ -162,7 +167,7 @@ class RegisterController extends Controller
         try {
             Mail::to($user->email)->send(new WelcomeMail($user));
         } catch (\Exception $e) {
-            Log::warning('Welcome email failed: ' . $e->getMessage(), [
+            Log::warning('Welcome email failed: '.$e->getMessage(), [
                 'user_id' => $user->id,
                 'email' => $user->email,
             ]);
@@ -181,7 +186,6 @@ class RegisterController extends Controller
     /**
      * Get a validator for an incoming registration request.
      *
-     * @param  array  $data
      * @return \Illuminate\Contracts\Validation\Validator
      */
     protected function validator(array $data)
@@ -209,6 +213,7 @@ class RegisterController extends Controller
 
                     if (in_array($normalizedPassword, $commonPasswords, true)) {
                         $fail('Mot de passe trop courant. Choisissez un mot de passe plus unique.');
+
                         return;
                     }
 
@@ -217,6 +222,7 @@ class RegisterController extends Controller
 
                     if ($normalizedPassword !== '' && ($normalizedPassword === $email || $normalizedPassword === $emailLocalPart)) {
                         $fail('Le mot de passe ne doit pas être identique à votre e-mail.');
+
                         return;
                     }
 
@@ -230,6 +236,7 @@ class RegisterController extends Controller
                     foreach ($nameCandidates as $candidate) {
                         if ($candidate !== '' && $normalizedPassword === $candidate) {
                             $fail('Le mot de passe ne doit pas être identique à votre nom ou à votre entreprise.');
+
                             return;
                         }
                     }
@@ -280,24 +287,23 @@ class RegisterController extends Controller
     /**
      * Create a new user instance after a valid registration.
      *
-     * @param  array  $data
      * @return \App\Models\User
      */
     protected function create(array $data)
     {
         $isProfessionnel = isset($data['account_type']) && $data['account_type'] === 'professionnel';
-        
+
         // Construire le nom selon le type de compte
         if ($isProfessionnel) {
             $name = $data['company_name'];
             $accountType = 'professionnel';
             $userType = 'professionnel';
             $businessType = $data['business_type'] ?? 'auto_entrepreneur';
-            
+
             // Définir les limites selon le type de business
             $maxActiveAds = $businessType === 'entreprise' ? 20 : 10;
         } else {
-            $name = trim($data['firstname'] . ' ' . $data['lastname']);
+            $name = trim($data['firstname'].' '.$data['lastname']);
             $accountType = 'particulier';
             $userType = 'particulier';
             $businessType = null;
@@ -310,7 +316,7 @@ class RegisterController extends Controller
             ->where('email', $data['email'])
             ->whereNotNull('deleted_at')
             ->first();
-        
+
         if ($trashedUser) {
             Log::info('Force-deleting soft-deleted user to allow re-registration', [
                 'old_user_id' => $trashedUser->id,
@@ -354,20 +360,20 @@ class RegisterController extends Controller
         if (class_exists(\App\Models\PointTransaction::class)) {
             try {
                 $welcomePoints = 5; // 5 points gratuits à l'inscription
-                
+
                 \App\Models\PointTransaction::create([
                     'user_id' => $user->id,
                     'points' => $welcomePoints,
                     'type' => 'welcome_bonus',
                     'description' => 'Bonus de bienvenue à l\'inscription (5 points gratuits)',
                 ]);
-                
+
                 // Créditer available_points et total_points (colonnes réelles)
                 $user->increment('available_points', $welcomePoints);
                 $user->increment('total_points', $welcomePoints);
             } catch (\Exception $e) {
                 // Log error but don't fail registration
-                \Log::error('Failed to add welcome points: ' . $e->getMessage());
+                \Log::error('Failed to add welcome points: '.$e->getMessage());
             }
         }
 

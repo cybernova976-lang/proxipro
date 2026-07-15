@@ -106,6 +106,42 @@
         font-size: 0.88rem; font-weight: 600; color: #334155;
     }
     .vc-email span svg { width: 14px; height: 14px; color: #4f46e5; }
+    .vc-email-correction {
+        margin: -14px 0 24px; text-align: center;
+    }
+    .vc-email-correction summary {
+        display: inline-flex; align-items: center; gap: 6px;
+        color: #4f46e5; font-size: 0.84rem; font-weight: 700;
+        cursor: pointer; list-style: none; padding: 7px 10px; border-radius: 10px;
+    }
+    .vc-email-correction summary::-webkit-details-marker { display: none; }
+    .vc-email-correction summary:hover { background: #eef2ff; }
+    .vc-email-correction[open] summary { margin-bottom: 12px; }
+    .vc-email-edit-panel {
+        padding: 16px; border: 1px solid #e0e7ff; border-radius: 16px;
+        background: #f8faff; text-align: left;
+    }
+    .vc-email-edit-panel label {
+        display: block; margin-bottom: 7px; color: #334155;
+        font-size: 0.8rem; font-weight: 700;
+    }
+    .vc-email-edit-row { display: flex; gap: 8px; }
+    .vc-email-edit-row input {
+        min-width: 0; flex: 1; padding: 11px 12px; border: 1px solid #cbd5e1;
+        border-radius: 11px; background: white; color: #1e293b; font: inherit;
+        outline: none;
+    }
+    .vc-email-edit-row input:focus {
+        border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+    }
+    .vc-email-edit-row button {
+        padding: 11px 14px; border: 0; border-radius: 11px;
+        background: #4f46e5; color: white; font: inherit;
+        font-size: 0.82rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+    }
+    .vc-email-edit-help {
+        margin: 8px 0 0; color: #64748b; font-size: 0.74rem; line-height: 1.45;
+    }
 
     /* ── Alerts ── */
     .vc-alert {
@@ -121,6 +157,9 @@
     }
     .vc-alert-success {
         background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a;
+    }
+    .vc-alert-warning {
+        background: #fffbeb; border: 1px solid #fde68a; color: #92400e;
     }
 
     /* ── Code inputs ── */
@@ -237,6 +276,8 @@
         .vc-digit { width: 44px; height: 54px; font-size: 1.25rem; border-radius: 12px; }
         .vc-code-row { gap: 6px; }
         .vc-title { font-size: 1.3rem; }
+        .vc-email-edit-row { flex-direction: column; }
+        .vc-email-edit-row button { width: 100%; }
     }
 </style>
 
@@ -276,6 +317,35 @@
                 </span>
             </div>
 
+            @if ($canChangeEmail)
+            <details class="vc-email-correction" @if($errors->has('email')) open @endif>
+                <summary>
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 3.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 15.07a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.862 3.487z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 7.125V18.75A2.25 2.25 0 0117.25 21H5.25A2.25 2.25 0 013 18.75V6.75A2.25 2.25 0 015.25 4.5h11.625"/>
+                    </svg>
+                    Adresse incorrecte ? La modifier
+                </summary>
+                <form method="POST" action="{{ route('verification.code.email.update') }}" class="vc-email-edit-panel">
+                    @csrf
+                    <label for="corrected-email">Votre adresse e-mail correcte</label>
+                    <div class="vc-email-edit-row">
+                        <input
+                            type="email"
+                            id="corrected-email"
+                            name="email"
+                            value="{{ old('email', $email) }}"
+                            maxlength="255"
+                            autocomplete="email"
+                            required
+                        >
+                        <button type="submit">Corriger et renvoyer</button>
+                    </div>
+                    <p class="vc-email-edit-help">L’ancien code sera annulé et un nouveau code sera envoyé à cette adresse.</p>
+                </form>
+            </details>
+            @endif
+
             {{-- ── Alerts ── --}}
             @if (session('error'))
             <div class="vc-alert vc-alert-error">
@@ -292,6 +362,15 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <span>{{ session('success') }}</span>
+            </div>
+            @endif
+
+            @if (session('warning'))
+            <div class="vc-alert vc-alert-warning">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                </svg>
+                <span>{{ session('warning') }}</span>
             </div>
             @endif
 

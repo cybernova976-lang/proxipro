@@ -9,8 +9,8 @@ use App\Models\User;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
@@ -147,6 +147,8 @@ class LoginController extends Controller
                     ]);
                 }
 
+                $request->session()->put(EmailVerificationCodeController::PENDING_USER_SESSION_KEY, $user->id);
+
                 // Generate a fresh verification code
                 $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
                 $user->email_verification_code = Hash::make($code);
@@ -178,26 +180,14 @@ class LoginController extends Controller
                         ->with('error', 'Veuillez d\'abord vérifier votre adresse e-mail. Un nouveau code vous a été envoyé.');
                 }
 
-                // Email failed: auto-verify to not block the user
-                Log::warning('Email send failed on login, auto-verifying user', [
+                // Keep the account unverified. The verification screen lets the
+                // user resend the code or safely correct a mistyped address.
+                Log::warning('Email send failed on login, keeping user unverified', [
                     'user_id' => $user->id,
                 ]);
-                try {
-                    $user->email_verified_at = now();
-                    $user->email_verification_code = null;
-                    $user->email_verification_code_expires_at = null;
-                    $user->save();
 
-                    // Re-login and continue
-                    $this->guard()->login($user);
-                } catch (\Throwable $e) {
-                    Log::error('Auto-verify fallback failed on login', [
-                        'user_id' => $user->id,
-                        'exception_class' => get_class($e),
-                        'exception_message' => $e->getMessage(),
-                        'exception_trace' => $e->getTraceAsString(),
-                    ]);
-                }
+                return redirect()->route('verification.code.show', ['email' => $user->email])
+                    ->with('warning', 'L’envoi du code a échoué. Vous pouvez corriger votre adresse ou demander un nouvel envoi.');
             }
         } catch (\Throwable $e) {
             Log::error('Login post-authentication failed, redirecting to feed anyway', [

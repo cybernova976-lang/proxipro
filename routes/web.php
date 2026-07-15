@@ -118,6 +118,9 @@ Route::post('/email/verify-code', [App\Http\Controllers\Auth\EmailVerificationCo
 Route::post('/email/resend-code', [App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'resend'])
     ->middleware('throttle:3,1')
     ->name('verification.code.resend');
+Route::post('/email/update-address', [App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'updateEmail'])
+    ->middleware('throttle:3,1')
+    ->name('verification.code.email.update');
 
 // Email Verification Routes (legacy link-based)
 Route::middleware('auth')->group(function () {
