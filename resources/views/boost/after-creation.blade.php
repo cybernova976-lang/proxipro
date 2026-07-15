@@ -92,24 +92,31 @@
     .ad-summary-info p { color: #64748b; font-size: 0.85rem; margin: 0; }
     
     /* Section Title */
-    .section-title {
+    .boost-section-heading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
         text-align: center;
         margin-bottom: 28px;
     }
     
-    .section-title h2 {
+    .boost-section-heading h2 {
         font-size: 1.7rem;
         font-weight: 800;
         color: #1e293b;
-        margin-bottom: 8px;
+        margin: 0;
         white-space: nowrap;
     }
     
-    .section-title p {
+    .boost-section-heading p {
         color: #64748b;
         font-size: 1rem;
-        max-width: 600px;
-        margin: 0 auto;
+        line-height: 1.5;
+        margin: 0;
+        white-space: nowrap;
     }
     
     /* ===== CARD GRID ===== */
@@ -524,7 +531,9 @@
         .success-container { padding: 24px 16px; }
         .success-header h1 { font-size: 1.5rem; }
         .options-grid { grid-template-columns: 1fr; }
-        .section-title h2 { font-size: 1.4rem; white-space: normal; }
+        .boost-section-heading h2,
+        .boost-section-heading p { white-space: normal; }
+        .boost-section-heading h2 { font-size: 1.4rem; }
         .confirm-details { flex-direction: column; }
         .confirm-actions { flex-direction: column; }
         .top-info { flex-direction: column; }
@@ -561,7 +570,7 @@
     </div>
     
     <!-- Section Title -->
-    <div class="section-title">
+    <div class="boost-section-heading">
         <h2>🚀 Boostez la visibilité de votre annonce</h2>
         <p>Sélectionnez une pancarte pour augmenter vos chances d'être contacté rapidement</p>
     </div>
