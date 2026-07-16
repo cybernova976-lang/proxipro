@@ -52,3 +52,12 @@ Schedule::command('points:daily-reset')
     ->dailyAt('00:05')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/points-daily-reset.log'));
+
+// Retire chaque nuit les annonces arrivées au terme de leur durée de publication.
+Schedule::call(function () {
+    \App\Models\Ad::query()
+        ->where('status', 'active')
+        ->whereNotNull('expires_at')
+        ->where('expires_at', '<=', now())
+        ->update(['status' => 'expired']);
+})->name('ads:expire')->dailyAt('00:15')->withoutOverlapping();

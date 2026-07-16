@@ -28,7 +28,9 @@
     $author = $ad->user;
     $authorName = $author?->name ?? 'Utilisateur';
     $authorInitial = strtoupper(substr($authorName, 0, 1));
-    $isProfessionalOffer = $section['dataKind'] === 'professional-offer';
+    $isProfessionalAuthor = $author && ($author->user_type === 'professionnel' || ($author->account_type ?? null) === 'professionnel');
+    $isParticularProvider = $author && !$isProfessionalAuthor && (bool) $author->is_service_provider;
+    $authorBadge = $isProfessionalAuthor ? 'PRO' : ($isParticularProvider ? 'PRESTATAIRE' : null);
     $publishedDate = $ad->created_at?->format('d/m/Y');
     $priceLabel = $ad->formatted_price;
 @endphp
@@ -75,8 +77,8 @@
                     <span>{{ $authorInitial }}</span>
                 @endif
                 {{ Str::limit($authorName, 16) }}
-                @if($isProfessionalOffer)
-                    <span class="home-showcase-author-pro">PRO</span>
+                @if($authorBadge)
+                    <span class="home-showcase-author-pro">{{ $authorBadge }}</span>
                 @endif
             </span>
             @if($publishedDate)

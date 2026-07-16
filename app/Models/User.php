@@ -394,7 +394,7 @@ class User extends Authenticatable
      */
     public function canPublishNewAd(): bool
     {
-        $activeAdsCount = $this->ads()->where('status', 'active')->count();
+        $activeAdsCount = $this->ads()->marketplaceActive()->count();
 
         return $activeAdsCount < $this->getMaxActiveAds();
     }

@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Storage;
 
 class AdController extends Controller
 {
+    private const PUBLICATION_TERMS_VERSION = '2026-07-16';
+
     public function __construct(private SavedSearchService $savedSearchService) {}
 
     /**
@@ -29,7 +31,7 @@ class AdController extends Controller
             $query = Ad::query()->where('user_id', Auth::id());
             $isMyAds = true;
         } else {
-            $query = Ad::query()->where('status', 'active');
+            $query = Ad::marketplaceActive();
         }
 
         // Filtres de recherche
@@ -171,13 +173,19 @@ class AdController extends Controller
     public function store(Request $request)
     {
         try {
+            if (! Auth::user()?->canPublishNewAd()) {
+                return back()
+                    ->withErrors(['general' => 'Vous avez atteint la limite d’annonces actives de votre compte. Archivez une annonce avant d’en publier une nouvelle.'])
+                    ->withInput();
+            }
+
             $maxPhotos = Auth::user() && Auth::user()->hasActiveProSubscription() ? 4 : 2;
             $request->merge(['price_type' => $this->resolvePriceType($request)]);
 
             // Valider les données
             $request->validate([
-                'title' => 'required|string|max:255',
-                'description' => 'required|string',
+                'title' => 'required|string|min:8|max:255',
+                'description' => 'required|string|min:30|max:5000',
                 'category' => 'required|string',
                 'country' => 'required|string',
                 'city' => 'nullable|string',
@@ -192,6 +200,7 @@ class AdController extends Controller
                 'visibility' => 'nullable|in:public,pro_targeted',
                 'target_categories' => 'nullable|array',
                 'target_categories.*' => 'string',
+                'accept_conditions' => 'accepted',
             ]);
 
             [$priceType, $price] = $this->normalizedPriceData($request);
@@ -199,6 +208,12 @@ class AdController extends Controller
             if ($request->service_type === 'offre' && ! $this->canPublishProfessionalOffer(Auth::user())) {
                 return back()
                     ->withErrors(['service_type' => 'Les offres professionnelles sont réservées aux comptes professionnels ou prestataires.'])
+                    ->withInput();
+            }
+
+            if ($this->hasRecentDuplicate(Auth::id(), $request->title, $request->category)) {
+                return back()
+                    ->withErrors(['title' => 'Une annonce identique a déjà été publiée au cours des dernières 24 heures.'])
                     ->withInput();
             }
 
@@ -236,6 +251,9 @@ class AdController extends Controller
             $ad->price_type = $priceType;
             $ad->price = $price;
             $ad->service_type = $request->service_type;
+            $ad->expires_at = $this->publicationExpiry($request->service_type);
+            $ad->publication_terms_accepted_at = now();
+            $ad->publication_terms_version = self::PUBLICATION_TERMS_VERSION;
             $ad->radius_km = $request->radius_km ?? 10;
             $ad->user_id = Auth::id();
             $ad->country = $request->country;
@@ -304,6 +322,8 @@ class AdController extends Controller
 
             // Rediriger vers la page après publication (urgent + boost)
             return redirect()->route('boost.after-creation', $ad);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('STORE AD CRASH: '.$e->getMessage(), [
                 'exception' => get_class($e),
@@ -324,12 +344,19 @@ class AdController extends Controller
             return response()->json(['success' => false, 'message' => 'Non authentifié.'], 401);
         }
 
+        if (! Auth::user()->canPublishNewAd()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous avez atteint la limite d’annonces actives de votre compte.',
+            ], 422);
+        }
+
         $maxPhotos = Auth::user()->hasActiveProSubscription() ? 4 : 2;
         $request->merge(['price_type' => $this->resolvePriceType($request)]);
 
         $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
+            'title' => 'required|string|min:8|max:255',
+            'description' => 'required|string|min:30|max:5000',
             'category' => 'required|string',
             'country' => 'required|string',
             'city' => 'nullable|string',
@@ -339,6 +366,7 @@ class AdController extends Controller
             'service_type' => 'required|in:offre,demande',
             'photos' => 'nullable|array|max:'.$maxPhotos,
             'photos.*' => 'image|mimes:jpeg,png,webp|max:5120',
+            'accept_conditions' => 'accepted',
         ]);
 
         [$priceType, $price] = $this->normalizedPriceData($request);
@@ -349,6 +377,13 @@ class AdController extends Controller
                 'errors' => [
                     'service_type' => ['Les offres professionnelles sont réservées aux comptes professionnels ou prestataires.'],
                 ],
+            ], 422);
+        }
+
+        if ($this->hasRecentDuplicate(Auth::id(), $request->title, $request->category)) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['title' => ['Une annonce identique a déjà été publiée au cours des dernières 24 heures.']],
             ], 422);
         }
 
@@ -381,6 +416,9 @@ class AdController extends Controller
         $ad->price_type = $priceType;
         $ad->price = $price;
         $ad->service_type = $request->service_type;
+        $ad->expires_at = $this->publicationExpiry($request->service_type);
+        $ad->publication_terms_accepted_at = now();
+        $ad->publication_terms_version = self::PUBLICATION_TERMS_VERSION;
         $ad->radius_km = 10;
         $ad->user_id = Auth::id();
         $ad->country = $request->country;
@@ -688,6 +726,24 @@ class AdController extends Controller
             || $user->hasActiveProSubscription()
             || $user->hasCompletedProOnboarding()
             || $hasPaidPlan;
+    }
+
+    private function hasRecentDuplicate(int $userId, string $title, string $category): bool
+    {
+        return Ad::query()
+            ->where('user_id', $userId)
+            ->where('category', $category)
+            ->whereRaw('LOWER(title) = ?', [mb_strtolower(trim($title))])
+            ->where('created_at', '>=', now()->subDay())
+            ->whereIn('status', ['active', 'pending'])
+            ->exists();
+    }
+
+    private function publicationExpiry(string $serviceType)
+    {
+        return $serviceType === 'demande'
+            ? now()->addDays(30)
+            : now()->addDays(90);
     }
 
     private function resolvePriceType(Request $request, ?Ad $ad = null): string

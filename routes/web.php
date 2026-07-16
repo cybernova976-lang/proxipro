@@ -141,8 +141,9 @@ Route::middleware('auth')->group(function () {
 // Routes pour les annonces
 Route::middleware(['auth'])->group(function () {
     Route::get('/ads/my-ads', [AdController::class, 'myAds'])->name('ads.myads');
-    Route::post('/ads/store-from-popup', [AdController::class, 'storeFromPopup'])->name('ads.storeFromPopup');
-    Route::resource('ads', AdController::class)->except(['index', 'show']);
+    Route::post('/ads/store-from-popup', [AdController::class, 'storeFromPopup'])->middleware('throttle:10,60')->name('ads.storeFromPopup');
+    Route::post('/ads', [AdController::class, 'store'])->middleware('throttle:10,60')->name('ads.store');
+    Route::resource('ads', AdController::class)->except(['index', 'show', 'store']);
     Route::delete('/ads/{ad}/photos/{index}', [AdController::class, 'deletePhoto'])->name('ads.photos.delete');
 });
 Route::resource('ads', AdController::class)->only(['index', 'show']);

@@ -1681,7 +1681,7 @@
     }
     @media (max-width: 640px) {
         .home-showcase-carousel.is-scrollable .home-showcase-scroll-grid {
-            grid-auto-columns: 100%;
+            grid-auto-columns: min(86vw, 330px);
         }
         .home-showcase-carousel-arrow {
             width: 32px;
@@ -1693,22 +1693,18 @@
         }
         .home-showcase-row2-carousel.is-scrollable .home-showcase-scroll,
         .home-showcase-professional-offers-carousel.is-scrollable .home-showcase-scroll {
-            overflow-x: visible;
-            scroll-snap-type: none;
-            overscroll-behavior-x: auto;
-            touch-action: auto;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            overscroll-behavior-x: contain;
+            touch-action: pan-x;
         }
         .home-showcase-row2-carousel.is-scrollable .home-showcase-scroll-row-grid,
         .home-showcase-professional-offers-carousel.is-scrollable .home-showcase-scroll-grid {
-            grid-auto-flow: row;
-            grid-template-columns: 1fr !important;
-            grid-template-rows: none;
-            grid-auto-columns: auto;
-            padding: 0;
-        }
-        .home-showcase-row2-grid > :nth-child(n + 2),
-        .home-showcase-professional-offers-carousel .home-showcase-ads-grid > :nth-child(n + 5) {
-            display: none;
+            grid-auto-flow: column;
+            grid-template-columns: none !important;
+            grid-template-rows: 1fr;
+            grid-auto-columns: min(86vw, 330px);
+            padding: 2px 0 8px;
         }
     }
     .saved-search-banner {
@@ -6286,6 +6282,54 @@
         padding-top: 26px;
     }
 
+    .marketplace-mode-tabs {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+        margin: 0 0 12px;
+        padding: 5px;
+        overflow-x: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        background: #fff;
+        scrollbar-width: none;
+    }
+
+    .marketplace-mode-tabs::-webkit-scrollbar { display: none; }
+
+    .marketplace-mode-tab {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 40px;
+        padding: 8px 14px;
+        flex: 1 0 auto;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: #475569;
+        font-size: 0.84rem;
+        font-weight: 750;
+        text-decoration: none;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .marketplace-mode-tab:hover,
+    .marketplace-mode-tab.active {
+        background: #eef2ff;
+        color: #4338ca;
+    }
+
+    .badge-provider-particular {
+        background: #ecfdf5 !important;
+        color: #047857 !important;
+        font-size: 0.58rem !important;
+        line-height: 1.1;
+        white-space: normal;
+    }
+
     :root {
         --feed-home-width: min(1120px, calc(100vw - 144px));
     }
@@ -7087,10 +7131,10 @@
         <!-- Toggle Pro / Offre / Demandes -->
         <div class="toggle-group">
             <button class="toggle-btn{{ ($filterType ?? 'all') === 'all' ? '' : '' }}" id="togglePro" onclick="setViewMode('providers')">
-                <i class="fas fa-user-tie me-1"></i> Je cherche un Pro
+                <i class="fas fa-user-tie me-1"></i> Prestataires
             </button>
             <a href="{{ route('feed', ['type' => 'offres']) }}" class="toggle-btn{{ ($filterType ?? 'all') === 'offres' ? ' active' : (($filterType ?? 'all') === 'all' ? ' active' : '') }}" id="toggleOffres">
-                <i class="fas fa-briefcase me-1"></i> Offres de pros
+                <i class="fas fa-briefcase me-1"></i> Services proposés
             </a>
             <a href="{{ route('feed', ['type' => 'demandes']) }}" class="toggle-btn{{ ($filterType ?? 'all') === 'demandes' ? ' active' : '' }}" id="toggleDemandes">
                 <i class="fas fa-search me-1"></i> Demandes
@@ -7195,14 +7239,15 @@
     <!-- Section Prestataires (cachée par défaut) -->
     <div id="providersSection" style="display: none;">
         <div class="text-center mb-4">
-            <h2 class="fw-bold mb-1" id="providersSectionTitle">Prestataires évalués et qualifiés</h2>
-            <p class="text-muted mb-0" id="providersSectionSubtitle">Profils professionnels présentés sous forme de cartes</p>
+            <h2 class="fw-bold mb-1" id="providersSectionTitle">Prestataires disponibles</h2>
+            <p class="text-muted mb-0" id="providersSectionSubtitle">Professionnels et prestataires particuliers correspondant à vos critères</p>
         </div>
         <div class="providers-grid" id="providersGrid">
             @if(isset($premiumPros) && $premiumPros->count() > 0)
                 @foreach($premiumPros as $pro)
                 @php
-                    $isProAccount = $pro->user_type === 'professionnel' || $pro->hasActiveProSubscription() || $pro->hasCompletedProOnboarding();
+                    $isProAccount = $pro->user_type === 'professionnel' || ($pro->account_type ?? null) === 'professionnel';
+                    $providerStatusLabel = $isProAccount ? 'PRO' : 'PRESTATAIRE PARTICULIER';
                     $ratingRaw = $pro->reviews_avg_rating ?? $pro->verified_reviews_avg ?? null;
                     $rating = $ratingRaw ? rtrim(rtrim(number_format((float) $ratingRaw, 2, ',', ''), '0'), ',') : null;
                     $reviewsCount = (int) ($pro->reviews_count ?? $pro->verified_reviews_count ?? 0);
@@ -7210,7 +7255,7 @@
                     $profession = $pro->profession ?? $pro->service_category ?? $primaryService?->subcategory ?? $primaryService?->main_category ?? $pro->bio ?? 'Prestataire de services';
                     $hourlyRate = $pro->hourly_rate ?? $primaryService?->hourly_rate ?? null;
                     $isTopProvider = $reviewsCount > 0 && (float) ($ratingRaw ?? 0) >= 4.5;
-                    $providerBio = $pro->bio ?: 'Prestataire professionnel disponible pour vos demandes locales.';
+                    $providerBio = $pro->bio ?: 'Prestataire disponible pour répondre à vos demandes de services.';
                 @endphp
                 <a href="{{ route('profile.public', $pro->id) }}" class="provider-card">
                     <div class="provider-image-wrapper">
@@ -7229,9 +7274,7 @@
                         <div class="provider-info-header">
                             <h3 class="provider-name">
                                 {{ Str::limit($pro->name, 18) }}
-                                @if($isProAccount)
-                                <span class="badge-pro">PRO</span>
-                                @endif
+                                <span class="badge-pro{{ $isProAccount ? '' : ' badge-provider-particular' }}">{{ $providerStatusLabel }}</span>
                             </h3>
                             @if($hourlyRate)
                             <span class="provider-price">{{ number_format((float) $hourlyRate, 0, ',', ' ') }} €/h</span>
@@ -7266,14 +7309,14 @@
         
         <div class="feed-page-heading">
             <div>
-                <h1 id="missionsSectionTitle">Ce qui se passe près de vous</h1>
+                <h1 id="missionsSectionTitle">{{ ($feedScope ?? 'all') === 'nearby' ? 'Près de vous' : 'Découvrez les annonces' }}</h1>
                 <p id="missionsSectionSubtitle">
                 @if(($filterType ?? 'all') === 'demandes')
-                    Des particuliers recherchent vos compétences
+                    Les demandes de services publiées par les membres
                 @elseif(($filterType ?? 'all') === 'offres')
-                    Trouvez le professionnel qu'il vous faut
+                    Comparez les services proposés par les prestataires
                 @else
-                    Trouvez des opportunités près de chez vous
+                    Demandes, services et prestataires réunis au même endroit
                 @endif
                 </p>
             </div>
@@ -7406,7 +7449,7 @@
                     <div class="pro-widget">
                         <div class="pro-widget-badge"><i class="fas fa-star"></i> Opportunité</div>
                         <h3>Vous êtes professionnel ?</h3>
-                        <p>Rejoignez +500 pros et recevez des demandes de clients près de chez vous.</p>
+                        <p>Présentez vos services et recevez des demandes correspondant à votre activité.</p>
                         <button onclick="handleProposerServices()" class="pro-widget-cta">
                             <i class="fas fa-hand-holding-heart"></i> Proposer mes services
                         </button>
@@ -7416,7 +7459,7 @@
                     <div class="pro-widget">
                         <div class="pro-widget-badge"><i class="fas fa-star"></i> Opportunité</div>
                         <h3>Vous êtes professionnel ?</h3>
-                        <p>Inscrivez-vous et proposez vos services à des milliers de clients.</p>
+                        <p>Inscrivez-vous pour présenter vos services et répondre aux demandes.</p>
                         <a href="{{ route('login') }}" class="pro-widget-cta">
                             <i class="fas fa-hand-holding-heart"></i> Proposer mes services
                         </a>
@@ -7434,7 +7477,7 @@
                     <div style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                             <h3 style="font-size: 0.85rem; font-weight: 600; color: #111827;">
-                                <i class="fas fa-crown" style="color: #f59e0b; margin-right: 6px;"></i>Top Pros
+                                <i class="fas fa-crown" style="color: #f59e0b; margin-right: 6px;"></i>Prestataires les mieux notés
                             </h3>
                         </div>
                         <div>
@@ -7481,6 +7524,20 @@
             <!-- Colonne principale: Feed des missions -->
             <div class="feed-main">
 
+                <nav class="marketplace-mode-tabs" aria-label="Choisir le contenu à afficher">
+                    <button type="button" class="marketplace-mode-tab" onclick="setViewMode('providers')">
+                        <i class="fas fa-user-check"></i> Prestataires
+                    </button>
+                    <a href="{{ route('feed', ['type' => 'offres', 'scope' => $feedScope ?? 'all']) }}"
+                       class="marketplace-mode-tab{{ ($filterType ?? 'all') === 'offres' ? ' active' : '' }}">
+                        <i class="fas fa-briefcase"></i> Services proposés
+                    </a>
+                    <a href="{{ route('feed', ['type' => 'demandes', 'scope' => $feedScope ?? 'all']) }}"
+                       class="marketplace-mode-tab{{ ($filterType ?? 'all') === 'demandes' ? ' active' : '' }}">
+                        <i class="fas fa-search"></i> Demandes
+                    </a>
+                </nav>
+
                 {{-- Barre "De quoi avez-vous besoin ?" + filtres principaux --}}
                 <div class="create-post-card">
                     <div class="create-post-inner">
@@ -7513,7 +7570,7 @@
                                         id="feedScopeAllBtn"
                                         class="feed-scope-btn {{ ($feedScope ?? 'all') === 'all' ? 'active' : '' }}"
                                         onclick="selectFeedScope('all')">
-                                    <i class="fas fa-globe-africa"></i>
+                                    <i class="fas fa-globe"></i>
                                     <span>Tout voir</span>
                                 </button>
                             </div>
@@ -7993,7 +8050,7 @@
                     <p class="copyright">© {{ date('Y') }} ProxiPro. Tous droits réservés.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p class="footer-credits">Fait avec <i class="fas fa-heart text-danger"></i> à Mayotte</p>
+                    <p class="footer-credits">Des services de confiance, où que vous soyez</p>
                 </div>
             </div>
         </div>
@@ -8611,13 +8668,6 @@
                     </button>
                 </div>
 
-                <div class="sub-popup-testimonial">
-                    <div class="sub-popup-testimonial-avatar">MA</div>
-                    <div class="sub-popup-testimonial-text">
-                        « Depuis que mon profil est mis en avant, je reçois 3 à 5 demandes par semaine. Les clients me trouvent sans publier d'annonce. »
-                        <strong>— Mohamed A., Plombier à Mamoudzou</strong>
-                    </div>
-                </div>
                 @endif
                 @endauth
             </div>
@@ -8818,7 +8868,7 @@
             const popup = `
                 <div style="min-width:220px;">
                     <div style="font-weight:800;color:#0f172a;margin-bottom:6px;">${escapeMapHtml(marker.title || '')}</div>
-                    <div style="font-size:12px;color:#475569;margin-bottom:6px;">${escapeMapHtml(marker.category || 'Annonce')} · ${escapeMapHtml(marker.location || 'Lieu non precise')}</div>
+                    <div style="font-size:12px;color:#475569;margin-bottom:6px;">${escapeMapHtml(marker.category || 'Annonce')} · ${escapeMapHtml(marker.location || 'Lieu non precise')}${marker.location_is_approximate ? ' · Position approximative' : ''}</div>
                     <div style="font-size:13px;font-weight:700;color:#1e3a8a;margin-bottom:10px;">${price}</div>
                     ${distanceLine}
                     <a href="${escapeMapHtml(marker.url)}" style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;background:#2563eb;color:#fff;text-decoration:none;font-size:12px;font-weight:700;">Voir l'annonce</a>
@@ -9862,7 +9912,7 @@
             <div class="popup-form-group">
                 <label class="popup-form-label">Titre de votre demande <span class="required">*</span></label>
                 <input type="text" class="popup-form-input" id="popupAdTitle" 
-                    placeholder="Ex: Recherche ${subName.toLowerCase()} à Mamoudzou" maxlength="255">
+                    placeholder="Ex : Recherche ${subName.toLowerCase()} disponible cette semaine" maxlength="255">
                 <div class="popup-form-error" id="popupTitleError"></div>
             </div>
 
@@ -9916,6 +9966,15 @@
                 </div>
                 <div class="popup-form-hint">Laissez vide si le prix est à discuter</div>
             </div>
+
+            <div class="popup-form-group" style="display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;">
+                <input type="checkbox" id="popupAcceptConditions" style="margin-top:3px;" required>
+                <label for="popupAcceptConditions" style="font-size:.8rem;color:#475569;line-height:1.45;cursor:pointer;">
+                    Je confirme que cette annonce est licite, exacte, non dupliquée et respecte les
+                    <a href="{{ route('legal.terms') }}" target="_blank" rel="noopener">conditions de publication</a>.
+                </label>
+            </div>
+            <div class="popup-form-error" id="popupConditionsError"></div>
 
             <button class="category-popup-step3-submit" id="popupSubmitBtn" onclick="submitPopupAd()">
                 <i class="fas fa-paper-plane me-2"></i>Publier ma demande
@@ -10012,7 +10071,7 @@
 
     function submitPopupAd() {
         // Clear errors
-        ['popupTitleError', 'popupDescError', 'popupLocationError', 'popupGlobalError'].forEach(id => {
+        ['popupTitleError', 'popupDescError', 'popupLocationError', 'popupConditionsError', 'popupGlobalError'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.textContent = '';
         });
@@ -10023,6 +10082,7 @@
         const city = document.getElementById('popupCity')?.value || '';
         const manualLocation = document.getElementById('popupLocationManual')?.value?.trim() || '';
         const price = document.getElementById('popupPrice')?.value || '';
+        const acceptsConditions = !!document.getElementById('popupAcceptConditions')?.checked;
 
         // Client-side validation
         let hasError = false;
@@ -10034,8 +10094,16 @@
             document.getElementById('popupDescError').textContent = 'La description est obligatoire.';
             hasError = true;
         }
+        if (description && description.length < 30) {
+            document.getElementById('popupDescError').textContent = 'Ajoutez au moins 30 caractères pour décrire précisément votre besoin.';
+            hasError = true;
+        }
         if (!country || (!city && !manualLocation) || city === '') {
             document.getElementById('popupLocationError').textContent = 'Veuillez sélectionner un pays et une ville.';
+            hasError = true;
+        }
+        if (!acceptsConditions) {
+            document.getElementById('popupConditionsError').textContent = 'Vous devez accepter les conditions de publication.';
             hasError = true;
         }
         if (hasError) return;
@@ -10050,6 +10118,7 @@
         formData.append('category', popupState.subcategory || popupState.category);
         formData.append('country', country);
         formData.append('service_type', 'demande');
+        formData.append('accept_conditions', '1');
 
         if (city === '__other__' && manualLocation) {
             formData.append('location', manualLocation);
@@ -10646,6 +10715,7 @@
     // État actuel des filtres
     let currentFilters = {
         mode: 'missions', // 'missions' ou 'providers'
+        type: @json($filterType ?? 'all'),
         category: '',
         subcategory: '',
         sort: 'recommended',
@@ -11120,6 +11190,7 @@
         }
         if (currentFilters.priceMin) params.append('price_min', currentFilters.priceMin);
         if (currentFilters.priceMax) params.append('price_max', currentFilters.priceMax);
+        if (currentFilters.type && currentFilters.type !== 'all') params.append('type', currentFilters.type);
         params.append('scope', currentFilters.scope || 'all');
         // Geo params
         if (currentFilters.scope === 'nearby' && currentFilters.geoEnabled && currentFilters.lat !== null && currentFilters.lng !== null) {
@@ -11197,10 +11268,10 @@
                 ? `<img src="${buildStorageUrl(pro.avatar)}" alt="${escapeHtml(pro.name)}">`
                 : `<div class="provider-image-placeholder">${escapeHtml((pro.name || 'P').charAt(0).toUpperCase())}</div>`;
             
-            const isProAccount = pro.user_type === 'professionnel' || pro.pro_onboarding_completed || pro.has_active_pro_subscription;
+            const isProAccount = pro.user_type === 'professionnel';
             const proBadge = isProAccount
-                ? '<span class="badge-pro">PRO</span>' 
-                : '';
+                ? '<span class="badge-pro">PRO</span>'
+                : '<span class="badge-pro badge-provider-particular">PRESTATAIRE PARTICULIER</span>';
             
             const price = pro.hourly_rate 
                 ? `<span class="provider-price">${pro.hourly_rate} €/h</span>` 
@@ -11216,7 +11287,7 @@
             const ratingHtml = reviewsCount > 0 && ratingText
                 ? `<span class="rating-value">${ratingText}</span><span class="reviews-count">${reviewsCount} avis</span>`
                 : '<span class="reviews-count">0 avis</span>';
-            const providerBio = pro.bio || 'Prestataire professionnel disponible pour vos demandes locales.';
+            const providerBio = pro.bio || 'Prestataire disponible pour répondre à vos demandes de services.';
             
             html += `
                 <a href="/user/${pro.id}" class="provider-card">
@@ -11303,6 +11374,8 @@
 
     function getShowcaseAdIdSet() {
         const ids = new Set();
+        const showcase = document.querySelector('.home-showcase-section');
+        if (showcase?.hidden) return ids;
         document.querySelectorAll('.home-showcase-ad-card[data-showcase-ad-id]').forEach((card) => {
             const value = Number(card.getAttribute('data-showcase-ad-id'));
             if (Number.isFinite(value) && value > 0) {
@@ -12027,6 +12100,13 @@
         if (initialProvidersSection) initialProvidersSection.style.display = 'none';
         if (initialMissionsSection) initialMissionsSection.style.display = 'block';
 
+        const shouldLoadInitialFilteredFeed = @json(request()->has('type'));
+        if (shouldLoadInitialFilteredFeed) {
+            const showcase = document.querySelector('.home-showcase-section');
+            if (showcase) showcase.hidden = true;
+            loadData();
+        }
+
         // ===== INFINITE SCROLL =====
         let isLoadingMore = false;
         const scrollTrigger = document.getElementById('infiniteScrollTrigger');
@@ -12062,6 +12142,7 @@
                 else if (currentFilters.country) params.append('location', currentFilters.country);
                 if (currentFilters.priceMin) params.append('price_min', currentFilters.priceMin);
                 if (currentFilters.priceMax) params.append('price_max', currentFilters.priceMax);
+                if (currentFilters.type && currentFilters.type !== 'all') params.append('type', currentFilters.type);
                 params.append('scope', currentFilters.scope || 'all');
                 if (currentFilters.scope === 'nearby' && currentFilters.geoEnabled && currentFilters.lat !== null && currentFilters.lng !== null) {
                     params.append('lat', currentFilters.lat);

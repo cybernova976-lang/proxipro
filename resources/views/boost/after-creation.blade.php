@@ -579,6 +579,7 @@
     <div class="options-grid">
         
         <!-- 🔥 URGENT Card -->
+        @if($ad->service_type === 'demande')
         <div class="option-card" 
              style="--card-color: #dc2626; --card-rgb: 220,38,38;" 
              data-type="urgent"
@@ -605,6 +606,7 @@
                 <span class="euros">14,00 €</span>
             </div>
         </div>
+        @endif
         
         <!-- Boost Packages -->
         @foreach($packages as $key => $package)

@@ -189,10 +189,10 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringNotContainsString('title="Espace Pro"', $content);
 
         $this->assertStringContainsString('Pour vous', $showcaseHtml);
-        $this->assertStringContainsString('Sélectionnés selon vos intérêts', $showcaseHtml);
-        $this->assertStringContainsString('Offres des particuliers', $showcaseHtml);
-        $this->assertStringContainsString('Offres de professionnels', $showcaseHtml);
-        $this->assertStringContainsString('Profils de professionnels', $showcaseHtml);
+        $this->assertStringContainsString('Une sélection récente, pertinente et équilibrée', $showcaseHtml);
+        $this->assertStringContainsString('Demandes de services', $showcaseHtml);
+        $this->assertStringContainsString('Services proposés', $showcaseHtml);
+        $this->assertStringContainsString('Prestataires recommandés', $showcaseHtml);
         $this->assertStringContainsString('home-showcase-fixed-row', $showcaseHtml);
         $this->assertStringContainsString('home-showcase-row2-carousel', $showcaseHtml);
         $this->assertStringContainsString('home-showcase-professional-offers-carousel', $showcaseHtml);
@@ -203,7 +203,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             '.home-showcase-block--personal-requests .home-showcase-carousel-arrow',
             $content
         );
-        $this->assertStringContainsString(
+        $this->assertStringNotContainsString(
             '.home-showcase-professional-offers-carousel .home-showcase-ads-grid > :nth-child(n + 5)',
             $content
         );
@@ -240,6 +240,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
 
         $this->assertStringContainsString('Top Artisan', $showcaseHtml);
         $this->assertStringContainsString('PRO', $showcaseHtml);
+        $this->assertStringContainsString('PRESTATAIRE PARTICULIER', $showcaseHtml);
         $this->assertStringContainsString('Plombier', $showcaseHtml);
         $this->assertStringContainsString('1 avis', $showcaseHtml);
         $this->assertStringContainsString('Top prestataire', $showcaseHtml);

@@ -3,10 +3,22 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class Ad extends Model
 {
+    protected static function booted(): void
+    {
+        $clearFeedCategoryCache = function () {
+            Cache::forget('feed:active-category-counts:v2:all');
+            Cache::forget('feed:active-category-counts:v2:offre');
+        };
+
+        static::saved($clearFeedCategoryCache);
+        static::deleted($clearFeedCategoryCache);
+    }
+
     protected $fillable = [
         'title',
         'description',
@@ -17,6 +29,9 @@ class Ad extends Model
         'price_type',
         'service_type',
         'status',
+        'expires_at',
+        'publication_terms_accepted_at',
+        'publication_terms_version',
         'photos',
         'user_id',
         'latitude',
@@ -37,7 +52,7 @@ class Ad extends Model
         'reply_restriction',
         'visibility',
         'target_categories',
-        'views'
+        'views',
     ];
 
     protected $casts = [
@@ -51,10 +66,22 @@ class Ad extends Model
         'boost_end' => 'datetime',
         'is_urgent' => 'boolean',
         'urgent_until' => 'datetime',
+        'expires_at' => 'datetime',
+        'publication_terms_accepted_at' => 'datetime',
         'sidebar_priority' => 'integer',
         'photos' => 'array',
-        'target_categories' => 'array'
+        'target_categories' => 'array',
     ];
+
+    public function scopeMarketplaceActive($query)
+    {
+        return $query
+            ->where('status', 'active')
+            ->where(function ($activeQuery) {
+                $activeQuery->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            });
+    }
 
     public function getEffectivePriceTypeAttribute(): string
     {
@@ -82,8 +109,8 @@ class Ad extends Model
         $formatted = number_format($price, $decimals, ',', ' ');
 
         return $this->effective_price_type === 'hourly'
-            ? $formatted . ' €/h'
-            : $formatted . ' €';
+            ? $formatted.' €/h'
+            : $formatted.' €';
     }
 
     public function getPriceModeLabelAttribute(): string
@@ -118,8 +145,8 @@ class Ad extends Model
      */
     public function scopeWithinRadius($query, $lat, $lng, $radius)
     {
-        $haversine = "(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))";
-        
+        $haversine = '(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))';
+
         return $query
             ->select('*')
             ->selectRaw("{$haversine} AS distance", [$lat, $lng, $lat])
@@ -137,6 +164,7 @@ class Ad extends Model
         if ($category) {
             return $query->where('category', $category);
         }
+
         return $query;
     }
 
@@ -151,6 +179,7 @@ class Ad extends Model
         if ($maxPrice !== null) {
             $query->where('price', '<=', $maxPrice);
         }
+
         return $query;
     }
 
@@ -159,12 +188,14 @@ class Ad extends Model
      */
     public function scopeSearch($query, $searchTerm)
     {
-        if (!$searchTerm) return $query;
-        
-        return $query->where(function($q) use ($searchTerm) {
+        if (! $searchTerm) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($searchTerm) {
             $q->where('title', 'LIKE', "%{$searchTerm}%")
-              ->orWhere('description', 'LIKE', "%{$searchTerm}%")
-              ->orWhere('location', 'LIKE', "%{$searchTerm}%");
+                ->orWhere('description', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('location', 'LIKE', "%{$searchTerm}%");
         });
     }
 
@@ -174,12 +205,12 @@ class Ad extends Model
     public static function popularServicesByRegion($region, $limit = 5)
     {
         return self::where('location', 'LIKE', "%{$region}%")
-                   ->where('status', 'active')
-                   ->select('category', DB::raw('COUNT(*) as count'))
-                   ->groupBy('category')
-                   ->orderBy('count', 'DESC')
-                   ->limit($limit)
-                   ->get();
+            ->where('status', 'active')
+            ->select('category', DB::raw('COUNT(*) as count'))
+            ->groupBy('category')
+            ->orderBy('count', 'DESC')
+            ->limit($limit)
+            ->get();
     }
 
     /**
@@ -188,10 +219,10 @@ class Ad extends Model
     public function scopeUrgent($query)
     {
         return $query->where('is_urgent', true)
-                     ->where(function ($q) {
-                         $q->whereNull('urgent_until')
-                           ->orWhere('urgent_until', '>', now());
-                     });
+            ->where(function ($q) {
+                $q->whereNull('urgent_until')
+                    ->orWhere('urgent_until', '>', now());
+            });
     }
 
     /**
@@ -200,7 +231,7 @@ class Ad extends Model
     public function scopeBoosted($query)
     {
         return $query->where('is_boosted', true)
-                     ->where('boost_end', '>', now());
+            ->where('boost_end', '>', now());
     }
 
     /**
@@ -209,18 +240,18 @@ class Ad extends Model
     public function scopeSidebar($query)
     {
         return $query->where('status', 'active')
-                     ->where(function ($q) {
-                         $q->where(function ($q2) {
-                             $q2->where('is_urgent', true)
-                                ->where(function ($q3) {
-                                    $q3->whereNull('urgent_until')
-                                       ->orWhere('urgent_until', '>', now());
-                                });
-                         })->orWhere(function ($q2) {
-                             $q2->where('is_boosted', true)
-                                ->where('boost_end', '>', now());
-                         });
-                     });
+            ->where(function ($q) {
+                $q->where(function ($q2) {
+                    $q2->where('is_urgent', true)
+                        ->where(function ($q3) {
+                            $q3->whereNull('urgent_until')
+                                ->orWhere('urgent_until', '>', now());
+                        });
+                })->orWhere(function ($q2) {
+                    $q2->where('is_boosted', true)
+                        ->where('boost_end', '>', now());
+                });
+            });
     }
 
     /**
@@ -228,7 +259,7 @@ class Ad extends Model
      */
     public function isCurrentlyUrgent(): bool
     {
-        return $this->is_urgent && (!$this->urgent_until || $this->urgent_until->isFuture());
+        return $this->is_urgent && (! $this->urgent_until || $this->urgent_until->isFuture());
     }
 
     /**
@@ -251,6 +282,7 @@ class Ad extends Model
         if ($this->isCurrentlyBoosted() && $this->boost_end) {
             $dates[] = $this->boost_end;
         }
+
         return count($dates) > 0 ? max($dates) : null;
     }
 
@@ -260,6 +292,7 @@ class Ad extends Model
     public function getRemainingVisibilityDays(): int
     {
         $best = $this->getBestVisibilityEnd();
+
         return $best ? max(0, (int) now()->diffInDays($best, false)) : 0;
     }
 

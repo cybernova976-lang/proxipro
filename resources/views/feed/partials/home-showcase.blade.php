@@ -7,8 +7,8 @@
         [
             'kind' => 'personal-requests',
             'dataKind' => 'personal-request',
-            'title' => 'Offres des particuliers',
-            'copy' => 'Des utilisateurs recherchent un professionnel disponible pour leurs travaux et services.',
+            'title' => 'Demandes de services',
+            'copy' => 'Des particuliers et des professionnels recherchent un prestataire disponible.',
             'badge' => 'Demande',
             'icon' => 'fas fa-search',
             'ads' => $personalRequestAds,
@@ -16,9 +16,9 @@
         [
             'kind' => 'professional-offers',
             'dataKind' => 'professional-offer',
-            'title' => 'Offres de professionnels',
-            'copy' => 'Services, locations de matériel, recrutements et promotions publiés par des pros.',
-            'badge' => 'Offre pro',
+            'title' => 'Services proposés',
+            'copy' => 'Des services publiés par des professionnels et des prestataires particuliers.',
+            'badge' => 'Service',
             'icon' => 'fas fa-briefcase',
             'ads' => $professionalOfferAds,
         ],
@@ -30,7 +30,7 @@
     <div class="home-showcase-header">
         <div>
             <h2 id="homeShowcaseTitle">Pour vous</h2>
-            <p>Sélectionnés selon vos intérêts</p>
+            <p>Une sélection récente, pertinente et équilibrée</p>
         </div>
         <a href="#adsFeedMap" class="home-showcase-link">Voir la carte <i class="fas fa-arrow-down"></i></a>
     </div>
@@ -118,8 +118,8 @@
         <div class="home-showcase-block-header">
             <div>
                 <span class="home-showcase-kicker"><i class="fas fa-user-tie"></i> Profils</span>
-                <h3>Profils de professionnels</h3>
-                <p>Des prestataires locaux, avec les profils abonnés ou boostés affichés en priorité.</p>
+                <h3>Prestataires recommandés</h3>
+                <p>Professionnels et prestataires particuliers disponibles pour répondre à vos besoins.</p>
             </div>
             <a href="javascript:void(0)" onclick="setViewMode('providers'); window.scrollTo({top: 0, behavior: 'smooth'});">Voir les profils <i class="fas fa-arrow-right"></i></a>
         </div>
@@ -140,8 +140,10 @@
                 $reviewsCount = (int) ($pro->verified_reviews_count ?? $pro->reviews_count ?? 0);
                 $primaryService = $pro->relationLoaded('services') ? $pro->services->first() : null;
                 $profession = $pro->profession ?? $pro->service_category ?? $primaryService?->subcategory ?? $primaryService?->main_category ?? 'Prestataire de services';
-                $bio = $pro->bio ?: 'Prestataire professionnel disponible pour vos demandes locales.';
+                $bio = $pro->bio ?: 'Prestataire disponible pour répondre à vos demandes de services.';
                 $isTopProvider = (bool) ($pro->is_top_provider ?? false);
+                $isProfessionalAccount = $pro->user_type === 'professionnel' || ($pro->account_type ?? null) === 'professionnel';
+                $profileBadge = $isProfessionalAccount ? 'PRO' : 'PRESTATAIRE PARTICULIER';
             @endphp
             <a href="{{ route('profile.public', $pro->id) }}"
                class="home-showcase-pro-card"
@@ -161,7 +163,7 @@
                     <div class="home-showcase-pro-name-row">
                         <div class="home-showcase-pro-title">
                             <strong>{{ Str::limit($pro->name, 20) }}</strong>
-                            <span class="home-showcase-pro-badge">PRO</span>
+                            <span class="home-showcase-pro-badge">{{ $profileBadge }}</span>
                         </div>
                     </div>
                     <p class="home-showcase-pro-profession">{{ Str::limit($profession, 44) }}</p>

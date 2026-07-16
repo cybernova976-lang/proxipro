@@ -94,6 +94,38 @@ class AdPublicationArchitectureFeatureTest extends TestCase
             'service_type' => 'offre',
             'user_id' => $user->id,
         ]);
+        $ad = $user->ads()->firstOrFail();
+        $this->assertNotNull($ad->expires_at);
+        $this->assertTrue($ad->expires_at->between(now()->addDays(89), now()->addDays(91)));
+        $this->assertNotNull($ad->publication_terms_accepted_at);
+        $this->assertSame('2026-07-16', $ad->publication_terms_version);
+    }
+
+    public function test_publication_requires_explicit_acceptance_of_the_rules(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->from(route('ads.create'))
+            ->post(route('ads.store'), $this->payload(['accept_conditions' => null]));
+
+        $response->assertRedirect(route('ads.create'));
+        $response->assertSessionHasErrors('accept_conditions');
+        $this->assertDatabaseCount('ads', 0);
+    }
+
+    public function test_recent_duplicate_publication_is_rejected(): void
+    {
+        Http::fake(['nominatim.openstreetmap.org/*' => Http::response([], 200)]);
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('ads.store'), $this->payload())->assertRedirect();
+        $this->actingAs($user)
+            ->from(route('ads.create'))
+            ->post(route('ads.store'), $this->payload())
+            ->assertSessionHasErrors('title');
+
+        $this->assertDatabaseCount('ads', 1);
     }
 
     private function payload(array $overrides = []): array
@@ -109,6 +141,7 @@ class AdPublicationArchitectureFeatureTest extends TestCase
             'service_type' => 'demande',
             'visibility' => 'public',
             'reply_restriction' => 'everyone',
+            'accept_conditions' => '1',
         ], $overrides);
     }
 }

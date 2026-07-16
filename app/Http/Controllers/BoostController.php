@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ad;
-use App\Models\PointTransaction;
+use App\Models\Transaction;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class BoostController extends Controller
 {
@@ -108,7 +110,7 @@ class BoostController extends Controller
             }
 
             // If urgent is active and covers more days than this package → useless
-            if ($status['is_urgent'] && $status['urgent_days_left'] >= $package['duration_days'] && !$status['is_boosted']) {
+            if ($status['is_urgent'] && $status['urgent_days_left'] >= $package['duration_days'] && ! $status['is_boosted']) {
                 $pkg['is_useful'] = false;
                 $pkg['warning'] = "Inutile : votre mode Urgent couvre déjà {$status['urgent_days_left']} jours restants.";
             }
@@ -137,7 +139,7 @@ class BoostController extends Controller
         $recommendedKey = null;
         if ($status['is_expiring_soon']) {
             $recommendedKey = 'boost_7'; // Best value when expiring
-        } elseif (!$status['has_any_visibility']) {
+        } elseif (! $status['has_any_visibility']) {
             $recommendedKey = 'boost_7'; // Best value for new boost
         }
 
@@ -187,23 +189,23 @@ class BoostController extends Controller
 
         // Prevent double-boost: reject if current boost covers more than this package
         if ($status['is_boosted'] && $status['boost_days_left'] >= $package['duration_days']) {
-            return back()->with('error', 'Votre boost actuel couvre déjà ' . $status['boost_days_left'] . ' jours restants. Choisissez un pack plus long pour prolonger.');
+            return back()->with('error', 'Votre boost actuel couvre déjà '.$status['boost_days_left'].' jours restants. Choisissez un pack plus long pour prolonger.');
         }
 
         // Check points - redirect to pricing if insufficient
         if (($user->available_points ?? 0) < $pointsRequired) {
-            return redirect()->route('pricing.index')->with('error', 'Points insuffisants. Vous avez ' . ($user->available_points ?? 0) . ' points, il vous en faut ' . $pointsRequired . '. Achetez des points ci-dessous.');
+            return redirect()->route('pricing.index')->with('error', 'Points insuffisants. Vous avez '.($user->available_points ?? 0).' points, il vous en faut '.$pointsRequired.'. Achetez des points ci-dessous.');
         }
 
         // Smart: warn if package is less useful than current visibility
         // But still allow purchase (maybe user wants to stack)
-        $user->spendPoints($pointsRequired, 'boost_purchase', 'Achat ' . $package['name'] . ' pour l\'annonce: ' . $ad->title);
+        $user->spendPoints($pointsRequired, 'boost_purchase', 'Achat '.$package['name'].' pour l\'annonce: '.$ad->title);
 
         // Smart boost end calculation:
         // If already boosted, extend from current boost_end
         // If urgent is active but not boosted, boost starts from now (both run in parallel)
         $boostEnd = Carbon::now()->addDays($package['duration_days']);
-        
+
         if ($ad->isCurrentlyBoosted() && $ad->boost_end) {
             $boostEnd = $ad->boost_end->addDays($package['duration_days']);
         }
@@ -215,9 +217,9 @@ class BoostController extends Controller
         ]);
 
         // Build smart success message
-        $message = '🚀 Annonce boostée jusqu\'au ' . $boostEnd->format('d/m/Y à H:i') . ' !';
+        $message = '🚀 Annonce boostée jusqu\'au '.$boostEnd->format('d/m/Y à H:i').' !';
         if ($status['is_urgent']) {
-            $message .= ' (+ mode Urgent actif jusqu\'au ' . $status['urgent_until']->format('d/m/Y') . ')';
+            $message .= ' (+ mode Urgent actif jusqu\'au '.$status['urgent_until']->format('d/m/Y').')';
         }
 
         return redirect()->route('ads.show', $ad)->with('success', $message);
@@ -243,7 +245,7 @@ class BoostController extends Controller
         // Prevent double-boost: reject if current boost covers more than this package
         $status = $ad->getBoostStatus();
         if ($status['is_boosted'] && $status['boost_days_left'] >= $package['duration_days']) {
-            return back()->with('error', 'Votre boost actuel couvre déjà ' . $status['boost_days_left'] . ' jours restants. Choisissez un pack plus long pour prolonger.');
+            return back()->with('error', 'Votre boost actuel couvre déjà '.$status['boost_days_left'].' jours restants. Choisissez un pack plus long pour prolonger.');
         }
 
         // Pro discount: -20% on euros
@@ -262,15 +264,15 @@ class BoostController extends Controller
                     'price_data' => [
                         'currency' => 'eur',
                         'product_data' => [
-                            'name' => $package['name'] . ' - ' . $ad->title,
+                            'name' => $package['name'].' - '.$ad->title,
                             'description' => $package['description'],
                         ],
-                        'unit_amount' => (int)($priceEuros * 100),
+                        'unit_amount' => (int) ($priceEuros * 100),
                     ],
                     'quantity' => 1,
                 ]],
                 'mode' => 'payment',
-                'success_url' => route('boost.success', ['ad' => $ad->id, 'package' => $request->package]),
+                'success_url' => route('boost.success', ['ad' => $ad->id, 'package' => $request->package]).'?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => route('boost.show', $ad),
                 'customer_email' => $user->email,
                 'metadata' => [
@@ -282,7 +284,7 @@ class BoostController extends Controller
 
             return redirect($session->url);
         } catch (\Exception $e) {
-            return back()->with('error', 'Erreur lors du paiement: ' . $e->getMessage());
+            return back()->with('error', 'Erreur lors du paiement: '.$e->getMessage());
         }
     }
 
@@ -297,23 +299,34 @@ class BoostController extends Controller
         if (Auth::id() !== $ad->user_id) {
             return redirect()->route('homepage')->with('error', 'Accès non autorisé.');
         }
+        if (! isset($this->boostPackages[$packageKey])) {
+            return redirect()->route('boost.show', $ad)->with('error', 'Pack de boost invalide.');
+        }
 
+        $session = $this->verifiedCheckoutSession($request, $ad, null, $packageKey);
+        if (! $session) {
+            return redirect()->route('boost.show', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. Aucun boost n’a été appliqué.');
+        }
         $package = $this->boostPackages[$packageKey];
         $status = $ad->getBoostStatus();
 
         $boostEnd = Carbon::now()->addDays($package['duration_days']);
-        
+
         if ($ad->isCurrentlyBoosted() && $ad->boost_end) {
             $boostEnd = $ad->boost_end->addDays($package['duration_days']);
         }
 
-        $ad->update([
-            'is_boosted' => true,
-            'boost_end' => $boostEnd,
-            'boost_type' => $packageKey,
-        ]);
+        if (! $this->processCheckoutOnce($session, 'AD_BOOST', $ad, function () use ($ad, $boostEnd, $packageKey) {
+            $ad->update([
+                'is_boosted' => true,
+                'boost_end' => $boostEnd,
+                'boost_type' => $packageKey,
+            ]);
+        })) {
+            return redirect()->route('ads.show', $ad)->with('success', 'Ce paiement avait déjà été confirmé.');
+        }
 
-        $message = '🚀 Paiement réussi ! Annonce boostée jusqu\'au ' . $boostEnd->format('d/m/Y à H:i') . ' !';
+        $message = '🚀 Paiement réussi ! Annonce boostée jusqu\'au '.$boostEnd->format('d/m/Y à H:i').' !';
         if ($status['is_urgent']) {
             $message .= ' (+ mode Urgent actif)';
         }
@@ -344,7 +357,9 @@ class BoostController extends Controller
      */
     public static function getExpiringAlerts($user): array
     {
-        if (!$user) return [];
+        if (! $user) {
+            return [];
+        }
 
         $alerts = [];
         $ads = Ad::where('user_id', $user->id)
@@ -410,11 +425,11 @@ class BoostController extends Controller
 
         // Vérifier les points disponibles
         if (($user->available_points ?? 0) < $refreshCost) {
-            return back()->with('error', 'Points insuffisants. Il vous faut ' . $refreshCost . ' points pour rafraîchir votre annonce. Vous avez ' . ($user->available_points ?? 0) . ' points.');
+            return back()->with('error', 'Points insuffisants. Il vous faut '.$refreshCost.' points pour rafraîchir votre annonce. Vous avez '.($user->available_points ?? 0).' points.');
         }
 
         // Déduire les points
-        $user->spendPoints($refreshCost, 'refresh_ad', 'Rafraîchissement de l\'annonce: ' . $ad->title);
+        $user->spendPoints($refreshCost, 'refresh_ad', 'Rafraîchissement de l\'annonce: '.$ad->title);
 
         // Mettre à jour l'annonce (remonter dans les résultats)
         $ad->update([
@@ -424,7 +439,7 @@ class BoostController extends Controller
             'boost_type' => null,
         ]);
 
-        return redirect()->route('ads.show', $ad)->with('success', 
+        return redirect()->route('ads.show', $ad)->with('success',
             '✅ Votre annonce a été rafraîchie et remontera dans les résultats de recherche !'
         );
     }
@@ -450,15 +465,15 @@ class BoostController extends Controller
                     'price_data' => [
                         'currency' => 'eur',
                         'product_data' => [
-                            'name' => 'Rafraîchir l\'annonce - ' . $ad->title,
+                            'name' => 'Rafraîchir l\'annonce - '.$ad->title,
                             'description' => 'Remonter votre annonce dans les résultats de recherche',
                         ],
-                        'unit_amount' => (int)($priceEuros * 100),
+                        'unit_amount' => (int) ($priceEuros * 100),
                     ],
                     'quantity' => 1,
                 ]],
                 'mode' => 'payment',
-                'success_url' => route('ads.refresh.success', ['ad' => $ad->id]),
+                'success_url' => route('ads.refresh.success', ['ad' => $ad->id]).'?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => route('boost.show', $ad),
                 'customer_email' => $user->email,
                 'metadata' => [
@@ -470,7 +485,7 @@ class BoostController extends Controller
 
             return redirect($session->url);
         } catch (\Exception $e) {
-            return back()->with('error', 'Erreur lors du paiement: ' . $e->getMessage());
+            return back()->with('error', 'Erreur lors du paiement: '.$e->getMessage());
         }
     }
 
@@ -485,14 +500,22 @@ class BoostController extends Controller
             return redirect()->route('homepage')->with('error', 'Accès non autorisé.');
         }
 
-        $ad->update([
-            'updated_at' => now(),
-            'is_boosted' => false,
-            'boost_end' => null,
-            'boost_type' => null,
-        ]);
+        $session = $this->verifiedCheckoutSession($request, $ad, 'refresh');
+        if (! $session) {
+            return redirect()->route('boost.show', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. L’annonce n’a pas été rafraîchie.');
+        }
+        if (! $this->processCheckoutOnce($session, 'AD_REFRESH', $ad, function () use ($ad) {
+            $ad->update([
+                'updated_at' => now(),
+                'is_boosted' => false,
+                'boost_end' => null,
+                'boost_type' => null,
+            ]);
+        })) {
+            return redirect()->route('ads.show', $ad)->with('success', 'Ce paiement avait déjà été confirmé.');
+        }
 
-        return redirect()->route('ads.show', $ad)->with('success', 
+        return redirect()->route('ads.show', $ad)->with('success',
             '✅ Paiement réussi ! Votre annonce a été rafraîchie et remontera dans les résultats !'
         );
     }
@@ -518,10 +541,13 @@ class BoostController extends Controller
         if (Auth::id() !== $ad->user_id) {
             return back()->with('error', 'Vous ne pouvez pas modifier cette annonce.');
         }
+        if ($ad->service_type !== 'demande') {
+            return back()->with('error', 'Le mode Urgent est réservé aux demandes de services. Utilisez un Boost pour une offre.');
+        }
 
         // Vérifier si déjà urgent
         if ($ad->is_urgent && $ad->urgent_until && $ad->urgent_until->isFuture()) {
-            return back()->with('error', 'Cette annonce est déjà en mode URGENT jusqu\'au ' . $ad->urgent_until->format('d/m/Y') . '.');
+            return back()->with('error', 'Cette annonce est déjà en mode URGENT jusqu\'au '.$ad->urgent_until->format('d/m/Y').'.');
         }
 
         $user = Auth::user();
@@ -535,11 +561,11 @@ class BoostController extends Controller
 
         // Vérifier les points disponibles
         if (($user->available_points ?? 0) < $urgentCost) {
-            return back()->with('error', 'Points insuffisants. Il vous faut ' . $urgentCost . ' points pour publier en mode URGENT. Vous avez ' . ($user->available_points ?? 0) . ' points.');
+            return back()->with('error', 'Points insuffisants. Il vous faut '.$urgentCost.' points pour publier en mode URGENT. Vous avez '.($user->available_points ?? 0).' points.');
         }
 
         // Déduire les points
-        $user->spendPoints($urgentCost, 'urgent_publication', 'Publication urgente: ' . $ad->title);
+        $user->spendPoints($urgentCost, 'urgent_publication', 'Publication urgente: '.$ad->title);
 
         // Activer le mode urgent pour 7 jours
         $ad->update([
@@ -548,8 +574,8 @@ class BoostController extends Controller
             'sidebar_priority' => 1,
         ]);
 
-        return redirect()->route('ads.show', $ad)->with('success', 
-            '🔥 Votre annonce est maintenant en mode URGENT pendant ' . $config['duration_days'] . ' jours ! (-' . $urgentCost . ' points)'
+        return redirect()->route('ads.show', $ad)->with('success',
+            '🔥 Votre annonce est maintenant en mode URGENT pendant '.$config['duration_days'].' jours ! (-'.$urgentCost.' points)'
         );
     }
 
@@ -560,6 +586,9 @@ class BoostController extends Controller
     {
         if (Auth::id() !== $ad->user_id) {
             return back()->with('error', 'Vous ne pouvez pas modifier cette annonce.');
+        }
+        if ($ad->service_type !== 'demande') {
+            return back()->with('error', 'Le mode Urgent est réservé aux demandes de services. Utilisez un Boost pour une offre.');
         }
 
         // Vérifier si déjà urgent
@@ -585,15 +614,15 @@ class BoostController extends Controller
                     'price_data' => [
                         'currency' => 'eur',
                         'product_data' => [
-                            'name' => 'Publication Urgente 🔥 - ' . $ad->title,
-                            'description' => 'Votre annonce sera épinglée en section Urgentes pendant ' . $config['duration_days'] . ' jours',
+                            'name' => 'Publication Urgente 🔥 - '.$ad->title,
+                            'description' => 'Votre annonce sera épinglée en section Urgentes pendant '.$config['duration_days'].' jours',
                         ],
-                        'unit_amount' => (int)($priceEuros * 100),
+                        'unit_amount' => (int) ($priceEuros * 100),
                     ],
                     'quantity' => 1,
                 ]],
                 'mode' => 'payment',
-                'success_url' => route('boost.urgent.success', ['ad' => $ad->id]),
+                'success_url' => route('boost.urgent.success', ['ad' => $ad->id]).'?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => route('boost.after-creation', $ad),
                 'customer_email' => $user->email,
                 'metadata' => [
@@ -605,7 +634,7 @@ class BoostController extends Controller
 
             return redirect($session->url);
         } catch (\Exception $e) {
-            return back()->with('error', 'Erreur lors du paiement: ' . $e->getMessage());
+            return back()->with('error', 'Erreur lors du paiement: '.$e->getMessage());
         }
     }
 
@@ -619,17 +648,93 @@ class BoostController extends Controller
         if (Auth::id() !== $ad->user_id) {
             return redirect()->route('homepage')->with('error', 'Accès non autorisé.');
         }
+        if ($ad->service_type !== 'demande') {
+            return redirect()->route('boost.show', $ad)->with('error', 'Le mode Urgent est réservé aux demandes de services.');
+        }
 
+        $session = $this->verifiedCheckoutSession($request, $ad, 'urgent');
+        if (! $session) {
+            return redirect()->route('boost.show', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. Le mode Urgent n’a pas été activé.');
+        }
         $config = self::getUrgentConfig();
 
-        $ad->update([
-            'is_urgent' => true,
-            'urgent_until' => now()->addDays($config['duration_days']),
-            'sidebar_priority' => 1,
-        ]);
+        if (! $this->processCheckoutOnce($session, 'AD_URGENT', $ad, function () use ($ad, $config) {
+            $ad->update([
+                'is_urgent' => true,
+                'urgent_until' => now()->addDays($config['duration_days']),
+                'sidebar_priority' => 1,
+            ]);
+        })) {
+            return redirect()->route('ads.show', $ad)->with('success', 'Ce paiement avait déjà été confirmé.');
+        }
 
-        return redirect()->route('ads.show', $ad)->with('success', 
-            '🔥 Paiement réussi ! Votre annonce est en mode URGENT pendant ' . $config['duration_days'] . ' jours !'
+        return redirect()->route('ads.show', $ad)->with('success',
+            '🔥 Paiement réussi ! Votre annonce est en mode URGENT pendant '.$config['duration_days'].' jours !'
         );
+    }
+
+    private function verifiedCheckoutSession(Request $request, Ad $ad, ?string $expectedType = null, ?string $expectedPackage = null)
+    {
+        $sessionId = (string) $request->query('session_id', '');
+        if ($sessionId === '' || ! config('services.stripe.secret')) {
+            return null;
+        }
+
+        try {
+            \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+            $session = \Stripe\Checkout\Session::retrieve($sessionId);
+            $metadata = $session->metadata;
+
+            if ($session->payment_status !== 'paid'
+                || (int) ($metadata->ad_id ?? 0) !== (int) $ad->id
+                || (int) ($metadata->user_id ?? 0) !== (int) Auth::id()) {
+                return null;
+            }
+
+            if ($expectedType !== null && (string) ($metadata->type ?? '') !== $expectedType) {
+                return null;
+            }
+            if ($expectedPackage !== null && (string) ($metadata->package ?? '') !== $expectedPackage) {
+                return null;
+            }
+
+            return $session;
+        } catch (\Throwable $exception) {
+            Log::warning('Stripe checkout verification failed', [
+                'ad_id' => $ad->id,
+                'session_id' => $sessionId,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    private function processCheckoutOnce($session, string $type, Ad $ad, callable $applyPromotion): bool
+    {
+        return DB::transaction(function () use ($session, $type, $ad, $applyPromotion) {
+            $transaction = Transaction::firstOrCreate(
+                ['stripe_session_id' => $session->id],
+                [
+                    'user_id' => Auth::id(),
+                    'amount' => ((int) ($session->amount_total ?? 0)) / 100,
+                    'type' => $type,
+                    'description' => 'Promotion de l’annonce #'.$ad->id,
+                    'status' => 'completed',
+                    'metadata' => [
+                        'ad_id' => $ad->id,
+                        'payment_intent' => $session->payment_intent ?? null,
+                    ],
+                ]
+            );
+
+            if (! $transaction->wasRecentlyCreated) {
+                return false;
+            }
+
+            $applyPromotion();
+
+            return true;
+        });
     }
 }
