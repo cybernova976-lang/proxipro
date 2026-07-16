@@ -6663,9 +6663,14 @@
         margin-top: 34px;
     }
 
-    .home-showcase-pro-grid,
-    .providers-grid {
+    .home-showcase-pro-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    /* Onglet Prestataires : cartes plus compactes, jusqu'a 4 profils par ligne. */
+    .providers-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 14px;
     }
 
