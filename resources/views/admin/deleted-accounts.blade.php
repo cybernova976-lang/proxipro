@@ -3,12 +3,17 @@
 @section('title', 'Comptes supprimés')
 
 @section('content')
-<div class="row mb-4">
+<div class="row align-items-center g-3 mb-4">
     <div class="col">
         <h2 class="h4 fw-bold">
             <i class="fas fa-user-slash text-danger me-2"></i>Comptes Supprimés
         </h2>
         <p class="text-muted mb-0">Historique des comptes utilisateurs supprimés avec possibilité de restauration</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ route('admin.blocked-emails.index') }}" class="btn btn-outline-danger">
+            <i class="fas fa-envelope-circle-xmark me-2"></i>Gérer les e-mails bloqués
+        </a>
     </div>
 </div>
 
@@ -25,6 +30,7 @@
                         <th class="border-0 py-3">Email original</th>
                         <th class="border-0 py-3">Type</th>
                         <th class="border-0 py-3">Motif de suppression</th>
+                        <th class="border-0 py-3">Réinscription</th>
                         <th class="border-0 py-3">Dates</th>
                         <th class="border-0 py-3 pe-4 text-end">Actions</th>
                     </tr>
@@ -38,6 +44,8 @@
                         $reason = $log->reason ?? 'Non spécifié';
                         $accountType = $log->account_type ?? 'particulier';
                         $dataSummary = $log ? json_decode($log->data_summary, true) : null;
+                        $normalizedEmail = \App\Models\BlockedEmail::normalize($originalEmail);
+                        $blockedEmail = $blockedEmails->get($normalizedEmail);
                     @endphp
                     <tr>
                         <td class="ps-4">{{ $user->id }}</td>
@@ -83,6 +91,33 @@
                             <span class="badge bg-{{ $badgeColor }}" style="font-size: 0.75rem;">
                                 {{ $reason }}
                             </span>
+                        </td>
+                        <td>
+                            @if($blockedEmail)
+                                <span class="badge bg-danger mb-2">
+                                    <i class="fas fa-ban me-1"></i>E-mail bloqué
+                                </span>
+                                <form action="{{ route('admin.blocked-emails.destroy', $blockedEmail) }}" method="POST"
+                                      onsubmit="return confirm(@js('Autoriser à nouveau '.$originalEmail.' à créer un compte ?'));">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-lock-open me-1"></i>Autoriser
+                                    </button>
+                                </form>
+                            @else
+                                <span class="badge bg-light text-success border border-success mb-2">
+                                    Réinscription autorisée
+                                </span>
+                                <form action="{{ route('admin.blocked-emails.from-deleted-account', $user->id) }}" method="POST"
+                                      onsubmit="return confirm(@js('Empêcher '.$originalEmail.' de créer un nouveau compte ?'));">
+                                    @csrf
+                                    <input type="hidden" name="reason" value="Blocage décidé depuis l’historique du compte supprimé #{{ $user->id }}.">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-ban me-1"></i>Bloquer l’e-mail
+                                    </button>
+                                </form>
+                            @endif
                         </td>
                         <td>
                             <small class="text-muted d-block">Inscrit : {{ $user->created_at->format('d/m/Y') }}</small>

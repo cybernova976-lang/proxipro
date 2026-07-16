@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\EmailVerificationCode;
 use App\Mail\WelcomeMail;
 use App\Models\User;
+use App\Rules\EmailNotBlocked;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -150,6 +151,7 @@ class EmailVerificationCodeController extends Controller
                 'string',
                 'email:rfc',
                 'max:255',
+                new EmailNotBlocked,
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
         ], [

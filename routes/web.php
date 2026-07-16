@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdController;
 use App\Http\Controllers\Admin\AdminServiceOrderController;
+use App\Http\Controllers\Admin\BlockedEmailController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BoostController;
 use App\Http\Controllers\CommentController;
@@ -539,6 +540,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/deleted-accounts', [AdminController::class, 'deletedAccounts'])->name('admin.deleted-accounts');
     Route::post('/deleted-accounts/{id}/restore', [AdminController::class, 'restoreAccount'])->name('admin.accounts.restore');
     Route::delete('/deleted-accounts/{id}/force', [AdminController::class, 'forceDeleteAccount'])->name('admin.accounts.force-delete');
+
+    // Adresses interdites de réinscription
+    Route::get('/blocked-emails', [BlockedEmailController::class, 'index'])->name('admin.blocked-emails.index');
+    Route::post('/blocked-emails', [BlockedEmailController::class, 'store'])->name('admin.blocked-emails.store');
+    Route::post('/deleted-accounts/{id}/block-email', [BlockedEmailController::class, 'storeFromDeletedAccount'])->name('admin.blocked-emails.from-deleted-account');
+    Route::delete('/blocked-emails/{blockedEmail}', [BlockedEmailController::class, 'destroy'])->name('admin.blocked-emails.destroy');
 
     // Gestion des abonnements
     Route::get('/subscriptions', [AdminController::class, 'subscriptions'])->name('admin.subscriptions');

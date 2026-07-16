@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Mail\EmailVerificationCode;
 use App\Mail\WelcomeMail;
+use App\Models\BlockedEmail;
 use App\Models\Setting;
 use App\Models\User;
+use App\Rules\EmailNotBlocked;
 use App\Services\ReferralService;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
@@ -95,6 +97,10 @@ class RegisterController extends Controller
         if ($request->input('city') === '__other__' && $request->filled('city_manual')) {
             $request->merge(['city' => trim((string) $request->input('city_manual'))]);
         }
+
+        $request->merge([
+            'email' => BlockedEmail::normalize((string) $request->input('email')),
+        ]);
 
         // Proceed with normal registration (from RegistersUsers trait)
         $this->validator($request->all())->validate();
@@ -191,7 +197,7 @@ class RegisterController extends Controller
     protected function validator(array $data)
     {
         $rules = [
-            'email' => ['required', 'string', 'email:rfc,dns', 'max:255', Rule::unique('users', 'email')->whereNull('deleted_at')],
+            'email' => ['required', 'string', 'email:rfc,dns', 'max:255', new EmailNotBlocked, Rule::unique('users', 'email')->whereNull('deleted_at')],
             'referral_code' => ['nullable', 'string', 'max:20', Rule::exists('users', 'referral_code')],
             'country' => ['required', 'string', 'max:100', Rule::in(array_keys(config('locations.countries', [])))],
             'city' => ['required', 'string', 'max:100', Rule::notIn(['__other__'])],

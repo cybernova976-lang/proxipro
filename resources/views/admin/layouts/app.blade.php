@@ -186,6 +186,11 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('admin.blocked-emails.index') }}" class="{{ request()->routeIs('admin.blocked-emails.*') ? 'active' : '' }}">
+                    <i class="fas fa-envelope-circle-xmark me-2"></i> E-mails bloqués
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('admin.stats') }}" class="{{ request()->routeIs('admin.stats') ? 'active' : '' }}">
                     <i class="fas fa-chart-bar me-2"></i> Statistiques
                 </a>

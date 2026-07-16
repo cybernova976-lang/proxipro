@@ -3,19 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Mail\AdminTestMail;
-use App\Models\User;
 use App\Models\Ad;
-use App\Models\Setting;
 use App\Models\Advertisement;
+use App\Models\BlockedEmail;
+use App\Models\ContactMessage;
 use App\Models\IdentityVerification;
 use App\Models\Report;
-use App\Models\ContactMessage;
+use App\Models\Setting;
+use App\Models\User;
 use App\Support\ProviderSubscriptionPlans;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
@@ -39,9 +39,9 @@ class AdminController extends Controller
 
         // Graphique des inscriptions (7 derniers jours)
         $registrations = User::select(
-                DB::raw('created_at::date as date'),
-                DB::raw('COUNT(*) as count')
-            )
+            DB::raw('created_at::date as date'),
+            DB::raw('COUNT(*) as count')
+        )
             ->where('created_at', '>=', now()->subDays(7))
             ->groupBy('date')
             ->orderBy('date')
@@ -70,26 +70,26 @@ class AdminController extends Controller
     public function users(Request $request)
     {
         $query = User::withCount('ads');
-        
+
         // Recherche par nom ou email
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                  ->orWhere('email', 'like', '%' . $search . '%');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('email', 'like', '%'.$search.'%');
             });
         }
-        
+
         // Filtre par rôle
         if ($request->filled('role')) {
             $query->where('role', $request->role);
         }
-        
+
         // Filtre par type d'utilisateur
         if ($request->filled('user_type')) {
             $query->where('user_type', $request->user_type);
         }
-        
+
         // Filtre par statut
         if ($request->filled('status')) {
             switch ($request->status) {
@@ -107,8 +107,9 @@ class AdminController extends Controller
                     break;
             }
         }
-        
+
         $users = $query->latest()->paginate(20);
+
         return view('admin.users.index', compact('users'));
     }
 
@@ -116,6 +117,7 @@ class AdminController extends Controller
     public function showUser($id)
     {
         $user = User::with('ads')->findOrFail($id);
+
         return view('admin.users.show', compact('user'));
     }
 
@@ -123,10 +125,10 @@ class AdminController extends Controller
     public function updateUser(Request $request, $id)
     {
         $user = User::findOrFail($id);
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $id,
+            'email' => 'required|email|unique:users,email,'.$id,
             'phone' => 'nullable|string|max:20',
             'role' => 'nullable|in:user,admin,moderator',
         ]);
@@ -135,25 +137,25 @@ class AdminController extends Controller
         $user->email = $validated['email'];
         $user->phone = $validated['phone'] ?? $user->phone;
         $user->role = $validated['role'] ?? $user->role ?? 'user';
-        
+
         $newVerifiedStatus = $request->boolean('is_verified');
         $oldVerifiedStatus = (bool) $user->is_verified;
         $user->is_verified = $newVerifiedStatus;
-        
+
         // Synchroniser les champs identity_verified / pro_verified avec is_verified
-        if ($newVerifiedStatus && !$oldVerifiedStatus) {
+        if ($newVerifiedStatus && ! $oldVerifiedStatus) {
             // Admin marque comme vérifié → activer tous les flags
             $user->identity_verified = true;
             $user->identity_verified_at = now();
             $user->pro_verified = true;
             $user->pro_verified_at = now();
-        } elseif (!$newVerifiedStatus && $oldVerifiedStatus) {
+        } elseif (! $newVerifiedStatus && $oldVerifiedStatus) {
             // Admin retire la vérification → réinitialiser tous les flags
             $user->identity_verified = false;
             $user->identity_verified_at = null;
             $user->pro_verified = false;
             $user->pro_verified_at = null;
-            
+
             // Aussi révoquer la vérification active si elle existe
             $activeVerification = \App\Models\IdentityVerification::where('user_id', $user->id)
                 ->where('status', 'approved')
@@ -167,7 +169,7 @@ class AdminController extends Controller
                 ]);
             }
         }
-        
+
         $user->is_active = $request->boolean('is_active');
         $user->save();
 
@@ -187,10 +189,10 @@ class AdminController extends Controller
     public function ads(Request $request)
     {
         $query = Ad::with('user');
-        
+
         // Filtres
         if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
+            $query->where('title', 'like', '%'.$request->search.'%');
         }
         if ($request->filled('category')) {
             $query->where('category', $request->category);
@@ -201,16 +203,16 @@ class AdminController extends Controller
         if ($request->filled('service_type')) {
             $query->where('service_type', $request->service_type);
         }
-        
+
         $ads = $query->latest()->paginate(20);
-        
+
         $stats = [
             'total' => Ad::count(),
             'active' => Ad::where('status', 'active')->count(),
             'pending' => Ad::where('status', 'pending')->count(),
             'rejected' => Ad::where('status', 'rejected')->count(),
         ];
-        
+
         return view('admin.ads.index', compact('ads', 'stats'));
     }
 
@@ -218,6 +220,7 @@ class AdminController extends Controller
     public function showAd($id)
     {
         $ad = Ad::with('user')->findOrFail($id);
+
         return view('admin.ads.show', compact('ad'));
     }
 
@@ -225,7 +228,7 @@ class AdminController extends Controller
     public function updateAd(Request $request, $id)
     {
         $ad = Ad::findOrFail($id);
-        
+
         $validated = $request->validate([
             'status' => 'required|in:active,pending,rejected,expired',
         ]);
@@ -278,7 +281,7 @@ class AdminController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
+            $query->where('title', 'like', '%'.$request->search.'%');
         }
 
         $ads = $query->latest()->paginate(20);
@@ -388,16 +391,53 @@ class AdminController extends Controller
             ->get()
             ->keyBy('user_id');
 
-        return view('admin.deleted-accounts', compact('deletedUsers', 'deletionLogs'));
+        $originalEmails = $deletedUsers->getCollection()
+            ->map(function (User $user) use ($deletionLogs) {
+                $log = $deletionLogs->get($user->id);
+
+                return BlockedEmail::normalize((string) ($log->email ?? $user->email));
+            })
+            ->filter()
+            ->unique()
+            ->values();
+
+        $blockedEmails = BlockedEmail::query()
+            ->whereIn('email', $originalEmails)
+            ->get()
+            ->keyBy('email');
+
+        return view('admin.deleted-accounts', compact('deletedUsers', 'deletionLogs', 'blockedEmails'));
     }
 
     // Restaurer un compte supprimé
     public function restoreAccount($id)
     {
         $user = User::onlyTrashed()->findOrFail($id);
+        $deletionLog = DB::table('deleted_accounts')->where('user_id', $user->id)->first();
+        $originalEmail = BlockedEmail::normalize((string) ($deletionLog->email ?? $user->email));
+
+        if (str_ends_with($user->email, '@deleted.local') && filter_var($originalEmail, FILTER_VALIDATE_EMAIL)) {
+            $emailAlreadyUsed = User::withTrashed()
+                ->where('email', $originalEmail)
+                ->whereKeyNot($user->id)
+                ->exists();
+
+            if ($emailAlreadyUsed) {
+                return back()->with('error', 'Ce compte ne peut pas être restauré : son adresse e-mail originale est déjà utilisée par un autre compte.');
+            }
+
+            $user->email = $originalEmail;
+            $user->save();
+        }
+
         $user->restore();
-        
-        return back()->with('success', 'Compte de ' . $user->name . ' restauré avec succès');
+
+        BlockedEmail::query()
+            ->where('email', $originalEmail)
+            ->orWhere('source_user_id', $user->id)
+            ->delete();
+
+        return back()->with('success', 'Compte de '.$user->name.' restauré avec succès');
     }
 
     // Supprimer définitivement un compte
@@ -406,8 +446,8 @@ class AdminController extends Controller
         $user = User::onlyTrashed()->findOrFail($id);
         $userName = $user->name;
         $user->forceDelete();
-        
-        return back()->with('success', 'Compte de ' . $userName . ' supprimé définitivement');
+
+        return back()->with('success', 'Compte de '.$userName.' supprimé définitivement');
     }
 
     // ===== GESTION DES ABONNEMENTS =====
@@ -416,48 +456,48 @@ class AdminController extends Controller
     public function subscriptions(Request $request)
     {
         $query = User::query();
-        
+
         // Filtrer par plan
         if ($request->filled('plan')) {
             $query->where('plan', $request->plan);
         }
-        
+
         // Filtrer par statut abonnement
         if ($request->filled('subscription_status')) {
             if ($request->subscription_status === 'active') {
                 $query->where('subscription_end', '>', now());
             } elseif ($request->subscription_status === 'expired') {
                 $query->where('subscription_end', '<=', now())
-                      ->whereNotNull('subscription_end');
+                    ->whereNotNull('subscription_end');
             } elseif ($request->subscription_status === 'none') {
                 $query->whereNull('subscription_end');
             }
         }
-        
+
         // Recherche
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                  ->orWhere('email', 'like', '%' . $search . '%');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('email', 'like', '%'.$search.'%');
             });
         }
-        
+
         $users = $query->orderByDesc('subscription_end')->paginate(20);
-        
+
         // Statistiques
         $stats = [
             'total_premium' => User::where('plan', '!=', 'FREE')->count(),
             'active_subscriptions' => User::where('subscription_end', '>', now())->count(),
             'expired_subscriptions' => User::where('subscription_end', '<=', now())
-                                           ->whereNotNull('subscription_end')->count(),
+                ->whereNotNull('subscription_end')->count(),
             'starter_count' => User::where('plan', 'STARTER')->count(),
             'pro_count' => User::where('plan', 'PRO')->count(),
             'business_count' => User::where('plan', 'BUSINESS')->count(),
         ];
-        
+
         $plans = config('admin.plans');
-        
+
         $providerSubscriptionPlans = ProviderSubscriptionPlans::all();
 
         return view('admin.subscriptions.index', compact('users', 'stats', 'plans', 'providerSubscriptionPlans'));
@@ -489,46 +529,46 @@ class AdminController extends Controller
     public function updateSubscription(Request $request, $id)
     {
         $user = User::findOrFail($id);
-        
+
         $validated = $request->validate([
             'plan' => 'required|in:FREE,STARTER,PRO,BUSINESS',
             'subscription_end' => 'nullable|date',
         ]);
-        
+
         $user->plan = $validated['plan'];
-        
+
         if ($validated['plan'] === 'FREE') {
             $user->subscription_end = null;
         } elseif ($request->filled('subscription_end')) {
             $user->subscription_end = $validated['subscription_end'];
         }
-        
+
         $user->save();
-        
-        return back()->with('success', 'Abonnement de ' . $user->name . ' mis à jour avec succès');
+
+        return back()->with('success', 'Abonnement de '.$user->name.' mis à jour avec succès');
     }
 
     // Accorder le premium gratuitement
     public function grantPremium(Request $request, $id)
     {
         $user = User::findOrFail($id);
-        
+
         $validated = $request->validate([
             'plan' => 'required|in:STARTER,PRO,BUSINESS',
             'duration' => 'required|in:7,30,90,365,unlimited',
         ]);
-        
+
         $user->plan = $validated['plan'];
-        
+
         if ($validated['duration'] === 'unlimited') {
             $user->subscription_end = now()->addYears(100);
         } else {
-            $user->subscription_end = now()->addDays((int)$validated['duration']);
+            $user->subscription_end = now()->addDays((int) $validated['duration']);
         }
-        
+
         $user->save();
-        
-        return back()->with('success', 'Premium ' . $validated['plan'] . ' accordé à ' . $user->name);
+
+        return back()->with('success', 'Premium '.$validated['plan'].' accordé à '.$user->name);
     }
 
     // Suspendre un abonnement
@@ -537,8 +577,8 @@ class AdminController extends Controller
         $user = User::findOrFail($id);
         $user->subscription_end = now()->subDay();
         $user->save();
-        
-        return back()->with('success', 'Abonnement de ' . $user->name . ' suspendu');
+
+        return back()->with('success', 'Abonnement de '.$user->name.' suspendu');
     }
 
     // Annuler un abonnement (retour à FREE)
@@ -548,8 +588,8 @@ class AdminController extends Controller
         $user->plan = 'FREE';
         $user->subscription_end = null;
         $user->save();
-        
-        return back()->with('success', 'Abonnement de ' . $user->name . ' annulé');
+
+        return back()->with('success', 'Abonnement de '.$user->name.' annulé');
     }
 
     // ===== STATISTIQUES =====
@@ -564,50 +604,50 @@ class AdminController extends Controller
             'verified_users' => User::where('is_verified', true)->count(),
             'premium_users' => User::where('plan', '!=', 'FREE')->count(),
         ];
-        
+
         // Inscriptions par jour (30 derniers jours)
         $registrationsByDay = User::select(
-                DB::raw('created_at::date as date'),
-                DB::raw('COUNT(*) as count')
-            )
+            DB::raw('created_at::date as date'),
+            DB::raw('COUNT(*) as count')
+        )
             ->where('created_at', '>=', now()->subDays(30))
             ->groupBy('date')
             ->orderBy('date')
             ->get();
-        
+
         // Annonces par jour (30 derniers jours)
         $adsByDay = Ad::select(
-                DB::raw('created_at::date as date'),
-                DB::raw('COUNT(*) as count')
-            )
+            DB::raw('created_at::date as date'),
+            DB::raw('COUNT(*) as count')
+        )
             ->where('created_at', '>=', now()->subDays(30))
             ->groupBy('date')
             ->orderBy('date')
             ->get();
-        
+
         // Répartition par catégorie
         $adsByCategory = Ad::select('category', DB::raw('COUNT(*) as count'))
             ->groupBy('category')
             ->orderByDesc('count')
             ->limit(10)
             ->get();
-        
+
         // Répartition des plans
         $usersByPlan = User::select('plan', DB::raw('COUNT(*) as count'))
             ->groupBy('plan')
             ->get();
-        
+
         // Répartition par type d'utilisateur
         $usersByType = User::select('user_type', DB::raw('COUNT(*) as count'))
             ->groupBy('user_type')
             ->get();
-        
+
         // Top utilisateurs par annonces
         $topUsers = User::withCount('ads')
             ->orderByDesc('ads_count')
             ->limit(10)
             ->get();
-        
+
         // Recensement complet des utilisateurs avec niveau de configuration
         $allUsers = User::withCount('ads')
             ->orderByDesc('created_at')
@@ -615,31 +655,31 @@ class AdminController extends Controller
             ->map(function ($user) {
                 // Calcul du niveau de complétion du profil
                 $fields = [
-                    'name' => !empty($user->name),
-                    'email' => !empty($user->email),
-                    'phone' => !empty($user->phone),
-                    'avatar' => !empty($user->avatar),
-                    'city' => !empty($user->city),
-                    'country' => !empty($user->country),
-                    'address' => !empty($user->address),
-                    'bio' => !empty($user->bio),
+                    'name' => ! empty($user->name),
+                    'email' => ! empty($user->email),
+                    'phone' => ! empty($user->phone),
+                    'avatar' => ! empty($user->avatar),
+                    'city' => ! empty($user->city),
+                    'country' => ! empty($user->country),
+                    'address' => ! empty($user->address),
+                    'bio' => ! empty($user->bio),
                 ];
-                
+
                 if ($user->isProfessionnel()) {
-                    $fields['profession'] = !empty($user->profession);
-                    $fields['business_type'] = !empty($user->business_type);
-                    $fields['company_name'] = !empty($user->company_name);
+                    $fields['profession'] = ! empty($user->profession);
+                    $fields['business_type'] = ! empty($user->business_type);
+                    $fields['company_name'] = ! empty($user->company_name);
                 }
-                
+
                 $filled = count(array_filter($fields));
                 $total = count($fields);
                 $user->profile_completion = $total > 0 ? round(($filled / $total) * 100) : 0;
                 $user->profile_filled = $filled;
                 $user->profile_total = $total;
-                
+
                 return $user;
             });
-        
+
         return view('admin.stats', compact(
             'generalStats',
             'registrationsByDay',
@@ -665,7 +705,7 @@ class AdminController extends Controller
         ];
 
         $mailSummary = $this->buildMailConfigSummary();
-        
+
         return view('admin.settings', compact('settings', 'mailSummary'));
     }
 
@@ -774,7 +814,7 @@ class AdminController extends Controller
 
             return back()->with('success', "Email de test envoyé à {$targetEmail}");
         } catch (\Throwable $e) {
-            return back()->with('error', 'Échec de l\'envoi du mail de test : ' . $e->getMessage());
+            return back()->with('error', 'Échec de l\'envoi du mail de test : '.$e->getMessage());
         }
     }
 
@@ -793,11 +833,13 @@ class AdminController extends Controller
             Artisan::call('cache:clear');
             Artisan::call('config:clear');
             Artisan::call('view:clear');
+
             return back()->with('success', 'Cache vidé avec succès');
         }
 
         if ($action === 'optimize') {
             Artisan::call('optimize');
+
             return back()->with('success', 'Application optimisée avec succès');
         }
 
@@ -849,81 +891,81 @@ class AdminController extends Controller
     public function admins()
     {
         // Vérifier si c'est l'admin principal
-        if (!$this->isPrincipalAdmin()) {
+        if (! $this->isPrincipalAdmin()) {
             abort(403, 'Accès réservé à l\'administrateur principal');
         }
-        
+
         $admins = User::where('role', 'admin')->get();
         $privileges = config('admin.privileges');
-        
+
         return view('admin.admins.index', compact('admins', 'privileges'));
     }
 
     // Promouvoir un utilisateur en admin
     public function promoteToAdmin(Request $request, $id)
     {
-        if (!$this->isPrincipalAdmin()) {
+        if (! $this->isPrincipalAdmin()) {
             abort(403, 'Accès réservé à l\'administrateur principal');
         }
-        
+
         $user = User::findOrFail($id);
-        
+
         $validated = $request->validate([
             'privileges' => 'nullable|array',
-            'privileges.*' => 'in:' . implode(',', array_keys(config('admin.privileges'))),
+            'privileges.*' => 'in:'.implode(',', array_keys(config('admin.privileges'))),
         ]);
-        
+
         $user->role = 'admin';
         $user->admin_privileges = json_encode($validated['privileges'] ?? []);
         $user->save();
-        
-        return back()->with('success', $user->name . ' a été promu administrateur');
+
+        return back()->with('success', $user->name.' a été promu administrateur');
     }
 
     // Révoquer les droits admin
     public function revokeAdmin($id)
     {
-        if (!$this->isPrincipalAdmin()) {
+        if (! $this->isPrincipalAdmin()) {
             abort(403, 'Accès réservé à l\'administrateur principal');
         }
-        
+
         $user = User::findOrFail($id);
-        
+
         // Vérifier que ce n'est pas l'admin principal
         if ($user->email === config('admin.principal_admin.email')) {
             return back()->with('error', 'Impossible de révoquer l\'administrateur principal');
         }
-        
+
         $user->role = 'user';
         $user->admin_privileges = null;
         $user->save();
-        
-        return back()->with('success', 'Droits administrateur de ' . $user->name . ' révoqués');
+
+        return back()->with('success', 'Droits administrateur de '.$user->name.' révoqués');
     }
 
     // Mettre à jour les privilèges d'un admin
     public function updateAdminPrivileges(Request $request, $id)
     {
-        if (!$this->isPrincipalAdmin()) {
+        if (! $this->isPrincipalAdmin()) {
             abort(403, 'Accès réservé à l\'administrateur principal');
         }
-        
+
         $user = User::findOrFail($id);
-        
+
         // Vérifier que ce n'est pas l'admin principal
         if ($user->email === config('admin.principal_admin.email')) {
             return back()->with('error', 'Impossible de modifier les privilèges de l\'administrateur principal');
         }
-        
+
         $validated = $request->validate([
             'privileges' => 'nullable|array',
-            'privileges.*' => 'in:' . implode(',', array_keys(config('admin.privileges'))),
+            'privileges.*' => 'in:'.implode(',', array_keys(config('admin.privileges'))),
         ]);
-        
+
         $user->admin_privileges = json_encode($validated['privileges'] ?? []);
         $user->save();
-        
-        return back()->with('success', 'Privilèges de ' . $user->name . ' mis à jour');
+
+        return back()->with('success', 'Privilèges de '.$user->name.' mis à jour');
     }
 
     // ===== GESTION DES PUBLICITES =====
@@ -936,7 +978,7 @@ class AdminController extends Controller
         $advertisements = Advertisement::orderBy('priority', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
-        
+
         return view('admin.advertisements.index', compact('advertisements'));
     }
 
@@ -965,7 +1007,7 @@ class AdminController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
-        $advertisement = new Advertisement();
+        $advertisement = new Advertisement;
         $advertisement->title = $validated['title'];
         $advertisement->description = $validated['description'] ?? null;
         $advertisement->link = $validated['link'] ?? null;
@@ -991,6 +1033,7 @@ class AdminController extends Controller
     public function editAdvertisement($id)
     {
         $advertisement = Advertisement::findOrFail($id);
+
         return view('admin.advertisements.edit', compact('advertisement'));
     }
 
@@ -1042,11 +1085,11 @@ class AdminController extends Controller
     public function deleteAdvertisement($id)
     {
         $advertisement = Advertisement::findOrFail($id);
-        
+
         if ($advertisement->image) {
             \Storage::disk(config('filesystems.default', 'public'))->delete($advertisement->image);
         }
-        
+
         $advertisement->delete();
 
         return back()->with('success', 'Publicité supprimée avec succès');
@@ -1058,11 +1101,12 @@ class AdminController extends Controller
     public function toggleAdvertisement($id)
     {
         $advertisement = Advertisement::findOrFail($id);
-        $advertisement->is_active = !$advertisement->is_active;
+        $advertisement->is_active = ! $advertisement->is_active;
         $advertisement->save();
 
         $status = $advertisement->is_active ? 'activée' : 'désactivée';
-        return back()->with('success', 'Publicité ' . $status . ' avec succès');
+
+        return back()->with('success', 'Publicité '.$status.' avec succès');
     }
 
     // ===== GESTION DES VÉRIFICATIONS =====
@@ -1100,9 +1144,9 @@ class AdminController extends Controller
         // Recherche par nom/email utilisateur
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('user', function($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                  ->orWhere('email', 'like', '%' . $search . '%');
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('email', 'like', '%'.$search.'%');
             });
         }
 
@@ -1129,6 +1173,7 @@ class AdminController extends Controller
     public function showVerification($id)
     {
         $verification = IdentityVerification::with('user', 'reviewer')->findOrFail($id);
+
         return view('admin.verifications.show', compact('verification'));
     }
 
@@ -1139,7 +1184,7 @@ class AdminController extends Controller
     {
         $verification = IdentityVerification::findOrFail($id);
 
-        if (!$verification->isPending() && !$verification->isReturned()) {
+        if (! $verification->isPending() && ! $verification->isReturned()) {
             return back()->with('error', 'Cette vérification a déjà été traitée.');
         }
 
@@ -1181,11 +1226,13 @@ class AdminController extends Controller
             $user->notify(new \App\Notifications\VerificationApproved($verification));
 
             DB::commit();
-            return back()->with('success', 'Vérification approuvée avec succès. L\'utilisateur ' . $user->name . ' est maintenant vérifié.');
+
+            return back()->with('success', 'Vérification approuvée avec succès. L\'utilisateur '.$user->name.' est maintenant vérifié.');
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Erreur approbation vérification: ' . $e->getMessage());
-            return back()->with('error', 'Erreur lors de l\'approbation: ' . $e->getMessage());
+            \Log::error('Erreur approbation vérification: '.$e->getMessage());
+
+            return back()->with('error', 'Erreur lors de l\'approbation: '.$e->getMessage());
         }
     }
 
@@ -1196,7 +1243,7 @@ class AdminController extends Controller
     {
         $verification = IdentityVerification::findOrFail($id);
 
-        if (!$verification->isPending() && !$verification->isReturned()) {
+        if (! $verification->isPending() && ! $verification->isReturned()) {
             return back()->with('error', 'Cette vérification a déjà été traitée.');
         }
 
@@ -1241,7 +1288,7 @@ class AdminController extends Controller
     {
         $verification = IdentityVerification::findOrFail($id);
 
-        if (!$verification->isPending() && !$verification->isReturned()) {
+        if (! $verification->isPending() && ! $verification->isReturned()) {
             return back()->with('error', 'Cette vérification a déjà été traitée.');
         }
 
@@ -1309,7 +1356,8 @@ class AdminController extends Controller
                 $user->notify(new \App\Notifications\VerificationApproved($verification));
 
                 DB::commit();
-                return back()->with('success', 'Tous les documents sont validés. Le profil de ' . $user->name . ' est maintenant vérifié !');
+
+                return back()->with('success', 'Tous les documents sont validés. Le profil de '.$user->name.' est maintenant vérifié !');
             }
 
             // If any document rejected → status returned, notify user
@@ -1321,15 +1369,18 @@ class AdminController extends Controller
                 ));
 
                 DB::commit();
+
                 return back()->with('success', 'Documents évalués. Le formulaire a été renvoyé à l\'utilisateur avec les documents rejetés.');
             }
 
             DB::commit();
+
             return back()->with('success', 'Statuts des documents mis à jour.');
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Erreur revue documents: ' . $e->getMessage());
-            return back()->with('error', 'Erreur lors de la revue: ' . $e->getMessage());
+            \Log::error('Erreur revue documents: '.$e->getMessage());
+
+            return back()->with('error', 'Erreur lors de la revue: '.$e->getMessage());
         }
     }
 
@@ -1340,7 +1391,7 @@ class AdminController extends Controller
     {
         $verification = IdentityVerification::findOrFail($id);
 
-        if (!$verification->isPending() && !$verification->isReturned()) {
+        if (! $verification->isPending() && ! $verification->isReturned()) {
             return back()->with('error', 'Cette vérification a déjà été traitée.');
         }
 
@@ -1425,11 +1476,11 @@ class AdminController extends Controller
     {
         $fields = ['document_front', 'document_back', 'selfie'];
         foreach ($fields as $field) {
-            if (!empty($verification->$field) && \Storage::disk(config('filesystems.default', 'public'))->exists($verification->$field)) {
+            if (! empty($verification->$field) && \Storage::disk(config('filesystems.default', 'public'))->exists($verification->$field)) {
                 $newPath = str_replace('verifications-temp/', 'verifications/', $verification->$field);
                 // Créer le dossier de destination si nécessaire
                 $dir = dirname($newPath);
-                if (!\Storage::disk(config('filesystems.default', 'public'))->exists($dir)) {
+                if (! \Storage::disk(config('filesystems.default', 'public'))->exists($dir)) {
                     \Storage::disk(config('filesystems.default', 'public'))->makeDirectory($dir);
                 }
                 \Storage::disk(config('filesystems.default', 'public'))->move($verification->$field, $newPath);
@@ -1471,10 +1522,10 @@ class AdminController extends Controller
         }
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->whereHas('reporter', fn($r) => $r->where('name', 'like', "%{$search}%"))
-                  ->orWhereHas('ad', fn($r) => $r->where('title', 'like', "%{$search}%"))
-                  ->orWhere('reason', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('reporter', fn ($r) => $r->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('ad', fn ($r) => $r->where('title', 'like', "%{$search}%"))
+                    ->orWhere('reason', 'like', "%{$search}%");
             });
         }
 
@@ -1493,6 +1544,7 @@ class AdminController extends Controller
     public function showReport($id)
     {
         $report = Report::with(['reporter', 'ad.user'])->findOrFail($id);
+
         return view('admin.reports.show', compact('report'));
     }
 
@@ -1515,6 +1567,7 @@ class AdminController extends Controller
     {
         $report = Report::findOrFail($id);
         $report->update(['status' => 'dismissed']);
+
         return back()->with('success', 'Signalement rejeté.');
     }
 
@@ -1522,6 +1575,7 @@ class AdminController extends Controller
     {
         $report = Report::findOrFail($id);
         $report->delete();
+
         return back()->with('success', 'Signalement supprimé.');
     }
 
@@ -1539,9 +1593,9 @@ class AdminController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('subject', 'like', "%{$search}%")
-                  ->orWhere('message', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('subject', 'like', "%{$search}%")
+                    ->orWhere('message', 'like', "%{$search}%");
             });
         }
 
