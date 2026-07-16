@@ -6,6 +6,7 @@ use App\Models\Ad;
 use App\Models\User;
 use App\Models\UserService;
 use App\Notifications\NewAdMatchingNotification;
+use App\Services\AdPublicationSchema;
 use App\Services\GeocodingService;
 use App\Services\SavedSearchService;
 use Illuminate\Http\Request;
@@ -17,7 +18,10 @@ class AdController extends Controller
 {
     private const PUBLICATION_TERMS_VERSION = '2026-07-16';
 
-    public function __construct(private SavedSearchService $savedSearchService) {}
+    public function __construct(
+        private SavedSearchService $savedSearchService,
+        private AdPublicationSchema $publicationSchema
+    ) {}
 
     /**
      * Display a listing of the resource with advanced search.
@@ -164,7 +168,9 @@ class AdController extends Controller
             array_keys(config('categories.marketplace'))
         );
 
-        return view('ads.create', compact('categories'));
+        $publicationSchemas = $this->publicationSchema->schemasForForm();
+
+        return view('ads.create', compact('categories', 'publicationSchemas'));
     }
 
     /**
@@ -180,13 +186,22 @@ class AdController extends Controller
             }
 
             $maxPhotos = Auth::user() && Auth::user()->hasActiveProSubscription() ? 4 : 2;
-            $request->merge(['price_type' => $this->resolvePriceType($request)]);
+            $publicationContext = $this->publicationSchema->resolve(
+                $request->input('main_category'),
+                $request->input('category')
+            );
+            $request->merge([
+                'price_type' => $this->resolvePriceType($request, null, $publicationContext['domain']),
+                'main_category' => $publicationContext['main_category'],
+                'publication_domain' => $publicationContext['domain'],
+            ]);
 
             // Valider les données
-            $request->validate([
+            $request->validate(array_merge([
                 'title' => 'required|string|min:8|max:255',
                 'description' => 'required|string|min:30|max:5000',
-                'category' => 'required|string',
+                'main_category' => 'nullable|string|max:100',
+                'category' => 'required|string|max:100',
                 'country' => 'required|string',
                 'city' => 'nullable|string',
                 'location' => 'nullable|string',
@@ -201,7 +216,9 @@ class AdController extends Controller
                 'target_categories' => 'nullable|array',
                 'target_categories.*' => 'string',
                 'accept_conditions' => 'accepted',
-            ]);
+            ], $this->publicationSchema->validationRules($publicationContext['domain'])), [],
+                $this->publicationSchema->validationAttributes($publicationContext['domain'])
+            );
 
             [$priceType, $price] = $this->normalizedPriceData($request);
 
@@ -246,6 +263,12 @@ class AdController extends Controller
             $ad->title = $request->title;
             $ad->description = $request->description;
             $ad->category = $request->category;
+            $ad->main_category = $publicationContext['main_category'];
+            $ad->publication_domain = $publicationContext['domain'];
+            $ad->ad_details = $this->publicationSchema->sanitizeDetails(
+                $publicationContext['domain'],
+                $request->input('ad_details', [])
+            );
             $ad->location = $finalLocation;
             $ad->city = $selectedCity;
             $ad->price_type = $priceType;
@@ -352,12 +375,21 @@ class AdController extends Controller
         }
 
         $maxPhotos = Auth::user()->hasActiveProSubscription() ? 4 : 2;
-        $request->merge(['price_type' => $this->resolvePriceType($request)]);
+        $publicationContext = $this->publicationSchema->resolve(
+            $request->input('main_category'),
+            $request->input('category')
+        );
+        $request->merge([
+            'price_type' => $this->resolvePriceType($request, null, $publicationContext['domain']),
+            'main_category' => $publicationContext['main_category'],
+            'publication_domain' => $publicationContext['domain'],
+        ]);
 
-        $request->validate([
+        $request->validate(array_merge([
             'title' => 'required|string|min:8|max:255',
             'description' => 'required|string|min:30|max:5000',
-            'category' => 'required|string',
+            'main_category' => 'nullable|string|max:100',
+            'category' => 'required|string|max:100',
             'country' => 'required|string',
             'city' => 'nullable|string',
             'location' => 'nullable|string',
@@ -367,7 +399,9 @@ class AdController extends Controller
             'photos' => 'nullable|array|max:'.$maxPhotos,
             'photos.*' => 'image|mimes:jpeg,png,webp|max:5120',
             'accept_conditions' => 'accepted',
-        ]);
+        ], $this->publicationSchema->validationRules($publicationContext['domain'])), [],
+            $this->publicationSchema->validationAttributes($publicationContext['domain'])
+        );
 
         [$priceType, $price] = $this->normalizedPriceData($request);
 
@@ -411,6 +445,12 @@ class AdController extends Controller
         $ad->title = $request->title;
         $ad->description = $request->description;
         $ad->category = $request->category;
+        $ad->main_category = $publicationContext['main_category'];
+        $ad->publication_domain = $publicationContext['domain'];
+        $ad->ad_details = $this->publicationSchema->sanitizeDetails(
+            $publicationContext['domain'],
+            $request->input('ad_details', [])
+        );
         $ad->location = $finalLocation;
         $ad->city = $selectedCity;
         $ad->price_type = $priceType;
@@ -495,8 +535,11 @@ class AdController extends Controller
     public function show(Ad $ad)
     {
         $isSaved = Auth::check() ? Auth::user()->hasSavedAd($ad) : false;
+        $publicationContext = $this->publicationSchema->resolve($ad->main_category, $ad->category);
+        $publicationDomain = $ad->publication_domain ?: $publicationContext['domain'];
+        $publicationDetails = $this->publicationSchema->presentationDetails($publicationDomain, $ad->ad_details);
 
-        return view('ads.show', compact('ad', 'isSaved'));
+        return view('ads.show', compact('ad', 'isSaved', 'publicationDomain', 'publicationDetails'));
     }
 
     /**
@@ -514,8 +557,9 @@ class AdController extends Controller
             array_keys(config('categories.services')),
             array_keys(config('categories.marketplace'))
         );
+        $publicationSchemas = $this->publicationSchema->schemasForForm();
 
-        return view('ads.edit', compact('ad', 'categories'));
+        return view('ads.edit', compact('ad', 'categories', 'publicationSchemas'));
     }
 
     /**
@@ -530,12 +574,21 @@ class AdController extends Controller
             }
 
             $maxPhotos = Auth::user() && Auth::user()->hasActiveProSubscription() ? 4 : 2;
-            $request->merge(['price_type' => $this->resolvePriceType($request, $ad)]);
+            $publicationContext = $this->publicationSchema->resolve(
+                $request->input('main_category'),
+                $request->input('category')
+            );
+            $request->merge([
+                'price_type' => $this->resolvePriceType($request, $ad, $publicationContext['domain']),
+                'main_category' => $publicationContext['main_category'],
+                'publication_domain' => $publicationContext['domain'],
+            ]);
 
-            $request->validate([
+            $request->validate(array_merge([
                 'title' => 'required|string|max:255',
                 'description' => 'required|string',
-                'category' => 'required|string',
+                'main_category' => 'nullable|string|max:100',
+                'category' => 'required|string|max:100',
                 'country' => 'required|string',
                 'city' => 'nullable|string',
                 'location' => 'nullable|string',
@@ -549,7 +602,9 @@ class AdController extends Controller
                 'visibility' => 'nullable|in:public,pro_targeted',
                 'target_categories' => 'nullable|array',
                 'target_categories.*' => 'string',
-            ]);
+            ], $this->publicationSchema->validationRules($publicationContext['domain'])), [],
+                $this->publicationSchema->validationAttributes($publicationContext['domain'])
+            );
 
             [$priceType, $price] = $this->normalizedPriceData($request);
 
@@ -592,6 +647,12 @@ class AdController extends Controller
             $ad->title = $request->title;
             $ad->description = $request->description;
             $ad->category = $request->category;
+            $ad->main_category = $publicationContext['main_category'];
+            $ad->publication_domain = $publicationContext['domain'];
+            $ad->ad_details = $this->publicationSchema->sanitizeDetails(
+                $publicationContext['domain'],
+                $request->input('ad_details', [])
+            );
             $ad->location = $finalLocation;
             $ad->city = $selectedCity;
             $ad->country = $request->country;
@@ -653,6 +714,8 @@ class AdController extends Controller
             }
 
             return redirect()->route('ads.show', $ad)->with('success', 'Annonce mise à jour avec succès !');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('UPDATE AD CRASH: '.$e->getMessage(), [
                 'ad_id' => $ad->id ?? null,
@@ -746,7 +809,7 @@ class AdController extends Controller
             : now()->addDays(90);
     }
 
-    private function resolvePriceType(Request $request, ?Ad $ad = null): string
+    private function resolvePriceType(Request $request, ?Ad $ad = null, ?string $publicationDomain = null): string
     {
         $type = $request->input('price_type');
 
@@ -759,6 +822,10 @@ class AdController extends Controller
         }
 
         if ($request->filled('price') || ($ad && $ad->price !== null)) {
+            if (in_array($publicationDomain, ['employment', 'ridesharing', 'sale', 'rental', 'lost_found'], true)) {
+                return 'fixed';
+            }
+
             return $request->input('service_type') === 'demande' ? 'hourly' : 'fixed';
         }
 

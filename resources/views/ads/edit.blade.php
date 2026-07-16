@@ -916,16 +916,18 @@
                 <p class="form-hint"><i class="fas fa-lightbulb me-1"></i>Conseil : Une description détaillée attire plus de clients !</p>
             </div>
         </div>
+
+        @include('ads.partials.publication-domain-fields')
         
         <!-- Localisation -->
         <div class="form-section">
             <div class="section-header">
                 <div class="section-icon"><i class="fas fa-map-marker-alt"></i></div>
-                <h4 class="section-title">Localisation</h4>
+                <h4 class="section-title" id="location-section-title">Localisation</h4>
             </div>
             
             <div class="row g-4">
-                <div class="col-md-4">
+                <div class="col-md-4" id="location-country-column">
                     <label for="country" class="form-label">Pays <span class="text-danger">*</span></label>
                     <select class="form-select @error('country') is-invalid @enderror" id="country" name="country" required>
                         <option value="">-- Sélectionner un pays --</option>
@@ -938,7 +940,7 @@
                     @enderror
                 </div>
                 
-                <div class="col-md-4">
+                <div class="col-md-4" id="location-city-column">
                     <label for="city" class="form-label">Ville <span class="text-danger">*</span></label>
                     <select class="form-select" id="city" name="city">
                         <option value="">-- Sélectionnez d'abord un pays --</option>
@@ -952,7 +954,7 @@
                     <div id="location-result" class="form-hint"></div>
                 </div>
                 
-                <div class="col-md-4">
+                <div class="col-md-4" id="radius-column">
                     <label for="radius_km" class="form-label">Rayon d'intervention</label>
                     <select class="form-select" id="radius_km" name="radius_km">
                         <option value="5" {{ old('radius_km', $ad->radius_km) == 5 ? 'selected' : '' }}>5 km</option>
@@ -977,12 +979,12 @@
         <div class="form-section">
             <div class="section-header">
                 <div class="section-icon"><i class="fas fa-euro-sign"></i></div>
-                <h4 class="section-title">Tarification (optionnel)</h4>
+                <h4 class="section-title" id="price-section-title">Tarification (optionnel)</h4>
             </div>
             
             <div class="row">
                 <div class="col-lg-8">
-                    <label class="form-label">Mode de rémunération</label>
+                    <label class="form-label" id="price-mode-label">Mode de rémunération</label>
                     <div class="price-mode-selector" id="price-mode-selector">
                         <label class="price-mode-option {{ $selectedPriceType === 'fixed' ? 'selected' : '' }}" data-price-type="fixed">
                             <input type="radio" name="price_type" value="fixed" {{ $selectedPriceType === 'fixed' ? 'checked' : '' }}>
@@ -1065,6 +1067,7 @@
     // ===== CATEGORY SELECTION =====
     // Généré dynamiquement depuis config/categories.php (source unique de vérité)
     const categoriesData = @json($categoriesData);
+    @include('ads.partials.publication-domain-script')
 
     function selectMainCategory(catName, icon) {
         document.getElementById('main-categories-grid').style.display = 'none';
@@ -1100,6 +1103,7 @@
         
         document.getElementById('main_category').value = mainCat;
         document.getElementById('category').value = subcat;
+        applyPublicationDomain(mainCat);
     }
 
     function resetCategories() {
@@ -1109,6 +1113,7 @@
         document.getElementById('selected-category-display').style.display = 'none';
         document.getElementById('main_category').value = '';
         document.getElementById('category').value = '';
+        applyPublicationDomain(null);
     }
 
     // ===== TYPE SELECTION =====
@@ -1135,6 +1140,8 @@
                 ? 'Décrivez précisément ce dont vous avez besoin : type de travaux, lieu, urgence, budget...'
                 : 'Décrivez votre offre : prestations, conditions, zone d’intervention, disponibilité ou tarif...';
         }
+
+        applyPublicationDomain(document.getElementById('main_category')?.value || null);
     }
 
     function setServiceType(type, options = {}) {
@@ -1177,6 +1184,7 @@
         const suffix = document.getElementById('price-input-suffix');
         const label = document.getElementById('price-input-label');
         const hint = document.getElementById('price-input-hint');
+        const priceContext = getActivePublicationSchema()?.price || {};
 
         document.querySelectorAll('.price-mode-option').forEach(option => {
             const selected = option.dataset.priceType === type;
@@ -1191,19 +1199,19 @@
             priceInput.required = false;
             priceGroup.classList.add('is-disabled');
             suffix.textContent = '';
-            label.textContent = 'Montant';
-            hint.textContent = 'Le prix sera affiché comme “À négocier”.';
+            label.textContent = priceContext.amount_labels?.negotiable || 'Montant';
+            hint.textContent = priceContext.hint || 'Le prix sera affiché comme “À négocier”.';
             return;
         }
 
         priceInput.disabled = false;
         priceInput.required = true;
         priceGroup.classList.remove('is-disabled');
-        suffix.textContent = type === 'hourly' ? '€/h' : '€';
-        label.textContent = type === 'hourly' ? 'Tarif horaire' : 'Prix global';
-        hint.textContent = type === 'hourly'
+        suffix.textContent = priceContext.suffixes?.[type] || (type === 'hourly' ? '€/h' : '€');
+        label.textContent = priceContext.amount_labels?.[type] || (type === 'hourly' ? 'Tarif horaire' : 'Prix global');
+        hint.textContent = priceContext.hint || (type === 'hourly'
             ? 'Indiquez le montant facturé par heure.'
-            : 'Indiquez le montant total demandé ou proposé.';
+            : 'Indiquez le montant total demandé ou proposé.');
     }
 
     document.querySelectorAll('.price-mode-option').forEach(option => {

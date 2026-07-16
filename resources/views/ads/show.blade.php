@@ -20,6 +20,12 @@
     .ad-meta-item { display: flex; align-items: center; color: #4a5568; }
     .ad-meta-item i { width: 32px; height: 32px; background: rgba(124, 58, 237,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 8px; color: #7c3aed; font-size: 0.9rem; }
     .ad-price { font-size: 2rem; font-weight: 700; color: #28a745; margin-bottom: 25px; }
+    .ad-specifics { margin-bottom: 25px; padding: 18px; border: 1px solid #dbeafe; border-radius: 14px; background: linear-gradient(145deg, #f8fbff, #ffffff); }
+    .ad-specifics-title { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; color: #243b53; font-size: 1rem; font-weight: 700; }
+    .ad-specifics-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; }
+    .ad-specific-item { min-width: 0; padding: 10px 12px; border-radius: 10px; background: #eff6ff; }
+    .ad-specific-label { display: block; margin-bottom: 3px; color: #64748b; font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+    .ad-specific-value { display: block; color: #1e293b; font-size: .9rem; font-weight: 600; overflow-wrap: anywhere; }
     .ad-description { color: #4a5568; line-height: 1.8; padding: 20px; background: #f7fafc; border-radius: 12px; border-left: 4px solid #7c3aed; margin-bottom: 25px; }
     .seller-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 20px; border: 1px solid rgba(0,0,0,0.08); padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
     .seller-avatar { width: 70px; height: 70px; background: linear-gradient(135deg, #7c3aed, #9333ea); border-radius: 18px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; }
@@ -77,6 +83,7 @@
         .ad-meta-item { font-size: 0.85rem; }
         .ad-meta-item i { width: 28px; height: 28px; font-size: 0.8rem; }
         .ad-description { padding: 14px; font-size: 0.9rem; line-height: 1.7; margin-bottom: 20px; }
+        .ad-specifics-grid { grid-template-columns: minmax(0, 1fr); }
         .seller-card { border-radius: 14px; padding: 18px; }
         .seller-avatar { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 12px; }
         .seller-avatar i { font-size: 22px; }
@@ -242,6 +249,22 @@
                             @if($ad->radius_km)<div class="ad-meta-item"><i class="fas fa-bullseye"></i><span>{{ $ad->radius_km }} km</span></div>@endif
                         </div>
                         <div class="ad-price">{{ $ad->formatted_price }}</div>
+                        @if(!empty($publicationDetails))
+                            <div class="ad-specifics">
+                                <div class="ad-specifics-title">
+                                    <span>{{ config('ad_publication.domains.'.$publicationDomain.'.icon', '📋') }}</span>
+                                    <span>{{ config('ad_publication.domains.'.$publicationDomain.'.label', 'Informations pratiques') }}</span>
+                                </div>
+                                <div class="ad-specifics-grid">
+                                    @foreach($publicationDetails as $detail)
+                                        <div class="ad-specific-item">
+                                            <span class="ad-specific-label">{{ $detail['label'] }}</span>
+                                            <span class="ad-specific-value">{{ $detail['value'] }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
                         <h6 style="color: #2d3748;" class="mb-2"><i class="fas fa-align-left me-2 text-primary"></i>Description</h6>
                         <div class="ad-description">{!! nl2br(e($ad->description)) !!}</div>
                         <div class="d-flex gap-2 flex-wrap">

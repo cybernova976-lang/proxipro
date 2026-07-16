@@ -23,6 +23,9 @@ class Ad extends Model
         'title',
         'description',
         'category',
+        'main_category',
+        'publication_domain',
+        'ad_details',
         'location',
         'city',
         'price',
@@ -71,6 +74,7 @@ class Ad extends Model
         'sidebar_priority' => 'integer',
         'photos' => 'array',
         'target_categories' => 'array',
+        'ad_details' => 'array',
     ];
 
     public function scopeMarketplaceActive($query)
@@ -108,9 +112,31 @@ class Ad extends Model
         $decimals = floor($price) === $price ? 0 : 2;
         $formatted = number_format($price, $decimals, ',', ' ');
 
-        return $this->effective_price_type === 'hourly'
-            ? $formatted.' €/h'
-            : $formatted.' €';
+        if ($this->effective_price_type === 'hourly') {
+            return $formatted.' €/h';
+        }
+
+        $details = is_array($this->ad_details) ? $this->ad_details : [];
+        $unit = match ($this->publication_domain) {
+            'ridesharing' => '/place',
+            'rental' => match ($details['rental_period'] ?? null) {
+                'hour' => '/h',
+                'day' => '/jour',
+                'week' => '/semaine',
+                'month' => '/mois',
+                default => '',
+            },
+            'employment' => match ($details['compensation_period'] ?? null) {
+                'hour' => '/h',
+                'day' => '/jour',
+                'month' => '/mois',
+                'year' => '/an',
+                default => '',
+            },
+            default => '',
+        };
+
+        return $formatted.' €'.$unit;
     }
 
     public function getPriceModeLabelAttribute(): string
