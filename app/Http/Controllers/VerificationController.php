@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Stripe\Stripe;
 use Stripe\Checkout\Session;
+use Stripe\Stripe;
 use Throwable;
 
 class VerificationController extends Controller
@@ -55,12 +55,7 @@ class VerificationController extends Controller
      */
     private function getProfileMissingFields($user): array
     {
-        $missing = [];
-        if (!$user->name) $missing[] = ['field' => 'name', 'label' => 'Nom complet'];
-        // Photo de profil, nom et email suffisent pour la vérification
-        // Les autres champs ne sont plus obligatoires
-        
-        return $missing;
+        return $user->verificationProfileMissingFields();
     }
 
     /**
@@ -69,15 +64,15 @@ class VerificationController extends Controller
     public function getStatus()
     {
         $user = Auth::user();
-        
+
         $pendingVerification = IdentityVerification::where('user_id', $user->id)
             ->where('status', 'pending')
             ->first();
-        
+
         $returnedVerification = IdentityVerification::where('user_id', $user->id)
             ->where('status', 'returned')
             ->first();
-        
+
         $pendingPayment = IdentityVerification::where('user_id', $user->id)
             ->where('payment_status', 'pending')
             ->whereIn('status', ['awaiting_payment', 'pending'])
@@ -114,7 +109,7 @@ class VerificationController extends Controller
         return response($content, 200, [
             'Content-Type' => $storedDocument->mime_type,
             'Content-Length' => (string) strlen($content),
-            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+            'Content-Disposition' => 'inline; filename="'.$fileName.'"',
             'Cache-Control' => 'private, no-store, max-age=0',
             'X-Content-Type-Options' => 'nosniff',
         ]);
@@ -126,6 +121,17 @@ class VerificationController extends Controller
     public function storeAjax(Request $request)
     {
         $user = Auth::user();
+        $missingFields = $this->getProfileMissingFields($user);
+
+        if ($missingFields !== []) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Complétez toutes les informations de votre profil avant de demander sa vérification.',
+                'missing_profile_fields' => array_column($missingFields, 'label'),
+                'redirect' => route('profile.edit'),
+            ], 422);
+        }
+
         $files = $this->validateVerificationSubmission($request, $user, includeType: true);
 
         // Vérifier si une demande est déjà en cours
@@ -142,7 +148,7 @@ class VerificationController extends Controller
         }
 
         // Pour service_provider, vérifier que le profil est vérifié
-        if ($request->type === 'service_provider' && !$user->is_verified) {
+        if ($request->type === 'service_provider' && ! $user->is_verified) {
             return response()->json([
                 'success' => false,
                 'message' => 'Vous devez d\'abord vérifier votre profil.',
@@ -187,7 +193,13 @@ class VerificationController extends Controller
     public function resubmit(Request $request)
     {
         $user = Auth::user();
-        
+        $missingFields = $this->getProfileMissingFields($user);
+
+        if ($missingFields !== []) {
+            return redirect()->route('verification.index')
+                ->with('error', 'Complétez toutes les informations de votre profil avant de renvoyer votre demande.');
+        }
+
         $verification = IdentityVerification::where('user_id', $user->id)
             ->where('status', 'returned')
             ->latest()
@@ -221,15 +233,15 @@ class VerificationController extends Controller
 
         DB::transaction(function () use ($request, $rejectedFields, $verification, $user) {
             foreach ($rejectedFields as $field) {
-                if (!$request->hasFile($field)) {
+                if (! $request->hasFile($field)) {
                     continue;
                 }
 
                 $this->deleteVerificationPath($verification->$field);
                 $prepared = $this->prepareDatabaseDocument($request->file($field), $field);
                 $verification->$field = $prepared['path'];
-                $verification->{$field . '_status'} = 'pending';
-                $verification->{$field . '_rejection_reason'} = null;
+                $verification->{$field.'_status'} = 'pending';
+                $verification->{$field.'_rejection_reason'} = null;
                 $this->createDatabaseDocument($verification, $user->id, $field, $prepared);
             }
 
@@ -259,13 +271,24 @@ class VerificationController extends Controller
         ]);
 
         $user = Auth::user();
+        $missingFields = $this->getProfileMissingFields($user);
+
+        if ($missingFields !== []) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Votre profil doit être entièrement complété avant le paiement et l’envoi de la demande.',
+                'missing_profile_fields' => array_column($missingFields, 'label'),
+                'redirect' => route('profile.edit'),
+            ], 422);
+        }
+
         $verification = IdentityVerification::where('id', $request->verification_id)
             ->where('user_id', $user->id)
             ->where('payment_status', 'pending')
             ->firstOrFail();
 
         $stripeSecret = config('services.stripe.secret');
-        if (!$stripeSecret) {
+        if (! $stripeSecret) {
             return response()->json([
                 'success' => false,
                 'message' => 'Le paiement est momentanément indisponible. Veuillez réessayer plus tard.',
@@ -279,8 +302,8 @@ class VerificationController extends Controller
             $verification->update(['payment_amount' => $amount]);
         }
 
-        $priceLabel = number_format((float) $amount, 2, ',', ' ') . '€';
-        $pointsLabel = IdentityVerification::getVerificationPointsCost($verification->type) . ' points';
+        $priceLabel = number_format((float) $amount, 2, ',', ' ').'€';
+        $pointsLabel = IdentityVerification::getVerificationPointsCost($verification->type).' points';
         $productName = $verification->type === 'profile_verification'
             ? "Vérification de profil ProxiPro ({$priceLabel})"
             : "Badge Prestataire Vérifié ProxiPro ({$priceLabel} / {$pointsLabel})";
@@ -293,14 +316,14 @@ class VerificationController extends Controller
                         'currency' => 'eur',
                         'product_data' => [
                             'name' => $productName,
-                            'description' => 'Frais de vérification pour ' . $user->name,
+                            'description' => 'Frais de vérification pour '.$user->name,
                         ],
                         'unit_amount' => (int) round($amount * 100),
                     ],
                     'quantity' => 1,
                 ]],
                 'mode' => 'payment',
-                'success_url' => route('verification.payment.success', ['id' => $verification->id]) . '?session_id={CHECKOUT_SESSION_ID}',
+                'success_url' => route('verification.payment.success', ['id' => $verification->id]).'?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => route('verification.payment.cancel', ['id' => $verification->id]),
                 'customer_email' => $user->email,
                 'client_reference_id' => (string) $verification->id,
@@ -339,6 +362,17 @@ class VerificationController extends Controller
         ]);
 
         $user = Auth::user();
+        $missingFields = $this->getProfileMissingFields($user);
+
+        if ($missingFields !== []) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Votre profil doit être entièrement complété avant l’envoi de la demande.',
+                'missing_profile_fields' => array_column($missingFields, 'label'),
+                'redirect' => route('profile.edit'),
+            ], 422);
+        }
+
         $verification = IdentityVerification::where('id', $request->verification_id)
             ->where('user_id', $user->id)
             ->where('payment_status', 'pending')
@@ -357,12 +391,12 @@ class VerificationController extends Controller
         if (($user->available_points ?? 0) < $pointsCost) {
             return response()->json([
                 'success' => false,
-                'message' => 'Points insuffisants. Il vous faut ' . $pointsCost . ' points. Vous avez ' . ($user->available_points ?? 0) . ' points.',
+                'message' => 'Points insuffisants. Il vous faut '.$pointsCost.' points. Vous avez '.($user->available_points ?? 0).' points.',
             ], 400);
         }
 
         // Deduct points
-        $user->spendPoints($pointsCost, 'verification_payment', 'Vérification de profil - ' . $verification->type);
+        $user->spendPoints($pointsCost, 'verification_payment', 'Vérification de profil - '.$verification->type);
 
         // Move documents to permanent folder
         $this->moveDocumentsToPermanent($verification);
@@ -370,7 +404,7 @@ class VerificationController extends Controller
         // Update verification status
         $verification->update([
             'payment_status' => 'paid',
-            'payment_id' => 'points_' . $pointsCost,
+            'payment_id' => 'points_'.$pointsCost,
             'paid_at' => now(),
             'status' => 'pending',
             'submitted_at' => now(),
@@ -390,7 +424,7 @@ class VerificationController extends Controller
     {
         $verification = IdentityVerification::findOrFail($id);
         $paymentConfirmed = false;
-        
+
         if ($verification->user_id !== Auth::id()) {
             abort(403);
         }
@@ -398,7 +432,7 @@ class VerificationController extends Controller
         if ($request->has('session_id')) {
             try {
                 $stripeSecret = config('services.stripe.secret');
-                if (!$stripeSecret) {
+                if (! $stripeSecret) {
                     throw new \RuntimeException('Stripe is not configured.');
                 }
 
@@ -415,7 +449,7 @@ class VerificationController extends Controller
                 if ($session->payment_status === 'paid' && $metadataMatches && $amountMatches) {
                     // Déplacer les documents vers dossier permanent
                     $this->moveDocumentsToPermanent($verification);
-                    
+
                     $verification->update([
                         'payment_status' => 'paid',
                         'payment_id' => $session->payment_intent,
@@ -426,11 +460,11 @@ class VerificationController extends Controller
                     $paymentConfirmed = true;
                 }
             } catch (\Exception $e) {
-                Log::error('Erreur vérification paiement: ' . $e->getMessage());
+                Log::error('Erreur vérification paiement: '.$e->getMessage());
             }
         }
 
-        if (!$paymentConfirmed && $verification->payment_status !== 'paid') {
+        if (! $paymentConfirmed && $verification->payment_status !== 'paid') {
             return redirect()->route('profile.show')->with('error', 'Le paiement n\'a pas pu être validé. Votre demande n\'a pas été envoyée à l\'administration.');
         }
 
@@ -447,7 +481,7 @@ class VerificationController extends Controller
     public function paymentCancel($id)
     {
         $verification = IdentityVerification::findOrFail($id);
-        
+
         if ($verification->user_id !== Auth::id()) {
             abort(403);
         }
@@ -485,7 +519,7 @@ class VerificationController extends Controller
         $disk = Storage::disk(config('filesystems.default', 'public'));
 
         if ($verification->document_front
-            && !IdentityVerificationDocument::isDatabasePath($verification->document_front)
+            && ! IdentityVerificationDocument::isDatabasePath($verification->document_front)
             && $disk->exists($verification->document_front)) {
             $newPath = str_replace('verifications-temp/', 'verifications/', $verification->document_front);
             $disk->move($verification->document_front, $newPath);
@@ -493,7 +527,7 @@ class VerificationController extends Controller
         }
 
         if ($verification->document_back
-            && !IdentityVerificationDocument::isDatabasePath($verification->document_back)
+            && ! IdentityVerificationDocument::isDatabasePath($verification->document_back)
             && $disk->exists($verification->document_back)) {
             $newPath = str_replace('verifications-temp/', 'verifications/', $verification->document_back);
             $disk->move($verification->document_back, $newPath);
@@ -501,7 +535,7 @@ class VerificationController extends Controller
         }
 
         if ($verification->selfie
-            && !IdentityVerificationDocument::isDatabasePath($verification->selfie)
+            && ! IdentityVerificationDocument::isDatabasePath($verification->selfie)
             && $disk->exists($verification->selfie)) {
             $newPath = str_replace('verifications-temp/', 'verifications/', $verification->selfie);
             $disk->move($verification->selfie, $newPath);
@@ -509,7 +543,7 @@ class VerificationController extends Controller
         }
 
         if ($verification->professional_document
-            && !IdentityVerificationDocument::isDatabasePath($verification->professional_document)
+            && ! IdentityVerificationDocument::isDatabasePath($verification->professional_document)
             && $disk->exists($verification->professional_document)) {
             $newPath = str_replace('verifications-temp/', 'verifications/', $verification->professional_document);
             $disk->move($verification->professional_document, $newPath);
@@ -528,8 +562,11 @@ class VerificationController extends Controller
 
         // Check profile completeness first
         $missingFields = $this->getProfileMissingFields($user);
-        if (!empty($missingFields)) {
-            return redirect()->back()->with('error', 'Veuillez compléter votre profil avant de soumettre votre vérification.');
+        if (! empty($missingFields)) {
+            return redirect()->back()->with(
+                'error',
+                'Complétez toutes les informations de votre profil avant de soumettre votre vérification.'
+            );
         }
 
         $files = $this->validateVerificationSubmission($request, $user);
@@ -572,7 +609,7 @@ class VerificationController extends Controller
     public function cancel()
     {
         $user = Auth::user();
-        
+
         $verification = IdentityVerification::where('user_id', $user->id)
             ->whereIn('status', ['awaiting_payment', 'pending'])
             ->first();
@@ -626,10 +663,10 @@ class VerificationController extends Controller
         $selfie = $request->file('selfie') ?: $request->file('selfie_camera');
 
         $errors = [];
-        if (!$front) {
+        if (! $front) {
             $errors['document_front'] = 'Ajoutez la page d’identité ou le recto de votre document.';
         }
-        if (!$selfie) {
+        if (! $selfie) {
             $errors['selfie'] = 'Ajoutez une photo de vous tenant votre document.';
         }
         if ($errors) {
@@ -734,6 +771,7 @@ class VerificationController extends Controller
         $databaseId = IdentityVerificationDocument::idFromPath($path);
         if ($databaseId) {
             IdentityVerificationDocument::whereKey($databaseId)->delete();
+
             return;
         }
 

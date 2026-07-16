@@ -41,7 +41,9 @@
                                 <input type="file" id="avatar" name="avatar" class="d-none" accept="image/*">
                                 <input type="hidden" id="avatar_cropped" name="avatar_cropped" value="">
                             </div>
-                            <div class="text-muted small mt-2">Astuce: recadrez et zoomez votre photo avant enregistrement.</div>
+                            <div class="text-muted small mt-2">
+                                La photo de profil est obligatoire avant une demande de vérification. Recadrez-la avant l'enregistrement.
+                            </div>
                             @error('avatar')
                                 <div class="text-danger small mt-2">{{ $message }}</div>
                             @enderror
@@ -70,33 +72,63 @@
                             
                             <!-- Téléphone -->
                             <div class="col-md-6">
-                                <label for="phone" class="form-label">Téléphone</label>
+                                <label for="phone" class="form-label">Téléphone <span class="text-danger">*</span></label>
                                 <input type="tel" class="form-control @error('phone') is-invalid @enderror" 
                                        id="phone" name="phone" value="{{ old('phone', $user->phone) }}" 
-                                       placeholder="0639 XX XX XX">
+                                       placeholder="Votre numéro de téléphone" required>
                                 @error('phone')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             
-                            <!-- Localisation -->
+                            <!-- Pays -->
                             <div class="col-md-6">
-                                <label for="location" class="form-label">Localisation</label>
-                                <input type="text" class="form-control @error('location') is-invalid @enderror" 
-                                       id="location" name="location" value="{{ old('location', $user->location) }}" 
-                                       placeholder="Mamoudzou, Mayotte">
-                                @error('location')
+                                <label for="country" class="form-label">Pays <span class="text-danger">*</span></label>
+                                <select class="form-select @error('country') is-invalid @enderror" id="country" name="country" required>
+                                    <option value="">Sélectionnez votre pays</option>
+                                    @foreach(config('locations.countries', []) as $countryName => $flag)
+                                        <option value="{{ $countryName }}" {{ old('country', $user->country) === $countryName ? 'selected' : '' }}>{{ $flag }} {{ $countryName }}</option>
+                                    @endforeach
+                                </select>
+                                @error('country')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="city" class="form-label">Ville <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('city') is-invalid @enderror" id="city" name="city"
+                                       value="{{ old('city', $user->city) }}" placeholder="Votre ville" required>
+                                @error('city')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-8">
+                                <label for="address" class="form-label">Adresse <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('address') is-invalid @enderror" id="address" name="address"
+                                       value="{{ old('address', $user->address) }}" placeholder="Numéro et nom de voie" required>
+                                @error('address')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="postal_code" class="form-label">Code postal <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('postal_code') is-invalid @enderror" id="postal_code" name="postal_code"
+                                       value="{{ old('postal_code', $user->postal_code) }}" placeholder="Code postal" required>
+                                @error('postal_code')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             
                             <!-- Bio -->
                             <div class="col-12">
-                                <label for="bio" class="form-label">À propos de moi</label>
+                                <label for="bio" class="form-label">À propos de moi <span class="text-danger">*</span></label>
                                 <textarea class="form-control @error('bio') is-invalid @enderror" 
                                           id="bio" name="bio" rows="4" 
                                           placeholder="Décrivez-vous en quelques mots..." 
-                                          maxlength="500">{{ old('bio', $user->bio) }}</textarea>
+                                          maxlength="500" required>{{ old('bio', $user->bio) }}</textarea>
                                 <div class="form-text">
                                     <span id="bioCount">{{ strlen($user->bio ?? '') }}</span>/500 caractères
                                 </div>

@@ -41,4 +41,21 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    /**
+     * Indicate that all common profile fields required for identity verification are filled.
+     */
+    public function completeForVerification(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'phone' => '+33612345678',
+            'avatar' => 'avatars/test-profile.jpg',
+            'bio' => 'Profil complet utilisé pour les tests de vérification.',
+            'country' => 'France',
+            'city' => 'Paris',
+            'address' => '10 rue de la Paix',
+            'postal_code' => '75002',
+            'email_verified_at' => now(),
+        ]);
+    }
 }

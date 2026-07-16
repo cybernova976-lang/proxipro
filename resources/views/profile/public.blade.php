@@ -27,7 +27,9 @@
 @section('content')
 @php
     $isOwnProfile = auth()->check() && auth()->id() === $user->id;
-    $profileVerified = (bool) ($user->is_verified || $user->identity_verified);
+    $profileVerified = $user->hasVerifiedProfileBadge();
+    $profileCompleteForVerification = $user->hasCompleteVerificationProfile();
+    $isParticularAccount = $user->user_type !== 'professionnel' && $user->account_type !== 'professionnel';
     $primaryService = $user->relationLoaded('services') ? $user->services->first() : null;
     $displayProfession = $user->profession
         ?: ($primaryService?->subcategory ?? $primaryService?->category ?? null);
@@ -37,21 +39,28 @@
     $showServiceCategory = $serviceCategory !== '' && $normalizedCategory !== $normalizedProfession;
     $providerAction = null;
     if ($isOwnProfile) {
-        if ($user->isOAuthUser() && !$user->profile_completed && !$user->is_service_provider) {
+        if ($isParticularAccount && !$user->is_service_provider && !$profileCompleteForVerification) {
             $providerAction = [
-                'target' => '#becomeProviderOAuthModal',
-                'icon' => 'fas fa-rocket',
-                'label' => 'Devenir prestataire',
-                'class' => 'btn-success',
+                'href' => route('profile.edit'),
+                'icon' => 'fas fa-user-edit',
+                'label' => 'Compléter mon profil',
+                'class' => 'btn-warning',
             ];
-        } elseif (!$user->isOAuthUser() && (!$user->user_type || $user->user_type === 'particulier') && !$user->is_service_provider) {
+        } elseif ($isParticularAccount && !$user->is_service_provider && !$profileVerified) {
+            $providerAction = [
+                'href' => route('verification.index'),
+                'icon' => 'fas fa-shield-alt',
+                'label' => 'Vérifier mon profil',
+                'class' => 'btn-outline-success',
+            ];
+        } elseif ($isParticularAccount && !$user->is_service_provider) {
             $providerAction = [
                 'target' => '#becomeProviderModal',
                 'icon' => 'fas fa-user-plus',
                 'label' => 'Devenir prestataire',
                 'class' => 'btn-success',
             ];
-        } elseif ($user->is_service_provider && (!$user->user_type || $user->user_type === 'particulier')) {
+        } elseif ($user->isParticulierPrestataire()) {
             $providerAction = [
                 'target' => '#becomeProviderModal',
                 'icon' => 'fas fa-check-circle',
@@ -96,7 +105,15 @@
                             @endif
                         @endauth
                     </div>
-                    
+
+                    @if($user->isParticulierPrestataire())
+                        <div class="mb-3">
+                            <span class="badge rounded-pill px-3 py-2" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; white-space: normal;">
+                                <i class="fas fa-user-cog me-1"></i>Particulier prestataire non professionnel
+                            </span>
+                        </div>
+                    @endif
+
                     <!-- Name + Pro Badge -->
                     <div class="d-flex align-items-center justify-content-center flex-wrap gap-2 mb-1">
                         <h4 class="fw-bold mb-0">{{ $user->name }}</h4>
@@ -129,7 +146,7 @@
                             </span>
                         @endif
                     </div>
-                    
+
                     <!-- Job Title / Profession -->
                     <p class="text-primary fw-semibold mb-1" style="word-break: break-word; overflow-wrap: break-word;">
                         @if($displayProfession)
@@ -232,9 +249,15 @@
                                 </form>
                             @else
                                 @if($providerAction)
-                                    <button type="button" class="btn {{ $providerAction['class'] }} w-100 mb-2" data-bs-toggle="modal" data-bs-target="{{ $providerAction['target'] }}">
-                                        <i class="{{ $providerAction['icon'] }} me-2"></i><span translate="no">{{ $providerAction['label'] }}</span>
-                                    </button>
+                                    @if(isset($providerAction['href']))
+                                        <a href="{{ $providerAction['href'] }}" class="btn {{ $providerAction['class'] }} w-100 mb-2">
+                                            <i class="{{ $providerAction['icon'] }} me-2"></i><span translate="no">{{ $providerAction['label'] }}</span>
+                                        </a>
+                                    @else
+                                        <button type="button" class="btn {{ $providerAction['class'] }} w-100 mb-2" data-bs-toggle="modal" data-bs-target="{{ $providerAction['target'] }}">
+                                            <i class="{{ $providerAction['icon'] }} me-2"></i><span translate="no">{{ $providerAction['label'] }}</span>
+                                        </button>
+                                    @endif
                                 @endif
                                 <button type="button" class="btn btn-outline-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                                     <i class="fas fa-pen me-2"></i><span translate="no">Modifier mon profil</span>

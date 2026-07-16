@@ -949,6 +949,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Remplir les pays
                 renderCountries(data.countries);
+            } else {
+                showError(data.message || 'Complétez et vérifiez votre profil avant de devenir prestataire.');
+                btnNext.disabled = true;
+                btnSubmit.disabled = true;
             }
         } catch (error) {
             console.error('Erreur chargement données:', error);

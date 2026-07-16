@@ -1672,6 +1672,11 @@
                 showSuccessStep(data);
             } else {
                 showError(data.message || 'Une erreur est survenue.');
+                if (data.redirect) {
+                    setTimeout(() => {
+                        window.location.href = data.redirect;
+                    }, 1200);
+                }
             }
         } catch (error) {
             console.error('Error:', error);

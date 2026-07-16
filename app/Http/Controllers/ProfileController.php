@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
@@ -62,7 +63,10 @@ class ProfileController extends Controller
             'email' => 'required|email|max:255|unique:users,email,'.$user->id,
             'phone' => 'nullable|string|max:20',
             'bio' => 'nullable|string|max:500',
-            'location' => 'nullable|string|max:255',
+            'country' => ['nullable', 'string', 'max:100', Rule::in(array_keys(config('locations.countries', [])))],
+            'city' => 'nullable|string|max:100',
+            'address' => 'nullable|string|max:500',
+            'postal_code' => 'nullable|string|max:30',
             'profession' => 'nullable|string|max:255',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'avatar_cropped' => 'nullable|string',
@@ -72,7 +76,17 @@ class ProfileController extends Controller
 
         $request->validate($rules);
 
-        $data = $request->only(['name', 'email', 'phone', 'bio', 'location', 'profession']);
+        $data = $request->only([
+            'name',
+            'email',
+            'phone',
+            'bio',
+            'country',
+            'city',
+            'address',
+            'postal_code',
+            'profession',
+        ]);
 
         // Gérer le tarif horaire (prestataires uniquement)
         if ($user->user_type === 'professionnel' || $user->is_service_provider || $user->hasActiveProSubscription() || $user->hasCompletedProOnboarding()) {

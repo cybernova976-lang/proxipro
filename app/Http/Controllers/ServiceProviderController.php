@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\UserService;
 use App\Models\ProSubscription;
+use App\Models\UserService;
 use App\Support\ProviderSubscriptionPlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,8 +12,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Stripe\Stripe;
 use Stripe\Checkout\Session as StripeSession;
+use Stripe\Stripe;
 
 class ServiceProviderController extends Controller
 {
@@ -26,11 +25,12 @@ class ServiceProviderController extends Controller
         $categories = [];
         foreach (config('categories.services') as $name => $data) {
             $categories[$name] = [
-                'icon'           => $data['fa_icon'],
-                'color'          => $data['color'],
-                'subcategories'  => $data['subcategories'],
+                'icon' => $data['fa_icon'],
+                'color' => $data['color'],
+                'subcategories' => $data['subcategories'],
             ];
         }
+
         return $categories;
     }
 
@@ -40,6 +40,17 @@ class ServiceProviderController extends Controller
     public function showForm()
     {
         $user = Auth::user();
+
+        if (! $user->is_service_provider && ! $user->hasCompleteVerificationProfile()) {
+            return redirect()->route('profile.edit')
+                ->with('error', 'Complétez toutes les informations de votre profil avant de devenir prestataire.');
+        }
+
+        if (! $user->is_service_provider && ! $user->hasVerifiedProfileBadge()) {
+            return redirect()->route('verification.index')
+                ->with('error', 'Vous devez obtenir le badge « Profil vérifié » avant de devenir prestataire.');
+        }
+
         $categories = $this->getServiceCategories();
         $existingServices = $user->services()->get();
 
@@ -53,7 +64,7 @@ class ServiceProviderController extends Controller
     {
         return response()->json([
             'success' => true,
-            'categories' => $this->getServiceCategories()
+            'categories' => $this->getServiceCategories(),
         ]);
     }
 
@@ -82,34 +93,28 @@ class ServiceProviderController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
-        if ($request->boolean('enforce_profile_completion')) {
-            $missingProfileFields = [];
+        if (! $user->is_service_provider) {
+            $missingProfileFields = $user->verificationProfileMissingFields();
 
-            if (blank($user->name)) {
-                $missingProfileFields[] = 'nom';
-            }
-            if (blank($user->phone)) {
-                $missingProfileFields[] = 'téléphone';
-            }
-            if (blank($user->city) && blank($user->detected_city)) {
-                $missingProfileFields[] = 'ville';
-            }
-            if (blank($user->country) && blank($user->detected_country)) {
-                $missingProfileFields[] = 'pays';
-            }
-            if (blank($user->avatar)) {
-                $missingProfileFields[] = 'photo de profil';
-            }
-
-            if (!empty($missingProfileFields)) {
+            if ($missingProfileFields !== []) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Complétez d’abord votre profil prestataire : ' . implode(', ', $missingProfileFields) . '.',
-                    'missing_profile_fields' => $missingProfileFields,
+                    'message' => 'Complétez toutes les informations de votre profil avant de devenir prestataire.',
+                    'missing_profile_fields' => array_column($missingProfileFields, 'label'),
+                    'redirect' => route('profile.edit'),
+                ], 422);
+            }
+
+            if (! $user->hasVerifiedProfileBadge()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vous devez obtenir le badge « Profil vérifié » avant de devenir prestataire.',
+                    'profile_verification_required' => true,
+                    'redirect' => route('verification.index'),
                 ], 422);
             }
         }
@@ -160,7 +165,12 @@ class ServiceProviderController extends Controller
                 'service_subcategories' => $subcategories,
             ];
 
-            if (blank($user->profession) && !empty($subcategories)) {
+            if ($user->user_type !== 'professionnel' && $user->account_type !== 'professionnel') {
+                $profileUpdate['user_type'] = 'particulier';
+                $profileUpdate['account_type'] = 'particulier';
+            }
+
+            if (blank($user->profession) && ! empty($subcategories)) {
                 $profileUpdate['profession'] = $subcategories[0];
             }
 
@@ -179,7 +189,7 @@ class ServiceProviderController extends Controller
                 if (isset($notifPrefs['pro_notifications_sms'])) {
                     $notifUpdate['pro_notifications_sms'] = (bool) $notifPrefs['pro_notifications_sms'];
                 }
-                if (!empty($notifUpdate)) {
+                if (! empty($notifUpdate)) {
                     $user->update($notifUpdate);
                 }
             }
@@ -188,7 +198,7 @@ class ServiceProviderController extends Controller
 
             // Si un plan est sélectionné, vérifier d'abord si l'utilisateur a déjà un abonnement actif
             if ($request->filled('plan') && in_array($request->plan, ['monthly', 'annual'])) {
-                
+
                 // Vérifier si l'utilisateur a déjà un abonnement actif
                 if ($user->hasActiveProSubscription()) {
                     return response()->json([
@@ -203,7 +213,7 @@ class ServiceProviderController extends Controller
 
                 $planType = $request->plan;
                 $planConfig = ProviderSubscriptionPlans::get($planType);
-                if (!$planConfig || empty($planConfig['enabled'])) {
+                if (! $planConfig || empty($planConfig['enabled'])) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Cet abonnement n’est pas disponible pour le moment.',
@@ -215,7 +225,7 @@ class ServiceProviderController extends Controller
                 session([
                     'provider_subscription' => [
                         'plan' => $planType,
-                        'categories' => array_map(fn($s) => $s['main_category'], $request->services),
+                        'categories' => array_map(fn ($s) => $s['main_category'], $request->services),
                     ],
                 ]);
 
@@ -223,7 +233,7 @@ class ServiceProviderController extends Controller
                     Stripe::setApiKey(config('services.stripe.secret'));
 
                     $stripeCustomerId = $user->stripe_id;
-                    if (!$stripeCustomerId) {
+                    if (! $stripeCustomerId) {
                         $customer = \Stripe\Customer::create([
                             'email' => $user->email,
                             'name' => $user->company_name ?? $user->name,
@@ -248,7 +258,7 @@ class ServiceProviderController extends Controller
                             'quantity' => 1,
                         ]],
                         'mode' => 'payment',
-                        'success_url' => route('service-provider.payment.success') . '?session_id={CHECKOUT_SESSION_ID}',
+                        'success_url' => route('service-provider.payment.success').'?session_id={CHECKOUT_SESSION_ID}',
                         'cancel_url' => route('service-provider.payment.cancel'),
                         'metadata' => [
                             'user_id' => $user->id,
@@ -266,7 +276,8 @@ class ServiceProviderController extends Controller
                     ]);
 
                 } catch (\Exception $e) {
-                    \Log::error('ServiceProvider Stripe error: ' . $e->getMessage());
+                    \Log::error('ServiceProvider Stripe error: '.$e->getMessage());
+
                     return response()->json([
                         'success' => false,
                         'message' => 'Erreur lors de la création du paiement. Veuillez réessayer.',
@@ -282,15 +293,16 @@ class ServiceProviderController extends Controller
                 'is_service_provider' => true,
                 'has_subscription' => false,
                 'plan' => null,
-                'redirect' => route('service-provider.mes-services')
+                'redirect' => route('service-provider.mes-services'),
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue. Veuillez réessayer.',
-                'error' => config('app.debug') ? $e->getMessage() : null
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
@@ -303,7 +315,7 @@ class ServiceProviderController extends Controller
         $sessionId = $request->get('session_id');
         $user = Auth::user();
 
-        if (!$sessionId || !$user) {
+        if (! $sessionId || ! $user) {
             return redirect()->route('feed')->with('error', 'Session de paiement invalide.');
         }
 
@@ -358,16 +370,18 @@ class ServiceProviderController extends Controller
                 DB::commit();
                 session()->forget('provider_subscription');
 
-                return redirect()->route('service-provider.mes-services')->with('success', 'Félicitations ! Votre abonnement ' . ($plan === 'annual' ? 'annuel' : 'mensuel') . ' est activé !');
+                return redirect()->route('service-provider.mes-services')->with('success', 'Félicitations ! Votre abonnement '.($plan === 'annual' ? 'annuel' : 'mensuel').' est activé !');
 
             } catch (\Exception $e) {
                 DB::rollBack();
-                \Log::error('ServiceProvider payment success DB error: ' . $e->getMessage());
+                \Log::error('ServiceProvider payment success DB error: '.$e->getMessage());
+
                 return redirect()->route('feed')->with('error', 'Erreur lors de l\'activation. Contactez le support.');
             }
 
         } catch (\Exception $e) {
-            \Log::error('ServiceProvider payment verification error: ' . $e->getMessage());
+            \Log::error('ServiceProvider payment verification error: '.$e->getMessage());
+
             return redirect()->route('feed')->with('error', 'Erreur de vérification du paiement.');
         }
     }
@@ -378,6 +392,7 @@ class ServiceProviderController extends Controller
     public function paymentCancel()
     {
         session()->forget('provider_subscription');
+
         return redirect()->route('service-provider.mes-services')->with('info', 'Paiement annulé. Votre profil prestataire est actif mais sans abonnement.');
     }
 
@@ -407,18 +422,18 @@ class ServiceProviderController extends Controller
         try {
             // Désactiver tous les services
             $user->services()->update(['is_active' => false]);
-            
+
             // Désactiver le statut prestataire
             $user->update(['is_service_provider' => false]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Votre statut de prestataire a été désactivé. Vous n\'apparaîtrez plus dans les recherches de professionnels.'
+                'message' => 'Votre statut de prestataire a été désactivé. Vous n\'apparaîtrez plus dans les recherches de professionnels.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Une erreur est survenue.'
+                'message' => 'Une erreur est survenue.',
             ], 500);
         }
     }
@@ -435,7 +450,7 @@ class ServiceProviderController extends Controller
             'success' => true,
             'is_service_provider' => $user->is_service_provider,
             'services' => $services,
-            'categories' => $this->getServiceCategories()
+            'categories' => $this->getServiceCategories(),
         ]);
     }
 
@@ -462,7 +477,7 @@ class ServiceProviderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Service mis à jour.',
-            'service' => $service
+            'service' => $service,
         ]);
     }
 
@@ -483,7 +498,7 @@ class ServiceProviderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Service supprimé.',
-            'is_service_provider' => $user->is_service_provider
+            'is_service_provider' => $user->is_service_provider,
         ]);
     }
 
@@ -547,7 +562,7 @@ class ServiceProviderController extends Controller
             try {
                 $defaultDisk = config('filesystems.default', 'public');
 
-                if ($user->avatar && !str_starts_with($user->avatar, 'http')) {
+                if ($user->avatar && ! str_starts_with($user->avatar, 'http')) {
                     try {
                         Storage::disk($defaultDisk)->delete($user->avatar);
                     } catch (\Throwable $e) {
@@ -560,11 +575,11 @@ class ServiceProviderController extends Controller
                 }
 
                 $extension = $request->file('avatar')->extension() ?: 'jpg';
-                $path = 'avatars/' . Str::uuid() . '.' . $extension;
+                $path = 'avatars/'.Str::uuid().'.'.$extension;
                 Storage::disk($defaultDisk)->putFileAs('avatars', $request->file('avatar'), basename($path));
                 $data['avatar'] = $path;
             } catch (\Throwable $e) {
-                Log::error('Erreur upload avatar parcours prestataire: ' . $e->getMessage(), [
+                Log::error('Erreur upload avatar parcours prestataire: '.$e->getMessage(), [
                     'user_id' => $user->id,
                     'exception' => get_class($e),
                 ]);
@@ -576,7 +591,7 @@ class ServiceProviderController extends Controller
             }
         }
 
-        if (!empty($data)) {
+        if (! empty($data)) {
             $user->update($data);
         }
 

@@ -234,6 +234,48 @@ class User extends Authenticatable
     }
 
     /**
+     * Le badge public « Profil vérifié » est accordé après validation d'identité.
+     */
+    public function hasVerifiedProfileBadge(): bool
+    {
+        return (bool) ($this->is_verified || $this->identity_verified);
+    }
+
+    /**
+     * Champs indispensables avant de pouvoir demander la vérification du profil.
+     *
+     * @return array<int, array{field: string, label: string}>
+     */
+    public function verificationProfileMissingFields(): array
+    {
+        $requirements = [
+            ['field' => 'name', 'label' => 'Nom complet', 'complete' => filled($this->name)],
+            ['field' => 'email', 'label' => 'Adresse e-mail', 'complete' => filled($this->email)],
+            ['field' => 'phone', 'label' => 'Numéro de téléphone', 'complete' => filled($this->phone)],
+            ['field' => 'avatar', 'label' => 'Photo de profil', 'complete' => filled($this->avatar)],
+            ['field' => 'bio', 'label' => 'Présentation du profil', 'complete' => filled($this->bio)],
+            ['field' => 'country', 'label' => 'Pays', 'complete' => filled($this->country)],
+            ['field' => 'city', 'label' => 'Ville', 'complete' => filled($this->city)],
+            ['field' => 'address', 'label' => 'Adresse', 'complete' => filled($this->address)],
+            ['field' => 'postal_code', 'label' => 'Code postal', 'complete' => filled($this->postal_code)],
+        ];
+
+        return collect($requirements)
+            ->reject(fn (array $requirement) => $requirement['complete'])
+            ->map(fn (array $requirement) => [
+                'field' => $requirement['field'],
+                'label' => $requirement['label'],
+            ])
+            ->values()
+            ->all();
+    }
+
+    public function hasCompleteVerificationProfile(): bool
+    {
+        return $this->verificationProfileMissingFields() === [];
+    }
+
+    /**
      * Relation avec les services/compétences du prestataire
      */
     public function services()
@@ -262,7 +304,9 @@ class User extends Authenticatable
      */
     public function isParticulierPrestataire(): bool
     {
-        return $this->user_type === 'particulier' && $this->is_service_provider;
+        return $this->is_service_provider
+            && $this->user_type !== 'professionnel'
+            && $this->account_type !== 'professionnel';
     }
 
     /**

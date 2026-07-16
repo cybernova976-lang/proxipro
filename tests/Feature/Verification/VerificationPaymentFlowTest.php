@@ -18,7 +18,7 @@ class VerificationPaymentFlowTest extends TestCase
     {
         Storage::fake(config('filesystems.default', 'public'));
 
-        $user = User::factory()->create([
+        $user = User::factory()->completeForVerification()->create([
             'identity_verified' => false,
             'is_verified' => false,
         ]);
@@ -57,7 +57,7 @@ class VerificationPaymentFlowTest extends TestCase
     {
         Storage::fake(config('filesystems.default', 'public'));
 
-        $user = User::factory()->create([
+        $user = User::factory()->completeForVerification()->create([
             'available_points' => IdentityVerification::getVerificationPointsCost('profile_verification'),
             'identity_verified' => false,
             'is_verified' => false,
@@ -124,7 +124,7 @@ class VerificationPaymentFlowTest extends TestCase
 
     public function test_profile_pages_show_public_verification_badge_and_owner_action(): void
     {
-        $owner = User::factory()->create([
+        $owner = User::factory()->completeForVerification()->create([
             'identity_verified' => false,
             'is_verified' => false,
             'profession' => 'Plombier',
@@ -148,8 +148,6 @@ class VerificationPaymentFlowTest extends TestCase
 
         $profilePage
             ->assertOk()
-            ->assertSee('Devenir prestataire')
-            ->assertSeeInOrder(['Devenir prestataire', 'Modifier mon profil'])
             ->assertDontSee('Profil non vérifié')
             ->assertSee('Vérifier mon profil')
             ->assertDontSee('Prestataire de devenir')
@@ -157,13 +155,21 @@ class VerificationPaymentFlowTest extends TestCase
             ->assertSee('Electricien');
 
         $this->assertSame(1, substr_count($profilePage->getContent(), 'Plombier'));
+
+        $owner->update(['identity_verified' => true]);
+
+        $this->actingAs($owner)
+            ->get(route('profile.show'))
+            ->assertOk()
+            ->assertSee('Devenir prestataire')
+            ->assertSeeInOrder(['Devenir prestataire', 'Modifier mon profil']);
     }
 
     public function test_mobile_camera_fields_are_accepted_for_identity_verification(): void
     {
         Storage::fake(config('filesystems.default', 'public'));
 
-        $user = User::factory()->create([
+        $user = User::factory()->completeForVerification()->create([
             'account_type' => 'particulier',
             'identity_verified' => false,
         ]);
@@ -194,7 +200,7 @@ class VerificationPaymentFlowTest extends TestCase
             'filesystems.disks.s3.endpoint' => 'https://unreachable.invalid',
         ]);
 
-        $user = User::factory()->create([
+        $user = User::factory()->completeForVerification()->create([
             'identity_verified' => false,
         ]);
 
@@ -257,7 +263,7 @@ class VerificationPaymentFlowTest extends TestCase
 
     public function test_verification_form_exposes_the_inline_camera_and_mobile_publish_action(): void
     {
-        $user = User::factory()->create([
+        $user = User::factory()->completeForVerification()->create([
             'identity_verified' => false,
         ]);
 
@@ -277,7 +283,7 @@ class VerificationPaymentFlowTest extends TestCase
     {
         Storage::fake(config('filesystems.default', 'public'));
 
-        $user = User::factory()->create([
+        $user = User::factory()->completeForVerification()->create([
             'account_type' => 'particulier',
             'identity_verified' => false,
         ]);
@@ -303,7 +309,7 @@ class VerificationPaymentFlowTest extends TestCase
     {
         Storage::fake(config('filesystems.default', 'public'));
 
-        $user = User::factory()->create([
+        $user = User::factory()->completeForVerification()->create([
             'account_type' => 'particulier',
             'user_type' => 'professionnel',
             'is_service_provider' => true,
@@ -324,5 +330,44 @@ class VerificationPaymentFlowTest extends TestCase
         $this->assertNull($verification->professional_document);
         $this->assertNull($verification->professional_document_type);
         $this->assertSame('pending', $verification->professional_document_status);
+    }
+
+    public function test_incomplete_profile_cannot_submit_identity_verification(): void
+    {
+        Storage::fake(config('filesystems.default', 'public'));
+
+        $user = User::factory()->create([
+            'phone' => null,
+            'avatar' => null,
+            'bio' => null,
+            'country' => null,
+            'city' => null,
+            'address' => null,
+            'postal_code' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('verification.index'))
+            ->assertOk()
+            ->assertSee('Profil incomplet')
+            ->assertSee('Numéro de téléphone')
+            ->assertSee('Photo de profil')
+            ->assertSee('Présentation du profil')
+            ->assertSee('Compléter mon profil')
+            ->assertSee('id="submitVerificationBtn" disabled', false);
+
+        $response = $this->actingAs($user)
+            ->from(route('verification.index'))
+            ->post(route('verification.store'), [
+                'document_type' => 'id_card',
+                'document_front' => UploadedFile::fake()->create('front.jpg', 12, 'image/jpeg'),
+                'selfie' => UploadedFile::fake()->create('selfie.jpg', 12, 'image/jpeg'),
+            ]);
+
+        $response->assertRedirect(route('verification.index'))
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseCount('identity_verifications', 0);
+        $this->assertDatabaseCount('identity_verification_documents', 0);
     }
 }

@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\UserService;
 use App\Models\ProSubscription;
+use App\Models\UserService;
 use App\Support\ProviderSubscriptionPlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Stripe\Stripe;
 use Stripe\Checkout\Session as StripeSession;
+use Stripe\Stripe;
 
 class BecomeProviderController extends Controller
 {
@@ -39,11 +38,12 @@ class BecomeProviderController extends Controller
         $categories = [];
         foreach (config('categories.services') as $name => $data) {
             $categories[$name] = [
-                'icon'           => $data['icon'],
-                'color'          => $data['color'],
-                'subcategories'  => $data['subcategories'],
+                'icon' => $data['icon'],
+                'color' => $data['color'],
+                'subcategories' => $data['subcategories'],
             ];
         }
+
         return $categories;
     }
 
@@ -53,7 +53,26 @@ class BecomeProviderController extends Controller
     public function getFormData()
     {
         $user = Auth::user();
-        
+
+        $missingProfileFields = $user->verificationProfileMissingFields();
+        if ($missingProfileFields !== []) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Complétez toutes les informations de votre profil avant de devenir prestataire.',
+                'missing_profile_fields' => array_column($missingProfileFields, 'label'),
+                'redirect' => route('profile.edit'),
+            ], 422);
+        }
+
+        if (! $user->hasVerifiedProfileBadge()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous devez obtenir le badge « Profil vérifié » avant de devenir prestataire.',
+                'profile_verification_required' => true,
+                'redirect' => route('verification.index'),
+            ], 422);
+        }
+
         return response()->json([
             'success' => true,
             'user' => [
@@ -74,10 +93,29 @@ class BecomeProviderController extends Controller
     {
         $user = Auth::user();
 
+        $missingProfileFields = $user->verificationProfileMissingFields();
+        if ($missingProfileFields !== []) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Complétez toutes les informations de votre profil avant de devenir prestataire.',
+                'missing_profile_fields' => array_column($missingProfileFields, 'label'),
+                'redirect' => route('profile.edit'),
+            ], 422);
+        }
+
+        if (! $user->hasVerifiedProfileBadge()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous devez obtenir le badge « Profil vérifié » avant de devenir prestataire.',
+                'profile_verification_required' => true,
+                'redirect' => route('verification.index'),
+            ], 422);
+        }
+
         // Validation
         $rules = [
-            'business_type' => 'required|in:entreprise,auto_entrepreneur',
-            'company_name' => 'required|string|max:255',
+            'business_type' => 'nullable|in:entreprise,auto_entrepreneur',
+            'company_name' => 'nullable|string|max:255',
             'category' => 'required|string|max:100',
             'subcategory' => 'required|string|max:100',
             'country' => 'required|string|max:100',
@@ -86,9 +124,7 @@ class BecomeProviderController extends Controller
         ];
 
         $messages = [
-            'business_type.required' => 'Veuillez choisir votre type d\'activité.',
             'business_type.in' => 'Type d\'activité invalide.',
-            'company_name.required' => 'Le nom commercial est obligatoire.',
             'category.required' => 'Veuillez sélectionner une catégorie.',
             'subcategory.required' => 'Veuillez sélectionner une sous-catégorie (métier).',
             'country.required' => 'Veuillez sélectionner votre pays.',
@@ -100,7 +136,7 @@ class BecomeProviderController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -109,10 +145,6 @@ class BecomeProviderController extends Controller
 
             // Mettre à jour le nom si différent
             $updateData = [
-                'account_type' => 'professionnel',
-                'business_type' => $request->business_type,
-                'company_name' => $request->company_name,
-                'user_type' => 'professionnel',
                 'profession' => $request->subcategory, // Le métier est la sous-catégorie
                 'country' => $request->country,
                 'city' => $request->city,
@@ -120,12 +152,12 @@ class BecomeProviderController extends Controller
                 'service_provider_since' => now(),
                 'profile_completed' => true,
                 'profile_completed_at' => now(),
-                'max_active_ads' => $request->business_type === 'entreprise' ? 20 : 10,
+                'max_active_ads' => $user->max_active_ads ?? 5,
             ];
 
-            // Si le nom commercial est différent, on le met comme nom principal
-            if ($request->company_name !== $user->name) {
-                $updateData['name'] = $request->company_name;
+            if ($user->user_type !== 'professionnel' && $user->account_type !== 'professionnel') {
+                $updateData['account_type'] = 'particulier';
+                $updateData['user_type'] = 'particulier';
             }
 
             $user->update($updateData);
@@ -150,7 +182,7 @@ class BecomeProviderController extends Controller
             if ($request->filled('plan') && in_array($request->plan, ['monthly', 'annual'])) {
                 $planType = $request->plan;
                 $planConfig = ProviderSubscriptionPlans::get($planType);
-                if (!$planConfig || empty($planConfig['enabled'])) {
+                if (! $planConfig || empty($planConfig['enabled'])) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Cet abonnement n’est pas disponible pour le moment.',
@@ -171,7 +203,7 @@ class BecomeProviderController extends Controller
                     Stripe::setApiKey(config('services.stripe.secret'));
 
                     $stripeCustomerId = $user->stripe_id;
-                    if (!$stripeCustomerId) {
+                    if (! $stripeCustomerId) {
                         $customer = \Stripe\Customer::create([
                             'email' => $user->email,
                             'name' => $user->company_name ?? $user->name,
@@ -196,7 +228,7 @@ class BecomeProviderController extends Controller
                             'quantity' => 1,
                         ]],
                         'mode' => 'payment',
-                        'success_url' => route('become-provider.payment.success') . '?session_id={CHECKOUT_SESSION_ID}',
+                        'success_url' => route('become-provider.payment.success').'?session_id={CHECKOUT_SESSION_ID}',
                         'cancel_url' => route('become-provider.payment.cancel'),
                         'metadata' => [
                             'user_id' => $user->id,
@@ -214,7 +246,8 @@ class BecomeProviderController extends Controller
                     ]);
 
                 } catch (\Exception $e) {
-                    \Log::error('BecomeProvider Stripe error: ' . $e->getMessage());
+                    \Log::error('BecomeProvider Stripe error: '.$e->getMessage());
+
                     return response()->json([
                         'success' => false,
                         'message' => 'Erreur lors de la création du paiement. Veuillez réessayer.',
@@ -229,19 +262,19 @@ class BecomeProviderController extends Controller
                 'user' => [
                     'name' => $user->name,
                     'profession' => $user->profession,
-                    'business_type' => $user->business_type,
+                    'account_type' => $user->account_type,
                     'is_service_provider' => true,
                 ],
                 'has_subscription' => false,
                 'plan' => null,
                 'show_verification' => true,
-                'redirect' => route('pro.dashboard')
+                'redirect' => route('pro.dashboard'),
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('BecomeProvider error: ' . $e->getMessage());
-            
+            \Log::error('BecomeProvider error: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue. Veuillez réessayer.',
@@ -257,7 +290,7 @@ class BecomeProviderController extends Controller
         $sessionId = $request->get('session_id');
         $user = Auth::user();
 
-        if (!$sessionId || !$user) {
+        if (! $sessionId || ! $user) {
             return redirect()->route('feed')->with('error', 'Session de paiement invalide.');
         }
 
@@ -310,16 +343,18 @@ class BecomeProviderController extends Controller
                 DB::commit();
                 session()->forget('become_provider_subscription');
 
-                return redirect()->route('pro.dashboard')->with('success', 'Félicitations ! Votre abonnement ' . ($plan === 'annual' ? 'annuel' : 'mensuel') . ' est activé !');
+                return redirect()->route('pro.dashboard')->with('success', 'Félicitations ! Votre abonnement '.($plan === 'annual' ? 'annuel' : 'mensuel').' est activé !');
 
             } catch (\Exception $e) {
                 DB::rollBack();
-                \Log::error('BecomeProvider payment success DB error: ' . $e->getMessage());
+                \Log::error('BecomeProvider payment success DB error: '.$e->getMessage());
+
                 return redirect()->route('feed')->with('error', 'Erreur lors de l\'activation. Contactez le support.');
             }
 
         } catch (\Exception $e) {
-            \Log::error('BecomeProvider payment verification error: ' . $e->getMessage());
+            \Log::error('BecomeProvider payment verification error: '.$e->getMessage());
+
             return redirect()->route('feed')->with('error', 'Erreur de vérification du paiement.');
         }
     }
@@ -330,6 +365,7 @@ class BecomeProviderController extends Controller
     public function paymentCancel()
     {
         session()->forget('become_provider_subscription');
+
         return redirect()->route('feed')->with('info', 'Paiement annulé. Votre profil prestataire est actif mais sans abonnement. Vous pouvez souscrire depuis votre espace pro.');
     }
 }

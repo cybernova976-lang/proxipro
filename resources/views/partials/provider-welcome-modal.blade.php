@@ -72,9 +72,19 @@
                 <button type="button" class="btn btn-outline-secondary btn-later" data-bs-dismiss="modal">
                     <i class="fas fa-clock"></i> Plus tard
                 </button>
-                <button type="button" class="btn btn-become-pro" id="welcomeBecomeProviderBtn">
-                    <i class="fas fa-rocket"></i> Devenir prestataire
-                </button>
+                @if(!Auth::user()->hasCompleteVerificationProfile())
+                    <a href="{{ route('profile.edit') }}" class="btn btn-become-pro">
+                        <i class="fas fa-user-edit"></i> Compléter mon profil
+                    </a>
+                @elseif(!Auth::user()->hasVerifiedProfileBadge())
+                    <a href="{{ route('verification.index') }}" class="btn btn-become-pro">
+                        <i class="fas fa-shield-alt"></i> Vérifier mon profil
+                    </a>
+                @else
+                    <button type="button" class="btn btn-become-pro" id="welcomeBecomeProviderBtn">
+                        <i class="fas fa-rocket"></i> Devenir prestataire
+                    </button>
+                @endif
             </div>
         </div>
     </div>
@@ -286,10 +296,10 @@ document.addEventListener('DOMContentLoaded', function() {
             welcomeModal.addEventListener('hidden.bs.modal', function openProviderModal() {
                 welcomeModal.removeEventListener('hidden.bs.modal', openProviderModal);
                 
-                // Ouvrir le modal OAuth d'inscription professionnel
-                const oauthModal = document.getElementById('becomeProviderOAuthModal');
-                if (oauthModal) {
-                    const providerModal = new bootstrap.Modal(oauthModal);
+                // Ouvrir le formulaire commun aux particuliers prestataires
+                const providerFormModal = document.getElementById('becomeProviderModal');
+                if (providerFormModal) {
+                    const providerModal = new bootstrap.Modal(providerFormModal);
                     providerModal.show();
                 }
             }, { once: true });
