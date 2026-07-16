@@ -7,15 +7,31 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', config('app.name', 'ProxiPro'))</title>
+    @php
+        $defaultMetaDescription = 'Publiez un besoin, comparez les propositions et trouvez un prestataire près de chez vous.';
+        $pageTitle = trim($__env->yieldContent('title')) ?: config('app.name', 'ProxiPro');
+        $pageDescription = trim($__env->yieldContent('meta_description')) ?: $defaultMetaDescription;
+        $openGraphTitle = trim($__env->yieldContent('og_title')) ?: $pageTitle;
+        $openGraphDescription = trim($__env->yieldContent('og_description')) ?: $pageDescription;
+        $openGraphType = trim($__env->yieldContent('og_type')) ?: 'website';
+        $openGraphUrl = trim($__env->yieldContent('og_url')) ?: url()->current();
+        $openGraphImage = trim($__env->yieldContent('og_image')) ?: asset('images/social-card.svg');
+    @endphp
+    <title>{{ $pageTitle }}</title>
 
-    <meta name="description" content="@yield('meta_description', 'Publiez un besoin, comparez les propositions et trouvez un prestataire près de chez vous.')">
+    <meta name="description" content="{{ $pageDescription }}">
     <link rel="canonical" href="{{ url()->current() }}">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="@yield('title', config('app.name', 'ProxiPro'))">
-    <meta property="og:description" content="@yield('meta_description', 'Publiez un besoin, comparez les propositions et trouvez un prestataire près de chez vous.')">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:image" content="{{ asset('images/social-card.svg') }}">
+    <meta property="og:type" content="{{ $openGraphType }}">
+    <meta property="og:title" content="{{ $openGraphTitle }}">
+    <meta property="og:description" content="{{ $openGraphDescription }}">
+    <meta property="og:url" content="{{ $openGraphUrl }}">
+    <meta property="og:image" content="{{ $openGraphImage }}">
+    <meta property="og:site_name" content="{{ config('app.name', 'ProxiPro') }}">
+    <meta property="og:locale" content="fr_FR">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $openGraphTitle }}">
+    <meta name="twitter:description" content="{{ $openGraphDescription }}">
+    <meta name="twitter:image" content="{{ $openGraphImage }}">
     @if(request()->routeIs('login', 'register', 'password.*', 'settings.*', 'messages.*', 'admin.*'))
         <meta name="robots" content="noindex,nofollow">
     @endif

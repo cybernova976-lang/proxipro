@@ -1,28 +1,12 @@
 @extends('layouts.app')
 
 @section('title', 'Profil de ' . $user->name . ' - ProxiPro')
-
-@push('meta')
-    {{-- Open Graph for social sharing --}}
-    <meta property="og:type" content="profile">
-    <meta property="og:title" content="{{ $user->name }}{{ $user->profession ? ' — ' . $user->profession : '' }} | ProxiPro">
-    <meta property="og:description" content="{{ $user->bio ? Str::limit($user->bio, 160) : ($user->profession ? $user->profession . ' sur ProxiPro. ' : '') . ($user->city ? 'Basé à ' . $user->city . '. ' : '') . 'Retrouvez ce professionnel sur ProxiPro.' }}">
-    @if($user->avatar)
-        <meta property="og:image" content="{{ storage_url($user->avatar) }}">
-    @else
-        <meta property="og:image" content="{{ asset('favicon.ico') }}">
-    @endif
-    <meta property="og:url" content="{{ route('profile.public', $user->id) }}">
-    <meta property="og:site_name" content="ProxiPro">
-    <meta property="og:locale" content="fr_FR">
-    {{-- Twitter Card --}}
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ $user->name }}{{ $user->profession ? ' — ' . $user->profession : '' }} | ProxiPro">
-    <meta name="twitter:description" content="{{ $user->bio ? Str::limit($user->bio, 160) : 'Profil professionnel sur ProxiPro.' }}">
-    @if($user->avatar)
-        <meta name="twitter:image" content="{{ storage_url($user->avatar) }}">
-    @endif
-@endpush
+@section('meta_description', $user->bio ? Str::limit($user->bio, 160) : (($user->profession ? $user->profession . ' sur ProxiPro. ' : '') . ($user->city ? 'Basé à ' . $user->city . '. ' : '') . 'Découvrez ce profil sur ProxiPro.'))
+@section('og_type', 'profile')
+@section('og_title', ($user->company_name ?: $user->name) . ($user->profession ? ' — ' . $user->profession : '') . ' | ProxiPro')
+@section('og_description', $user->bio ? Str::limit($user->bio, 160) : 'Découvrez le profil de ' . ($user->company_name ?: $user->name) . ' sur ProxiPro.')
+@section('og_image', $user->avatar ? storage_url($user->avatar) : asset('images/social-card.svg'))
+@section('og_url', route('profile.public', $user->id))
 
 @section('content')
 @php
@@ -273,50 +257,24 @@
                         @endauth
                     </div>
 
-                    <!-- Social Share Buttons -->
-                    @php
-                        $shareUrl = urlencode(route('profile.public', $user->id));
-                        $shareTitle = urlencode($user->name . ($user->profession ? ' — ' . $user->profession : '') . ' | ProxiPro');
-                        $shareDesc = urlencode($user->bio ? Str::limit($user->bio, 120) : 'Découvrez ce professionnel sur ProxiPro.');
-                    @endphp
                     <div class="mt-3 pt-3 border-top">
-                        <p class="text-muted small mb-2 text-center"><i class="fas fa-share-alt me-1"></i>Partager ce profil</p>
-                        <div class="d-flex justify-content-center gap-2">
-                            <a href="https://www.facebook.com/sharer/sharer.php?u={{ $shareUrl }}" target="_blank" rel="noopener"
-                               class="btn btn-sm" style="background: #1877f2; color: white; border-radius: 8px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;"
-                               title="Partager sur Facebook">
-                                <i class="fab fa-facebook-f"></i>
-                            </a>
-                            <a href="https://twitter.com/intent/tweet?url={{ $shareUrl }}&text={{ $shareTitle }}" target="_blank" rel="noopener"
-                               class="btn btn-sm" style="background: #1da1f2; color: white; border-radius: 8px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;"
-                               title="Partager sur Twitter">
-                                <i class="fab fa-twitter"></i>
-                            </a>
-                            <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ $shareUrl }}&title={{ $shareTitle }}&summary={{ $shareDesc }}" target="_blank" rel="noopener"
-                               class="btn btn-sm" style="background: #0a66c2; color: white; border-radius: 8px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;"
-                               title="Partager sur LinkedIn">
-                                <i class="fab fa-linkedin-in"></i>
-                            </a>
-                            <a href="https://wa.me/?text={{ $shareTitle }}%20{{ $shareUrl }}" target="_blank" rel="noopener"
-                               class="btn btn-sm" style="background: #25d366; color: white; border-radius: 8px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;"
-                               title="Partager sur WhatsApp">
-                                <i class="fab fa-whatsapp"></i>
-                            </a>
-                            <button onclick="copyProfileLink()" class="btn btn-sm" style="background: #64748b; color: white; border-radius: 8px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;" title="Copier le lien" id="copyLinkBtn">
-                                <i class="fas fa-link"></i>
+                        @if($user->profile_public)
+                            <button type="button" class="btn btn-outline-primary w-100" id="sharePublicProfileBtn">
+                                <i class="fas fa-share-nodes me-2"></i>Partager ce profil
                             </button>
-                        </div>
+                        @elseif($isOwnProfile)
+                            <div class="alert alert-light border small mb-0 text-start">
+                                <i class="fas fa-lock me-1 text-warning"></i>
+                                Rendez votre profil public dans les paramètres avant de le partager.
+                            </div>
+                        @endif
                     </div>
-                    <script>
-                    function copyProfileLink() {
-                        navigator.clipboard.writeText('{{ route('profile.public', $user->id) }}').then(() => {
-                            const btn = document.getElementById('copyLinkBtn');
-                            btn.innerHTML = '<i class="fas fa-check"></i>';
-                            btn.style.background = '#16a34a';
-                            setTimeout(() => { btn.innerHTML = '<i class="fas fa-link"></i>'; btn.style.background = '#64748b'; }, 2000);
-                        });
-                    }
-                    </script>
+                    @if($user->profile_public)
+                        @include('profile.partials.share-modal', [
+                            'triggerId' => 'sharePublicProfileBtn',
+                            'modalId' => 'publicProfileShareModal',
+                        ])
+                    @endif
                 </div>
             </div>
             

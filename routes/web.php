@@ -253,6 +253,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/save-categories', [ProfileController::class, 'saveCategories'])->name('profile.save-categories');
 });
 Route::get('/user/{id}', [ProfileController::class, 'publicProfile'])->name('profile.public');
+Route::post('/user/{id}/share', [ProfileController::class, 'recordShare'])
+    ->middleware('throttle:30,1')
+    ->name('profile.share.record');
 Route::middleware(['auth'])->group(function () {
     Route::post('/user/{id}/reviews', [ReviewController::class, 'store'])->name('reviews.store');
 });

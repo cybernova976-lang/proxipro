@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Ad;
 use App\Models\ServiceOrder;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -334,5 +335,37 @@ class ProfileController extends Controller
         }
 
         return view('profile.public', compact('user', 'ads', 'stats', 'reviews', 'ratingCount', 'ratingAverage', 'reviewableOrder'));
+    }
+
+    /**
+     * Enregistrer un partage de profil public sans permettre l'inflation du compteur.
+     */
+    public function recordShare(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'platform' => ['required', Rule::in([
+                'native', 'copy', 'facebook', 'x', 'linkedin', 'whatsapp', 'telegram', 'email',
+            ])],
+        ]);
+
+        $user = User::query()->findOrFail($id);
+        abort_unless((bool) $user->profile_public, 404);
+
+        $sessionKey = 'shared_profile_'.$user->id;
+        $alreadyShared = $request->session()->has($sessionKey);
+
+        if (! $alreadyShared) {
+            $user->increment('profile_shares');
+            $request->session()->put($sessionKey, [
+                'platform' => $validated['platform'],
+                'shared_at' => now()->toIso8601String(),
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'already_shared' => $alreadyShared,
+            'profile_shares' => (int) $user->fresh()->profile_shares,
+        ]);
     }
 }

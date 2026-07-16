@@ -16,7 +16,7 @@
         <a href="{{ route('pro.profile.edit') }}" class="btn btn-pro-primary">
             <i class="fas fa-edit me-1"></i> Modifier
         </a>
-        <button class="btn btn-pro-outline" id="shareProfileBtn">
+        <button class="btn btn-pro-outline" id="shareProfileBtn" @disabled(!$user->profile_public) title="{{ $user->profile_public ? 'Partager mon profil public' : 'Activez la visibilité publique du profil pour le partager' }}">
             <i class="fas fa-share-alt me-1"></i> Partager
         </button>
     </div>
@@ -162,53 +162,10 @@
     @endif
 </div>
 
-{{-- Share modal --}}
-<div class="modal fade" id="shareProfileModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content" style="border-radius: 16px; border: none;">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold">Partager mon profil</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                @php $profileUrl = route('profile.public', $user->id); @endphp
-                <div class="d-flex justify-content-center gap-3 mb-3">
-                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode($profileUrl) }}" target="_blank" class="pro-topbar-btn" style="background: #1877f2; color: white; width: 48px; height: 48px; border-radius: 12px;">
-                        <i class="fab fa-facebook-f"></i>
-                    </a>
-                    <a href="https://twitter.com/intent/tweet?url={{ urlencode($profileUrl) }}&text={{ urlencode('Découvrez mon profil professionnel sur ProxiPro !') }}" target="_blank" class="pro-topbar-btn" style="background: #1da1f2; color: white; width: 48px; height: 48px; border-radius: 12px;">
-                        <i class="fab fa-twitter"></i>
-                    </a>
-                    <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ urlencode($profileUrl) }}" target="_blank" class="pro-topbar-btn" style="background: #0a66c2; color: white; width: 48px; height: 48px; border-radius: 12px;">
-                        <i class="fab fa-linkedin-in"></i>
-                    </a>
-                    <a href="https://wa.me/?text={{ urlencode('Découvrez mon profil professionnel sur ProxiPro : ' . $profileUrl) }}" target="_blank" class="pro-topbar-btn" style="background: #25d366; color: white; width: 48px; height: 48px; border-radius: 12px;">
-                        <i class="fab fa-whatsapp"></i>
-                    </a>
-                </div>
-                <div class="input-group">
-                    <input type="text" class="form-control" value="{{ $profileUrl }}" id="profileUrlInput" readonly style="border-radius: 10px 0 0 10px; font-size: 0.85rem;">
-                    <button class="btn btn-pro-primary" onclick="copyProfileUrl()" style="border-radius: 0 10px 10px 0;">
-                        <i class="fas fa-copy"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endsection
-
-@section('scripts')
-<script>
-document.getElementById('shareProfileBtn')?.addEventListener('click', function() {
-    new bootstrap.Modal(document.getElementById('shareProfileModal')).show();
-});
-
-function copyProfileUrl() {
-    const input = document.getElementById('profileUrlInput');
-    input.select();
-    navigator.clipboard.writeText(input.value);
-    alert('Lien copié !');
-}
-</script>
+@if($user->profile_public)
+    @include('profile.partials.share-modal', [
+        'triggerId' => 'shareProfileBtn',
+        'modalId' => 'proProfileShareModal',
+    ])
+@endif
 @endsection

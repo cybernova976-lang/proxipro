@@ -183,6 +183,7 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'email_notifications' => 'boolean',
             'profile_public' => 'boolean',
+            'profile_shares' => 'integer',
             'show_email' => 'boolean',
             'show_phone' => 'boolean',
             'preferred_categories' => 'array',
