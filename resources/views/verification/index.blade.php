@@ -27,6 +27,40 @@
         box-shadow: 0 10px 40px rgba(0,0,0,0.08);
         border: 1px solid var(--border-subtle);
     }
+    .verification-success-alert {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 15px 18px;
+        border: 1px solid #10b981;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        box-shadow: 0 6px 18px rgba(16, 185, 129, 0.1);
+    }
+    .verification-success-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        flex: 0 0 42px;
+        border-radius: 50%;
+        background: rgba(16, 185, 129, 0.18);
+        color: #059669;
+        font-size: 1.15rem;
+    }
+    .verification-success-alert h5 {
+        color: #166534;
+        font-size: 1rem;
+        line-height: 1.35;
+        margin: 0;
+    }
+    .verification-success-alert p {
+        color: #64748b;
+        font-size: 0.875rem;
+        line-height: 1.4;
+        margin: 4px 0 0;
+    }
     .status-badge {
         display: inline-flex;
         align-items: center;
@@ -369,6 +403,24 @@
             border-radius: 14px;
         }
 
+        .verification-success-alert {
+            align-items: flex-start;
+            gap: 11px;
+            padding: 13px 14px;
+            border-radius: 12px;
+        }
+
+        .verification-success-icon {
+            width: 36px;
+            height: 36px;
+            flex-basis: 36px;
+            font-size: 1rem;
+        }
+
+        .verification-success-alert h5 {
+            font-size: 0.95rem;
+        }
+
         .upload-zone {
             padding: 24px 14px;
         }
@@ -413,15 +465,19 @@
 
 <div class="container pb-5">
     @if(session('success'))
-        <div class="verification-card mb-4" style="border: 2px solid #10b981; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
-            <div class="text-center py-3">
-                <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; background: rgba(16, 185, 129, 0.2);">
-                    <i class="fas fa-check-circle fa-2x" style="color: #10b981;"></i>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="verification-success-alert mb-4" role="status">
+                    <span class="verification-success-icon" aria-hidden="true">
+                        <i class="fas fa-check"></i>
+                    </span>
+                    <div>
+                        <h5 class="fw-bold">{{ session('success') }}</h5>
+                        @if(isset($verification) && $verification && $verification->isPending())
+                            <p>Notre équipe va examiner vos documents. Vous recevrez une notification dès que la vérification sera terminée.</p>
+                        @endif
+                    </div>
                 </div>
-                <h5 class="fw-bold mb-2" style="color: #166534;">{{ session('success') }}</h5>
-                @if(isset($verification) && $verification && $verification->isPending())
-                    <p class="text-muted mb-0">Notre équipe va examiner vos documents. Vous recevrez une notification dès que la vérification sera terminée.</p>
-                @endif
             </div>
         </div>
     @endif

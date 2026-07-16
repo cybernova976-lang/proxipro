@@ -46,6 +46,7 @@ class VerificationPaymentFlowTest extends TestCase
         $page->assertSee('Confirmer votre demande');
         $page->assertSee('Continuer par carte');
         $page->assertSee('Vos documents ont bien été enregistrés');
+        $page->assertSee('verification-success-alert', false);
         $page->assertDontSee('Finaliser le paiement');
         $page->assertDontSee('Paiement requis');
         $page->assertDontSee('Statut de vérification');
@@ -66,9 +67,9 @@ class VerificationPaymentFlowTest extends TestCase
             'user_id' => $user->id,
             'type' => 'profile_verification',
             'document_type' => 'id_card',
-            'document_front' => 'verifications-temp/' . $user->id . '/front.jpg',
+            'document_front' => 'verifications-temp/'.$user->id.'/front.jpg',
             'document_front_status' => 'pending',
-            'selfie' => 'verifications-temp/' . $user->id . '/selfie.jpg',
+            'selfie' => 'verifications-temp/'.$user->id.'/selfie.jpg',
             'selfie_status' => 'pending',
             'payment_amount' => IdentityVerification::getVerificationPrice('profile_verification'),
             'payment_status' => 'pending',
@@ -98,9 +99,9 @@ class VerificationPaymentFlowTest extends TestCase
             'user_id' => $user->id,
             'type' => 'profile_verification',
             'document_type' => 'passport',
-            'document_front' => 'verifications/' . $user->id . '/passport.jpg',
+            'document_front' => 'verifications/'.$user->id.'/passport.jpg',
             'document_front_status' => 'pending',
-            'selfie' => 'verifications/' . $user->id . '/selfie.jpg',
+            'selfie' => 'verifications/'.$user->id.'/selfie.jpg',
             'selfie_status' => 'pending',
             'payment_amount' => 5,
             'payment_status' => 'paid',
