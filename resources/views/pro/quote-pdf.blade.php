@@ -74,20 +74,25 @@
         .status-sent { background: #fef3c7; color: #d97706; }
         .status-accepted { background: #d1fae5; color: #059669; }
         .status-rejected, .status-refused { background: #fee2e2; color: #dc2626; }
+        .draft-watermark { position: fixed; top: 42%; left: 7%; right: 7%; text-align: center; transform: rotate(-28deg); font-size: 44px; font-weight: bold; color: rgba(220, 38, 38, .16); z-index: -1; }
+        .meta-box { margin: 12px 0; padding: 10px 12px; background: #eff6ff; border: 1px solid #bfdbfe; font-size: 9px; color: #334155; }
     </style>
 </head>
 <body>
+    @php $seller = $quote->seller_snapshot ?: $user->commercialIdentitySnapshot(); @endphp
+    @if($quote->status === 'draft')<div class="draft-watermark">BROUILLON — NON CONTRACTUEL</div>@endif
     <div class="container">
         {{-- Header --}}
         <div class="header">
             <div class="header-left">
-                <div class="company-logo">{{ $user->company_name ?? $user->name }}</div>
+                <div class="company-logo">{{ $seller['company_name'] ?? $seller['name'] }}</div>
                 <div class="company-info">
-                    @if($user->address){{ $user->address }}<br>@endif
-                    @if($user->city){{ $user->city }}@if($user->country), {{ $user->country }}@endif<br>@endif
-                    @if($user->phone)Tél : {{ $user->phone }}<br>@endif
-                    {{ $user->email }}
-                    @if($user->siret)<br>SIRET : {{ $user->siret }}@endif
+                    @if(!empty($seller['address'])){{ $seller['address'] }}<br>@endif
+                    @if(!empty($seller['postal_code']) || !empty($seller['city'])){{ $seller['postal_code'] ?? '' }} {{ $seller['city'] ?? '' }}@if(!empty($seller['country'])), {{ $seller['country'] }}@endif<br>@endif
+                    @if(!empty($seller['phone']))Tél : {{ $seller['phone'] }}<br>@endif
+                    {{ $seller['email'] ?? '' }}
+                    @if(!empty($seller['siret']))<br>SIRET : {{ $seller['siret'] }}@endif
+                    @if(!empty($seller['tva_number']))<br>TVA : {{ $seller['tva_number'] }}@endif
                 </div>
             </div>
             <div class="header-right">
@@ -108,7 +113,10 @@
             <div class="client-label">Destinataire</div>
             <div class="client-name">{{ $quote->client_name }}</div>
             <div class="client-info">
+                @if($quote->client_company){{ $quote->client_company }}<br>@endif
                 @if($quote->client_address){{ $quote->client_address }}<br>@endif
+                @if($quote->client_registration_number)Immatriculation : {{ $quote->client_registration_number }}<br>@endif
+                @if($quote->client_vat_number)TVA : {{ $quote->client_vat_number }}<br>@endif
                 @if($quote->client_email){{ $quote->client_email }}<br>@endif
                 @if($quote->client_phone){{ $quote->client_phone }}@endif
             </div>
@@ -117,6 +125,12 @@
         {{-- Subject --}}
         <div class="subject">
             <strong>Objet :</strong> {{ $quote->subject }}
+        </div>
+        <div class="meta-box">
+            <strong>Nature :</strong> {{ ['services' => 'Prestation de services', 'goods' => 'Vente de biens', 'mixed' => 'Biens et services'][$quote->operation_type] ?? 'Prestation de services' }}
+            @if($quote->execution_location) — <strong>Lieu :</strong> {{ $quote->execution_location }}@endif<br>
+            <strong>Établissement du devis :</strong> {{ $quote->is_free ? 'gratuit' : 'payant' }}
+            @if($quote->deposit_percentage !== null) — <strong>Acompte :</strong> {{ number_format($quote->deposit_percentage, 2, ',', ' ') }} % @endif
         </div>
 
         {{-- Items Table --}}
@@ -182,7 +196,8 @@
 
         {{-- Footer --}}
         <div class="footer">
-            {{ $user->company_name ?? $user->name }} — Document généré le {{ now()->format('d/m/Y à H:i') }} via ProxiPro
+            @if($quote->status === 'draft')Brouillon non contractuel — @endif
+            {{ $seller['company_name'] ?? $seller['name'] }} — Document généré le {{ now()->format('d/m/Y à H:i') }} via ProxiPro
         </div>
     </div>
 </body>

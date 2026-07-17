@@ -477,6 +477,8 @@ Route::middleware(['auth'])->prefix('pro')->name('pro.')->group(function () {
     Route::get('/quotes/{id}/download', [$ctrl, 'downloadQuote'])->name('quotes.download');
     Route::post('/quotes/{id}/send-email', [$ctrl, 'sendQuoteEmail'])->name('quotes.sendEmail');
     Route::post('/quotes/{id}/send-message', [$ctrl, 'sendQuoteMessage'])->name('quotes.sendMessage');
+    Route::get('/quotes/{id}/shared-download', [$ctrl, 'downloadSharedQuote'])
+        ->middleware('signed')->name('quotes.shared-download');
 
     // Factures
     Route::get('/invoices', [$ctrl, 'invoices'])->name('invoices');
@@ -487,6 +489,7 @@ Route::middleware(['auth'])->prefix('pro')->name('pro.')->group(function () {
     Route::put('/invoices/{id}', [$ctrl, 'updateInvoice'])->name('invoices.update');
     Route::put('/invoices/{id}/status', [$ctrl, 'updateInvoiceStatus'])->name('invoices.status');
     Route::get('/invoices/{id}/download', [$ctrl, 'downloadInvoice'])->name('invoices.download');
+    Route::post('/invoices/{id}/send-email', [$ctrl, 'sendInvoiceEmail'])->name('invoices.sendEmail');
     Route::delete('/invoices/{id}', [$ctrl, 'destroyInvoice'])->name('invoices.destroy');
 
     // Documents
@@ -497,6 +500,8 @@ Route::middleware(['auth'])->prefix('pro')->name('pro.')->group(function () {
     // Statut du compte
     Route::get('/account-status', [$ctrl, 'accountStatus'])->name('account-status');
     Route::put('/account-status', [$ctrl, 'updateAccountStatus'])->name('account-status.update');
+    Route::get('/compliance', [$ctrl, 'compliance'])->name('compliance');
+    Route::post('/compliance/accept', [$ctrl, 'acceptProTerms'])->name('compliance.accept');
 
     // Abonnement
     Route::get('/subscription', [$ctrl, 'subscription'])->name('subscription');
@@ -781,3 +786,11 @@ Route::get('/politique-confidentialite', function () {
 Route::get('/politique-cookies', function () {
     return view('legal.cookies');
 })->name('legal.cookies');
+
+Route::get('/regles-marketplace', function () {
+    return view('legal.platform-rules');
+})->name('legal.platform-rules');
+
+Route::get('/conditions-espace-pro', function () {
+    return view('legal.pro-terms');
+})->name('legal.pro-terms');

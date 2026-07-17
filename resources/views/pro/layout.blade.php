@@ -8,7 +8,7 @@
     <title>@yield('title', 'Espace Pro - ProxiPro')</title>
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Inter:400,500,600,700,800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    @vite(['resources/sass/app.scss', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
     :root {
@@ -693,7 +693,7 @@
                     <i class="fas fa-file-alt"></i>
                 </div>
                 Création de devis
-                @php $pendingQuotes = Auth::user()->proQuotes()->where('status', 'pending')->count(); @endphp
+                @php $pendingQuotes = Auth::user()->proQuotes()->whereIn('status', ['draft', 'sent'])->count(); @endphp
                 @if($pendingQuotes > 0)
                     <span class="pro-nav-badge warning">{{ $pendingQuotes }}</span>
                 @endif
@@ -736,6 +736,17 @@
                     <i class="fas fa-exchange-alt"></i>
                 </div>
                 Statut du compte
+            </a>
+            <a href="{{ route('pro.compliance') }}" class="pro-nav-item {{ request()->routeIs('pro.compliance*') ? 'active' : '' }}">
+                <div class="pro-nav-icon" style="background: rgba(16,185,129,0.1); color: #10b981;">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                Conformité PRO
+                @if(Auth::user()->canIssueCommercialDocuments())
+                    <span class="pro-nav-badge info"><i class="fas fa-check"></i></span>
+                @else
+                    <span class="pro-nav-badge danger"><i class="fas fa-exclamation"></i></span>
+                @endif
             </a>
             <a href="{{ route('pro.subscription') }}" class="pro-nav-item {{ request()->routeIs('pro.subscription*') ? 'active' : '' }}">
                 <div class="pro-nav-icon" style="background: rgba(249,115,22,0.1); color: #f97316;">
@@ -809,6 +820,13 @@
             </div>
         @endif
 
+        @if(session('warning'))
+            <div class="alert alert-warning alert-dismissible fade show" style="border-radius: 12px; border: none; background: rgba(245,158,11,0.12); color: #92400e;">
+                <i class="fas fa-exclamation-triangle me-2"></i>{{ session('warning') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
         @if($errors->any())
             <div class="alert alert-danger alert-dismissible fade show" style="border-radius: 12px; border: none;">
                 <ul class="mb-0">
@@ -825,7 +843,6 @@
 
     @include('partials.provider-modal')
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
     // Sidebar toggle
     const sidebar = document.getElementById('proSidebar');

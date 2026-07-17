@@ -12,7 +12,11 @@ use App\Support\ProviderSubscriptionPlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Stripe\Checkout\Session as StripeSession;
 use Stripe\Stripe;
 
@@ -38,6 +42,98 @@ class ProDashboardController extends Controller
         }
 
         return $user;
+    }
+
+    /**
+     * Les particuliers prestataires peuvent utiliser le CRM, mais l'édition de
+     * documents commerciaux est réservée à une activité professionnelle déclarée.
+     */
+    private function ensureCommercialProfessional()
+    {
+        $user = $this->ensurePro();
+
+        if (! $user->isProfessionnel()) {
+            throw new \Illuminate\Http\Exceptions\HttpResponseException(
+                redirect()->route('pro.account-status')->with(
+                    'warning',
+                    'Les devis et factures professionnels nécessitent un statut professionnel. Le CRM reste accessible aux particuliers prestataires.'
+                )
+            );
+        }
+
+        return $user;
+    }
+
+    private function ensureCanIssueCommercialDocuments($user): void
+    {
+        if (! $user->canIssueCommercialDocuments()) {
+            throw new \Illuminate\Http\Exceptions\HttpResponseException(
+                redirect()->route('pro.compliance')->with(
+                    'warning',
+                    'Ce brouillon est conservé, mais il ne peut pas encore être émis. Terminez la checklist de conformité PRO.'
+                )
+            );
+        }
+    }
+
+    private function proClientRule(int $userId)
+    {
+        return Rule::exists('pro_clients', 'id')->where(
+            fn ($query) => $query->where('provider_id', $userId)
+        );
+    }
+
+    private function resolveProClient($user, array $validated): ?ProClient
+    {
+        if (! empty($validated['client_id'])) {
+            return $user->proClients()->findOrFail($validated['client_id']);
+        }
+
+        $query = $user->proClients();
+        $existing = filled($validated['client_email'] ?? null)
+            ? $query->where('email', $validated['client_email'])->first()
+            : $query->where('name', $validated['client_name'])->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        return $user->proClients()->create([
+            'name' => $validated['client_name'],
+            'email' => $validated['client_email'] ?? null,
+            'phone' => $validated['client_phone'] ?? null,
+            'address' => $validated['client_address'] ?? null,
+            'company' => $validated['client_company'] ?? null,
+            'status' => 'active',
+            'source' => 'commercial_document',
+            'last_interaction_at' => now(),
+        ]);
+    }
+
+    private function issueQuote(ProQuote $quote, $user): void
+    {
+        $this->ensureCanIssueCommercialDocuments($user);
+
+        if ($quote->status === 'draft' && $quote->issued_at === null) {
+            $quote->update([
+                'quote_number' => ProQuote::generateNumber($user->id),
+                'seller_snapshot' => $user->commercialIdentitySnapshot(),
+                'issued_at' => now(),
+            ]);
+        }
+    }
+
+    private function finalizeInvoice(ProInvoice $invoice, $user): void
+    {
+        $this->ensureCanIssueCommercialDocuments($user);
+
+        if ($invoice->status === 'draft' && $invoice->finalized_at === null) {
+            $invoice->update([
+                'invoice_number' => ProInvoice::generateNumber($user->id),
+                'seller_snapshot' => $user->commercialIdentitySnapshot(),
+                'finalized_at' => now(),
+            ]);
+        }
     }
 
     // =========================================
@@ -214,16 +310,21 @@ class ProDashboardController extends Controller
 
     public function quotes()
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $quotes = $user->proQuotes()->with('client')->latest()->paginate(15);
         $clients = $user->proClients()->orderBy('name')->get();
+        $quoteStats = [
+            'waiting' => $user->proQuotes()->whereIn('status', ['draft', 'sent'])->count(),
+            'accepted' => $user->proQuotes()->where('status', 'accepted')->count(),
+            'refused' => $user->proQuotes()->where('status', 'refused')->count(),
+        ];
 
-        return view('pro.quotes', compact('user', 'quotes', 'clients'));
+        return view('pro.quotes', compact('user', 'quotes', 'clients', 'quoteStats'));
     }
 
     public function createQuote()
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $clients = $user->proClients()->orderBy('name')->get();
 
         return view('pro.quote-create', compact('user', 'clients'));
@@ -231,21 +332,28 @@ class ProDashboardController extends Controller
 
     public function storeQuote(Request $request)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
 
         $validated = $request->validate([
-            'client_id' => 'nullable|exists:pro_clients,id',
+            'client_id' => ['nullable', $this->proClientRule($user->id)],
             'client_name' => 'required|string|max:255',
             'client_email' => 'nullable|email|max:255',
             'client_phone' => 'nullable|string|max:20',
             'client_address' => 'nullable|string|max:500',
+            'client_company' => 'nullable|string|max:255',
+            'client_registration_number' => 'nullable|string|max:64',
+            'client_vat_number' => 'nullable|string|max:64',
             'subject' => 'required|string|max:255',
+            'operation_type' => 'required|in:services,goods,mixed',
+            'execution_location' => 'nullable|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.description' => 'required|string|max:500',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
             'valid_until' => 'nullable|date|after:today',
+            'is_free' => 'required|boolean',
+            'deposit_percentage' => 'nullable|numeric|min:0|max:100',
             'notes' => 'nullable|string|max:2000',
             'conditions' => 'nullable|string|max:2000',
         ]);
@@ -261,14 +369,25 @@ class ProDashboardController extends Controller
         $tax = round($subtotal * $taxRate / 100, 2);
         $total = $subtotal + $tax;
 
-        $quote = ProQuote::create([
+        $client = $this->resolveProClient($user, $validated);
+
+        ProQuote::create([
             'user_id' => $user->id,
-            'quote_number' => ProQuote::generateNumber($user->id),
+            'pro_client_id' => $client?->id,
+            'quote_number' => 'BROUILLON-DEV-'.strtoupper(Str::random(10)),
             'client_name' => $validated['client_name'],
             'client_email' => $validated['client_email'] ?? null,
             'client_phone' => $validated['client_phone'] ?? null,
             'client_address' => $validated['client_address'] ?? null,
+            'client_company' => $validated['client_company'] ?? null,
+            'client_registration_number' => $validated['client_registration_number'] ?? null,
+            'client_vat_number' => $validated['client_vat_number'] ?? null,
             'subject' => $validated['subject'],
+            'operation_type' => $validated['operation_type'],
+            'execution_location' => $validated['execution_location'] ?? null,
+            'currency' => 'EUR',
+            'is_free' => (bool) $validated['is_free'],
+            'deposit_percentage' => $validated['deposit_percentage'] ?? null,
             'items' => $items->toArray(),
             'subtotal' => $subtotal,
             'tax_rate' => $taxRate,
@@ -280,29 +399,12 @@ class ProDashboardController extends Controller
             'conditions' => $validated['conditions'] ?? null,
         ]);
 
-        // Auto-create client if doesn't exist
-        if (empty($validated['client_id']) && $validated['client_name']) {
-            $existingClient = $user->proClients()->where('name', $validated['client_name'])->first();
-            if (! $existingClient) {
-                $client = ProClient::create([
-                    'provider_id' => $user->id,
-                    'name' => $validated['client_name'],
-                    'email' => $validated['client_email'] ?? null,
-                    'phone' => $validated['client_phone'] ?? null,
-                    'address' => $validated['client_address'] ?? null,
-                    'status' => 'active',
-                    'source' => 'quote',
-                    'last_interaction_at' => now(),
-                ]);
-            }
-        }
-
-        return redirect()->route('pro.quotes')->with('success', 'Devis créé avec succès.');
+        return redirect()->route('pro.quotes')->with('success', 'Brouillon de devis créé. Vérifiez-le avant l’envoi au client.');
     }
 
     public function showQuote($id)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $quote = $user->proQuotes()->with('client')->findOrFail($id);
 
         return view('pro.quote-show', compact('user', 'quote'));
@@ -310,14 +412,34 @@ class ProDashboardController extends Controller
 
     public function updateQuoteStatus(Request $request, $id)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $quote = $user->proQuotes()->findOrFail($id);
 
-        $request->validate(['status' => 'required|in:draft,sent,accepted,rejected,expired']);
-        $quote->update(['status' => $request->status]);
+        $request->validate(['status' => 'required|in:sent,accepted,refused,expired']);
+        $target = $request->string('status')->toString();
+        $allowedTransitions = [
+            'draft' => ['sent'],
+            'sent' => ['accepted', 'refused', 'expired'],
+        ];
+
+        if (! in_array($target, $allowedTransitions[$quote->status] ?? [], true)) {
+            return back()->with('error', 'Cette transition est impossible : un document émis conserve son historique.');
+        }
+
+        if ($target === 'sent') {
+            $this->issueQuote($quote, $user);
+        }
+
+        $timestamps = match ($target) {
+            'sent' => ['sent_at' => now()],
+            'accepted' => ['accepted_at' => now()],
+            'refused' => ['refused_at' => now()],
+            default => [],
+        };
+        $quote->update(['status' => $target] + $timestamps);
 
         // Si le devis est accepté, on peut auto-générer une facture
-        if ($request->status === 'accepted') {
+        if ($target === 'accepted') {
             return redirect()->route('pro.quotes')->with('success', 'Devis accepté ! Vous pouvez maintenant créer une facture associée.');
         }
 
@@ -326,8 +448,11 @@ class ProDashboardController extends Controller
 
     public function editQuote($id)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $quote = $user->proQuotes()->findOrFail($id);
+        if (! $quote->isEditable()) {
+            return redirect()->route('pro.quotes.show', $quote)->with('error', 'Un devis émis ne peut plus être modifié. Dupliquez-le pour créer une nouvelle version.');
+        }
         $clients = $user->proClients()->orderBy('name')->get();
 
         return view('pro.quote-edit', compact('user', 'quote', 'clients'));
@@ -335,11 +460,14 @@ class ProDashboardController extends Controller
 
     public function updateQuote(Request $request, $id)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $quote = $user->proQuotes()->findOrFail($id);
+        if (! $quote->isEditable()) {
+            return redirect()->route('pro.quotes.show', $quote)->with('error', 'Un devis émis ne peut plus être modifié.');
+        }
 
         $validated = $request->validate([
-            'client_id' => 'nullable|exists:pro_clients,id',
+            'client_id' => ['nullable', $this->proClientRule($user->id)],
             'client_name' => 'required|string|max:255',
             'client_email' => 'nullable|email|max:255',
             'client_phone' => 'nullable|string|max:20',
@@ -367,6 +495,7 @@ class ProDashboardController extends Controller
         $total = $subtotal + $tax;
 
         $quote->update([
+            'pro_client_id' => $this->resolveProClient($user, $validated)?->id,
             'client_name' => $validated['client_name'],
             'client_email' => $validated['client_email'] ?? null,
             'client_phone' => $validated['client_phone'] ?? null,
@@ -387,8 +516,11 @@ class ProDashboardController extends Controller
 
     public function deleteQuote($id)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $quote = $user->proQuotes()->findOrFail($id);
+        if (! $quote->isEditable()) {
+            return back()->with('error', 'Seul un brouillon peut être supprimé. Les devis émis sont conservés pour garantir la traçabilité.');
+        }
         $quote->delete();
 
         return redirect()->route('pro.quotes')->with('success', 'Devis supprimé avec succès.');
@@ -396,7 +528,7 @@ class ProDashboardController extends Controller
 
     public function downloadQuote($id)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $quote = $user->proQuotes()->with('client')->findOrFail($id);
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pro.quote-pdf', compact('user', 'quote'));
@@ -407,7 +539,7 @@ class ProDashboardController extends Controller
 
     public function sendQuoteEmail(Request $request, $id)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $quote = $user->proQuotes()->with('client')->findOrFail($id);
 
         $request->validate([
@@ -415,10 +547,13 @@ class ProDashboardController extends Controller
             'message' => 'nullable|string|max:2000',
         ]);
 
+        $this->issueQuote($quote, $user);
+        $quote->refresh();
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pro.quote-pdf', compact('user', 'quote'));
         $pdf->setPaper('a4');
 
-        \Illuminate\Support\Facades\Mail::send('emails.quote', [
+        Mail::send('emails.quote', [
             'quote' => $quote,
             'user' => $user,
             'customMessage' => $request->message,
@@ -432,7 +567,7 @@ class ProDashboardController extends Controller
 
         // Mark as sent
         if ($quote->status === 'draft') {
-            $quote->update(['status' => 'sent']);
+            $quote->update(['status' => 'sent', 'sent_at' => now()]);
         }
 
         return redirect()->route('pro.quotes.show', $id)->with('success', 'Devis envoyé par email à '.$request->email);
@@ -440,7 +575,7 @@ class ProDashboardController extends Controller
 
     public function sendQuoteMessage(Request $request, $id)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $quote = $user->proQuotes()->with('client')->findOrFail($id);
 
         $request->validate([
@@ -449,6 +584,10 @@ class ProDashboardController extends Controller
         ]);
 
         $recipient = User::findOrFail($request->recipient_id);
+        abort_if($recipient->id === $user->id, 422, 'Vous ne pouvez pas vous envoyer un devis à vous-même.');
+
+        $this->issueQuote($quote, $user);
+        $quote->refresh();
 
         // Get or create conversation
         $conversation = \App\Models\Conversation::getOrCreate($user->id, $recipient->id, 'Devis '.$quote->quote_number);
@@ -461,7 +600,12 @@ class ProDashboardController extends Controller
         if ($quote->valid_until) {
             $content .= "⏳ Valide jusqu'au : ".$quote->valid_until->format('d/m/Y')."\n";
         }
-        $content .= "\n🔗 Lien : ".route('pro.quotes.show', $quote->id);
+        $downloadUrl = URL::temporarySignedRoute(
+            'pro.quotes.shared-download',
+            now()->addDays(30),
+            ['id' => $quote->id, 'recipient' => $recipient->id]
+        );
+        $content .= "\n🔗 Télécharger le devis (lien personnel valable 30 jours) : ".$downloadUrl;
 
         if ($request->message) {
             $content .= "\n\n💬 Message :\n".$request->message;
@@ -477,10 +621,22 @@ class ProDashboardController extends Controller
 
         // Mark as sent
         if ($quote->status === 'draft') {
-            $quote->update(['status' => 'sent']);
+            $quote->update(['status' => 'sent', 'sent_at' => now()]);
         }
 
         return redirect()->route('pro.quotes.show', $id)->with('success', 'Devis envoyé via la messagerie à '.$recipient->name);
+    }
+
+    public function downloadSharedQuote(Request $request, $id)
+    {
+        abort_unless((int) $request->query('recipient') === (int) Auth::id(), 403);
+        $quote = ProQuote::with('user', 'client')->findOrFail($id);
+        $user = $quote->user;
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pro.quote-pdf', compact('user', 'quote'));
+        $pdf->setPaper('a4');
+
+        return $pdf->download('Devis_'.$quote->quote_number.'.pdf');
     }
 
     // =========================================
@@ -489,34 +645,57 @@ class ProDashboardController extends Controller
 
     public function invoices()
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $invoices = $user->proInvoices()->with('client')->latest()->paginate(15);
         $clients = $user->proClients()->orderBy('name')->get();
+        $invoiceStats = [
+            'sent' => $user->proInvoices()->where('status', 'sent')->count(),
+            'paid' => $user->proInvoices()->where('status', 'paid')->count(),
+            'overdue' => $user->proInvoices()->where('status', 'overdue')->count(),
+        ];
 
-        return view('pro.invoices', compact('user', 'invoices', 'clients'));
+        return view('pro.invoices', compact('user', 'invoices', 'clients', 'invoiceStats'));
     }
 
     public function createInvoice($quoteId = null)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $clients = $user->proClients()->orderBy('name')->get();
         $quote = $quoteId ? $user->proQuotes()->find($quoteId) : null;
+
+        if ($quote && $quote->status !== 'accepted') {
+            return redirect()->route('pro.quotes.show', $quote)->with('error', 'La facture ne peut être créée qu’à partir d’un devis accepté.');
+        }
+        if ($quote && $quote->invoice()->exists()) {
+            return redirect()->route('pro.invoices.show', $quote->invoice()->value('id'))->with('warning', 'Une facture existe déjà pour ce devis.');
+        }
 
         return view('pro.invoice-create', compact('user', 'clients', 'quote'));
     }
 
     public function storeInvoice(Request $request)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
 
         $validated = $request->validate([
-            'client_id' => 'nullable|exists:pro_clients,id',
-            'quote_id' => 'nullable|exists:pro_quotes,id',
+            'client_id' => ['nullable', $this->proClientRule($user->id)],
+            'quote_id' => [
+                'nullable',
+                Rule::exists('pro_quotes', 'id')->where(fn ($query) => $query->where('user_id', $user->id)->where('status', 'accepted')),
+            ],
             'client_name' => 'required|string|max:255',
             'client_email' => 'nullable|email|max:255',
             'client_phone' => 'nullable|string|max:20',
             'client_address' => 'nullable|string|max:500',
+            'client_company' => 'nullable|string|max:255',
+            'client_registration_number' => 'nullable|string|max:64',
+            'client_vat_number' => 'nullable|string|max:64',
+            'client_type' => 'required|in:individual,business',
             'subject' => 'required|string|max:255',
+            'operation_type' => 'required|in:services,goods,mixed',
+            'service_date' => 'required|date',
+            'purchase_order_number' => 'nullable|string|max:100',
+            'delivery_address' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.description' => 'required|string|max:500',
             'items.*.quantity' => 'required|numeric|min:0.01',
@@ -525,7 +704,15 @@ class ProDashboardController extends Controller
             'due_date' => 'nullable|date',
             'notes' => 'nullable|string|max:2000',
             'payment_method' => 'nullable|string|max:50',
+            'payment_terms' => 'required|string|max:1000',
+            'vat_exemption_reason' => 'nullable|required_if:tax_rate,0|string|max:255',
+            'early_payment_discount' => 'required|string|max:255',
+            'late_penalty_rate' => 'nullable|required_if:client_type,business|numeric|min:0|max:100',
         ]);
+
+        if (! empty($validated['quote_id']) && $user->proInvoices()->where('quote_id', $validated['quote_id'])->exists()) {
+            return back()->withInput()->withErrors(['quote_id' => 'Une facture existe déjà pour ce devis.']);
+        }
 
         $items = collect($validated['items'])->map(function ($item) {
             $item['total'] = round($item['quantity'] * $item['unit_price'], 2);
@@ -538,15 +725,27 @@ class ProDashboardController extends Controller
         $tax = round($subtotal * $taxRate / 100, 2);
         $total = $subtotal + $tax;
 
+        $client = $this->resolveProClient($user, $validated);
+
         ProInvoice::create([
             'user_id' => $user->id,
+            'pro_client_id' => $client?->id,
             'quote_id' => $validated['quote_id'] ?? null,
-            'invoice_number' => ProInvoice::generateNumber($user->id),
+            'invoice_number' => 'BROUILLON-FAC-'.strtoupper(Str::random(10)),
             'client_name' => $validated['client_name'],
             'client_email' => $validated['client_email'] ?? null,
             'client_phone' => $validated['client_phone'] ?? null,
             'client_address' => $validated['client_address'] ?? null,
+            'client_company' => $validated['client_company'] ?? null,
+            'client_registration_number' => $validated['client_registration_number'] ?? null,
+            'client_vat_number' => $validated['client_vat_number'] ?? null,
+            'client_type' => $validated['client_type'],
             'subject' => $validated['subject'],
+            'operation_type' => $validated['operation_type'],
+            'service_date' => $validated['service_date'],
+            'purchase_order_number' => $validated['purchase_order_number'] ?? null,
+            'delivery_address' => $validated['delivery_address'] ?? null,
+            'currency' => 'EUR',
             'items' => $items->toArray(),
             'subtotal' => $subtotal,
             'tax_rate' => $taxRate,
@@ -556,14 +755,18 @@ class ProDashboardController extends Controller
             'due_date' => $validated['due_date'] ?? null,
             'notes' => $validated['notes'] ?? null,
             'payment_method' => $validated['payment_method'] ?? null,
+            'payment_terms' => $validated['payment_terms'],
+            'vat_exemption_reason' => $validated['vat_exemption_reason'] ?? null,
+            'early_payment_discount' => $validated['early_payment_discount'],
+            'late_penalty_rate' => $validated['late_penalty_rate'] ?? null,
         ]);
 
-        return redirect()->route('pro.invoices')->with('success', 'Facture créée avec succès.');
+        return redirect()->route('pro.invoices')->with('success', 'Brouillon de facture créé. Le numéro définitif sera attribué lors de l’émission.');
     }
 
     public function showInvoice($id)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $invoice = $user->proInvoices()->with('client', 'quote')->findOrFail($id);
 
         return view('pro.invoice-show', compact('user', 'invoice'));
@@ -571,7 +774,7 @@ class ProDashboardController extends Controller
 
     public function downloadInvoice($id)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $invoice = $user->proInvoices()->with('client', 'quote')->findOrFail($id);
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pro.invoice-pdf', compact('user', 'invoice'));
@@ -580,10 +783,50 @@ class ProDashboardController extends Controller
         return $pdf->download('Facture_'.$invoice->invoice_number.'.pdf');
     }
 
+    public function sendInvoiceEmail(Request $request, $id)
+    {
+        $user = $this->ensureCommercialProfessional();
+        $invoice = $user->proInvoices()->with('client', 'quote')->findOrFail($id);
+        if (! in_array($invoice->status, ['draft', 'sent'], true)) {
+            return back()->with('error', 'Cette facture ne peut plus être envoyée dans son état actuel.');
+        }
+
+        $validated = $request->validate([
+            'email' => 'required|email|max:255',
+            'message' => 'nullable|string|max:2000',
+        ]);
+
+        $this->finalizeInvoice($invoice, $user);
+        $invoice->refresh();
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pro.invoice-pdf', compact('user', 'invoice'));
+        $pdf->setPaper('a4');
+
+        Mail::send('emails.invoice', [
+            'invoice' => $invoice,
+            'user' => $user,
+            'customMessage' => $validated['message'] ?? null,
+        ], function ($mail) use ($validated, $invoice, $user, $pdf) {
+            $mail->to($validated['email'])
+                ->subject('Facture '.$invoice->invoice_number.' - '.($user->company_name ?? $user->name))
+                ->attachData($pdf->output(), 'Facture_'.$invoice->invoice_number.'.pdf', [
+                    'mime' => 'application/pdf',
+                ]);
+        });
+
+        if ($invoice->status === 'draft') {
+            $invoice->update(['status' => 'sent', 'sent_at' => now()]);
+        }
+
+        return back()->with('success', 'Facture envoyée par email à '.$validated['email'].'.');
+    }
+
     public function destroyInvoice($id)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $invoice = $user->proInvoices()->findOrFail($id);
+        if (! $invoice->isEditable()) {
+            return back()->with('error', 'Seul un brouillon peut être supprimé. Les factures émises sont conservées pour garantir la traçabilité.');
+        }
         $invoice->delete();
 
         return redirect()->route('pro.invoices')->with('success', 'Facture supprimée avec succès.');
@@ -591,19 +834,38 @@ class ProDashboardController extends Controller
 
     public function updateInvoiceStatus(Request $request, $id)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $invoice = $user->proInvoices()->findOrFail($id);
 
-        $request->validate(['status' => 'required|in:draft,sent,paid,overdue,cancelled']);
+        $request->validate([
+            'status' => 'required|in:sent,paid,overdue,cancelled',
+            'payment_method' => 'nullable|required_if:status,paid|string|max:50',
+        ]);
+        $target = $request->string('status')->toString();
+        $allowedTransitions = [
+            'draft' => ['sent', 'paid'],
+            'sent' => ['paid', 'overdue', 'cancelled'],
+            'overdue' => ['paid', 'cancelled'],
+        ];
+        if (! in_array($target, $allowedTransitions[$invoice->status] ?? [], true)) {
+            return back()->with('error', 'Cette transition est impossible : une facture finalisée conserve son historique.');
+        }
 
-        $updateData = ['status' => $request->status];
-        if ($request->status === 'paid') {
+        if ($invoice->status === 'draft') {
+            $this->finalizeInvoice($invoice, $user);
+        }
+
+        $updateData = ['status' => $target];
+        if ($target === 'sent') {
+            $updateData['sent_at'] = now();
+        }
+        if ($target === 'paid') {
             $updateData['paid_at'] = now();
             $updateData['payment_method'] = $request->payment_method ?? 'other';
 
             // Update client revenue
-            if ($invoice->client_id) {
-                $client = ProClient::find($invoice->client_id);
+            if ($invoice->pro_client_id) {
+                $client = $user->proClients()->find($invoice->pro_client_id);
                 if ($client) {
                     $client->increment('total_revenue', $invoice->total);
                     $client->increment('total_projects');
@@ -619,8 +881,11 @@ class ProDashboardController extends Controller
 
     public function editInvoice($id)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $invoice = $user->proInvoices()->with('quote')->findOrFail($id);
+        if (! $invoice->isEditable()) {
+            return redirect()->route('pro.invoices.show', $invoice)->with('error', 'Une facture émise ne peut plus être modifiée. Créez un avoir pour la corriger.');
+        }
         $clients = $user->proClients()->orderBy('name')->get();
 
         return view('pro.invoice-edit', compact('user', 'invoice', 'clients'));
@@ -628,11 +893,14 @@ class ProDashboardController extends Controller
 
     public function updateInvoice(Request $request, $id)
     {
-        $user = $this->ensurePro();
+        $user = $this->ensureCommercialProfessional();
         $invoice = $user->proInvoices()->findOrFail($id);
+        if (! $invoice->isEditable()) {
+            return redirect()->route('pro.invoices.show', $invoice)->with('error', 'Une facture émise ne peut plus être modifiée.');
+        }
 
         $validated = $request->validate([
-            'client_id' => 'nullable|exists:pro_clients,id',
+            'client_id' => ['nullable', $this->proClientRule($user->id)],
             'client_name' => 'required|string|max:255',
             'client_email' => 'nullable|email|max:255',
             'client_phone' => 'nullable|string|max:20',
@@ -660,6 +928,7 @@ class ProDashboardController extends Controller
         $total = $subtotal + $tax;
 
         $invoice->update([
+            'pro_client_id' => $this->resolveProClient($user, $validated)?->id,
             'client_name' => $validated['client_name'],
             'client_email' => $validated['client_email'] ?? null,
             'client_phone' => $validated['client_phone'] ?? null,
@@ -743,6 +1012,31 @@ class ProDashboardController extends Controller
         return view('pro.account-status', compact('user'));
     }
 
+    public function compliance()
+    {
+        $user = $this->ensurePro();
+        $requirements = $user->proCommercialMissingRequirements();
+
+        return view('pro.compliance', compact('user', 'requirements'));
+    }
+
+    public function acceptProTerms(Request $request)
+    {
+        $user = $this->ensurePro();
+        $request->validate([
+            'accept_pro_terms' => 'accepted',
+            'certify_information' => 'accepted',
+        ]);
+
+        $user->update([
+            'pro_terms_accepted_at' => now(),
+            'pro_terms_version' => (string) config('legal.pro_terms_version'),
+            'pro_terms_ip' => $request->ip(),
+        ]);
+
+        return redirect()->route('pro.compliance')->with('success', 'Conditions PRO acceptées. La checklist a été actualisée.');
+    }
+
     public function updateAccountStatus(Request $request)
     {
         $user = $this->ensurePro();
@@ -750,10 +1044,29 @@ class ProDashboardController extends Controller
         $validated = $request->validate([
             'pro_status' => 'required|in:particulier,auto-entrepreneur,entreprise',
             'company_name' => 'nullable|string|max:255',
-            'siret' => 'nullable|string|max:17',
+            'siret' => [
+                'nullable', 'string', 'max:64',
+                function (string $attribute, mixed $value, \Closure $fail) use ($user) {
+                    if (blank($value)) {
+                        return;
+                    }
+                    $number = preg_replace('/[^A-Z0-9]/i', '', (string) $value);
+                    $country = Str::lower(Str::ascii((string) $user->country));
+                    if (in_array($country, ['france', 'mayotte'], true) && ! preg_match('/^\d{14}$/', $number)) {
+                        $fail('Le SIRET doit contenir exactement 14 chiffres.');
+                    }
+                },
+            ],
             'tva_number' => 'nullable|string|max:20',
             'insurance_number' => 'nullable|string|max:100',
         ]);
+
+        $validated['siret'] = filled($validated['siret'] ?? null)
+            ? strtoupper(preg_replace('/[^A-Z0-9]/i', '', $validated['siret']))
+            : null;
+        $validated['tva_number'] = filled($validated['tva_number'] ?? null)
+            ? strtoupper(preg_replace('/\s+/', '', $validated['tva_number']))
+            : null;
 
         $updateData = [
             'pro_status' => $validated['pro_status'],

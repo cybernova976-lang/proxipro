@@ -27,19 +27,19 @@
     </div>
     <div class="col-6 col-md-3">
         <div class="pro-card text-center py-3 mb-0">
-            <div class="fw-bold fs-4 text-warning">{{ $quotes->where('status', 'pending')->count() }}</div>
+            <div class="fw-bold fs-4 text-warning">{{ $quoteStats['waiting'] }}</div>
             <div class="text-muted" style="font-size: 0.78rem;">En attente</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="pro-card text-center py-3 mb-0">
-            <div class="fw-bold fs-4 text-success">{{ $quotes->where('status', 'accepted')->count() }}</div>
+            <div class="fw-bold fs-4 text-success">{{ $quoteStats['accepted'] }}</div>
             <div class="text-muted" style="font-size: 0.78rem;">Acceptés</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="pro-card text-center py-3 mb-0">
-            <div class="fw-bold fs-4 text-danger">{{ $quotes->where('status', 'rejected')->count() }}</div>
+            <div class="fw-bold fs-4 text-danger">{{ $quoteStats['refused'] }}</div>
             <div class="text-muted" style="font-size: 0.78rem;">Refusés</div>
         </div>
     </div>
@@ -89,7 +89,7 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end" style="z-index: 1050;">
                                     <li><a class="dropdown-item" href="{{ route('pro.quotes.show', $quote->id) }}"><i class="fas fa-eye me-2"></i>Voir</a></li>
-                                    <li><a class="dropdown-item" href="{{ route('pro.quotes.edit', $quote->id) }}"><i class="fas fa-edit me-2"></i>Modifier</a></li>
+                                    @if($quote->isEditable())<li><a class="dropdown-item" href="{{ route('pro.quotes.edit', $quote->id) }}"><i class="fas fa-edit me-2"></i>Modifier</a></li>@endif
                                     <li><a class="dropdown-item" href="{{ route('pro.quotes.download', $quote->id) }}"><i class="fas fa-download me-2"></i>Télécharger PDF</a></li>
                                     <li>
                                         <a class="dropdown-item" href="#" onclick="openSendModal({{ $quote->id }}, '{{ $quote->quote_number }}', '{{ addslashes($quote->client_email ?? '') }}')">
@@ -105,7 +105,7 @@
                                         </form>
                                     </li>
                                     @endif
-                                    @if(in_array($quote->status, ['sent', 'pending']))
+                                    @if($quote->status === 'sent')
                                     <li>
                                         <form method="POST" action="{{ route('pro.quotes.status', $quote->id) }}">
                                             @csrf @method('PUT')
@@ -116,14 +116,15 @@
                                     <li>
                                         <form method="POST" action="{{ route('pro.quotes.status', $quote->id) }}">
                                             @csrf @method('PUT')
-                                            <input type="hidden" name="status" value="rejected">
+                                            <input type="hidden" name="status" value="refused">
                                             <button class="dropdown-item text-danger"><i class="fas fa-times me-2"></i>Refusé</button>
                                         </form>
                                     </li>
                                     @endif
                                     @if($quote->status === 'accepted')
-                                    <li><a class="dropdown-item" href="{{ route('pro.invoices.create', ['quote' => $quote->id]) }}"><i class="fas fa-file-invoice me-2"></i>Créer facture</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('pro.invoices.create', ['quoteId' => $quote->id]) }}"><i class="fas fa-file-invoice me-2"></i>Créer facture</a></li>
                                     @endif
+                                    @if($quote->isEditable())
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <form method="POST" action="{{ route('pro.quotes.delete', $quote->id) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce devis ?');">
@@ -131,6 +132,7 @@
                                             <button class="dropdown-item text-danger"><i class="fas fa-trash-alt me-2"></i>Supprimer</button>
                                         </form>
                                     </li>
+                                    @endif
                                 </ul>
                             </div>
                         </td>

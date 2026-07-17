@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Cashier\Billable;
 
 class User extends Authenticatable
@@ -96,6 +97,7 @@ class User extends Authenticatable
         'business_type',
         'company_name',
         'siret',
+        'tva_number',
         'business_sector',
         'service_category',
         'service_subcategories',
@@ -139,6 +141,9 @@ class User extends Authenticatable
         'show_hourly_rate',
         'specialties',
         'years_experience',
+        'pro_terms_accepted_at',
+        'pro_terms_version',
+        'pro_terms_ip',
         // Champs outil devis/facture
         'free_quotes_used',
         'paid_quotes_remaining',
@@ -180,6 +185,7 @@ class User extends Authenticatable
             'is_verified' => 'boolean',
             'identity_verified' => 'boolean',
             'identity_verified_at' => 'datetime',
+            'pro_terms_accepted_at' => 'datetime',
             'is_active' => 'boolean',
             'email_notifications' => 'boolean',
             'profile_public' => 'boolean',
@@ -316,6 +322,86 @@ class User extends Authenticatable
     public function isProfessionnel(): bool
     {
         return $this->account_type === 'professionnel';
+    }
+
+    /**
+     * Conditions manquantes avant l'émission d'un document commercial officiel.
+     * Les brouillons restent disponibles pour préparer l'activité avant immatriculation.
+     *
+     * @return array<int, string>
+     */
+    public function proCommercialMissingRequirements(): array
+    {
+        $missing = [];
+
+        if (! $this->isProfessionnel()) {
+            $missing[] = 'Déclarer un statut professionnel';
+        }
+        if (! $this->hasCompleteVerificationProfile()) {
+            $missing[] = 'Compléter toutes les informations du profil';
+        }
+        if (! $this->hasVerifiedProfileBadge()) {
+            $missing[] = 'Obtenir le badge « Profil vérifié »';
+        }
+        if (blank($this->company_name)) {
+            $missing[] = 'Renseigner la raison sociale';
+        }
+        if (! $this->hasValidBusinessRegistrationNumber()) {
+            $missing[] = 'Renseigner un numéro d’immatriculation valide (SIRET à 14 chiffres pour la France)';
+        }
+        if (blank($this->address) || blank($this->city) || blank($this->country)) {
+            $missing[] = 'Renseigner l’adresse professionnelle complète';
+        }
+        if (! $this->hasAcceptedCurrentProTerms()) {
+            $missing[] = 'Accepter les conditions de l’Espace PRO en vigueur';
+        }
+
+        return array_values(array_unique($missing));
+    }
+
+    public function hasAcceptedCurrentProTerms(): bool
+    {
+        return $this->pro_terms_accepted_at !== null
+            && hash_equals((string) config('legal.pro_terms_version'), (string) $this->pro_terms_version);
+    }
+
+    public function canIssueCommercialDocuments(): bool
+    {
+        return $this->proCommercialMissingRequirements() === [];
+    }
+
+    public function hasValidBusinessRegistrationNumber(): bool
+    {
+        $number = preg_replace('/[^A-Z0-9]/i', '', (string) $this->siret);
+        if ($number === '') {
+            return false;
+        }
+
+        $country = Str::lower(Str::ascii((string) $this->country));
+        if (in_array($country, ['france', 'mayotte'], true)) {
+            return (bool) preg_match('/^\d{14}$/', $number);
+        }
+
+        return (bool) preg_match('/^[A-Z0-9]{4,64}$/i', $number);
+    }
+
+    /** @return array<string, mixed> */
+    public function commercialIdentitySnapshot(): array
+    {
+        return [
+            'name' => $this->name,
+            'company_name' => $this->company_name,
+            'email' => $this->email,
+            'phone' => $this->phone,
+            'address' => $this->address,
+            'postal_code' => $this->postal_code,
+            'city' => $this->city,
+            'country' => $this->country,
+            'siret' => $this->siret,
+            'tva_number' => $this->tva_number,
+            'business_type' => $this->business_type,
+            'insurance_number' => $this->insurance_number,
+        ];
     }
 
     /**

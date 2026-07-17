@@ -78,7 +78,7 @@
                         </div>
                         <h6 class="fw-bold">Auto-Entrepreneur</h6>
                         <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                            Micro-entreprise / auto-entrepreneur. Accès complet aux devis et factures conformes.
+                            Micro-entreprise / auto-entrepreneur. Préparez vos documents puis validez la checklist de conformité avant émission.
                         </p>
                         <div class="mt-2">
                             <span class="pro-status pro-status-info" style="font-size: 0.72rem;">SIRET requis</span>
@@ -99,7 +99,7 @@
                         </div>
                         <h6 class="fw-bold">Entreprise</h6>
                         <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                            SARL, SAS, EURL, SA… Accès Premium avec personnalisation avancée, TVA et mentions légales complètes.
+                            SARL, SAS, EURL, SA… Outils commerciaux avec identité d’émetteur, TVA et traçabilité des documents.
                         </p>
                         <div class="mt-2">
                             <span class="pro-status pro-status-primary" style="font-size: 0.72rem;">SIRET + KBIS</span>
@@ -120,8 +120,8 @@
                 <input type="text" name="company_name" class="form-control" value="{{ old('company_name', $user->company_name) }}" style="border-radius: 10px;">
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-semibold">Numéro SIRET</label>
-                <input type="text" name="siret" class="form-control" value="{{ old('siret', $user->siret) }}" style="border-radius: 10px;" placeholder="123 456 789 00012" maxlength="17">
+                <label class="form-label fw-semibold">Immatriculation professionnelle</label>
+                <input type="text" name="siret" class="form-control" value="{{ old('siret', $user->siret) }}" style="border-radius: 10px;" placeholder="SIRET (France) ou registre local" maxlength="64">
             </div>
             <div class="col-md-6">
                 <label class="form-label fw-semibold">Numéro TVA intracommunautaire</label>
@@ -146,9 +146,10 @@
     <h6 class="fw-bold mb-2"><i class="fas fa-info-circle me-2 text-primary"></i>Important à savoir</h6>
     <ul class="mb-0" style="font-size: 0.85rem; color: #64748b;">
         <li>Le changement de statut n'affecte pas vos données existantes (clients, devis, factures).</li>
-        <li>En tant qu'auto-entrepreneur ou entreprise, vos mentions légales seront automatiquement ajoutées à vos devis et factures.</li>
+        <li>Les informations saisies alimentent vos documents ; vous devez vérifier les mentions exigées pour votre activité et votre pays.</li>
         <li>Certains documents peuvent être requis selon votre nouveau statut (KBIS, attestation d'assurance…).</li>
-        <li>Votre changement sera pris en compte immédiatement.</li>
+        <li>Le changement est immédiat, mais l’émission de documents reste soumise au profil complet, au badge vérifié, à l’immatriculation et aux conditions PRO.</li>
+        <li><a href="{{ route('pro.compliance') }}">Consultez la checklist de conformité PRO</a> avant tout envoi à un client.</li>
     </ul>
 </div>
 

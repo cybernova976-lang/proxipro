@@ -43,10 +43,18 @@
     </div>
 </div>
 
+@unless($user->canIssueCommercialDocuments())
+<div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-radius: 12px;">
+    <span><i class="fas fa-lock me-2"></i>La facture sera enregistrée comme brouillon sans numéro définitif.</span>
+    <a href="{{ route('pro.compliance') }}" class="btn btn-sm btn-warning">Voir la checklist</a>
+</div>
+@endunless
+
 <form method="POST" action="{{ route('pro.invoices.store') }}">
     @csrf
     @if($quote)
         <input type="hidden" name="quote_id" value="{{ $quote->id }}">
+        <input type="hidden" name="client_id" value="{{ $quote->pro_client_id }}">
     @endif
     
     <div class="row g-4">
@@ -58,7 +66,7 @@
                     <select name="client_id" id="clientSelect" class="form-select" style="border-radius: 10px;" onchange="fillClientInfo(this)">
                         <option value="">-- Nouveau client --</option>
                         @foreach($clients as $client)
-                            <option value="{{ $client->id }}" data-name="{{ $client->name }}" data-email="{{ $client->email }}" data-phone="{{ $client->phone }}" data-address="{{ $client->address }}">{{ $client->name }}</option>
+                            <option value="{{ $client->id }}" data-name="{{ $client->name }}" data-email="{{ $client->email }}" data-phone="{{ $client->phone }}" data-address="{{ $client->address }}" data-company="{{ $client->company }}">{{ $client->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -67,6 +75,25 @@
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Nom *</label>
                         <input type="text" name="client_name" id="clientName" class="form-control" required style="border-radius: 10px;" value="{{ $quote ? $quote->client_name : old('client_name') }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Entreprise du client</label>
+                        <input type="text" name="client_company" id="clientCompany" class="form-control" style="border-radius: 10px;" value="{{ $quote ? $quote->client_company : old('client_company') }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Type de client *</label>
+                        <select name="client_type" class="form-select" required style="border-radius: 10px;">
+                            <option value="individual" @selected(old('client_type') === 'individual')>Particulier</option>
+                            <option value="business" @selected(old('client_type', $quote?->client_company ? 'business' : '') === 'business')>Professionnel / entreprise</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Immatriculation client</label>
+                        <input type="text" name="client_registration_number" class="form-control" style="border-radius: 10px;" value="{{ $quote ? $quote->client_registration_number : old('client_registration_number') }}" placeholder="SIREN / registre local">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">N° TVA client</label>
+                        <input type="text" name="client_vat_number" class="form-control" style="border-radius: 10px;" value="{{ $quote ? $quote->client_vat_number : old('client_vat_number') }}">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Email</label>
@@ -85,9 +112,31 @@
 
             <div class="pro-card">
                 <div class="pro-card-title"><i class="fas fa-tag text-info"></i> Objet de la facture</div>
-                <div class="mb-0">
+                <div class="mb-3">
                     <label class="form-label fw-semibold">Objet / Sujet *</label>
                     <input type="text" name="subject" class="form-control" required style="border-radius: 10px;" value="{{ $quote ? $quote->subject ?? '' : old('subject') }}" placeholder="Ex: Prestation de service, Vente de matériel...">
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nature de l’opération *</label>
+                        <select name="operation_type" class="form-select" required style="border-radius: 10px;">
+                            <option value="services" @selected(old('operation_type', $quote?->operation_type ?? 'services') === 'services')>Prestation de services</option>
+                            <option value="goods" @selected(old('operation_type', $quote?->operation_type) === 'goods')>Vente de biens</option>
+                            <option value="mixed" @selected(old('operation_type', $quote?->operation_type) === 'mixed')>Biens et services</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Date de vente / prestation *</label>
+                        <input type="date" name="service_date" class="form-control" required value="{{ old('service_date', now()->format('Y-m-d')) }}" style="border-radius: 10px;">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Bon de commande</label>
+                        <input type="text" name="purchase_order_number" class="form-control" value="{{ old('purchase_order_number') }}" style="border-radius: 10px;">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Adresse de livraison</label>
+                        <input type="text" name="delivery_address" class="form-control" value="{{ old('delivery_address') }}" style="border-radius: 10px;">
+                    </div>
                 </div>
             </div>
 
@@ -142,6 +191,25 @@
                         <option value="carte">Carte bancaire</option>
                         <option value="other">Autre</option>
                     </select>
+                </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Conditions de paiement *</label>
+                        <textarea name="payment_terms" class="form-control" rows="2" required style="border-radius: 10px;">{{ old('payment_terms', 'Paiement à 30 jours à compter de la date d’émission.') }}</textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Escompte *</label>
+                        <input type="text" name="early_payment_discount" class="form-control" required value="{{ old('early_payment_discount', 'Néant') }}" style="border-radius: 10px;">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Pénalités de retard (%)</label>
+                        <input type="number" name="late_penalty_rate" class="form-control" min="0" max="100" step="0.01" value="{{ old('late_penalty_rate', 12) }}" style="border-radius: 10px;">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Mention d’exonération de TVA</label>
+                        <input type="text" name="vat_exemption_reason" class="form-control" value="{{ old('vat_exemption_reason', 'TVA non applicable, art. 293 B du CGI') }}" style="border-radius: 10px;">
+                        <small class="text-muted">Requise uniquement si le taux de TVA est 0 %.</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -220,6 +288,7 @@ function fillClientInfo(select) {
     document.getElementById('clientEmail').value = o.dataset.email || '';
     document.getElementById('clientPhone').value = o.dataset.phone || '';
     document.getElementById('clientAddress').value = o.dataset.address || '';
+    document.getElementById('clientCompany').value = o.dataset.company || '';
 }
 
 document.addEventListener('DOMContentLoaded', function() {

@@ -56,6 +56,13 @@
     </div>
 </div>
 
+@unless($user->canIssueCommercialDocuments())
+<div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-radius: 12px;">
+    <span><i class="fas fa-lock me-2"></i>Vous pouvez préparer ce devis. Il restera en brouillon tant que la checklist PRO n’est pas terminée.</span>
+    <a href="{{ route('pro.compliance') }}" class="btn btn-sm btn-warning">Voir la checklist</a>
+</div>
+@endunless
+
 <form method="POST" action="{{ route('pro.quotes.store') }}">
     @csrf
     
@@ -76,7 +83,8 @@
                                 data-name="{{ $client->name }}" 
                                 data-email="{{ $client->email }}" 
                                 data-phone="{{ $client->phone }}" 
-                                data-address="{{ $client->address }}">
+                                data-address="{{ $client->address }}"
+                                data-company="{{ $client->company }}">
                                 {{ $client->name }}{{ $client->company ? ' (' . $client->company . ')' : '' }}
                             </option>
                         @endforeach
@@ -101,6 +109,18 @@
                         <label class="form-label fw-semibold">Adresse</label>
                         <input type="text" name="client_address" id="clientAddress" class="form-control" style="border-radius: 10px;" value="{{ old('client_address') }}">
                     </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Entreprise du client</label>
+                        <input type="text" name="client_company" id="clientCompany" class="form-control" style="border-radius: 10px;" value="{{ old('client_company') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Immatriculation</label>
+                        <input type="text" name="client_registration_number" class="form-control" style="border-radius: 10px;" value="{{ old('client_registration_number') }}" placeholder="SIREN / registre local">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">N° TVA</label>
+                        <input type="text" name="client_vat_number" class="form-control" style="border-radius: 10px;" value="{{ old('client_vat_number') }}">
+                    </div>
                 </div>
             </div>
 
@@ -110,6 +130,20 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Objet du devis *</label>
                     <input type="text" name="subject" class="form-control" required style="border-radius: 10px;" placeholder="Ex: Rénovation salle de bain" value="{{ old('subject') }}">
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nature de l’opération *</label>
+                        <select name="operation_type" class="form-select" required style="border-radius: 10px;">
+                            <option value="services" @selected(old('operation_type') === 'services')>Prestation de services</option>
+                            <option value="goods" @selected(old('operation_type') === 'goods')>Vente de biens</option>
+                            <option value="mixed" @selected(old('operation_type') === 'mixed')>Biens et services</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Lieu d’exécution</label>
+                        <input type="text" name="execution_location" class="form-control" value="{{ old('execution_location') }}" style="border-radius: 10px;" placeholder="Adresse du chantier ou à distance">
+                    </div>
                 </div>
 
                 <label class="form-label fw-semibold">Lignes du devis</label>
@@ -170,6 +204,17 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Validité jusqu'au</label>
                     <input type="date" name="valid_until" class="form-control" value="{{ now()->addDays(30)->format('Y-m-d') }}" style="border-radius: 10px;">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Établissement du devis</label>
+                    <select name="is_free" class="form-select" style="border-radius: 10px;" required>
+                        <option value="1" @selected(old('is_free', '1') === '1')>Gratuit</option>
+                        <option value="0" @selected(old('is_free') === '0')>Payant (préciser dans les conditions)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Acompte demandé (%)</label>
+                    <input type="number" name="deposit_percentage" class="form-control" value="{{ old('deposit_percentage', 30) }}" min="0" max="100" step="0.01" style="border-radius: 10px;">
                 </div>
 
                 <div class="quote-totals mt-4">
@@ -271,6 +316,7 @@ function fillClientInfo(select) {
     document.getElementById('clientEmail').value = option.dataset.email || '';
     document.getElementById('clientPhone').value = option.dataset.phone || '';
     document.getElementById('clientAddress').value = option.dataset.address || '';
+    document.getElementById('clientCompany').value = option.dataset.company || '';
 }
 </script>
 @endsection

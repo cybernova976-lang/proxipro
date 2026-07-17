@@ -8031,6 +8031,8 @@
                     <li><a href="{{ route('legal.terms') }}">Conditions d'utilisation</a></li>
                     <li><a href="{{ route('legal.privacy') }}">Politique de confidentialité</a></li>
                     <li><a href="{{ route('legal.cookies') }}">Politique des cookies</a></li>
+                    <li><a href="{{ route('legal.platform-rules') }}">Règles de la marketplace</a></li>
+                    <li><a href="{{ route('legal.pro-terms') }}">Conditions Espace PRO</a></li>
                     <li><a href="{{ route('legal.mentions') }}">Mentions légales</a></li>
                 </ul>
             </div>

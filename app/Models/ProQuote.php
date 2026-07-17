@@ -7,10 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class ProQuote extends Model
 {
     protected $fillable = [
-        'user_id', 'client_id', 'quote_number', 'client_name', 'client_email',
+        'user_id', 'client_id', 'pro_client_id', 'quote_number', 'client_name', 'client_email',
         'client_phone', 'client_address', 'subject', 'description', 'items',
         'subtotal', 'tax_rate', 'tax_amount', 'total', 'status',
-        'valid_until', 'notes', 'conditions',
+        'valid_until', 'notes', 'conditions', 'client_company',
+        'client_registration_number', 'client_vat_number', 'operation_type',
+        'execution_location', 'currency', 'is_free', 'deposit_percentage',
+        'seller_snapshot', 'issued_at', 'sent_at', 'accepted_at', 'refused_at',
     ];
 
     protected $casts = [
@@ -20,6 +23,13 @@ class ProQuote extends Model
         'tax_amount' => 'decimal:2',
         'total' => 'decimal:2',
         'valid_until' => 'date',
+        'is_free' => 'boolean',
+        'deposit_percentage' => 'decimal:2',
+        'seller_snapshot' => 'array',
+        'issued_at' => 'datetime',
+        'sent_at' => 'datetime',
+        'accepted_at' => 'datetime',
+        'refused_at' => 'datetime',
     ];
 
     public function user()
@@ -29,7 +39,7 @@ class ProQuote extends Model
 
     public function client()
     {
-        return $this->belongsTo(ProClient::class, 'client_id');
+        return $this->belongsTo(ProClient::class, 'pro_client_id');
     }
 
     public function invoice()
@@ -39,28 +49,21 @@ class ProQuote extends Model
 
     public static function generateNumber($userId): string
     {
-        $year = date('Y');
-        $prefix = 'DEV-' . $year . '-';
+        return \App\Support\ProDocumentNumber::next((int) $userId, 'quote');
+    }
 
-        $last = self::where('quote_number', 'like', $prefix . '%')
-            ->orderByDesc('id')
-            ->value('quote_number');
-
-        $next = 1;
-        if ($last) {
-            $next = (int) substr($last, strlen($prefix)) + 1;
-        }
-
-        return $prefix . str_pad($next, 4, '0', STR_PAD_LEFT);
+    public function isEditable(): bool
+    {
+        return $this->status === 'draft' && $this->issued_at === null;
     }
 
     public function getStatusBadgeClass(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'draft' => 'bg-secondary',
             'sent' => 'bg-primary',
             'accepted' => 'bg-success',
-            'refused' => 'bg-danger',
+            'refused', 'rejected' => 'bg-danger',
             'expired' => 'bg-warning',
             default => 'bg-secondary',
         };
@@ -68,11 +71,11 @@ class ProQuote extends Model
 
     public function getStatusLabel(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'draft' => 'Brouillon',
             'sent' => 'Envoyé',
             'accepted' => 'Accepté',
-            'refused' => 'Refusé',
+            'refused', 'rejected' => 'Refusé',
             'expired' => 'Expiré',
             default => 'Inconnu',
         };
@@ -80,7 +83,7 @@ class ProQuote extends Model
 
     public function getStatusColor(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'draft' => 'secondary',
             'sent', 'pending' => 'warning',
             'accepted' => 'success',

@@ -16,7 +16,7 @@
     <div class="d-flex gap-2">
         <span class="pro-status pro-status-{{ $quote->getStatusColor() }}" style="font-size: 0.88rem; padding: 8px 16px;">{{ $quote->getStatusLabel() }}</span>
         @if($quote->status === 'accepted')
-            <a href="{{ route('pro.invoices.create', ['quote' => $quote->id]) }}" class="btn btn-pro-primary">
+            <a href="{{ route('pro.invoices.create', ['quoteId' => $quote->id]) }}" class="btn btn-pro-primary">
                 <i class="fas fa-file-invoice me-1"></i> Créer facture
             </a>
         @endif
@@ -97,7 +97,7 @@
             </div>
             <div class="d-flex justify-content-between py-1" style="font-size: 0.9rem;">
                 <span>TVA</span>
-                <strong>{{ number_format($quote->tax, 2, ',', ' ') }}€</strong>
+                <strong>{{ number_format($quote->tax_amount, 2, ',', ' ') }}€</strong>
             </div>
             <div class="d-flex justify-content-between py-2 mt-1" style="font-size: 1.15rem; font-weight: 800; color: var(--pro-primary); border-top: 2px solid var(--pro-border);">
                 <span>Total TTC</span>
@@ -140,9 +140,11 @@
 @endif
 
 <div class="d-flex flex-wrap gap-2 mt-3">
+    @if($quote->isEditable())
     <a href="{{ route('pro.quotes.edit', $quote->id) }}" class="btn btn-pro-primary">
         <i class="fas fa-edit me-1"></i> Modifier
     </a>
+    @endif
     <a href="{{ route('pro.quotes.download', $quote->id) }}" class="btn btn-pro-outline">
         <i class="fas fa-download me-1"></i> Télécharger PDF
     </a>
@@ -155,12 +157,14 @@
     <a href="{{ route('pro.quotes') }}" class="btn btn-light" style="border-radius: 10px;">
         <i class="fas fa-arrow-left me-1"></i> Retour
     </a>
-    <form method="POST" action="{{ route('pro.quotes.delete', $quote->id) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce devis ?');" class="ms-auto">
+    @if($quote->isEditable())
+    <form method="POST" action="{{ route('pro.quotes.delete', $quote->id) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce brouillon ?');" class="ms-auto">
         @csrf @method('DELETE')
         <button class="btn btn-outline-danger" style="border-radius: 10px;">
             <i class="fas fa-trash-alt me-1"></i> Supprimer
         </button>
     </form>
+    @endif
 </div>
 
 {{-- ===== SEND QUOTE MODAL ===== --}}

@@ -26,19 +26,19 @@
     </div>
     <div class="col-6 col-md-3">
         <div class="pro-card text-center py-3 mb-0">
-            <div class="fw-bold fs-4 text-warning">{{ $invoices->where('status', 'sent')->count() }}</div>
+            <div class="fw-bold fs-4 text-warning">{{ $invoiceStats['sent'] }}</div>
             <div class="text-muted" style="font-size: 0.78rem;">En attente</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="pro-card text-center py-3 mb-0">
-            <div class="fw-bold fs-4 text-success">{{ $invoices->where('status', 'paid')->count() }}</div>
+            <div class="fw-bold fs-4 text-success">{{ $invoiceStats['paid'] }}</div>
             <div class="text-muted" style="font-size: 0.78rem;">Payées</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="pro-card text-center py-3 mb-0">
-            <div class="fw-bold fs-4 text-danger">{{ $invoices->where('status', 'overdue')->count() }}</div>
+            <div class="fw-bold fs-4 text-danger">{{ $invoiceStats['overdue'] }}</div>
             <div class="text-muted" style="font-size: 0.78rem;">En retard</div>
         </div>
     </div>
@@ -87,12 +87,13 @@
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" href="{{ route('pro.invoices.show', $invoice->id) }}"><i class="fas fa-eye me-2"></i>Voir</a></li>
                                     <li><a class="dropdown-item" href="{{ route('pro.invoices.download', $invoice->id) }}"><i class="fas fa-download me-2"></i>Télécharger PDF</a></li>
-                                    <li><a class="dropdown-item" href="{{ route('pro.invoices.edit', $invoice->id) }}"><i class="fas fa-edit me-2"></i>Modifier</a></li>
-                                    @if($invoice->status !== 'paid')
+                                    @if($invoice->isEditable())<li><a class="dropdown-item" href="{{ route('pro.invoices.edit', $invoice->id) }}"><i class="fas fa-edit me-2"></i>Modifier</a></li>@endif
+                                    @if(in_array($invoice->status, ['draft', 'sent', 'overdue']))
                                     <li>
                                         <form method="POST" action="{{ route('pro.invoices.status', $invoice->id) }}">
                                             @csrf @method('PUT')
                                             <input type="hidden" name="status" value="paid">
+                                            <input type="hidden" name="payment_method" value="other">
                                             <button class="dropdown-item text-success"><i class="fas fa-check me-2"></i>Marquer payée</button>
                                         </form>
                                     </li>
@@ -106,6 +107,7 @@
                                         </form>
                                     </li>
                                     @endif
+                                    @if($invoice->isEditable())
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <form method="POST" action="{{ route('pro.invoices.destroy', $invoice->id) }}" onsubmit="return confirm('Supprimer cette facture ?')">
@@ -113,6 +115,7 @@
                                             <button class="dropdown-item text-danger"><i class="fas fa-trash me-2"></i>Supprimer</button>
                                         </form>
                                     </li>
+                                    @endif
                                 </ul>
                             </div>
                         </td>

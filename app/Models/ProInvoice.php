@@ -7,10 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class ProInvoice extends Model
 {
     protected $fillable = [
-        'user_id', 'client_id', 'quote_id', 'invoice_number', 'client_name',
+        'user_id', 'client_id', 'pro_client_id', 'quote_id', 'invoice_number', 'client_name',
         'client_email', 'client_phone', 'client_address', 'subject', 'description',
         'items', 'subtotal', 'tax_rate', 'tax_amount', 'total', 'status',
         'due_date', 'paid_at', 'payment_method', 'notes', 'payment_terms',
+        'client_company', 'client_registration_number', 'client_vat_number',
+        'client_type', 'operation_type', 'service_date', 'purchase_order_number',
+        'delivery_address', 'currency', 'vat_exemption_reason',
+        'early_payment_discount', 'late_penalty_rate', 'seller_snapshot',
+        'finalized_at', 'sent_at',
     ];
 
     protected $casts = [
@@ -21,6 +26,11 @@ class ProInvoice extends Model
         'total' => 'decimal:2',
         'due_date' => 'date',
         'paid_at' => 'date',
+        'service_date' => 'date',
+        'late_penalty_rate' => 'decimal:2',
+        'seller_snapshot' => 'array',
+        'finalized_at' => 'datetime',
+        'sent_at' => 'datetime',
     ];
 
     public function user()
@@ -30,7 +40,7 @@ class ProInvoice extends Model
 
     public function client()
     {
-        return $this->belongsTo(ProClient::class, 'client_id');
+        return $this->belongsTo(ProClient::class, 'pro_client_id');
     }
 
     public function quote()
@@ -40,24 +50,17 @@ class ProInvoice extends Model
 
     public static function generateNumber($userId): string
     {
-        $year = date('Y');
-        $prefix = 'FAC-' . $year . '-';
+        return \App\Support\ProDocumentNumber::next((int) $userId, 'invoice');
+    }
 
-        $last = self::where('invoice_number', 'like', $prefix . '%')
-            ->orderByDesc('id')
-            ->value('invoice_number');
-
-        $next = 1;
-        if ($last) {
-            $next = (int) substr($last, strlen($prefix)) + 1;
-        }
-
-        return $prefix . str_pad($next, 4, '0', STR_PAD_LEFT);
+    public function isEditable(): bool
+    {
+        return $this->status === 'draft' && $this->finalized_at === null;
     }
 
     public function getStatusBadgeClass(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'draft' => 'bg-secondary',
             'sent' => 'bg-primary',
             'paid' => 'bg-success',
@@ -69,7 +72,7 @@ class ProInvoice extends Model
 
     public function getStatusLabel(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'draft' => 'Brouillon',
             'sent' => 'Envoyée',
             'paid' => 'Payée',
@@ -86,7 +89,7 @@ class ProInvoice extends Model
 
     public function getStatusColor(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'draft' => 'secondary',
             'sent' => 'warning',
             'paid' => 'success',

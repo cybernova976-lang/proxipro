@@ -105,15 +105,23 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <span class="pro-status pro-status-{{ $invoice->getStatusColor() }}" style="font-size: 0.88rem; padding: 8px 16px;">{{ $invoice->getStatusLabel() }}</span>
-        @if($invoice->status !== 'paid')
+        @if(in_array($invoice->status, ['draft', 'sent', 'overdue']))
             <form method="POST" action="{{ route('pro.invoices.status', $invoice->id) }}" class="d-inline">
                 @csrf @method('PUT')
                 <input type="hidden" name="status" value="paid">
+                <input type="hidden" name="payment_method" value="other">
                 <button class="btn btn-pro-primary btn-sm"><i class="fas fa-check me-1"></i> Marquer payée</button>
             </form>
         @endif
     </div>
 </div>
+
+@if($invoice->status === 'draft' && ! $user->canIssueCommercialDocuments())
+<div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-radius: 12px;">
+    <span><i class="fas fa-lock me-2"></i>Cette facture est un brouillon. Complétez la conformité PRO pour lui attribuer un numéro définitif et l’envoyer.</span>
+    <a href="{{ route('pro.compliance') }}" class="btn btn-sm btn-warning">Checklist PRO</a>
+</div>
+@endif
 
 <div class="pro-card">
     {{-- Header: Logo + Infos + Invoice Title --}}
@@ -126,13 +134,15 @@
                 @if($user->phone)<div>Tél : {{ $user->phone }}</div>@endif
                 <div>{{ $user->email }}</div>
                 @if($user->siret)<div style="color: #94a3b8; font-size: 0.78rem;">SIRET : {{ $user->siret }}</div>@endif
+                @if($user->tva_number)<div style="color: #94a3b8; font-size: 0.78rem;">TVA : {{ $user->tva_number }}</div>@endif
             </div>
         </div>
         <div class="text-end">
             <div class="invoice-doc-title">FACTURE</div>
             <div style="font-size: 0.88rem; color: #475569; line-height: 1.8; margin-top: 4px;">
                 <div><strong>N° :</strong> {{ $invoice->invoice_number }}</div>
-                <div><strong>Date :</strong> {{ $invoice->created_at->format('d/m/Y') }}</div>
+                <div><strong>Date d’émission :</strong> {{ ($invoice->finalized_at ?? $invoice->created_at)->format('d/m/Y') }}</div>
+                @if($invoice->service_date)<div><strong>Date de l’opération :</strong> {{ $invoice->service_date->format('d/m/Y') }}</div>@endif
                 @if($invoice->due_date)<div><strong>Échéance :</strong> {{ $invoice->due_date->format('d/m/Y') }}</div>@endif
                 @if($invoice->quote)<div><strong>Réf. devis :</strong> {{ $invoice->quote->quote_number }}</div>@endif
             </div>
@@ -145,7 +155,10 @@
             <div class="invoice-info-label">Client</div>
             <div class="invoice-info-name">{{ $invoice->client_name }}</div>
             <div class="invoice-info-detail">
+                @if($invoice->client_company)<div><strong>{{ $invoice->client_company }}</strong></div>@endif
                 @if($invoice->client_address)<div>{{ $invoice->client_address }}</div>@endif
+                @if($invoice->client_registration_number)<div>Immatriculation : {{ $invoice->client_registration_number }}</div>@endif
+                @if($invoice->client_vat_number)<div>TVA : {{ $invoice->client_vat_number }}</div>@endif
                 @if($invoice->client_email)<div>{{ $invoice->client_email }}</div>@endif
                 @if($invoice->client_phone)<div>{{ $invoice->client_phone }}</div>@endif
             </div>
@@ -184,8 +197,8 @@
                 <strong>{{ number_format($invoice->subtotal, 2, ',', ' ') }} €</strong>
             </div>
             <div class="total-line" style="border-top: 1px solid #e2e8f0;">
-                <span>TVA ({{ $invoice->tax_rate ? number_format($invoice->tax_rate, 0) : 20 }}%)</span>
-                <strong>{{ number_format($invoice->tax_amount ?? $invoice->tax, 2, ',', ' ') }} €</strong>
+                <span>TVA ({{ number_format($invoice->tax_rate, 2, ',', ' ') }}%)</span>
+                <strong>{{ number_format($invoice->tax_amount, 2, ',', ' ') }} €</strong>
             </div>
             <div class="total-line-grand">
                 <span>Total TTC</span>
@@ -203,6 +216,13 @@
     </div>
     @endif
 
+    <div class="p-3 mb-3" style="background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; font-size: .83rem; color: #475569;">
+        @if((float) $invoice->tax_rate === 0.0 && $invoice->vat_exemption_reason)<div class="fw-bold mb-1">{{ $invoice->vat_exemption_reason }}</div>@endif
+        <div><strong>Conditions de paiement :</strong> {{ $invoice->payment_terms ?: 'À convenir' }}</div>
+        <div><strong>Escompte :</strong> {{ $invoice->early_payment_discount ?: 'Néant' }}</div>
+        @if($invoice->client_type === 'business')<div><strong>Retard :</strong> {{ number_format($invoice->late_penalty_rate ?? 0, 2, ',', ' ') }} % par an + indemnité forfaitaire de recouvrement de 40 €.</div>@endif
+    </div>
+
     {{-- Notes --}}
     @if($invoice->notes)
     <div class="pt-3" style="border-top: 1px solid var(--pro-border);">
@@ -217,9 +237,11 @@
     <a href="{{ route('pro.invoices.download', $invoice->id) }}" class="btn btn-download-pdf">
         <i class="fas fa-file-pdf me-1"></i> Télécharger PDF
     </a>
+    @if($invoice->isEditable())
     <a href="{{ route('pro.invoices.edit', $invoice->id) }}" class="btn btn-pro-primary">
         <i class="fas fa-edit me-1"></i> Modifier
     </a>
+    @endif
     <button onclick="window.print()" class="btn btn-pro-outline">
         <i class="fas fa-print me-1"></i> Imprimer
     </button>
@@ -227,4 +249,22 @@
         <i class="fas fa-arrow-left me-1"></i> Retour
     </a>
 </div>
+
+@if(in_array($invoice->status, ['draft', 'sent']))
+<div class="pro-card mt-3" style="max-width: 720px;">
+    <div class="pro-card-title"><i class="fas fa-envelope text-primary"></i> Envoyer la facture par email</div>
+    <form method="POST" action="{{ route('pro.invoices.sendEmail', $invoice->id) }}" class="row g-3">
+        @csrf
+        <div class="col-md-5">
+            <label class="form-label fw-semibold">Destinataire</label>
+            <input type="email" name="email" value="{{ $invoice->client_email }}" class="form-control" required>
+        </div>
+        <div class="col-md-7">
+            <label class="form-label fw-semibold">Message (facultatif)</label>
+            <input type="text" name="message" class="form-control" placeholder="Veuillez trouver votre facture en pièce jointe.">
+        </div>
+        <div class="col-12"><button class="btn btn-pro-primary"><i class="fas fa-paper-plane me-1"></i> Envoyer le PDF</button></div>
+    </form>
+</div>
+@endif
 @endsection

@@ -11,4 +11,5 @@ return [
     'host_address' => env('LEGAL_HOST_ADDRESS'),
     'privacy_contact' => env('PRIVACY_CONTACT_EMAIL', env('SUPPORT_EMAIL')),
     'last_updated' => env('LEGAL_LAST_UPDATED'),
+    'pro_terms_version' => env('PRO_TERMS_VERSION', '2026-07-17'),
 ];

@@ -120,34 +120,41 @@
             border-top: 1px solid #e2e8f0;
             padding-top: 10px;
         }
+        .draft-watermark { position: fixed; top: 42%; left: 7%; right: 7%; text-align: center; transform: rotate(-28deg); font-size: 44px; font-weight: bold; color: rgba(220, 38, 38, .16); z-index: -1; }
+        .legal-box { margin-top: 14px; padding: 11px 14px; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 9px; line-height: 1.55; color: #475569; }
     </style>
 </head>
 <body>
+    @php $seller = $invoice->seller_snapshot ?: $user->commercialIdentitySnapshot(); @endphp
+    @if($invoice->status === 'draft')<div class="draft-watermark">BROUILLON — NON CONTRACTUEL</div>@endif
     <div class="container">
         {{-- Header --}}
         <div class="header">
             <div class="header-left">
-                <div class="company-logo">{{ $user->company_name ?? $user->name }}</div>
+                <div class="company-logo">{{ $seller['company_name'] ?? $seller['name'] }}</div>
                 <div class="company-info">
-                    @if($user->company_name && $user->name !== $user->company_name){{ $user->name }}<br>@endif
-                    @if($user->address){{ $user->address }}<br>@endif
-                    @if($user->city){{ $user->city }}@if($user->country), {{ $user->country }}@endif<br>@endif
-                    @if($user->phone)Tél : {{ $user->phone }}<br>@endif
-                    {{ $user->email }}
-                    @if($user->siret)<br>SIRET : {{ $user->siret }}@endif
+                    @if(!empty($seller['name']) && $seller['name'] !== ($seller['company_name'] ?? null)){{ $seller['name'] }}<br>@endif
+                    @if(!empty($seller['address'])){{ $seller['address'] }}<br>@endif
+                    @if(!empty($seller['postal_code']) || !empty($seller['city'])){{ $seller['postal_code'] ?? '' }} {{ $seller['city'] ?? '' }}@if(!empty($seller['country'])), {{ $seller['country'] }}@endif<br>@endif
+                    @if(!empty($seller['phone']))Tél : {{ $seller['phone'] }}<br>@endif
+                    {{ $seller['email'] ?? '' }}
+                    @if(!empty($seller['siret']))<br>SIRET : {{ $seller['siret'] }}@endif
+                    @if(!empty($seller['tva_number']))<br>TVA : {{ $seller['tva_number'] }}@endif
                 </div>
             </div>
             <div class="header-right">
                 <div class="doc-title">FACTURE</div>
                 <div class="doc-info">
                     <strong>N° :</strong> {{ $invoice->invoice_number }}<br>
-                    <strong>Date :</strong> {{ $invoice->created_at->format('d/m/Y') }}<br>
+                    <strong>Date d’émission :</strong> {{ ($invoice->finalized_at ?? $invoice->created_at)->format('d/m/Y') }}<br>
+                    @if($invoice->service_date)<strong>Date de l’opération :</strong> {{ $invoice->service_date->format('d/m/Y') }}<br>@endif
                     @if($invoice->due_date)
                     <strong>Échéance :</strong> {{ $invoice->due_date->format('d/m/Y') }}<br>
                     @endif
                     @if($invoice->quote)
                     <strong>Réf. devis :</strong> {{ $invoice->quote->quote_number }}<br>
                     @endif
+                    @if($invoice->purchase_order_number)<strong>Bon de commande :</strong> {{ $invoice->purchase_order_number }}<br>@endif
                     <span class="status-badge status-{{ $invoice->status }}">{{ $statusLabel ?? $invoice->getStatusLabel() }}</span>
                 </div>
             </div>
@@ -160,7 +167,10 @@
                 <div class="party-box">
                     <div class="info-box-label">Client</div>
                     <div class="info-box-name">{{ $invoice->client_name }}</div>
+                    @if($invoice->client_company)<div class="info-box-detail"><strong>{{ $invoice->client_company }}</strong></div>@endif
                     @if($invoice->client_address)<div class="info-box-detail">{{ $invoice->client_address }}</div>@endif
+                    @if($invoice->client_registration_number)<div class="info-box-detail">Immatriculation : {{ $invoice->client_registration_number }}</div>@endif
+                    @if($invoice->client_vat_number)<div class="info-box-detail">TVA : {{ $invoice->client_vat_number }}</div>@endif
                     @if($invoice->client_email)<div class="info-box-detail">{{ $invoice->client_email }}</div>@endif
                     @if($invoice->client_phone)<div class="info-box-detail">{{ $invoice->client_phone }}</div>@endif
                 </div>
@@ -170,7 +180,7 @@
         {{-- Subject --}}
         @if($invoice->subject && $invoice->subject !== 'Facture')
         <div style="margin-bottom: 20px; font-size: 12px;">
-            <strong>Objet :</strong> {{ $invoice->subject }}
+            <strong>Objet :</strong> {{ $invoice->subject }} — {{ ['services' => 'Prestations de services', 'goods' => 'Vente de biens', 'mixed' => 'Biens et services'][$invoice->operation_type] ?? 'Prestation' }}
         </div>
         @endif
 
@@ -206,8 +216,8 @@
                         <span class="value">{{ number_format($invoice->subtotal, 2, ',', ' ') }} €</span>
                     </div>
                     <div class="total-row">
-                        <span class="label">TVA ({{ $invoice->tax_rate ? number_format($invoice->tax_rate, 0) : 20 }}%)</span>
-                        <span class="value">{{ number_format($invoice->tax_amount ?? $invoice->tax, 2, ',', ' ') }} €</span>
+                        <span class="label">TVA ({{ number_format($invoice->tax_rate, 2, ',', ' ') }}%)</span>
+                        <span class="value">{{ number_format($invoice->tax_amount, 2, ',', ' ') }} €</span>
                     </div>
                     <div class="total-row grand">
                         <span class="label">Total TTC</span>
@@ -233,6 +243,13 @@
         </div>
         @endif
 
+        <div class="legal-box">
+            @if((float) $invoice->tax_rate === 0.0 && $invoice->vat_exemption_reason)<strong>{{ $invoice->vat_exemption_reason }}</strong><br>@endif
+            <strong>Conditions de paiement :</strong> {{ $invoice->payment_terms ?: 'À convenir' }}@if($invoice->due_date) — échéance au {{ $invoice->due_date->format('d/m/Y') }}@endif<br>
+            <strong>Escompte pour paiement anticipé :</strong> {{ $invoice->early_payment_discount ?: 'Néant' }}.<br>
+            @if($invoice->client_type === 'business')<strong>Retard :</strong> pénalités au taux annuel de {{ number_format($invoice->late_penalty_rate ?? 0, 2, ',', ' ') }} % et indemnité forfaitaire de 40 € pour frais de recouvrement.@endif
+        </div>
+
         {{-- Notes --}}
         @if($invoice->notes)
         <div class="notes-section">
@@ -243,8 +260,9 @@
     </div>
 
     <div class="footer">
-        Document généré le {{ now()->format('d/m/Y') }} — {{ $user->company_name ?? $user->name }}
-        @if($user->siret) — SIRET : {{ $user->siret }}@endif
+        @if($invoice->status === 'draft')Brouillon sans valeur de facture définitive — @endif
+        Document généré le {{ now()->format('d/m/Y') }} — {{ $seller['company_name'] ?? $seller['name'] }}
+        @if(!empty($seller['siret'])) — SIRET : {{ $seller['siret'] }}@endif
     </div>
 </body>
 </html>
