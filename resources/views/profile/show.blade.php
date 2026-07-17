@@ -196,6 +196,15 @@
                         <a href="{{ route('profile.edit') }}" class="btn btn-primary">
                             <i class="fas fa-edit me-2"></i><span translate="no">Modifier mon profil</span>
                         </a>
+                        @if($user->profile_public)
+                            <button type="button" class="btn btn-outline-primary" id="ownProfileShareBtn">
+                                <i class="fas fa-share-nodes me-2"></i>Partager mon profil
+                            </button>
+                        @else
+                            <a href="{{ route('settings.index') }}" class="btn btn-outline-warning" title="Votre profil doit être public pour être partagé">
+                                <i class="fas fa-lock me-2"></i>Rendre mon profil partageable
+                            </a>
+                        @endif
                         <a href="{{ route('settings.index') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-cog me-2"></i>Paramètres
                         </a>
@@ -370,6 +379,13 @@
         </div>
     </div>
 </div>
+
+@if($user->profile_public)
+    @include('profile.partials.share-modal', [
+        'triggerId' => 'ownProfileShareBtn',
+        'modalId' => 'ownProfileShareModal',
+    ])
+@endif
 
 {{-- Ad Detail Modal --}}
 <div class="modal fade" id="adDetailModal" tabindex="-1">

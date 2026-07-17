@@ -31,11 +31,20 @@ class ProfileSharingFeatureTest extends TestCase
             ->assertSee('data-share-platform="whatsapp"', false)
             ->assertSee('data-share-platform="facebook"', false)
             ->assertSee('data-share-platform="linkedin"', false)
-            ->assertSee('navigator.share(shareData)', false)
+            ->assertSee('navigator.canShare(fileShareData)', false)
+            ->assertSee('navigator.share(nativeShareData)', false)
             ->assertSee("document.execCommand('copy')", false)
-            ->assertSee('avatars/amina-profile.jpg', false);
+            ->assertSee('avatars/amina-profile.jpg', false)
+            ->assertSee('La photo sera jointe lorsque l’application choisie l’accepte.');
 
         $html = $response->getContent();
+        $expectedShareText = implode("\n", [
+            'Découvrez le profil de Amina Services sur ProxiPro.',
+            'Métier : Électricienne',
+            'Description : Interventions électriques rapides pour les particuliers et les entreprises.',
+            'Localisation : Lyon, France',
+        ]);
+        $this->assertStringContainsString(json_encode($expectedShareText), $html);
         $this->assertStringContainsString(json_encode(route('profile.share.record', $user)), $html);
         $this->assertSame(1, substr_count($html, 'property="og:title"'));
         $this->assertSame(1, substr_count($html, 'property="og:image"'));
@@ -102,5 +111,42 @@ class ProfileSharingFeatureTest extends TestCase
             ->assertSee('id="proProfileShareModal"', false)
             ->assertSee('data-profile-copy-link', false)
             ->assertSee(route('profile.public', $professional), false);
+    }
+
+    public function test_user_can_share_their_own_public_profile_from_their_profile_page(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Nadia Dépannage',
+            'profession' => 'Plombière',
+            'bio' => 'Dépannages et installations sanitaires à domicile.',
+            'avatar' => 'avatars/nadia.jpg',
+            'profile_public' => true,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('profile.show'))
+            ->assertOk()
+            ->assertSee('id="ownProfileShareBtn"', false)
+            ->assertSee('Partager mon profil')
+            ->assertSee('id="ownProfileShareModal"', false)
+            ->assertSee('avatars/nadia.jpg', false);
+
+        $this->assertStringContainsString(json_encode(implode("\n", [
+            'Découvrez le profil de Nadia Dépannage sur ProxiPro.',
+            'Métier : Plombière',
+            'Description : Dépannages et installations sanitaires à domicile.',
+        ])), $response->getContent());
+    }
+
+    public function test_private_own_profile_prompts_the_user_to_make_it_shareable(): void
+    {
+        $user = User::factory()->create(['profile_public' => false]);
+
+        $this->actingAs($user)
+            ->get(route('profile.show'))
+            ->assertOk()
+            ->assertDontSee('id="ownProfileShareBtn"', false)
+            ->assertDontSee('id="ownProfileShareModal"', false)
+            ->assertSee('Rendre mon profil partageable');
     }
 }

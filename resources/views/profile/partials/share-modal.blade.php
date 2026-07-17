@@ -4,9 +4,19 @@
     $profileShareName = $user->company_name ?: $user->name;
     $profileShareRole = $user->profession ?: ($user->services->first()?->subcategory ?? null);
     $profileShareUrl = route('profile.public', $user->id);
-    $profileShareTitle = $profileShareName.($profileShareRole ? ' — '.$profileShareRole : '').' | '.config('app.name', 'ProxiPro');
-    $profileShareText = 'Découvrez le profil de '.$profileShareName.($profileShareRole ? ', '.$profileShareRole : '').' sur '.config('app.name', 'ProxiPro').'.';
+    $profileShareAvatarUrl = $user->avatar ? storage_url($user->avatar) : null;
+    $profileShareDescription = trim((string) ($user->bio ?: ($user->services->first()?->description ?? '')));
+    $profileShareDescription = $profileShareDescription !== ''
+        ? Str::limit(preg_replace('/\s+/', ' ', $profileShareDescription), 180)
+        : null;
     $profileShareLocation = collect([$user->city, $user->country])->filter()->implode(', ');
+    $profileShareTitle = $profileShareName.($profileShareRole ? ' — '.$profileShareRole : '').' | '.config('app.name', 'ProxiPro');
+    $profileShareText = collect([
+        'Découvrez le profil de '.$profileShareName.' sur '.config('app.name', 'ProxiPro').'.',
+        $profileShareRole ? 'Métier : '.$profileShareRole : null,
+        $profileShareDescription ? 'Description : '.$profileShareDescription : null,
+        $profileShareLocation ? 'Localisation : '.$profileShareLocation : null,
+    ])->filter()->implode("\n");
 @endphp
 
 <style>
@@ -19,7 +29,7 @@
 
     .profile-share-preview {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 14px;
         padding: 14px;
         border: 1px solid #e2e8f0;
@@ -46,6 +56,17 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
+    }
+
+    .profile-share-description {
+        display: -webkit-box;
+        margin: 5px 0 0;
+        overflow: hidden;
+        color: #64748b;
+        font-size: .78rem;
+        line-height: 1.35;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
     }
 
     .profile-share-options {
@@ -144,12 +165,18 @@
                         <div class="fw-bold text-dark text-truncate">{{ $profileShareName }}</div>
                         @if($profileShareRole)<div class="small text-muted text-truncate">{{ $profileShareRole }}</div>@endif
                         @if($profileShareLocation)<div class="small text-muted"><i class="fas fa-map-marker-alt me-1"></i>{{ $profileShareLocation }}</div>@endif
+                        @if($profileShareDescription)<p class="profile-share-description">{{ $profileShareDescription }}</p>@endif
                     </div>
                 </div>
 
                 <button type="button" class="profile-share-native" data-profile-native-share>
                     <i class="fas fa-share-nodes me-2"></i>Partager avec mon appareil
                 </button>
+                @if($profileShareAvatarUrl)
+                    <p class="small text-muted text-center mt-n1 mb-3" data-profile-photo-hint>
+                        <i class="fas fa-image me-1"></i>La photo sera jointe lorsque l’application choisie l’accepte.
+                    </p>
+                @endif
 
                 <div class="profile-share-options mb-3">
                     <a class="profile-share-option" data-share-platform="whatsapp" href="https://wa.me/?text={{ urlencode($profileShareText.' '.$profileShareUrl) }}" target="_blank" rel="noopener noreferrer" aria-label="Partager sur WhatsApp">
@@ -172,11 +199,11 @@
                     </a>
                 </div>
 
-                <label for="{{ $profileShareModalId }}Url" class="form-label small fw-semibold">Lien direct du profil</label>
+                <label for="{{ $profileShareModalId }}Url" class="form-label small fw-semibold">Profil public</label>
                 <div class="input-group profile-share-copy">
                     <input type="text" class="form-control" id="{{ $profileShareModalId }}Url" value="{{ $profileShareUrl }}" readonly>
                     <button type="button" class="btn btn-primary px-3" data-profile-copy-link>
-                        <i class="fas fa-copy me-1"></i><span>Copier</span>
+                        <i class="fas fa-copy me-1"></i><span>Copier le profil</span>
                     </button>
                 </div>
                 <div class="profile-share-status" data-profile-share-status role="status" aria-live="polite"></div>
@@ -196,6 +223,8 @@ document.addEventListener('DOMContentLoaded', () => {
         text: @json($profileShareText),
         url: @json($profileShareUrl),
     };
+    const avatarUrl = @json($profileShareAvatarUrl);
+    const completeShareText = `${shareData.text}\n\n${shareData.url}`;
     const recordUrl = @json(route('profile.share.record', $user->id));
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
     const modal = new bootstrap.Modal(modalElement);
@@ -222,12 +251,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }).catch(() => {});
     }
 
-    async function copyLink() {
+    async function copyProfile() {
         let copied = false;
 
         if (navigator.clipboard && window.isSecureContext) {
             try {
-                await navigator.clipboard.writeText(shareData.url);
+                await navigator.clipboard.writeText(completeShareText);
                 copied = true;
             } catch (error) {
                 copied = false;
@@ -236,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!copied) {
             const fallback = document.createElement('textarea');
-            fallback.value = shareData.url;
+            fallback.value = completeShareText;
             fallback.setAttribute('readonly', '');
             fallback.style.position = 'fixed';
             fallback.style.opacity = '0';
@@ -259,11 +288,45 @@ document.addEventListener('DOMContentLoaded', () => {
         recordShare('copy');
         copyButton.querySelector('i').className = 'fas fa-check me-1';
         copyButton.querySelector('span').textContent = 'Copié';
-        setStatus('Lien copié dans le presse-papiers.');
+        setStatus('Le métier, la description et le lien du profil ont été copiés.');
         window.setTimeout(() => {
             copyButton.querySelector('i').className = 'fas fa-copy me-1';
-            copyButton.querySelector('span').textContent = 'Copier';
+            copyButton.querySelector('span').textContent = 'Copier le profil';
         }, 2200);
+    }
+
+    async function buildNativeShareData() {
+        if (!avatarUrl || typeof navigator.canShare !== 'function' || typeof File === 'undefined') {
+            return shareData;
+        }
+
+        try {
+            const response = await fetch(avatarUrl, { credentials: 'same-origin' });
+            if (!response.ok) return shareData;
+
+            const blob = await response.blob();
+            if (!blob.type.startsWith('image/')) return shareData;
+
+            const extensions = {
+                'image/jpeg': 'jpg',
+                'image/png': 'png',
+                'image/gif': 'gif',
+                'image/webp': 'webp',
+            };
+            const extension = extensions[blob.type] || 'jpg';
+            const avatarFile = new File([blob], `profil-${@json(Str::slug($profileShareName) ?: 'utilisateur')}.${extension}`, {
+                type: blob.type,
+            });
+            const fileShareData = {
+                title: shareData.title,
+                text: completeShareText,
+                files: [avatarFile],
+            };
+
+            return navigator.canShare(fileShareData) ? fileShareData : shareData;
+        } catch (error) {
+            return shareData;
+        }
     }
 
     trigger.addEventListener('click', () => {
@@ -271,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.show();
     });
 
-    copyButton.addEventListener('click', copyLink);
+    copyButton.addEventListener('click', copyProfile);
 
     modalElement.querySelectorAll('[data-share-platform]').forEach(link => {
         link.addEventListener('click', () => recordShare(link.dataset.sharePlatform));
@@ -281,13 +344,17 @@ document.addEventListener('DOMContentLoaded', () => {
         nativeButton.style.display = 'block';
         nativeButton.addEventListener('click', async () => {
             try {
-                await navigator.share(shareData);
+                nativeButton.disabled = true;
+                const nativeShareData = await buildNativeShareData();
+                await navigator.share(nativeShareData);
                 recordShare('native');
                 setStatus('Profil partagé avec succès.');
             } catch (error) {
                 if (error?.name !== 'AbortError') {
                     setStatus('Le partage natif est indisponible. Utilisez une option ci-dessous.', true);
                 }
+            } finally {
+                nativeButton.disabled = false;
             }
         });
     }
