@@ -12,14 +12,17 @@
     <meta property="og:title" content="{{ config('app.name', 'ProxiPro') }} — Trouvez un prestataire près de chez vous">
     <meta property="og:description" content="Décrivez votre besoin, comparez les propositions et choisissez le prestataire qui vous convient.">
     <meta property="og:url" content="{{ url('/') }}">
-    <meta property="og:image" content="{{ asset('images/social-card.svg') }}">
+    <meta property="og:image" content="{{ asset('images/social-card.png') }}">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="{{ config('app.name', 'ProxiPro') }}, services de proximité">
     <meta property="og:site_name" content="{{ config('app.name', 'ProxiPro') }}">
     <meta property="og:locale" content="fr_FR">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ config('app.name', 'ProxiPro') }} — Services de proximité">
     <meta name="twitter:description" content="Publiez un besoin et comparez les propositions de prestataires.">
-    <meta name="twitter:image" content="{{ asset('images/social-card.svg') }}">
+    <meta name="twitter:image" content="{{ asset('images/social-card.png') }}">
     <script type="application/ld+json">
         {!! json_encode([
             '@context' => 'https://schema.org',
@@ -485,6 +488,7 @@
             justify-content: center; color: white; font-weight: 900; font-size: 0.9rem;
         }
         .footer-brand p { font-size: 0.9rem; line-height: 1.7; margin-bottom: 20px; }
+        .footer-brand > [data-site-share-trigger] { margin-bottom: 18px; }
         .footer-social { display: flex; gap: 10px; }
         .footer-social a {
             width: 38px; height: 38px; border-radius: 10px;
@@ -551,6 +555,7 @@
                 <ul class="nav-links">
                     <li><a href="{{ url('/ads') }}">Annonces</a></li>
                     <li><a href="{{ route('contact.index') }}">Contact</a></li>
+                    <li><a href="#" data-site-share-trigger><i class="fas fa-share-nodes me-1"></i>Partager</a></li>
                     @auth
                         <li><a href="{{ route('feed') }}" class="btn-nav-login">Accueil</a></li>
                     @else
@@ -572,6 +577,9 @@
                     <a href="{{ route('contact.index') }}" class="d-block py-2 text-decoration-none text-dark fw-semibold">
                         <i class="fas fa-envelope me-2 text-muted"></i>Contact
                     </a>
+                    <button type="button" class="btn btn-light text-start fw-semibold" data-site-share-trigger>
+                        <i class="fas fa-share-nodes me-2 text-primary"></i>Partager {{ config('app.name', 'ProxiPro') }}
+                    </button>
                     @auth
                         <a href="{{ route('feed') }}" class="btn btn-primary rounded-3 mt-2 py-2">
                             <i class="fas fa-home me-2"></i>Accueil
@@ -957,6 +965,9 @@
                 <div class="footer-brand">
                     <h4><span class="footer-brand-icon">{{ Str::upper(Str::substr(config('app.name', 'ProxiPro'), 0, 1)) }}</span> {{ config('app.name', 'ProxiPro') }}</h4>
                     <p>La plateforme de mise en relation pour publier un besoin, comparer des propositions et travailler avec un prestataire près de chez vous.</p>
+                    <button type="button" class="btn btn-outline-light rounded-3" data-site-share-trigger>
+                        <i class="fas fa-share-nodes me-2"></i>Partager {{ config('app.name', 'ProxiPro') }}
+                    </button>
                     @if(collect(config('site.social', []))->filter()->isNotEmpty())
                     <div class="footer-social">
                         @foreach(config('site.social') as $network => $url)
@@ -1006,6 +1017,8 @@
             </div>
         </div>
     </footer>
+
+    @include('partials.site-share-modal')
 
     <!-- Scroll to Top Button -->
     <button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" 

@@ -15,7 +15,7 @@
         $openGraphDescription = trim($__env->yieldContent('og_description')) ?: $pageDescription;
         $openGraphType = trim($__env->yieldContent('og_type')) ?: 'website';
         $openGraphUrl = trim($__env->yieldContent('og_url')) ?: url()->current();
-        $openGraphImage = trim($__env->yieldContent('og_image')) ?: asset('images/social-card.svg');
+        $openGraphImage = trim($__env->yieldContent('og_image')) ?: asset('images/social-card.png');
     @endphp
     <title>{{ $pageTitle }}</title>
 
@@ -6584,6 +6584,9 @@
                         <a href="{{ route('contact.index') }}" class="header-nav-btn">
                             <i class="fas fa-headset"></i><span>Contact</span>
                         </a>
+                        <button type="button" class="header-nav-btn" data-site-share-trigger>
+                            <i class="fas fa-share-nodes"></i><span>Partager</span>
+                        </button>
                     </nav>
 
                     <a href="{{ route('ads.create', ['type' => 'demande']) }}"
@@ -6788,6 +6791,7 @@
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('points.dashboard') }}"><i class="fas fa-coins text-warning"></i>Mes Points <span class="badge bg-success ms-auto">{{ Auth::user()->available_points ?? 0 }}</span></a></li>
                                 <li><hr class="dropdown-divider my-2"></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('contact.index') }}"><i class="fas fa-headset" style="color: #3b82f6;"></i>Contact</a></li>
+                                <li><button type="button" class="dropdown-item dropdown-item-modern" data-site-share-trigger><i class="fas fa-share-nodes" style="color: #7c3aed;"></i>Partager {{ config('app.name', 'ProxiPro') }}</button></li>
                                 @if(Auth::user()->isProfessionnel() || Auth::user()->isServiceProvider() || Auth::user()->hasCompletedProOnboarding())
                                 <li><hr class="dropdown-divider my-2"></li>
                                 <li style="padding: 4px 16px 2px;"><small class="text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Espace Pro</small></li>
@@ -10039,5 +10043,6 @@
             @include('partials.provider-welcome-modal')
         @endif
     @endauth
+    @include('partials.site-share-modal')
 </body>
 </html>

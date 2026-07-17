@@ -40,8 +40,39 @@ class PublicSiteFeatureTest extends TestCase
             ->assertSee('Besoin réel de plomberie')
             ->assertSee('name="location"', false)
             ->assertSee(route('ads.show', $ad), false)
+            ->assertSee('data-site-share-trigger', false)
+            ->assertSee('id="sitePlatformShareModal"', false)
+            ->assertSee('data-site-native-share', false)
+            ->assertSee('navigator.canShare(fileShareData)', false)
+            ->assertSee('navigator.share(nativeShareData)', false)
+            ->assertSee('images/social-card.png', false)
+            ->assertSee('property="og:image:width" content="1200"', false)
+            ->assertSee('data-site-share-copy', false)
             ->assertDontSee('Plateforme N°1')
             ->assertDontSee('Sophie M.');
+
+        $this->assertFileExists(public_path('images/social-card.png'));
+        $socialImageSize = getimagesize(public_path('images/social-card.png'));
+        $this->assertSame([1200, 630], array_slice($socialImageSize, 0, 2));
+        $this->assertSame(IMAGETYPE_PNG, $socialImageSize[2]);
+        $this->assertSame(1, substr_count($response->getContent(), 'id="sitePlatformShareModal"'));
+    }
+
+    public function test_authenticated_layout_exposes_platform_sharing_from_the_user_menu(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('profile.show'));
+
+        $response->assertOk()
+            ->assertSee('Partager '.config('app.name', 'ProxiPro'))
+            ->assertSee('data-site-share-trigger', false)
+            ->assertSee('id="sitePlatformShareModal"', false)
+            ->assertSee('https://wa.me/', false)
+            ->assertSee('facebook.com/sharer/sharer.php', false)
+            ->assertSee('linkedin.com/sharing/share-offsite', false);
+
+        $this->assertSame(1, substr_count($response->getContent(), 'id="sitePlatformShareModal"'));
     }
 
     public function test_notification_and_privacy_preferences_are_persisted(): void
