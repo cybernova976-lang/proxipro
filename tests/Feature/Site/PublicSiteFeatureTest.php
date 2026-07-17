@@ -48,6 +48,8 @@ class PublicSiteFeatureTest extends TestCase
             ->assertSee('images/social-card.png', false)
             ->assertSee('property="og:image:width" content="1200"', false)
             ->assertSee('data-site-share-copy', false)
+            ->assertSee('Partager ProxiPro')
+            ->assertDontSee('<title>Laravel', false)
             ->assertDontSee('Plateforme N°1')
             ->assertDontSee('Sophie M.');
 
