@@ -54,7 +54,7 @@
         ];
     }
 @endphp
-<div class="container py-4">
+<div class="container py-4 own-profile-page">
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
@@ -68,28 +68,25 @@
         </div>
     @endif
 
-    <div class="row">
+    <div class="row g-4 align-items-start">
         <!-- Profile Card -->
-        <div class="col-lg-4 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center py-5">
+        <div class="col-lg-4 own-profile-sidebar">
+            <div class="card border-0 shadow-sm own-profile-identity-card">
+                <div class="card-body text-center own-profile-identity-body">
                     <!-- Avatar -->
-                    <div class="position-relative d-inline-block">
+                    <div class="position-relative own-profile-photo-shell mb-4">
                     @if($user->avatar)
-                            <img src="{{ storage_url($user->avatar) }}" alt="Avatar" id="profileAvatarImg"
-                                class="mb-4 shadow rounded-3" style="width: 200px; height: 200px; object-fit: cover; border: 4px solid #e2e8f0;">
+                            <img src="{{ storage_url($user->avatar) }}" alt="Ma photo de profil" id="profileAvatarImg"
+                                class="own-profile-portrait">
                     @else
-                            <div class="bg-primary text-white d-inline-flex align-items-center justify-content-center mb-4 shadow rounded-3" id="profileAvatarPlaceholder"
-                                style="width: 200px; height: 200px; font-size: 72px; border: 4px solid #e2e8f0;">
+                            <div class="bg-primary text-white d-flex align-items-center justify-content-center own-profile-portrait own-profile-placeholder" id="profileAvatarPlaceholder">
                             {{ strtoupper(substr($user->name, 0, 1)) }}
                         </div>
-                        <img src="" alt="Avatar" id="profileAvatarImg" class="mb-4 shadow rounded-3 d-none" style="width: 200px; height: 200px; object-fit: cover; border: 4px solid #e2e8f0;">
                     @endif
-                        <label for="avatarUploadInput" class="position-absolute bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
-                               style="cursor: pointer; width: 44px; height: 44px; bottom: 20px; right: -5px; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                        <a href="{{ route('profile.edit') }}#profile-photo-section" class="own-profile-photo-edit position-absolute bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                               title="Changer et recadrer ma photo" aria-label="Changer et recadrer ma photo de profil">
                             <i class="fas fa-camera"></i>
-                        </label>
-                        <input type="file" id="avatarUploadInput" class="d-none" accept="image/jpeg,image/png,image/jpg,image/gif">
+                        </a>
                     </div>
 
                     @if($user->isParticulierPrestataire())
@@ -214,7 +211,7 @@
             
             <!-- Compétences Prestataire -->
             @if($user->is_service_provider && $user->services && $user->services->count() > 0)
-            <div class="card border-0 shadow-sm mt-4">
+            <div class="card border-0 shadow-sm mt-4 own-profile-detail-card">
                 <div class="card-header bg-transparent">
                     <h6 class="mb-0"><i class="fas fa-tools me-2 text-success"></i>Mes autres compétences</h6>
                 </div>
@@ -243,7 +240,7 @@
             @endif
 
             <!-- Info Card -->
-            <div class="card border-0 shadow-sm mt-4">
+            <div class="card border-0 shadow-sm mt-4 own-profile-detail-card">
                 <div class="card-header bg-transparent">
                     <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations</h6>
                 </div>
@@ -271,11 +268,11 @@
         </div>
         
         <!-- Main Content -->
-        <div class="col-lg-8">
+        <div class="col-lg-8 own-profile-main">
             <!-- Stats -->
             <div class="row g-3 mb-4">
                 <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm h-100 own-profile-stat-card">
                         <div class="card-body d-flex align-items-center gap-3 py-3">
                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: rgba(58,134,255,0.1);">
                                 <i class="fas fa-bullhorn text-primary"></i>
@@ -288,7 +285,7 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm h-100 own-profile-stat-card">
                         <div class="card-body d-flex align-items-center gap-3 py-3">
                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: rgba(16,185,129,0.1);">
                                 <i class="fas fa-check-circle text-success"></i>
@@ -301,7 +298,7 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm h-100 own-profile-stat-card">
                         <div class="card-body d-flex align-items-center gap-3 py-3">
                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: rgba(14,165,233,0.1);">
                                 <i class="fas fa-eye text-info"></i>
@@ -314,10 +311,36 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card border-0 shadow-sm mb-4 own-profile-section-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="own-profile-section-icon"><i class="fas fa-shield-alt"></i></span>
+                        <div>
+                            <h2 class="h6 fw-bold mb-1">État de mon profil</h2>
+                            <p class="text-muted small mb-0">Les trois éléments qui renforcent la confiance des autres utilisateurs.</p>
+                        </div>
+                    </div>
+                    <div class="own-profile-readiness-grid">
+                        <a href="{{ $profileVerified ? route('profile.public', $user) : route('verification.index') }}" class="own-profile-readiness-item {{ $profileVerified ? 'is-ready' : 'is-action' }}">
+                            <i class="fas {{ $profileVerified ? 'fa-check-circle' : 'fa-clock' }}"></i>
+                            <span><strong>{{ $profileVerified ? 'Profil vérifié' : 'Profil à vérifier' }}</strong><small>{{ $profileVerified ? 'Votre identité a été validée' : 'Finalisez la vérification d’identité' }}</small></span>
+                        </a>
+                        <a href="{{ route('settings.index') }}" class="own-profile-readiness-item {{ $user->profile_public ? 'is-ready' : 'is-action' }}">
+                            <i class="fas {{ $user->profile_public ? 'fa-globe' : 'fa-lock' }}"></i>
+                            <span><strong>{{ $user->profile_public ? 'Profil public' : 'Profil privé' }}</strong><small>{{ $user->profile_public ? 'Visible et partageable' : 'Activez sa visibilité publique' }}</small></span>
+                        </a>
+                        <a href="{{ route('profile.edit') }}" class="own-profile-readiness-item {{ $profileCompleteForVerification ? 'is-ready' : 'is-action' }}">
+                            <i class="fas {{ $profileCompleteForVerification ? 'fa-list-check' : 'fa-user-pen' }}"></i>
+                            <span><strong>{{ $profileCompleteForVerification ? 'Informations complètes' : 'Profil à compléter' }}</strong><small>{{ $profileCompleteForVerification ? 'Les informations essentielles sont présentes' : 'Ajoutez les informations manquantes' }}</small></span>
+                        </a>
+                    </div>
+                </div>
+            </div>
             
             <!-- Bio -->
             @if($user->bio)
-            <div class="card border-0 shadow-sm mb-4">
+            <div class="card border-0 shadow-sm mb-4 own-profile-section-card">
                 <div class="card-header bg-transparent">
                     <h6 class="mb-0"><i class="fas fa-quote-left me-2"></i>À propos</h6>
                 </div>
@@ -328,7 +351,7 @@
             @endif
             
             <!-- Recent Ads -->
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm own-profile-section-card">
                 <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                     <h6 class="mb-0"><i class="fas fa-bullhorn me-2"></i>Mes dernières annonces</h6>
                     <a href="{{ route('ads.index') }}?user={{ $user->id }}" class="btn btn-sm btn-outline-primary">
@@ -380,6 +403,168 @@
     </div>
 </div>
 
+@push('styles')
+<style>
+    .own-profile-page {
+        max-width: 1180px;
+    }
+    .own-profile-sidebar {
+        position: sticky;
+        top: 96px;
+    }
+    .own-profile-identity-card,
+    .own-profile-detail-card,
+    .own-profile-stat-card,
+    .own-profile-section-card {
+        border: 1px solid #e6ebf2 !important;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 12px 34px rgba(15, 23, 42, .07) !important;
+    }
+    .own-profile-identity-body {
+        padding: 1.15rem 1.15rem 1.35rem;
+    }
+    .own-profile-photo-shell {
+        width: 100%;
+        aspect-ratio: 4 / 4.25;
+    }
+    .own-profile-portrait {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        object-position: center;
+        border: 1px solid #dfe6ef;
+        border-radius: 18px;
+        box-shadow: 0 16px 30px rgba(15, 23, 42, .13);
+    }
+    .own-profile-placeholder {
+        font-size: clamp(4rem, 10vw, 7rem);
+        background: linear-gradient(145deg, #2563eb, #6857f5) !important;
+    }
+    .own-profile-photo-edit {
+        width: 44px;
+        height: 44px;
+        right: .8rem;
+        bottom: -.65rem;
+        border: 3px solid #fff;
+        box-shadow: 0 5px 14px rgba(15, 23, 42, .2);
+        text-decoration: none;
+    }
+    .own-profile-detail-card .card-header,
+    .own-profile-section-card .card-header {
+        padding: 1rem 1.15rem .7rem;
+        border-bottom-color: #edf0f5;
+    }
+    .own-profile-stat-card {
+        min-height: 105px;
+    }
+    .own-profile-section-card .card-body {
+        padding: 1.25rem;
+    }
+    .own-profile-section-icon {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        color: #087a58;
+        background: #e6faf2;
+    }
+    .own-profile-readiness-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .75rem;
+    }
+    .own-profile-readiness-item {
+        min-height: 105px;
+        padding: .9rem;
+        display: flex;
+        flex-direction: column;
+        gap: .55rem;
+        border: 1px solid #e5eaf1;
+        border-radius: 14px;
+        color: #334155;
+        background: #fbfcfe;
+        text-decoration: none;
+        transition: transform .15s ease, border-color .15s ease;
+    }
+    .own-profile-readiness-item:hover {
+        transform: translateY(-2px);
+        border-color: #b9cdfd;
+    }
+    .own-profile-readiness-item > i {
+        color: #bd7208;
+        font-size: 1.05rem;
+    }
+    .own-profile-readiness-item.is-ready > i {
+        color: #059669;
+    }
+    .own-profile-readiness-item strong,
+    .own-profile-readiness-item small {
+        display: block;
+    }
+    .own-profile-readiness-item strong {
+        font-size: .84rem;
+    }
+    .own-profile-readiness-item small {
+        margin-top: .25rem;
+        color: #7b8799;
+        font-size: .71rem;
+        line-height: 1.35;
+    }
+    @media (max-width: 991.98px) {
+        .own-profile-sidebar {
+            position: static;
+        }
+        .own-profile-photo-shell {
+            max-width: 420px;
+            margin-inline: auto;
+            aspect-ratio: 4 / 3.7;
+        }
+    }
+    @media (max-width: 767.98px) {
+        .own-profile-readiness-grid {
+            grid-template-columns: 1fr;
+        }
+        .own-profile-readiness-item {
+            min-height: 0;
+            flex-direction: row;
+            align-items: flex-start;
+        }
+    }
+    @media (max-width: 575.98px) {
+        .own-profile-page {
+            width: 100%;
+            max-width: 100%;
+            padding-top: .8rem !important;
+            padding-right: 12px !important;
+            padding-left: 12px !important;
+            overflow-x: hidden;
+        }
+        .own-profile-page > .row {
+            margin-right: 0;
+            margin-left: 0;
+        }
+        .own-profile-page > .row > [class*="col-"] {
+            min-width: 0;
+            padding-right: 0;
+            padding-left: 0;
+        }
+        .own-profile-identity-card,
+        .own-profile-detail-card,
+        .own-profile-stat-card,
+        .own-profile-section-card {
+            border-radius: 16px;
+        }
+        .own-profile-photo-shell {
+            aspect-ratio: 1 / 1.02;
+        }
+    }
+</style>
+@endpush
+
 @if($user->profile_public)
     @include('profile.partials.share-modal', [
         'triggerId' => 'ownProfileShareBtn',
@@ -418,56 +603,7 @@
     </div>
 </div>
 
-{{-- Avatar upload script --}}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const avatarInput = document.getElementById('avatarUploadInput');
-    if (!avatarInput) return;
-    
-    avatarInput.addEventListener('change', function() {
-        const file = this.files[0];
-        if (!file) return;
-        
-        if (file.size > 2 * 1024 * 1024) {
-            alert('L\'image ne doit pas dépasser 2 Mo.');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('avatar', file);
-        formData.append('_method', 'PUT');
-        formData.append('name', '{{ $user->name }}');
-        formData.append('email', '{{ $user->email }}');
-
-        fetch('{{ route("profile.update") }}', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json',
-            },
-            body: formData
-        }).then(response => {
-            if (response.ok || response.status === 302) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.getElementById('profileAvatarImg');
-                    const placeholder = document.getElementById('profileAvatarPlaceholder');
-                    if (img) {
-                        img.src = e.target.result;
-                        img.classList.remove('d-none');
-                    }
-                    if (placeholder) placeholder.classList.add('d-none');
-                };
-                reader.readAsDataURL(file);
-            } else {
-                alert('Erreur lors du téléchargement. Veuillez réessayer.');
-            }
-        }).catch(() => {
-            alert('Erreur réseau. Veuillez réessayer.');
-        });
-    });
-});
-
 function showAdDetail(ad) {
     document.getElementById('adDetailTitle').textContent = ad.title;
     document.getElementById('adDetailCategory').textContent = ad.category || '';

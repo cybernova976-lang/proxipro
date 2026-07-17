@@ -21,6 +21,20 @@
     $normalizedProfession = mb_strtolower(trim((string) $displayProfession));
     $normalizedCategory = mb_strtolower($serviceCategory);
     $showServiceCategory = $serviceCategory !== '' && $normalizedCategory !== $normalizedProfession;
+    $filteredSubcategories = collect($user->service_subcategories ?? [])
+        ->filter(function ($subcat) use ($normalizedProfession, $normalizedCategory) {
+            $normalized = mb_strtolower(trim((string) $subcat));
+            return $normalized !== ''
+                && $normalized !== $normalizedProfession
+                && $normalized !== $normalizedCategory;
+        })
+        ->unique()
+        ->values();
+    $profileLocation = collect([$user->city, $user->country])->filter()->implode(', ')
+        ?: ($user->location ?: null);
+    $accountLabel = $user->isParticulierPrestataire()
+        ? 'Particulier prestataire non professionnel'
+        : (($user->user_type === 'professionnel' || $user->hasCompletedProOnboarding()) ? 'Professionnel' : 'Particulier');
     $providerAction = null;
     if ($isOwnProfile) {
         if ($isParticularAccount && !$user->is_service_provider && !$profileCompleteForVerification) {
@@ -54,38 +68,28 @@
         }
     }
 @endphp
-<div class="container py-4">
-    <div class="row">
+<div class="container py-4 public-profile-page">
+    <div class="row g-4 align-items-start">
         <!-- Profile Card - Sidebar gauche -->
-        <div class="col-lg-4 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center py-5">
+        <div class="col-lg-4 profile-sidebar-column">
+            <div class="card border-0 shadow-sm profile-identity-card">
+                <div class="card-body text-center profile-identity-body">
                     <!-- Avatar en format carte -->
-                    <div class="position-relative d-inline-block mb-4">
+                    <div class="position-relative profile-photo-shell mb-4">
                         @if($user->avatar)
-                            <img src="{{ storage_url($user->avatar) }}" alt="Avatar" id="profileAvatarImg"
-                                class="shadow" style="width: 180px; height: 220px; max-width: 100%; object-fit: cover; border-radius: 14px; border: 1px solid #e2e8f0;">
+                            <img src="{{ storage_url($user->avatar) }}" alt="Photo de profil de {{ $user->name }}" id="profileAvatarImg"
+                                class="profile-portrait">
                         @else
-                            <div class="bg-primary text-white d-inline-flex align-items-center justify-content-center shadow" id="profileAvatarPlaceholder"
-                                style="width: 180px; height: 220px; max-width: 100%; font-size: 64px; border-radius: 14px; border: 1px solid #e2e8f0;">
+                            <div class="bg-primary text-white d-flex align-items-center justify-content-center profile-portrait profile-portrait-placeholder" id="profileAvatarPlaceholder">
                                 {{ strtoupper(substr($user->name, 0, 1)) }}
                             </div>
-                            <img src="" alt="Avatar" id="profileAvatarImg" class="shadow d-none"
-                                style="width: 180px; height: 220px; max-width: 100%; object-fit: cover; border-radius: 14px; border: 1px solid #e2e8f0;">
                         @endif
                         @auth
                             @if(auth()->id() === $user->id)
-                                <label for="avatarUploadInput" class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow"
-                                       style="cursor: pointer; width: 40px; height: 40px; font-size: 0.9rem; border: 2px solid white;" title="Changer la photo">
+                                <a href="{{ route('profile.edit') }}#profile-photo-section" class="profile-photo-edit position-absolute bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow"
+                                       title="Changer et recadrer la photo" aria-label="Changer et recadrer la photo de profil">
                                     <i class="fas fa-camera"></i>
-                                </label>
-                                <form id="avatarUploadForm" action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" class="d-none">
-                                    @csrf
-                                    @method('PUT')
-                                    <input type="hidden" name="name" value="{{ $user->name }}">
-                                    <input type="hidden" name="email" value="{{ $user->email }}">
-                                    <input type="file" id="avatarUploadInput" name="avatar" accept="image/jpeg,image/png,image/jpg,image/gif">
-                                </form>
+                                </a>
                             @endif
                         @endauth
                     </div>
@@ -155,27 +159,14 @@
                     @endif
                     
                     {{-- Métiers / Sous-catégories (exclure celles identiques à la profession) --}}
-                    @if($user->service_subcategories && count($user->service_subcategories) > 0)
-                        @php
-                            $filteredSubcats = collect($user->service_subcategories)
-                                ->filter(function ($subcat) use ($normalizedProfession, $normalizedCategory) {
-                                    $normalized = mb_strtolower(trim((string) $subcat));
-                                    return $normalized !== ''
-                                        && $normalized !== $normalizedProfession
-                                        && $normalized !== $normalizedCategory;
-                                })
-                                ->unique()
-                                ->values();
-                        @endphp
-                        @if($filteredSubcats->isNotEmpty())
-                        <div class="d-flex flex-wrap justify-content-center gap-1 mb-2">
-                            @foreach($filteredSubcats as $subcat)
-                                <span class="badge bg-light text-primary border px-2 py-1" style="font-size: 0.75rem; max-width: 100%; white-space: normal; word-break: break-word; text-align: center;">
+                    @if($filteredSubcategories->isNotEmpty())
+                        <div class="d-flex flex-wrap justify-content-center gap-2 mb-3 profile-skill-list">
+                            @foreach($filteredSubcategories as $subcat)
+                                <span class="profile-skill-chip">
                                     {{ Str::limit($subcat, 50) }}
                                 </span>
                             @endforeach
                         </div>
-                        @endif
                     @endif
                     
                     <!-- Localisation -->
@@ -187,7 +178,7 @@
                     
                     <!-- Bio courte -->
                     @if($user->bio)
-                        <p class="text-muted small mb-3">{{ Str::limit($user->bio, 80) }}</p>
+                        <p class="text-muted small mb-3 profile-short-bio">{{ Str::limit($user->bio, 120) }}</p>
                     @endif
                     
                     <!-- Rating -->
@@ -279,21 +270,16 @@
             </div>
             
             <!-- Info Card -->
-            <div class="card border-0 shadow-sm mt-4">
+            <div class="card border-0 shadow-sm mt-4 profile-detail-card">
                 <div class="card-header bg-transparent">
                     <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations</h6>
                 </div>
                 <div class="card-body">
                     <ul class="list-unstyled mb-0">
-                        @if($user->city && $user->country)
+                        @if($profileLocation)
                         <li class="mb-3 d-flex align-items-center">
                             <i class="fas fa-map-marker-alt text-muted me-3" style="width: 20px;"></i>
-                            {{ $user->city }}, {{ $user->country }}
-                        </li>
-                        @elseif($user->location)
-                        <li class="mb-3 d-flex align-items-center">
-                            <i class="fas fa-map-marker-alt text-muted me-3" style="width: 20px;"></i>
-                            {{ $user->location }}
+                            {{ $profileLocation }}
                         </li>
                         @endif
                         @if($user->business_type)
@@ -324,14 +310,14 @@
 
             <!-- Compétences Prestataire -->
             @if($user->is_service_provider && $user->services && $user->services->count() > 0)
-            <div class="card border-0 shadow-sm mt-4">
+            <div class="card border-0 shadow-sm mt-4 profile-detail-card">
                 <div class="card-header bg-transparent">
                     <h6 class="mb-0"><i class="fas fa-tools me-2 text-success"></i>Compétences</h6>
                 </div>
                 <div class="card-body">
                     <div class="d-flex flex-wrap gap-2">
                         @foreach($user->services as $service)
-                            <span class="badge bg-light text-primary px-3 py-2">
+                            <span class="profile-skill-chip">
                                 {{ $service->subcategory }}
                             </span>
                         @endforeach
@@ -349,50 +335,76 @@
         </div>
         
         <!-- Main Content -->
-        <div class="col-lg-8">
+        <div class="col-lg-8 profile-main-column">
             <!-- Stats -->
-            <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body text-center">
-                            <div class="display-6 fw-bold text-primary">{{ $stats['total_ads'] ?? 0 }}</div>
-                            <div class="text-muted">Annonces actives</div>
-                        </div>
-                    </div>
+            <div class="profile-metrics mb-4" aria-label="Indicateurs du profil">
+                <div class="profile-metric">
+                    <span class="profile-metric-value text-primary">{{ $stats['total_ads'] ?? 0 }}</span>
+                    <span class="profile-metric-label">Annonces actives</span>
                 </div>
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body text-center">
-                            <div class="display-6 fw-bold text-warning">{{ number_format($ratingAverage ?? 0, 1) }}</div>
-                            <div class="text-muted">Note moyenne</div>
-                            <div class="mt-2">
-                                @for($i = 1; $i <= 5; $i++)
-                                    <i class="fas fa-star {{ $i <= round($ratingAverage ?? 0) ? 'text-warning' : 'text-muted' }}"></i>
-                                @endfor
-                            </div>
-                        </div>
-                    </div>
+                <div class="profile-metric">
+                    <span class="profile-metric-value text-warning">{{ number_format($ratingAverage ?? 0, 1) }}<small>/5</small></span>
+                    <span class="profile-metric-label">Note moyenne</span>
+                    <span class="profile-stars" aria-label="Note de {{ number_format($ratingAverage ?? 0, 1) }} sur 5">
+                        @for($i = 1; $i <= 5; $i++)
+                            <i class="fas fa-star {{ $i <= round($ratingAverage ?? 0) ? 'text-warning' : 'text-muted' }}"></i>
+                        @endfor
+                    </span>
                 </div>
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body text-center">
-                            <div class="display-6 fw-bold text-success">{{ $ratingCount ?? 0 }}</div>
-                            <div class="text-muted">Avis reçus</div>
-                        </div>
-                    </div>
+                <div class="profile-metric">
+                    <span class="profile-metric-value text-success">{{ $ratingCount ?? 0 }}</span>
+                    <span class="profile-metric-label">Avis vérifiés</span>
                 </div>
             </div>
+
+            <section class="card border-0 shadow-sm mb-4 profile-section" aria-labelledby="trust-title">
+                <div class="card-body">
+                    <div class="profile-section-heading">
+                        <span class="profile-section-icon profile-section-icon-success"><i class="fas fa-shield-alt"></i></span>
+                        <div>
+                            <h2 id="trust-title">Confiance et repères</h2>
+                            <p>Les informations utiles avant de prendre contact.</p>
+                        </div>
+                    </div>
+                    <div class="profile-trust-grid">
+                        <div class="profile-trust-item {{ $profileVerified ? 'is-confirmed' : 'is-pending' }}">
+                            <i class="fas {{ $profileVerified ? 'fa-check-circle' : 'fa-clock' }}"></i>
+                            <div><strong>{{ $profileVerified ? 'Identité vérifiée' : 'Identité non vérifiée' }}</strong><span>{{ $profileVerified ? 'Documents validés par la plateforme' : 'Vérification pas encore obtenue' }}</span></div>
+                        </div>
+                        <div class="profile-trust-item {{ $user->email_verified_at ? 'is-confirmed' : 'is-pending' }}">
+                            <i class="fas {{ $user->email_verified_at ? 'fa-envelope-circle-check' : 'fa-envelope' }}"></i>
+                            <div><strong>{{ $user->email_verified_at ? 'E-mail confirmé' : 'E-mail non confirmé' }}</strong><span>Compte {{ $user->email_verified_at ? 'authentifié' : 'en attente de confirmation' }}</span></div>
+                        </div>
+                        <div class="profile-trust-item is-neutral">
+                            <i class="fas fa-calendar-check"></i>
+                            <div><strong>Membre depuis {{ $user->created_at->translatedFormat('F Y') }}</strong><span>{{ $accountLabel }}</span></div>
+                        </div>
+                        @if($user->pro_intervention_radius)
+                        <div class="profile-trust-item is-neutral">
+                            <i class="fas fa-location-dot"></i>
+                            <div><strong>Zone de {{ $user->pro_intervention_radius }} km</strong><span>{{ $profileLocation ?: 'Zone définie par le prestataire' }}</span></div>
+                        </div>
+                        @elseif($user->years_experience)
+                        <div class="profile-trust-item is-neutral">
+                            <i class="fas fa-award"></i>
+                            <div><strong>{{ $user->years_experience }} an{{ $user->years_experience > 1 ? 's' : '' }} d’expérience</strong><span>Expérience déclarée par l’utilisateur</span></div>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+            </section>
             
             <!-- Bio -->
             @if($user->bio)
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-transparent">
-                    <h6 class="mb-0"><i class="fas fa-quote-left me-2"></i>À propos</h6>
-                </div>
+            <section class="card border-0 shadow-sm mb-4 profile-section">
                 <div class="card-body">
-                    <p class="mb-0">{{ $user->bio }}</p>
+                    <div class="profile-section-heading">
+                        <span class="profile-section-icon"><i class="fas fa-user"></i></span>
+                        <div><h2>À propos</h2><p>Présentation et manière de travailler.</p></div>
+                    </div>
+                    <p class="mb-0 profile-bio">{{ $user->bio }}</p>
                 </div>
-            </div>
+            </section>
             @endif
 
             <!-- Leave Review Form -->
@@ -430,7 +442,7 @@
                 @elseif(auth()->id() !== $user->id)
                     <div class="alert alert-light border mb-4">
                         <i class="fas fa-shield-alt text-success me-2"></i>
-                        Les avis sont reserves aux utilisateurs ayant termine une prestation payee ensemble.
+                        Les avis sont réservés aux utilisateurs ayant terminé une prestation payée ensemble.
                     </div>
                 @endif
             @else
@@ -444,34 +456,31 @@
             @endauth
             
             <!-- Ads List -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-transparent">
-                    <h6 class="mb-0"><i class="fas fa-bullhorn me-2"></i>Annonces de {{ $user->name }}</h6>
-                </div>
+            <section class="card border-0 shadow-sm mb-4 profile-section">
                 <div class="card-body">
+                    <div class="profile-section-heading">
+                        <span class="profile-section-icon"><i class="fas fa-images"></i></span>
+                        <div><h2>Annonces de {{ $user->name }}</h2><p>Services, demandes et réalisations actuellement visibles.</p></div>
+                    </div>
                     @if($ads->count() > 0)
                         <div class="row g-3">
                             @foreach($ads as $ad)
                                 <div class="col-md-6">
-                                    <a href="{{ route('ads.show', $ad) }}" class="d-flex align-items-center p-3 bg-light rounded-3 h-100 text-decoration-none" style="transition: background 0.15s;">
+                                    <a href="{{ route('ads.show', $ad) }}" class="profile-ad-card h-100 text-decoration-none">
                                         @if($ad->photos && count($ad->photos) > 0)
-                                            <img src="{{ storage_url($ad->photos[0]) }}" alt="" 
-                                                 class="rounded me-3 flex-shrink-0" style="width: 60px; height: 60px; object-fit: cover;">
+                                            <img src="{{ storage_url($ad->photos[0]) }}" alt="Illustration de {{ $ad->title }}" loading="lazy">
                                         @else
-                                            <div class="bg-secondary rounded me-3 d-flex align-items-center justify-content-center flex-shrink-0" 
-                                                 style="width: 60px; height: 60px;">
-                                                <i class="fas fa-image text-white"></i>
+                                            <div class="profile-ad-placeholder">
+                                                <i class="fas fa-image"></i>
                                             </div>
                                         @endif
-                                        <div class="flex-grow-1 min-width-0">
-                                            <h6 class="mb-1 text-truncate text-dark">
-                                                {{ $ad->title }}
-                                            </h6>
-                                            <div class="small text-muted">
-                                                {{ $ad->created_at->diffForHumans() }}
-                                            </div>
-                                            <div class="small fw-bold text-primary mt-1">
-                                                {{ number_format($ad->price, 0, ',', ' ') }} €
+                                        <div class="profile-ad-content">
+                                            <h3>{{ $ad->title }}</h3>
+                                            <div class="profile-ad-meta">
+                                                <span>{{ $ad->created_at->diffForHumans() }}</span>
+                                                @if($ad->price !== null)
+                                                    <strong>{{ number_format($ad->price, 0, ',', ' ') }} €</strong>
+                                                @endif
                                             </div>
                                         </div>
                                     </a>
@@ -490,20 +499,22 @@
                         </div>
                     @endif
                 </div>
-            </div>
+            </section>
 
             <!-- Reviews -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-transparent">
-                    <h6 class="mb-0"><i class="fas fa-comments me-2"></i>Avis sur {{ $user->name }}</h6>
-                </div>
+            <section class="card border-0 shadow-sm profile-section">
                 <div class="card-body">
+                    <div class="profile-section-heading">
+                        <span class="profile-section-icon profile-section-icon-warning"><i class="fas fa-star"></i></span>
+                        <div><h2>Avis sur {{ $user->name }}</h2><p>Uniquement après une prestation terminée et payée sur la plateforme.</p></div>
+                    </div>
                     @if(isset($reviews) && $reviews->count() > 0)
                         <div class="d-flex flex-column gap-3">
                             @foreach($reviews as $review)
-                                <div class="p-3 bg-light rounded-3">
+                                <article class="profile-review-card">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <div class="fw-semibold">
+                                        <div class="fw-semibold d-flex align-items-center gap-2">
+                                            <span class="profile-review-avatar">{{ strtoupper(substr($review->reviewer?->name ?? 'U', 0, 1)) }}</span>
                                             <a href="{{ $review->reviewer ? route('profile.public', $review->reviewer_id) : '#' }}" class="text-decoration-none">
                                                 {{ $review->reviewer?->name ?? 'Utilisateur' }}
                                             </a>
@@ -518,7 +529,7 @@
                                     @if($review->comment)
                                         <div>{{ $review->comment }}</div>
                                     @endif
-                                </div>
+                                </article>
                             @endforeach
                         </div>
                     @else
@@ -528,7 +539,7 @@
                         </div>
                     @endif
                 </div>
-            </div>
+            </section>
         </div>
     </div>
 </div>
@@ -660,8 +671,346 @@
 
 @push('styles')
 <style>
-    .col-md-6 a.d-flex:hover, a.d-flex.bg-light:hover {
-        background: #e2e8f0 !important;
+    .public-profile-page {
+        max-width: 1180px;
+    }
+    .profile-sidebar-column {
+        position: sticky;
+        top: 96px;
+    }
+    .profile-identity-card,
+    .profile-detail-card,
+    .profile-section,
+    .profile-metrics {
+        border: 1px solid #e6ebf2 !important;
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 12px 35px rgba(15, 23, 42, 0.07) !important;
+    }
+    .profile-identity-body {
+        padding: 1.15rem 1.15rem 1.35rem;
+    }
+    .profile-photo-shell {
+        width: 100%;
+        aspect-ratio: 4 / 4.35;
+        overflow: visible;
+    }
+    .profile-portrait {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        object-position: center;
+        border-radius: 18px;
+        border: 1px solid #dfe6ef;
+        box-shadow: 0 16px 30px rgba(15, 23, 42, 0.13);
+    }
+    .profile-portrait-placeholder {
+        font-size: clamp(4rem, 10vw, 7rem);
+        background: linear-gradient(145deg, #2563eb, #6857f5) !important;
+    }
+    .profile-photo-edit {
+        right: .8rem;
+        bottom: -.65rem;
+        width: 44px;
+        height: 44px;
+        border: 3px solid #fff;
+        text-decoration: none;
+    }
+    .profile-short-bio {
+        line-height: 1.55;
+    }
+    .profile-skill-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: .48rem .7rem;
+        border: 1px solid #dbe5ff;
+        border-radius: 999px;
+        background: #f5f8ff;
+        color: #3159b7;
+        font-size: .78rem;
+        font-weight: 600;
+        white-space: normal;
+        line-height: 1.2;
+    }
+    .profile-detail-card .card-header {
+        padding: 1rem 1.15rem .6rem;
+        border: 0;
+    }
+    .profile-detail-card .card-body {
+        padding: .75rem 1.15rem 1rem;
+    }
+    .profile-detail-card li:last-child {
+        margin-bottom: 0 !important;
+    }
+    .profile-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        background: #fff;
+    }
+    .profile-metric {
+        min-height: 126px;
+        padding: 1.2rem .85rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+    .profile-metric + .profile-metric {
+        border-left: 1px solid #e9edf4;
+    }
+    .profile-metric-value {
+        font-size: 1.85rem;
+        line-height: 1;
+        font-weight: 800;
+    }
+    .profile-metric-value small {
+        font-size: .8rem;
+        color: #8490a5;
+    }
+    .profile-metric-label {
+        margin-top: .45rem;
+        color: #68758a;
+        font-size: .82rem;
+    }
+    .profile-stars {
+        margin-top: .35rem;
+        font-size: .68rem;
+        letter-spacing: 1px;
+    }
+    .profile-section .card-body {
+        padding: 1.45rem;
+    }
+    .profile-section-heading {
+        display: flex;
+        align-items: flex-start;
+        gap: .85rem;
+        margin-bottom: 1.2rem;
+    }
+    .profile-section-heading h2 {
+        margin: 0;
+        color: #13213a;
+        font-size: 1.12rem;
+        font-weight: 800;
+    }
+    .profile-section-heading p {
+        margin: .2rem 0 0;
+        color: #778399;
+        font-size: .82rem;
+    }
+    .profile-section-icon {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        color: #3267e8;
+        background: #edf3ff;
+    }
+    .profile-section-icon-success {
+        color: #07855c;
+        background: #e8faf3;
+    }
+    .profile-section-icon-warning {
+        color: #b66a00;
+        background: #fff5dd;
+    }
+    .profile-trust-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .8rem;
+    }
+    .profile-trust-item {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        min-height: 74px;
+        padding: .85rem;
+        border: 1px solid #e6ebf2;
+        border-radius: 14px;
+        background: #fbfcfe;
+    }
+    .profile-trust-item > i {
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: #edf1f7;
+        color: #65738a;
+    }
+    .profile-trust-item.is-confirmed > i {
+        color: #047857;
+        background: #dff8ed;
+    }
+    .profile-trust-item.is-pending > i {
+        color: #a76208;
+        background: #fff3d6;
+    }
+    .profile-trust-item strong,
+    .profile-trust-item span {
+        display: block;
+    }
+    .profile-trust-item > div {
+        min-width: 0;
+    }
+    .profile-trust-item strong {
+        color: #26344d;
+        font-size: .86rem;
+    }
+    .profile-trust-item span {
+        margin-top: .16rem;
+        color: #7c8799;
+        font-size: .72rem;
+        line-height: 1.3;
+    }
+    .profile-bio {
+        color: #4d5a70;
+        line-height: 1.75;
+        white-space: pre-line;
+    }
+    .profile-ad-card {
+        display: block;
+        overflow: hidden;
+        border: 1px solid #e6ebf2;
+        border-radius: 15px;
+        background: #fff;
+        color: inherit;
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .profile-ad-card:hover {
+        transform: translateY(-2px);
+        border-color: #b9cdfd;
+        box-shadow: 0 12px 24px rgba(37, 99, 235, .1);
+    }
+    .profile-ad-card > img,
+    .profile-ad-placeholder {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+    }
+    .profile-ad-placeholder {
+        display: grid;
+        place-items: center;
+        color: #8290a5;
+        background: linear-gradient(145deg, #edf1f7, #e2e8f0);
+        font-size: 1.65rem;
+    }
+    .profile-ad-content {
+        padding: .9rem;
+    }
+    .profile-ad-content h3 {
+        margin: 0;
+        overflow: hidden;
+        color: #18243a;
+        font-size: .92rem;
+        font-weight: 750;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .profile-ad-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .65rem;
+        margin-top: .6rem;
+        color: #7b8799;
+        font-size: .74rem;
+    }
+    .profile-ad-meta strong {
+        color: #2563eb;
+        font-size: .86rem;
+    }
+    .profile-review-card {
+        padding: 1rem;
+        border: 1px solid #e8ecf2;
+        border-radius: 15px;
+        background: #fbfcfe;
+    }
+    .profile-review-avatar {
+        width: 34px;
+        height: 34px;
+        display: inline-grid;
+        place-items: center;
+        border-radius: 50%;
+        color: #fff;
+        background: linear-gradient(135deg, #4776ef, #7c4dff);
+        font-size: .78rem;
+    }
+    @media (max-width: 991.98px) {
+        .profile-sidebar-column {
+            position: static;
+        }
+        .profile-photo-shell {
+            max-width: 420px;
+            margin-inline: auto;
+            aspect-ratio: 4 / 3.7;
+        }
+    }
+    @media (max-width: 575.98px) {
+        .public-profile-page {
+            width: 100%;
+            max-width: 100%;
+            padding-top: .8rem !important;
+            padding-right: 12px !important;
+            padding-left: 12px !important;
+            overflow-x: hidden;
+        }
+        .public-profile-page > .row {
+            margin-right: 0;
+            margin-left: 0;
+        }
+        .public-profile-page > .row > [class*="col-"] {
+            min-width: 0;
+            padding-right: 0;
+            padding-left: 0;
+        }
+        .profile-identity-card,
+        .profile-detail-card,
+        .profile-section,
+        .profile-metrics {
+            border-radius: 16px;
+        }
+        .profile-photo-shell {
+            aspect-ratio: 1 / 1.02;
+        }
+        .profile-metric {
+            min-height: 102px;
+            padding: .85rem .35rem;
+        }
+        .profile-metrics {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .profile-metric:nth-child(3) {
+            grid-column: 1 / -1;
+            border-top: 1px solid #e9edf4;
+            border-left: 0;
+        }
+        .profile-metric-value {
+            font-size: 1.35rem;
+        }
+        .profile-metric-label {
+            font-size: .7rem;
+        }
+        .profile-stars {
+            display: none;
+        }
+        .profile-section .card-body {
+            padding: 1rem;
+        }
+        .profile-trust-grid {
+            grid-template-columns: 1fr;
+        }
+        .profile-trust-item strong,
+        .profile-trust-item span {
+            overflow-wrap: anywhere;
+        }
+        .profile-section-heading p {
+            line-height: 1.35;
+        }
     }
 </style>
 @endpush
@@ -670,45 +1019,6 @@
 @auth
 @if(auth()->id() === $user->id)
 <script>
-// --- Avatar upload inline ---
-document.getElementById('avatarUploadInput')?.addEventListener('change', function() {
-    const file = this.files[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-        alert('La photo ne doit pas dépasser 2 Mo.');
-        return;
-    }
-    // Preview
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = document.getElementById('profileAvatarImg');
-        img.src = e.target.result;
-        img.classList.remove('d-none');
-        const placeholder = document.getElementById('profileAvatarPlaceholder');
-        if (placeholder) placeholder.classList.add('d-none');
-    };
-    reader.readAsDataURL(file);
-
-    // Submit form via AJAX
-    const form = document.getElementById('avatarUploadForm');
-    const formData = new FormData(form);
-    fetch('{{ route("profile.update") }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept': 'application/json'
-        },
-        body: formData
-    }).then(r => {
-        if (r.ok || r.redirected) {
-            // Success - reload to show updated avatar everywhere
-            window.location.reload();
-        } else {
-            alert('Erreur lors du téléchargement de la photo.');
-        }
-    }).catch(() => alert('Erreur réseau. Veuillez réessayer.'));
-});
-
 // --- Bio character counter ---
 document.getElementById('editBio')?.addEventListener('input', function() {
     document.getElementById('editBioCount').textContent = this.value.length;

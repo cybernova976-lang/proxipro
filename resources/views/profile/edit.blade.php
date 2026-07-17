@@ -21,7 +21,7 @@
                         @method('PUT')
                         
                         <!-- Avatar -->
-                        <div class="text-center mb-4">
+                        <div class="text-center mb-4" id="profile-photo-section">
                             <div class="position-relative d-inline-block">
                                 @if($user->avatar)
                                     <img src="{{ storage_url($user->avatar) }}" alt="Avatar" 
@@ -38,12 +38,13 @@
                                        style="cursor: pointer; width: 44px; height: 44px; font-size: 1rem;">
                                     <i class="fas fa-camera"></i>
                                 </label>
-                                <input type="file" id="avatar" name="avatar" class="d-none" accept="image/*">
+                                <input type="file" id="avatar" name="avatar" class="d-none" accept="image/jpeg,image/png,image/webp,image/gif">
                                 <input type="hidden" id="avatar_cropped" name="avatar_cropped" value="">
                             </div>
                             <div class="text-muted small mt-2">
                                 La photo de profil est obligatoire avant une demande de vérification. Recadrez-la avant l'enregistrement.
                             </div>
+                            <div id="avatarFeedback" class="small mt-2 d-none" role="alert" aria-live="polite"></div>
                             @error('avatar')
                                 <div class="text-danger small mt-2">{{ $message }}</div>
                             @enderror
@@ -282,8 +283,12 @@
             </div>
             <div class="modal-body">
                 <p class="text-muted small mb-3">Déplacez la photo et utilisez le zoom pour choisir le cadrage.</p>
-                <div id="cropViewport" class="mx-auto mb-3" style="width:280px; height:280px; border-radius:14px; overflow:hidden; background:#f1f5f9; border:1px solid #e2e8f0; position:relative; touch-action:none;">
-                    <img id="cropImage" alt="Prévisualisation du recadrage" style="position:absolute; left:0; top:0; transform-origin: top left; user-select:none; -webkit-user-drag:none; max-width:none;">
+                <div id="cropViewport" class="mx-auto mb-3" style="width:min(280px, 100%); aspect-ratio:1; border-radius:14px; overflow:hidden; background:#f1f5f9; border:1px solid #e2e8f0; position:relative; touch-action:none;">
+                    <div id="cropLoader" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center text-muted" style="z-index:2; background:#f1f5f9;">
+                        <span class="spinner-border spinner-border-sm text-primary mb-2" aria-hidden="true"></span>
+                        <span class="small">Préparation de la photo…</span>
+                    </div>
+                    <img id="cropImage" alt="Prévisualisation du recadrage" style="position:absolute; left:0; top:0; opacity:0; transform-origin: top left; user-select:none; -webkit-user-drag:none; max-width:none; will-change:transform;">
                 </div>
                 <label for="cropZoom" class="form-label mb-1">Zoom</label>
                 <input type="range" id="cropZoom" class="form-range" min="1" max="3" step="0.01" value="1">
@@ -307,11 +312,13 @@ const avatarInput = document.getElementById('avatar');
 const avatarPreview = document.getElementById('avatarPreview');
 const avatarPlaceholder = document.getElementById('avatarPlaceholder');
 const avatarCroppedInput = document.getElementById('avatar_cropped');
+const avatarFeedback = document.getElementById('avatarFeedback');
 
 const cropModalEl = document.getElementById('avatarCropModal');
 const cropModal = new bootstrap.Modal(cropModalEl);
 const cropViewport = document.getElementById('cropViewport');
 const cropImage = document.getElementById('cropImage');
+const cropLoader = document.getElementById('cropLoader');
 const cropZoom = document.getElementById('cropZoom');
 const cropReset = document.getElementById('cropReset');
 const cropApply = document.getElementById('cropApply');
@@ -327,14 +334,31 @@ const cropState = {
     dragStartY: 0,
     dragOriginX: 0,
     dragOriginY: 0,
+    applied: false,
 };
+
+function setAvatarFeedback(message = '', isError = false) {
+    avatarFeedback.textContent = message;
+    avatarFeedback.classList.toggle('d-none', message === '');
+    avatarFeedback.classList.toggle('text-danger', isError);
+    avatarFeedback.classList.toggle('text-success', !isError && message !== '');
+}
+
+function cropBoxSize() {
+    const box = cropViewport.getBoundingClientRect();
+
+    return {
+        width: box.width || cropViewport.clientWidth || 280,
+        height: box.height || cropViewport.clientHeight || 280,
+    };
+}
 
 function clampCropPosition() {
     if (!cropState.image) {
         return;
     }
 
-    const box = cropViewport.getBoundingClientRect();
+    const box = cropBoxSize();
     const imgWidth = cropState.image.naturalWidth * cropState.scale;
     const imgHeight = cropState.image.naturalHeight * cropState.scale;
 
@@ -355,7 +379,7 @@ function resetCrop() {
         return;
     }
 
-    const box = cropViewport.getBoundingClientRect();
+    const box = cropBoxSize();
     const baseX = (box.width - cropState.image.naturalWidth * cropState.baseScale) / 2;
     const baseY = (box.height - cropState.image.naturalHeight * cropState.baseScale) / 2;
 
@@ -366,16 +390,36 @@ function resetCrop() {
     renderCropImage();
 }
 
+function initializeCropViewport() {
+    if (!cropState.image) {
+        return;
+    }
+
+    const box = cropBoxSize();
+    cropState.baseScale = Math.max(
+        box.width / cropState.image.naturalWidth,
+        box.height / cropState.image.naturalHeight
+    );
+    cropImage.style.width = `${cropState.image.naturalWidth}px`;
+    cropImage.style.height = `${cropState.image.naturalHeight}px`;
+    resetCrop();
+    cropImage.style.opacity = '1';
+    cropLoader.classList.add('d-none');
+}
+
 function openCropper(dataUrl) {
     const img = new Image();
     img.onload = function() {
         cropState.image = img;
+        cropState.applied = false;
+        cropLoader.classList.remove('d-none');
+        cropImage.style.opacity = '0';
         cropImage.src = dataUrl;
-
-        const box = cropViewport.getBoundingClientRect();
-        cropState.baseScale = Math.max(box.width / img.naturalWidth, box.height / img.naturalHeight);
-        resetCrop();
         cropModal.show();
+    };
+    img.onerror = function() {
+        avatarInput.value = '';
+        setAvatarFeedback('Cette image ne peut pas être lue. Choisissez un fichier JPG, PNG ou WebP.', true);
     };
     img.src = dataUrl;
 }
@@ -433,12 +477,20 @@ async function canvasToDataUrlWithTarget(canvas, maxBytes) {
 
 avatarInput.addEventListener('change', function(e) {
     const file = e.target.files[0];
+    setAvatarFeedback();
     if (!file) {
         return;
     }
 
     if (!file.type.startsWith('image/')) {
         e.target.value = '';
+        setAvatarFeedback('Le fichier sélectionné n’est pas une image valide.', true);
+        return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+        e.target.value = '';
+        setAvatarFeedback('La photo ne doit pas dépasser 5 Mo.', true);
         return;
     }
 
@@ -456,7 +508,7 @@ cropZoom.addEventListener('input', function() {
 
     const factor = parseFloat(this.value);
     const previousScale = cropState.scale;
-    const box = cropViewport.getBoundingClientRect();
+    const box = cropBoxSize();
     const centerX = box.width / 2;
     const centerY = box.height / 2;
 
@@ -484,7 +536,7 @@ cropApply.addEventListener('click', async function() {
     cropApply.disabled = true;
     cropApply.textContent = 'Traitement...';
 
-    const box = cropViewport.getBoundingClientRect();
+    const box = cropBoxSize();
     const exportSize = 512;
     const canvas = document.createElement('canvas');
     canvas.width = exportSize;
@@ -508,14 +560,24 @@ cropApply.addEventListener('click', async function() {
 
     avatarCroppedInput.value = optimizedDataUrl;
     avatarInput.value = '';
+    cropState.applied = true;
     cropModal.hide();
+    setAvatarFeedback('Photo cadrée. Enregistrez le profil pour confirmer la modification.');
 
     cropApply.disabled = false;
     cropApply.textContent = 'Appliquer';
 });
 
+cropModalEl.addEventListener('shown.bs.modal', function() {
+    window.requestAnimationFrame(initializeCropViewport);
+});
+
 cropModalEl.addEventListener('hidden.bs.modal', function() {
     cropState.dragging = false;
+    cropLoader.classList.add('d-none');
+    if (!cropState.applied) {
+        avatarInput.value = '';
+    }
 });
 
 document.getElementById('bio').addEventListener('input', function() {

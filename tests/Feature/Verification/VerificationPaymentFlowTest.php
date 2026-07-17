@@ -154,7 +154,9 @@ class VerificationPaymentFlowTest extends TestCase
             ->assertDontSee('profil de vérification mon')
             ->assertSee('Electricien');
 
-        $this->assertSame(1, substr_count($profilePage->getContent(), 'Plombier'));
+        // La modale de partage réutilise le métier dans ses données sociales ;
+        // on vérifie ici qu'il n'est affiché qu'une fois dans le contenu visible du profil.
+        $this->assertSame(1, substr_count($profilePage->getContent(), '</i>Plombier'));
 
         $owner->update(['identity_verified' => true]);
 
