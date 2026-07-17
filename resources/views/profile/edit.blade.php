@@ -308,6 +308,7 @@
 
 @section('scripts')
 <script>
+document.addEventListener('DOMContentLoaded', function() {
 const avatarInput = document.getElementById('avatar');
 const avatarPreview = document.getElementById('avatarPreview');
 const avatarPlaceholder = document.getElementById('avatarPlaceholder');
@@ -315,7 +316,7 @@ const avatarCroppedInput = document.getElementById('avatar_cropped');
 const avatarFeedback = document.getElementById('avatarFeedback');
 
 const cropModalEl = document.getElementById('avatarCropModal');
-const cropModal = new bootstrap.Modal(cropModalEl);
+const cropModal = window.bootstrap?.Modal ? new window.bootstrap.Modal(cropModalEl) : null;
 const cropViewport = document.getElementById('cropViewport');
 const cropImage = document.getElementById('cropImage');
 const cropLoader = document.getElementById('cropLoader');
@@ -408,6 +409,16 @@ function initializeCropViewport() {
 }
 
 function openCropper(dataUrl) {
+    if (!cropModal) {
+        avatarPreview.src = dataUrl;
+        avatarPreview.classList.remove('d-none');
+        if (avatarPlaceholder) {
+            avatarPlaceholder.classList.add('d-none');
+        }
+        setAvatarFeedback('Photo sélectionnée. Enregistrez le profil pour confirmer la modification.');
+        return;
+    }
+
     const img = new Image();
     img.onload = function() {
         cropState.image = img;
@@ -591,8 +602,11 @@ document.getElementById('profile_confirm_delete').addEventListener('change', fun
 
 // Reopen modal on validation error
 @if($errors->any() && ($errors->has('password') || $errors->has('delete') || $errors->has('confirm_delete')))
-    var modal = new bootstrap.Modal(document.getElementById('deleteAccountModal'));
-    modal.show();
+    if (window.bootstrap?.Modal) {
+        var modal = new window.bootstrap.Modal(document.getElementById('deleteAccountModal'));
+        modal.show();
+    }
 @endif
+});
 </script>
 @endsection

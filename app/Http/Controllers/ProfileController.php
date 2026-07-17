@@ -70,7 +70,7 @@ class ProfileController extends Controller
             'postal_code' => 'nullable|string|max:30',
             'profession' => 'nullable|string|max:255',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
-            'avatar_cropped' => 'nullable|string',
+            'avatar_cropped' => 'nullable|string|max:7000000',
             'hourly_rate' => 'nullable|numeric|min:0|max:999',
             'show_hourly_rate' => 'nullable',
         ];
@@ -88,6 +88,8 @@ class ProfileController extends Controller
             'postal_code',
             'profession',
         ]);
+        $previousAvatar = $user->avatar;
+        $newAvatarDisk = null;
 
         // Gérer le tarif horaire (prestataires uniquement)
         if ($user->user_type === 'professionnel' || $user->is_service_provider || $user->hasActiveProSubscription() || $user->hasCompletedProOnboarding()) {
@@ -117,23 +119,22 @@ class ProfileController extends Controller
                     return back()->withErrors(['avatar' => 'L\'image recadrée est trop volumineuse (max 5 Mo).'])->withInput();
                 }
 
+                $imageInfo = @getimagesizefromstring($binary);
+                $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+                if ($imageInfo === false || ! in_array($imageInfo['mime'] ?? null, $allowedMimeTypes, true)) {
+                    return back()->withErrors(['avatar' => 'Le contenu de l\'image recadrée est invalide.'])->withInput();
+                }
+
                 Log::info('Avatar cropped upload — disk: '.$defaultDisk.', driver: '.$diskDriver, [
                     'user_id' => $user->id,
                     'file_size' => strlen($binary),
                 ]);
 
-                if ($user->avatar && ! str_starts_with($user->avatar, 'http')) {
-                    try {
-                        Storage::disk($defaultDisk)->delete($user->avatar);
-                    } catch (\Exception $e) {
-                        Log::warning('Impossible de supprimer l\'ancien avatar: '.$e->getMessage(), [
-                            'user_id' => $user->id,
-                            'avatar' => $user->avatar,
-                        ]);
-                    }
-                }
-
-                $extension = str_contains($meta, 'image/png') ? 'png' : (str_contains($meta, 'image/webp') ? 'webp' : 'jpg');
+                $extension = match ($imageInfo['mime']) {
+                    'image/png' => 'png',
+                    'image/webp' => 'webp',
+                    default => 'jpg',
+                };
                 $path = 'avatars/'.Str::uuid().'.'.$extension;
                 $saved = Storage::disk($defaultDisk)->put($path, $binary);
 
@@ -147,6 +148,7 @@ class ProfileController extends Controller
                 }
 
                 $data['avatar'] = $path;
+                $newAvatarDisk = $defaultDisk;
             } catch (\Exception $e) {
                 Log::error('Erreur upload avatar recadré: '.$e->getMessage(), [
                     'user_id' => $user->id,
@@ -167,23 +169,12 @@ class ProfileController extends Controller
                     'mime_type' => $request->file('avatar')->getMimeType(),
                 ]);
 
-                // Supprimer l'ancien avatar
-                if ($user->avatar && ! str_starts_with($user->avatar, 'http')) {
-                    try {
-                        Storage::disk($defaultDisk)->delete($user->avatar);
-                    } catch (\Exception $e) {
-                        Log::warning('Impossible de supprimer l\'ancien avatar: '.$e->getMessage(), [
-                            'user_id' => $user->id,
-                            'avatar' => $user->avatar,
-                        ]);
-                    }
-                }
-
                 $path = $request->file('avatar')->store('avatars', $defaultDisk);
 
                 if ($path) {
                     Log::info('Avatar stored successfully', ['user_id' => $user->id, 'path' => $path]);
                     $data['avatar'] = $path;
+                    $newAvatarDisk = $defaultDisk;
                 } else {
                     Log::error('Avatar store() returned empty path', [
                         'user_id' => $user->id,
@@ -205,6 +196,22 @@ class ProfileController extends Controller
         }
 
         $user->update($data);
+
+        // L'ancien fichier n'est supprimé qu'après l'enregistrement réussi du nouveau.
+        // Ainsi, une panne du stockage ne casse jamais la photo déjà utilisée par le profil.
+        if ($newAvatarDisk
+            && $previousAvatar
+            && $previousAvatar !== ($data['avatar'] ?? null)
+            && ! str_starts_with($previousAvatar, 'http')) {
+            try {
+                Storage::disk($newAvatarDisk)->delete($previousAvatar);
+            } catch (\Exception $e) {
+                Log::warning('Impossible de supprimer l\'ancien avatar après remplacement: '.$e->getMessage(), [
+                    'user_id' => $user->id,
+                    'avatar' => $previousAvatar,
+                ]);
+            }
+        }
 
         // Rediriger vers le profil public si c'est la page d'origine
         $referer = $request->headers->get('referer', '');

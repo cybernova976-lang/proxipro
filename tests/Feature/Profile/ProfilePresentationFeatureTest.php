@@ -4,6 +4,8 @@ namespace Tests\Feature\Profile;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProfilePresentationFeatureTest extends TestCase
@@ -19,9 +21,12 @@ class ProfilePresentationFeatureTest extends TestCase
         $response->assertOk()
             ->assertSee('id="cropLoader"', false)
             ->assertSee('Préparation de la photo…')
+            ->assertSee("document.addEventListener('DOMContentLoaded'", false)
+            ->assertSee('window.bootstrap?.Modal', false)
             ->assertSee("cropModalEl.addEventListener('shown.bs.modal'", false)
             ->assertSee('window.requestAnimationFrame(initializeCropViewport)', false)
-            ->assertSee('Photo cadrée. Enregistrez le profil', false);
+            ->assertSee('Photo cadrée. Enregistrez le profil', false)
+            ->assertSee('Photo sélectionnée. Enregistrez le profil', false);
 
         $html = $response->getContent();
         $openCropperStart = strpos($html, 'function openCropper(dataUrl)');
@@ -32,6 +37,55 @@ class ProfilePresentationFeatureTest extends TestCase
         $this->assertStringNotContainsString('getBoundingClientRect()', $openCropper);
         $this->assertStringNotContainsString('baseScale =', $openCropper);
     }
+
+    public function test_user_can_upload_a_profile_photo_and_old_file_is_removed_after_success(): void
+    {
+        config(['filesystems.default' => 'public']);
+        Storage::fake('public');
+        Storage::disk('public')->put('avatars/old-avatar.jpg', 'old');
+
+        $user = User::factory()->create(['avatar' => 'avatars/old-avatar.jpg']);
+        $avatar = UploadedFile::fake()->createWithContent(
+            'new-avatar.png',
+            base64_decode(self::ONE_PIXEL_PNG)
+        );
+
+        $response = $this->actingAs($user)->put(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'avatar' => $avatar,
+        ]);
+
+        $response->assertRedirect(route('profile.show'))->assertSessionHasNoErrors();
+
+        $storedAvatar = $user->fresh()->avatar;
+        $this->assertNotSame('avatars/old-avatar.jpg', $storedAvatar);
+        Storage::disk('public')->assertExists($storedAvatar);
+        Storage::disk('public')->assertMissing('avatars/old-avatar.jpg');
+    }
+
+    public function test_user_can_save_a_cropped_profile_photo(): void
+    {
+        config(['filesystems.default' => 'public']);
+        Storage::fake('public');
+
+        $user = User::factory()->create(['avatar' => null]);
+
+        $response = $this->actingAs($user)->put(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'avatar_cropped' => 'data:image/png;base64,'.self::ONE_PIXEL_PNG,
+        ]);
+
+        $response->assertRedirect(route('profile.show'))->assertSessionHasNoErrors();
+
+        $storedAvatar = $user->fresh()->avatar;
+        $this->assertStringStartsWith('avatars/', $storedAvatar);
+        $this->assertStringEndsWith('.png', $storedAvatar);
+        Storage::disk('public')->assertExists($storedAvatar);
+    }
+
+    private const ONE_PIXEL_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 
     public function test_public_profile_uses_the_new_trust_first_responsive_presentation(): void
     {
