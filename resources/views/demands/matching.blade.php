@@ -249,7 +249,7 @@ body { background: #f0f2f5; }
             @foreach($professionals as $pro)
             <div class="pro-card">
                 @if($pro->hasActiveProSubscription())
-                    <div class="pro-card-badge"><i class="fas fa-crown"></i> PRO</div>
+                    <div class="pro-card-badge"><i class="fas fa-crown"></i> PREMIUM</div>
                 @endif
 
                 <div class="pro-card-header">
@@ -306,7 +306,7 @@ body { background: #f0f2f5; }
                 @foreach($additionalPros as $pro)
                 <div class="pro-card">
                     @if($pro->hasActiveProSubscription())
-                        <div class="pro-card-badge"><i class="fas fa-crown"></i> PRO</div>
+                        <div class="pro-card-badge"><i class="fas fa-crown"></i> PREMIUM</div>
                     @endif
 
                     <div class="pro-card-header">

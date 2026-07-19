@@ -22,6 +22,7 @@ class SeoController extends Controller
 
         try {
             Ad::query()
+                ->inEnabledCategories()
                 ->where('status', 'active')
                 ->select(['id', 'updated_at'])
                 ->latest('updated_at')

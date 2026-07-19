@@ -128,9 +128,7 @@ class MessageController extends Controller
                 $restriction = $ad->reply_restriction ?? 'everyone';
 
                 if ($restriction === 'pro_only') {
-                    $isPro = $currentUser->user_type === 'professionnel'
-                          || $currentUser->hasActiveProSubscription()
-                          || $currentUser->hasCompletedProOnboarding();
+                    $isPro = $currentUser->isProfessionnel();
                     if (! $isPro) {
                         return back()->with('error', 'Cette annonce est réservée aux professionnels. Seuls les comptes Pro peuvent contacter l\'annonceur.');
                     }

@@ -17,11 +17,11 @@ class HomePageController extends Controller
             return redirect()->route('feed');
         }
 
-        $serviceCategories = config('categories.services', []);
+        $serviceCategories = \App\Support\MarketplaceCategoryRegistry::enabledServices();
 
         try {
             $stats = Cache::remember('homepage.stats', now()->addMinutes(5), fn () => [
-                'totalAds' => Ad::where('status', 'active')->count(),
+                'totalAds' => Ad::inEnabledCategories()->where('status', 'active')->count(),
                 'totalPros' => User::where('is_active', true)
                     ->where(fn ($query) => $query
                         ->where('user_type', 'professionnel')
@@ -32,6 +32,7 @@ class HomePageController extends Controller
 
             // Une seule requête agrégée remplace une requête par sous-catégorie.
             $countsByCategory = Cache::remember('homepage.category_counts', now()->addMinutes(5), fn () => Ad::query()
+                ->inEnabledCategories()
                 ->where('status', 'active')
                 ->selectRaw('category, COUNT(*) as aggregate')
                 ->groupBy('category')
@@ -39,6 +40,7 @@ class HomePageController extends Controller
             );
 
             $latestAds = Ad::query()
+                ->inEnabledCategories()
                 ->where('status', 'active')
                 ->with('user:id,name,avatar,identity_verified')
                 ->latest()
@@ -52,7 +54,7 @@ class HomePageController extends Controller
                     ->orWhere('is_service_provider', true))
                 ->whereNotNull('profession')
                 ->withCount([
-                    'ads as active_ads_count' => fn ($query) => $query->where('status', 'active'),
+                    'ads as active_ads_count' => fn ($query) => $query->inEnabledCategories()->where('status', 'active'),
                     'verifiedReviewsReceived as verified_reviews_count',
                 ])
                 ->withAvg('verifiedReviewsReceived as verified_reviews_avg', 'rating')

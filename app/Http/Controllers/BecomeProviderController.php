@@ -2,18 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ProSubscription;
 use App\Models\UserService;
+use App\Services\ProviderSubscriptionService;
+use App\Support\MarketplaceCategoryRegistry;
+use App\Support\PlatformFeatures;
 use App\Support\ProviderSubscriptionPlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Stripe\Checkout\Session as StripeSession;
-use Stripe\Stripe;
+use Illuminate\Validation\Rule;
 
 class BecomeProviderController extends Controller
 {
+    public function __construct(private ProviderSubscriptionService $providerSubscriptionService) {}
+
     /**
      * Liste des pays disponibles
      */
@@ -36,7 +39,7 @@ class BecomeProviderController extends Controller
     private function getServiceCategories(): array
     {
         $categories = [];
-        foreach (config('categories.services') as $name => $data) {
+        foreach (\App\Support\MarketplaceCategoryRegistry::enabledServices() as $name => $data) {
             $categories[$name] = [
                 'icon' => $data['icon'],
                 'color' => $data['color'],
@@ -83,6 +86,7 @@ class BecomeProviderController extends Controller
             'countries' => $this->getCountries(),
             'cities' => $this->getCitiesByCountry(),
             'categories' => $this->getServiceCategories(),
+            'pro_subscriptions_enabled' => PlatformFeatures::proSubscriptionsEnabled(),
         ]);
     }
 
@@ -112,12 +116,19 @@ class BecomeProviderController extends Controller
             ], 422);
         }
 
+        $enabledServices = MarketplaceCategoryRegistry::enabledServices();
+        $enabledSubcategories = collect($enabledServices)
+            ->flatMap(fn (array $definition): array => $definition['subcategories'] ?? [])
+            ->unique()
+            ->values()
+            ->all();
+
         // Validation
         $rules = [
             'business_type' => 'nullable|in:entreprise,auto_entrepreneur',
             'company_name' => 'nullable|string|max:255',
-            'category' => 'required|string|max:100',
-            'subcategory' => 'required|string|max:100',
+            'category' => ['required', 'string', 'max:100', Rule::in(array_keys($enabledServices))],
+            'subcategory' => ['required', 'string', 'max:100', Rule::in($enabledSubcategories)],
             'country' => 'required|string|max:100',
             'city' => 'required|string|max:100',
             'plan' => 'nullable|in:monthly,annual',
@@ -137,6 +148,13 @@ class BecomeProviderController extends Controller
             return response()->json([
                 'success' => false,
                 'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        if (! in_array($request->subcategory, $enabledServices[$request->category]['subcategories'] ?? [], true)) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['subcategory' => ['Le métier choisi ne correspond pas à une activité actuellement ouverte.']],
             ], 422);
         }
 
@@ -179,7 +197,9 @@ class BecomeProviderController extends Controller
             DB::commit();
 
             // Si un plan est sélectionné, rediriger vers Stripe pour le paiement
-            if ($request->filled('plan') && in_array($request->plan, ['monthly', 'annual'])) {
+            if (PlatformFeatures::proSubscriptionsEnabled()
+                && $request->filled('plan')
+                && in_array($request->plan, ['monthly', 'annual'], true)) {
                 $planType = $request->plan;
                 $planConfig = ProviderSubscriptionPlans::get($planType);
                 if (! $planConfig || empty($planConfig['enabled'])) {
@@ -188,9 +208,6 @@ class BecomeProviderController extends Controller
                         'message' => 'Cet abonnement n’est pas disponible pour le moment.',
                     ], 422);
                 }
-                $amount = ProviderSubscriptionPlans::amount($planType);
-                $planLabel = ProviderSubscriptionPlans::stripeLabel($planType);
-
                 // Sauvegarder les données pour finaliser après paiement
                 session([
                     'become_provider_subscription' => [
@@ -200,43 +217,13 @@ class BecomeProviderController extends Controller
                 ]);
 
                 try {
-                    Stripe::setApiKey(config('services.stripe.secret'));
-
-                    $stripeCustomerId = $user->stripe_id;
-                    if (! $stripeCustomerId) {
-                        $customer = \Stripe\Customer::create([
-                            'email' => $user->email,
-                            'name' => $user->company_name ?? $user->name,
-                            'metadata' => ['user_id' => $user->id],
-                        ]);
-                        $stripeCustomerId = $customer->id;
-                        $user->update(['stripe_id' => $stripeCustomerId]);
-                    }
-
-                    $session = StripeSession::create([
-                        'customer' => $stripeCustomerId,
-                        'payment_method_types' => ['card'],
-                        'line_items' => [[
-                            'price_data' => [
-                                'currency' => 'eur',
-                                'product_data' => [
-                                    'name' => $planLabel,
-                                    'description' => ProviderSubscriptionPlans::description($planType),
-                                ],
-                                'unit_amount' => (int) round($amount * 100),
-                            ],
-                            'quantity' => 1,
-                        ]],
-                        'mode' => 'payment',
-                        'success_url' => route('become-provider.payment.success').'?session_id={CHECKOUT_SESSION_ID}',
-                        'cancel_url' => route('become-provider.payment.cancel'),
-                        'metadata' => [
-                            'user_id' => $user->id,
-                            'type' => 'become_provider_subscription',
-                            'plan' => $planType,
-                            'amount' => $amount,
-                        ],
-                    ]);
+                    $session = $this->providerSubscriptionService->createCheckoutSession(
+                        $user,
+                        $planType,
+                        route('become-provider.payment.success').'?session_id={CHECKOUT_SESSION_ID}',
+                        route('become-provider.payment.cancel'),
+                        'become_provider_subscription'
+                    );
 
                     return response()->json([
                         'success' => true,
@@ -245,13 +232,15 @@ class BecomeProviderController extends Controller
                         'message' => 'Redirection vers le paiement...',
                     ]);
 
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     \Log::error('BecomeProvider Stripe error: '.$e->getMessage());
 
                     return response()->json([
                         'success' => false,
-                        'message' => 'Erreur lors de la création du paiement. Veuillez réessayer.',
-                    ], 500);
+                        'message' => $e instanceof \DomainException
+                            ? $e->getMessage()
+                            : 'Erreur lors de la création du paiement. Veuillez réessayer.',
+                    ], $e instanceof \DomainException ? 422 : 500);
                 }
             }
 
@@ -295,45 +284,18 @@ class BecomeProviderController extends Controller
         }
 
         try {
-            Stripe::setApiKey(config('services.stripe.secret'));
-            $session = StripeSession::retrieve($sessionId);
-
-            if ($session->payment_status !== 'paid') {
-                return redirect()->route('feed')->with('error', 'Le paiement n\'a pas été confirmé.');
-            }
-
-            if ((int) $session->metadata->user_id !== $user->id) {
-                return redirect()->route('feed')->with('error', 'Session de paiement invalide.');
-            }
-
-            // Vérifier idempotence
-            $existingSub = ProSubscription::where('stripe_payment_intent', $session->payment_intent)->first();
-            if ($existingSub) {
-                return redirect()->route('pro.dashboard')->with('success', 'Votre abonnement est déjà actif !');
-            }
-
             $data = session('become_provider_subscription', []);
-            $plan = $data['plan'] ?? $session->metadata->plan ?? 'monthly';
-            $amount = ProviderSubscriptionPlans::amount($plan);
             $category = $data['category'] ?? null;
+
+            $subscription = $this->providerSubscriptionService->completeCheckout(
+                $sessionId,
+                $user,
+                ['selected_categories' => $category ? [$category] : []]
+            );
+            $plan = $subscription->plan;
 
             DB::beginTransaction();
             try {
-                ProSubscription::create([
-                    'user_id' => $user->id,
-                    'plan' => $plan,
-                    'amount' => $amount,
-                    'status' => 'active',
-                    'starts_at' => now(),
-                    'ends_at' => $plan === 'annual' ? now()->addYear() : now()->addMonth(),
-                    'auto_renew' => true,
-                    'notifications_enabled' => true,
-                    'realtime_notifications' => true,
-                    'selected_categories' => $category ? [$category] : [],
-                    'intervention_radius' => 30,
-                    'stripe_payment_intent' => $session->payment_intent,
-                ]);
-
                 $user->update([
                     'pro_subscription_plan' => $plan,
                     'pro_status' => 'active',
@@ -352,7 +314,7 @@ class BecomeProviderController extends Controller
                 return redirect()->route('feed')->with('error', 'Erreur lors de l\'activation. Contactez le support.');
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('BecomeProvider payment verification error: '.$e->getMessage());
 
             return redirect()->route('feed')->with('error', 'Erreur de vérification du paiement.');

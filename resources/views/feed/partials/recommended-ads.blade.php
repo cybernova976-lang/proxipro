@@ -17,7 +17,9 @@
             $isServiceProvider = $recommendationUser && ($recommendationUser->user_type === 'professionnel' || $recommendationUser->is_service_provider);
             $isProfessionalPromotion = $isServiceProvider && (($ad->service_type ?? null) !== 'demande');
             $displayName = $recommendationUser?->name ? trim(explode(' ', $recommendationUser->name)[0]) : 'Utilisateur';
-            $isProAccount = $recommendationUser && ($recommendationUser->user_type === 'professionnel' || $recommendationUser->hasActiveProSubscription());
+            $isPremiumAccount = $recommendationUser && $recommendationUser->hasActiveProSubscription();
+            $isProAccount = $recommendationUser && ($recommendationUser->isProfessionnel() || $isPremiumAccount);
+            $accountLabel = $isPremiumAccount ? 'Premium' : ($recommendationUser?->isProfessionnel() ? 'Pro' : 'Prestataire');
             $qualities = collect($recommendationUser?->specialties ?? $recommendationUser?->service_subcategories ?? [])
                 ->filter()
                 ->reject(fn ($quality) => $quality === ($recommendationUser?->profession ?? null))
@@ -67,6 +69,7 @@
                 'isProfessionalPromotion' => $isProfessionalPromotion,
                 'displayName' => $displayName,
                 'isProAccount' => $isProAccount,
+                'accountLabel' => $accountLabel,
                 'qualities' => $qualities,
                 'photoCount' => $photoCount,
                 'visualUrl' => $visualUrl,
@@ -120,6 +123,7 @@
                     $displayName = $card['displayName'];
                     $qualities = $card['qualities'];
                     $isProAccount = $card['isProAccount'];
+                    $accountLabel = $card['accountLabel'];
                 @endphp
                 <a href="{{ $card['recommendationUrl'] }}" class="recommendation-card{{ $isProfessionalPromotion ? ' recommendation-card--profile' : '' }}" data-recommendation-ad-id="{{ $ad->id }}">
                     <div class="recommendation-card-media">
@@ -159,7 +163,7 @@
                             <div class="recommendation-card-name-row">
                                 <h4 class="recommendation-card-title">{{ $displayName }}</h4>
                                 <span class="recommendation-card-account-badge{{ $isProAccount ? ' is-pro' : '' }}">
-                                    {{ $isProAccount ? 'Pro' : 'Prestataire' }}
+                                    {{ $accountLabel }}
                                 </span>
                             </div>
                             <p class="recommendation-card-profession">{{ Str::limit($recommendationUser->profession ?? $recommendationUser->service_category ?? 'Prestataire de services', 44) }}</p>

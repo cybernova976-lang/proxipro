@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Ad;
-use App\Models\Transaction;
 use App\Models\PointTransaction;
+use App\Models\Transaction;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -43,9 +42,9 @@ class DashboardController extends Controller
         $activeUrgentAds = $user->ads()
             ->where('status', 'active')
             ->where('is_urgent', true)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('urgent_until')
-                  ->orWhere('urgent_until', '>', now());
+                    ->orWhere('urgent_until', '>', now());
             })
             ->orderBy('urgent_until', 'asc')
             ->get();
@@ -56,7 +55,7 @@ class DashboardController extends Controller
                 'plan' => $user->plan,
                 'started_at' => $user->subscription_start ?? $user->created_at,
                 'ends_at' => $user->subscription_end,
-                'is_active' => !$user->subscription_end || $user->subscription_end->isFuture(),
+                'is_active' => ! $user->subscription_end || $user->subscription_end->isFuture(),
             ];
         }
 
@@ -96,6 +95,7 @@ class DashboardController extends Controller
     public function profileEdit()
     {
         $user = Auth::user();
+
         return view('dashboard.partials.profile-edit', compact('user'));
     }
 
@@ -105,6 +105,7 @@ class DashboardController extends Controller
     public function settings()
     {
         $user = Auth::user();
+
         return view('dashboard.partials.settings', compact('user'));
     }
 
@@ -173,15 +174,15 @@ class DashboardController extends Controller
     public function createAd()
     {
         $categories = array_merge(
-            array_keys(config('categories.services')),
-            array_keys(config('categories.marketplace'))
+            array_keys(\App\Support\MarketplaceCategoryRegistry::enabledServices()),
+            array_keys(\App\Support\MarketplaceCategoryRegistry::enabledMarketplace())
         );
 
         $categoriesData = [];
-        foreach (config('categories.services') as $name => $data) {
+        foreach (\App\Support\MarketplaceCategoryRegistry::enabledServices() as $name => $data) {
             $categoriesData[$name] = ['icon' => $data['icon'], 'subcategories' => $data['subcategories']];
         }
-        foreach (config('categories.marketplace') as $name => $data) {
+        foreach (\App\Support\MarketplaceCategoryRegistry::enabledMarketplace() as $name => $data) {
             $categoriesData[$name] = ['icon' => $data['icon'], 'subcategories' => $data['subcategories']];
         }
 

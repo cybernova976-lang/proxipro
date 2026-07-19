@@ -7721,7 +7721,8 @@
                     else { $photoUrls[] = storage_url($p); }
                 }
                 $isNew = $ad->created_at->diffInHours() < 24;
-                $hasProBadge = $ad->user && ($ad->user->user_type === 'professionnel' || $ad->user->hasActiveProSubscription());
+                $hasProfessionalBadge = $ad->user && $ad->user->isProfessionnel();
+                $hasPremiumBadge = $ad->user && $ad->user->hasActiveProSubscription();
                 $commentsCount = $ad->comments()->count();
 
                 // Reply restriction check
@@ -7731,7 +7732,7 @@
                 if (Auth::check() && Auth::id() !== $ad->user_id) {
                     if ($adRestriction === 'pro_only') {
                         $u = Auth::user();
-                        $isPro = $u->user_type === 'professionnel' || $u->hasActiveProSubscription() || $u->hasCompletedProOnboarding();
+                        $isPro = $u->isProfessionnel();
                         if (!$isPro) {
                             $canReplyToAd = false;
                             $replyRestrictionMsg = 'Réservé aux PRO';
@@ -7774,8 +7775,10 @@
                             @if($ad->user && $ad->user->is_verified)
                                 <i class="fas fa-check-circle" style="color: #1877f2; font-size: 0.75rem;"></i>
                             @endif
-                            @if($hasProBadge)
+                            @if($hasProfessionalBadge)
                                 <span class="fb-post-badge">PRO</span>
+                            @elseif($hasPremiumBadge)
+                                <span class="fb-post-badge"><i class="fas fa-crown"></i> PREMIUM</span>
                             @endif
                         </a>
                         <div class="fb-post-meta">
@@ -10234,7 +10237,7 @@
     const totalWizardSteps = 4;
     let wizCatTreeBuilt = false;
     let wizardUserHasAvatar = {{ Auth::check() && Auth::user()->avatar ? 'true' : 'false' }};
-    const wizardServiceCategories = @json(config('categories.services'));
+    const wizardServiceCategories = @json(\App\Support\MarketplaceCategoryRegistry::enabledServices());
     const wizardExistingSubcategories = @json(Auth::check() ? (Auth::user()->service_subcategories ?? []) : []);
 
     const wizardStepConfig = {

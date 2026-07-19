@@ -169,10 +169,10 @@
             <div id="main-categories-grid" class="category-grid">
                 @php
                 $categoriesData = [];
-                foreach (config('categories.services') as $name => $data) {
+                foreach (\App\Support\MarketplaceCategoryRegistry::enabledServices() as $name => $data) {
                     $categoriesData[$name] = ['icon' => $data['icon'], 'subcategories' => $data['subcategories']];
                 }
-                foreach (config('categories.marketplace') as $name => $data) {
+                foreach (\App\Support\MarketplaceCategoryRegistry::enabledMarketplace() as $name => $data) {
                     $categoriesData[$name] = ['icon' => $data['icon'], 'subcategories' => $data['subcategories']];
                 }
                 @endphp

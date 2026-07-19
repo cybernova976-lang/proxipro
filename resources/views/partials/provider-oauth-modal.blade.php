@@ -172,10 +172,11 @@
                 <!-- Step 5: Abonnement -->
                 <div class="oauth-step-content" id="oauthStep5">
                     <div class="step-header">
-                        <h6><i class="fas fa-crown"></i> Choisissez votre abonnement</h6>
-                        <p>Accédez à tous les outils professionnels pour développer votre activité.</p>
+                        <h6><i class="fas fa-crown"></i> {{ $proSubscriptionsEnabled ? 'Choisissez votre abonnement' : 'Accès prestataire au lancement' }}</h6>
+                        <p>{{ $proSubscriptionsEnabled ? 'Accédez à tous les outils professionnels pour développer votre activité.' : 'Aucun abonnement n’est commercialisé pour le moment.' }}</p>
                     </div>
 
+                    @if($proSubscriptionsEnabled)
                     <div class="oauth-subscription-plans">
                         <div class="oauth-plan-card" data-plan="monthly" onclick="selectOAuthPlan('monthly')">
                             <div class="oauth-plan-name">Mensuel</div>
@@ -209,12 +210,17 @@
                             </ul>
                         </div>
                     </div>
+                    @else
+                    <div class="alert alert-success border-0 text-center">
+                        <i class="fas fa-check-circle me-1"></i> Votre profil peut être activé gratuitement, sans paiement automatique.
+                    </div>
+                    @endif
 
                     <div style="text-align:center;margin-top:16px;">
                         <button type="button" class="btn btn-outline-secondary" onclick="skipOAuthSubscription()" style="font-size:0.92rem;padding:10px 28px;border-radius:10px;border:2px solid #cbd5e1;font-weight:600;">
-                            <i class="fas fa-forward me-1"></i> Continuer sans abonnement
+                            <i class="fas {{ $proSubscriptionsEnabled ? 'fa-forward' : 'fa-check' }} me-1"></i> {{ $proSubscriptionsEnabled ? 'Continuer sans abonnement' : 'Continuer gratuitement' }}
                         </button>
-                        <p style="font-size:0.8rem;color:#94a3b8;margin-top:8px;">Vous pourrez souscrire à tout moment depuis votre espace pro.</p>
+                        <p style="font-size:0.8rem;color:#94a3b8;margin-top:8px;">{{ $proSubscriptionsEnabled ? 'Vous pourrez souscrire à tout moment depuis votre espace pro.' : 'Aucun abonnement ne sera activé automatiquement.' }}</p>
                     </div>
                 </div>
 

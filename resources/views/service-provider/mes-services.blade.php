@@ -138,7 +138,7 @@
             @else
                 @php
                     $grouped = $services->groupBy('main_category');
-                    $allCategories = config('categories.services');
+                    $allCategories = \App\Support\MarketplaceCategoryRegistry::enabledServices();
                 @endphp
                 
                 @foreach($grouped as $categoryName => $categoryServices)

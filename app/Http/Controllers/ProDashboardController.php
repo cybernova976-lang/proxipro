@@ -6,8 +6,10 @@ use App\Models\ProClient;
 use App\Models\ProDocument;
 use App\Models\ProInvoice;
 use App\Models\ProQuote;
-use App\Models\ProSubscription;
 use App\Models\User;
+use App\Services\ProviderSubscriptionService;
+use App\Support\MarketplaceCategoryRegistry;
+use App\Support\PlatformFeatures;
 use App\Support\ProviderSubscriptionPlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,12 +19,10 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Stripe\Checkout\Session as StripeSession;
-use Stripe\Stripe;
 
 class ProDashboardController extends Controller
 {
-    public function __construct()
+    public function __construct(private ProviderSubscriptionService $providerSubscriptionService)
     {
         $this->middleware('auth');
     }
@@ -1109,8 +1109,64 @@ class ProDashboardController extends Controller
         $user = $this->ensurePro();
         $subscription = $user->proSubscription;
         $subscriptions = $user->proSubscriptions()->latest()->get();
+        $proSubscriptionsEnabled = PlatformFeatures::proSubscriptionsEnabled();
 
-        return view('pro.subscription', compact('user', 'subscription', 'subscriptions'));
+        return view('pro.subscription', compact('user', 'subscription', 'subscriptions', 'proSubscriptionsEnabled'));
+    }
+
+    public function cancelSubscriptionRenewal()
+    {
+        $user = $this->ensurePro();
+        $subscription = $user->proSubscriptions()->currentlyActive()->latest()->first();
+
+        if (! $subscription) {
+            return back()->with('error', 'Aucun abonnement actif à annuler.');
+        }
+
+        try {
+            $subscription = $this->providerSubscriptionService->cancelAtPeriodEnd($subscription);
+
+            return back()->with(
+                'success',
+                'Le renouvellement est arrêté. Votre accès reste actif jusqu’au '.optional($subscription->ends_at)->format('d/m/Y').'.'
+            );
+        } catch (\Throwable $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+    }
+
+    public function resumeSubscriptionRenewal()
+    {
+        $user = $this->ensurePro();
+        $subscription = $user->proSubscriptions()->currentlyActive()->latest()->first();
+
+        if (! $subscription) {
+            return back()->with('error', 'Cet abonnement est déjà terminé.');
+        }
+
+        try {
+            $this->providerSubscriptionService->resumeRenewal($subscription);
+
+            return back()->with('success', 'Le renouvellement automatique est réactivé.');
+        } catch (\Throwable $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+    }
+
+    public function openSubscriptionBillingPortal()
+    {
+        $user = $this->ensurePro();
+
+        try {
+            $url = $this->providerSubscriptionService->createBillingPortalSession(
+                $user,
+                route('pro.subscription')
+            );
+
+            return redirect()->away($url);
+        } catch (\Throwable $exception) {
+            return back()->with('error', 'Le portail de facturation est indisponible : '.$exception->getMessage());
+        }
     }
 
     public function subscribeOnboarding(Request $request)
@@ -1157,9 +1213,22 @@ class ProDashboardController extends Controller
                 }
             }
             if ($step >= 3 && $request->has('categories')) {
-                $updateData['pro_service_categories'] = $request->input('categories');
+                $enabledServices = MarketplaceCategoryRegistry::enabledServices();
+                $enabledCategoryNames = array_keys($enabledServices);
+                $enabledSubcategories = collect($enabledServices)
+                    ->flatMap(fn (array $definition): array => $definition['subcategories'] ?? [])
+                    ->unique()
+                    ->all();
+
+                $updateData['pro_service_categories'] = array_values(array_intersect(
+                    (array) $request->input('categories'),
+                    $enabledCategoryNames
+                ));
                 if ($request->has('subcategories')) {
-                    $updateData['service_subcategories'] = $request->input('subcategories');
+                    $updateData['service_subcategories'] = array_values(array_intersect(
+                        (array) $request->input('subcategories'),
+                        $enabledSubcategories
+                    ));
                 }
             }
             if ($step >= 4) {
@@ -1184,9 +1253,19 @@ class ProDashboardController extends Controller
 
         // Handle complete without subscription (skip_subscription)
         if ($request->input('skip_subscription')) {
+            $enabledServices = MarketplaceCategoryRegistry::enabledServices();
+            $enabledCategoryNames = array_keys($enabledServices);
+            $enabledSubcategories = collect($enabledServices)
+                ->flatMap(fn (array $definition): array => $definition['subcategories'] ?? [])
+                ->unique()
+                ->values()
+                ->all();
+
             $validated = $request->validate([
                 'categories' => 'nullable|array',
+                'categories.*' => ['string', Rule::in($enabledCategoryNames)],
                 'subcategories' => 'nullable|array',
+                'subcategories.*' => ['string', Rule::in($enabledSubcategories)],
                 'intervention_radius' => 'nullable|integer|min:5|max:200',
                 'notifications_realtime' => 'nullable|boolean',
                 'notifications_email' => 'nullable|boolean',
@@ -1262,6 +1341,20 @@ class ProDashboardController extends Controller
             ]);
         }
 
+        if (! PlatformFeatures::proSubscriptionsEnabled()) {
+            $message = PlatformFeatures::proSubscriptionUnavailableMessage();
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'subscriptions_unavailable' => true,
+                ], 422);
+            }
+
+            return back()->with('info', $message);
+        }
+
         // Full subscribe with payment via Stripe Checkout
         $validated = $request->validate([
             'plan' => 'required|in:monthly,annual',
@@ -1288,9 +1381,6 @@ class ProDashboardController extends Controller
                 'message' => 'Cet abonnement n’est pas disponible pour le moment.',
             ], 422);
         }
-        $amount = ProviderSubscriptionPlans::amount($validated['plan']);
-        $planLabel = ProviderSubscriptionPlans::stripeLabel($validated['plan']);
-
         // Save onboarding data in session so we can finalize after payment
         session([
             'pro_onboarding_data' => [
@@ -1313,45 +1403,13 @@ class ProDashboardController extends Controller
         ]);
 
         try {
-            Stripe::setApiKey(config('services.stripe.secret'));
-
-            // Create or retrieve Stripe customer
-            $stripeCustomerId = $user->stripe_id;
-            if (! $stripeCustomerId) {
-                $customer = \Stripe\Customer::create([
-                    'email' => $user->email,
-                    'name' => $user->company_name ?? $user->name,
-                    'metadata' => ['user_id' => $user->id],
-                ]);
-                $stripeCustomerId = $customer->id;
-                $user->update(['stripe_id' => $stripeCustomerId]);
-            }
-
-            // Create Stripe Checkout Session
-            $session = StripeSession::create([
-                'customer' => $stripeCustomerId,
-                'payment_method_types' => ['card'],
-                'line_items' => [[
-                    'price_data' => [
-                        'currency' => 'eur',
-                        'product_data' => [
-                            'name' => $planLabel,
-                            'description' => ProviderSubscriptionPlans::description($validated['plan']),
-                        ],
-                        'unit_amount' => (int) round($amount * 100), // Stripe uses cents
-                    ],
-                    'quantity' => 1,
-                ]],
-                'mode' => 'payment',
-                'success_url' => route('pro.onboarding.payment.success').'?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url' => route('pro.onboarding.payment.cancel'),
-                'metadata' => [
-                    'user_id' => $user->id,
-                    'type' => 'pro_subscription',
-                    'plan' => $validated['plan'],
-                    'amount' => $amount,
-                ],
-            ]);
+            $session = $this->providerSubscriptionService->createCheckoutSession(
+                $user,
+                $validated['plan'],
+                route('pro.onboarding.payment.success').'?session_id={CHECKOUT_SESSION_ID}',
+                route('pro.onboarding.payment.cancel'),
+                'pro_subscription'
+            );
 
             // For standard form submissions (e.g. subscription page), redirect directly to Stripe
             if (! $request->expectsJson() && ! $request->ajax()) {
@@ -1364,16 +1422,18 @@ class ProDashboardController extends Controller
                 'checkout_url' => $session->url,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('Stripe Checkout creation error (pro onboarding): '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'user_id' => $user->id,
             ]);
 
+            $status = $e instanceof \DomainException ? 422 : 500;
+
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la création du paiement : '.$e->getMessage(),
-            ], 500);
+                'message' => $status === 422 ? $e->getMessage() : 'Le paiement ne peut pas être préparé actuellement. Veuillez réessayer.',
+            ], $status);
         }
     }
 
@@ -1390,49 +1450,24 @@ class ProDashboardController extends Controller
         }
 
         try {
-            Stripe::setApiKey(config('services.stripe.secret'));
-            $session = StripeSession::retrieve($sessionId);
-
-            if ($session->payment_status !== 'paid') {
-                return redirect()->route('pro.onboarding')->with('error', 'Le paiement n\'a pas été confirmé. Veuillez réessayer.');
-            }
-
-            // Verify this session belongs to this user
-            if ((int) $session->metadata->user_id !== $user->id) {
-                return redirect()->route('pro.onboarding')->with('error', 'Session de paiement invalide.');
-            }
-
-            // Check if already processed (idempotency)
-            $existingSub = ProSubscription::where('stripe_payment_intent', $session->payment_intent)->first();
-            if ($existingSub) {
-                return redirect()->route('pro.dashboard')->with('success', 'Votre abonnement est déjà actif !');
-            }
-
             // Retrieve onboarding data from session
             $data = session('pro_onboarding_data', []);
-            $plan = $data['plan'] ?? $session->metadata->plan ?? 'monthly';
-            $amount = ProviderSubscriptionPlans::amount($plan);
             $categories = $data['categories'] ?? $user->pro_service_categories ?? [];
             $interventionRadius = $data['intervention_radius'] ?? $user->pro_intervention_radius ?? 30;
 
-            DB::beginTransaction();
-            try {
-                // Create subscription
-                $subscription = ProSubscription::create([
-                    'user_id' => $user->id,
-                    'plan' => $plan,
-                    'amount' => $amount,
-                    'status' => 'active',
-                    'starts_at' => now(),
-                    'ends_at' => $plan === 'annual' ? now()->addYear() : now()->addMonth(),
-                    'auto_renew' => true,
-                    'notifications_enabled' => true,
+            $subscription = $this->providerSubscriptionService->completeCheckout(
+                $sessionId,
+                $user,
+                [
                     'realtime_notifications' => $data['notifications_realtime'] ?? true,
                     'selected_categories' => $categories,
                     'intervention_radius' => $interventionRadius,
-                    'stripe_payment_intent' => $session->payment_intent,
-                ]);
+                ]
+            );
+            $plan = $subscription->plan;
 
+            DB::beginTransaction();
+            try {
                 // Update user
                 $updateData = [
                     'pro_onboarding_completed' => true,
@@ -1504,7 +1539,7 @@ class ProDashboardController extends Controller
                 return redirect()->route('pro.onboarding')->with('error', 'Le paiement a été effectué mais une erreur est survenue. Veuillez contacter le support.');
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('Stripe session retrieval error (pro onboarding): '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'user_id' => $user->id,
@@ -1542,7 +1577,9 @@ class ProDashboardController extends Controller
 
         $categories = $this->getServiceCategories();
 
-        return view('pro.onboarding', compact('user', 'categories'));
+        $proSubscriptionsEnabled = PlatformFeatures::proSubscriptionsEnabled();
+
+        return view('pro.onboarding', compact('user', 'categories', 'proSubscriptionsEnabled'));
     }
 
     // =========================================
@@ -1568,6 +1605,7 @@ class ProDashboardController extends Controller
                 'has_location' => $user->hasGeoLocation(),
             ],
             'categories' => $this->getServiceCategories(),
+            'pro_subscriptions_enabled' => PlatformFeatures::proSubscriptionsEnabled(),
         ]);
     }
 
@@ -1793,7 +1831,7 @@ class ProDashboardController extends Controller
     private function getServiceCategories(): array
     {
         $categories = [];
-        foreach (config('categories.services') as $name => $data) {
+        foreach (\App\Support\MarketplaceCategoryRegistry::enabledServices() as $name => $data) {
             $categories[$name] = [
                 'icon' => $data['icon'],
                 'color' => $data['color'],

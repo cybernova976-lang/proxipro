@@ -631,11 +631,14 @@
         <!-- ========================================================= -->
         <div class="ob-step-content" id="obStep5" style="display:none;">
             <div class="ob-card">
-                <div class="ob-card-title">👑 Choisissez votre abonnement</div>
+                <div class="ob-card-title">{{ $proSubscriptionsEnabled ? '👑 Choisissez votre abonnement' : '🚀 Accès prestataire pendant le lancement' }}</div>
                 <div class="ob-card-subtitle">
-                    L'abonnement ProxiPro vous donne accès à tous les outils professionnels : réception de demandes clients, devis, factures, gestion clientèle et visibilité accrue.
+                    {{ $proSubscriptionsEnabled
+                        ? "L'abonnement ProxiPro vous donne accès à tous les outils professionnels : réception de demandes clients, devis, factures, gestion clientèle et visibilité accrue."
+                        : "L'abonnement récurrent n'est pas encore commercialisé. Terminez votre configuration et utilisez l'espace prestataire sans abonnement pendant cette phase." }}
                 </div>
 
+                @if($proSubscriptionsEnabled)
                 <div class="ob-plan-grid">
                     {{-- Monthly --}}
                     <div class="ob-plan-card" id="planMonthly" onclick="selectPlan('monthly')">
@@ -679,6 +682,13 @@
                         </ul>
                     </div>
                 </div>
+                @else
+                <div style="padding: 22px; border-radius: 16px; background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.2); text-align: center;">
+                    <i class="fas fa-check-circle" style="font-size: 2rem; color: #10b981; margin-bottom: 10px;"></i>
+                    <h3 style="font-size: 1.05rem; margin-bottom: 6px;">Aucun paiement demandé</h3>
+                    <p style="font-size: .84rem; color: var(--ob-muted); margin: 0;">Les offres Pro seront activées ultérieurement, lorsque leur facturation récurrente et le cadre administratif seront prêts.</p>
+                </div>
+                @endif
             </div>
         </div>
 
@@ -723,11 +733,13 @@
 
                 <div style="margin-top: 16px; padding: 14px; background: rgba(16,185,129,0.06); border-radius: 12px; border: 1px solid rgba(16,185,129,0.15);">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                        <i class="fas fa-lock" style="color: #059669;"></i>
-                        <strong style="font-size: 0.88rem; color: #059669;">Paiement 100% sécurisé</strong>
+                        <i class="fas {{ $proSubscriptionsEnabled ? 'fa-lock' : 'fa-gift' }}" style="color: #059669;"></i>
+                        <strong style="font-size: 0.88rem; color: #059669;">{{ $proSubscriptionsEnabled ? 'Paiement 100% sécurisé' : 'Accès gratuit pendant la phase de lancement' }}</strong>
                     </div>
                     <p style="font-size: 0.78rem; color: var(--ob-muted); margin: 0;">
-                        Votre paiement est crypté et traité par Stripe. Vous pouvez annuler votre abonnement à tout moment. Satisfait ou remboursé pendant 14 jours.
+                        {{ $proSubscriptionsEnabled
+                            ? 'Votre paiement est crypté et traité par Stripe. Vous pouvez annuler votre abonnement à tout moment.'
+                            : 'Vous serez informé avant toute future mise en place d’une offre payante. Aucun abonnement ne sera activé automatiquement.' }}
                     </p>
                 </div>
             </div>
@@ -762,11 +774,12 @@
     (function() {
         // ---- DATA ----
         const catsData = @json($categories);
+        const subscriptionsEnabled = @json($proSubscriptionsEnabled);
         let currentStep = 1;
         const totalSteps = 6;
         let selectedCats = [];
         let selectedSubs = [];
-        let selectedPlan = 'annual';
+        let selectedPlan = subscriptionsEnabled ? 'annual' : null;
 
         // ---- STEPPER ----
         function updateStepper() {
@@ -807,7 +820,9 @@
             back.style.display = currentStep > 1 ? '' : 'none';
 
             if (currentStep === totalSteps) {
-                next.innerHTML = '<i class="fas fa-credit-card me-1"></i> Confirmer et payer';
+                next.innerHTML = subscriptionsEnabled
+                    ? '<i class="fas fa-credit-card me-1"></i> Confirmer et payer'
+                    : '<i class="fas fa-check me-1"></i> Terminer la configuration';
             } else if (currentStep === 1) {
                 next.innerHTML = 'Commencer <i class="fas fa-arrow-right"></i>';
             } else {
@@ -999,7 +1014,10 @@
                 ? '<span style="color: var(--ob-success);"><i class="fas fa-check-circle me-1"></i>Activées</span>'
                 : '<span style="color: var(--ob-muted);">Désactivées</span>';
 
-            if (selectedPlan === 'annual') {
+            if (!subscriptionsEnabled) {
+                document.getElementById('recapPlan').textContent = 'Aucun — accès lancement';
+                document.getElementById('recapTotal').textContent = '0,00 €';
+            } else if (selectedPlan === 'annual') {
                 document.getElementById('recapPlan').textContent = 'Annuel (85€/an)';
                 document.getElementById('recapTotal').textContent = '85,00 €';
             } else {
@@ -1018,10 +1036,13 @@
 
             const btn = document.getElementById('obBtnNext');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Redirection vers le paiement...';
+            btn.innerHTML = subscriptionsEnabled
+                ? '<i class="fas fa-spinner fa-spin me-1"></i> Redirection vers le paiement...'
+                : '<i class="fas fa-spinner fa-spin me-1"></i> Enregistrement...';
 
             const payload = {
                 plan: selectedPlan,
+                skip_subscription: !subscriptionsEnabled,
                 categories: selectedCats,
                 subcategories: selectedSubs,
                 intervention_radius: parseInt(document.getElementById('obRadius').value) || 30,
@@ -1051,13 +1072,17 @@
                     window.location.href = data.redirect;
                 } else {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-credit-card me-1"></i> Confirmer et payer';
+                    btn.innerHTML = subscriptionsEnabled
+                        ? '<i class="fas fa-credit-card me-1"></i> Confirmer et payer'
+                        : '<i class="fas fa-check me-1"></i> Terminer la configuration';
                     alert(data.message || 'Erreur lors de l\'activation. Veuillez réessayer.');
                 }
             })
             .catch(() => {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-credit-card me-1"></i> Confirmer et payer';
+                btn.innerHTML = subscriptionsEnabled
+                    ? '<i class="fas fa-credit-card me-1"></i> Confirmer et payer'
+                    : '<i class="fas fa-check me-1"></i> Terminer la configuration';
                 alert('Erreur de connexion. Veuillez réessayer.');
             });
         }

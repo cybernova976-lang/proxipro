@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\MarketplaceCategoryRegistry;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -80,11 +81,17 @@ class Ad extends Model
     public function scopeMarketplaceActive($query)
     {
         return $query
+            ->inEnabledCategories()
             ->where('status', 'active')
             ->where(function ($activeQuery) {
                 $activeQuery->whereNull('expires_at')
                     ->orWhere('expires_at', '>', now());
             });
+    }
+
+    public function scopeInEnabledCategories($query)
+    {
+        return MarketplaceCategoryRegistry::applyEnabledScope($query);
     }
 
     public function getEffectivePriceTypeAttribute(): string
@@ -231,6 +238,7 @@ class Ad extends Model
     public static function popularServicesByRegion($region, $limit = 5)
     {
         return self::where('location', 'LIKE', "%{$region}%")
+            ->inEnabledCategories()
             ->where('status', 'active')
             ->select('category', DB::raw('COUNT(*) as count'))
             ->groupBy('category')
@@ -265,7 +273,8 @@ class Ad extends Model
      */
     public function scopeSidebar($query)
     {
-        return $query->where('status', 'active')
+        return $query->inEnabledCategories()
+            ->where('status', 'active')
             ->where(function ($q) {
                 $q->where(function ($q2) {
                     $q2->where('is_urgent', true)

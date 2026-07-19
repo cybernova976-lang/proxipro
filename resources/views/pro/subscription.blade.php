@@ -27,21 +27,55 @@
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 @endif
+@if(session('info'))
+<div class="alert alert-info alert-dismissible fade show" role="alert" style="border-radius: 12px; max-width: 960px; margin-left: auto; margin-right: auto;">
+    <i class="fas fa-info-circle me-2"></i>{{ session('info') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+@endif
 
 {{-- Current Subscription Status --}}
 @if($subscription && $subscription->isActive())
 <div class="pro-card sub-page-card mb-4" style="background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(59,130,246,0.05)); border-left: 4px solid #10b981; padding: 16px 20px;">
-    <div class="d-flex align-items-center gap-3">
+    <div class="d-flex flex-wrap align-items-center gap-3">
         <div style="width: 42px; height: 42px; border-radius: 50%; background: rgba(16,185,129,0.15); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
             <i class="fas fa-check-circle"></i>
         </div>
         <div class="flex-grow-1">
             <h6 class="fw-bold mb-0 text-success">Abonnement actif — {{ $subscription->getPlanLabel() }}</h6>
             <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                Valide jusqu'au <strong>{{ $subscription->ends_at->format('d/m/Y') }}</strong> · {{ $subscription->daysRemaining() }} jours restants
+                Valide jusqu'au <strong>{{ optional($subscription->ends_at)->format('d/m/Y') ?: 'prochaine échéance Stripe' }}</strong> · {{ $subscription->daysRemaining() }} jours restants
+            </p>
+            <p class="mb-0 mt-1" style="font-size: .75rem;">
+                @if($subscription->stripe_subscription_id)
+                    @if($subscription->auto_renew)
+                        <span class="text-success"><i class="fas fa-repeat me-1"></i>Renouvellement automatique actif</span>
+                    @else
+                        <span class="text-warning"><i class="fas fa-calendar-xmark me-1"></i>Résiliation programmée à l’échéance</span>
+                    @endif
+                @else
+                    <span class="text-muted"><i class="fas fa-gift me-1"></i>Accès accordé manuellement, sans prélèvement</span>
+                @endif
             </p>
         </div>
         <span class="pro-status pro-status-success">Actif</span>
+        @if($subscription->stripe_subscription_id)
+            <form method="POST" action="{{ route('pro.subscription.billing-portal') }}">
+                @csrf
+                <button class="btn btn-sm btn-outline-primary"><i class="fas fa-credit-card me-1"></i>Factures et carte</button>
+            </form>
+            @if($subscription->auto_renew)
+                <form method="POST" action="{{ route('pro.subscription.cancel-renewal') }}" onsubmit="return confirm('Arrêter le renouvellement automatique à la prochaine échéance ?');">
+                    @csrf
+                    <button class="btn btn-sm btn-outline-danger">Arrêter le renouvellement</button>
+                </form>
+            @else
+                <form method="POST" action="{{ route('pro.subscription.resume-renewal') }}">
+                    @csrf
+                    <button class="btn btn-sm btn-outline-success">Réactiver le renouvellement</button>
+                </form>
+            @endif
+        @endif
     </div>
 </div>
 @else
@@ -51,14 +85,17 @@
             <i class="fas fa-exclamation-triangle"></i>
         </div>
         <div>
-            <h6 class="fw-bold mb-0">Aucun abonnement actif</h6>
-            <p class="text-muted mb-0" style="font-size: 0.8rem;">Choisissez un plan ci-dessous ou achetez des points à la carte.</p>
+            <h6 class="fw-bold mb-0">{{ $proSubscriptionsEnabled ? 'Aucun abonnement actif' : 'Abonnement Pro en préparation' }}</h6>
+            <p class="text-muted mb-0" style="font-size: 0.8rem;">
+                {{ $proSubscriptionsEnabled ? 'Choisissez un plan ci-dessous ou achetez des points à la carte.' : 'L’espace prestataire reste accessible gratuitement pendant la préparation de l’offre récurrente.' }}
+            </p>
         </div>
     </div>
 </div>
 @endif
 
 {{-- ===== SECTION 1: Plans d'abonnement (compact) ===== --}}
+@if($proSubscriptionsEnabled)
 <div class="pro-card sub-page-card mb-4">
     <h6 class="fw-bold mb-3"><i class="fas fa-crown me-2" style="color: #f59e0b;"></i>Plans d'abonnement</h6>
     @php $providerSubscriptionPlans = \App\Support\ProviderSubscriptionPlans::active(); @endphp
@@ -97,9 +134,11 @@
                 <form method="POST" action="{{ route('pro.onboarding.subscribe') }}" class="mt-2">
                     @csrf
                     <input type="hidden" name="plan" value="{{ $planKey }}">
-                    <button type="submit" class="btn btn-sm {{ $subscription && $subscription->isActive() && $subscription->plan === $planKey ? 'btn-outline-success' : (!empty($plan['recommended']) ? 'btn-pro-primary' : 'btn-outline-primary') }} w-100" style="border-radius: 8px; font-size: 0.8rem; padding: 6px;">
+                    <button type="submit" class="btn btn-sm {{ $subscription && $subscription->isActive() && $subscription->plan === $planKey ? 'btn-outline-success' : (!empty($plan['recommended']) ? 'btn-pro-primary' : 'btn-outline-primary') }} w-100" style="border-radius: 8px; font-size: 0.8rem; padding: 6px;" {{ $subscription && $subscription->isActive() ? 'disabled' : '' }}>
                         @if($subscription && $subscription->isActive() && $subscription->plan === $planKey)
                             <i class="fas fa-check me-1"></i> Plan actuel
+                        @elseif($subscription && $subscription->isActive())
+                            Abonnement déjà actif
                         @else
                             Choisir ce plan
                         @endif
@@ -110,6 +149,20 @@
         @endforeach
     </div>
 </div>
+@else
+<div class="pro-card sub-page-card mb-4" style="border-left: 4px solid #6366f1;">
+    <div class="d-flex align-items-start gap-3">
+        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(99,102,241,.12); color: #4f46e5; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <i class="fas fa-tools"></i>
+        </div>
+        <div>
+            <h6 class="fw-bold mb-1">Offre Pro non commercialisée</h6>
+            <p class="text-muted mb-2" style="font-size:.84rem;">Aucun prélèvement récurrent n’est proposé pour le moment. Les plans affichés dans l’administration servent uniquement à préparer la future offre.</p>
+            <span class="badge bg-success-subtle text-success border border-success-subtle">Accès prestataire gratuit pendant la phase de lancement</span>
+        </div>
+    </div>
+</div>
+@endif
 
 {{-- ===== SECTION 2: Acheter des points ===== --}}
 <div class="pro-card sub-page-card mb-4">
@@ -123,22 +176,24 @@
 
     <div class="row g-2">
         @php
-            $packs = [
-                ['key' => 'POINTS_5', 'name' => 'Boost 3j', 'pts' => 5, 'price' => 4, 'icon' => 'fas fa-bolt', 'color' => '#6366f1'],
-                ['key' => 'POINTS_10', 'name' => 'Boost 7j', 'pts' => 10, 'price' => 6, 'icon' => 'fas fa-rocket', 'color' => '#f59e0b', 'popular' => true],
-                ['key' => 'POINTS_20', 'name' => 'Boost 15j', 'pts' => 20, 'price' => 10, 'icon' => 'fas fa-star', 'color' => '#a855f7'],
-                ['key' => 'POINTS_30', 'name' => 'Boost 30j', 'pts' => 30, 'price' => 15, 'icon' => 'fas fa-crown', 'color' => '#ef4444'],
-                ['key' => 'POINTS_50', 'name' => 'Confort', 'pts' => 50, 'price' => 22, 'icon' => 'fas fa-shield-alt', 'color' => '#10b981'],
-                ['key' => 'POINTS_100', 'name' => 'Pro', 'pts' => 100, 'price' => 40, 'icon' => 'fas fa-gem', 'color' => '#2563eb', 'best' => true],
-            ];
+            $packs = collect(\App\Support\PointPackCatalog::all())->map(fn ($pack, $key) => [
+                'key' => $key,
+                'name' => $pack['description'],
+                'pts' => $pack['points'],
+                'price' => $pack['price'],
+                'icon' => $pack['icon'],
+                'color' => $pack['color'],
+                'popular' => $pack['badge'] === 'popular',
+                'best' => $pack['badge'] === 'best',
+            ])->values()->all();
         @endphp
 
         @foreach($packs as $pack)
         <div class="col-md-6 col-lg-4">
-            <div class="pts-pack-mini {{ isset($pack['popular']) ? 'pts-pack-featured' : '' }} {{ isset($pack['best']) ? 'pts-pack-best' : '' }}">
-                @if(isset($pack['popular']))
+            <div class="pts-pack-mini {{ !empty($pack['popular']) ? 'pts-pack-featured' : '' }} {{ !empty($pack['best']) ? 'pts-pack-best' : '' }}">
+                @if(!empty($pack['popular']))
                     <span class="pts-mini-badge" style="background: #f59e0b;">Populaire</span>
-                @elseif(isset($pack['best']))
+                @elseif(!empty($pack['best']))
                     <span class="pts-mini-badge" style="background: #10b981;">Meilleur prix</span>
                 @endif
                 <div class="d-flex align-items-center gap-2">

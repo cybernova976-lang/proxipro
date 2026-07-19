@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\ProviderSubscriptionService;
 use App\Services\ReferralService;
 use App\Services\ServiceOrderWorkflowService;
+use App\Support\PointPackCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Stripe\Checkout\Session as StripeSession;
@@ -13,19 +15,6 @@ use Stripe\Stripe;
 
 class StripeCheckoutController extends Controller
 {
-    /**
-     * Configuration des produits Stripe
-     */
-    private $products = [
-        // Packs de points (alignés sur les tarifs boost)
-        'POINTS_5' => ['price' => 400, 'points' => 5, 'name' => '5 Points', 'type' => 'points'],
-        'POINTS_10' => ['price' => 600, 'points' => 10, 'name' => '10 Points', 'type' => 'points'],
-        'POINTS_20' => ['price' => 1000, 'points' => 20, 'name' => '20 Points', 'type' => 'points'],
-        'POINTS_30' => ['price' => 1500, 'points' => 30, 'name' => '30 Points', 'type' => 'points'],
-        'POINTS_50' => ['price' => 2200, 'points' => 50, 'name' => '50 Points', 'type' => 'points'],
-        'POINTS_100' => ['price' => 4000, 'points' => 100, 'name' => '100 Points', 'type' => 'points'],
-    ];
-
     /**
      * Configuration des récompenses de partage social
      */
@@ -41,6 +30,7 @@ class StripeCheckoutController extends Controller
     public function __construct(
         protected ReferralService $referralService,
         protected ServiceOrderWorkflowService $serviceOrderWorkflowService,
+        protected ProviderSubscriptionService $providerSubscriptionService,
     ) {
         Stripe::setApiKey(config('services.stripe.secret'));
     }
@@ -57,11 +47,10 @@ class StripeCheckoutController extends Controller
         $user = Auth::user();
         $productKey = $request->product_key;
 
-        if (! isset($this->products[$productKey])) {
+        $product = PointPackCatalog::find($productKey);
+        if (! $product) {
             return response()->json(['error' => 'Produit invalide'], 400);
         }
-
-        $product = $this->products[$productKey];
 
         try {
             // Créer ou récupérer le customer Stripe
@@ -90,7 +79,7 @@ class StripeCheckoutController extends Controller
                                 ? $product['points'].' points/mois inclus'
                                 : 'Pack de '.$product['points'].' points',
                         ],
-                        'unit_amount' => $product['price'],
+                        'unit_amount' => $product['price_cents'],
                     ],
                     'quantity' => 1,
                 ]],
@@ -155,7 +144,7 @@ class StripeCheckoutController extends Controller
             }
 
             $userId = $session->metadata->user_id;
-            $product = $this->products[$productKey] ?? null;
+            $product = PointPackCatalog::find($productKey);
 
             if (! $product) {
                 return redirect()->route('pricing.index')->with('error', 'Produit invalide');
@@ -199,7 +188,7 @@ class StripeCheckoutController extends Controller
         // Enregistrer la transaction
         $transaction = Transaction::create([
             'user_id' => $user->id,
-            'amount' => $product['price'] / 100,
+            'amount' => $product['price'],
             'type' => 'POINTS',
             'description' => 'Achat de '.$product['points'].' points',
             'status' => 'completed',
@@ -236,29 +225,65 @@ class StripeCheckoutController extends Controller
             return response()->json(['error' => 'Invalid webhook signature'], 400);
         }
 
-        // Gérer les événements
-        if (isset($event->type) && $event->type === 'checkout.session.completed') {
-            $session = $event->data->object;
-            $metadata = $session->metadata;
+        try {
+            if (isset($event->type) && $event->type === 'checkout.session.completed') {
+                $session = $event->data->object;
+                $metadata = $session->metadata;
+                $type = $metadata->type ?? null;
 
-            if (($metadata->type ?? null) === 'service_order') {
-                $this->serviceOrderWorkflowService->markPaidFromCheckoutSession($session);
+                if ($type === 'service_order') {
+                    $this->serviceOrderWorkflowService->markPaidFromCheckoutSession($session);
 
-                return response()->json(['received' => true]);
-            }
+                    return response()->json(['received' => true]);
+                }
 
-            $user = User::find($metadata->user_id ?? null);
-            $productKey = $metadata->product_key ?? null;
+                if (in_array($type, ProviderSubscriptionService::CHECKOUT_TYPES, true)) {
+                    $this->providerSubscriptionService->completeCheckoutSession($session);
 
-            if ($user && $productKey && isset($this->products[$productKey])) {
-                $product = $this->products[$productKey];
+                    return response()->json(['received' => true]);
+                }
 
-                // Vérifier si pas déjà traité
-                $existingTransaction = Transaction::where('stripe_session_id', $session->id)->first();
-                if (! $existingTransaction) {
-                    $this->processPayment($user, $product, $productKey, $session);
+                $user = User::find($metadata->user_id ?? null);
+                $productKey = $metadata->product_key ?? null;
+
+                if ($user && $productKey && ($product = PointPackCatalog::find($productKey))) {
+
+                    // Vérifier si pas déjà traité
+                    $existingTransaction = Transaction::where('stripe_session_id', $session->id)->first();
+                    if (! $existingTransaction) {
+                        $this->processPayment($user, $product, $productKey, $session);
+                    }
                 }
             }
+
+            if (in_array($event->type ?? null, [
+                'customer.subscription.created',
+                'customer.subscription.updated',
+                'customer.subscription.deleted',
+                'customer.subscription.paused',
+                'customer.subscription.resumed',
+            ], true)) {
+                if ($this->providerSubscriptionService->managesStripeSubscription($event->data->object)) {
+                    $this->providerSubscriptionService->syncStripeSubscription($event->data->object);
+                }
+            }
+
+            if (($event->type ?? null) === 'invoice.paid') {
+                $this->providerSubscriptionService->syncInvoicePaid($event->data->object);
+            }
+
+            if (($event->type ?? null) === 'invoice.payment_failed') {
+                $this->providerSubscriptionService->markInvoiceFailed($event->data->object);
+            }
+        } catch (\Throwable $exception) {
+            \Log::error('Stripe webhook processing failed.', [
+                'event_id' => $event->id ?? null,
+                'event_type' => $event->type ?? null,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            // Stripe réessaiera automatiquement les événements non acquittés.
+            return response()->json(['error' => 'Webhook processing failed'], 500);
         }
 
         return response()->json(['received' => true]);

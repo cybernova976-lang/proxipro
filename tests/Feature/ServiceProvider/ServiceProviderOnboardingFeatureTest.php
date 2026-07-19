@@ -48,8 +48,8 @@ class ServiceProviderOnboardingFeatureTest extends TestCase
             'enforce_profile_completion' => true,
             'services' => [
                 [
-                    'main_category' => 'Maison & entretien',
-                    'subcategory' => 'Menage',
+                    'main_category' => 'Nettoyage & Entretien',
+                    'subcategory' => 'Femme/Homme de ménage',
                     'experience_years' => 2,
                     'description' => 'Menage regulier et ponctuel.',
                 ],
@@ -71,15 +71,15 @@ class ServiceProviderOnboardingFeatureTest extends TestCase
         $this->assertSame('particulier', $user->user_type);
         $this->assertSame('particulier', $user->account_type);
         $this->assertTrue($user->isParticulierPrestataire());
-        $this->assertSame('Maison & entretien', $user->service_category);
-        $this->assertSame(['Menage'], $user->service_subcategories);
-        $this->assertSame(['Maison & entretien'], $user->pro_service_categories);
-        $this->assertSame('Menage', $user->profession);
+        $this->assertSame('Nettoyage & Entretien', $user->service_category);
+        $this->assertSame(['Femme/Homme de ménage'], $user->service_subcategories);
+        $this->assertSame(['Nettoyage & Entretien'], $user->pro_service_categories);
+        $this->assertSame('Femme/Homme de ménage', $user->profession);
 
         $this->assertDatabaseHas('user_services', [
             'user_id' => $user->id,
-            'main_category' => 'Maison & entretien',
-            'subcategory' => 'Menage',
+            'main_category' => 'Nettoyage & Entretien',
+            'subcategory' => 'Femme/Homme de ménage',
             'is_active' => true,
         ]);
 
@@ -110,8 +110,8 @@ class ServiceProviderOnboardingFeatureTest extends TestCase
             'enforce_profile_completion' => true,
             'services' => [
                 [
-                    'main_category' => 'Maison & entretien',
-                    'subcategory' => 'Menage',
+                    'main_category' => 'Nettoyage & Entretien',
+                    'subcategory' => 'Femme/Homme de ménage',
                 ],
             ],
         ]);
@@ -143,8 +143,8 @@ class ServiceProviderOnboardingFeatureTest extends TestCase
 
         $response = $this->postJson(route('service-provider.register'), [
             'services' => [[
-                'main_category' => 'Maison & entretien',
-                'subcategory' => 'Menage',
+                'main_category' => 'Nettoyage & Entretien',
+                'subcategory' => 'Femme/Homme de ménage',
             ]],
         ]);
 

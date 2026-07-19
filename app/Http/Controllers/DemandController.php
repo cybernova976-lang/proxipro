@@ -22,7 +22,7 @@ class DemandController extends Controller
     public function create(Request $request)
     {
         $categoriesData = [];
-        foreach (config('categories.services') as $name => $data) {
+        foreach (\App\Support\MarketplaceCategoryRegistry::enabledServices() as $name => $data) {
             $categoriesData[$name] = [
                 'icon' => $data['icon'],
                 'fa_icon' => $data['fa_icon'],
@@ -43,7 +43,7 @@ class DemandController extends Controller
      */
     public function store(Request $request)
     {
-        $services = config('categories.services', []);
+        $services = \App\Support\MarketplaceCategoryRegistry::enabledServices();
         $mainCategories = array_keys($services);
         $subcategories = collect($services)
             ->flatMap(fn (array $category) => $category['subcategories'] ?? [])
@@ -222,7 +222,7 @@ class DemandController extends Controller
         $parentCategory = null;
         $additionalPros = collect();
         if ($professionals->count() < 5) {
-            foreach (config('categories.services') as $catName => $catData) {
+            foreach (\App\Support\MarketplaceCategoryRegistry::enabledServices() as $catName => $catData) {
                 if (in_array($category, $catData['subcategories'] ?? [])) {
                     $parentCategory = $catName;
                     break;

@@ -892,7 +892,9 @@ class User extends Authenticatable
      */
     public function proSubscription()
     {
-        return $this->hasOne(ProSubscription::class)->where('status', 'active');
+        return $this->hasOne(ProSubscription::class)
+            ->currentlyActive()
+            ->latestOfMany();
     }
 
     /**
@@ -908,7 +910,7 @@ class User extends Authenticatable
      */
     public function hasActiveProSubscription(): bool
     {
-        return $this->proSubscription()->exists();
+        return $this->proSubscriptions()->currentlyActive()->exists();
     }
 
     /**

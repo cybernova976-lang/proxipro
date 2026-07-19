@@ -150,7 +150,7 @@
                 @php
                     // Catégories depuis config/categories.php (source unique)
                     $categories = [];
-                    foreach (config('categories.services') as $name => $data) {
+                    foreach (\App\Support\MarketplaceCategoryRegistry::enabledServices() as $name => $data) {
                         $key = \Illuminate\Support\Str::slug($name, '_');
                         $categories[$key] = $data['icon'] . ' ' . $name;
                     }

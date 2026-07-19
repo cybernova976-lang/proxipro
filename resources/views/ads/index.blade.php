@@ -191,7 +191,7 @@
                  <div class="d-flex flex-wrap gap-2 justify-content-center">
                     <a href="{{ request()->fullUrlWithQuery(['category' => null]) }}" class="category-chip {{ !request('category') ? 'active' : '' }}">Tout</a>
                     @php
-                        $filterCategories = array_merge(array_keys(config('categories.services')), array_keys(config('categories.marketplace')));
+                        $filterCategories = array_keys(\App\Support\MarketplaceCategoryRegistry::enabledAll());
                     @endphp
                     @foreach($filterCategories as $cat)
                         <a href="{{ request()->fullUrlWithQuery(['category' => $cat]) }}" class="category-chip {{ request('category') == $cat ? 'active' : '' }}">{{ $cat }}</a>

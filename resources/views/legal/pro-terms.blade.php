@@ -6,7 +6,7 @@
     <p class="lead text-muted">Version {{ config('legal.pro_terms_version') }} — devis, factures, clients et outils professionnels.</p>
 
     <h4 class="mt-4">1. Accès</h4>
-    <p>Le CRM peut être proposé aux prestataires autorisés. L’émission officielle de devis et factures est réservée à un compte professionnel dont le profil est complet, vérifié, immatriculé et ayant accepté la version en vigueur. Avant cela, les documents restent des brouillons non contractuels.</p>
+    <p>Le CRM peut être proposé aux prestataires autorisés. L’émission officielle de devis et factures est réservée à un compte professionnel dont le profil est complet, vérifié, immatriculé et ayant accepté la version en vigueur. Avant cela, les documents restent des brouillons non contractuels. La souscription d’une offre commerciale ne transforme jamais un particulier en professionnel et ne remplace aucun justificatif d’immatriculation.</p>
 
     <h4 class="mt-4">2. Exactitude des informations</h4>
     <p>Le professionnel garantit l’exactitude de sa raison sociale, de son immatriculation, de son adresse, de sa TVA, de ses assurances et des informations client. Il les actualise avant toute émission. Les informations de l’émetteur sont figées dans le document au moment où celui-ci reçoit son numéro définitif.</p>
@@ -24,7 +24,9 @@
     <p>Le carnet de clients est réservé aux besoins professionnels légitimes du titulaire. Il est interdit d’y importer des données obtenues illicitement, de prospecter sans base légale ou de partager les coordonnées hors des finalités annoncées. Le professionnel répond aux droits exercés directement auprès de lui pour les traitements dont il est responsable.</p>
 
     <h4 class="mt-4">7. Abonnement, disponibilité et export</h4>
-    <p>Les fonctionnalités incluses, limites et prix sont affichés avant souscription. L’utilisateur exporte régulièrement ses documents et ne confie pas à la plateforme son unique copie comptable. La suspension d’un abonnement n’efface pas automatiquement les obligations de paiement ou de conservation déjà nées.</p>
+    <p>Les fonctionnalités incluses, limites, prix et périodicité mensuelle ou annuelle sont affichés avant souscription. Lorsque l’offre récurrente est activée, le paiement par Stripe déclenche un renouvellement automatique à chaque échéance. L’utilisateur peut arrêter ce renouvellement depuis la page « Abonnement & Points » ; son accès payé reste alors ouvert jusqu’à la fin de la période en cours. Une résiliation déjà arrivée à terme nécessite une nouvelle souscription.</p>
+    <p>Une modification tarifaire dans l’administration s’applique aux nouvelles souscriptions ; elle ne modifie pas silencieusement le prix Stripe d’un abonnement déjà créé. Toute évolution appliquée à un renouvellement existant doit être annoncée conformément au droit applicable. Les remboursements, droits de rétractation et exceptions restent régis par les dispositions impératives applicables au titulaire.</p>
+    <p>L’utilisateur exporte régulièrement ses documents et ne confie pas à la plateforme son unique copie comptable. La suspension d’un accès n’efface pas les obligations de paiement ou de conservation déjà nées.</p>
 
     <h4 class="mt-4">8. Contrôles et suspension</h4>
     <p>L’accès peut être limité si les informations expirent, si le statut professionnel n’est plus valide, en cas de fraude, d’usage illégal ou de risque pour les clients. Les brouillons peuvent rester consultables lorsque la sécurité et la loi le permettent. Une contestation peut être adressée au support.</p>

@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\ProSubscription;
 use App\Models\UserService;
+use App\Services\ProviderSubscriptionService;
+use App\Support\MarketplaceCategoryRegistry;
+use App\Support\PlatformFeatures;
 use App\Support\ProviderSubscriptionPlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,18 +15,19 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Stripe\Checkout\Session as StripeSession;
-use Stripe\Stripe;
+use Illuminate\Validation\Rule;
 
 class ServiceProviderController extends Controller
 {
+    public function __construct(private ProviderSubscriptionService $providerSubscriptionService) {}
+
     /**
      * Liste des catégories avec sous-catégories (source unique : config/categories.php)
      */
     private function getServiceCategories(): array
     {
         $categories = [];
-        foreach (config('categories.services') as $name => $data) {
+        foreach (\App\Support\MarketplaceCategoryRegistry::enabledServices() as $name => $data) {
             $categories[$name] = [
                 'icon' => $data['fa_icon'],
                 'color' => $data['color'],
@@ -75,11 +79,18 @@ class ServiceProviderController extends Controller
     {
         $user = Auth::user();
 
+        $enabledServices = MarketplaceCategoryRegistry::enabledServices();
+        $enabledSubcategories = collect($enabledServices)
+            ->flatMap(fn (array $definition): array => $definition['subcategories'] ?? [])
+            ->unique()
+            ->values()
+            ->all();
+
         // Validation
         $validator = Validator::make($request->all(), [
             'services' => 'required|array|min:1',
-            'services.*.main_category' => 'required|string|max:100',
-            'services.*.subcategory' => 'required|string|max:100',
+            'services.*.main_category' => ['required', 'string', 'max:100', Rule::in(array_keys($enabledServices))],
+            'services.*.subcategory' => ['required', 'string', 'max:100', Rule::in($enabledSubcategories)],
             'services.*.experience_years' => 'nullable|integer|min:0|max:50',
             'services.*.description' => 'nullable|string|max:500',
             'plan' => 'nullable|in:monthly,annual',
@@ -95,6 +106,15 @@ class ServiceProviderController extends Controller
                 'success' => false,
                 'errors' => $validator->errors(),
             ], 422);
+        }
+
+        foreach ($request->input('services', []) as $index => $service) {
+            if (! in_array($service['subcategory'] ?? null, $enabledServices[$service['main_category'] ?? '']['subcategories'] ?? [], true)) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ["services.{$index}.subcategory" => ['Le métier choisi ne correspond pas à une activité actuellement ouverte.']],
+                ], 422);
+            }
         }
 
         if (! $user->is_service_provider) {
@@ -197,7 +217,9 @@ class ServiceProviderController extends Controller
             DB::commit();
 
             // Si un plan est sélectionné, vérifier d'abord si l'utilisateur a déjà un abonnement actif
-            if ($request->filled('plan') && in_array($request->plan, ['monthly', 'annual'])) {
+            if (PlatformFeatures::proSubscriptionsEnabled()
+                && $request->filled('plan')
+                && in_array($request->plan, ['monthly', 'annual'], true)) {
 
                 // Vérifier si l'utilisateur a déjà un abonnement actif
                 if ($user->hasActiveProSubscription()) {
@@ -219,9 +241,6 @@ class ServiceProviderController extends Controller
                         'message' => 'Cet abonnement n’est pas disponible pour le moment.',
                     ], 422);
                 }
-                $amount = ProviderSubscriptionPlans::amount($planType);
-                $planLabel = ProviderSubscriptionPlans::stripeLabel($planType);
-
                 session([
                     'provider_subscription' => [
                         'plan' => $planType,
@@ -230,43 +249,13 @@ class ServiceProviderController extends Controller
                 ]);
 
                 try {
-                    Stripe::setApiKey(config('services.stripe.secret'));
-
-                    $stripeCustomerId = $user->stripe_id;
-                    if (! $stripeCustomerId) {
-                        $customer = \Stripe\Customer::create([
-                            'email' => $user->email,
-                            'name' => $user->company_name ?? $user->name,
-                            'metadata' => ['user_id' => $user->id],
-                        ]);
-                        $stripeCustomerId = $customer->id;
-                        $user->update(['stripe_id' => $stripeCustomerId]);
-                    }
-
-                    $session = StripeSession::create([
-                        'customer' => $stripeCustomerId,
-                        'payment_method_types' => ['card'],
-                        'line_items' => [[
-                            'price_data' => [
-                                'currency' => 'eur',
-                                'product_data' => [
-                                    'name' => $planLabel,
-                                    'description' => ProviderSubscriptionPlans::description($planType),
-                                ],
-                                'unit_amount' => (int) round($amount * 100),
-                            ],
-                            'quantity' => 1,
-                        ]],
-                        'mode' => 'payment',
-                        'success_url' => route('service-provider.payment.success').'?session_id={CHECKOUT_SESSION_ID}',
-                        'cancel_url' => route('service-provider.payment.cancel'),
-                        'metadata' => [
-                            'user_id' => $user->id,
-                            'type' => 'provider_subscription',
-                            'plan' => $planType,
-                            'amount' => $amount,
-                        ],
-                    ]);
+                    $session = $this->providerSubscriptionService->createCheckoutSession(
+                        $user,
+                        $planType,
+                        route('service-provider.payment.success').'?session_id={CHECKOUT_SESSION_ID}',
+                        route('service-provider.payment.cancel'),
+                        'provider_subscription'
+                    );
 
                     return response()->json([
                         'success' => true,
@@ -275,13 +264,15 @@ class ServiceProviderController extends Controller
                         'message' => 'Redirection vers le paiement...',
                     ]);
 
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     \Log::error('ServiceProvider Stripe error: '.$e->getMessage());
 
                     return response()->json([
                         'success' => false,
-                        'message' => 'Erreur lors de la création du paiement. Veuillez réessayer.',
-                    ], 500);
+                        'message' => $e instanceof \DomainException
+                            ? $e->getMessage()
+                            : 'Erreur lors de la création du paiement. Veuillez réessayer.',
+                    ], $e instanceof \DomainException ? 422 : 500);
                 }
             }
 
@@ -320,47 +311,23 @@ class ServiceProviderController extends Controller
         }
 
         try {
-            Stripe::setApiKey(config('services.stripe.secret'));
-            $session = StripeSession::retrieve($sessionId);
-
-            if ($session->payment_status !== 'paid') {
-                return redirect()->route('feed')->with('error', 'Le paiement n\'a pas été confirmé.');
-            }
-
-            if ((int) $session->metadata->user_id !== $user->id) {
-                return redirect()->route('feed')->with('error', 'Session de paiement invalide.');
-            }
-
-            $existingSub = ProSubscription::where('stripe_payment_intent', $session->payment_intent)->first();
-            if ($existingSub) {
-                return redirect()->route('service-provider.mes-services')->with('success', 'Votre abonnement est déjà actif !');
-            }
-
             $data = session('provider_subscription', []);
-            $plan = $data['plan'] ?? $session->metadata->plan ?? 'monthly';
-            $amount = ProviderSubscriptionPlans::amount($plan);
             $categories = $data['categories'] ?? [];
+
+            $subscription = $this->providerSubscriptionService->completeCheckout(
+                $sessionId,
+                $user,
+                [
+                    'selected_categories' => $categories,
+                    'intervention_radius' => $user->pro_intervention_radius ?? 30,
+                ]
+            );
+            $plan = $subscription->plan;
 
             DB::beginTransaction();
             try {
-                ProSubscription::create([
-                    'user_id' => $user->id,
-                    'plan' => $plan,
-                    'amount' => $amount,
-                    'status' => 'active',
-                    'starts_at' => now(),
-                    'ends_at' => $plan === 'annual' ? now()->addYear() : now()->addMonth(),
-                    'auto_renew' => true,
-                    'notifications_enabled' => true,
-                    'realtime_notifications' => true,
-                    'selected_categories' => $categories,
-                    'intervention_radius' => $user->pro_intervention_radius ?? 30,
-                    'stripe_payment_intent' => $session->payment_intent,
-                ]);
-
                 $user->update([
                     'pro_subscription_plan' => $plan,
-                    'user_type' => 'professionnel',
                     'pro_status' => 'active',
                     'pro_onboarding_completed' => true,
                     'profile_completed' => true,
@@ -379,7 +346,7 @@ class ServiceProviderController extends Controller
                 return redirect()->route('feed')->with('error', 'Erreur lors de l\'activation. Contactez le support.');
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('ServiceProvider payment verification error: '.$e->getMessage());
 
             return redirect()->route('feed')->with('error', 'Erreur de vérification du paiement.');

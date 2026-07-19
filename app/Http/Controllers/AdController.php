@@ -9,6 +9,7 @@ use App\Notifications\NewAdMatchingNotification;
 use App\Services\AdPublicationSchema;
 use App\Services\GeocodingService;
 use App\Services\SavedSearchService;
+use App\Support\MarketplaceCategoryRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -55,10 +56,7 @@ class AdController extends Controller
 
         // Recherche par catégorie
         if ($category) {
-            $configuredCategories = array_merge(
-                config('categories.services', []),
-                config('categories.marketplace', [])
-            );
+            $configuredCategories = MarketplaceCategoryRegistry::enabledAll();
 
             if (isset($configuredCategories[$category])) {
                 $query->whereIn('category', array_merge(
@@ -130,10 +128,7 @@ class AdController extends Controller
         $popularServices = Ad::popularServicesByRegion($location ?? 'France');
 
         // Catégories disponibles - depuis config/categories.php (source unique)
-        $categories = array_merge(
-            array_keys(config('categories.services')),
-            array_keys(config('categories.marketplace'))
-        );
+        $categories = array_keys(MarketplaceCategoryRegistry::enabledAll());
 
         return view('ads.index', compact('ads', 'popularServices', 'categories', 'isMyAds'));
     }
@@ -163,10 +158,7 @@ class AdController extends Controller
         }
 
         // Catégories disponibles - depuis config/categories.php (source unique)
-        $categories = array_merge(
-            array_keys(config('categories.services')),
-            array_keys(config('categories.marketplace'))
-        );
+        $categories = array_keys(MarketplaceCategoryRegistry::enabledAll());
 
         $publicationSchemas = $this->publicationSchema->schemasForForm();
 
@@ -190,6 +182,7 @@ class AdController extends Controller
                 $request->input('main_category'),
                 $request->input('category')
             );
+            $this->ensureCategoryIsEnabled($publicationContext, $request->input('category'));
             $request->merge([
                 'price_type' => $this->resolvePriceType($request, null, $publicationContext['domain']),
                 'main_category' => $publicationContext['main_category'],
@@ -379,6 +372,7 @@ class AdController extends Controller
             $request->input('main_category'),
             $request->input('category')
         );
+        $this->ensureCategoryIsEnabled($publicationContext, $request->input('category'));
         $request->merge([
             'price_type' => $this->resolvePriceType($request, null, $publicationContext['domain']),
             'main_category' => $publicationContext['main_category'],
@@ -534,6 +528,14 @@ class AdController extends Controller
      */
     public function show(Ad $ad)
     {
+        $canInspectDisabledAd = Auth::check()
+            && (Auth::id() === $ad->user_id || Auth::user()?->isAdmin());
+
+        abort_unless(
+            MarketplaceCategoryRegistry::isVisible($ad->main_category, $ad->category) || $canInspectDisabledAd,
+            404
+        );
+
         $isSaved = Auth::check() ? Auth::user()->hasSavedAd($ad) : false;
         $publicationContext = $this->publicationSchema->resolve($ad->main_category, $ad->category);
         $publicationDomain = $ad->publication_domain ?: $publicationContext['domain'];
@@ -553,10 +555,7 @@ class AdController extends Controller
         }
 
         // Catégories disponibles - depuis config/categories.php (source unique)
-        $categories = array_merge(
-            array_keys(config('categories.services')),
-            array_keys(config('categories.marketplace'))
-        );
+        $categories = array_keys(MarketplaceCategoryRegistry::enabledAll());
         $publicationSchemas = $this->publicationSchema->schemasForForm();
 
         return view('ads.edit', compact('ad', 'categories', 'publicationSchemas'));
@@ -578,6 +577,7 @@ class AdController extends Controller
                 $request->input('main_category'),
                 $request->input('category')
             );
+            $this->ensureCategoryIsEnabled($publicationContext, $request->input('category'));
             $request->merge([
                 'price_type' => $this->resolvePriceType($request, $ad, $publicationContext['domain']),
                 'main_category' => $publicationContext['main_category'],
@@ -800,6 +800,17 @@ class AdController extends Controller
             ->where('created_at', '>=', now()->subDay())
             ->whereIn('status', ['active', 'pending'])
             ->exists();
+    }
+
+    private function ensureCategoryIsEnabled(array $publicationContext, ?string $category): void
+    {
+        if (MarketplaceCategoryRegistry::isEnabled($publicationContext['main_category'] ?? null, $category)) {
+            return;
+        }
+
+        throw \Illuminate\Validation\ValidationException::withMessages([
+            'category' => 'Cette activité est temporairement indisponible. Choisissez une catégorie actuellement ouverte sur la plateforme.',
+        ]);
     }
 
     private function publicationExpiry(string $serviceType)

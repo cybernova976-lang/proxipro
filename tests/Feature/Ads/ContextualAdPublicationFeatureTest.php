@@ -3,6 +3,7 @@
 namespace Tests\Feature\Ads;
 
 use App\Models\User;
+use App\Support\MarketplaceCategoryRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -16,6 +17,7 @@ class ContextualAdPublicationFeatureTest extends TestCase
         parent::setUp();
 
         Http::fake(['nominatim.openstreetmap.org/*' => Http::response([], 200)]);
+        MarketplaceCategoryRegistry::storeEnabledIds(array_keys(MarketplaceCategoryRegistry::definitions()));
     }
 
     public function test_create_form_contains_contextual_schemas_and_accessible_mobile_fields(): void

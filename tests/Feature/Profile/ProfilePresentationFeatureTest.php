@@ -64,6 +64,27 @@ class ProfilePresentationFeatureTest extends TestCase
         Storage::disk('public')->assertMissing('avatars/old-avatar.jpg');
     }
 
+    public function test_dashboard_cropper_also_waits_until_its_modal_is_visible(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('dashboard.profile-edit'));
+
+        $response->assertOk()
+            ->assertSee('window.bootstrap?.Modal', false)
+            ->assertSee("cropModalEl.addEventListener('shown.bs.modal'", false)
+            ->assertSee('window.requestAnimationFrame(resetCrop)', false)
+            ->assertSee('width:min(280px, 100%)', false);
+
+        $html = $response->getContent();
+        $openCropperStart = strpos($html, 'function openCropper(dataUrl)');
+        $openCropperEnd = strpos($html, 'function pointerPosition', $openCropperStart);
+        $openCropper = substr($html, $openCropperStart, $openCropperEnd - $openCropperStart);
+
+        $this->assertStringContainsString('cropModal.show()', $openCropper);
+        $this->assertStringNotContainsString('getBoundingClientRect()', $openCropper);
+    }
+
     public function test_user_can_save_a_cropped_profile_photo(): void
     {
         config(['filesystems.default' => 'public']);

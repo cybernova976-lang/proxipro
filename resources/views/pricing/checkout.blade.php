@@ -412,6 +412,13 @@
         </div>
         @endif
 
+        @if(session('info'))
+        <div class="alert alert-info alert-dismissible fade show" role="alert" style="border-radius: 14px; margin-bottom: 20px; border: none;">
+            <i class="fas fa-info-circle me-2"></i>{{ session('info') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        @endif
+
         {{-- ===== TAB NAV ===== --}}
         <div class="pts-nav">
             <button class="pts-nav-btn active" data-tab="buy"><i class="fas fa-shopping-bag me-1"></i> Acheter</button>
@@ -427,14 +434,14 @@
 
             <div class="row g-3">
                 @php
-                    $packs = [
-                        ['key' => 'POINTS_5',   'pts' => 5,   'price' => 4,  'desc' => 'Boost 3 jours',          'emoji' => '⚡', 'badge' => null],
-                        ['key' => 'POINTS_10',  'pts' => 10,  'price' => 6,  'desc' => 'Boost 7 jours',          'emoji' => '🚀', 'badge' => 'popular'],
-                        ['key' => 'POINTS_20',  'pts' => 20,  'price' => 10, 'desc' => 'Boost 15 jours',         'emoji' => '⭐', 'badge' => null],
-                        ['key' => 'POINTS_30',  'pts' => 30,  'price' => 15, 'desc' => 'Boost 30 jours',         'emoji' => '👑', 'badge' => null],
-                        ['key' => 'POINTS_50',  'pts' => 50,  'price' => 22, 'desc' => 'Boost + Vérification',   'emoji' => '🛡️', 'badge' => null],
-                        ['key' => 'POINTS_100', 'pts' => 100, 'price' => 40, 'desc' => 'Utilisation intensive',  'emoji' => '💎', 'badge' => 'best'],
-                    ];
+                    $packs = collect($pointPacks)->map(fn ($pack, $key) => [
+                        'key' => $key,
+                        'pts' => $pack['points'],
+                        'price' => $pack['price'],
+                        'desc' => $pack['description'],
+                        'emoji' => $pack['emoji'],
+                        'badge' => $pack['badge'],
+                    ])->values()->all();
                 @endphp
 
                 @foreach($packs as $pack)

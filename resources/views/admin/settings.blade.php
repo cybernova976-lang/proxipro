@@ -12,20 +12,6 @@
     </div>
 </div>
 
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-@endif
-
-@if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-@endif
-
 <div class="row g-4">
     <!-- Paramètres généraux -->
     <div class="col-lg-6">
@@ -108,6 +94,129 @@
         </div>
     </div>
     
+    <!-- Pilotage du catalogue -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                <div>
+                    <h5 class="mb-1">
+                        <i class="fas fa-layer-group me-2 text-primary"></i>
+                        Activités proposées sur la plateforme
+                    </h5>
+                    <p class="text-muted small mb-0">Une activité coupée disparaît des formulaires et des listes publiques. Ses annonces restent enregistrées pour une réactivation ultérieure.</p>
+                </div>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2">
+                    {{ collect($categoryStates)->filter()->count() }} / {{ count($categoryStates) }} actives
+                </span>
+            </div>
+            <div class="card-body pt-2">
+                <div class="alert alert-info border-0 small">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Les services de mise en relation sont ouverts par défaut. Covoiturage, vente, emploi, location et objets perdus restent fermés tant que leurs parcours et règles spécifiques ne sont pas prêts.
+                </div>
+
+                <form action="{{ route('admin.settings.catalog') }}" method="POST">
+                    @csrf
+                    <div class="row g-4">
+                        @foreach(['services' => ['Services de mise en relation', 'Ces catégories constituent le cœur de la plateforme.'], 'marketplace' => ['Verticales spécialisées', 'À activer seulement après préparation du parcours et des règles propres à la verticale.']] as $type => [$title, $subtitle])
+                            <div class="col-xl-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <h6 class="fw-bold mb-1">{{ $title }}</h6>
+                                    <p class="text-muted small mb-3">{{ $subtitle }}</p>
+
+                                    <div class="row g-2">
+                                        @foreach(collect($categoryDefinitions)->where('type', $type) as $definition)
+                                            <div class="col-md-6">
+                                                <label class="d-flex align-items-start gap-2 border rounded-3 p-2 h-100" for="category-{{ $definition['id'] }}" style="cursor: pointer;">
+                                                    <input
+                                                        class="form-check-input mt-1 flex-shrink-0"
+                                                        type="checkbox"
+                                                        name="enabled_categories[]"
+                                                        value="{{ $definition['id'] }}"
+                                                        id="category-{{ $definition['id'] }}"
+                                                        {{ ($categoryStates[$definition['id']] ?? false) ? 'checked' : '' }}
+                                                    >
+                                                    <span>
+                                                        <span class="d-block fw-semibold">{{ $definition['icon'] }} {{ $definition['name'] }}</span>
+                                                        <span class="d-block text-muted" style="font-size: .72rem; line-height: 1.3;">{{ $definition['description'] }}</span>
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Appliquer la disponibilité
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        @include('admin.partials.pro-subscription-control')
+    </div>
+
+    <!-- Identité légale et URL publique -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-1"><i class="fas fa-scale-balanced me-2 text-dark"></i>Identité légale de la plateforme</h5>
+                <p class="text-muted small mb-0">Ces données alimentent la préparation de la commercialisation. Les clés Stripe restent protégées dans les variables de l’hébergement.</p>
+            </div>
+            <div class="card-body">
+                <form action="{{ route('admin.settings.legal') }}" method="POST">
+                    @csrf
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nom de l’exploitant</label>
+                            <input class="form-control" name="legal_entity_name" value="{{ old('legal_entity_name', $legalSettings['legal_entity_name']) }}" placeholder="Nom personnel ou raison sociale">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Forme juridique</label>
+                            <input class="form-control" name="legal_entity_form" value="{{ old('legal_entity_form', $legalSettings['legal_entity_form']) }}" placeholder="EI, SASU, SARL…">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Immatriculation</label>
+                            <input class="form-control" name="legal_registration_number" value="{{ old('legal_registration_number', $legalSettings['legal_registration_number']) }}" placeholder="SIREN/SIRET ou registre local">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">N° TVA (facultatif)</label>
+                            <input class="form-control" name="legal_vat_number" value="{{ old('legal_vat_number', $legalSettings['legal_vat_number']) }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Responsable de publication</label>
+                            <input class="form-control" name="legal_publication_director" value="{{ old('legal_publication_director', $legalSettings['legal_publication_director']) }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">URL publique HTTPS</label>
+                            <input type="url" class="form-control" name="platform_public_url" value="{{ old('platform_public_url', $legalSettings['platform_public_url']) }}" placeholder="https://www.votre-site.com">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Adresse légale</label>
+                            <textarea class="form-control" name="legal_address" rows="2">{{ old('legal_address', $legalSettings['legal_address']) }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="d-flex gap-2 align-items-start border rounded-3 p-3" for="stripeBillingPortalConfigured">
+                                <input class="form-check-input mt-1" type="checkbox" name="stripe_billing_portal_configured" value="1" id="stripeBillingPortalConfigured" {{ ($legalSettings['stripe_billing_portal_configured'] ?? '0') === '1' ? 'checked' : '' }}>
+                                <span><span class="d-block fw-semibold">Portail client Stripe configuré</span><span class="d-block text-muted small">Confirmez après avoir activé dans Stripe la gestion du moyen de paiement, des factures et de la résiliation.</span></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <button class="btn btn-primary"><i class="fas fa-save me-2"></i>Enregistrer l’identité</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Paramètres des points -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm">

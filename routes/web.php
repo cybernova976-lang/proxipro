@@ -505,6 +505,9 @@ Route::middleware(['auth'])->prefix('pro')->name('pro.')->group(function () {
 
     // Abonnement
     Route::get('/subscription', [$ctrl, 'subscription'])->name('subscription');
+    Route::post('/subscription/cancel-renewal', [$ctrl, 'cancelSubscriptionRenewal'])->name('subscription.cancel-renewal');
+    Route::post('/subscription/resume-renewal', [$ctrl, 'resumeSubscriptionRenewal'])->name('subscription.resume-renewal');
+    Route::post('/subscription/billing-portal', [$ctrl, 'openSubscriptionBillingPortal'])->name('subscription.billing-portal');
 
     // Onboarding / Subscribe
     Route::get('/onboarding/data', [$ctrl, 'getOnboardingData'])->name('onboarding.data');
@@ -559,6 +562,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     // Gestion des abonnements
     Route::get('/subscriptions', [AdminController::class, 'subscriptions'])->name('admin.subscriptions');
     Route::put('/subscriptions/provider-plans', [AdminController::class, 'updateProviderSubscriptionPlans'])->name('admin.subscriptions.provider-plans.update');
+    Route::post('/subscriptions/provider/grant', [AdminController::class, 'grantProviderSubscription'])->name('admin.subscriptions.provider.grant');
+    Route::post('/subscriptions/provider/{proSubscription}/suspend', [AdminController::class, 'suspendProviderSubscription'])->name('admin.subscriptions.provider.suspend');
+    Route::post('/subscriptions/provider/{proSubscription}/resume', [AdminController::class, 'resumeProviderSubscription'])->name('admin.subscriptions.provider.resume');
+    Route::post('/subscriptions/provider/{proSubscription}/cancel', [AdminController::class, 'cancelProviderSubscription'])->name('admin.subscriptions.provider.cancel');
     Route::put('/subscriptions/{id}', [AdminController::class, 'updateSubscription'])->name('admin.subscriptions.update');
     Route::post('/subscriptions/{id}/grant-premium', [AdminController::class, 'grantPremium'])->name('admin.subscriptions.grant-premium');
     Route::post('/subscriptions/{id}/suspend', [AdminController::class, 'suspendSubscription'])->name('admin.subscriptions.suspend');
@@ -571,6 +578,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
     Route::post('/settings/general', [AdminController::class, 'updateSettingsGeneral'])->name('admin.settings.general');
     Route::post('/settings/ads', [AdminController::class, 'updateSettingsAds'])->name('admin.settings.ads');
+    Route::post('/settings/catalog', [AdminController::class, 'updateSettingsCatalog'])->name('admin.settings.catalog');
+    Route::post('/settings/legal', [AdminController::class, 'updateSettingsLegal'])->name('admin.settings.legal');
+    Route::post('/settings/pro-subscriptions', [AdminController::class, 'updateSettingsProSubscriptions'])->name('admin.settings.pro-subscriptions');
     Route::post('/settings/points', [AdminController::class, 'updateSettingsPoints'])->name('admin.settings.points');
     Route::post('/settings/email', [AdminController::class, 'updateSettingsEmail'])->name('admin.settings.email');
     Route::post('/settings/email/test', [AdminController::class, 'sendTestEmail'])->name('admin.settings.email.test');

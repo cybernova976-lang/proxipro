@@ -639,11 +639,14 @@
             {{-- ======================== STEP 5: Abonnement ======================== --}}
             <div class="obm-step-content" id="obmStep5" style="display:none;">
                 <div class="obm-card">
-                    <div class="obm-card-title">👑 Choisissez votre abonnement</div>
+                    <div class="obm-card-title">{{ $proSubscriptionsEnabled ? '👑 Choisissez votre abonnement' : '🚀 Accès prestataire pendant le lancement' }}</div>
                     <div class="obm-card-subtitle">
-                        L'abonnement ProxiPro vous donne accès à tous les outils professionnels : demandes clients, devis, factures, clientèle et visibilité.
+                        {{ $proSubscriptionsEnabled
+                            ? "L'abonnement ProxiPro vous donne accès à tous les outils professionnels : demandes clients, devis, factures, clientèle et visibilité."
+                            : "Aucun abonnement n'est commercialisé pour le moment. Vous pouvez terminer gratuitement la configuration de votre espace." }}
                     </div>
 
+                    @if($proSubscriptionsEnabled)
                     <div class="obm-plan-grid">
                         {{-- Monthly --}}
                         <div class="obm-plan-card" id="obmPlanMonthly" onclick="obmSelectPlan('monthly')">
@@ -687,13 +690,20 @@
                             </ul>
                         </div>
                     </div>
+                    @else
+                    <div style="padding: 18px; border-radius: 14px; background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.2); text-align:center;">
+                        <i class="fas fa-check-circle" style="font-size:1.7rem;color:#10b981;margin-bottom:8px;"></i>
+                        <strong style="display:block;margin-bottom:4px;">Aucun paiement demandé</strong>
+                        <span style="font-size:.76rem;color:#64748b;">L’offre récurrente pourra être ajoutée ultérieurement sans modifier votre profil.</span>
+                    </div>
+                    @endif
 
                     <div style="text-align: center; margin-top: 16px;">
                         <button type="button" class="obm-btn-skip-sub" onclick="obmSkipSubscription()">
-                            <i class="fas fa-forward"></i> Passer l'abonnement pour le moment
+                            <i class="fas {{ $proSubscriptionsEnabled ? 'fa-forward' : 'fa-check' }}"></i> {{ $proSubscriptionsEnabled ? "Passer l'abonnement pour le moment" : 'Terminer gratuitement' }}
                         </button>
                         <p style="font-size: 0.7rem; color: #94a3b8; margin-top: 6px;">
-                            Vous pourrez souscrire plus tard. Certaines fonctionnalités premium ne seront pas disponibles.
+                            {{ $proSubscriptionsEnabled ? 'Vous pourrez souscrire plus tard. Certaines fonctionnalités premium ne seront pas disponibles.' : 'Aucun abonnement ne sera activé automatiquement.' }}
                         </p>
                     </div>
                 </div>
@@ -781,12 +791,13 @@
 
     // ---- DATA ----
     const obmCatsData = @json($onboardingCategories ?? []);
+    const obmSubscriptionsEnabled = @json($proSubscriptionsEnabled);
     const obmStartStep = {{ Auth::user()->pro_onboarding_step ?? 0 }};
     let obmCurrentStep = 1;
     const obmTotalSteps = 6;
     let obmSelectedCats = [];
     let obmSelectedSubs = [];
-    let obmSelectedPlan = 'annual';
+    let obmSelectedPlan = obmSubscriptionsEnabled ? 'annual' : null;
     let obmGeoLat = null;
     let obmGeoLng = null;
 
@@ -829,7 +840,9 @@
         back.style.display = obmCurrentStep > 1 ? '' : 'none';
 
         if (obmCurrentStep === obmTotalSteps) {
-            next.innerHTML = '<i class="fas fa-credit-card me-1"></i> Confirmer et payer';
+            next.innerHTML = obmSubscriptionsEnabled
+                ? '<i class="fas fa-credit-card me-1"></i> Confirmer et payer'
+                : '<i class="fas fa-check me-1"></i> Terminer';
         } else if (obmCurrentStep === 1) {
             next.innerHTML = 'Commencer <i class="fas fa-arrow-right"></i>';
         } else {
@@ -1071,7 +1084,7 @@
 
     // ---- SKIP SUBSCRIPTION ----
     window.obmSkipSubscription = function() {
-        if (!confirm('En passant l\'abonnement, certaines fonctionnalités premium (statistiques avancées, badge Pro Premium, position prioritaire) ne seront pas disponibles.\n\nÊtes-vous sûr de vouloir continuer sans abonnement ?')) {
+        if (obmSubscriptionsEnabled && !confirm('En passant l\'abonnement, certaines fonctionnalités premium (statistiques avancées, badge Pro Premium, position prioritaire) ne seront pas disponibles.\n\nÊtes-vous sûr de vouloir continuer sans abonnement ?')) {
             return;
         }
 
@@ -1141,7 +1154,10 @@
             ? '<span style="color: #10b981;"><i class="fas fa-check-circle me-1"></i>' + notifText.join(', ') + '</span>'
             : '<span style="color: #94a3b8;">Aucune</span>';
 
-        if (obmSelectedPlan === 'annual') {
+        if (!obmSubscriptionsEnabled) {
+            document.getElementById('obmRecapPlan').textContent = 'Aucun — accès lancement';
+            document.getElementById('obmRecapTotal').textContent = '0,00 €';
+        } else if (obmSelectedPlan === 'annual') {
             document.getElementById('obmRecapPlan').textContent = 'Annuel (85€/an)';
             document.getElementById('obmRecapTotal').textContent = '85,00 €';
         } else {
@@ -1164,6 +1180,7 @@
 
         const payload = {
             plan: obmSelectedPlan,
+            skip_subscription: !obmSubscriptionsEnabled,
             categories: obmSelectedCats,
             subcategories: obmSelectedSubs,
             intervention_radius: parseInt(document.getElementById('obmRadius')?.value) || 30,

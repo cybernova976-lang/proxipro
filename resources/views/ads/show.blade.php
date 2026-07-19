@@ -341,9 +341,7 @@
                                 $viewerIsProvider = Auth::user()->isProfessionnel() || Auth::user()->isServiceProvider();
 
                                 if ($restriction === 'pro_only') {
-                                    $isPro = Auth::user()->user_type === 'professionnel'
-                                          || Auth::user()->hasActiveProSubscription()
-                                          || Auth::user()->hasCompletedProOnboarding();
+                                    $isPro = Auth::user()->isProfessionnel();
                                     if (!$isPro) {
                                         $canReply = false;
                                         $restrictionMsg = 'Cette annonce est réservée aux professionnels.';
@@ -377,8 +375,8 @@
                                     <span style="color: #92400e; font-size: 0.85rem; font-weight: 600;">{{ $restrictionMsg }}</span>
                                     @if($restriction === 'pro_only')
                                         <div class="mt-2">
-                                            <a href="{{ route('pro.dashboard') }}" class="btn btn-sm btn-warning" style="font-size: 0.8rem;">
-                                                <i class="fas fa-crown me-1"></i>Devenir Pro
+                                            <a href="{{ route('pro.account-status') }}" class="btn btn-sm btn-warning" style="font-size: 0.8rem;">
+                                                <i class="fas fa-briefcase me-1"></i>Déclarer mon statut professionnel
                                             </a>
                                         </div>
                                     @elseif($restriction === 'verified_only')

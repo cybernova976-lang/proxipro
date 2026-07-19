@@ -5,10 +5,18 @@
 
 @section('content')
 @php
+    $legal = [
+        'entity_name' => \App\Support\PlatformFeatures::legalValue('legal_entity_name', 'entity_name'),
+        'entity_form' => \App\Support\PlatformFeatures::legalValue('legal_entity_form', 'entity_form'),
+        'registration_number' => \App\Support\PlatformFeatures::legalValue('legal_registration_number', 'registration_number'),
+        'vat_number' => \App\Support\PlatformFeatures::legalValue('legal_vat_number', 'vat_number'),
+        'address' => \App\Support\PlatformFeatures::legalValue('legal_address', 'address'),
+        'publication_director' => \App\Support\PlatformFeatures::legalValue('legal_publication_director', 'publication_director'),
+    ];
     $requiredLegalFields = collect([
-        'Raison sociale' => config('legal.entity_name'),
-        'Adresse' => config('legal.address'),
-        'Directeur de publication' => config('legal.publication_director'),
+        'Raison sociale' => $legal['entity_name'],
+        'Adresse' => $legal['address'],
+        'Directeur de publication' => $legal['publication_director'],
         'Hébergeur' => config('legal.host_name'),
         'Adresse de l’hébergeur' => config('legal.host_address'),
     ]);
@@ -26,13 +34,13 @@
 
                 <h4 class="mt-4">1. Éditeur du site</h4>
                 <dl class="row">
-                    <dt class="col-sm-4">Raison sociale</dt><dd class="col-sm-8">{{ config('legal.entity_name') ?: 'À renseigner' }}</dd>
-                    @if(config('legal.entity_form'))<dt class="col-sm-4">Forme juridique</dt><dd class="col-sm-8">{{ config('legal.entity_form') }}</dd>@endif
-                    @if(config('legal.registration_number'))<dt class="col-sm-4">Immatriculation</dt><dd class="col-sm-8">{{ config('legal.registration_number') }}</dd>@endif
-                    @if(config('legal.vat_number'))<dt class="col-sm-4">TVA</dt><dd class="col-sm-8">{{ config('legal.vat_number') }}</dd>@endif
-                    <dt class="col-sm-4">Adresse</dt><dd class="col-sm-8">{{ config('legal.address') ?: 'À renseigner' }}</dd>
+                    <dt class="col-sm-4">Raison sociale</dt><dd class="col-sm-8">{{ $legal['entity_name'] ?: 'À renseigner' }}</dd>
+                    @if($legal['entity_form'])<dt class="col-sm-4">Forme juridique</dt><dd class="col-sm-8">{{ $legal['entity_form'] }}</dd>@endif
+                    @if($legal['registration_number'])<dt class="col-sm-4">Immatriculation</dt><dd class="col-sm-8">{{ $legal['registration_number'] }}</dd>@endif
+                    @if($legal['vat_number'])<dt class="col-sm-4">TVA</dt><dd class="col-sm-8">{{ $legal['vat_number'] }}</dd>@endif
+                    <dt class="col-sm-4">Adresse</dt><dd class="col-sm-8">{{ $legal['address'] ?: 'À renseigner' }}</dd>
                     <dt class="col-sm-4">Contact</dt><dd class="col-sm-8">@if(config('site.support_email'))<a href="mailto:{{ config('site.support_email') }}">{{ config('site.support_email') }}</a>@else À renseigner @endif</dd>
-                    <dt class="col-sm-4">Publication</dt><dd class="col-sm-8">{{ config('legal.publication_director') ?: 'À renseigner' }}</dd>
+                    <dt class="col-sm-4">Publication</dt><dd class="col-sm-8">{{ $legal['publication_director'] ?: 'À renseigner' }}</dd>
                 </dl>
 
                 <h4 class="mt-4">2. Hébergement</h4>

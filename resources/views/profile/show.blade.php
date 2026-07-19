@@ -150,7 +150,7 @@
                     <div class="mb-4">
                         @if($user->hasActiveProSubscription())
                             <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;">
-                                <i class="fas fa-briefcase me-1"></i>Professionnel
+                                <i class="fas fa-crown me-1"></i>Premium
                             </span>
                         @elseif($user->user_type === 'professionnel' || $user->isProfessionnel())
                             <span class="badge bg-primary px-3 py-2">

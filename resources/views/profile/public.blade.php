@@ -107,11 +107,11 @@
                         <h4 class="fw-bold mb-0">{{ $user->name }}</h4>
                         @if($user->hasActiveProSubscription())
                             <span class="badge" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
-                                <i class="fas fa-briefcase me-1"></i>Pro
+                                <i class="fas fa-crown me-1"></i>Premium
                             </span>
-                        @elseif($user->user_type === 'professionnel' || $user->hasCompletedProOnboarding())
+                        @elseif($user->user_type === 'professionnel' || $user->isProfessionnel())
                             <span class="badge" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                                <i class="fas fa-crown me-1"></i>Pro
+                                <i class="fas fa-briefcase me-1"></i>Professionnel
                             </span>
                         @elseif($user->is_service_provider)
                             <span class="badge" style="background: linear-gradient(135deg, #10b981, #059669);">
@@ -640,7 +640,7 @@
                     <label class="form-label fw-semibold">Choisir un domaine d'activité</label>
                     <select class="form-select" id="categorySelect">
                         <option value="">-- Sélectionner un domaine --</option>
-                        @foreach(config('categories.services', []) as $catName => $catData)
+                        @foreach(\App\Support\MarketplaceCategoryRegistry::enabledServices() as $catName => $catData)
                             <option value="{{ $catName }}">{{ $catData['icon'] ?? '' }} {{ $catName }}</option>
                         @endforeach
                     </select>
@@ -1025,7 +1025,7 @@ document.getElementById('editBio')?.addEventListener('input', function() {
 });
 
 // --- Categories management ---
-const categoriesConfig = @json(config('categories.services', []));
+const categoriesConfig = @json(\App\Support\MarketplaceCategoryRegistry::enabledServices());
 let selectedCategory = '';
 let selectedSubcategories = [];
 

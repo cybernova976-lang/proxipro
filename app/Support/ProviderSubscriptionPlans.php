@@ -15,7 +15,7 @@ class ProviderSubscriptionPlans
             ? json_decode($stored, true)
             : (is_array($stored) ? $stored : null);
 
-        if (!is_array($decoded)) {
+        if (! is_array($decoded)) {
             return self::defaults();
         }
 
@@ -24,7 +24,7 @@ class ProviderSubscriptionPlans
 
     public static function active(): array
     {
-        return array_filter(self::all(), fn(array $plan) => (bool) ($plan['enabled'] ?? true));
+        return array_filter(self::all(), fn (array $plan) => (bool) ($plan['enabled'] ?? true));
     }
 
     public static function get(string $plan): ?array
@@ -44,21 +44,21 @@ class ProviderSubscriptionPlans
         $config = self::get($plan);
         $label = $config['label'] ?? ucfirst($plan);
 
-        return 'Abonnement ProxiPro ' . $label;
+        return 'Abonnement ProxiPro '.$label;
     }
 
     public static function summaryLabel(?string $plan): string
     {
-        if (!$plan) {
+        if (! $plan) {
             return '';
         }
 
         $config = self::get($plan);
-        if (!$config) {
+        if (! $config) {
             return ucfirst($plan);
         }
 
-        return trim(($config['label'] ?? ucfirst($plan)) . ' (' . ($config['price'] ?? '') . ($config['period'] ?? '') . ')');
+        return trim(($config['label'] ?? ucfirst($plan)).' ('.($config['price'] ?? '').($config['period'] ?? '').')');
     }
 
     public static function description(string $plan): string
@@ -77,13 +77,14 @@ class ProviderSubscriptionPlans
             $features = array_values(array_filter(array_map('trim', $features)));
 
             $amount = str_replace(',', '.', (string) ($planInput['amount'] ?? $defaultPlan['amount']));
+            $normalizedAmount = is_numeric($amount) ? round((float) $amount, 2) : (float) $defaultPlan['amount'];
 
             $normalized[$key] = [
-                'enabled' => !empty($planInput['enabled']),
-                'recommended' => !empty($planInput['recommended']),
+                'enabled' => ! empty($planInput['enabled']),
+                'recommended' => ! empty($planInput['recommended']),
                 'label' => trim((string) ($planInput['label'] ?? $defaultPlan['label'])),
-                'price' => trim((string) ($planInput['price'] ?? $defaultPlan['price'])),
-                'amount' => is_numeric($amount) ? round((float) $amount, 2) : (float) $defaultPlan['amount'],
+                'price' => number_format($normalizedAmount, 2, ',', ' ').'€',
+                'amount' => $normalizedAmount,
                 'period' => trim((string) ($planInput['period'] ?? $defaultPlan['period'])),
                 'original_price' => trim((string) ($planInput['original_price'] ?? '')),
                 'badge' => trim((string) ($planInput['badge'] ?? '')),

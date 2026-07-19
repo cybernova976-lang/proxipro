@@ -26,10 +26,8 @@ class CommentController extends Controller
             $restriction = $ad->reply_restriction ?? 'everyone';
 
             if ($restriction === 'pro_only') {
-                $isPro = $currentUser->user_type === 'professionnel'
-                      || $currentUser->hasActiveProSubscription()
-                      || $currentUser->hasCompletedProOnboarding();
-                if (!$isPro) {
+                $isPro = $currentUser->isProfessionnel();
+                if (! $isPro) {
                     if ($request->ajax() || $request->wantsJson()) {
                         return response()->json([
                             'success' => false,
@@ -37,12 +35,13 @@ class CommentController extends Controller
                             'restriction' => 'pro_only',
                         ], 403);
                     }
+
                     return back()->with('error', 'Cette annonce est réservée aux professionnels.');
                 }
             }
 
             if ($restriction === 'verified_only') {
-                if (!$currentUser->is_verified) {
+                if (! $currentUser->is_verified) {
                     if ($request->ajax() || $request->wantsJson()) {
                         return response()->json([
                             'success' => false,
@@ -50,6 +49,7 @@ class CommentController extends Controller
                             'restriction' => 'verified_only',
                         ], 403);
                     }
+
                     return back()->with('error', 'Cette annonce est réservée aux profils vérifiés.');
                 }
             }
@@ -65,10 +65,10 @@ class CommentController extends Controller
         // Déduire 2 points pour commenter
         try {
             if (Auth::user()->available_points >= 2) {
-                Auth::user()->spendPoints(2, 'comment', "Commentaire sur l'annonce: " . $ad->title);
+                Auth::user()->spendPoints(2, 'comment', "Commentaire sur l'annonce: ".$ad->title);
             }
         } catch (\Exception $e) {
-            \Log::warning('Erreur spendPoints: ' . $e->getMessage());
+            \Log::warning('Erreur spendPoints: '.$e->getMessage());
         }
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -98,7 +98,7 @@ class CommentController extends Controller
     public function destroy(Comment $comment)
     {
         // Check if the user is the owner of the comment or an admin
-        if (Auth::id() !== $comment->user_id && (!Auth::user() || Auth::user()->role !== 'admin')) {
+        if (Auth::id() !== $comment->user_id && (! Auth::user() || Auth::user()->role !== 'admin')) {
             if (request()->ajax() || request()->wantsJson()) {
                 return response()->json(['success' => false, 'message' => 'Non autorisé'], 403);
             }
@@ -107,7 +107,7 @@ class CommentController extends Controller
 
         try {
             $comment->delete();
-            
+
             if (request()->ajax() || request()->wantsJson()) {
                 return response()->json([
                     'success' => true,
@@ -117,15 +117,15 @@ class CommentController extends Controller
 
             return back()->with('success', 'Commentaire supprimé avec succès.');
         } catch (\Exception $e) {
-            \Log::error('Erreur suppression commentaire: ' . $e->getMessage());
-            
+            \Log::error('Erreur suppression commentaire: '.$e->getMessage());
+
             if (request()->ajax() || request()->wantsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Erreur lors de la suppression du commentaire.',
                 ], 500);
             }
-            
+
             return back()->with('error', 'Erreur lors de la suppression du commentaire.');
         }
     }

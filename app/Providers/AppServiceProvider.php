@@ -2,16 +2,17 @@
 
 namespace App\Providers;
 
+use App\Models\Setting;
+use App\Support\PlatformFeatures;
+use Carbon\Carbon;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
-use App\Models\Setting;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoApiTransport;
 
 class AppServiceProvider extends ServiceProvider
@@ -34,6 +35,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->applyDynamicMailSettings();
+        // Résolution au moment du rendu : les commandes Artisan et les migrations
+        // ne doivent pas dépendre de la disponibilité de la table settings.
+        View::composer('*', function ($view) {
+            $view->with('proSubscriptionsEnabled', PlatformFeatures::proSubscriptionsEnabled());
+        });
 
         $publicUrl = $this->resolvePublicUrl();
 
@@ -132,7 +138,7 @@ class AppServiceProvider extends ServiceProvider
         $publicUrl = $this->resolvePublicUrl();
 
         if ($publicUrl !== null) {
-            return $publicUrl . $path;
+            return $publicUrl.$path;
         }
 
         return url($path);
@@ -150,7 +156,7 @@ class AppServiceProvider extends ServiceProvider
 
         $railwayPublicDomain = env('RAILWAY_PUBLIC_DOMAIN');
         if (is_string($railwayPublicDomain) && trim($railwayPublicDomain) !== '') {
-            $candidates[] = 'https://' . ltrim(trim($railwayPublicDomain), '/');
+            $candidates[] = 'https://'.ltrim(trim($railwayPublicDomain), '/');
         }
 
         foreach ($candidates as $candidate) {
@@ -176,7 +182,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         if (! Str::startsWith($candidate, ['http://', 'https://'])) {
-            $candidate = 'https://' . ltrim($candidate, '/');
+            $candidate = 'https://'.ltrim($candidate, '/');
         }
 
         if (filter_var($candidate, FILTER_VALIDATE_URL) === false) {
@@ -200,13 +206,13 @@ class AppServiceProvider extends ServiceProvider
         $port = parse_url($candidate, PHP_URL_PORT);
         $path = trim((string) parse_url($candidate, PHP_URL_PATH));
 
-        $normalized = $scheme . '://' . $host;
+        $normalized = $scheme.'://'.$host;
         if ($port !== false && $port !== null) {
-            $normalized .= ':' . $port;
+            $normalized .= ':'.$port;
         }
 
         if ($path !== '' && $path !== '/') {
-            $normalized .= '/' . trim($path, '/');
+            $normalized .= '/'.trim($path, '/');
         }
 
         return rtrim($normalized, '/');

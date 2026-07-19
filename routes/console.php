@@ -47,6 +47,13 @@ Schedule::command('boosts:send-expiring-alerts')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/boosts-alerts.log'));
 
+// Les abonnements récurrents sont synchronisés par webhook Stripe. Ce nettoyage
+// concerne uniquement les accès manuels accordés par un administrateur.
+Schedule::command('subscriptions:expire-pro')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/pro-subscriptions-cleanup.log'));
+
 // Remet à zéro les compteurs de points quotidiens avant une nouvelle journée.
 Schedule::command('points:daily-reset')
     ->dailyAt('00:05')

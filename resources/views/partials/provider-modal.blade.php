@@ -209,12 +209,13 @@
                 <div class="provider-step-content" id="step3Content">
                     <h6 class="step-title">
                         <i class="fas fa-crown"></i>
-                        Choisissez votre abonnement
+                        {{ $proSubscriptionsEnabled ? 'Choisissez votre abonnement' : 'Accès prestataire au lancement' }}
                     </h6>
                     <p class="step-description">
-                        Accédez à tous les outils professionnels pour développer votre activité.
+                        {{ $proSubscriptionsEnabled ? 'Accédez à tous les outils professionnels pour développer votre activité.' : 'L’abonnement n’est pas encore commercialisé. Votre profil prestataire peut être activé gratuitement.' }}
                     </p>
 
+                    @if($proSubscriptionsEnabled)
                     <div class="subscription-plans-grid">
                         @foreach($providerSubscriptionPlans as $planKey => $plan)
                             <div class="plan-card {{ !empty($plan['recommended']) ? 'plan-recommended' : '' }}" data-plan="{{ $planKey }}" onclick="selectPlan('{{ $planKey }}')">
@@ -240,12 +241,17 @@
                             </div>
                         @endforeach
                     </div>
+                    @else
+                    <div class="alert alert-success border-0 text-center">
+                        <i class="fas fa-check-circle me-1"></i> Aucun paiement ni abonnement automatique.
+                    </div>
+                    @endif
 
                     <div class="skip-subscription-wrapper" style="text-align:center;margin-top:16px;">
                         <button type="button" class="btn btn-outline-secondary" onclick="skipSubscription()" style="font-size:0.92rem;padding:10px 28px;border-radius:10px;border:2px solid #cbd5e1;font-weight:600;">
-                            <i class="fas fa-forward"></i><span translate="no">Continuer sans abonnement</span>
+                            <i class="fas {{ $proSubscriptionsEnabled ? 'fa-forward' : 'fa-check' }}"></i><span translate="no">{{ $proSubscriptionsEnabled ? 'Continuer sans abonnement' : 'Activer gratuitement mon profil' }}</span>
                         </button>
-                        <p class="skip-note" style="font-size:0.8rem;color:#94a3b8;margin-top:8px;">Vous pourrez souscrire à tout moment depuis votre espace pro.</p>
+                        <p class="skip-note" style="font-size:0.8rem;color:#94a3b8;margin-top:8px;">{{ $proSubscriptionsEnabled ? 'Vous pourrez souscrire à tout moment depuis votre espace pro.' : 'Vous serez informé avant toute future offre payante.' }}</p>
                     </div>
                 </div>
 

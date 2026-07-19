@@ -10,7 +10,7 @@
         <h1 class="mb-4">Politique de confidentialité</h1>
 
         <h4 class="mt-4">1. Responsable et contact</h4>
-        <p>Le responsable du traitement est {{ config('legal.entity_name') ?: 'l’entité éditrice indiquée dans les mentions légales' }}. Pour exercer vos droits, utilisez le <a href="{{ route('contact.index') }}">formulaire de contact</a>@if(config('legal.privacy_contact')) ou écrivez à <a href="mailto:{{ config('legal.privacy_contact') }}">{{ config('legal.privacy_contact') }}</a>@endif.</p>
+        <p>Le responsable du traitement est {{ \App\Support\PlatformFeatures::legalValue('legal_entity_name', 'entity_name') ?: 'l’entité éditrice indiquée dans les mentions légales' }}. Pour exercer vos droits, utilisez le <a href="{{ route('contact.index') }}">formulaire de contact</a>@if(config('legal.privacy_contact')) ou écrivez à <a href="mailto:{{ config('legal.privacy_contact') }}">{{ config('legal.privacy_contact') }}</a>@endif.</p>
 
         <h4 class="mt-4">2. Données traitées</h4>
         <ul>

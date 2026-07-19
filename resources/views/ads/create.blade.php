@@ -1036,10 +1036,10 @@
                 @php
                 // Catégories depuis config/categories.php (source unique)
                 $categoriesData = [];
-                foreach (config('categories.services') as $name => $data) {
+                foreach (\App\Support\MarketplaceCategoryRegistry::enabledServices() as $name => $data) {
                     $categoriesData[$name] = ['icon' => $data['icon'], 'subcategories' => $data['subcategories']];
                 }
-                foreach (config('categories.marketplace') as $name => $data) {
+                foreach (\App\Support\MarketplaceCategoryRegistry::enabledMarketplace() as $name => $data) {
                     $categoriesData[$name] = ['icon' => $data['icon'], 'subcategories' => $data['subcategories']];
                 }
                 @endphp

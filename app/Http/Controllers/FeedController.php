@@ -827,7 +827,7 @@ class FeedController extends Controller
     {
         $counts = $this->activeCategoryCounts('offre');
         $categories = [];
-        foreach (config('categories.services') as $name => $data) {
+        foreach (\App\Support\MarketplaceCategoryRegistry::enabledServices() as $name => $data) {
             $subs = [];
             foreach (array_slice($data['subcategories'], 0, 5) as $sub) {
                 $subs[] = [
@@ -1016,7 +1016,7 @@ class FeedController extends Controller
 
     private function getCategoriesWithSubcategories()
     {
-        $allCategories = array_merge(config('categories.services'), config('categories.marketplace'));
+        $allCategories = \App\Support\MarketplaceCategoryRegistry::enabledAll();
         $colorMap = [
             '#eab308' => 'primary', '#22c55e' => 'success', '#06b6d4' => 'info',
             '#ef4444' => 'danger', '#3b82f6' => 'primary', '#ec4899' => 'pink',
@@ -1074,6 +1074,7 @@ class FeedController extends Controller
 
         // Annonces épinglées (boostées) pour la section spéciale
         $pinnedAds = Ad::where('is_pinned', true)
+            ->inEnabledCategories()
             ->where('status', 'active')
             ->take(5)
             ->get();
@@ -1262,7 +1263,7 @@ class FeedController extends Controller
 
     private function getHomeMegaCategories()
     {
-        $allCategories = array_merge(config('categories.services'), config('categories.marketplace'));
+        $allCategories = \App\Support\MarketplaceCategoryRegistry::enabledAll();
         $counts = $this->activeCategoryCounts();
         $categoriesWithSubs = [];
 

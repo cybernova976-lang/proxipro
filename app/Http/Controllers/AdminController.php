@@ -8,9 +8,13 @@ use App\Models\Advertisement;
 use App\Models\BlockedEmail;
 use App\Models\ContactMessage;
 use App\Models\IdentityVerification;
+use App\Models\ProSubscription;
 use App\Models\Report;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\ProviderSubscriptionService;
+use App\Support\MarketplaceCategoryRegistry;
+use App\Support\PlatformFeatures;
 use App\Support\ProviderSubscriptionPlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -19,7 +23,7 @@ use Illuminate\Support\Facades\Mail;
 
 class AdminController extends Controller
 {
-    public function __construct()
+    public function __construct(private ProviderSubscriptionService $providerSubscriptionService)
     {
         $this->middleware('admin');
     }
@@ -499,8 +503,28 @@ class AdminController extends Controller
         $plans = config('admin.plans');
 
         $providerSubscriptionPlans = ProviderSubscriptionPlans::all();
+        $proSubscriptionReadiness = PlatformFeatures::proSubscriptionReadiness();
+        $providerSubscriptions = ProSubscription::with('user')
+            ->latest()
+            ->paginate(12, ['*'], 'provider_page')
+            ->withQueryString();
+        $providerStats = [
+            'total' => ProSubscription::count(),
+            'active' => ProSubscription::currentlyActive()->count(),
+            'pending' => ProSubscription::where('status', 'pending')->count(),
+            'ending' => ProSubscription::currentlyActive()->where('auto_renew', false)->count(),
+            'stripe' => ProSubscription::whereNotNull('stripe_subscription_id')->count(),
+        ];
 
-        return view('admin.subscriptions.index', compact('users', 'stats', 'plans', 'providerSubscriptionPlans'));
+        return view('admin.subscriptions.index', compact(
+            'users',
+            'stats',
+            'plans',
+            'providerSubscriptionPlans',
+            'proSubscriptionReadiness',
+            'providerSubscriptions',
+            'providerStats'
+        ));
     }
 
     public function updateProviderSubscriptionPlans(Request $request)
@@ -511,7 +535,7 @@ class AdminController extends Controller
             'plans.*.recommended' => 'nullable|boolean',
             'plans.*.label' => 'required|string|max:80',
             'plans.*.price' => 'required|string|max:40',
-            'plans.*.amount' => 'required|numeric|min:0',
+            'plans.*.amount' => 'required|numeric|min:0.5',
             'plans.*.period' => 'required|string|max:40',
             'plans.*.original_price' => 'nullable|string|max:40',
             'plans.*.badge' => 'nullable|string|max:80',
@@ -523,6 +547,77 @@ class AdminController extends Controller
         ProviderSubscriptionPlans::saveFromAdminInput($validated['plans']);
 
         return back()->with('success', 'Cartes d’abonnement prestataire mises à jour.');
+    }
+
+    public function grantProviderSubscription(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email', 'exists:users,email'],
+            'plan' => ['required', 'in:monthly,annual'],
+            'duration' => ['required', 'integer', 'min:1', 'max:730'],
+        ]);
+        $user = User::where('email', $validated['email'])->firstOrFail();
+        if (! $user->isServiceProvider()) {
+            return back()->with('error', 'Cet utilisateur doit d’abord activer un profil prestataire.');
+        }
+
+        if ($user->hasActiveProSubscription()) {
+            return back()->with('error', 'Cet utilisateur possède déjà un abonnement Pro actif.');
+        }
+
+        $subscription = ProSubscription::create([
+            'user_id' => $user->id,
+            'plan' => $validated['plan'],
+            'amount' => 0,
+            'status' => 'active',
+            'starts_at' => now(),
+            'ends_at' => now()->addDays($validated['duration']),
+            'auto_renew' => false,
+            'notifications_enabled' => true,
+            'realtime_notifications' => $user->pro_notifications_realtime ?? true,
+            'selected_categories' => $user->pro_service_categories ?? [],
+            'intervention_radius' => $user->pro_intervention_radius ?? 30,
+        ]);
+
+        $user->update([
+            'pro_subscription_plan' => $subscription->plan,
+            'pro_status' => 'active',
+        ]);
+
+        return back()->with('success', 'Accès Pro manuel accordé à '.$user->name.'. Aucun prélèvement Stripe ne sera créé.');
+    }
+
+    public function suspendProviderSubscription(ProSubscription $proSubscription)
+    {
+        try {
+            $this->providerSubscriptionService->suspend($proSubscription);
+
+            return back()->with('success', 'Abonnement prestataire suspendu.');
+        } catch (\Throwable $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+    }
+
+    public function resumeProviderSubscription(ProSubscription $proSubscription)
+    {
+        try {
+            $this->providerSubscriptionService->resumeSuspended($proSubscription);
+
+            return back()->with('success', 'Abonnement prestataire réactivé.');
+        } catch (\Throwable $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+    }
+
+    public function cancelProviderSubscription(ProSubscription $proSubscription)
+    {
+        try {
+            $this->providerSubscriptionService->cancelImmediately($proSubscription);
+
+            return back()->with('success', 'Abonnement prestataire annulé immédiatement.');
+        } catch (\Throwable $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
     }
 
     // Modifier l'abonnement d'un utilisateur
@@ -705,8 +800,28 @@ class AdminController extends Controller
         ];
 
         $mailSummary = $this->buildMailConfigSummary();
+        $categoryDefinitions = MarketplaceCategoryRegistry::definitions();
+        $categoryStates = MarketplaceCategoryRegistry::states();
+        $proSubscriptionReadiness = PlatformFeatures::proSubscriptionReadiness();
+        $legalSettings = [
+            'legal_entity_name' => PlatformFeatures::legalValue('legal_entity_name', 'entity_name'),
+            'legal_entity_form' => PlatformFeatures::legalValue('legal_entity_form', 'entity_form'),
+            'legal_registration_number' => PlatformFeatures::legalValue('legal_registration_number', 'registration_number'),
+            'legal_vat_number' => PlatformFeatures::legalValue('legal_vat_number', 'vat_number'),
+            'legal_address' => PlatformFeatures::legalValue('legal_address', 'address'),
+            'legal_publication_director' => PlatformFeatures::legalValue('legal_publication_director', 'publication_director'),
+            'platform_public_url' => Setting::get('platform_public_url', config('app.url')),
+            'stripe_billing_portal_configured' => Setting::get('stripe_billing_portal_configured', '0'),
+        ];
 
-        return view('admin.settings', compact('settings', 'mailSummary'));
+        return view('admin.settings', compact(
+            'settings',
+            'mailSummary',
+            'categoryDefinitions',
+            'categoryStates',
+            'proSubscriptionReadiness',
+            'legalSettings'
+        ));
     }
 
     public function updateSettingsGeneral(Request $request)
@@ -737,6 +852,55 @@ class AdminController extends Controller
         Setting::set('auto_moderation', $request->has('auto_moderation') ? '1' : '0', 'ads');
 
         return back()->with('success', 'Paramètres des annonces mis à jour avec succès');
+    }
+
+    public function updateSettingsCatalog(Request $request)
+    {
+        $allowedIds = array_keys(MarketplaceCategoryRegistry::definitions());
+        $validated = $request->validate([
+            'enabled_categories' => ['nullable', 'array'],
+            'enabled_categories.*' => ['string', \Illuminate\Validation\Rule::in($allowedIds)],
+        ]);
+
+        MarketplaceCategoryRegistry::storeEnabledIds($validated['enabled_categories'] ?? []);
+
+        return back()->with('success', 'Disponibilité des activités mise à jour. Les annonces historiques ont été conservées.');
+    }
+
+    public function updateSettingsLegal(Request $request)
+    {
+        $validated = $request->validate([
+            'legal_entity_name' => ['nullable', 'string', 'max:255'],
+            'legal_entity_form' => ['nullable', 'string', 'max:100'],
+            'legal_registration_number' => ['nullable', 'string', 'max:100'],
+            'legal_vat_number' => ['nullable', 'string', 'max:100'],
+            'legal_address' => ['nullable', 'string', 'max:500'],
+            'legal_publication_director' => ['nullable', 'string', 'max:255'],
+            'platform_public_url' => ['nullable', 'url:https', 'max:255'],
+        ]);
+
+        foreach ($validated as $key => $value) {
+            Setting::set($key, trim((string) $value), 'legal');
+        }
+        Setting::set('stripe_billing_portal_configured', $request->boolean('stripe_billing_portal_configured') ? '1' : '0', 'subscriptions');
+
+        return back()->with('success', 'Identité légale et URL publique mises à jour.');
+    }
+
+    public function updateSettingsProSubscriptions(Request $request)
+    {
+        try {
+            PlatformFeatures::setProSubscriptionsEnabled($request->boolean('enabled'));
+        } catch (\DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        return back()->with(
+            'success',
+            $request->boolean('enabled')
+                ? 'Les abonnements Pro sont maintenant ouverts à la souscription.'
+                : 'Les nouvelles souscriptions Pro ont été désactivées. Les abonnements existants restent suivis.'
+        );
     }
 
     public function updateSettingsPoints(Request $request)

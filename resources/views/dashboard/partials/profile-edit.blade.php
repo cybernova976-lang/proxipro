@@ -189,7 +189,7 @@
             </div>
             <div class="modal-body">
                 <p class="text-muted small mb-3">Déplacez la photo et utilisez le zoom pour choisir le cadrage.</p>
-                <div id="cropViewport" class="mx-auto mb-3" style="width:280px; height:280px; border-radius:14px; overflow:hidden; background:#f1f5f9; border:1px solid #e2e8f0; position:relative; touch-action:none;">
+                <div id="cropViewport" class="mx-auto mb-3" style="width:min(280px, 100%); aspect-ratio:1; border-radius:14px; overflow:hidden; background:#f1f5f9; border:1px solid #e2e8f0; position:relative; touch-action:none;">
                     <img id="cropImage" alt="Prévisualisation du recadrage" style="position:absolute; left:0; top:0; transform-origin: top left; user-select:none; -webkit-user-drag:none; max-width:none;">
                 </div>
                 <label for="cropZoom" class="form-label mb-1">Zoom</label>
@@ -214,7 +214,7 @@ const avatarPlaceholder = document.getElementById('avatarPlaceholder');
 const avatarCroppedInput = document.getElementById('avatar_cropped');
 
 const cropModalEl = document.getElementById('avatarCropModal');
-const cropModal = new bootstrap.Modal(cropModalEl);
+const cropModal = window.bootstrap?.Modal ? new window.bootstrap.Modal(cropModalEl) : null;
 const cropViewport = document.getElementById('cropViewport');
 const cropImage = document.getElementById('cropImage');
 const cropZoom = document.getElementById('cropZoom');
@@ -234,12 +234,21 @@ const cropState = {
     dragOriginY: 0,
 };
 
+function cropBoxSize() {
+    const box = cropViewport.getBoundingClientRect();
+
+    return {
+        width: box.width || cropViewport.clientWidth || 280,
+        height: box.height || cropViewport.clientHeight || 280,
+    };
+}
+
 function clampCropPosition() {
     if (!cropState.image) {
         return;
     }
 
-    const box = cropViewport.getBoundingClientRect();
+    const box = cropBoxSize();
     const imgWidth = cropState.image.naturalWidth * cropState.scale;
     const imgHeight = cropState.image.naturalHeight * cropState.scale;
 
@@ -260,7 +269,7 @@ function resetCrop() {
         return;
     }
 
-    const box = cropViewport.getBoundingClientRect();
+    const box = cropBoxSize();
     const baseX = (box.width - cropState.image.naturalWidth * cropState.baseScale) / 2;
     const baseY = (box.height - cropState.image.naturalHeight * cropState.baseScale) / 2;
 
@@ -272,14 +281,19 @@ function resetCrop() {
 }
 
 function openCropper(dataUrl) {
+    if (!cropModal) {
+        avatarPreview.src = dataUrl;
+        avatarPreview.classList.remove('d-none');
+        if (avatarPlaceholder) {
+            avatarPlaceholder.classList.add('d-none');
+        }
+        return;
+    }
+
     const img = new Image();
     img.onload = function() {
         cropState.image = img;
         cropImage.src = dataUrl;
-
-        const box = cropViewport.getBoundingClientRect();
-        cropState.baseScale = Math.max(box.width / img.naturalWidth, box.height / img.naturalHeight);
-        resetCrop();
         cropModal.show();
     };
     img.src = dataUrl;
@@ -347,6 +361,11 @@ avatarInput.addEventListener('change', function(e) {
         return;
     }
 
+    if (file.size > 5 * 1024 * 1024) {
+        e.target.value = '';
+        return;
+    }
+
     const reader = new FileReader();
     reader.onload = function(loadEvent) {
         openCropper(loadEvent.target.result);
@@ -361,7 +380,7 @@ cropZoom.addEventListener('input', function() {
 
     const factor = parseFloat(this.value);
     const previousScale = cropState.scale;
-    const box = cropViewport.getBoundingClientRect();
+    const box = cropBoxSize();
     const centerX = box.width / 2;
     const centerY = box.height / 2;
 
@@ -389,7 +408,7 @@ cropApply.addEventListener('click', async function() {
     cropApply.disabled = true;
     cropApply.textContent = 'Traitement...';
 
-    const box = cropViewport.getBoundingClientRect();
+    const box = cropBoxSize();
     const exportSize = 512;
     const canvas = document.createElement('canvas');
     canvas.width = exportSize;
@@ -417,6 +436,21 @@ cropApply.addEventListener('click', async function() {
 
     cropApply.disabled = false;
     cropApply.textContent = 'Appliquer';
+});
+
+cropModalEl.addEventListener('shown.bs.modal', function() {
+    if (!cropState.image) {
+        return;
+    }
+
+    const box = cropBoxSize();
+    cropState.baseScale = Math.max(
+        box.width / cropState.image.naturalWidth,
+        box.height / cropState.image.naturalHeight
+    );
+    cropImage.style.width = `${cropState.image.naturalWidth}px`;
+    cropImage.style.height = `${cropState.image.naturalHeight}px`;
+    window.requestAnimationFrame(resetCrop);
 });
 
 cropModalEl.addEventListener('hidden.bs.modal', function() {
