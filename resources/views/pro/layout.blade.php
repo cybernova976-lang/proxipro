@@ -175,8 +175,15 @@
     .pro-user-avatar {
         width: 36px;
         height: 36px;
-        border-radius: 10px;
+        min-width: 36px;
+        max-width: 36px;
+        flex: 0 0 36px;
+        aspect-ratio: 1 / 1;
+        padding: 0;
+        border: 2px solid #fff;
+        border-radius: 50%;
         object-fit: cover;
+        object-position: center;
         background: var(--pro-gradient);
         color: white;
         display: flex;
@@ -755,7 +762,7 @@
             <div class="dropdown">
                 <a href="#" class="pro-user-menu dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                     @if(Auth::user()->avatar)
-                        <img src="{{ storage_url(Auth::user()->avatar) }}" class="pro-user-avatar" alt="">
+                        <img src="{{ storage_url(Auth::user()->avatar) }}" class="pro-user-avatar" alt="Photo de profil de {{ Auth::user()->name }}">
                     @else
                         <div class="pro-user-avatar">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</div>
                     @endif

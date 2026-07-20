@@ -6867,7 +6867,7 @@
                             <button class="user-menu-btn d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 @if(Auth::user()->avatar)
                                     <span class="header-user-avatar-frame">
-                                        <img src="{{ storage_url(Auth::user()->avatar) }}" alt="Avatar" class="user-avatar header-user-avatar">
+                                        <img src="{{ storage_url(Auth::user()->avatar) }}" alt="Photo de profil de {{ Auth::user()->name }}" class="header-user-avatar">
                                     </span>
                                 @else
                                     <div class="user-avatar-placeholder" style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #9333ea); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 700; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -6884,7 +6884,7 @@
                                 <li class="px-3 py-2 border-bottom">
                                     <div class="d-flex align-items-center">
                                         @if(Auth::user()->avatar)
-                                            <img src="{{ storage_url(Auth::user()->avatar) }}" alt="" class="user-avatar me-3" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                            <img src="{{ storage_url(Auth::user()->avatar) }}" alt="Photo de profil de {{ Auth::user()->name }}" class="dropdown-user-avatar me-3">
                                         @else
                                             <div class="user-avatar-placeholder me-3" style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #9333ea); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; border: 2px solid #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</div>
                                         @endif
@@ -9900,9 +9900,12 @@
 
         .header-user-avatar-frame {
             display: inline-flex;
+            align-items: stretch;
+            justify-content: stretch;
             width: 38px;
             height: 38px;
             flex: 0 0 38px;
+            aspect-ratio: 1 / 1;
             overflow: hidden;
             border: 2px solid #fff;
             border-radius: 50%;
@@ -9911,13 +9914,31 @@
         }
 
         .header-user-avatar {
+            display: block;
             width: 100% !important;
             height: 100% !important;
+            min-width: 100%;
+            max-width: none;
+            padding: 0 !important;
+            margin: 0 !important;
             border: 0 !important;
             border-radius: 0 !important;
+            object-fit: cover !important;
+            object-position: center;
+        }
+
+        .dropdown-user-avatar {
+            display: block;
+            width: 44px;
+            height: 44px;
+            flex: 0 0 44px;
+            aspect-ratio: 1 / 1;
+            padding: 0;
+            border: 2px solid #f1f5f9;
+            border-radius: 50%;
             object-fit: cover;
             object-position: center;
-            transform: scale(1.22);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         @media (max-width: 991.98px) {
