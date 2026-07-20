@@ -71,14 +71,24 @@
         }
         
         @media (max-width: 768px) {
+            html,
+            body {
+                width: 100%;
+                max-width: 100%;
+                overflow-x: clip;
+                -webkit-text-size-adjust: 100%;
+            }
+
             .sidebar {
                 margin-left: -250px;
                 z-index: 1050;
                 overflow-y: auto;
+                width: min(86vw, 280px);
             }
             
             .main-content {
                 margin-left: 0;
+                padding: 12px;
             }
             
             .sidebar.active {
@@ -87,6 +97,42 @@
 
             .sidebar-close-btn {
                 display: block !important;
+            }
+
+            .main-content .navbar {
+                margin-bottom: 12px !important;
+            }
+
+            .main-content .navbar-text {
+                max-width: 48vw;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .main-content .container-fluid {
+                padding: 0;
+            }
+
+            .main-content .table-responsive {
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .main-content .table-responsive > table {
+                min-width: 680px;
+            }
+
+            .main-content input,
+            .main-content select,
+            .main-content textarea {
+                font-size: 16px !important;
+            }
+
+            .main-content .modal-dialog {
+                max-width: calc(100vw - 20px);
+                margin: 10px auto;
             }
         }
 

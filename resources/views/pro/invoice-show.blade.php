@@ -90,6 +90,17 @@
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
     }
+    @media (max-width: 576px) {
+        .invoice-doc-title { font-size: 1.45rem; }
+        .invoice-actions-bar .btn,
+        .invoice-actions-bar form { width: 100%; }
+        .invoice-actions-bar form .btn { width: 100%; }
+        .invoice-info-card,
+        .invoice-totals {
+            width: 100%;
+            min-width: 0;
+        }
+    }
 </style>
 
 <div class="pro-content-header">
@@ -137,7 +148,7 @@
                 @if($user->tva_number)<div style="color: #94a3b8; font-size: 0.78rem;">TVA : {{ $user->tva_number }}</div>@endif
             </div>
         </div>
-        <div class="text-end">
+        <div class="text-end pro-mobile-text-start">
             <div class="invoice-doc-title">FACTURE</div>
             <div style="font-size: 0.88rem; color: #475569; line-height: 1.8; margin-top: 4px;">
                 <div><strong>N° :</strong> {{ $invoice->invoice_number }}</div>
@@ -151,7 +162,7 @@
 
     {{-- Client (right-aligned, below header) --}}
     <div class="d-flex justify-content-end mb-4">
-        <div class="invoice-info-card" style="min-width: 280px;">
+        <div class="invoice-info-card pro-mobile-full" style="min-width: 280px;">
             <div class="invoice-info-label">Client</div>
             <div class="invoice-info-name">{{ $invoice->client_name }}</div>
             <div class="invoice-info-detail">
@@ -191,7 +202,7 @@
 
     {{-- Totals --}}
     <div class="d-flex justify-content-end mb-4">
-        <div class="invoice-totals">
+        <div class="invoice-totals pro-mobile-full">
             <div class="total-line">
                 <span>Sous-total HT</span>
                 <strong>{{ number_format($invoice->subtotal, 2, ',', ' ') }} €</strong>

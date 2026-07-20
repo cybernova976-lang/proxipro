@@ -13,7 +13,7 @@
         </nav>
         <h1>Devis {{ $quote->quote_number }}</h1>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
         <span class="pro-status pro-status-{{ $quote->getStatusColor() }}" style="font-size: 0.88rem; padding: 8px 16px;">{{ $quote->getStatusLabel() }}</span>
         @if($quote->status === 'accepted')
             <a href="{{ route('pro.invoices.create', ['quoteId' => $quote->id]) }}" class="btn btn-pro-primary">
@@ -36,7 +36,7 @@
                 @if($user->siret)<div>SIRET : {{ $user->siret }}</div>@endif
             </div>
         </div>
-        <div class="text-end">
+        <div class="text-end pro-mobile-text-start">
             <h3 class="fw-bold" style="color: var(--pro-primary);">DEVIS</h3>
             <div style="font-size: 0.88rem;">
                 <div><strong>N° :</strong> {{ $quote->quote_number }}</div>
@@ -90,7 +90,7 @@
 
     {{-- Totals --}}
     <div class="d-flex justify-content-end">
-        <div style="min-width: 250px; background: #f8fafc; border-radius: 12px; padding: 1rem 1.25rem;">
+        <div class="pro-mobile-full" style="min-width: 250px; background: #f8fafc; border-radius: 12px; padding: 1rem 1.25rem;">
             <div class="d-flex justify-content-between py-1" style="font-size: 0.9rem;">
                 <span>Sous-total HT</span>
                 <strong>{{ number_format($quote->subtotal, 2, ',', ' ') }}€</strong>

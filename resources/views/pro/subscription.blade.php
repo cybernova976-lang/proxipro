@@ -394,6 +394,52 @@
     color: white;
     transform: scale(1.05);
 }
+
+@media (max-width: 576px) {
+    .sub-page-card {
+        width: 100%;
+        padding: 16px !important;
+    }
+
+    .sub-plan-card {
+        padding: 16px 12px 12px;
+    }
+
+    .sub-plan-card > .d-flex {
+        flex-wrap: wrap;
+        align-items: flex-start !important;
+        gap: 10px !important;
+    }
+
+    .sub-plan-card > .d-flex > .flex-grow-1 {
+        flex: 1 1 calc(100% - 52px);
+    }
+
+    .sub-plan-card > .d-flex > .text-end {
+        width: 100%;
+        min-width: 0 !important;
+        padding-left: 48px;
+        text-align: left !important;
+    }
+
+    .pts-pack-mini > .d-flex {
+        flex-wrap: wrap;
+    }
+
+    .pts-pack-mini .btn-pts-mini {
+        width: 100%;
+        min-height: 40px;
+    }
+
+    .sub-page-card .badge {
+        white-space: normal;
+        text-align: left;
+    }
+
+    .sub-page-card .table-responsive {
+        overflow-x: auto !important;
+    }
+}
 </style>
 
 @endsection

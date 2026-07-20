@@ -1,4 +1,7 @@
 {{-- Points Dashboard Partial --}}
+@php
+    $dashboardReferralPoints = (int) $user->referralRewardsEarned()->sum('points');
+@endphp
 <div class="container py-4">
     <div class="row mb-4">
         <div class="col">
@@ -60,9 +63,9 @@
         <div class="col-md-3 mb-3">
             <div class="card border-0 bg-warning bg-gradient text-white">
                 <div class="card-body text-center">
-                    <h6 class="card-subtitle mb-2">Points journaliers</h6>
-                    <h2 class="card-title mb-0">{{ $user->daily_points }}/10</h2>
-                    <small>réinitialisés chaque jour</small>
+                    <h6 class="card-subtitle mb-2">Points de parrainage</h6>
+                    <h2 class="card-title mb-0">{{ $dashboardReferralPoints }}</h2>
+                    <small>bonus réellement validés</small>
                 </div>
             </div>
         </div>
@@ -86,25 +89,21 @@
                 </div>
                 <div class="card-body">
                     <div class="list-group list-group-flush">
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div><i class="fas fa-share-alt text-primary me-2"></i><strong>Partager une annonce</strong><p class="mb-0 text-muted small">Sur les réseaux sociaux</p></div>
-                            <span class="badge bg-primary">+5 points</span>
+                        <div class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                            <div><i class="fas fa-envelope-circle-check text-primary me-2"></i><strong>Inscription validée</strong><p class="mb-0 text-muted small">Après validation de l’adresse e-mail</p></div>
+                            <span class="badge bg-primary text-nowrap">+5 points</span>
                         </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div><i class="fas fa-heart text-danger me-2"></i><strong>Liker une annonce</strong><p class="mb-0 text-muted small">Jusqu'à 10 points/jour</p></div>
-                            <span class="badge bg-success">+1 point</span>
+                        <div class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                            <div><i class="fas fa-shield-check text-success me-2"></i><strong>Profil vérifié</strong><p class="mb-0 text-muted small">Après approbation par l’administration</p></div>
+                            <span class="badge bg-success text-nowrap">+50 points</span>
                         </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div><i class="fas fa-comment text-info me-2"></i><strong>Commenter</strong><p class="mb-0 text-muted small">Jusqu'à 10 points/jour</p></div>
-                            <span class="badge bg-success">+1 point</span>
+                        <div class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                            <div><i class="fas fa-user-friends text-info me-2"></i><strong>Parrainage réussi</strong><p class="mb-0 text-muted small">Après le premier achat validé du filleul</p></div>
+                            <span class="badge bg-info text-nowrap">+50 / +20</span>
                         </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div><i class="fas fa-bullhorn text-warning me-2"></i><strong>Publier une annonce</strong><p class="mb-0 text-muted small">Par publication valide</p></div>
-                            <span class="badge bg-warning text-dark">+10 points</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div><i class="fas fa-star text-success me-2"></i><strong>Monter de niveau</strong><p class="mb-0 text-muted small">Bonus à chaque niveau</p></div>
-                            <span class="badge bg-info">Niveau × 10 points</span>
+                        <div class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                            <div><i class="fas fa-cart-shopping text-warning me-2"></i><strong>Achat d’un pack</strong><p class="mb-0 text-muted small">Crédit après paiement confirmé</p></div>
+                            <a href="{{ route('pricing.index') }}" class="btn btn-sm btn-outline-primary text-nowrap">Voir les packs</a>
                         </div>
                     </div>
                 </div>
@@ -139,24 +138,6 @@
                     @endif
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Partager pour gagner -->
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white border-0">
-            <h5 class="mb-0"><i class="fas fa-share text-primary me-2"></i>Partager pour gagner 5 points</h5>
-        </div>
-        <div class="card-body">
-            <p class="text-muted mb-3">Partagez votre annonce favorite sur les réseaux sociaux :</p>
-            <div class="d-flex flex-wrap gap-2" id="share-buttons">
-                <button class="btn btn-outline-primary share-btn" data-platform="facebook"><i class="fab fa-facebook me-2"></i>Facebook</button>
-                <button class="btn btn-outline-info share-btn" data-platform="twitter"><i class="fab fa-twitter me-2"></i>Twitter</button>
-                <button class="btn btn-outline-primary share-btn" data-platform="linkedin"><i class="fab fa-linkedin me-2"></i>LinkedIn</button>
-                <button class="btn btn-outline-success share-btn" data-platform="whatsapp"><i class="fab fa-whatsapp me-2"></i>WhatsApp</button>
-                <button class="btn btn-outline-primary share-btn" data-platform="telegram"><i class="fab fa-telegram me-2"></i>Telegram</button>
-            </div>
-            <div id="share-result" class="mt-3"></div>
         </div>
     </div>
 
@@ -205,38 +186,3 @@
         </div>
     </div>
 </div>
-
-<script>
-(function() {
-    document.querySelectorAll('.share-btn').forEach(function(button) {
-        button.addEventListener('click', function() {
-            var platform = this.dataset.platform;
-            var btn = this;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>En cours...';
-            
-            fetch('{{ route("points.share") }}', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                body: JSON.stringify({ platform: platform })
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (data.success) {
-                    document.getElementById('share-result').innerHTML = '<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i>' + data.message + '</div>';
-                    setTimeout(function() { dashboardNav('points'); }, 2000);
-                } else {
-                    document.getElementById('share-result').innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>' + data.message + '</div>';
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fab fa-' + platform + ' me-2"></i>' + platform.charAt(0).toUpperCase() + platform.slice(1);
-                }
-            })
-            .catch(function() {
-                document.getElementById('share-result').innerHTML = '<div class="alert alert-danger">Erreur lors du partage</div>';
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fab fa-' + platform + ' me-2"></i>' + platform.charAt(0).toUpperCase() + platform.slice(1);
-            });
-        });
-    });
-})();
-</script>

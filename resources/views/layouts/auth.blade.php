@@ -36,6 +36,15 @@
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+
+        html, body { width: 100%; max-width: 100%; overflow-x: clip; -webkit-text-size-adjust: 100%; }
+        img, video, svg { max-width: 100%; }
+
+        @media (max-width: 640px) {
+            input, select, textarea { font-size: 16px !important; }
+            .min-h-screen { min-height: 100dvh; }
+            body > .min-h-screen { display: block; }
+        }
     </style>
 </head>
 <body class="font-sans antialiased text-gray-900 bg-gray-50">

@@ -297,6 +297,8 @@
     }
     .ob-input:focus { border-color: var(--ob-primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.08); }
     .ob-label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--ob-text); margin-bottom: 6px; }
+    .ob-two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-bottom: 16px; }
+    .ob-footer-actions { display: flex; align-items: center; gap: 16px; }
 
     /* Geo button */
     .ob-geo-btn {
@@ -322,12 +324,27 @@
 
     /* Responsive */
     @media (max-width: 640px) {
-        .ob-welcome-hero { padding: 32px 20px; }
+        html, body { width: 100%; max-width: 100%; overflow-x: clip; -webkit-text-size-adjust: 100%; }
+        .ob-header { padding: 24px 12px 0; }
+        .ob-container { padding: 0 12px 32px; }
+        .ob-welcome-hero { padding: 32px 18px; border-radius: 14px; }
         .ob-welcome-title { font-size: 1.4rem; }
-        .ob-card { padding: 24px 20px; }
-        .ob-stepper { gap: 0; }
-        .ob-step-label { font-size: 0.6rem; }
-        .ob-footer { flex-wrap: wrap; }
+        .ob-card { padding: 22px 16px; border-radius: 14px; }
+        .ob-stepper { gap: 0; margin: 20px auto 24px; padding: 0 12px; overflow: hidden; }
+        .ob-step-circle { width: 32px; height: 32px; }
+        .ob-step-line { margin-top: -18px; }
+        .ob-step-label { display: none; }
+        .ob-two-col { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+        .ob-cat-grid { gap: 8px; }
+        .ob-cat-btn { padding: 14px 8px; }
+        .ob-input { min-height: 46px; font-size: 16px; }
+        .ob-geo-btn { width: 100%; min-height: 46px; justify-content: center; }
+        .ob-recap-row { align-items: flex-start; gap: 14px; }
+        .ob-recap-value { max-width: 52%; text-align: right; overflow-wrap: anywhere; }
+        .ob-footer { flex-direction: column-reverse; align-items: stretch; padding: 12px 0; }
+        .ob-footer > div:first-child { width: 100%; }
+        .ob-footer-actions { width: 100%; flex-direction: column-reverse; gap: 8px; }
+        .ob-btn-next, .ob-btn-skip, .ob-btn-back { width: 100%; min-height: 46px; justify-content: center; }
     }
     </style>
 </head>
@@ -486,7 +503,7 @@
                     <div id="obGeoStatus" style="margin-top: 8px; font-size: 0.8rem; display: none;"></div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div class="ob-two-col">
                     <div>
                         <label class="ob-label">Adresse *</label>
                         <input type="text" class="ob-input" id="obAddress" placeholder="12 rue de la Paix, 75001 Paris" value="{{ $user->address ?? '' }}">
@@ -497,7 +514,7 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div class="ob-two-col">
                     <div>
                         <label class="ob-label">Pays</label>
                         <input type="text" class="ob-input" id="obCountry" placeholder="France" value="{{ $user->country ?? $user->detected_country ?? 'France' }}">
@@ -760,7 +777,7 @@
                     <i class="fas fa-arrow-left"></i> Retour
                 </button>
             </div>
-            <div style="display: flex; align-items: center; gap: 16px;">
+            <div class="ob-footer-actions">
                 <button type="button" class="ob-btn-skip" onclick="obSkipAll()">Passer pour le moment</button>
                 <button type="button" class="ob-btn-next" id="obBtnNext" onclick="obNext()">
                     Commencer <i class="fas fa-arrow-right"></i>

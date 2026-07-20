@@ -86,9 +86,15 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'fr'),
+    // L'interface actuellement publiée est intégralement francophone. On force
+    // donc le français tant qu'aucun sélecteur de langue complet n'est livré :
+    // une variable APP_LOCALE héritée d'un hébergeur ne doit pas réintroduire
+    // les messages de validation anglais au milieu de l'interface.
+    'locale' => 'fr',
 
-    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'fr'),
+    'fallback_locale' => 'fr',
+
+    'supported_locales' => ['fr'],
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'fr_FR'),
 

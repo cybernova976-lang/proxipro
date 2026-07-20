@@ -396,8 +396,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/stripe/create-checkout', [StripeCheckoutController::class, 'createCheckout'])->name('stripe.create-checkout');
     Route::get('/stripe/success', [StripeCheckoutController::class, 'success'])->name('stripe.success');
     Route::get('/stripe/transactions', [StripeCheckoutController::class, 'transactions'])->name('stripe.transactions');
-    Route::post('/social/share', [StripeCheckoutController::class, 'socialShare'])->name('social.share');
-    Route::get('/social/status', [StripeCheckoutController::class, 'socialStatus'])->name('social.status');
 });
 Route::post('/stripe/webhook', [StripeCheckoutController::class, 'webhook'])->name('stripe.webhook');
 
@@ -438,8 +436,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/points', [PointController::class, 'dashboard'])->name('points.dashboard');
     Route::get('/points/index', [PointController::class, 'dashboard'])->name('points.index');
     Route::get('/points/transactions', [PointController::class, 'transactions'])->name('points.transactions');
-    Route::post('/points/share', [PointController::class, 'share'])->name('points.share');
-    Route::post('/points/daily', [PointController::class, 'dailyEngagement'])->name('points.daily');
 });
 
 // ==========================================

@@ -554,6 +554,7 @@
     @media (max-width: 991px) {
         .pro-sidebar {
             transform: translateX(-100%);
+            width: min(86vw, 310px);
         }
 
         .pro-sidebar.show {
@@ -566,6 +567,25 @@
 
         .pro-main {
             margin-left: 0;
+        }
+
+        .pro-main .table-responsive {
+            width: 100%;
+            overflow-x: auto !important;
+            overscroll-behavior-inline: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .pro-main .table-responsive > table {
+            min-width: 680px;
+            margin-bottom: 0;
+        }
+
+        /* A sticky summary is useful beside a desktop form, but becomes an
+           obstacle once columns stack on a phone or tablet. */
+        .pro-card[style*="position: sticky"] {
+            position: static !important;
+            top: auto !important;
         }
     }
 
@@ -581,12 +601,121 @@
     }
 
     @media (max-width: 576px) {
+        html,
+        body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: clip;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        input,
+        select,
+        textarea {
+            font-size: 16px !important;
+        }
+
+        .pro-topbar {
+            padding: 0 10px;
+        }
+
+        .pro-topbar-left,
+        .pro-topbar-right {
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .pro-sidebar-toggle,
+        .pro-topbar-btn {
+            width: 40px;
+            height: 40px;
+            flex: 0 0 40px;
+        }
+
+        .pro-topbar-brand {
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .pro-topbar-brand > span:not(.pro-badge) {
+            display: none;
+        }
+
+        .pro-user-menu {
+            padding: 2px;
+        }
+
         .pro-main {
-            padding: 1rem;
+            padding: 12px;
         }
 
         .pro-content-header h1 {
             font-size: 1.25rem;
+        }
+
+        .pro-content-header {
+            align-items: stretch;
+            margin-bottom: 1rem;
+            gap: .75rem;
+        }
+
+        .pro-content-header > *,
+        .pro-content-header .btn,
+        .pro-content-header form {
+            max-width: 100%;
+        }
+
+        .pro-content-header > .d-flex,
+        .pro-content-header > form,
+        .pro-content-header > a {
+            width: 100%;
+        }
+
+        .pro-mobile-full {
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+
+        .pro-mobile-text-start {
+            text-align: left !important;
+        }
+
+        .pro-card,
+        .pro-stat-card {
+            padding: 1rem;
+            border-radius: 12px;
+        }
+
+        .pro-main .row > *,
+        .pro-main .d-flex > * {
+            min-width: 0;
+        }
+
+        .pro-main img,
+        .pro-main video,
+        .pro-main iframe,
+        .pro-main svg {
+            max-width: 100%;
+        }
+
+        .pro-main h1,
+        .pro-main h2,
+        .pro-main h3,
+        .pro-main h4,
+        .pro-main p,
+        .pro-main td,
+        .pro-main th {
+            overflow-wrap: anywhere;
+        }
+
+        .pro-main .modal-dialog {
+            max-width: calc(100vw - 20px);
+            margin: 10px auto;
+        }
+
+        .pro-main .btn:not(.btn-sm),
+        .pro-main button:not(.btn-sm) {
+            min-height: 44px;
         }
 
         .pro-stat-value {

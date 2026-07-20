@@ -15,18 +15,6 @@ use Stripe\Stripe;
 
 class StripeCheckoutController extends Controller
 {
-    /**
-     * Configuration des récompenses de partage social
-     */
-    private $socialRewards = [
-        'facebook' => ['points' => 5, 'name' => 'Facebook'],
-        'twitter' => ['points' => 5, 'name' => 'Twitter/X'],
-        'instagram' => ['points' => 5, 'name' => 'Instagram'],
-        'linkedin' => ['points' => 5, 'name' => 'LinkedIn'],
-        'whatsapp' => ['points' => 5, 'name' => 'WhatsApp'],
-        'telegram' => ['points' => 5, 'name' => 'Telegram'],
-    ];
-
     public function __construct(
         protected ReferralService $referralService,
         protected ServiceOrderWorkflowService $serviceOrderWorkflowService,
@@ -213,7 +201,7 @@ class StripeCheckoutController extends Controller
             if (! $endpointSecret || ! $sigHeader) {
                 \Log::warning('Stripe webhook refused because signature verification is not configured.');
 
-                return response()->json(['error' => 'Webhook signature unavailable'], 400);
+                return response()->json(['error' => 'Signature du webhook indisponible'], 400);
             }
 
             $event = \Stripe\Webhook::constructEvent($payload, $sigHeader, $endpointSecret);
@@ -222,7 +210,7 @@ class StripeCheckoutController extends Controller
                 'exception' => $e->getMessage(),
             ]);
 
-            return response()->json(['error' => 'Invalid webhook signature'], 400);
+            return response()->json(['error' => 'Signature du webhook invalide'], 400);
         }
 
         try {
@@ -283,7 +271,7 @@ class StripeCheckoutController extends Controller
             ]);
 
             // Stripe réessaiera automatiquement les événements non acquittés.
-            return response()->json(['error' => 'Webhook processing failed'], 500);
+            return response()->json(['error' => 'Échec du traitement du webhook'], 500);
         }
 
         return response()->json(['received' => true]);
@@ -301,115 +289,5 @@ class StripeCheckoutController extends Controller
             ->get();
 
         return response()->json($transactions);
-    }
-
-    /**
-     * Partage social - Réclamer les points
-     */
-    public function socialShare(Request $request)
-    {
-        try {
-            $request->validate([
-                'platform' => 'required|string|in:facebook,twitter,instagram,linkedin,whatsapp,telegram',
-            ]);
-
-            $user = Auth::user();
-
-            if (! $user) {
-                return response()->json(['error' => 'Utilisateur non connecté'], 401);
-            }
-
-            $platform = $request->platform;
-
-            if (! isset($this->socialRewards[$platform])) {
-                return response()->json(['error' => 'Plateforme invalide'], 400);
-            }
-
-            $reward = $this->socialRewards[$platform];
-
-            // Vérifier si déjà réclamé
-            $alreadyClaimed = \DB::table('social_shares')
-                ->where('user_id', $user->id)
-                ->where('platform', $platform)
-                ->exists();
-
-            if ($alreadyClaimed) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Vous avez déjà récupéré vos points '.$reward['name'],
-                    'already_claimed' => true,
-                ]);
-            }
-
-            // Enregistrer le partage
-            \DB::table('social_shares')->insert([
-                'user_id' => $user->id,
-                'platform' => $platform,
-                'points_earned' => $reward['points'],
-                'ip_address' => $request->ip(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            // Créditer les points en utilisant la méthode du modèle User
-            $user->addPoints($reward['points'], 'social_share', 'Partage sur '.$reward['name']);
-
-            // Calculer le total gagné via partage
-            $totalEarned = \DB::table('social_shares')
-                ->where('user_id', $user->id)
-                ->sum('points_earned');
-
-            return response()->json([
-                'success' => true,
-                'points_earned' => $reward['points'],
-                'total_social_points' => $totalEarned,
-                'new_balance' => $user->fresh()->available_points,
-                'message' => '🎉 +'.$reward['points'].' points grâce à '.$reward['name'].' !',
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Social share error: '.$e->getMessage(), [
-                'user_id' => Auth::id(),
-                'platform' => $request->platform ?? null,
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return response()->json([
-                'error' => 'Erreur lors du traitement: '.$e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Statut des partages sociaux
-     */
-    public function socialStatus()
-    {
-        $user = Auth::user();
-
-        $shares = \DB::table('social_shares')
-            ->where('user_id', $user->id)
-            ->get();
-
-        $claimedPlatforms = $shares->pluck('platform')->toArray();
-        $totalEarned = $shares->sum('points_earned');
-
-        $maxPossible = array_sum(array_column($this->socialRewards, 'points'));
-
-        $availablePlatforms = collect($this->socialRewards)
-            ->filter(function ($value, $key) use ($claimedPlatforms) {
-                return ! in_array($key, $claimedPlatforms);
-            })
-            ->map(function ($value, $key) {
-                return array_merge(['platform' => $key], $value);
-            })
-            ->values();
-
-        return response()->json([
-            'claimed_platforms' => $claimedPlatforms,
-            'total_earned' => $totalEarned,
-            'max_possible' => $maxPossible,
-            'available_platforms' => $availablePlatforms,
-            'all_claimed' => count($claimedPlatforms) >= count($this->socialRewards),
-        ]);
     }
 }

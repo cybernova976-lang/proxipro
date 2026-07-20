@@ -352,6 +352,8 @@
     .pts-confirm-inner { flex-direction: column; text-align: center; }
     .pts-confirm-close { margin: 0 auto; }
     .pts-guarantees { flex-direction: column; align-items: center; gap: 12px; }
+    .pts-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .pts-table-wrap table { min-width: 540px; }
 }
 @media (max-width: 575px) {
     .pts-steps { grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -419,12 +421,6 @@
         </div>
         @endif
 
-        {{-- ===== TAB NAV ===== --}}
-        <div class="pts-nav">
-            <button class="pts-nav-btn active" data-tab="buy"><i class="fas fa-shopping-bag me-1"></i> Acheter</button>
-            <button class="pts-nav-btn" data-tab="free"><i class="fas fa-gift me-1"></i> Gratuit</button>
-        </div>
-
         {{-- ===================== BUY POINTS ===================== --}}
         <div id="tab-buy" class="pts-tab-content active">
             <div class="pts-section-head">
@@ -445,7 +441,7 @@
                 @endphp
 
                 @foreach($packs as $pack)
-                <div class="col-6 col-lg-4">
+                <div class="col-12 col-sm-6 col-lg-4">
                     <div class="pts-pack {{ $pack['badge'] === 'popular' ? 'pts-featured' : '' }}">
                         @if($pack['badge'] === 'popular')
                             <div class="pts-pack-ribbon popular">Populaire</div>
@@ -561,63 +557,13 @@
             </div>
         </div>
 
-        {{-- ===================== FREE POINTS ===================== --}}
-        <div id="tab-free" class="pts-tab-content">
-            <div class="pts-free-wrap">
-                <div class="text-center mb-4" style="position: relative; z-index: 2;">
-                    <h3 class="text-white fw-bold mb-2" style="font-size: 1.5rem;">
-                        <i class="fas fa-gift me-2" style="color: #fbbf24;"></i>Points gratuits
-                    </h3>
-                    <p class="mb-3" style="color: rgba(255,255,255,0.55); font-size: 0.92rem;">
-                        Partagez ProxiPro sur les réseaux sociaux et recevez <strong class="text-warning">5 points</strong> par réseau.
-                    </p>
-                    <div class="d-inline-block px-4 py-2 rounded-pill" style="background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.2);">
-                        <span class="text-warning fw-bold" id="total-social-earned">0 / 30 points réclamés</span>
-                    </div>
-                </div>
-
-                <div class="row g-3" id="social-platforms">
-                    <div class="col-12 text-center py-4"><div class="spinner-border text-light spinner-border-sm" role="status"></div></div>
-                </div>
-
-                <hr style="border-color: rgba(255,255,255,0.08); margin: 36px 0;">
-
-                <h5 class="text-white fw-bold mb-3" style="font-size: 1.1rem;">
-                    <i class="fas fa-coins text-warning me-2"></i>Autres façons de gagner
-                </h5>
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="pts-earn-card">
-                            <i class="fas fa-user-plus text-primary"></i>
-                            <h6>Inscription</h6>
-                            <p>5 points offerts à l'inscription</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="pts-earn-card">
-                            <i class="fas fa-share-alt text-success"></i>
-                            <h6>Partage réseaux</h6>
-                            <p>5 pts / réseau (1 fois)</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="pts-earn-card">
-                            <i class="fas fa-star text-warning"></i>
-                            <h6>Engagement</h6>
-                            <p>Points bonus en interagissant</p>
-                        </div>
-                    </div>
-                </div>
+        <div class="alert alert-light border mt-4 d-flex align-items-start gap-3" style="border-radius: 14px;">
+            <i class="fas fa-user-friends text-primary mt-1"></i>
+            <div>
+                <strong>Un programme de parrainage traçable est disponible</strong>
+                <p class="mb-1 text-muted small">Les bonus sont crédités seulement après le premier achat validé du filleul. Un simple clic de partage ne donne aucun point.</p>
+                <a href="{{ route('points.dashboard') }}" class="small fw-semibold">Voir mon lien de parrainage</a>
             </div>
-        </div>
-    </div>
-</div>
-
-{{-- ===== SHARE MODAL ===== --}}
-<div class="modal fade share-modal" id="shareModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-body" id="share-modal-content"></div>
         </div>
     </div>
 </div>
@@ -664,44 +610,7 @@
 
 @section('scripts')
 <script>
-let shareModal, currentPlatform = null, countdownInterval = null;
-
-const socialPlatforms = [
-    { key: 'facebook',  name: 'Facebook',  icon: '📘', points: 5 },
-    { key: 'twitter',   name: 'Twitter/X', icon: '🐦', points: 5 },
-    { key: 'instagram', name: 'Instagram', icon: '📸', points: 5 },
-    { key: 'linkedin',  name: 'LinkedIn',  icon: '💼', points: 5 },
-    { key: 'whatsapp',  name: 'WhatsApp',  icon: '💬', points: 5 },
-    { key: 'telegram',  name: 'Telegram',  icon: '✈️', points: 5 },
-];
-
-const siteUrl = window.location.origin;
-const shareText = 'Découvrez ProxiPro - Trouvez des professionnels près de chez vous ! ';
-
-const shareUrls = {
-    facebook:  'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(siteUrl),
-    twitter:   'https://twitter.com/intent/tweet?url=' + encodeURIComponent(siteUrl) + '&text=' + encodeURIComponent(shareText),
-    instagram: 'https://www.instagram.com/',
-    linkedin:  'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(siteUrl),
-    whatsapp:  'https://wa.me/?text=' + encodeURIComponent(shareText + siteUrl),
-    telegram:  'https://t.me/share/url?url=' + encodeURIComponent(siteUrl) + '&text=' + encodeURIComponent(shareText),
-};
-
 document.addEventListener('DOMContentLoaded', function() {
-    shareModal = new bootstrap.Modal(document.getElementById('shareModal'));
-
-    // Tab switching
-    document.querySelectorAll('.pts-nav-btn').forEach(function(tab) {
-        tab.addEventListener('click', function() {
-            document.querySelectorAll('.pts-nav-btn').forEach(function(t) { t.classList.remove('active'); });
-            document.querySelectorAll('.pts-tab-content').forEach(function(c) { c.classList.remove('active'); });
-            this.classList.add('active');
-            document.getElementById('tab-' + this.dataset.tab).classList.add('active');
-        });
-    });
-
-    loadSocialStatus();
-
     // Handle canceled payment
     var params = new URLSearchParams(window.location.search);
     if (params.get('canceled') === 'true') {
@@ -758,171 +667,5 @@ function purchasePoints(productKey, btn) {
     });
 }
 
-// ===== Social sharing =====
-function loadSocialStatus() {
-    fetch('{{ route("social.status") }}')
-        .then(function(r) { return r.json(); })
-        .then(function(data) { renderSocial(data); })
-        .catch(function() {
-            document.getElementById('social-platforms').innerHTML =
-                '<div class="col-12 text-center py-3" style="color: rgba(255,255,255,0.4);">Impossible de charger les réseaux</div>';
-        });
-}
-
-function renderSocial(status) {
-    var container = document.getElementById('social-platforms');
-    var claimed = status.claimed_platforms || [];
-    var totalEarned = status.total_earned || 0;
-    var maxPossible = status.max_possible || 30;
-    document.getElementById('total-social-earned').textContent =
-        totalEarned + ' / ' + maxPossible + ' points réclamés';
-
-    var html = '';
-    socialPlatforms.forEach(function(p) {
-        var done = claimed.includes(p.key);
-        html += '<div class="col-6 col-md-4 col-lg-2"><div class="pts-social-card ' + (done ? 'claimed' : '') + '">'
-            + '<div class="pts-social-emoji">' + p.icon + '</div>'
-            + '<h6>' + p.name + '</h6>'
-            + '<div class="pts-social-reward">+' + p.points + ' pts</div>'
-            + '<button class="btn-pts-share" onclick="startSocialShare(\'' + p.key + '\')" ' + (done ? 'disabled' : '') + '>'
-            + (done ? '<i class="fas fa-check me-1"></i>Réclamé' : '<i class="fas fa-share-alt me-1"></i>Partager')
-            + '</button></div></div>';
-    });
-    container.innerHTML = html;
-}
-
-function startSocialShare(key) {
-    currentPlatform = socialPlatforms.find(function(p) { return p.key === key; });
-    if (!currentPlatform) return;
-
-    showShareStep('sharing');
-    shareModal.show();
-
-    // Instagram doesn't have a share URL API - open the app/website
-    var shareUrl = shareUrls[key];
-    var win = window.open(shareUrl, '_blank', 'width=600,height=500');
-    
-    if (!win || win.closed) {
-        // For mobile or popup-blocked, try direct navigation
-        if (key === 'whatsapp' || key === 'telegram' || key === 'instagram') {
-            window.open(shareUrl, '_blank');
-            startCountdown(10);
-        } else {
-            showShareStep('popup_blocked');
-        }
-        return;
-    }
-    startCountdown(10);
-}
-
-function showShareStep(step, msg) {
-    msg = msg || '';
-    var el = document.getElementById('share-modal-content');
-    var templates = {
-        sharing: '<div class="share-step">'
-            + '<div class="share-step-icon" style="background:#f0f2f5;">' + (currentPlatform ? currentPlatform.icon : '') + '</div>'
-            + '<h4 class="fw-bold">Partagez sur ' + (currentPlatform ? currentPlatform.name : '') + '</h4>'
-            + '<p class="text-muted">Complétez le partage dans la fenêtre ouverte...</p>'
-            + '<div class="spinner-border text-primary mt-3"></div>'
-            + '<p class="text-muted small mt-2">Veuillez patienter quelques secondes</p>'
-            + '</div>',
-        countdown: '<div class="share-step">'
-            + '<div class="countdown-ring" id="countdown-number">30</div>'
-            + '<h4 class="fw-bold">Vérification en cours...</h4>'
-            + '<p class="text-muted">Ne fermez pas cette fenêtre</p>'
-            + '</div>',
-        confirm: '<div class="share-step">'
-            + '<div class="share-step-icon" style="background:rgba(16,185,129,0.1);">'
-            + '<i class="fas fa-question-circle text-success" style="font-size:2rem;"></i>'
-            + '</div>'
-            + '<h4 class="fw-bold">Avez-vous partagé sur ' + (currentPlatform ? currentPlatform.name : '') + ' ?</h4>'
-            + '<p class="text-muted mb-4">Confirmez pour recevoir vos <strong>' + (currentPlatform ? currentPlatform.points : 5) + ' points gratuits</strong></p>'
-            + '<div class="d-flex gap-3 justify-content-center">'
-            + '<button class="btn btn-outline-secondary px-4" style="border-radius:12px;" onclick="shareModal.hide()">Annuler</button>'
-            + '<button class="btn btn-success px-4" style="border-radius:12px;" onclick="confirmShare()"><i class="fas fa-check me-2"></i>Oui, j\'ai partagé !</button>'
-            + '</div>'
-            + '</div>',
-        crediting: '<div class="share-step">'
-            + '<div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>'
-            + '<h4 class="fw-bold mt-4">Crédit en cours...</h4>'
-            + '</div>',
-        success: '<div class="share-step">'
-            + '<div class="share-step-icon" style="background:rgba(16,185,129,0.1);">'
-            + '<i class="fas fa-check-circle text-success" style="font-size:2.4rem;"></i>'
-            + '</div>'
-            + '<h4 class="fw-bold text-success">+' + (currentPlatform ? currentPlatform.points : 5) + ' points !</h4>'
-            + '<p class="text-muted">' + (msg || 'Merci pour votre partage !') + '</p>'
-            + '</div>',
-        popup_blocked: '<div class="share-step">'
-            + '<div class="share-step-icon" style="background:rgba(245,158,11,0.1);">'
-            + '<i class="fas fa-exclamation-triangle text-warning" style="font-size:2rem;"></i>'
-            + '</div>'
-            + '<h4 class="fw-bold">Popup bloquée</h4>'
-            + '<p class="text-muted">Autorisez les popups pour partager sur ce réseau.</p>'
-            + '<button class="btn btn-outline-secondary mt-3 px-4" style="border-radius:12px;" onclick="shareModal.hide()">Fermer</button>'
-            + '</div>',
-        error: '<div class="share-step">'
-            + '<div class="share-step-icon" style="background:rgba(239,68,68,0.1);">'
-            + '<i class="fas fa-times-circle text-danger" style="font-size:2rem;"></i>'
-            + '</div>'
-            + '<h4 class="fw-bold text-danger">Erreur</h4>'
-            + '<p class="text-muted">' + msg + '</p>'
-            + '<button class="btn btn-outline-secondary mt-3 px-4" style="border-radius:12px;" onclick="shareModal.hide()">Fermer</button>'
-            + '</div>'
-    };
-    el.innerHTML = templates[step] || '';
-}
-
-function startCountdown(secs) {
-    showShareStep('countdown');
-    var count = secs;
-    var el = document.getElementById('countdown-number');
-    if (el) el.textContent = count;
-
-    countdownInterval = setInterval(function() {
-        count--;
-        var n = document.getElementById('countdown-number');
-        if (n) n.textContent = count;
-        if (count <= 0) {
-            clearInterval(countdownInterval);
-            showShareStep('confirm');
-        }
-    }, 1000);
-}
-
-function confirmShare() {
-    showShareStep('crediting');
-
-    fetch('{{ route("social.share") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify({ platform: currentPlatform.key })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if (data.success) {
-            showShareStep('success', data.message);
-            // Update the points display in the hero section
-            if (data.new_balance !== undefined) {
-                document.getElementById('user-points').textContent =
-                    new Intl.NumberFormat('fr-FR').format(data.new_balance) + ' pts';
-            }
-            setTimeout(function() { shareModal.hide(); loadSocialStatus(); }, 2500);
-        } else if (data.already_claimed) {
-            showShareStep('error', 'Points déjà réclamés pour ' + currentPlatform.name + '. Vous pouvez toujours partager librement !');
-        } else {
-            showShareStep('error', data.error || data.message || 'Erreur inconnue');
-        }
-    })
-    .catch(function(err) {
-        console.error('Social share error:', err);
-        showShareStep('error', 'Erreur réseau. Vérifiez votre connexion et réessayez.');
-    });
-}
 </script>
 @endsection

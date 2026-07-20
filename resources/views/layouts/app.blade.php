@@ -2890,6 +2890,95 @@
        RESPONSIVE
        ========================================= */
     @media (max-width: 768px) {
+        html,
+        body,
+        #app {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: clip;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        main,
+        main > *,
+        .row > *,
+        .d-flex > * {
+            min-width: 0;
+        }
+
+        main img,
+        main video,
+        main iframe,
+        main svg {
+            max-width: 100%;
+        }
+
+        main h1,
+        main h2,
+        main h3,
+        main h4,
+        main p,
+        main a,
+        main td,
+        main th {
+            overflow-wrap: anywhere;
+        }
+
+        input,
+        select,
+        textarea {
+            font-size: 16px !important;
+        }
+
+        .container,
+        .container-fluid {
+            width: 100%;
+            padding-right: 12px !important;
+            padding-left: 12px !important;
+        }
+
+        .card,
+        .card-modern {
+            border-radius: 14px;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto !important;
+            overscroll-behavior-inline: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .table-responsive > table {
+            margin-bottom: 0;
+        }
+
+        .modal-dialog {
+            width: auto;
+            max-width: calc(100vw - 20px);
+            margin: 10px auto;
+        }
+
+        .modal-content {
+            max-height: calc(100dvh - 20px);
+            overflow-y: auto;
+            border-radius: 16px !important;
+        }
+
+        .alert {
+            padding: 12px 14px;
+            font-size: .9rem;
+        }
+
+        .btn:not(.btn-sm),
+        button:not(.btn-sm) {
+            min-height: 44px;
+        }
+
         .hero-search {
             padding: 24px 0;
         }
@@ -6526,6 +6615,28 @@
 
         .ads-grid {
             grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 420px) {
+        .header-actions-area,
+        .mobile-actions-group {
+            gap: 5px !important;
+        }
+
+        .mobile-service-request {
+            min-width: 40px !important;
+            padding-inline: 8px !important;
+        }
+
+        .header-home-link span,
+        .mobile-service-request-long {
+            display: none !important;
+        }
+
+        .mobile-service-request-short {
+            display: inline !important;
+            font-size: .67rem;
         }
     }
 </style>

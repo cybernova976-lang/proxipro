@@ -522,6 +522,21 @@
             .steps-grid::before { display: none; }
         }
         @media (max-width: 767px) {
+            html, body { width: 100%; max-width: 100%; overflow-x: clip; }
+            .hero .container {
+                width: 100%;
+                max-width: 100%;
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+            .hero .row {
+                width: 100%;
+                max-width: 100%;
+                margin-left: 0;
+                margin-right: 0;
+                --bs-gutter-x: 0;
+            }
+            .hero .row > * { width: 100%; max-width: 100%; min-width: 0; padding-left: 0; padding-right: 0; }
             .value-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
             .value-card { padding: 24px 16px; }
             .cat-grid { grid-template-columns: 1fr; }
@@ -529,10 +544,29 @@
             .trust-bar-inner { gap: 24px; }
             .footer-grid { grid-template-columns: 1fr; gap: 32px; }
             .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
-            .hero-title { font-size: 2rem; }
-            .search-card { padding: 24px; }
+            .hero-title {
+                max-width: 100%;
+                font-size: clamp(1.7rem, 8.4vw, 2rem);
+                letter-spacing: -0.6px;
+                overflow-wrap: anywhere;
+            }
+            .hero-title .accent { white-space: normal; }
+            .hero-desc { max-width: 100%; font-size: 1rem; overflow-wrap: anywhere; }
+            .hero-trust-item { min-width: 0; }
+            .search-card { width: 100%; max-width: 100%; min-width: 0; padding: 24px; }
+            .search-card form,
+            .search-field,
+            .search-field input,
+            .search-field select { min-width: 0; max-width: 100%; }
             .press-logos { gap: 24px; }
             .cta-card { padding: 32px 24px; }
+        }
+
+        @media (max-width: 390px) {
+            .hero { padding-top: 38px; }
+            .hero-label { max-width: 100%; padding: 8px 14px; }
+            .hero-trust { margin-top: 34px; }
+            .search-card { padding: 20px 16px; border-radius: 20px; }
         }
         
         /* ===== ANIMATIONS ===== */
