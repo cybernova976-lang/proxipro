@@ -41,6 +41,21 @@ class FeedMarketplaceRulesFeatureTest extends TestCase
         $this->assertLessThan(80, $queryCount, 'Le feed exécute trop de requêtes SQL pour une page vide.');
     }
 
+    public function test_professional_can_open_the_feed_with_onboarding_categories(): void
+    {
+        $professional = User::factory()->create([
+            'user_type' => 'professionnel',
+            'is_service_provider' => false,
+        ]);
+
+        $response = $this->withoutMiddleware()
+            ->actingAs($professional)
+            ->get(route('feed'));
+
+        $response->assertOk()
+            ->assertSee('const obmCatsData =', false);
+    }
+
     public function test_targeted_request_is_only_visible_to_matching_providers(): void
     {
         $author = User::factory()->create();

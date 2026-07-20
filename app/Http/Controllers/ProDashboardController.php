@@ -1830,15 +1830,6 @@ class ProDashboardController extends Controller
      */
     private function getServiceCategories(): array
     {
-        $categories = [];
-        foreach (\App\Support\MarketplaceCategoryRegistry::enabledServices() as $name => $data) {
-            $categories[$name] = [
-                'icon' => $data['icon'],
-                'color' => $data['color'],
-                'subcategories' => $data['subcategories'],
-            ];
-        }
-
-        return $categories;
+        return MarketplaceCategoryRegistry::enabledServiceOptions();
     }
 }

@@ -129,6 +129,28 @@ class MarketplaceCategoryRegistry
         return self::enabledForType('services');
     }
 
+    /**
+     * Catégories de services prêtes à être utilisées par les formulaires
+     * prestataire. Cette représentation commune évite qu'un contrôleur doive
+     * en instancier un autre pour récupérer de simples données de catalogue.
+     *
+     * @return array<string, array{icon: string, color: string, subcategories: array<int, string>}>
+     */
+    public static function enabledServiceOptions(): array
+    {
+        $categories = [];
+
+        foreach (self::enabledServices() as $name => $definition) {
+            $categories[$name] = [
+                'icon' => $definition['icon'] ?? '•',
+                'color' => $definition['color'] ?? '#64748b',
+                'subcategories' => array_values($definition['subcategories'] ?? []),
+            ];
+        }
+
+        return $categories;
+    }
+
     /** @return array<string, array<string, mixed>> */
     public static function enabledMarketplace(): array
     {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Ad;
 use App\Services\FeedRankingService;
+use App\Support\MarketplaceCategoryRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -269,10 +270,9 @@ class FeedController extends Controller
             $proSuggestions = $user->getProSuggestions();
             $proProfileCompletion = $user->getProProfileCompletionPercent();
 
-            // Always load categories for pro users (needed by onboarding modal
-            // when opened from suggestions, not just auto-show)
-            $proCtrl = new \App\Http\Controllers\ProDashboardController;
-            $onboardingCategories = $proCtrl->getServiceCategoriesPublic();
+            // Toujours charger les catégories pour le formulaire d'onboarding,
+            // y compris lorsqu'il est ouvert depuis les suggestions du feed.
+            $onboardingCategories = MarketplaceCategoryRegistry::enabledServiceOptions();
         }
 
         $adsMapData = $this->buildAdsMapData(
