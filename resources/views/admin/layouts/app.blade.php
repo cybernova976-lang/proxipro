@@ -28,7 +28,17 @@
             margin-left: var(--sidebar-width);
             padding: 20px;
             position: relative;
-            z-index: 1;
+            /* Ne pas créer de contexte d'empilement : les fonds Bootstrap sont
+               ajoutés sous <body> et passeraient sinon devant les modales. */
+            z-index: auto;
+        }
+
+        .modal {
+            z-index: 1060;
+        }
+
+        .modal-backdrop {
+            z-index: 1050;
         }
         
         .sidebar-header {
@@ -351,6 +361,13 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Plusieurs anciennes vues déclarent leurs modales dans un tableau ou
+        // dans .main-content. Les placer directement sous <body> garantit que
+        // leur z-index est comparé au même niveau que le fond Bootstrap.
+        document.querySelectorAll('.main-content .modal').forEach(function (modal) {
+            document.body.appendChild(modal);
+        });
+
         // Toggle sidebar sur mobile
         const sidebar = document.querySelector('.sidebar');
         const overlay = document.getElementById('sidebarOverlay');
