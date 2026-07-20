@@ -47,7 +47,10 @@ return [
     |
     */
 
-    'debug' => (bool) env('APP_DEBUG', false),
+    // Ne jamais exposer les traces, chemins et extraits de code sur un
+    // environnement public, même si APP_DEBUG a été activé par erreur.
+    'debug' => in_array(strtolower((string) env('APP_ENV', 'production')), ['local', 'development', 'testing'], true)
+        && (bool) env('APP_DEBUG', false),
 
     /*
     |--------------------------------------------------------------------------
