@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $ad->title . ' - ProxiPro')
+@section('title', $ad->title . ' - Lunamars')
 
 @push('styles')
 <style>
@@ -668,7 +668,7 @@ Cordialement,
                     <div class="modal-body">
                         <div class="alert alert-success" style="border-radius: 12px;">
                             <strong>Paiement securise</strong><br>
-                            Une commission ProxiPro de 10% est previsualisee. Le paiement securise sera branche a l'etape suivante.
+                            Une commission Lunamars de 10% est previsualisee. Le paiement securise sera branche a l'etape suivante.
                         </div>
                         <div class="mb-3">
                             <label class="form-label-light">Montant convenu</label>

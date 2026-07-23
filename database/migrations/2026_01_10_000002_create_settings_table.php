@@ -21,8 +21,8 @@ return new class extends Migration
 
         // Insérer les paramètres par défaut
         $defaults = [
-            ['key' => 'site_name', 'value' => 'ProxiPro', 'group' => 'general'],
-            ['key' => 'contact_email', 'value' => 'contact@ProxiPro.com', 'group' => 'general'],
+            ['key' => 'site_name', 'value' => 'Lunamars', 'group' => 'general'],
+            ['key' => 'contact_email', 'value' => 'hello@example.com', 'group' => 'general'],
             ['key' => 'maintenance_mode', 'value' => '0', 'group' => 'general'],
             ['key' => 'free_ads_limit', 'value' => '3', 'group' => 'ads'],
             ['key' => 'ad_validity_days', 'value' => '30', 'group' => 'ads'],

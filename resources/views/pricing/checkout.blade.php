@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Boutique de Points - ProxiPro')
+@section('title', 'Boutique de Points - Lunamars')
 
 @push('styles')
 <style>

@@ -18,7 +18,7 @@ class AdminTestMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Test e-mail ProxiPro')
+        return $this->subject('Test e-mail Lunamars')
             ->replyTo(
                 $this->details['reply_to_address'] ?? config('mail.reply_to.address'),
                 $this->details['reply_to_name'] ?? config('mail.reply_to.name')

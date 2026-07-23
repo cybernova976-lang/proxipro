@@ -9,7 +9,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      * 
-     * Système de profils utilisateurs ProxiPro:
+     * Système de profils utilisateurs Lunamars:
      * 
      * account_type: 'particulier' | 'professionnel'
      * - Détermine le type principal du compte

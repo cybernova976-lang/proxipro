@@ -48,7 +48,7 @@ class PublicSiteFeatureTest extends TestCase
             ->assertSee('images/social-card.png', false)
             ->assertSee('property="og:image:width" content="1200"', false)
             ->assertSee('data-site-share-copy', false)
-            ->assertSee('Partager ProxiPro')
+            ->assertSee('Partager Lunamars')
             ->assertDontSee('<title>Laravel', false)
             ->assertDontSee('Plateforme N°1')
             ->assertDontSee('Sophie M.');
@@ -67,7 +67,7 @@ class PublicSiteFeatureTest extends TestCase
         $response = $this->actingAs($user)->get(route('profile.show'));
 
         $response->assertOk()
-            ->assertSee('Partager '.config('app.name', 'ProxiPro'))
+            ->assertSee('Partager '.config('app.name', 'Lunamars'))
             ->assertSee('data-site-share-trigger', false)
             ->assertSee('id="sitePlatformShareModal"', false)
             ->assertSee('https://wa.me/', false)

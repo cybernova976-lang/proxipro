@@ -3,32 +3,34 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'ProxiPro') }} — Services entre particuliers et professionnels</title>
-    <meta name="description" content="Publiez votre besoin, recevez des propositions de prestataires et échangez en toute simplicité sur {{ config('app.name', 'ProxiPro') }}.">
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    <title>{{ config('app.name', 'Lunamars') }} — Services entre particuliers et professionnels</title>
+    <meta name="description" content="Publiez votre besoin, recevez des propositions de prestataires et échangez en toute simplicité sur {{ config('app.name', 'Lunamars') }}.">
     <link rel="canonical" href="{{ url('/') }}">
     
     <!-- Open Graph / Social Sharing -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="{{ config('app.name', 'ProxiPro') }} — Trouvez un prestataire près de chez vous">
+    <meta property="og:title" content="{{ config('app.name', 'Lunamars') }} — Trouvez un prestataire près de chez vous">
     <meta property="og:description" content="Décrivez votre besoin, comparez les propositions et choisissez le prestataire qui vous convient.">
     <meta property="og:url" content="{{ url('/') }}">
     <meta property="og:image" content="{{ asset('images/social-card.png') }}">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="{{ config('app.name', 'ProxiPro') }}, services de proximité">
-    <meta property="og:site_name" content="{{ config('app.name', 'ProxiPro') }}">
+    <meta property="og:image:alt" content="{{ config('app.name', 'Lunamars') }}, services de proximité">
+    <meta property="og:site_name" content="{{ config('app.name', 'Lunamars') }}">
     <meta property="og:locale" content="fr_FR">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ config('app.name', 'ProxiPro') }} — Services de proximité">
+    <meta name="twitter:title" content="{{ config('app.name', 'Lunamars') }} — Services de proximité">
     <meta name="twitter:description" content="Publiez un besoin et comparez les propositions de prestataires.">
     <meta name="twitter:image" content="{{ asset('images/social-card.png') }}">
     <script type="application/ld+json">
         {!! json_encode([
             '@context' => 'https://schema.org',
             '@type' => 'WebSite',
-            'name' => config('app.name', 'ProxiPro'),
+            'name' => config('app.name', 'Lunamars'),
             'url' => url('/'),
+            'logo' => asset('images/brand/lunamars-mark.png'),
             'potentialAction' => [
                 '@type' => 'SearchAction',
                 'target' => url('/ads') . '?q={search_term_string}',
@@ -102,9 +104,13 @@
         }
         .nav-brand-icon {
             width: 36px; height: 36px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: #fff;
             border-radius: 10px; display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: 900; font-size: 1.1rem;
+            padding: 2px; overflow: hidden;
+            box-shadow: 0 4px 14px rgba(58, 134, 255, 0.16);
+        }
+        .nav-brand-icon .lunamars-brand-mark {
+            width: 100%; height: 100%; object-fit: contain; display: block;
         }
         .nav-links {
             display: flex; align-items: center; gap: 6px;
@@ -483,9 +489,12 @@
         }
         .footer-brand-icon {
             width: 32px; height: 32px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: white;
             border-radius: 8px; display: inline-flex; align-items: center;
-            justify-content: center; color: white; font-weight: 900; font-size: 0.9rem;
+            justify-content: center; padding: 2px; overflow: hidden;
+        }
+        .footer-brand-icon .lunamars-brand-mark {
+            width: 100%; height: 100%; object-fit: contain; display: block;
         }
         .footer-brand p { font-size: 0.9rem; line-height: 1.7; margin-bottom: 20px; }
         .footer-brand > [data-site-share-trigger] { margin-bottom: 18px; }
@@ -583,8 +592,8 @@
         <div class="container">
             <div class="nav-inner">
                 <a href="{{ url('/') }}" class="nav-brand">
-                    <span class="nav-brand-icon">{{ Str::upper(Str::substr(config('app.name', 'ProxiPro'), 0, 1)) }}</span>
-                    {{ config('app.name', 'ProxiPro') }}
+                    <span class="nav-brand-icon"><x-brand-mark :size="36" /></span>
+                    {{ config('app.name', 'Lunamars') }}
                 </a>
                 <ul class="nav-links">
                     <li><a href="{{ url('/ads') }}">Annonces</a></li>
@@ -612,7 +621,7 @@
                         <i class="fas fa-envelope me-2 text-muted"></i>Contact
                     </a>
                     <button type="button" class="btn btn-light text-start fw-semibold" data-site-share-trigger>
-                        <i class="fas fa-share-nodes me-2 text-primary"></i>Partager {{ config('app.name', 'ProxiPro') }}
+                        <i class="fas fa-share-nodes me-2 text-primary"></i>Partager {{ config('app.name', 'Lunamars') }}
                     </button>
                     @auth
                         <a href="{{ route('feed') }}" class="btn btn-primary rounded-3 mt-2 py-2">
@@ -997,10 +1006,10 @@
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <h4><span class="footer-brand-icon">{{ Str::upper(Str::substr(config('app.name', 'ProxiPro'), 0, 1)) }}</span> {{ config('app.name', 'ProxiPro') }}</h4>
+                    <h4><span class="footer-brand-icon"><x-brand-mark :size="32" /></span> {{ config('app.name', 'Lunamars') }}</h4>
                     <p>La plateforme de mise en relation pour publier un besoin, comparer des propositions et travailler avec un prestataire près de chez vous.</p>
                     <button type="button" class="btn btn-outline-light rounded-3" data-site-share-trigger>
-                        <i class="fas fa-share-nodes me-2"></i>Partager {{ config('app.name', 'ProxiPro') }}
+                        <i class="fas fa-share-nodes me-2"></i>Partager {{ config('app.name', 'Lunamars') }}
                     </button>
                     @if(collect(config('site.social', []))->filter()->isNotEmpty())
                     <div class="footer-social">
@@ -1048,7 +1057,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <span>&copy; {{ date('Y') }} {{ config('app.name', 'ProxiPro') }}. Tous droits réservés.</span>
+                <span>&copy; {{ date('Y') }} {{ config('app.name', 'Lunamars') }}. Tous droits réservés.</span>
                 <span>Mise en relation de proximité</span>
             </div>
         </div>

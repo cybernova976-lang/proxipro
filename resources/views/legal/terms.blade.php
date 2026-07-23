@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Conditions générales d’utilisation - ' . config('app.name', 'ProxiPro'))
-@section('meta_description', 'Conditions d’accès et d’utilisation de la plateforme ' . config('app.name', 'ProxiPro') . '.')
+@section('title', 'Conditions générales d’utilisation - ' . config('app.name', 'Lunamars'))
+@section('meta_description', 'Conditions d’accès et d’utilisation de la plateforme ' . config('app.name', 'Lunamars') . '.')
 
 @section('content')
 <div class="container py-5"><div class="row justify-content-center"><div class="col-lg-9">
@@ -14,7 +14,7 @@
     <p>En créant un compte ou en utilisant une fonctionnalité réservée, l’utilisateur accepte les présentes conditions, les <a href="{{ route('legal.platform-rules') }}">règles de la marketplace</a> et la <a href="{{ route('legal.privacy') }}">politique de confidentialité</a>. Il doit disposer de la capacité juridique requise et fournir des informations exactes, actuelles et non trompeuses.</p>
 
     <h4 class="mt-4">2. Rôle de la plateforme</h4>
-    <p>{{ config('app.name', 'ProxiPro') }} est un intermédiaire de mise en relation. Sauf indication expresse pour un service précis, la plateforme n’est ni l’employeur, ni le mandataire, ni le fournisseur de la prestation conclue entre utilisateurs. Le client choisit son cocontractant ; le prestataire détermine son offre et reste responsable de son exécution.</p>
+    <p>{{ config('app.name', 'Lunamars') }} est un intermédiaire de mise en relation. Sauf indication expresse pour un service précis, la plateforme n’est ni l’employeur, ni le mandataire, ni le fournisseur de la prestation conclue entre utilisateurs. Le client choisit son cocontractant ; le prestataire détermine son offre et reste responsable de son exécution.</p>
 
     <h4 class="mt-4">3. Comptes et statuts affichés</h4>
     <p>Une personne ne doit utiliser qu’un compte légitime et protéger ses accès. La plateforme distingue le particulier demandeur, le « particulier prestataire non professionnel » et le professionnel déclaré. Un badge « Profil vérifié » confirme uniquement les contrôles effectués au moment de la vérification ; il ne constitue ni une garantie de compétence, ni une assurance de bonne exécution.</p>

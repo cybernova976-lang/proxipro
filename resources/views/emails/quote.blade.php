@@ -93,7 +93,7 @@
         </div>
 
         <div class="email-footer">
-            <p>Cet email a été envoyé via <strong>ProxiPro</strong> — La plateforme des professionnels de proximité.</p>
+            <p>Cet email a été envoyé via <strong>{{ config('app.name', 'Lunamars') }}</strong> — La plateforme des professionnels de proximité.</p>
         </div>
     </div>
 </body>

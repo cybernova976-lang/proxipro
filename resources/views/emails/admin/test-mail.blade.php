@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test e-mail ProxiPro</title>
+    <title>Test e-mail Lunamars</title>
 </head>
 <body style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,sans-serif;color:#1f2937;">
     <div style="max-width:640px;margin:0 auto;padding:32px 16px;">
         <div style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,.08);">
             <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8);padding:24px 28px;color:#ffffff;">
                 <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.85;">Diagnostic e-mail</div>
-                <h1 style="margin:8px 0 0;font-size:28px;line-height:1.2;">Test de messagerie ProxiPro</h1>
+                <h1 style="margin:8px 0 0;font-size:28px;line-height:1.2;">Test de messagerie Lunamars</h1>
             </div>
 
             <div style="padding:28px;">

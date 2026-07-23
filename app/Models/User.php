@@ -1014,7 +1014,7 @@ class User extends Authenticatable
                 'priority' => 90,
                 'type' => 'info',
                 'icon' => 'fas fa-crown',
-                'title' => 'Passez à ProxiPro Premium',
+                'title' => 'Passez à Lunamars Premium',
                 'description' => 'Recevez 3x plus de demandes et accédez aux outils avancés. À partir de 9,99€/mois.',
                 'action' => "window.location.href='".route('pro.subscription')."'",
                 'action_label' => 'Voir les offres',

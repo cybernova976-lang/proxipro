@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Mon Profil - ProxiPro')
+@section('title', 'Mon Profil - Lunamars')
 
 @section('content')
 @php

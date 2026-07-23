@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title', 'Profil de ' . $user->name . ' - ProxiPro')
-@section('meta_description', $user->bio ? Str::limit($user->bio, 160) : (($user->profession ? $user->profession . ' sur ProxiPro. ' : '') . ($user->city ? 'Basé à ' . $user->city . '. ' : '') . 'Découvrez ce profil sur ProxiPro.'))
+@section('title', 'Profil de ' . $user->name . ' - Lunamars')
+@section('meta_description', $user->bio ? Str::limit($user->bio, 160) : (($user->profession ? $user->profession . ' sur Lunamars. ' : '') . ($user->city ? 'Basé à ' . $user->city . '. ' : '') . 'Découvrez ce profil sur Lunamars.'))
 @section('og_type', 'profile')
-@section('og_title', ($user->company_name ?: $user->name) . ($user->profession ? ' — ' . $user->profession : '') . ' | ProxiPro')
-@section('og_description', $user->bio ? Str::limit($user->bio, 160) : 'Découvrez le profil de ' . ($user->company_name ?: $user->name) . ' sur ProxiPro.')
-@section('og_image', $user->avatar ? storage_url($user->avatar) : asset('images/social-card.svg'))
+@section('og_title', ($user->company_name ?: $user->name) . ($user->profession ? ' — ' . $user->profession : '') . ' | Lunamars')
+@section('og_description', $user->bio ? Str::limit($user->bio, 160) : 'Découvrez le profil de ' . ($user->company_name ?: $user->name) . ' sur Lunamars.')
+@section('og_image', $user->avatar ? storage_url($user->avatar) : asset('images/social-card.png'))
 @section('og_url', route('profile.public', $user->id))
 
 @section('content')

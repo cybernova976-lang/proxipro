@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Historique des transactions - ProxiPro')
+@section('title', 'Historique des transactions - Lunamars')
 
 @section('content')
 <div class="container py-4">

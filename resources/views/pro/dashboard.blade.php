@@ -432,7 +432,7 @@
     <div style="font-size: 3rem; margin-bottom: 12px;">🚀</div>
     <h3 style="font-weight: 800; color: #1e293b; margin-bottom: 8px;">Prêt à développer votre activité ?</h3>
     <p class="text-muted mb-4" style="max-width: 480px; margin: 0 auto 24px;">
-        Rejoignez les professionnels qui utilisent ProxiPro pour gérer leurs clients, leurs devis et leur facturation en un seul endroit.
+        Rejoignez les professionnels qui utilisent Lunamars pour gérer leurs clients, leurs devis et leur facturation en un seul endroit.
     </p>
     <div class="d-flex gap-3 justify-content-center flex-wrap">
         <button type="button" data-bs-toggle="modal" data-bs-target="#becomeProviderModal"

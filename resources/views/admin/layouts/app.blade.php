@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - @yield('title', 'ProxiPro')</title>
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    <title>Admin - @yield('title', 'Lunamars')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -44,6 +45,17 @@
         .sidebar-header {
             padding: 20px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .admin-brand-mark {
+            width: 42px;
+            height: 42px;
+            flex: 0 0 42px;
+            object-fit: contain;
+            padding: 3px;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
         }
         
         .sidebar-menu {
@@ -181,11 +193,12 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header d-flex align-items-start justify-content-between">
-            <div>
-                <h4 class="mb-0">
-                    <i class="fas fa-crown me-2"></i>Admin Panel
-                </h4>
-                <small class="text-muted">ProxiPro Platform</small>
+            <div class="d-flex align-items-center gap-2">
+                <x-brand-mark :size="42" class="admin-brand-mark" :decorative="false" />
+                <div>
+                    <h4 class="mb-0">Administration</h4>
+                    <small class="text-muted">{{ config('app.name', 'Lunamars') }}</small>
+                </div>
             </div>
             <button class="sidebar-close-btn d-md-none" id="sidebarClose" aria-label="Fermer le menu">
                 <i class="fas fa-times"></i>

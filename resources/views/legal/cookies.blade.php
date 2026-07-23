@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Politique des cookies - ' . config('app.name', 'ProxiPro'))
-@section('meta_description', 'Informations sur les cookies nécessaires au fonctionnement de ' . config('app.name', 'ProxiPro') . '.')
+@section('title', 'Politique des cookies - ' . config('app.name', 'Lunamars'))
+@section('meta_description', 'Informations sur les cookies nécessaires au fonctionnement de ' . config('app.name', 'Lunamars') . '.')
 
 @section('content')
 <div class="container py-5"><div class="row justify-content-center"><div class="col-lg-8">

@@ -5,7 +5,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Espace Pro - ProxiPro')</title>
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    <title>@yield('title', 'Espace Pro - Lunamars')</title>
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Inter:400,500,600,700,800&display=swap" rel="stylesheet">
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
@@ -72,14 +73,20 @@
     .pro-topbar-brand .brand-icon {
         width: 36px;
         height: 36px;
-        background: var(--pro-gradient);
-        color: white;
+        background: white;
         border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 800;
-        font-size: 1.1rem;
+        overflow: hidden;
+        padding: 2px;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.16);
+    }
+
+    .pro-topbar-brand .brand-icon .lunamars-brand-mark {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
 
     .pro-topbar-brand span {
@@ -741,8 +748,8 @@
                 <i class="fas fa-bars"></i>
             </button>
             <a href="{{ route('pro.dashboard') }}" class="pro-topbar-brand">
-                <div class="brand-icon">P</div>
-                <span>ProxiPro</span>
+                <div class="brand-icon"><x-brand-mark :size="36" /></div>
+                <span>{{ config('app.name', 'Lunamars') }}</span>
                 <span class="pro-badge">PRO</span>
             </a>
         </div>

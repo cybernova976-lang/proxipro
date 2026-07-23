@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Acheter des Points - ProxiPro')
+@section('title', 'Acheter des Points - Lunamars')
 
 @section('content')
 <div class="container py-5">

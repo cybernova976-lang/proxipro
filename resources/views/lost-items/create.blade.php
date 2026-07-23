@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Signaler un objet - ProxiPro')
+@section('title', 'Signaler un objet - Lunamars')
 
 @push('styles')
 <style>

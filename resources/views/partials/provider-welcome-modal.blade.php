@@ -7,7 +7,7 @@
             <div class="welcome-modal-header">
                 <div class="welcome-confetti">🎉</div>
                 <h4 class="welcome-title" id="providerWelcomeModalLabel">
-                    Bienvenue sur ProxiPro !
+                    Bienvenue sur Lunamars !
                 </h4>
                 <p class="welcome-subtitle">
                     Votre compte a été créé avec succès. Saviez-vous que vous pouvez aussi proposer vos services ?

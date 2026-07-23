@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
     <title>Bienvenue - Configuration de votre espace professionnel</title>
     <link href="https://fonts.bunny.net/css?family=Inter:400,500,600,700,800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -50,10 +51,13 @@
         margin-bottom: 8px; text-decoration: none;
     }
     .ob-logo-icon {
-        width: 40px; height: 40px; background: var(--ob-gradient);
-        color: white; border-radius: 12px; display: flex;
+        width: 40px; height: 40px; background: white;
+        border-radius: 12px; display: flex; padding: 2px; overflow: hidden;
         align-items: center; justify-content: center;
-        font-weight: 800; font-size: 1.1rem;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.16);
+    }
+    .ob-logo-icon .lunamars-brand-mark {
+        width: 100%; height: 100%; object-fit: contain;
     }
     .ob-logo .badge { background: var(--ob-gradient); color: white;
         font-size: 0.6rem; padding: 3px 8px; border-radius: 20px;
@@ -357,8 +361,8 @@
     <!-- Header -->
     <div class="ob-header">
         <a href="{{ route('feed') }}" class="ob-logo">
-            <div class="ob-logo-icon">P</div>
-            ProxiPro
+            <div class="ob-logo-icon"><x-brand-mark :size="40" /></div>
+            {{ config('app.name', 'Lunamars') }}
             <span class="badge">PRO</span>
         </a>
     </div>
@@ -651,7 +655,7 @@
                 <div class="ob-card-title">{{ $proSubscriptionsEnabled ? '👑 Choisissez votre abonnement' : '🚀 Accès prestataire pendant le lancement' }}</div>
                 <div class="ob-card-subtitle">
                     {{ $proSubscriptionsEnabled
-                        ? "L'abonnement ProxiPro vous donne accès à tous les outils professionnels : réception de demandes clients, devis, factures, gestion clientèle et visibilité accrue."
+                        ? "L'abonnement Lunamars vous donne accès à tous les outils professionnels : réception de demandes clients, devis, factures, gestion clientèle et visibilité accrue."
                         : "L'abonnement récurrent n'est pas encore commercialisé. Terminez votre configuration et utilisez l'espace prestataire sans abonnement pendant cette phase." }}
                 </div>
 

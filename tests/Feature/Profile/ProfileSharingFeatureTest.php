@@ -39,7 +39,7 @@ class ProfileSharingFeatureTest extends TestCase
 
         $html = $response->getContent();
         $expectedShareText = implode("\n", [
-            'Découvrez le profil de Amina Services sur ProxiPro.',
+            'Découvrez le profil de Amina Services sur Lunamars.',
             'Métier : Électricienne',
             'Description : Interventions électriques rapides pour les particuliers et les entreprises.',
             'Localisation : Lyon, France',
@@ -49,7 +49,7 @@ class ProfileSharingFeatureTest extends TestCase
         $this->assertSame(1, substr_count($html, 'property="og:title"'));
         $this->assertSame(1, substr_count($html, 'property="og:image"'));
         $this->assertSame(1, substr_count($html, 'name="twitter:card"'));
-        $this->assertStringContainsString('Amina Services — Électricienne | ProxiPro', $html);
+        $this->assertStringContainsString('Amina Services — Électricienne | Lunamars', $html);
     }
 
     public function test_a_session_only_counts_once_when_it_shares_the_same_profile_multiple_times(): void
@@ -132,7 +132,7 @@ class ProfileSharingFeatureTest extends TestCase
             ->assertSee('avatars/nadia.jpg', false);
 
         $this->assertStringContainsString(json_encode(implode("\n", [
-            'Découvrez le profil de Nadia Dépannage sur ProxiPro.',
+            'Découvrez le profil de Nadia Dépannage sur Lunamars.',
             'Métier : Plombière',
             'Description : Dépannages et installations sanitaires à domicile.',
         ])), $response->getContent());

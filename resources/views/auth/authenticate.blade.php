@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Connexion & Inscription - ProxiPro</title>
+    <title>Connexion & Inscription - Lunamars</title>
     
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -368,6 +369,19 @@
         .btn-auth.loading .btn-text {
             opacity: 0.7;
         }
+
+        .auth-header .logo.auth-brand-logo {
+            padding: 5px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .auth-header .auth-brand-logo .lunamars-brand-mark {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
     </style>
 </head>
 <body>
@@ -376,11 +390,9 @@
             <!-- Login Side -->
             <div class="login-side">
                 <div class="auth-header">
-                    <div class="logo">
-                        <i class="fas fa-sign-in-alt"></i>
-                    </div>
+                    <div class="logo auth-brand-logo"><x-brand-mark :size="50" :decorative="false" /></div>
                     <h2>Connexion</h2>
-                    <p>Bienvenue sur ProxiPro</p>
+                    <p>Bienvenue sur Lunamars</p>
                 </div>
                 
                 @if(session('status'))
@@ -444,9 +456,7 @@
             <!-- Register Side -->
             <div class="register-side">
                 <div class="auth-header">
-                    <div class="logo" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                        <i class="fas fa-user-plus"></i>
-                    </div>
+                    <div class="logo auth-brand-logo"><x-brand-mark :size="50" :decorative="false" /></div>
                     <h2>Inscription</h2>
                     <p>Rejoignez notre communauté</p>
                 </div>

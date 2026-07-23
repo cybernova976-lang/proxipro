@@ -642,7 +642,7 @@
                     <div class="obm-card-title">{{ $proSubscriptionsEnabled ? '👑 Choisissez votre abonnement' : '🚀 Accès prestataire pendant le lancement' }}</div>
                     <div class="obm-card-subtitle">
                         {{ $proSubscriptionsEnabled
-                            ? "L'abonnement ProxiPro vous donne accès à tous les outils professionnels : demandes clients, devis, factures, clientèle et visibilité."
+                            ? "L'abonnement Lunamars vous donne accès à tous les outils professionnels : demandes clients, devis, factures, clientèle et visibilité."
                             : "Aucun abonnement n'est commercialisé pour le moment. Vous pouvez terminer gratuitement la configuration de votre espace." }}
                     </div>
 

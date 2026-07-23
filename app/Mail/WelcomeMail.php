@@ -17,16 +17,16 @@ class WelcomeMail extends Mailable
     public function __construct(User $user)
     {
         $this->user = $user;
-        $this->appName = config('app.name', 'ProxiPro');
+        $this->appName = config('app.name', 'Lunamars');
         $this->supportEmail = config('mail.reply_to.address')
             ?: config('mail.admin_email')
             ?: config('mail.from.address')
-            ?: 'support@proxipro.fr';
+            ?: 'hello@example.com';
     }
 
     public function build()
     {
-        return $this->subject('Bienvenue sur ProxiPro')
+        return $this->subject('Bienvenue sur Lunamars')
             ->view('emails.welcome');
     }
 }

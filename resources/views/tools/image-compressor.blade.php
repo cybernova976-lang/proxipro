@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Compresseur d\'images - ProxiPro')
+@section('title', 'Compresseur d\'images - Lunamars')
 
 @section('content')
 <div class="container py-4">

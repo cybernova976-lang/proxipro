@@ -4,9 +4,9 @@
         <div class="d-flex justify-content-between align-items-center h-100">
             <!-- Logo -->
             <a href="{{ route('feed') }}" class="navbar-brand-modern">
-                <div class="brand-logo">P</div>
+                <div class="brand-logo lunamars-logo-shell"><x-brand-mark :size="38" /></div>
                 <div class="d-none d-sm-block">
-                    <span class="brand-text">ProxiPro</span>
+                    <span class="brand-text">{{ config('app.name', 'Lunamars') }}</span>
                 </div>
             </a>
             

@@ -6,17 +6,17 @@ $ErrorActionPreference = 'Stop'
 
 $workspaceRoot = Split-Path -Parent $PSScriptRoot
 $emergentRoot = Join-Path (Split-Path -Parent $workspaceRoot) 'Emergent'
-$massiwaniRoot = $workspaceRoot
+$lunamarsRoot = $workspaceRoot
 
-$massiwaniCommand = 'php artisan serve --host=127.0.0.1 --port=8001'
+$lunamarsCommand = 'php artisan serve --host=127.0.0.1 --port=8001'
 $backendCommand = '.\\venv\\Scripts\\Activate.ps1; python -m uvicorn server:app --reload --host 127.0.0.1 --port 8000'
 $frontendCommand = 'npm start'
 
 $targets = @(
     @{
-        Name = 'MASSIWANI V2';
-        Path = $massiwaniRoot;
-        Command = $massiwaniCommand;
+        Name = 'LUNAMARS V2';
+        Path = $lunamarsRoot;
+        Command = $lunamarsCommand;
     },
     @{
         Name = 'Emergent backend';
@@ -37,7 +37,7 @@ foreach ($target in $targets) {
 }
 
 Write-Host 'Ports attendus:' -ForegroundColor Cyan
-Write-Host '  MASSIWANI V2     -> http://127.0.0.1:8001' -ForegroundColor Cyan
+Write-Host '  LUNAMARS V2     -> http://127.0.0.1:8001' -ForegroundColor Cyan
 Write-Host '  Emergent backend -> http://127.0.0.1:8000' -ForegroundColor Cyan
 Write-Host '  Emergent frontend-> http://127.0.0.1:3000' -ForegroundColor Cyan
 

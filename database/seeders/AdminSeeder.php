@@ -22,7 +22,7 @@ class AdminSeeder extends Seeder
 
         $password = env('ADMIN_PASSWORD');
         if (empty($password)) {
-            $password = 'ProxiPro' . date('Y') . '!' . bin2hex(random_bytes(4));
+            $password = 'Lunamars' . date('Y') . '!' . bin2hex(random_bytes(4));
             $this->command->warn("ADMIN_PASSWORD non défini — mot de passe généré automatiquement.");
             Log::warning('AdminSeeder: ADMIN_PASSWORD not set, generated random password.');
         }

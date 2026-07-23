@@ -19,7 +19,7 @@
         </div>
         <p style="font-size:13px;color:#64748b;">La facture complète est jointe au format PDF. Pour toute question, contactez directement l’émetteur.</p>
     </div>
-    <div style="padding:18px;background:#f8fafc;text-align:center;font-size:11px;color:#94a3b8;">Document transmis via ProxiPro.</div>
+    <div style="padding:18px;background:#f8fafc;text-align:center;font-size:11px;color:#94a3b8;">Document transmis via Lunamars.</div>
 </div>
 </body>
 </html>

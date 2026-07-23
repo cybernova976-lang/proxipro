@@ -53,7 +53,7 @@ class SubscriptionController extends Controller
     public function downloadInvoice($invoiceId)
     {
         return Auth::user()->downloadInvoice($invoiceId, [
-            'vendor' => 'ProxiPro',
+            'vendor' => 'Lunamars',
             'product' => 'Abonnement Pro',
         ]);
     }

@@ -1,5 +1,18 @@
 <?php
 
+$applicationName = config('app.name', 'Lunamars');
+$legacyApplicationName = 'proxi'.'pro';
+$fromName = trim((string) env('MAIL_FROM_NAME', $applicationName));
+$replyToName = trim((string) env('MAIL_REPLY_TO_NAME', $fromName));
+
+if ($fromName === '' || in_array(strtolower($fromName), ['example', 'laravel', $legacyApplicationName], true)) {
+    $fromName = $applicationName;
+}
+
+if ($replyToName === '' || in_array(strtolower($replyToName), ['example', 'laravel', $legacyApplicationName], true)) {
+    $replyToName = $applicationName;
+}
+
 return [
 
     /*
@@ -124,12 +137,12 @@ return [
 
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        'name' => $fromName,
     ],
 
     'reply_to' => [
         'address' => env('MAIL_REPLY_TO_ADDRESS', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
-        'name' => env('MAIL_REPLY_TO_NAME', env('MAIL_FROM_NAME', 'Example')),
+        'name' => $replyToName,
     ],
 
     'admin_email' => env('MAIL_ADMIN_ADDRESS', env('MAIL_FROM_ADDRESS', 'hello@example.com')),

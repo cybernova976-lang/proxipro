@@ -51,8 +51,8 @@ if (app()->environment('local')) {
     Route::get('/test-mail', function () {
         $to = request('to', config('mail.from.address'));
 
-        Mail::raw('Email de test depuis ProxiPro.', function ($message) use ($to) {
-            $message->to($to)->subject('Email de test ProxiPro');
+        Mail::raw('Email de test depuis Lunamars.', function ($message) use ($to) {
+            $message->to($to)->subject('Email de test Lunamars');
         });
 
         return "Mail sent to {$to}";

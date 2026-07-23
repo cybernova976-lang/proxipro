@@ -1,11 +1,13 @@
 <?php
 
-$applicationName = trim((string) env('APP_NAME', 'ProxiPro'));
+$applicationName = trim((string) env('APP_NAME', 'Lunamars'));
 
 // Empêche la valeur d'échafaudage Laravel d'apparaître dans l'interface,
 // les e-mails et les aperçus sociaux si l'environnement est mal configuré.
-if ($applicationName === '' || strtolower($applicationName) === 'laravel') {
-    $applicationName = 'ProxiPro';
+$legacyApplicationName = 'proxi'.'pro';
+
+if ($applicationName === '' || in_array(strtolower($applicationName), ['laravel', $legacyApplicationName], true)) {
+    $applicationName = 'Lunamars';
 }
 
 return [

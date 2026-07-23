@@ -11,7 +11,7 @@
     <div class="dash-greeting">
         <div>
             <h1>Bonjour, <span>{{ Auth::user()->name }}</span></h1>
-            <p>Gérez vos annonces et votre activité sur ProxiPro</p>
+            <p>Gérez vos annonces et votre activité sur Lunamars</p>
         </div>
     </div>
 

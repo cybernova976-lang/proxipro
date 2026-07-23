@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Mes alertes - ProxiPro')
+@section('title', 'Mes alertes - Lunamars')
 
 @push('styles')
 <style>

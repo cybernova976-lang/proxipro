@@ -3,19 +3,20 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Créer un Devis ou une Facture Gratuit en Ligne | {{ config('app.name', 'ProxiPro') }}</title>
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    <title>Créer un Devis ou une Facture Gratuit en Ligne | {{ config('app.name', 'Lunamars') }}</title>
     <meta name="description" content="Créez vos devis et factures professionnels gratuitement en quelques clics. Outil en ligne simple, rapide et adapté aux auto-entrepreneurs, artisans, freelances et petites entreprises.">
     <meta name="keywords" content="créer devis gratuit, facture en ligne, générateur devis, outil facturation, devis auto-entrepreneur, facture freelance, devis artisan">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="{{ url('/creer-devis-facture-gratuit') }}">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Créer un Devis ou une Facture Gratuit en Ligne | {{ config('app.name', 'ProxiPro') }}">
+    <meta property="og:title" content="Créer un Devis ou une Facture Gratuit en Ligne | {{ config('app.name', 'Lunamars') }}">
     <meta property="og:description" content="Créez vos devis et factures professionnels gratuitement en quelques clics. Outil en ligne simple et adapté à tous les métiers.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url('/creer-devis-facture-gratuit') }}">
     <meta property="og:locale" content="fr_FR">
-    <meta property="og:site_name" content="{{ config('app.name', 'ProxiPro') }}">
+    <meta property="og:site_name" content="{{ config('app.name', 'Lunamars') }}">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
@@ -27,7 +28,7 @@
     {
         "@@context": "https://schema.org",
         "@@type": "SoftwareApplication",
-        "name": "ProxiPro - Générateur de Devis et Factures",
+        "name": "Lunamars - Générateur de Devis et Factures",
         "operatingSystem": "Web",
         "applicationCategory": "BusinessApplication",
         "description": "Outil en ligne pour créer des devis et factures professionnels en PDF.",
@@ -54,7 +55,7 @@
                 "name": "Comment créer un devis gratuit en ligne ?",
                 "acceptedAnswer": {
                     "@@type": "Answer",
-                    "text": "Inscrivez-vous gratuitement sur ProxiPro, remplissez les informations de votre entreprise et de votre client, ajoutez vos lignes de produits ou services, et téléchargez votre devis en PDF en un clic. Votre premier devis est entièrement gratuit."
+                    "text": "Inscrivez-vous gratuitement sur Lunamars, remplissez les informations de votre entreprise et de votre client, ajoutez vos lignes de produits ou services, et téléchargez votre devis en PDF en un clic. Votre premier devis est entièrement gratuit."
                 }
             },
             {
@@ -94,7 +95,7 @@
                 "name": "Comment payer pour des crédits supplémentaires ?",
                 "acceptedAnswer": {
                     "@@type": "Answer",
-                    "text": "Vous pouvez acheter des packs de crédits par carte bancaire (paiement sécurisé via Stripe) ou utiliser vos points ProxiPro. Les crédits n'expirent jamais."
+                    "text": "Vous pouvez acheter des packs de crédits par carte bancaire (paiement sécurisé via Stripe) ou utiliser vos points Lunamars. Les crédits n'expirent jamais."
                 }
             }
         ]
@@ -131,8 +132,9 @@
     <!-- Navbar -->
     <nav class="bg-white border-b border-gray-100 sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-            <a href="{{ url('/') }}" class="text-xl font-bold text-primary-600 no-underline">
-                {{ config('app.name', 'ProxiPro') }}
+            <a href="{{ url('/') }}" class="inline-flex items-center gap-2 text-xl font-bold text-primary-600 no-underline">
+                <x-brand-mark :size="38" class="w-10 h-10 rounded-xl bg-white shadow-sm" :decorative="false" />
+                {{ config('app.name', 'Lunamars') }}
             </a>
             <div class="flex items-center gap-3">
                 @auth
@@ -350,12 +352,12 @@
             <div class="space-y-4">
                 @php
                     $faqs = [
-                        ['q' => 'Comment creer un devis gratuit en ligne ?', 'a' => 'Inscrivez-vous gratuitement sur ProxiPro, remplissez les informations de votre entreprise et de votre client, ajoutez vos lignes de produits ou services, et telechargez votre devis en PDF en un clic. Votre premier devis est entierement gratuit.'],
+                        ['q' => 'Comment creer un devis gratuit en ligne ?', 'a' => 'Inscrivez-vous gratuitement sur Lunamars, remplissez les informations de votre entreprise et de votre client, ajoutez vos lignes de produits ou services, et telechargez votre devis en PDF en un clic. Votre premier devis est entierement gratuit.'],
                         ['q' => 'L\'outil de devis est-il vraiment gratuit ?', 'a' => 'Oui, votre premier devis est 100% gratuit, sans engagement. Pour creer davantage de documents (devis ou factures), vous pouvez acheter des packs de credits a partir de 4,99 EUR pour 5 documents.'],
                         ['q' => 'Quels metiers peuvent utiliser cet outil ?', 'a' => 'Notre outil est adapte a tous les metiers et statuts : auto-entrepreneurs, artisans, freelances, consultants, commercants, professions liberales, petites entreprises... Quel que soit votre secteur d\'activite.'],
                         ['q' => 'Les devis generes sont-ils conformes a la legislation ?', 'a' => 'Nos devis et factures incluent toutes les mentions obligatoires : numero de document, coordonnees de l\'emetteur et du client, detail des prestations, montants HT/TVA/TTC, conditions de paiement.'],
                         ['q' => 'Puis-je personnaliser mes devis et factures ?', 'a' => 'Oui, vous pouvez personnaliser vos informations d\'entreprise (nom, adresse, SIRET), les informations client, les lignes de detail, le taux de TVA, les conditions et les notes.'],
-                        ['q' => 'Comment payer pour des credits supplementaires ?', 'a' => 'Vous pouvez acheter des packs de credits par carte bancaire (paiement securise via Stripe) ou utiliser vos points ProxiPro. Les credits n\'expirent jamais.'],
+                        ['q' => 'Comment payer pour des credits supplementaires ?', 'a' => 'Vous pouvez acheter des packs de credits par carte bancaire (paiement securise via Stripe) ou utiliser vos points Lunamars. Les credits n\'expirent jamais.'],
                     ];
                 @endphp
                 @foreach($faqs as $i => $faq)
@@ -393,7 +395,7 @@
     <!-- Footer -->
     <footer class="bg-gray-900 text-gray-400 py-10">
         <div class="max-w-6xl mx-auto px-4 text-center">
-            <p class="text-sm">&copy; {{ date('Y') }} {{ config('app.name', 'ProxiPro') }}. Tous droits reserves.</p>
+            <p class="text-sm">&copy; {{ date('Y') }} {{ config('app.name', 'Lunamars') }}. Tous droits reserves.</p>
             <div class="flex justify-center gap-6 mt-3 text-sm">
                 <a href="{{ url('/') }}" class="hover:text-white transition no-underline text-gray-400">Accueil</a>
                 <a href="#fonctionnalites" class="hover:text-white transition no-underline text-gray-400">Fonctionnalites</a>

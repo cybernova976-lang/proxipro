@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Accueil - ProxiPro')
+@section('title', 'Accueil - Lunamars')
 
 @push('styles')
 <style>
@@ -3555,7 +3555,7 @@
                 <div class="footer-brand">
                     <div class="footer-logo">
                         <span class="logo-icon">P</span>
-                        <span class="logo-text">ProxiPro</span>
+                        <span class="logo-text">Lunamars</span>
                     </div>
                     <p class="footer-description">
                         La plateforme de mise en relation entre particuliers et professionnels. 
@@ -3596,7 +3596,7 @@
             <div class="col-lg-3 col-md-6 mb-4">
                 <h5 class="footer-title">Contact</h5>
                 <ul class="footer-contact">
-                    <li><i class="fas fa-envelope"></i> contact@ProxiPro.com</li>
+                    <li><i class="fas fa-envelope"></i> {{ config('mail.admin_email', config('mail.from.address', 'hello@example.com')) }}</li>
                     <li><i class="fas fa-phone"></i> +262 693 00 00 00</li>
                     <li><i class="fas fa-map-marker-alt"></i> Mayotte, France</li>
                 </ul>
@@ -3608,7 +3608,7 @@
         <div class="footer-bottom">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <p class="copyright">© {{ date('Y') }} ProxiPro. Tous droits réservés.</p>
+                    <p class="copyright">© {{ date('Y') }} Lunamars. Tous droits réservés.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <p class="footer-credits">Fait avec <i class="fas fa-heart text-danger"></i> à Mayotte</p>
@@ -3863,7 +3863,7 @@
 
 @push('scripts')
 <script>
-    console.log('=== Script ProxiPro Feed chargé ===');
+    console.log('=== Script Lunamars Feed chargé ===');
     
     // =========================================
     // SYSTÈME DE PUBLICATION SOCIALE AMÉLIORÉ
@@ -3946,7 +3946,7 @@
         if (event) event.stopPropagation();
         const url = `${window.location.origin}/ads/${adId}`;
         if (navigator.share) {
-            navigator.share({ title: 'Publication Massiwani', url: url }).catch(() => {});
+            navigator.share({ title: 'Publication Lunamars', url: url }).catch(() => {});
         } else {
             navigator.clipboard.writeText(url).then(() => {
                 showToast('Lien copié !', 'success');
@@ -4041,7 +4041,7 @@
 
     function shareTo(platform, adId, title = '') {
         const url = `${window.location.origin}/ads/${adId}`;
-        const shareTitle = title || 'Découvrez cette offre sur ProxiPro';
+        const shareTitle = title || 'Découvrez cette offre sur Lunamars';
         let shareUrl = '';
         
         switch (platform) {

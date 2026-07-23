@@ -27,10 +27,10 @@ class VerificationEmailTemplateTest extends TestCase
         $notification = new VerifyEmail();
         $mailMessage = $notification->toMail($user);
 
-        $this->assertSame('Vérification de votre adresse e-mail ProxiPro', $mailMessage->subject);
+        $this->assertSame('Vérification de votre adresse e-mail Lunamars', $mailMessage->subject);
         $this->assertSame('emails.auth.verify-email', $mailMessage->view);
         $this->assertSame('Claire Martin', $mailMessage->viewData['userName']);
-        $this->assertSame(config('app.name', 'ProxiPro'), $mailMessage->viewData['appName']);
+        $this->assertSame(config('app.name', 'Lunamars'), $mailMessage->viewData['appName']);
         $this->assertStringContainsString('/email/verify/', $mailMessage->viewData['verificationUrl']);
         $this->assertNotEmpty($mailMessage->viewData['supportEmail']);
     }

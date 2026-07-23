@@ -32,12 +32,12 @@ class BoostExpiringNotification extends Notification
         $supportEmail = config('mail.reply_to.address')
             ?: config('mail.admin_email')
             ?: config('mail.from.address')
-            ?: 'support@proxipro.fr';
+            ?: 'hello@example.com';
 
         return (new MailMessage)
             ->subject("{$icon} Votre {$label} expire bientôt — {$this->ad->title}")
             ->view('emails.notifications.boost-expiring', [
-                'appName' => config('app.name', 'ProxiPro'),
+                'appName' => config('app.name', 'Lunamars'),
                 'supportEmail' => $supportEmail,
                 'recipientName' => $notifiable->name,
                 'label' => $label,

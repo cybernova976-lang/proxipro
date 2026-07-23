@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Politique de confidentialité - ' . config('app.name', 'ProxiPro'))
-@section('meta_description', 'Comment ' . config('app.name', 'ProxiPro') . ' collecte, utilise et protège vos données personnelles.')
+@section('title', 'Politique de confidentialité - ' . config('app.name', 'Lunamars'))
+@section('meta_description', 'Comment ' . config('app.name', 'Lunamars') . ' collecte, utilise et protège vos données personnelles.')
 
 @section('content')
 <div class="container py-5"><div class="row justify-content-center"><div class="col-lg-8">

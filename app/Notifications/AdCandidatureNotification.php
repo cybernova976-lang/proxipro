@@ -28,12 +28,12 @@ class AdCandidatureNotification extends Notification
         $supportEmail = config('mail.reply_to.address')
             ?: config('mail.admin_email')
             ?: config('mail.from.address')
-            ?: 'support@proxipro.fr';
+            ?: 'hello@example.com';
 
         return (new MailMessage)
             ->subject("📩 Nouvelle candidature pour votre annonce : {$this->ad->title}")
             ->view('emails.notifications.ad-candidature', [
-                'appName' => config('app.name', 'ProxiPro'),
+                'appName' => config('app.name', 'Lunamars'),
                 'supportEmail' => $supportEmail,
                 'recipientName' => $notifiable->name,
                 'candidateName' => $this->candidate->name,

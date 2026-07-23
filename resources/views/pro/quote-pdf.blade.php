@@ -197,7 +197,7 @@
         {{-- Footer --}}
         <div class="footer">
             @if($quote->status === 'draft')Brouillon non contractuel — @endif
-            {{ $seller['company_name'] ?? $seller['name'] }} — Document généré le {{ now()->format('d/m/Y à H:i') }} via ProxiPro
+            {{ $seller['company_name'] ?? $seller['name'] }} — Document généré le {{ now()->format('d/m/Y à H:i') }} via Lunamars
         </div>
     </div>
 </body>

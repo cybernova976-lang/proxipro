@@ -7,8 +7,8 @@
     <div class="w-full max-w-[400px] fade-in">
         <!-- Logo -->
         <a href="{{ url('/') }}" class="flex items-center justify-center gap-2.5 mb-10">
-            <span class="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-content-center text-white font-extrabold text-base shadow-md" style="display:inline-flex;align-items:center;justify-content:center;">P</span>
-            <span class="text-xl font-extrabold tracking-tight text-gray-900">ProxiPro</span>
+            <x-brand-mark :size="40" class="w-10 h-10 rounded-xl bg-white shadow-md" :decorative="false" />
+            <span class="text-xl font-extrabold tracking-tight text-gray-900">{{ config('app.name', 'Lunamars') }}</span>
         </a>
 
         <!-- Carte -->

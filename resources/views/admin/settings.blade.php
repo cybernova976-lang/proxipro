@@ -8,7 +8,7 @@
         <h2 class="h4 fw-bold">
             <i class="fas fa-cog text-secondary me-2"></i>Paramètres de la Plateforme
         </h2>
-        <p class="text-muted mb-0">Configuration générale de {{ $settings['general']['site_name'] ?? 'ProxiPro' }}</p>
+        <p class="text-muted mb-0">Configuration générale de {{ $settings['general']['site_name'] ?? 'Lunamars' }}</p>
     </div>
 </div>
 
@@ -28,7 +28,7 @@
                     
                     <div class="mb-3">
                         <label class="form-label">Nom de la plateforme</label>
-                        <input type="text" class="form-control" name="site_name" value="{{ $settings['general']['site_name'] ?? 'ProxiPro' }}">
+                        <input type="text" class="form-control" name="site_name" value="{{ $settings['general']['site_name'] ?? 'Lunamars' }}">
                         <small class="text-muted">Ce nom sera affiché dans tout le site</small>
                     </div>
                     

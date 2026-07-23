@@ -214,7 +214,7 @@ class RegisterController extends Controller
                     $commonPasswords = [
                         '123456', '12345678', '123456789', '1234567890', 'password', 'password123',
                         'qwerty', 'azerty', 'admin', 'admin123', 'welcome', 'letmein', 'iloveyou',
-                        '000000', '111111', 'abc123', 'motdepasse', 'motdepasse123', 'proxipro',
+                        '000000', '111111', 'abc123', 'motdepasse', 'motdepasse123', 'lunamars',
                     ];
 
                     if (in_array($normalizedPassword, $commonPasswords, true)) {

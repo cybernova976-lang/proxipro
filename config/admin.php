@@ -3,7 +3,7 @@
 /**
  * Configuration de l'administration
  * 
- * Ce fichier définit les paramètres de l'administration ProxiPro
+ * Ce fichier définit les paramètres de l'administration Lunamars
  * y compris l'administrateur principal avec tous les privilèges.
  */
 

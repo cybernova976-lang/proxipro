@@ -123,7 +123,7 @@ class GeocodingService
 
     private function userAgent(): string
     {
-        $appName = preg_replace('/[^A-Za-z0-9._-]/', '', (string) config('app.name', 'ProxiPro')) ?: 'ProxiPro';
+        $appName = preg_replace('/[^A-Za-z0-9._-]/', '', (string) config('app.name', 'Lunamars')) ?: 'Lunamars';
         $contact = config('site.support_email') ?: config('app.url');
 
         return $appName.'/1.0 (+'.$contact.')';

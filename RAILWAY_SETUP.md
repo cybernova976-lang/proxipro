@@ -1,4 +1,4 @@
-# Railway Deployment Guide — ProxiPro
+# Railway Deployment Guide — Lunamars
 
 ## Why PostgreSQL instead of SQLite?
 
@@ -52,7 +52,7 @@ DB_PASSWORD=${{Postgres.PGPASSWORD}}
 ### Step 3 — Set the remaining application variables
 
 ```
-APP_NAME=ProxiPro
+APP_NAME=Lunamars
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://<your-railway-domain>.up.railway.app

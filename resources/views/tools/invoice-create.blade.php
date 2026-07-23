@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Créer une facture - ProxiPro')
+@section('title', 'Créer une facture - Lunamars')
 
 @section('content')
 <style>

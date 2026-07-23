@@ -64,11 +64,11 @@ This workspace can run alongside the sibling Emergent project without port confl
 
 Expected local ports:
 
-- MASSIWANI V2: `http://127.0.0.1:8001`
+- LUNAMARS V2: `http://127.0.0.1:8001`
 - Emergent backend: `http://127.0.0.1:8000`
 - Emergent frontend: `http://127.0.0.1:3000`
 
-From the MASSIWANI V2 root on Windows PowerShell:
+From the LUNAMARS V2 root on Windows PowerShell:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\start-local-dev.ps1
@@ -82,7 +82,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-local-dev.ps1 -DryRun
 
 Prerequisites:
 
-- MASSIWANI V2 dependencies already installed
+- LUNAMARS V2 dependencies already installed
 - Emergent located next to this folder at `..\Emergent`
 - Emergent backend virtual environment available at `backend\venv`
 - MongoDB available for the Emergent backend

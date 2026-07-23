@@ -18,16 +18,16 @@ class EmailVerificationCode extends Mailable
     {
         $this->code = $code;
         $this->userName = $userName;
-        $this->appName = config('app.name', 'ProxiPro');
+        $this->appName = config('app.name', 'Lunamars');
         $this->supportEmail = config('mail.reply_to.address')
             ?: config('mail.admin_email')
             ?: config('mail.from.address')
-            ?: 'support@proxipro.fr';
+            ?: 'hello@example.com';
     }
 
     public function build()
     {
-        return $this->subject('Votre code de vérification ProxiPro')
+        return $this->subject('Votre code de vérification Lunamars')
             ->view('emails.verification-code');
     }
 }

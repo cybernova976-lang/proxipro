@@ -164,7 +164,7 @@
     @endif
 
     <div class="footer">
-        Document généré le {{ now()->format('d/m/Y à H:i') }} via ProxiPro — {{ $emitter['company'] ?? $emitter['name'] }}
+        Document généré le {{ now()->format('d/m/Y à H:i') }} via Lunamars — {{ $emitter['company'] ?? $emitter['name'] }}
     </div>
 </body>
 </html>

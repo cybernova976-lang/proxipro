@@ -44,7 +44,7 @@ class NewAdMatchingNotification extends Notification implements ShouldQueue
         $supportEmail = config('mail.reply_to.address')
             ?: config('mail.admin_email')
             ?: config('mail.from.address')
-            ?: 'support@proxipro.fr';
+            ?: 'hello@example.com';
         $budget = $this->ad->price
             ? number_format($this->ad->price, 0, ',', ' ') . ' EUR'
             : null;
@@ -52,7 +52,7 @@ class NewAdMatchingNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject('📌 Nouvelle ' . $serviceType . ' dans votre domaine — ' . $this->ad->category)
             ->view('emails.notifications.new-ad-matching', [
-                'appName' => config('app.name', 'ProxiPro'),
+                'appName' => config('app.name', 'Lunamars'),
                 'supportEmail' => $supportEmail,
                 'recipientName' => $notifiable->name,
                 'serviceTypeLabel' => $serviceType,

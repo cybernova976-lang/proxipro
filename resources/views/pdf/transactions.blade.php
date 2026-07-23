@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>Historique des transactions - ProxiPro</title>
+    <title>Historique des transactions - Lunamars</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -24,6 +24,12 @@
             display: table-cell;
             vertical-align: middle;
             width: 60%;
+        }
+        .brand-mark {
+            width: 46px;
+            height: 46px;
+            object-fit: contain;
+            margin-bottom: 8px;
         }
         .pdf-header-right {
             display: table-cell;
@@ -217,7 +223,8 @@
     <!-- Header -->
     <div class="pdf-header">
         <div class="pdf-header-left">
-            <div class="brand-name">ProxiPro</div>
+            <img src="{{ public_path('images/brand/lunamars-mark.png') }}" alt="" class="brand-mark">
+            <div class="brand-name">{{ config('app.name', 'Lunamars') }}</div>
             <div class="brand-tagline">Plateforme internationale de services</div>
         </div>
         <div class="pdf-header-right">
@@ -337,7 +344,7 @@
 
     <!-- Footer -->
     <div class="pdf-footer">
-        <p>Ce document a été généré automatiquement par ProxiPro — {{ $generatedAt->format('d/m/Y à H:i') }}</p>
+        <p>Ce document a été généré automatiquement par Lunamars — {{ $generatedAt->format('d/m/Y à H:i') }}</p>
         <p>Pour toute question, contactez-nous sur la plateforme.</p>
     </div>
 </body>

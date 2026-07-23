@@ -46,7 +46,7 @@ class PurchaseInvoiceController extends Controller
         $invoiceNumber = 'PP-PTS-' . str_pad($transaction->id, 6, '0', STR_PAD_LEFT);
         $date = $transaction->created_at->format('d/m/Y');
         $amount = (float) $transaction->amount;
-        $itemDescription = 'Achat de points ProxiPro';
+        $itemDescription = 'Achat de points Lunamars';
         $itemDetail = $transaction->description ?? ('Pack de points - ' . $amount . '€');
         $transactionRef = $transaction->stripe_session_id;
 
@@ -76,7 +76,7 @@ class PurchaseInvoiceController extends Controller
         $date = $subscription->starts_at->format('d/m/Y');
         $amount = (float) $subscription->amount;
         $planLabel = $subscription->getPlanLabel();
-        $itemDescription = 'Abonnement Pro ProxiPro - ' . $planLabel;
+        $itemDescription = 'Abonnement Pro Lunamars - ' . $planLabel;
         $period = $subscription->starts_at->format('d/m/Y') . ' au ' . $subscription->ends_at->format('d/m/Y');
         $itemDetail = 'Période : ' . $period;
         $transactionRef = null;

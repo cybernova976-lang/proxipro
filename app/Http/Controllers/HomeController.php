@@ -95,6 +95,6 @@ class HomeController extends Controller
             'generatedAt' => now(),
         ]);
 
-        return $pdf->download('ProxiPro_Historique_Transactions_' . date('Y-m-d') . '.pdf');
+        return $pdf->download('Lunamars_Historique_Transactions_' . date('Y-m-d') . '.pdf');
     }
 }

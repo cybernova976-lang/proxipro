@@ -23,7 +23,7 @@ class ServiceOrderRequestedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Nouvelle commande securisee ProxiPro')
+            ->subject('Nouvelle commande securisee Lunamars')
             ->greeting('Bonjour ' . $notifiable->name . ',')
             ->line($this->serviceOrder->buyer->name . ' souhaite lancer une commande securisee pour votre annonce "' . $this->serviceOrder->ad->title . '".')
             ->line('Montant propose : ' . number_format((float) $this->serviceOrder->amount, 2, ',', ' ') . ' EUR')

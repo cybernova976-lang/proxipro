@@ -1,7 +1,7 @@
 #!/bin/bash
 # Do NOT use set -e: we want Apache to start even if setup commands fail
 # -------------------------------------------------------
-# ProxiPro – Railway / Docker entrypoint
+# Lunamars – Railway / Docker entrypoint
 # Handles first-run tasks before starting the web server
 # -------------------------------------------------------
 

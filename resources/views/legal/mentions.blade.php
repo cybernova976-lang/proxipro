@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Mentions légales - ' . config('app.name', 'ProxiPro'))
-@section('meta_description', 'Informations légales relatives à l’éditeur et à l’hébergeur de ' . config('app.name', 'ProxiPro') . '.')
+@section('title', 'Mentions légales - ' . config('app.name', 'Lunamars'))
+@section('meta_description', 'Informations légales relatives à l’éditeur et à l’hébergeur de ' . config('app.name', 'Lunamars') . '.')
 
 @section('content')
 @php
@@ -47,7 +47,7 @@
                 <p><strong>{{ config('legal.host_name') ?: 'Hébergeur à renseigner' }}</strong><br>{{ config('legal.host_address') ?: 'Adresse à renseigner' }}</p>
 
                 <h4 class="mt-4">3. Rôle de la plateforme</h4>
-                <p>{{ config('app.name', 'ProxiPro') }} fournit un service de mise en relation. Les utilisateurs restent responsables de leurs annonces, propositions, échanges, obligations professionnelles et de la bonne exécution des prestations conclues entre eux.</p>
+                <p>{{ config('app.name', 'Lunamars') }} fournit un service de mise en relation. Les utilisateurs restent responsables de leurs annonces, propositions, échanges, obligations professionnelles et de la bonne exécution des prestations conclues entre eux.</p>
 
                 <h4 class="mt-4">4. Propriété intellectuelle</h4>
                 <p>Les éléments propres à la plateforme sont protégés par les règles applicables à la propriété intellectuelle. Les contenus publiés par les utilisateurs restent sous leur responsabilité et ne doivent pas porter atteinte aux droits de tiers.</p>

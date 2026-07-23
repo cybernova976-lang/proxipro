@@ -60,12 +60,12 @@ class AppServiceProvider extends ServiceProvider
                 ?: config('mail.from.address');
 
             return (new MailMessage)
-                ->subject('Réinitialisation de votre mot de passe ProxiPro')
+                ->subject('Réinitialisation de votre mot de passe Lunamars')
                 ->view('emails.auth.reset-password', [
                     'resetUrl' => $url,
                     'userName' => $notifiable->name ?? null,
                     'supportEmail' => $supportEmail,
-                    'appName' => config('app.name', 'ProxiPro'),
+                    'appName' => config('app.name', 'Lunamars'),
                 ]);
         });
 
@@ -75,12 +75,12 @@ class AppServiceProvider extends ServiceProvider
                 ?: config('mail.from.address');
 
             return (new MailMessage)
-                ->subject('Vérification de votre adresse e-mail ProxiPro')
+                ->subject('Vérification de votre adresse e-mail Lunamars')
                 ->view('emails.auth.verify-email', [
                     'verificationUrl' => $url,
                     'userName' => $notifiable->name ?? null,
                     'supportEmail' => $supportEmail,
-                    'appName' => config('app.name', 'ProxiPro'),
+                    'appName' => config('app.name', 'Lunamars'),
                 ]);
         });
 

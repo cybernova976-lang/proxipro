@@ -46,7 +46,7 @@
 
         <div class="pro-card" id="pro-terms">
             <div class="pro-card-title"><i class="fas fa-file-signature text-success"></i> Engagement de l’émetteur</div>
-            <p class="text-muted" style="font-size: .88rem;">ProxiPro fournit un outil d’aide à la création. Le professionnel reste responsable de l’exactitude des mentions, de la fiscalité applicable et des obligations du pays où il exerce.</p>
+            <p class="text-muted" style="font-size: .88rem;">Lunamars fournit un outil d’aide à la création. Le professionnel reste responsable de l’exactitude des mentions, de la fiscalité applicable et des obligations du pays où il exerce.</p>
             @if($user->hasAcceptedCurrentProTerms())
                 <div class="alert alert-success mb-0" style="border-radius: 12px;">
                     <i class="fas fa-check-circle me-2"></i>Version {{ $user->pro_terms_version }} acceptée le {{ $user->pro_terms_accepted_at->format('d/m/Y à H:i') }}.

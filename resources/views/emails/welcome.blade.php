@@ -11,7 +11,7 @@
 
         {{-- Header --}}
         <div style="text-align: center; margin-bottom: 32px;">
-            <div style="display: inline-block; width: 56px; height: 56px; background: linear-gradient(135deg, #0f766e, #14b8a6); border-radius: 16px; color: white; font-size: 1.5rem; font-weight: 700; line-height: 56px; text-align: center; box-shadow: 0 4px 15px rgba(20, 184, 166, 0.30);">P</div>
+            <img src="{{ asset('images/brand/lunamars-mark.png') }}" width="56" height="56" alt="" style="display:inline-block; width:56px; height:56px; object-fit:contain; border-radius:16px; background:#ffffff; padding:4px; box-shadow:0 4px 15px rgba(37, 99, 235, 0.22);">
             <h1 style="margin: 12px 0 0; font-size: 1.8rem; background: linear-gradient(135deg, #0f766e, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">{{ $appName }}</h1>
         </div>
 

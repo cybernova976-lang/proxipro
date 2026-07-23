@@ -27,8 +27,8 @@ class ReferralRewardNotification extends Notification
     {
         $isReferrer = $this->recipientRole === 'referrer';
         $subject = $isReferrer
-            ? 'Votre bonus de parrainage ProxiPro est disponible'
-            : 'Votre bonus filleul ProxiPro est disponible';
+            ? 'Votre bonus de parrainage Lunamars est disponible'
+            : 'Votre bonus filleul Lunamars est disponible';
 
         $message = $isReferrer
             ? $this->counterpartName . ' a finalisé son premier achat. Vous recevez ' . $this->reward->points . ' points de parrainage.'
@@ -39,7 +39,7 @@ class ReferralRewardNotification extends Notification
             ->greeting('Bonjour ' . $notifiable->name . ',')
             ->line($message)
             ->action('Voir mes points', route('points.dashboard'))
-            ->line('Merci d\'utiliser ProxiPro.');
+            ->line('Merci d\'utiliser Lunamars.');
     }
 
     public function toArray(object $notifiable): array

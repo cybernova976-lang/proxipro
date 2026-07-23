@@ -1,5 +1,5 @@
 {{-- ============================================== --}}
-{{-- SIDEBAR NAVIGATION - ProxiPro               --}}
+{{-- SIDEBAR NAVIGATION - Lunamars               --}}
 {{-- Barre latérale avec thème clair              --}}
 {{-- ============================================== --}}
 

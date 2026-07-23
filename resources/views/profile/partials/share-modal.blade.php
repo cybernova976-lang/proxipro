@@ -10,9 +10,9 @@
         ? Str::limit(preg_replace('/\s+/', ' ', $profileShareDescription), 180)
         : null;
     $profileShareLocation = collect([$user->city, $user->country])->filter()->implode(', ');
-    $profileShareTitle = $profileShareName.($profileShareRole ? ' — '.$profileShareRole : '').' | '.config('app.name', 'ProxiPro');
+    $profileShareTitle = $profileShareName.($profileShareRole ? ' — '.$profileShareRole : '').' | '.config('app.name', 'Lunamars');
     $profileShareText = collect([
-        'Découvrez le profil de '.$profileShareName.' sur '.config('app.name', 'ProxiPro').'.',
+        'Découvrez le profil de '.$profileShareName.' sur '.config('app.name', 'Lunamars').'.',
         $profileShareRole ? 'Métier : '.$profileShareRole : null,
         $profileShareDescription ? 'Description : '.$profileShareDescription : null,
         $profileShareLocation ? 'Localisation : '.$profileShareLocation : null,

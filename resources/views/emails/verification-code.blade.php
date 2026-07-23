@@ -15,7 +15,7 @@
                     <tr>
                         <td style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding:32px 40px; text-align:center;">
                             <div style="display:inline-flex; align-items:center; gap:10px;">
-                                <div style="width:42px; height:42px; border-radius:14px; background:rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:20px; font-weight:700;">P</div>
+                                <img src="{{ asset('images/brand/lunamars-mark.png') }}" width="42" height="42" alt="" style="display:block; width:42px; height:42px; object-fit:contain; border-radius:14px; background:#ffffff; padding:3px;">
                                 <h1 style="color:#ffffff; font-size:22px; font-weight:700; margin:0; letter-spacing:-0.3px;">{{ $appName }}</h1>
                             </div>
                         </td>
@@ -57,7 +57,7 @@
                         <td style="padding:0 40px 32px 40px;">
                             <div style="background-color:#fef3c7; border-radius:8px; padding:14px 18px;">
                                 <p style="color:#92400e; font-size:12px; line-height:1.5; margin:0;">
-                                    🔒 <strong>Sécurité :</strong> Ne partagez jamais ce code. L'équipe ProxiPro ne vous demandera jamais votre code de vérification.
+                                    🔒 <strong>Sécurité :</strong> Ne partagez jamais ce code. L'équipe Lunamars ne vous demandera jamais votre code de vérification.
                                 </p>
                             </div>
                         </td>

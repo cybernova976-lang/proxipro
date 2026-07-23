@@ -12,6 +12,7 @@
         .header { display: table; width: 100%; margin-bottom: 30px; border-bottom: 3px solid #2563eb; padding-bottom: 20px; }
         .header-left { display: table-cell; width: 60%; vertical-align: top; }
         .header-right { display: table-cell; width: 40%; vertical-align: top; text-align: right; }
+        .platform-logo { width: 48px; height: 48px; object-fit: contain; margin-bottom: 8px; }
         .company-name { font-size: 20px; font-weight: bold; color: #0f172a; margin-bottom: 6px; }
         .company-info { font-size: 10px; color: #64748b; line-height: 1.6; }
         .doc-title { font-size: 26px; font-weight: bold; color: #2563eb; margin-bottom: 8px; }
@@ -55,15 +56,24 @@
     </style>
 </head>
 <body>
+    @php
+        $platformContactEmail = \App\Models\Setting::get(
+            'contact_email',
+            config('mail.admin_email', config('mail.from.address', 'hello@example.com'))
+        );
+        $platformPublicUrl = \App\Models\Setting::get('platform_public_url', config('app.url'));
+        $platformPublicHost = parse_url((string) $platformPublicUrl, PHP_URL_HOST) ?: $platformPublicUrl;
+    @endphp
     <div class="container">
         {{-- Header --}}
         <div class="header">
             <div class="header-left">
-                <div class="company-name">ProxiPro</div>
+                <img src="{{ public_path('images/brand/lunamars-mark.png') }}" alt="" class="platform-logo">
+                <div class="company-name">{{ config('app.name', 'Lunamars') }}</div>
                 <div class="company-info">
                     Plateforme de services entre particuliers et professionnels<br>
-                    contact@proxipro.fr<br>
-                    www.proxipro.fr
+                    {{ $platformContactEmail }}<br>
+                    {{ $platformPublicHost }}
                 </div>
             </div>
             <div class="header-right">
@@ -139,8 +149,8 @@
 
         {{-- Footer --}}
         <div class="footer">
-            <strong>ProxiPro</strong> — Plateforme de mise en relation de services<br>
-            Ce document constitue une facture pour l'achat effectué sur la plateforme ProxiPro.<br>
+            <strong>{{ config('app.name', 'Lunamars') }}</strong> — Plateforme de mise en relation de services<br>
+            Ce document constitue une facture pour l'achat effectué sur la plateforme {{ config('app.name', 'Lunamars') }}.<br>
             Document généré automatiquement le {{ now()->format('d/m/Y à H:i') }}
         </div>
     </div>

@@ -33,10 +33,10 @@ class PasswordResetFlowTest extends TestCase
         Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use ($user) {
             $mailMessage = $notification->toMail($user);
 
-            $this->assertSame('Réinitialisation de votre mot de passe ProxiPro', $mailMessage->subject);
+            $this->assertSame('Réinitialisation de votre mot de passe Lunamars', $mailMessage->subject);
             $this->assertSame('emails.auth.reset-password', $mailMessage->view);
             $this->assertSame($user->name, $mailMessage->viewData['userName']);
-            $this->assertSame(config('app.name', 'ProxiPro'), $mailMessage->viewData['appName']);
+            $this->assertSame(config('app.name', 'Lunamars'), $mailMessage->viewData['appName']);
             $this->assertNotEmpty($mailMessage->viewData['supportEmail']);
             $this->assertStringContainsString('password/reset', $mailMessage->viewData['resetUrl']);
 

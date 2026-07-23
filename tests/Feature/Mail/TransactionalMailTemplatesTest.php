@@ -23,7 +23,7 @@ class TransactionalMailTemplatesTest extends TestCase
 
         $html = (new WelcomeMail($user))->render();
 
-        $this->assertStringContainsString(config('app.name', 'ProxiPro'), $html);
+        $this->assertStringContainsString(config('app.name', 'Lunamars'), $html);
         $this->assertStringContainsString($user->email, $html);
         $this->assertStringContainsString((string) config('mail.reply_to.address', config('mail.admin_email', config('mail.from.address'))), $html);
     }
@@ -34,7 +34,7 @@ class TransactionalMailTemplatesTest extends TestCase
 
         $this->assertStringContainsString('482913', $html);
         $this->assertStringContainsString('Sophie Martin', $html);
-        $this->assertStringContainsString(config('app.name', 'ProxiPro'), $html);
+        $this->assertStringContainsString(config('app.name', 'Lunamars'), $html);
         $this->assertStringContainsString((string) config('mail.reply_to.address', config('mail.admin_email', config('mail.from.address'))), $html);
     }
 

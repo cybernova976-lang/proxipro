@@ -10,7 +10,7 @@
         <div style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 18px 45px rgba(16,185,129,.12);">
             <div style="background:linear-gradient(135deg,#0f766e,#10b981 55%,#34d399);padding:28px 30px;color:#ffffff;">
                 <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:12px;">
-                    <div style="width:42px;height:42px;border-radius:14px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;">P</div>
+                    <img src="{{ asset('images/brand/lunamars-mark.png') }}" width="42" height="42" alt="" style="display:block;width:42px;height:42px;object-fit:contain;border-radius:14px;background:#fff;padding:3px;">
                     <div style="font-size:18px;font-weight:700;letter-spacing:.02em;">{{ $appName }}</div>
                 </div>
                 <div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.82;">Activation du compte</div>

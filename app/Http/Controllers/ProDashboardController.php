@@ -1526,7 +1526,7 @@ class ProDashboardController extends Controller
                 // Clear onboarding session data
                 session()->forget('pro_onboarding_data');
 
-                return redirect()->route('pro.dashboard')->with('success', 'Félicitations ! Votre abonnement ProxiPro est activé. Bienvenue dans votre espace professionnel !');
+                return redirect()->route('pro.dashboard')->with('success', 'Félicitations ! Votre abonnement Lunamars est activé. Bienvenue dans votre espace professionnel !');
 
             } catch (\Exception $e) {
                 DB::rollBack();
