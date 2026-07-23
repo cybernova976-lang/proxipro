@@ -11,7 +11,7 @@
 
         {{-- Header --}}
         <div style="text-align: center; margin-bottom: 32px;">
-            <h1 style="margin:0; font-size:30px; font-weight:800; color:#4f46e5; letter-spacing:-0.8px;">{{ $appName }}</h1>
+            <img src="{{ asset('images/brand/lunamars-logo.png') }}" width="230" alt="{{ $appName }}" style="display:inline-block;width:230px;max-width:80%;height:auto;">
         </div>
 
         {{-- Main Card --}}

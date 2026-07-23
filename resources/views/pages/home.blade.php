@@ -30,6 +30,7 @@
             '@type' => 'WebSite',
             'name' => config('app.name', 'Lunamars'),
             'url' => url('/'),
+            'logo' => asset('images/brand/lunamars-logo.png'),
             'potentialAction' => [
                 '@type' => 'SearchAction',
                 'target' => url('/ads') . '?q={search_term_string}',
@@ -101,15 +102,10 @@
             text-decoration: none; font-weight: 900; font-size: 1.4rem;
             color: var(--primary) !important; letter-spacing: -0.5px;
         }
-        .nav-brand-icon {
-            width: 36px; height: 36px;
-            background: #fff;
-            border-radius: 10px; display: flex; align-items: center; justify-content: center;
-            padding: 2px; overflow: hidden;
-            box-shadow: 0 4px 14px rgba(58, 134, 255, 0.16);
-        }
-        .nav-brand-icon .lunamars-brand-mark {
-            width: 100%; height: 100%; object-fit: contain; display: block;
+        .nav-brand-wordmark {
+            width: auto !important;
+            height: 40px !important;
+            max-width: min(190px, 44vw);
         }
         .nav-links {
             display: flex; align-items: center; gap: 6px;
@@ -591,8 +587,7 @@
         <div class="container">
             <div class="nav-inner">
                 <a href="{{ url('/') }}" class="nav-brand">
-                    <span class="nav-brand-icon"><x-brand-mark :size="36" /></span>
-                    {{ config('app.name', 'Lunamars') }}
+                    <x-brand-mark variant="wordmark" :size="40" class="nav-brand-wordmark" :decorative="false" />
                 </a>
                 <ul class="nav-links">
                     <li><a href="{{ url('/ads') }}">Annonces</a></li>
@@ -1005,7 +1000,7 @@
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <h4><span class="footer-brand-icon"><x-brand-mark :size="32" /></span> {{ config('app.name', 'Lunamars') }}</h4>
+                    <h4><x-brand-mark variant="wordmark" :size="42" :decorative="false" /></h4>
                     <p>La plateforme de mise en relation pour publier un besoin, comparer des propositions et travailler avec un prestataire près de chez vous.</p>
                     <button type="button" class="btn btn-outline-light rounded-3" data-site-share-trigger>
                         <i class="fas fa-share-nodes me-2"></i>Partager {{ config('app.name', 'Lunamars') }}

@@ -10,7 +10,7 @@
         <div style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 18px 45px rgba(37,99,235,.10);">
             <div style="background:linear-gradient(135deg,#0f766e,#14b8a6 55%,#38bdf8);padding:28px 30px;color:#ffffff;">
                 <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:12px;">
-                    <div style="font-size:18px;font-weight:700;letter-spacing:.02em;">{{ $appName }}</div>
+                    <img src="{{ asset('images/brand/lunamars-logo.png') }}" width="190" alt="{{ $appName }}" style="display:block;width:190px;max-width:75%;height:auto;background:#ffffff;border-radius:10px;padding:5px 9px;">
                 </div>
                 <div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.82;">Alerte opportunité</div>
                 <h1 style="margin:10px 0 0;font-size:28px;line-height:1.2;">Nouvelle {{ $serviceTypeLabel }} dans votre domaine</h1>

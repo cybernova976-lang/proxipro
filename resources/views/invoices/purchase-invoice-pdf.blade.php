@@ -12,6 +12,7 @@
         .header { display: table; width: 100%; margin-bottom: 30px; border-bottom: 3px solid #2563eb; padding-bottom: 20px; }
         .header-left { display: table-cell; width: 60%; vertical-align: top; }
         .header-right { display: table-cell; width: 40%; vertical-align: top; text-align: right; }
+        .platform-logo { width: 180px; height: auto; margin-bottom: 8px; }
         .company-name { font-size: 20px; font-weight: bold; color: #0f172a; margin-bottom: 6px; }
         .company-info { font-size: 10px; color: #64748b; line-height: 1.6; }
         .doc-title { font-size: 26px; font-weight: bold; color: #2563eb; margin-bottom: 8px; }
@@ -67,7 +68,7 @@
         {{-- Header --}}
         <div class="header">
             <div class="header-left">
-                <div class="company-name">{{ config('app.name', 'Lunamars') }}</div>
+                <img src="{{ public_path('images/brand/lunamars-logo.png') }}" alt="{{ config('app.name', 'Lunamars') }}" class="platform-logo">
                 <div class="company-info">
                     Plateforme de services entre particuliers et professionnels<br>
                     {{ $platformContactEmail }}<br>

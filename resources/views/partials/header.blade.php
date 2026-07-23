@@ -162,6 +162,12 @@
         box-shadow: 0 4px 6px -1px rgba(124, 58, 237, 0.3);
         transition: all 0.3s;
     }
+
+    .brand-logo.lunamars-logo-shell {
+        overflow: hidden;
+        padding: 2px;
+        background: #fff;
+    }
     
     .navbar-brand-modern:hover .brand-logo {
         transform: scale(1.05);

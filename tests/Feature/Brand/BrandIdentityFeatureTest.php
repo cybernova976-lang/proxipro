@@ -27,6 +27,7 @@ class BrandIdentityFeatureTest extends TestCase
         $homepage->assertOk()
             ->assertSee('Lunamars')
             ->assertSee('lunamars-brand-mark', false)
+            ->assertSee('images/brand/lunamars-logo.png', false)
             ->assertDontSee('images/brand/lunamars-mark.png', false)
             ->assertSee('images/social-card.png', false)
             ->assertSee('"@context":"https://schema.org"', false)
@@ -38,12 +39,14 @@ class BrandIdentityFeatureTest extends TestCase
         $authenticatedPage->assertOk()
             ->assertSee('Lunamars')
             ->assertSee('lunamars-brand-mark', false)
+            ->assertSee('images/brand/lunamars-symbol.png', false)
             ->assertDontSee('images/brand/lunamars-mark.png', false)
             ->assertDontSee($legacyName);
 
         $mailHtml = (new EmailVerificationCode('482913', 'Sophie Martin'))->render();
 
         $this->assertStringContainsString('Lunamars', $mailHtml);
+        $this->assertStringContainsString('images/brand/lunamars-logo.png', $mailHtml);
         $this->assertStringNotContainsString('images/brand/lunamars-mark.png', $mailHtml);
         $this->assertStringNotContainsString($legacyName, $mailHtml);
     }
@@ -52,8 +55,12 @@ class BrandIdentityFeatureTest extends TestCase
     {
         $socialCardPath = public_path('images/social-card.png');
         $faviconPath = public_path('favicon.ico');
+        $logoPath = public_path('images/brand/lunamars-logo.png');
+        $symbolPath = public_path('images/brand/lunamars-symbol.png');
 
         $this->assertFileDoesNotExist(public_path('images/brand/lunamars-mark.png'));
+        $this->assertFileExists($logoPath);
+        $this->assertFileExists($symbolPath);
         $this->assertFileExists($socialCardPath);
         $this->assertFileExists($faviconPath);
         $this->assertGreaterThan(0, filesize($faviconPath));
@@ -61,5 +68,13 @@ class BrandIdentityFeatureTest extends TestCase
         $socialCardSize = getimagesize($socialCardPath);
         $this->assertSame([1200, 630], array_slice($socialCardSize, 0, 2));
         $this->assertSame(IMAGETYPE_PNG, $socialCardSize[2]);
+
+        $logoSize = getimagesize($logoPath);
+        $this->assertSame([1090, 250], array_slice($logoSize, 0, 2));
+        $this->assertSame(IMAGETYPE_PNG, $logoSize[2]);
+
+        $symbolSize = getimagesize($symbolPath);
+        $this->assertSame([512, 512], array_slice($symbolSize, 0, 2));
+        $this->assertSame(IMAGETYPE_PNG, $symbolSize[2]);
     }
 }

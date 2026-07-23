@@ -5,10 +5,10 @@
   </defs>
   <rect width="1200" height="630" fill="#f8fafc"/>
   <rect x="58" y="56" width="1084" height="518" rx="42" fill="#fff" stroke="#e2e8f0" stroke-width="2"/>
-  <rect x="58" y="56" width="20" height="518" rx="10" fill="#4f46e5"/>
-  <text x="126" y="190" fill="#1e293b" font-family="Arial, sans-serif" font-size="82" font-weight="800">Lunamars</text>
-  <text x="126" y="292" fill="#4f46e5" font-family="Arial, sans-serif" font-size="42" font-weight="750">Les services qui rapprochent.</text>
-  <text x="126" y="365" fill="#475569" font-family="Arial, sans-serif" font-size="29">Publiez un besoin. Comparez. Choisissez.</text>
-  <rect x="126" y="424" width="640" height="80" rx="20" fill="#eef2ff"/>
-  <text x="160" y="474" fill="#4338ca" font-family="Arial, sans-serif" font-size="25" font-weight="700">Particuliers • Professionnels • Partout</text>
+  <rect x="58" y="56" width="20" height="518" rx="10" fill="#709100"/>
+  <image href="brand/lunamars-logo.png" x="126" y="100" width="760" height="174" preserveAspectRatio="xMinYMid meet"/>
+  <text x="126" y="320" fill="#475569" font-family="Arial, sans-serif" font-size="39" font-weight="750">Les services qui rapprochent.</text>
+  <text x="126" y="388" fill="#475569" font-family="Arial, sans-serif" font-size="27">Publiez un besoin. Comparez. Choisissez.</text>
+  <rect x="126" y="435" width="640" height="80" rx="20" fill="#f7f4e8"/>
+  <text x="160" y="485" fill="#5b6d00" font-family="Arial, sans-serif" font-size="25" font-weight="700">Particuliers • Professionnels • Partout</text>
 </svg>

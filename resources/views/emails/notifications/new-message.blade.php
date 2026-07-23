@@ -10,7 +10,7 @@
         <div style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 18px 45px rgba(34,197,94,.12);">
             <div style="background:linear-gradient(135deg,#15803d,#22c55e 55%,#0ea5e9);padding:28px 30px;color:#ffffff;">
                 <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:12px;">
-                    <div style="font-size:18px;font-weight:700;letter-spacing:.02em;">{{ $appName }}</div>
+                    <img src="{{ asset('images/brand/lunamars-logo.png') }}" width="190" alt="{{ $appName }}" style="display:block;width:190px;max-width:75%;height:auto;background:#ffffff;border-radius:10px;padding:5px 9px;">
                 </div>
                 <div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.82;">Messagerie</div>
                 <h1 style="margin:10px 0 0;font-size:28px;line-height:1.2;">💬 Nouveau message de {{ $senderName }}</h1>

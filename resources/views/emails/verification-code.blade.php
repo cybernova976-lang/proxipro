@@ -14,7 +14,7 @@
                     {{-- Header --}}
                     <tr>
                         <td style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding:32px 40px; text-align:center;">
-                            <h1 style="color:#ffffff; font-size:25px; font-weight:800; margin:0; letter-spacing:-0.5px;">{{ $appName }}</h1>
+                            <img src="{{ asset('images/brand/lunamars-logo.png') }}" width="205" alt="{{ $appName }}" style="display:inline-block;width:205px;max-width:82%;height:auto;background:#ffffff;border-radius:12px;padding:6px 10px;">
                         </td>
                     </tr>
 
