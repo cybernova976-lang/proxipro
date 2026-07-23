@@ -57,6 +57,10 @@ class PublicSiteFeatureTest extends TestCase
         $socialImageSize = getimagesize(public_path('images/social-card.png'));
         $this->assertSame([1200, 630], array_slice($socialImageSize, 0, 2));
         $this->assertSame(IMAGETYPE_PNG, $socialImageSize[2]);
+        $this->assertMatchesRegularExpression(
+            '/\.site-share-preview img\s*\{[^}]*height:\s*auto;[^}]*object-fit:\s*contain;/s',
+            $response->getContent()
+        );
         $this->assertSame(1, substr_count($response->getContent(), 'id="sitePlatformShareModal"'));
     }
 

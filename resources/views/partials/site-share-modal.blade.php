@@ -95,8 +95,9 @@
     .site-share-preview img {
         display: block;
         width: 100%;
-        aspect-ratio: 1200 / 630;
-        object-fit: cover;
+        height: auto;
+        aspect-ratio: auto;
+        object-fit: contain;
     }
 
     .site-share-preview-copy {
