@@ -10,7 +10,6 @@
         <div style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 18px 45px rgba(59,130,246,.12);">
             <div style="background:linear-gradient(135deg,#2563eb,#3b82f6 55%,#60a5fa);padding:28px 30px;color:#ffffff;">
                 <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:12px;">
-                    <img src="{{ asset('images/brand/lunamars-mark.png') }}" width="42" height="42" alt="" style="display:block;width:42px;height:42px;object-fit:contain;border-radius:14px;background:#fff;padding:3px;">
                     <div style="font-size:18px;font-weight:700;letter-spacing:.02em;">{{ $appName }}</div>
                 </div>
                 <div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.82;">Candidature annonce</div>

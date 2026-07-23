@@ -11,8 +11,7 @@
 
         {{-- Header --}}
         <div style="text-align: center; margin-bottom: 32px;">
-            <img src="{{ asset('images/brand/lunamars-mark.png') }}" width="56" height="56" alt="" style="display:inline-block; width:56px; height:56px; object-fit:contain; border-radius:16px; background:#ffffff; padding:4px; box-shadow:0 4px 15px rgba(37, 99, 235, 0.22);">
-            <h1 style="margin: 12px 0 0; font-size: 1.8rem; background: linear-gradient(135deg, #0f766e, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">{{ $appName }}</h1>
+            <h1 style="margin:0; font-size:30px; font-weight:800; color:#4f46e5; letter-spacing:-0.8px;">{{ $appName }}</h1>
         </div>
 
         {{-- Main Card --}}

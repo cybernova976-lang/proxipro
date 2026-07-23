@@ -25,12 +25,6 @@
             vertical-align: middle;
             width: 60%;
         }
-        .brand-mark {
-            width: 46px;
-            height: 46px;
-            object-fit: contain;
-            margin-bottom: 8px;
-        }
         .pdf-header-right {
             display: table-cell;
             vertical-align: middle;
@@ -223,7 +217,6 @@
     <!-- Header -->
     <div class="pdf-header">
         <div class="pdf-header-left">
-            <img src="{{ public_path('images/brand/lunamars-mark.png') }}" alt="" class="brand-mark">
             <div class="brand-name">{{ config('app.name', 'Lunamars') }}</div>
             <div class="brand-tagline">Plateforme internationale de services</div>
         </div>

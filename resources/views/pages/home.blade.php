@@ -26,11 +26,10 @@
     <meta name="twitter:image" content="{{ asset('images/social-card.png') }}">
     <script type="application/ld+json">
         {!! json_encode([
-            '@context' => 'https://schema.org',
+            '@'.'context' => 'https://schema.org',
             '@type' => 'WebSite',
             'name' => config('app.name', 'Lunamars'),
             'url' => url('/'),
-            'logo' => asset('images/brand/lunamars-mark.png'),
             'potentialAction' => [
                 '@type' => 'SearchAction',
                 'target' => url('/ads') . '?q={search_term_string}',

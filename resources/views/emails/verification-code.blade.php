@@ -14,10 +14,7 @@
                     {{-- Header --}}
                     <tr>
                         <td style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding:32px 40px; text-align:center;">
-                            <div style="display:inline-flex; align-items:center; gap:10px;">
-                                <img src="{{ asset('images/brand/lunamars-mark.png') }}" width="42" height="42" alt="" style="display:block; width:42px; height:42px; object-fit:contain; border-radius:14px; background:#ffffff; padding:3px;">
-                                <h1 style="color:#ffffff; font-size:22px; font-weight:700; margin:0; letter-spacing:-0.3px;">{{ $appName }}</h1>
-                            </div>
+                            <h1 style="color:#ffffff; font-size:25px; font-weight:800; margin:0; letter-spacing:-0.5px;">{{ $appName }}</h1>
                         </td>
                     </tr>
 
