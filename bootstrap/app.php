@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Détection appareil (mobile/tablet/desktop) sur toutes les requêtes web
         $middleware->web(append: [
+            \App\Http\Middleware\RedirectToCanonicalHost::class,
             \App\Http\Middleware\DetectDevice::class,
             \App\Http\Middleware\SecurityHeaders::class,
         ]);

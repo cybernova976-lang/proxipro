@@ -17,12 +17,15 @@ class PasswordResetFlowTest extends TestCase
     public function test_password_reset_request_uses_french_status_message(): void
     {
         Notification::fake();
+        config(['app.url' => 'https://www.lunamars.fr']);
 
         $user = User::factory()->create();
 
-        $response = $this->post(route('password.email'), [
-            'email' => $user->email,
-        ]);
+        $response = $this
+            ->withHeader('Host', 'web-production-daad.up.railway.app')
+            ->post('/password/email', [
+                'email' => $user->email,
+            ]);
 
         $response
             ->assertRedirect()
@@ -38,7 +41,10 @@ class PasswordResetFlowTest extends TestCase
             $this->assertSame($user->name, $mailMessage->viewData['userName']);
             $this->assertSame(config('app.name', 'Lunamars'), $mailMessage->viewData['appName']);
             $this->assertNotEmpty($mailMessage->viewData['supportEmail']);
-            $this->assertStringContainsString('password/reset', $mailMessage->viewData['resetUrl']);
+            $this->assertStringStartsWith(
+                'https://www.lunamars.fr/password/reset/',
+                $mailMessage->viewData['resetUrl']
+            );
 
             return true;
         });

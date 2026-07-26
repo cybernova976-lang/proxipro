@@ -18,6 +18,18 @@ class PublicSiteFeatureTest extends TestCase
         Cache::flush();
     }
 
+    public function test_old_technical_host_redirects_to_the_canonical_domain_in_production(): void
+    {
+        $this->app['env'] = 'production';
+        config(['app.url' => 'https://www.lunamars.fr']);
+
+        $this
+            ->withHeader('Host', 'web-production-daad.up.railway.app')
+            ->get('/?source=railway')
+            ->assertRedirect('https://www.lunamars.fr/?source=railway')
+            ->assertStatus(301);
+    }
+
     public function test_homepage_uses_real_marketplace_content_and_security_headers(): void
     {
         $owner = User::factory()->create();

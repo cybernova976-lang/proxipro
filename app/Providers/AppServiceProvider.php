@@ -146,13 +146,13 @@ class AppServiceProvider extends ServiceProvider
 
     protected function resolvePublicUrl(): ?string
     {
-        $candidates = [];
+        // APP_URL is the canonical public address. It must take precedence over
+        // the request host so links cannot fall back to Railway's technical URL.
+        $candidates = [config('app.url')];
 
-        if (! $this->app->runningInConsole() && $this->app->bound('request')) {
+        if ($this->app->bound('request')) {
             $candidates[] = request()->getSchemeAndHttpHost();
         }
-
-        $candidates[] = config('app.url');
 
         $railwayPublicDomain = env('RAILWAY_PUBLIC_DOMAIN');
         if (is_string($railwayPublicDomain) && trim($railwayPublicDomain) !== '') {
