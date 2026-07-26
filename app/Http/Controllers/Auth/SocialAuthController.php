@@ -22,7 +22,20 @@ class SocialAuthController extends Controller
             return redirect()->route('login')->with('error', 'Fournisseur non supporté.');
         }
 
-        return Socialite::driver($provider)->redirect();
+        if (! $this->providerIsConfigured($provider)) {
+            return redirect()->route('login')->with(
+                'error',
+                'La connexion avec '.ucfirst($provider).' est temporairement indisponible.'
+            );
+        }
+
+        $driver = Socialite::driver($provider);
+
+        if ($provider === 'facebook') {
+            $driver->scopes(['email']);
+        }
+
+        return $driver->redirect();
     }
 
     /**
@@ -230,5 +243,12 @@ class SocialAuthController extends Controller
 
             return null;
         }
+    }
+
+    private function providerIsConfigured(string $provider): bool
+    {
+        return filled(config("services.{$provider}.client_id"))
+            && filled(config("services.{$provider}.client_secret"))
+            && filled(config("services.{$provider}.redirect"));
     }
 }

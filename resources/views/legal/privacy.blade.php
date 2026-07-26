@@ -50,6 +50,10 @@
         <h4 class="mt-4">6. Vos droits</h4>
         <p>Vous pouvez demander l’accès, la rectification, l’effacement, la limitation, l’opposition ou la portabilité lorsque ces droits s’appliquent, retirer un consentement et définir les suites applicables après votre décès lorsque le droit national le prévoit. Une réponse est apportée en principe sous un mois ; une preuve d’identité peut être demandée en cas de doute raisonnable. Vous pouvez aussi introduire une réclamation auprès de l’autorité de contrôle compétente, notamment la CNIL en France.</p>
 
+        <h4 class="mt-4" id="suppression-donnees">Suppression d’un compte et de ses données</h4>
+        <p>Un utilisateur connecté peut demander la suppression de son compte depuis <strong>Paramètres &gt; Supprimer le compte</strong>. S’il ne peut plus se connecter, notamment après une inscription avec Google ou Facebook, il peut utiliser le <a href="{{ route('contact.index') }}">formulaire de contact</a> en indiquant l’adresse e-mail associée au compte et l’objet « Suppression de mes données ».</p>
+        <p>Après vérification de la demande, le compte et les données qui ne sont plus nécessaires sont supprimés ou anonymisés. Certaines informations peuvent être conservées dans une archive à accès restreint pendant la durée imposée par la loi ou nécessaire à la prévention de la fraude, à la comptabilité et à la défense de droits.</p>
+
         <h4 class="mt-4">7. Sécurité et transferts</h4>
         <p>Des mesures organisationnelles et techniques protègent les accès, sessions, documents et paiements. Lorsqu’un prestataire traite des données hors de l’Espace économique européen, le transfert repose sur une décision d’adéquation ou des garanties reconnues, telles que les clauses contractuelles types, avec les mesures complémentaires nécessaires.</p>
 
