@@ -22,6 +22,8 @@ class StripeCheckoutSecurityFeatureTest extends TestCase
         $sessionAlias->shouldReceive('retrieve')->once()->andReturn((object) [
             'id' => 'cs_points_secure',
             'payment_status' => 'paid',
+            'amount_total' => 400,
+            'currency' => 'eur',
             'metadata' => (object) [
                 'type' => 'points',
                 'user_id' => $user->id,

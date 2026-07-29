@@ -133,7 +133,7 @@ class AdPublicationArchitectureFeatureTest extends TestCase
         return array_merge([
             'title' => 'Publication architecture test',
             'description' => 'Description suffisamment detaillee pour le test de publication.',
-            'category' => 'Plomberie',
+            'category' => 'Plombier',
             'country' => 'Mayotte',
             'city' => 'Mamoudzou',
             'location' => 'Mamoudzou',

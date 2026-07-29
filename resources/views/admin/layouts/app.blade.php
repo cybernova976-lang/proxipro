@@ -250,6 +250,11 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('admin.payments.index') }}" class="{{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">
+                    <i class="fas fa-credit-card me-2" style="color: #2563eb;"></i> Paiements Stripe
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('admin.deleted-accounts') }}" class="{{ request()->routeIs('admin.deleted-accounts') ? 'active' : '' }}">
                     <i class="fas fa-trash me-2"></i> Comptes supprimés
                 </a>

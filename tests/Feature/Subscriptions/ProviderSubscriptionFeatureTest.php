@@ -69,7 +69,11 @@ class ProviderSubscriptionFeatureTest extends TestCase
                 'user_id' => (string) $user->id,
                 'type' => 'provider_subscription',
                 'plan' => 'monthly',
+                'expected_amount_cents' => '999',
+                'expected_currency' => 'eur',
             ],
+            'amount_total' => 999,
+            'currency' => 'eur',
             'subscription' => $stripeSubscription,
             'payment_intent' => null,
         ];

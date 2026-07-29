@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\IdentityVerification;
 use App\Models\IdentityVerificationDocument;
+use App\Models\User;
+use App\Services\IdentityVerificationPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +19,7 @@ use Throwable;
 
 class VerificationController extends Controller
 {
-    public function __construct()
+    public function __construct(private readonly IdentityVerificationPaymentService $verificationPayments)
     {
         $this->middleware('auth');
     }
@@ -330,7 +332,10 @@ class VerificationController extends Controller
                 'metadata' => [
                     'verification_id' => $verification->id,
                     'user_id' => $user->id,
-                    'type' => $verification->type,
+                    'type' => 'identity_verification',
+                    'verification_type' => $verification->type,
+                    'expected_amount_cents' => (int) round($amount * 100),
+                    'expected_currency' => 'eur',
                 ],
             ]);
 
@@ -387,33 +392,43 @@ class VerificationController extends Controller
 
         $pointsCost = IdentityVerification::getVerificationPointsCost($verification->type);
 
-        // Check if user has enough points
-        if (($user->available_points ?? 0) < $pointsCost) {
+        try {
+            $newBalance = DB::transaction(function () use ($user, $verification, $pointsCost) {
+                $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
+                $lockedVerification = IdentityVerification::query()->lockForUpdate()->findOrFail($verification->id);
+
+                if ($lockedVerification->payment_status !== 'pending') {
+                    throw ValidationException::withMessages(['verification_id' => 'Cette demande a déjà été réglée.']);
+                }
+                if (($lockedUser->available_points ?? 0) < $pointsCost
+                    || ! $lockedUser->spendPoints($pointsCost, 'verification_payment', 'Vérification de profil - '.$lockedVerification->type)) {
+                    throw ValidationException::withMessages([
+                        'points' => 'Points insuffisants. Il vous faut '.$pointsCost.' points.',
+                    ]);
+                }
+
+                $this->verificationPayments->moveDocumentsToPermanent($lockedVerification);
+                $lockedVerification->forceFill([
+                    'payment_status' => 'paid',
+                    'payment_id' => 'points_'.$lockedVerification->id,
+                    'paid_at' => now(),
+                    'status' => 'pending',
+                    'submitted_at' => now(),
+                ])->save();
+
+                return (int) $lockedUser->fresh()->available_points;
+            });
+        } catch (ValidationException $exception) {
             return response()->json([
                 'success' => false,
-                'message' => 'Points insuffisants. Il vous faut '.$pointsCost.' points. Vous avez '.($user->available_points ?? 0).' points.',
-            ], 400);
+                'message' => collect($exception->errors())->flatten()->first(),
+            ], 422);
         }
-
-        // Deduct points
-        $user->spendPoints($pointsCost, 'verification_payment', 'Vérification de profil - '.$verification->type);
-
-        // Move documents to permanent folder
-        $this->moveDocumentsToPermanent($verification);
-
-        // Update verification status
-        $verification->update([
-            'payment_status' => 'paid',
-            'payment_id' => 'points_'.$pointsCost,
-            'paid_at' => now(),
-            'status' => 'pending',
-            'submitted_at' => now(),
-        ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Paiement par points réussi ! Votre demande de vérification a été envoyée.',
-            'new_balance' => $user->fresh()->available_points,
+            'new_balance' => $newBalance,
         ]);
     }
 
@@ -423,8 +438,6 @@ class VerificationController extends Controller
     public function paymentSuccess(Request $request, $id)
     {
         $verification = IdentityVerification::findOrFail($id);
-        $paymentConfirmed = false;
-
         if ($verification->user_id !== Auth::id()) {
             abort(403);
         }
@@ -438,33 +451,17 @@ class VerificationController extends Controller
 
                 Stripe::setApiKey($stripeSecret);
                 $session = Session::retrieve($request->session_id);
-                $expectedAmount = (int) round(IdentityVerification::getVerificationPrice($verification->type) * 100);
-                $metadata = $session->metadata?->toArray() ?? [];
-                $metadataMatches = (string) ($metadata['verification_id'] ?? '') === (string) $verification->id
-                    && (string) ($metadata['user_id'] ?? '') === (string) Auth::id()
-                    && (string) ($session->client_reference_id ?? '') === (string) $verification->id;
-                $amountMatches = (int) ($session->amount_total ?? 0) === $expectedAmount
-                    && strtolower((string) ($session->currency ?? '')) === 'eur';
-
-                if ($session->payment_status === 'paid' && $metadataMatches && $amountMatches) {
-                    // Déplacer les documents vers dossier permanent
-                    $this->moveDocumentsToPermanent($verification);
-
-                    $verification->update([
-                        'payment_status' => 'paid',
-                        'payment_id' => $session->payment_intent,
-                        'paid_at' => now(),
-                        'status' => 'pending',
-                        'submitted_at' => now(),
-                    ]);
-                    $paymentConfirmed = true;
-                }
-            } catch (\Exception $e) {
-                Log::error('Erreur vérification paiement: '.$e->getMessage());
+                $this->verificationPayments->fulfill($session, Auth::id(), $verification->id);
+            } catch (\Throwable $e) {
+                Log::warning('Identity verification Stripe confirmation refused.', [
+                    'verification_id' => $verification->id,
+                    'error' => $e->getMessage(),
+                ]);
             }
         }
 
-        if (! $paymentConfirmed && $verification->payment_status !== 'paid') {
+        $verification->refresh();
+        if ($verification->payment_status !== 'paid') {
             return redirect()->route('profile.show')->with('error', 'Le paiement n\'a pas pu être validé. Votre demande n\'a pas été envoyée à l\'administration.');
         }
 
@@ -491,66 +488,8 @@ class VerificationController extends Controller
                 ->with('error', 'Cette demande a déjà été payée et transmise à l’administration.');
         }
 
-        // Supprimer les documents temporaires
-        $this->deleteVerificationFiles($verification);
-        $verification->delete();
-
-        return redirect()->route('profile.show')->with('error', 'Paiement annulé. Votre demande n\'a pas été envoyée.');
-    }
-
-    /**
-     * Move documents from temp to permanent folder
-     */
-    private function moveDocumentsToPermanent(IdentityVerification $verification)
-    {
-        $paths = array_filter([
-            $verification->document_front,
-            $verification->document_back,
-            $verification->selfie,
-            $verification->professional_document,
-        ]);
-
-        if (collect($paths)->every(
-            fn (string $path) => IdentityVerificationDocument::isDatabasePath($path)
-        )) {
-            return;
-        }
-
-        $disk = Storage::disk(config('filesystems.default', 'public'));
-
-        if ($verification->document_front
-            && ! IdentityVerificationDocument::isDatabasePath($verification->document_front)
-            && $disk->exists($verification->document_front)) {
-            $newPath = str_replace('verifications-temp/', 'verifications/', $verification->document_front);
-            $disk->move($verification->document_front, $newPath);
-            $verification->document_front = $newPath;
-        }
-
-        if ($verification->document_back
-            && ! IdentityVerificationDocument::isDatabasePath($verification->document_back)
-            && $disk->exists($verification->document_back)) {
-            $newPath = str_replace('verifications-temp/', 'verifications/', $verification->document_back);
-            $disk->move($verification->document_back, $newPath);
-            $verification->document_back = $newPath;
-        }
-
-        if ($verification->selfie
-            && ! IdentityVerificationDocument::isDatabasePath($verification->selfie)
-            && $disk->exists($verification->selfie)) {
-            $newPath = str_replace('verifications-temp/', 'verifications/', $verification->selfie);
-            $disk->move($verification->selfie, $newPath);
-            $verification->selfie = $newPath;
-        }
-
-        if ($verification->professional_document
-            && ! IdentityVerificationDocument::isDatabasePath($verification->professional_document)
-            && $disk->exists($verification->professional_document)) {
-            $newPath = str_replace('verifications-temp/', 'verifications/', $verification->professional_document);
-            $disk->move($verification->professional_document, $newPath);
-            $verification->professional_document = $newPath;
-        }
-
-        $verification->save();
+        return redirect()->route('verification.index')
+            ->with('error', 'Paiement annulé. Vos documents sont conservés afin que vous puissiez reprendre le paiement.');
     }
 
     /**

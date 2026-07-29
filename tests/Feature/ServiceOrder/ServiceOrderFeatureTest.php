@@ -4,7 +4,6 @@ namespace Tests\Feature\ServiceOrder;
 
 use App\Models\Ad;
 use App\Models\ServiceOrder;
-use App\Models\Transaction;
 use App\Models\User;
 use App\Notifications\ServiceOrderRequestedNotification;
 use App\Notifications\ServiceOrderStatusNotification;
@@ -209,16 +208,24 @@ class ServiceOrderFeatureTest extends TestCase
             'seller_amount' => 180,
             'status' => ServiceOrder::STATUS_AWAITING_PAYMENT,
             'payment_status' => ServiceOrder::PAYMENT_CHECKOUT_OPEN,
+            'stripe_checkout_session_id' => 'cs_paid_service_order',
         ]);
 
         $sessionAlias = Mockery::mock('alias:Stripe\\Checkout\\Session');
         $sessionAlias->shouldReceive('retrieve')->once()->andReturn((object) [
             'id' => 'cs_paid_service_order',
             'payment_status' => 'paid',
+            'amount_total' => 20000,
+            'currency' => 'eur',
             'payment_intent' => 'pi_service_order_paid',
             'metadata' => (object) [
                 'type' => 'service_order',
                 'service_order_id' => $serviceOrder->id,
+                'buyer_id' => $buyer->id,
+                'seller_id' => $seller->id,
+                'order_number' => $serviceOrder->order_number,
+                'expected_amount_cents' => 20000,
+                'expected_currency' => 'eur',
             ],
         ]);
 
@@ -258,7 +265,7 @@ class ServiceOrderFeatureTest extends TestCase
         $this->assertDatabaseHas('transactions', [
             'user_id' => $seller->id,
             'type' => 'SERVICE_ORDER_RELEASE',
-            'description' => 'Liberation commande ' . $serviceOrder->order_number,
+            'description' => 'Liberation commande '.$serviceOrder->order_number,
         ]);
 
         $disputedOrder = ServiceOrder::create([

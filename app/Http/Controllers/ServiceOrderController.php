@@ -9,6 +9,7 @@ use App\Services\ServiceOrderWorkflowService;
 use App\Services\StripeConnectService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Stripe\Checkout\Session as StripeSession;
 use Stripe\Stripe;
@@ -112,33 +113,53 @@ class ServiceOrderController extends Controller
         abort_if($serviceOrder->buyer_id !== $buyer->id, 403);
         abort_unless($serviceOrder->canBuyerPay(), 422);
 
-        $stripeCustomerId = $this->ensureStripeCustomer($buyer);
+        if (! config('services.stripe.secret')) {
+            return redirect()->route('service-orders.index')
+                ->with('error', 'Le paiement sécurisé est momentanément indisponible.');
+        }
 
-        $session = StripeSession::create([
-            'customer' => $stripeCustomerId,
-            'payment_method_types' => ['card'],
-            'line_items' => [[
-                'price_data' => [
-                    'currency' => config('marketplace.currency', 'eur'),
-                    'product_data' => [
-                        'name' => 'Commande securisee '.$serviceOrder->order_number,
-                        'description' => $serviceOrder->ad->title,
+        try {
+            $stripeCustomerId = $this->ensureStripeCustomer($buyer);
+            $amountCents = (int) round(((float) $serviceOrder->amount) * 100);
+            $currency = strtolower((string) config('marketplace.currency', 'eur'));
+
+            $session = StripeSession::create([
+                'customer' => $stripeCustomerId,
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'price_data' => [
+                        'currency' => $currency,
+                        'product_data' => [
+                            'name' => 'Commande securisee '.$serviceOrder->order_number,
+                            'description' => $serviceOrder->ad->title,
+                        ],
+                        'unit_amount' => $amountCents,
                     ],
-                    'unit_amount' => (int) round(((float) $serviceOrder->amount) * 100),
+                    'quantity' => 1,
+                ]],
+                'mode' => 'payment',
+                'success_url' => route('stripe.success').'?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => route('service-orders.index').'?payment=canceled&order='.$serviceOrder->id,
+                'metadata' => [
+                    'type' => 'service_order',
+                    'service_order_id' => $serviceOrder->id,
+                    'buyer_id' => $serviceOrder->buyer_id,
+                    'seller_id' => $serviceOrder->seller_id,
+                    'order_number' => $serviceOrder->order_number,
+                    'expected_amount_cents' => $amountCents,
+                    'expected_currency' => $currency,
                 ],
-                'quantity' => 1,
-            ]],
-            'mode' => 'payment',
-            'success_url' => route('stripe.success').'?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => route('service-orders.index').'?payment=canceled&order='.$serviceOrder->id,
-            'metadata' => [
-                'type' => 'service_order',
+            ]);
+        } catch (\Throwable $exception) {
+            Log::error('Unable to create service order Stripe checkout.', [
                 'service_order_id' => $serviceOrder->id,
-                'buyer_id' => $serviceOrder->buyer_id,
-                'seller_id' => $serviceOrder->seller_id,
-                'order_number' => $serviceOrder->order_number,
-            ],
-        ]);
+                'buyer_id' => $buyer->id,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return redirect()->route('service-orders.index')
+                ->with('error', 'Impossible d’ouvrir le paiement sécurisé. Veuillez réessayer.');
+        }
 
         $serviceOrder->forceFill([
             'payment_status' => ServiceOrder::PAYMENT_CHECKOUT_OPEN,

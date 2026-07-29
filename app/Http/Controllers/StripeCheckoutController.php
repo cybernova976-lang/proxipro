@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
-use App\Models\User;
-use App\Services\ProviderSubscriptionService;
-use App\Services\ReferralService;
+use App\Services\PointPurchasePaymentService;
 use App\Services\ServiceOrderWorkflowService;
+use App\Services\StripeWebhookService;
 use App\Support\PointPackCatalog;
+use App\Support\StripeSessionData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Stripe\Checkout\Session as StripeSession;
@@ -16,9 +16,9 @@ use Stripe\Stripe;
 class StripeCheckoutController extends Controller
 {
     public function __construct(
-        protected ReferralService $referralService,
+        protected PointPurchasePaymentService $pointPurchases,
         protected ServiceOrderWorkflowService $serviceOrderWorkflowService,
-        protected ProviderSubscriptionService $providerSubscriptionService,
+        protected StripeWebhookService $stripeWebhooks,
     ) {
         Stripe::setApiKey(config('services.stripe.secret'));
     }
@@ -79,6 +79,8 @@ class StripeCheckoutController extends Controller
                     'product_key' => $productKey,
                     'type' => $product['type'],
                     'points' => $product['points'],
+                    'expected_amount_cents' => $product['price_cents'],
+                    'expected_currency' => 'eur',
                 ],
             ]);
 
@@ -108,11 +110,15 @@ class StripeCheckoutController extends Controller
         try {
             $session = StripeSession::retrieve($sessionId);
 
-            if ($session->payment_status !== 'paid') {
+            if (! StripeSessionData::isPaid($session)) {
                 return redirect()->route('pricing.index')->with('error', 'Paiement non confirmé');
             }
 
             if (($session->metadata->type ?? null) === 'service_order') {
+                if ((int) ($session->metadata->buyer_id ?? 0) !== (int) Auth::id()) {
+                    return redirect()->route('service-orders.index')->with('error', 'Cette session de paiement ne correspond pas à votre compte.');
+                }
+
                 $serviceOrder = $this->serviceOrderWorkflowService->markPaidFromCheckoutSession($session);
 
                 if (! $serviceOrder) {
@@ -123,41 +129,10 @@ class StripeCheckoutController extends Controller
                     ->with('success', 'Paiement Stripe confirme. Les fonds sont bloques jusqu\'a liberation ou litige.');
             }
 
-            // Le produit et le beneficiaire proviennent exclusivement des
-            // metadonnees Stripe signees, jamais des parametres de retour.
-            $productKey = $session->metadata->product_key ?? null;
-
-            if (! $productKey) {
-                return redirect()->route('pricing.index')->with('error', 'Produit invalide');
-            }
-
-            $userId = $session->metadata->user_id;
-            $product = PointPackCatalog::find($productKey);
-
-            if (! $product) {
-                return redirect()->route('pricing.index')->with('error', 'Produit invalide');
-            }
-
-            if ((int) $userId !== (int) Auth::id()) {
-                return redirect()->route('pricing.index')->with('error', 'Cette session de paiement ne correspond pas a votre compte.');
-            }
-
-            $user = User::find($userId);
-            if (! $user) {
-                return redirect()->route('pricing.index')->with('error', 'Utilisateur non trouvé');
-            }
-
-            // Vérifier si cette session a déjà été traitée
-            $existingTransaction = Transaction::where('stripe_session_id', $sessionId)->first();
-            if ($existingTransaction) {
-                return redirect()->route('pricing.index')
-                    ->with('success', 'Paiement déjà traité ! Vos points ont été crédités.');
-            }
-
-            // Traiter le paiement
-            $this->processPayment($user, $product, $productKey, $session);
-
-            $message = '🎉 '.$product['points'].' points ajoutés à votre compte !';
+            $result = $this->pointPurchases->fulfill($session, Auth::id());
+            $message = $result['status'] === 'processed'
+                ? '🎉 '.$result['product']['points'].' points ajoutés à votre compte !'
+                : 'Ce paiement avait déjà été traité. Vos points sont disponibles.';
 
             return redirect()->route('pricing.index')->with('success', $message);
 
@@ -166,26 +141,6 @@ class StripeCheckoutController extends Controller
 
             return redirect()->route('pricing.index')->with('error', 'Erreur lors de la confirmation du paiement');
         }
-    }
-
-    /**
-     * Traiter le paiement et créditer les points/abonnement
-     */
-    private function processPayment($user, $product, $productKey, $session)
-    {
-        // Enregistrer la transaction
-        $transaction = Transaction::create([
-            'user_id' => $user->id,
-            'amount' => $product['price'],
-            'type' => 'POINTS',
-            'description' => 'Achat de '.$product['points'].' points',
-            'status' => 'completed',
-            'stripe_session_id' => $session->id,
-        ]);
-
-        // Créditer les points (via available_points et total_points)
-        $user->addPoints($product['points'], 'purchase', 'Achat de '.$product['points'].' points', 'stripe');
-        $this->referralService->grantFirstPurchaseRewards($user->fresh(), $transaction);
     }
 
     /**
@@ -214,55 +169,7 @@ class StripeCheckoutController extends Controller
         }
 
         try {
-            if (isset($event->type) && $event->type === 'checkout.session.completed') {
-                $session = $event->data->object;
-                $metadata = $session->metadata;
-                $type = $metadata->type ?? null;
-
-                if ($type === 'service_order') {
-                    $this->serviceOrderWorkflowService->markPaidFromCheckoutSession($session);
-
-                    return response()->json(['received' => true]);
-                }
-
-                if (in_array($type, ProviderSubscriptionService::CHECKOUT_TYPES, true)) {
-                    $this->providerSubscriptionService->completeCheckoutSession($session);
-
-                    return response()->json(['received' => true]);
-                }
-
-                $user = User::find($metadata->user_id ?? null);
-                $productKey = $metadata->product_key ?? null;
-
-                if ($user && $productKey && ($product = PointPackCatalog::find($productKey))) {
-
-                    // Vérifier si pas déjà traité
-                    $existingTransaction = Transaction::where('stripe_session_id', $session->id)->first();
-                    if (! $existingTransaction) {
-                        $this->processPayment($user, $product, $productKey, $session);
-                    }
-                }
-            }
-
-            if (in_array($event->type ?? null, [
-                'customer.subscription.created',
-                'customer.subscription.updated',
-                'customer.subscription.deleted',
-                'customer.subscription.paused',
-                'customer.subscription.resumed',
-            ], true)) {
-                if ($this->providerSubscriptionService->managesStripeSubscription($event->data->object)) {
-                    $this->providerSubscriptionService->syncStripeSubscription($event->data->object);
-                }
-            }
-
-            if (($event->type ?? null) === 'invoice.paid') {
-                $this->providerSubscriptionService->syncInvoicePaid($event->data->object);
-            }
-
-            if (($event->type ?? null) === 'invoice.payment_failed') {
-                $this->providerSubscriptionService->markInvoiceFailed($event->data->object);
-            }
+            $result = $this->stripeWebhooks->process($event);
         } catch (\Throwable $exception) {
             \Log::error('Stripe webhook processing failed.', [
                 'event_id' => $event->id ?? null,
@@ -274,7 +181,7 @@ class StripeCheckoutController extends Controller
             return response()->json(['error' => 'Échec du traitement du webhook'], 500);
         }
 
-        return response()->json(['received' => true]);
+        return response()->json(['received' => true, 'result' => $result]);
     }
 
     /**

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdController;
 use App\Http\Controllers\Admin\AdminServiceOrderController;
 use App\Http\Controllers\Admin\BlockedEmailController;
+use App\Http\Controllers\Admin\PaymentReconciliationController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BoostController;
 use App\Http\Controllers\CommentController;
@@ -566,6 +567,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/subscriptions/{id}/grant-premium', [AdminController::class, 'grantPremium'])->name('admin.subscriptions.grant-premium');
     Route::post('/subscriptions/{id}/suspend', [AdminController::class, 'suspendSubscription'])->name('admin.subscriptions.suspend');
     Route::post('/subscriptions/{id}/cancel', [AdminController::class, 'cancelSubscription'])->name('admin.subscriptions.cancel');
+
+    // Suivi et réconciliation des paiements Stripe
+    Route::get('/payments', [PaymentReconciliationController::class, 'index'])->name('admin.payments.index');
+    Route::post('/payments/webhooks/{stripeWebhookEvent}/retry', [PaymentReconciliationController::class, 'retry'])
+        ->name('admin.payments.webhooks.retry');
 
     // Statistiques
     Route::get('/stats', [AdminController::class, 'stats'])->name('admin.stats');

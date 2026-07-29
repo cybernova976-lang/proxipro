@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ad;
-use App\Models\Transaction;
+use App\Services\AdPromotionPaymentService;
+use App\Support\AdPromotionCatalog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class BoostController extends Controller
@@ -15,68 +15,12 @@ class BoostController extends Controller
     /**
      * Boost packages available
      */
-    private $boostPackages = [
-        'boost_3' => [
-            'name' => 'Boost 3 jours',
-            'duration_days' => 3,
-            'price_points' => 5,
-            'price_euros' => 4.00,
-            'description' => 'Votre annonce apparaît dans la section "Professionnels Premium" pendant 3 jours',
-            'features' => [
-                'Visibilité accrue pendant 3 jours',
-                'Badge "Boost" sur votre annonce',
-                'Position prioritaire dans les résultats',
-            ],
-            'icon' => 'fas fa-bolt',
-            'color' => '#3b82f6',
-        ],
-        'boost_7' => [
-            'name' => 'Boost 7 jours',
-            'duration_days' => 7,
-            'price_points' => 10,
-            'price_euros' => 6.00,
-            'description' => 'Votre annonce apparaît dans la section "Professionnels Premium" pendant 7 jours',
-            'features' => [
-                'Visibilité accrue pendant 7 jours',
-                'Badge "Boost" sur votre annonce',
-                'Position prioritaire dans les résultats',
-                'Meilleur rapport qualité/prix',
-            ],
-            'icon' => 'fas fa-rocket',
-            'color' => '#10b981',
-        ],
-        'boost_15' => [
-            'name' => 'Boost 15 jours',
-            'duration_days' => 15,
-            'price_points' => 20,
-            'price_euros' => 10.00,
-            'description' => 'Votre annonce apparaît dans la section "Professionnels Premium" pendant 15 jours',
-            'features' => [
-                'Visibilité accrue pendant 15 jours',
-                'Badge "Premium" doré sur votre annonce',
-                'Position prioritaire dans les résultats',
-                'Mise en avant dans les notifications',
-            ],
-            'icon' => 'fas fa-star',
-            'color' => '#f59e0b',
-        ],
-        'boost_30' => [
-            'name' => 'Boost 30 jours',
-            'duration_days' => 30,
-            'price_points' => 30,
-            'price_euros' => 15.00,
-            'description' => 'Votre annonce apparaît dans la section "Professionnels Premium" pendant 30 jours',
-            'features' => [
-                'Visibilité maximale pendant 30 jours',
-                'Badge "VIP" exclusif sur votre annonce',
-                'Première position garantie',
-                'Mise en avant dans les notifications',
-                'Support prioritaire',
-            ],
-            'icon' => 'fas fa-crown',
-            'color' => '#8b5cf6',
-        ],
-    ];
+    private array $boostPackages;
+
+    public function __construct(private readonly AdPromotionPaymentService $promotionPayments)
+    {
+        $this->boostPackages = AdPromotionCatalog::boosts();
+    }
 
     /**
      * Show the boost options page for an ad — smart version
@@ -279,12 +223,17 @@ class BoostController extends Controller
                     'ad_id' => $ad->id,
                     'user_id' => $user->id,
                     'package' => $request->package,
+                    'type' => 'ad_boost',
+                    'expected_amount_cents' => (int) round($priceEuros * 100),
+                    'expected_currency' => 'eur',
                 ],
             ]);
 
             return redirect($session->url);
         } catch (\Exception $e) {
-            return back()->with('error', 'Erreur lors du paiement: '.$e->getMessage());
+            Log::error('Unable to create boost Stripe checkout.', ['ad_id' => $ad->id, 'error' => $e->getMessage()]);
+
+            return back()->with('error', 'Impossible d’ouvrir le paiement sécurisé. Veuillez réessayer.');
         }
     }
 
@@ -303,31 +252,24 @@ class BoostController extends Controller
             return redirect()->route('boost.show', $ad)->with('error', 'Pack de boost invalide.');
         }
 
-        $session = $this->verifiedCheckoutSession($request, $ad, null, $packageKey);
+        $session = $this->retrieveCheckoutSession($request, $ad);
         if (! $session) {
             return redirect()->route('boost.show', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. Aucun boost n’a été appliqué.');
         }
-        $package = $this->boostPackages[$packageKey];
-        $status = $ad->getBoostStatus();
+        try {
+            $result = $this->promotionPayments->fulfill($session, Auth::id(), $ad->id, 'ad_boost', $packageKey);
+        } catch (\Throwable $exception) {
+            Log::warning('Boost Stripe confirmation refused.', ['ad_id' => $ad->id, 'error' => $exception->getMessage()]);
 
-        $boostEnd = Carbon::now()->addDays($package['duration_days']);
-
-        if ($ad->isCurrentlyBoosted() && $ad->boost_end) {
-            $boostEnd = $ad->boost_end->addDays($package['duration_days']);
+            return redirect()->route('boost.show', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. Aucun boost n’a été appliqué.');
         }
-
-        if (! $this->processCheckoutOnce($session, 'AD_BOOST', $ad, function () use ($ad, $boostEnd, $packageKey) {
-            $ad->update([
-                'is_boosted' => true,
-                'boost_end' => $boostEnd,
-                'boost_type' => $packageKey,
-            ]);
-        })) {
+        if ($result['status'] !== 'processed') {
             return redirect()->route('ads.show', $ad)->with('success', 'Ce paiement avait déjà été confirmé.');
         }
 
-        $message = '🚀 Paiement réussi ! Annonce boostée jusqu\'au '.$boostEnd->format('d/m/Y à H:i').' !';
-        if ($status['is_urgent']) {
+        $ad->refresh();
+        $message = '🚀 Paiement réussi ! Annonce boostée jusqu\'au '.$ad->boost_end->format('d/m/Y à H:i').' !';
+        if ($ad->isCurrentlyUrgent()) {
             $message .= ' (+ mode Urgent actif)';
         }
 
@@ -454,7 +396,10 @@ class BoostController extends Controller
         }
 
         $user = Auth::user();
-        $priceEuros = $user->hasActiveProSubscription() ? 2.40 : 3.00;
+        $priceEuros = AdPromotionCatalog::discountedCents(
+            AdPromotionCatalog::refresh()['price_euros'],
+            $user->hasActiveProSubscription()
+        ) / 100;
 
         \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
 
@@ -480,12 +425,16 @@ class BoostController extends Controller
                     'ad_id' => $ad->id,
                     'user_id' => $user->id,
                     'type' => 'refresh',
+                    'expected_amount_cents' => (int) round($priceEuros * 100),
+                    'expected_currency' => 'eur',
                 ],
             ]);
 
             return redirect($session->url);
         } catch (\Exception $e) {
-            return back()->with('error', 'Erreur lors du paiement: '.$e->getMessage());
+            Log::error('Unable to create refresh Stripe checkout.', ['ad_id' => $ad->id, 'error' => $e->getMessage()]);
+
+            return back()->with('error', 'Impossible d’ouvrir le paiement sécurisé. Veuillez réessayer.');
         }
     }
 
@@ -500,18 +449,18 @@ class BoostController extends Controller
             return redirect()->route('homepage')->with('error', 'Accès non autorisé.');
         }
 
-        $session = $this->verifiedCheckoutSession($request, $ad, 'refresh');
+        $session = $this->retrieveCheckoutSession($request, $ad);
         if (! $session) {
             return redirect()->route('boost.show', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. L’annonce n’a pas été rafraîchie.');
         }
-        if (! $this->processCheckoutOnce($session, 'AD_REFRESH', $ad, function () use ($ad) {
-            $ad->update([
-                'updated_at' => now(),
-                'is_boosted' => false,
-                'boost_end' => null,
-                'boost_type' => null,
-            ]);
-        })) {
+        try {
+            $result = $this->promotionPayments->fulfill($session, Auth::id(), $ad->id, 'refresh');
+        } catch (\Throwable $exception) {
+            Log::warning('Refresh Stripe confirmation refused.', ['ad_id' => $ad->id, 'error' => $exception->getMessage()]);
+
+            return redirect()->route('boost.show', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. L’annonce n’a pas été rafraîchie.');
+        }
+        if ($result['status'] !== 'processed') {
             return redirect()->route('ads.show', $ad)->with('success', 'Ce paiement avait déjà été confirmé.');
         }
 
@@ -525,11 +474,7 @@ class BoostController extends Controller
      */
     public static function getUrgentConfig(): array
     {
-        return [
-            'price_points' => 15,
-            'price_euros' => 14.00,
-            'duration_days' => 7,
-        ];
+        return AdPromotionCatalog::urgent();
     }
 
     /**
@@ -629,12 +574,16 @@ class BoostController extends Controller
                     'ad_id' => $ad->id,
                     'user_id' => $user->id,
                     'type' => 'urgent',
+                    'expected_amount_cents' => (int) round($priceEuros * 100),
+                    'expected_currency' => 'eur',
                 ],
             ]);
 
             return redirect($session->url);
         } catch (\Exception $e) {
-            return back()->with('error', 'Erreur lors du paiement: '.$e->getMessage());
+            Log::error('Unable to create urgent Stripe checkout.', ['ad_id' => $ad->id, 'error' => $e->getMessage()]);
+
+            return back()->with('error', 'Impossible d’ouvrir le paiement sécurisé. Veuillez réessayer.');
         }
     }
 
@@ -652,19 +601,19 @@ class BoostController extends Controller
             return redirect()->route('boost.show', $ad)->with('error', 'Le mode Urgent est réservé aux demandes de services.');
         }
 
-        $session = $this->verifiedCheckoutSession($request, $ad, 'urgent');
+        $session = $this->retrieveCheckoutSession($request, $ad);
         if (! $session) {
             return redirect()->route('boost.show', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. Le mode Urgent n’a pas été activé.');
         }
         $config = self::getUrgentConfig();
+        try {
+            $result = $this->promotionPayments->fulfill($session, Auth::id(), $ad->id, 'urgent');
+        } catch (\Throwable $exception) {
+            Log::warning('Urgent Stripe confirmation refused.', ['ad_id' => $ad->id, 'error' => $exception->getMessage()]);
 
-        if (! $this->processCheckoutOnce($session, 'AD_URGENT', $ad, function () use ($ad, $config) {
-            $ad->update([
-                'is_urgent' => true,
-                'urgent_until' => now()->addDays($config['duration_days']),
-                'sidebar_priority' => 1,
-            ]);
-        })) {
+            return redirect()->route('boost.show', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. Le mode Urgent n’a pas été activé.');
+        }
+        if ($result['status'] !== 'processed') {
             return redirect()->route('ads.show', $ad)->with('success', 'Ce paiement avait déjà été confirmé.');
         }
 
@@ -673,7 +622,7 @@ class BoostController extends Controller
         );
     }
 
-    private function verifiedCheckoutSession(Request $request, Ad $ad, ?string $expectedType = null, ?string $expectedPackage = null)
+    private function retrieveCheckoutSession(Request $request, Ad $ad)
     {
         $sessionId = (string) $request->query('session_id', '');
         if ($sessionId === '' || ! config('services.stripe.secret')) {
@@ -682,23 +631,8 @@ class BoostController extends Controller
 
         try {
             \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
-            $session = \Stripe\Checkout\Session::retrieve($sessionId);
-            $metadata = $session->metadata;
 
-            if ($session->payment_status !== 'paid'
-                || (int) ($metadata->ad_id ?? 0) !== (int) $ad->id
-                || (int) ($metadata->user_id ?? 0) !== (int) Auth::id()) {
-                return null;
-            }
-
-            if ($expectedType !== null && (string) ($metadata->type ?? '') !== $expectedType) {
-                return null;
-            }
-            if ($expectedPackage !== null && (string) ($metadata->package ?? '') !== $expectedPackage) {
-                return null;
-            }
-
-            return $session;
+            return \Stripe\Checkout\Session::retrieve($sessionId);
         } catch (\Throwable $exception) {
             Log::warning('Stripe checkout verification failed', [
                 'ad_id' => $ad->id,
@@ -708,33 +642,5 @@ class BoostController extends Controller
 
             return null;
         }
-    }
-
-    private function processCheckoutOnce($session, string $type, Ad $ad, callable $applyPromotion): bool
-    {
-        return DB::transaction(function () use ($session, $type, $ad, $applyPromotion) {
-            $transaction = Transaction::firstOrCreate(
-                ['stripe_session_id' => $session->id],
-                [
-                    'user_id' => Auth::id(),
-                    'amount' => ((int) ($session->amount_total ?? 0)) / 100,
-                    'type' => $type,
-                    'description' => 'Promotion de l’annonce #'.$ad->id,
-                    'status' => 'completed',
-                    'metadata' => [
-                        'ad_id' => $ad->id,
-                        'payment_intent' => $session->payment_intent ?? null,
-                    ],
-                ]
-            );
-
-            if (! $transaction->wasRecentlyCreated) {
-                return false;
-            }
-
-            $applyPromotion();
-
-            return true;
-        });
     }
 }

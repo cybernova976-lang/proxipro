@@ -53,6 +53,8 @@ class ProviderSubscriptionService
             'user_id' => (string) $user->id,
             'type' => $flow,
             'plan' => $plan,
+            'expected_amount_cents' => (string) ((int) round($amount * 100)),
+            'expected_currency' => 'eur',
         ];
 
         return $client->checkout->sessions->create([
@@ -103,9 +105,24 @@ class ProviderSubscriptionService
         $metadata = $this->metadata($session);
         $type = (string) ($metadata['type'] ?? '');
         $userId = (int) ($metadata['user_id'] ?? 0);
+        $plan = (string) ($metadata['plan'] ?? '');
 
         if (! in_array($type, self::CHECKOUT_TYPES, true) || $userId <= 0) {
             throw new DomainException('Cette session Stripe ne correspond pas à un abonnement Pro.');
+        }
+        if (! in_array($plan, ['monthly', 'annual'], true)) {
+            throw new DomainException('Le plan de l’abonnement est invalide.');
+        }
+
+        $expectedAmount = (int) ($metadata['expected_amount_cents']
+            ?? round(ProviderSubscriptionPlans::amount($plan) * 100));
+        $expectedCurrency = strtolower((string) ($metadata['expected_currency'] ?? 'eur'));
+        $sessionAmount = $this->value($session, 'amount_total');
+        $sessionCurrency = strtolower((string) $this->value($session, 'currency'));
+        if (! is_numeric($sessionAmount)
+            || (int) $sessionAmount !== $expectedAmount
+            || $sessionCurrency !== $expectedCurrency) {
+            throw new DomainException('Le montant ou la devise de l’abonnement est invalide.');
         }
 
         $user = $expectedUser ?? User::find($userId);
@@ -136,7 +153,7 @@ class ProviderSubscriptionService
         $attributes['stripe_checkout_session_id'] = (string) $this->value($session, 'id');
         $attributes['stripe_payment_intent'] = $this->paymentIntentId($session, $subscriptionObject);
 
-        return $this->syncStripeSubscription($subscriptionObject, $user, (string) ($metadata['plan'] ?? ''), $attributes);
+        return $this->syncStripeSubscription($subscriptionObject, $user, $plan, $attributes);
     }
 
     public function syncStripeSubscription(
