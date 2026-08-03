@@ -525,6 +525,7 @@ Route::middleware(['auth'])->prefix('pro')->name('pro.')->group(function () {
 // Routes Admin (protégées par middleware admin)
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('/export', [AdminController::class, 'exportData'])->name('admin.export');
 
     // Gestion des utilisateurs
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');

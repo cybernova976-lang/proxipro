@@ -9,15 +9,16 @@
         <p class="text-muted mb-0">Statistiques et activités de la plateforme</p>
     </div>
     <div class="col-auto">
-        <button class="btn btn-primary">
+        <a href="{{ route('admin.export') }}" class="btn btn-primary">
             <i class="fas fa-download me-2"></i>Exporter les données
-        </button>
+        </a>
     </div>
 </div>
 
 <!-- Cartes de statistiques -->
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-lg-6">
+        <a href="{{ route('admin.users') }}" class="text-decoration-none" aria-label="Voir tous les utilisateurs">
         <div class="card stat-card border-0 bg-primary bg-gradient text-white">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
@@ -30,9 +31,11 @@
                 </div>
             </div>
         </div>
+        </a>
     </div>
     
     <div class="col-xl-3 col-lg-6">
+        <a href="{{ route('admin.ads') }}" class="text-decoration-none" aria-label="Voir toutes les annonces">
         <div class="card stat-card border-0 bg-success bg-gradient text-white">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
@@ -45,6 +48,7 @@
                 </div>
             </div>
         </div>
+        </a>
     </div>
     
     <div class="col-xl-3 col-lg-6">
@@ -65,6 +69,7 @@
     </div>
     
     <div class="col-xl-3 col-lg-6">
+        <a href="{{ route('admin.users', ['status' => 'verified']) }}" class="text-decoration-none" aria-label="Voir les utilisateurs vérifiés">
         <div class="card stat-card border-0 bg-info bg-gradient text-white">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
@@ -77,6 +82,7 @@
                 </div>
             </div>
         </div>
+        </a>
     </div>
 
     <div class="col-xl-3 col-lg-6">

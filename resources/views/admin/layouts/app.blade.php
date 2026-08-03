@@ -91,6 +91,11 @@
         .stat-card:hover {
             transform: translateY(-5px);
         }
+
+        a:focus-visible .stat-card {
+            outline: 3px solid rgba(13, 110, 253, 0.45);
+            outline-offset: 3px;
+        }
         
         @media (max-width: 768px) {
             html,

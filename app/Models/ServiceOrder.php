@@ -152,12 +152,15 @@ class ServiceOrder extends Model
 
     public function buyer()
     {
-        return $this->belongsTo(User::class, 'buyer_id');
+        // Une commande reste une pièce d'audit même lorsque le compte client
+        // a été supprimé. Inclure les comptes soft-deleted évite de casser
+        // l'espace de pilotage administrateur.
+        return $this->belongsTo(User::class, 'buyer_id')->withTrashed();
     }
 
     public function seller()
     {
-        return $this->belongsTo(User::class, 'seller_id');
+        return $this->belongsTo(User::class, 'seller_id')->withTrashed();
     }
 
     public function reviews()

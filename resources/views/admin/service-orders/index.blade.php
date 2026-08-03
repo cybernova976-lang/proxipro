@@ -67,12 +67,22 @@
                             <small class="text-muted">{{ $order->created_at->format('d/m/Y H:i') }}</small>
                         </td>
                         <td>
-                            <div class="fw-semibold">{{ $order->ad->title }}</div>
-                            <small class="text-muted">{{ $order->ad->category }}</small>
+                            <div class="fw-semibold">{{ $order->ad?->title ?? 'Annonce supprimée' }}</div>
+                            <small class="text-muted">{{ $order->ad?->category ?? 'Catégorie indisponible' }}</small>
                         </td>
                         <td>
-                            <div><strong>A:</strong> {{ $order->buyer->name }}</div>
-                            <div><strong>V:</strong> {{ $order->seller->name }}</div>
+                            <div>
+                                <strong>A:</strong> {{ $order->buyer?->name ?? 'Compte supprimé' }}
+                                @if($order->buyer?->trashed())
+                                    <span class="badge text-bg-secondary ms-1">Compte supprimé</span>
+                                @endif
+                            </div>
+                            <div>
+                                <strong>V:</strong> {{ $order->seller?->name ?? 'Compte supprimé' }}
+                                @if($order->seller?->trashed())
+                                    <span class="badge text-bg-secondary ms-1">Compte supprimé</span>
+                                @endif
+                            </div>
                         </td>
                         <td>
                             <div class="fw-semibold">{{ number_format((float) $order->amount, 2, ',', ' ') }} €</div>
@@ -86,9 +96,9 @@
                             @endif
                         </td>
                         <td>
-                            @if($order->seller->stripe_connect_account_id)
-                                <span class="badge {{ $order->seller->stripe_connect_payouts_enabled ? 'text-bg-success' : 'text-bg-warning' }}">
-                                    {{ $order->seller->stripe_connect_payouts_enabled ? 'Actif' : 'En attente' }}
+                            @if($order->seller?->stripe_connect_account_id)
+                                <span class="badge {{ $order->seller?->stripe_connect_payouts_enabled ? 'text-bg-success' : 'text-bg-warning' }}">
+                                    {{ $order->seller?->stripe_connect_payouts_enabled ? 'Actif' : 'En attente' }}
                                 </span>
                             @else
                                 <span class="badge text-bg-secondary">Non configure</span>

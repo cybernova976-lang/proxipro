@@ -24,6 +24,45 @@ class AdminServiceOrderFeatureTest extends TestCase
         $response->assertSee('Commandes securisees');
     }
 
+    public function test_admin_can_view_an_order_when_the_buyer_account_was_deleted(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $buyer = User::factory()->create(['name' => 'Ancien acheteur']);
+        $seller = User::factory()->create(['name' => 'Prestataire actif']);
+
+        $ad = Ad::create([
+            'title' => 'Commande avec compte supprime',
+            'description' => 'Cette commande doit rester consultable par l administration.',
+            'category' => 'Plomberie',
+            'location' => 'Mamoudzou',
+            'price' => 120,
+            'service_type' => 'offre',
+            'status' => 'active',
+            'user_id' => $seller->id,
+        ]);
+
+        ServiceOrder::create([
+            'order_number' => 'CMD-ADMIN-DELETED-BUYER',
+            'ad_id' => $ad->id,
+            'buyer_id' => $buyer->id,
+            'seller_id' => $seller->id,
+            'amount' => 120,
+            'commission_amount' => 12,
+            'seller_amount' => 108,
+            'status' => ServiceOrder::STATUS_FUNDED,
+            'payment_status' => ServiceOrder::PAYMENT_PAID,
+            'paid_at' => now(),
+        ]);
+
+        $buyer->delete();
+
+        $this->actingAs($admin)
+            ->get(route('admin.service-orders.index'))
+            ->assertOk()
+            ->assertSee('Ancien acheteur')
+            ->assertSee('Compte supprimé');
+    }
+
     public function test_admin_can_release_disputed_order_with_real_transfer_service(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

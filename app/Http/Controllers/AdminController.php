@@ -43,7 +43,7 @@ class AdminController extends Controller
 
         // Graphique des inscriptions (7 derniers jours)
         $registrations = User::select(
-            DB::raw('created_at::date as date'),
+            DB::raw('DATE(created_at) as date'),
             DB::raw('COUNT(*) as count')
         )
             ->where('created_at', '>=', now()->subDays(7))
@@ -68,6 +68,85 @@ class AdminController extends Controller
         $mailSummary = $this->buildMailConfigSummary();
 
         return view('admin.dashboard', compact('stats', 'registrations', 'latestUsers', 'latestAds', 'pendingVerifications', 'mailSummary'));
+    }
+
+    /**
+     * Exporte un instantané exploitable des principales données de pilotage.
+     */
+    public function exportData()
+    {
+        $filename = 'prokejem-export-'.now()->format('Ymd-His').'.csv';
+
+        return response()->streamDownload(function (): void {
+            $output = fopen('php://output', 'wb');
+
+            // BOM UTF-8 pour conserver les accents lors de l'ouverture dans Excel.
+            fwrite($output, "\xEF\xBB\xBF");
+            fputcsv($output, ['Type', 'ID', 'Nom ou titre', 'E-mail', 'Statut', 'Détail', 'Créé le'], ';');
+
+            User::withTrashed()->orderBy('id')->chunkById(500, function ($users) use ($output): void {
+                foreach ($users as $user) {
+                    $this->writeCsvRow($output, [
+                        'Utilisateur',
+                        $user->id,
+                        $user->name,
+                        $user->email,
+                        $user->trashed() ? 'Supprimé' : ($user->is_active ? 'Actif' : 'Inactif'),
+                        $user->is_verified ? 'Profil vérifié' : 'Profil non vérifié',
+                        $user->created_at?->format('d/m/Y H:i:s'),
+                    ]);
+                }
+            });
+
+            Ad::with(['user' => fn ($query) => $query->withTrashed()])
+                ->orderBy('id')
+                ->chunkById(500, function ($ads) use ($output): void {
+                    foreach ($ads as $ad) {
+                        $this->writeCsvRow($output, [
+                            'Annonce',
+                            $ad->id,
+                            $ad->title,
+                            $ad->user?->email,
+                            $ad->status,
+                            $ad->category,
+                            $ad->created_at?->format('d/m/Y H:i:s'),
+                        ]);
+                    }
+                });
+
+            IdentityVerification::with(['user' => fn ($query) => $query->withTrashed()])
+                ->orderBy('id')
+                ->chunkById(500, function ($verifications) use ($output): void {
+                    foreach ($verifications as $verification) {
+                        $this->writeCsvRow($output, [
+                            'Vérification',
+                            $verification->id,
+                            $verification->user?->name ?? 'Compte supprimé',
+                            $verification->user?->email,
+                            $verification->status,
+                            'Paiement : '.($verification->payment_status ?? 'non renseigné'),
+                            $verification->created_at?->format('d/m/Y H:i:s'),
+                        ]);
+                    }
+                });
+
+            fclose($output);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /**
+     * Neutralise les formules CSV afin qu'une valeur utilisateur ne soit pas
+     * exécutée par Excel ou un autre tableur lors de l'ouverture de l'export.
+     */
+    private function writeCsvRow($output, array $row): void
+    {
+        $safeRow = array_map(function ($value): string {
+            $value = (string) ($value ?? '');
+
+            return preg_match('/^[=+\-@\t\r]/u', $value) ? "'".$value : $value;
+        }, $row);
+
+        fputcsv($output, $safeRow, ';');
     }
 
     // Liste des utilisateurs
