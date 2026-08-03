@@ -11,7 +11,7 @@
 
         {{-- Header --}}
         <div style="text-align: center; margin-bottom: 32px;">
-            <img src="{{ asset('images/brand/lunamars-logo.png') }}" width="230" alt="{{ $appName }}" style="display:inline-block;width:230px;max-width:80%;height:auto;">
+            <img src="{{ asset('images/brand/prokejem-logo.png') }}" width="230" alt="{{ $appName }}" style="display:inline-block;width:230px;max-width:80%;height:auto;">
         </div>
 
         {{-- Main Card --}}

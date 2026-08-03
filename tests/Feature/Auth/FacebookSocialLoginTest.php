@@ -42,7 +42,7 @@ class FacebookSocialLoginTest extends TestCase
         config([
             'services.facebook.client_id' => 'facebook-client-id',
             'services.facebook.client_secret' => 'facebook-client-secret',
-            'services.facebook.redirect' => 'https://www.lunamars.fr/auth/facebook/callback',
+            'services.facebook.redirect' => 'https://www.prokejem.fr/auth/facebook/callback',
         ]);
 
         $provider = Mockery::mock();

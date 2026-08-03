@@ -56,7 +56,7 @@
         align-items: center; justify-content: center;
         box-shadow: 0 4px 14px rgba(99, 102, 241, 0.16);
     }
-    .ob-logo-icon .lunamars-brand-mark {
+    .ob-logo-icon .prokejem-brand-mark {
         width: 100%; height: 100%; object-fit: contain;
     }
     .ob-logo .badge { background: var(--ob-gradient); color: white;
@@ -362,7 +362,7 @@
     <div class="ob-header">
         <a href="{{ route('feed') }}" class="ob-logo">
             <div class="ob-logo-icon"><x-brand-mark :size="40" /></div>
-            {{ config('app.name', 'Lunamars') }}
+            {{ config('app.name', 'Prokejem') }}
             <span class="badge">PRO</span>
         </a>
     </div>
@@ -655,7 +655,7 @@
                 <div class="ob-card-title">{{ $proSubscriptionsEnabled ? '👑 Choisissez votre abonnement' : '🚀 Accès prestataire pendant le lancement' }}</div>
                 <div class="ob-card-subtitle">
                     {{ $proSubscriptionsEnabled
-                        ? "L'abonnement Lunamars vous donne accès à tous les outils professionnels : réception de demandes clients, devis, factures, gestion clientèle et visibilité accrue."
+                        ? "L'abonnement Prokejem vous donne accès à tous les outils professionnels : réception de demandes clients, devis, factures, gestion clientèle et visibilité accrue."
                         : "L'abonnement récurrent n'est pas encore commercialisé. Terminez votre configuration et utilisez l'espace prestataire sans abonnement pendant cette phase." }}
                 </div>
 

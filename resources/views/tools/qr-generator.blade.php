@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Générateur QR Code - Lunamars')
+@section('title', 'Générateur QR Code - Prokejem')
 
 @section('content')
 <div class="container py-4">

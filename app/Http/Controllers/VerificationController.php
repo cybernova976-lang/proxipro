@@ -307,8 +307,8 @@ class VerificationController extends Controller
         $priceLabel = number_format((float) $amount, 2, ',', ' ').'€';
         $pointsLabel = IdentityVerification::getVerificationPointsCost($verification->type).' points';
         $productName = $verification->type === 'profile_verification'
-            ? "Vérification de profil Lunamars ({$priceLabel})"
-            : "Badge Prestataire Vérifié Lunamars ({$priceLabel} / {$pointsLabel})";
+            ? "Vérification de profil Prokejem ({$priceLabel})"
+            : "Badge Prestataire Vérifié Prokejem ({$priceLabel} / {$pointsLabel})";
 
         try {
             $session = Session::create([

@@ -167,7 +167,7 @@ class IpGeolocationService
     }
 
     /**
-     * Localisation par défaut (Mayotte - Lunamars)
+     * Localisation par défaut (Mayotte - Prokejem)
      */
     private function getDefaultLocation(): array
     {

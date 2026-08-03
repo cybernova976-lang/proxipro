@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Accueil - Lunamars')
+@section('title', 'Accueil - Prokejem')
 
 @push('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -8001,7 +8001,7 @@
                 <div class="footer-brand">
                     <div class="footer-logo">
                         <span class="logo-icon"><x-brand-mark :size="40" /></span>
-                        <span class="logo-text">{{ config('app.name', 'Lunamars') }}</span>
+                        <span class="logo-text">{{ config('app.name', 'Prokejem') }}</span>
                     </div>
                     <p class="footer-description">
                         La plateforme de mise en relation entre particuliers et professionnels. 
@@ -8057,7 +8057,7 @@
         <div class="footer-bottom">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <p class="copyright">© {{ date('Y') }} Lunamars. Tous droits réservés.</p>
+                    <p class="copyright">© {{ date('Y') }} Prokejem. Tous droits réservés.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <p class="footer-credits">Des services de confiance, où que vous soyez</p>
@@ -8101,7 +8101,7 @@
     padding: 2px;
 }
 
-.footer-logo .logo-icon .lunamars-brand-mark {
+.footer-logo .logo-icon .prokejem-brand-mark {
     width: 100%;
     height: 100%;
     object-fit: contain;
@@ -8764,7 +8764,7 @@
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-    console.log('=== Script Lunamars Feed chargé ===');
+    console.log('=== Script Prokejem Feed chargé ===');
 
     let feedAdsMap = null;
     let feedAdsMapLayer = null;
@@ -9268,7 +9268,7 @@
         if (event) event.stopPropagation();
         const url = `${window.location.origin}/ads/${adId}`;
         if (navigator.share) {
-            navigator.share({ title: 'Publication Lunamars', url: url }).catch(() => {});
+            navigator.share({ title: 'Publication Prokejem', url: url }).catch(() => {});
         } else {
             navigator.clipboard.writeText(url).then(() => {
                 showToast('Lien copié !', 'success');
@@ -9363,7 +9363,7 @@
 
     function shareTo(platform, adId, title = '') {
         const url = `${window.location.origin}/ads/${adId}`;
-        const shareTitle = title || 'Découvrez cette offre sur Lunamars';
+        const shareTitle = title || 'Découvrez cette offre sur Prokejem';
         let shareUrl = '';
         
         switch (platform) {

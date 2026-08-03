@@ -44,7 +44,7 @@ class ProviderSubscriptionPlans
         $config = self::get($plan);
         $label = $config['label'] ?? ucfirst($plan);
 
-        return 'Abonnement Lunamars '.$label;
+        return 'Abonnement Prokejem '.$label;
     }
 
     public static function summaryLabel(?string $plan): string

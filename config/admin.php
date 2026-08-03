@@ -3,7 +3,7 @@
 /**
  * Configuration de l'administration
  * 
- * Ce fichier définit les paramètres de l'administration Lunamars
+ * Ce fichier définit les paramètres de l'administration Prokejem
  * y compris l'administrateur principal avec tous les privilèges.
  */
 

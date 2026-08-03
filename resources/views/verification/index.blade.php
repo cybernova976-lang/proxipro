@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Vérification d\'identité - Lunamars')
+@section('title', 'Vérification d\'identité - Prokejem')
 
 @push('styles')
 <style>

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', ($type === 'quote' ? 'Devis' : 'Facture') . ' créé(e) - Lunamars')
+@section('title', ($type === 'quote' ? 'Devis' : 'Facture') . ' créé(e) - Prokejem')
 
 @section('content')
 <style>

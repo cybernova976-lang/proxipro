@@ -33,7 +33,7 @@ class AdCandidatureNotification extends Notification
         return (new MailMessage)
             ->subject("📩 Nouvelle candidature pour votre annonce : {$this->ad->title}")
             ->view('emails.notifications.ad-candidature', [
-                'appName' => config('app.name', 'Lunamars'),
+                'appName' => config('app.name', 'Prokejem'),
                 'supportEmail' => $supportEmail,
                 'recipientName' => $notifiable->name,
                 'candidateName' => $this->candidate->name,

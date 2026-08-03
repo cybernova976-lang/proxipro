@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
-    <title>@yield('title', 'Espace Pro - Lunamars')</title>
+    <title>@yield('title', 'Espace Pro - Prokejem')</title>
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Inter:400,500,600,700,800&display=swap" rel="stylesheet">
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
@@ -83,7 +83,7 @@
         box-shadow: 0 4px 12px rgba(99, 102, 241, 0.16);
     }
 
-    .pro-topbar-brand .brand-icon .lunamars-brand-mark {
+    .pro-topbar-brand .brand-icon .prokejem-brand-mark {
         width: 100%;
         height: 100%;
         object-fit: contain;
@@ -749,7 +749,7 @@
             </button>
             <a href="{{ route('pro.dashboard') }}" class="pro-topbar-brand">
                 <div class="brand-icon"><x-brand-mark :size="36" /></div>
-                <span>{{ config('app.name', 'Lunamars') }}</span>
+                <span>{{ config('app.name', 'Prokejem') }}</span>
                 <span class="pro-badge">PRO</span>
             </a>
         </div>

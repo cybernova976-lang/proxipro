@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Mon système de points - Lunamars')
+@section('title', 'Mon système de points - Prokejem')
 
 @section('content')
 <div class="container py-4">

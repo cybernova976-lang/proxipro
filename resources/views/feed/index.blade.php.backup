@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Accueil - Lunamars')
+@section('title', 'Accueil - Prokejem')
 
 @push('styles')
 <style>
@@ -3555,7 +3555,7 @@
                 <div class="footer-brand">
                     <div class="footer-logo">
                         <span class="logo-icon">P</span>
-                        <span class="logo-text">Lunamars</span>
+                        <span class="logo-text">Prokejem</span>
                     </div>
                     <p class="footer-description">
                         La plateforme de mise en relation entre particuliers et professionnels. 
@@ -3608,7 +3608,7 @@
         <div class="footer-bottom">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <p class="copyright">© {{ date('Y') }} Lunamars. Tous droits réservés.</p>
+                    <p class="copyright">© {{ date('Y') }} Prokejem. Tous droits réservés.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <p class="footer-credits">Fait avec <i class="fas fa-heart text-danger"></i> à Mayotte</p>
@@ -3863,7 +3863,7 @@
 
 @push('scripts')
 <script>
-    console.log('=== Script Lunamars Feed chargé ===');
+    console.log('=== Script Prokejem Feed chargé ===');
     
     // =========================================
     // SYSTÈME DE PUBLICATION SOCIALE AMÉLIORÉ
@@ -3946,7 +3946,7 @@
         if (event) event.stopPropagation();
         const url = `${window.location.origin}/ads/${adId}`;
         if (navigator.share) {
-            navigator.share({ title: 'Publication Lunamars', url: url }).catch(() => {});
+            navigator.share({ title: 'Publication Prokejem', url: url }).catch(() => {});
         } else {
             navigator.clipboard.writeText(url).then(() => {
                 showToast('Lien copié !', 'success');
@@ -4041,7 +4041,7 @@
 
     function shareTo(platform, adId, title = '') {
         const url = `${window.location.origin}/ads/${adId}`;
-        const shareTitle = title || 'Découvrez cette offre sur Lunamars';
+        const shareTitle = title || 'Découvrez cette offre sur Prokejem';
         let shareUrl = '';
         
         switch (platform) {

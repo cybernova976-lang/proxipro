@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>Historique des transactions - Lunamars</title>
+    <title>Historique des transactions - Prokejem</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -222,7 +222,7 @@
     <!-- Header -->
     <div class="pdf-header">
         <div class="pdf-header-left">
-            <img src="{{ public_path('images/brand/lunamars-logo.png') }}" alt="{{ config('app.name', 'Lunamars') }}" class="brand-logo">
+            <img src="{{ public_path('images/brand/prokejem-logo.png') }}" alt="{{ config('app.name', 'Prokejem') }}" class="brand-logo">
             <div class="brand-tagline">Plateforme internationale de services</div>
         </div>
         <div class="pdf-header-right">
@@ -342,7 +342,7 @@
 
     <!-- Footer -->
     <div class="pdf-footer">
-        <p>Ce document a été généré automatiquement par Lunamars — {{ $generatedAt->format('d/m/Y à H:i') }}</p>
+        <p>Ce document a été généré automatiquement par Prokejem — {{ $generatedAt->format('d/m/Y à H:i') }}</p>
         <p>Pour toute question, contactez-nous sur la plateforme.</p>
     </div>
 </body>

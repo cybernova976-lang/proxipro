@@ -1,15 +1,16 @@
 <?php
 
-$applicationName = config('app.name', 'Lunamars');
+$applicationName = config('app.name', 'Prokejem');
 $legacyApplicationName = 'proxi'.'pro';
+$previousBrandName = 'luna'.'mars';
 $fromName = trim((string) env('MAIL_FROM_NAME', $applicationName));
 $replyToName = trim((string) env('MAIL_REPLY_TO_NAME', $fromName));
 
-if ($fromName === '' || in_array(strtolower($fromName), ['example', 'laravel', $legacyApplicationName], true)) {
+if ($fromName === '' || in_array(strtolower($fromName), ['example', 'laravel', $legacyApplicationName, $previousBrandName], true)) {
     $fromName = $applicationName;
 }
 
-if ($replyToName === '' || in_array(strtolower($replyToName), ['example', 'laravel', $legacyApplicationName], true)) {
+if ($replyToName === '' || in_array(strtolower($replyToName), ['example', 'laravel', $legacyApplicationName, $previousBrandName], true)) {
     $replyToName = $applicationName;
 }
 

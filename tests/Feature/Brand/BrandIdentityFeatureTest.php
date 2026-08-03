@@ -11,24 +11,24 @@ class BrandIdentityFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_lunamars_is_the_platform_identity_everywhere(): void
+    public function test_prokejem_is_the_platform_identity_everywhere(): void
     {
         $legacyName = 'Proxi'.'Pro';
 
-        $this->assertSame('Lunamars', config('app.name'));
-        $this->assertSame('Lunamars', config('mail.from.name'));
+        $this->assertSame('Prokejem', config('app.name'));
+        $this->assertSame('Prokejem', config('mail.from.name'));
         $this->assertDatabaseHas('settings', [
             'key' => 'site_name',
-            'value' => 'Lunamars',
+            'value' => 'Prokejem',
         ]);
 
         $homepage = $this->get(route('homepage'));
 
         $homepage->assertOk()
-            ->assertSee('Lunamars')
-            ->assertSee('lunamars-brand-mark', false)
-            ->assertSee('images/brand/lunamars-logo.png', false)
-            ->assertDontSee('images/brand/lunamars-mark.png', false)
+            ->assertSee('Prokejem')
+            ->assertSee('prokejem-brand-mark', false)
+            ->assertSee('images/brand/prokejem-logo.png', false)
+            ->assertDontSee('images/brand/prokejem-mark.png', false)
             ->assertSee('images/social-card.png', false)
             ->assertSee('"@context":"https://schema.org"', false)
             ->assertDontSee($legacyName);
@@ -37,17 +37,17 @@ class BrandIdentityFeatureTest extends TestCase
         $authenticatedPage = $this->actingAs($user)->get(route('profile.show'));
 
         $authenticatedPage->assertOk()
-            ->assertSee('Lunamars')
-            ->assertSee('lunamars-brand-mark', false)
-            ->assertSee('images/brand/lunamars-symbol.png', false)
-            ->assertDontSee('images/brand/lunamars-mark.png', false)
+            ->assertSee('Prokejem')
+            ->assertSee('prokejem-brand-mark', false)
+            ->assertSee('images/brand/prokejem-symbol.png', false)
+            ->assertDontSee('images/brand/prokejem-mark.png', false)
             ->assertDontSee($legacyName);
 
         $mailHtml = (new EmailVerificationCode('482913', 'Sophie Martin'))->render();
 
-        $this->assertStringContainsString('Lunamars', $mailHtml);
-        $this->assertStringContainsString('images/brand/lunamars-logo.png', $mailHtml);
-        $this->assertStringNotContainsString('images/brand/lunamars-mark.png', $mailHtml);
+        $this->assertStringContainsString('Prokejem', $mailHtml);
+        $this->assertStringContainsString('images/brand/prokejem-logo.png', $mailHtml);
+        $this->assertStringNotContainsString('images/brand/prokejem-mark.png', $mailHtml);
         $this->assertStringNotContainsString($legacyName, $mailHtml);
     }
 
@@ -55,10 +55,10 @@ class BrandIdentityFeatureTest extends TestCase
     {
         $socialCardPath = public_path('images/social-card.png');
         $faviconPath = public_path('favicon.ico');
-        $logoPath = public_path('images/brand/lunamars-logo.png');
-        $symbolPath = public_path('images/brand/lunamars-symbol.png');
+        $logoPath = public_path('images/brand/prokejem-logo.png');
+        $symbolPath = public_path('images/brand/prokejem-symbol.png');
 
-        $this->assertFileDoesNotExist(public_path('images/brand/lunamars-mark.png'));
+        $this->assertFileDoesNotExist(public_path('images/brand/prokejem-mark.png'));
         $this->assertFileExists($logoPath);
         $this->assertFileExists($symbolPath);
         $this->assertFileExists($socialCardPath);
@@ -70,11 +70,11 @@ class BrandIdentityFeatureTest extends TestCase
         $this->assertSame(IMAGETYPE_PNG, $socialCardSize[2]);
 
         $logoSize = getimagesize($logoPath);
-        $this->assertSame([1090, 250], array_slice($logoSize, 0, 2));
+        $this->assertSame([1153, 214], array_slice($logoSize, 0, 2));
         $this->assertSame(IMAGETYPE_PNG, $logoSize[2]);
 
         $symbolSize = getimagesize($symbolPath);
-        $this->assertSame([512, 512], array_slice($symbolSize, 0, 2));
+        $this->assertSame([1024, 1024], array_slice($symbolSize, 0, 2));
         $this->assertSame(IMAGETYPE_PNG, $symbolSize[2]);
     }
 }

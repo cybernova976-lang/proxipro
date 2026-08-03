@@ -17,7 +17,7 @@ class PasswordResetFlowTest extends TestCase
     public function test_password_reset_request_uses_french_status_message(): void
     {
         Notification::fake();
-        config(['app.url' => 'https://www.lunamars.fr']);
+        config(['app.url' => 'https://www.prokejem.fr']);
 
         $user = User::factory()->create();
 
@@ -36,13 +36,13 @@ class PasswordResetFlowTest extends TestCase
         Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use ($user) {
             $mailMessage = $notification->toMail($user);
 
-            $this->assertSame('Réinitialisation de votre mot de passe Lunamars', $mailMessage->subject);
+            $this->assertSame('Réinitialisation de votre mot de passe Prokejem', $mailMessage->subject);
             $this->assertSame('emails.auth.reset-password', $mailMessage->view);
             $this->assertSame($user->name, $mailMessage->viewData['userName']);
-            $this->assertSame(config('app.name', 'Lunamars'), $mailMessage->viewData['appName']);
+            $this->assertSame(config('app.name', 'Prokejem'), $mailMessage->viewData['appName']);
             $this->assertNotEmpty($mailMessage->viewData['supportEmail']);
             $this->assertStringStartsWith(
-                'https://www.lunamars.fr/password/reset/',
+                'https://www.prokejem.fr/password/reset/',
                 $mailMessage->viewData['resetUrl']
             );
 

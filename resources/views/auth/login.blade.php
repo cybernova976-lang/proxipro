@@ -8,7 +8,7 @@
         <!-- Logo -->
         <a href="{{ url('/') }}" class="flex items-center justify-center gap-2.5 mb-10">
             <x-brand-mark :size="40" class="w-10 h-10 rounded-xl bg-white shadow-md" :decorative="false" />
-            <span class="text-xl font-extrabold tracking-tight text-gray-900">{{ config('app.name', 'Lunamars') }}</span>
+            <span class="text-xl font-extrabold tracking-tight text-gray-900">{{ config('app.name', 'Prokejem') }}</span>
         </a>
 
         <!-- Carte -->

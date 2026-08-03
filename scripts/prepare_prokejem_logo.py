@@ -1,4 +1,4 @@
-"""Prepare transparent Lunamars logo assets from the approved source image."""
+"""Prepare transparent Prokejem logo assets from the approved source image."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 BRAND_DIR = ROOT / "public" / "images" / "brand"
-LOGO_PATH = BRAND_DIR / "lunamars-logo.png"
-SYMBOL_PATH = BRAND_DIR / "lunamars-symbol.png"
+LOGO_PATH = BRAND_DIR / "prokejem-logo.png"
+SYMBOL_PATH = BRAND_DIR / "prokejem-symbol.png"
 
 
 def remove_neutral_background(source: Image.Image) -> Image.Image:

@@ -17,7 +17,7 @@ class WelcomeMail extends Mailable
     public function __construct(User $user)
     {
         $this->user = $user;
-        $this->appName = config('app.name', 'Lunamars');
+        $this->appName = config('app.name', 'Prokejem');
         $this->supportEmail = config('mail.reply_to.address')
             ?: config('mail.admin_email')
             ?: config('mail.from.address')
@@ -26,7 +26,7 @@ class WelcomeMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Bienvenue sur Lunamars')
+        return $this->subject('Bienvenue sur Prokejem')
             ->view('emails.welcome');
     }
 }

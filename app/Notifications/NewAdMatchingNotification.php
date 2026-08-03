@@ -52,7 +52,7 @@ class NewAdMatchingNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject('📌 Nouvelle ' . $serviceType . ' dans votre domaine — ' . $this->ad->category)
             ->view('emails.notifications.new-ad-matching', [
-                'appName' => config('app.name', 'Lunamars'),
+                'appName' => config('app.name', 'Prokejem'),
                 'supportEmail' => $supportEmail,
                 'recipientName' => $notifiable->name,
                 'serviceTypeLabel' => $serviceType,

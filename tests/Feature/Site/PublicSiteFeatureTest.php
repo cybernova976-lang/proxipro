@@ -21,12 +21,12 @@ class PublicSiteFeatureTest extends TestCase
     public function test_old_technical_host_redirects_to_the_canonical_domain_in_production(): void
     {
         $this->app['env'] = 'production';
-        config(['app.url' => 'https://www.lunamars.fr']);
+        config(['app.url' => 'https://www.prokejem.fr']);
 
         $this
             ->withHeader('Host', 'web-production-daad.up.railway.app')
             ->get('/?source=railway')
-            ->assertRedirect('https://www.lunamars.fr/?source=railway')
+            ->assertRedirect('https://www.prokejem.fr/?source=railway')
             ->assertStatus(301);
     }
 
@@ -60,7 +60,7 @@ class PublicSiteFeatureTest extends TestCase
             ->assertSee('images/social-card.png', false)
             ->assertSee('property="og:image:width" content="1200"', false)
             ->assertSee('data-site-share-copy', false)
-            ->assertSee('Partager Lunamars')
+            ->assertSee('Partager Prokejem')
             ->assertDontSee('<title>Laravel', false)
             ->assertDontSee('Plateforme N°1')
             ->assertDontSee('Sophie M.');
@@ -83,7 +83,7 @@ class PublicSiteFeatureTest extends TestCase
         $response = $this->actingAs($user)->get(route('profile.show'));
 
         $response->assertOk()
-            ->assertSee('Partager '.config('app.name', 'Lunamars'))
+            ->assertSee('Partager '.config('app.name', 'Prokejem'))
             ->assertSee('data-site-share-trigger', false)
             ->assertSee('id="sitePlatformShareModal"', false)
             ->assertSee('https://wa.me/', false)

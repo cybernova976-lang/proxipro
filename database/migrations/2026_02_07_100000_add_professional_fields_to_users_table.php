@@ -9,7 +9,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      * 
-     * Système de profils utilisateurs Lunamars:
+     * Système de profils utilisateurs Prokejem:
      * 
      * account_type: 'particulier' | 'professionnel'
      * - Détermine le type principal du compte

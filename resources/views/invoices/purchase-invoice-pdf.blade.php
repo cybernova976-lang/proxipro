@@ -68,7 +68,7 @@
         {{-- Header --}}
         <div class="header">
             <div class="header-left">
-                <img src="{{ public_path('images/brand/lunamars-logo.png') }}" alt="{{ config('app.name', 'Lunamars') }}" class="platform-logo">
+                <img src="{{ public_path('images/brand/prokejem-logo.png') }}" alt="{{ config('app.name', 'Prokejem') }}" class="platform-logo">
                 <div class="company-info">
                     Plateforme de services entre particuliers et professionnels<br>
                     {{ $platformContactEmail }}<br>
@@ -148,8 +148,8 @@
 
         {{-- Footer --}}
         <div class="footer">
-            <strong>{{ config('app.name', 'Lunamars') }}</strong> — Plateforme de mise en relation de services<br>
-            Ce document constitue une facture pour l'achat effectué sur la plateforme {{ config('app.name', 'Lunamars') }}.<br>
+            <strong>{{ config('app.name', 'Prokejem') }}</strong> — Plateforme de mise en relation de services<br>
+            Ce document constitue une facture pour l'achat effectué sur la plateforme {{ config('app.name', 'Prokejem') }}.<br>
             Document généré automatiquement le {{ now()->format('d/m/Y à H:i') }}
         </div>
     </div>

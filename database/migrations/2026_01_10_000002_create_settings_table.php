@@ -21,7 +21,7 @@ return new class extends Migration
 
         // Insérer les paramètres par défaut
         $defaults = [
-            ['key' => 'site_name', 'value' => 'Lunamars', 'group' => 'general'],
+            ['key' => 'site_name', 'value' => 'Prokejem', 'group' => 'general'],
             ['key' => 'contact_email', 'value' => 'hello@example.com', 'group' => 'general'],
             ['key' => 'maintenance_mode', 'value' => '0', 'group' => 'general'],
             ['key' => 'free_ads_limit', 'value' => '3', 'group' => 'ads'],

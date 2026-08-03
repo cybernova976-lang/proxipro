@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Annonce publiée - Options de visibilité - Lunamars')
+@section('title', 'Annonce publiée - Options de visibilité - Prokejem')
 
 @push('styles')
 <style>
@@ -549,7 +549,7 @@
             <i class="fas fa-check"></i>
         </div>
         <h1>🎉 Votre annonce est publiée !</h1>
-        <p>Elle est maintenant visible par tous les utilisateurs de Lunamars</p>
+        <p>Elle est maintenant visible par tous les utilisateurs de Prokejem</p>
     </div>
     
     <!-- Top Info Row -->

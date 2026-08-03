@@ -10,7 +10,7 @@
 
     @php
         $defaultMetaDescription = 'Publiez un besoin, comparez les propositions et trouvez un prestataire près de chez vous.';
-        $pageTitle = trim($__env->yieldContent('title')) ?: config('app.name', 'Lunamars');
+        $pageTitle = trim($__env->yieldContent('title')) ?: config('app.name', 'Prokejem');
         $pageDescription = trim($__env->yieldContent('meta_description')) ?: $defaultMetaDescription;
         $openGraphTitle = trim($__env->yieldContent('og_title')) ?: $pageTitle;
         $openGraphDescription = trim($__env->yieldContent('og_description')) ?: $pageDescription;
@@ -27,7 +27,7 @@
     <meta property="og:description" content="{{ $openGraphDescription }}">
     <meta property="og:url" content="{{ $openGraphUrl }}">
     <meta property="og:image" content="{{ $openGraphImage }}">
-    <meta property="og:site_name" content="{{ config('app.name', 'Lunamars') }}">
+    <meta property="og:site_name" content="{{ config('app.name', 'Prokejem') }}">
     <meta property="og:locale" content="fr_FR">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $openGraphTitle }}">
@@ -6661,10 +6661,10 @@
                     <!-- GAUCHE : Logo -->
                     <div class="header-brand-area d-flex align-items-center gap-2 mobile-brand-group" style="min-width:0;">
                         <a class="navbar-brand-modern" href="{{ Auth::check() ? route('feed') : url('/') }}">
-                            <div class="brand-logo lunamars-logo-shell">
+                            <div class="brand-logo prokejem-logo-shell">
                                 <x-brand-mark :size="38" />
                             </div>
-                            <span class="brand-text d-none d-sm-inline">{{ config('app.name', 'Lunamars') }}</span>
+                            <span class="brand-text d-none d-sm-inline">{{ config('app.name', 'Prokejem') }}</span>
                         </a>
                         @auth
                         <a href="{{ route('feed') }}" class="header-home-link d-lg-none">
@@ -6904,7 +6904,7 @@
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('points.dashboard') }}"><i class="fas fa-coins text-warning"></i>Mes Points <span class="badge bg-success ms-auto">{{ Auth::user()->available_points ?? 0 }}</span></a></li>
                                 <li><hr class="dropdown-divider my-2"></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('contact.index') }}"><i class="fas fa-headset" style="color: #3b82f6;"></i>Contact</a></li>
-                                <li><button type="button" class="dropdown-item dropdown-item-modern" data-site-share-trigger><i class="fas fa-share-nodes" style="color: #7c3aed;"></i>Partager {{ config('app.name', 'Lunamars') }}</button></li>
+                                <li><button type="button" class="dropdown-item dropdown-item-modern" data-site-share-trigger><i class="fas fa-share-nodes" style="color: #7c3aed;"></i>Partager {{ config('app.name', 'Prokejem') }}</button></li>
                                 @if(Auth::user()->isProfessionnel() || Auth::user()->isServiceProvider() || Auth::user()->hasCompletedProOnboarding())
                                 <li><hr class="dropdown-divider my-2"></li>
                                 <li style="padding: 4px 16px 2px;"><small class="text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Espace Pro</small></li>
@@ -9901,14 +9901,14 @@
             display: none;
         }
 
-        .brand-logo.lunamars-logo-shell {
+        .brand-logo.prokejem-logo-shell {
             overflow: hidden;
             padding: 2px;
             background: #fff !important;
             border: 1px solid rgba(124, 58, 237, 0.12);
         }
 
-        .lunamars-logo-shell .lunamars-brand-mark {
+        .prokejem-logo-shell .prokejem-brand-mark {
             display: block;
             width: 100%;
             height: 100%;

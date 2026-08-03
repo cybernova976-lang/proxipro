@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Convertisseur PDF - Lunamars')
+@section('title', 'Convertisseur PDF - Prokejem')
 
 @section('content')
 <div class="container py-4">

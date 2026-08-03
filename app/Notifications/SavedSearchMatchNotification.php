@@ -33,13 +33,13 @@ class SavedSearchMatchNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Nouvelle annonce pour votre alerte Lunamars')
+            ->subject('Nouvelle annonce pour votre alerte Prokejem')
             ->greeting('Bonjour ' . $notifiable->name . ',')
             ->line('Une nouvelle annonce correspond a votre alerte "' . $this->savedSearch->name . '".')
             ->line('Categorie: ' . ($this->ad->category ?? 'Non precisee'))
             ->line('Lieu: ' . ($this->ad->location ?? 'Non precise'))
             ->action('Voir l\'annonce', route('ads.show', $this->ad->id))
-            ->line('Vous pouvez gerer vos alertes depuis votre espace Lunamars.');
+            ->line('Vous pouvez gerer vos alertes depuis votre espace Prokejem.');
     }
 
     public function toArray(object $notifiable): array

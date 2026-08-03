@@ -14,7 +14,7 @@
                     {{-- Header --}}
                     <tr>
                         <td style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding:32px 40px; text-align:center;">
-                            <img src="{{ asset('images/brand/lunamars-logo.png') }}" width="205" alt="{{ $appName }}" style="display:inline-block;width:205px;max-width:82%;height:auto;background:#ffffff;border-radius:12px;padding:6px 10px;">
+                            <img src="{{ asset('images/brand/prokejem-logo.png') }}" width="205" alt="{{ $appName }}" style="display:inline-block;width:205px;max-width:82%;height:auto;background:#ffffff;border-radius:12px;padding:6px 10px;">
                         </td>
                     </tr>
 
@@ -54,7 +54,7 @@
                         <td style="padding:0 40px 32px 40px;">
                             <div style="background-color:#fef3c7; border-radius:8px; padding:14px 18px;">
                                 <p style="color:#92400e; font-size:12px; line-height:1.5; margin:0;">
-                                    🔒 <strong>Sécurité :</strong> Ne partagez jamais ce code. L'équipe Lunamars ne vous demandera jamais votre code de vérification.
+                                    🔒 <strong>Sécurité :</strong> Ne partagez jamais ce code. L'équipe Prokejem ne vous demandera jamais votre code de vérification.
                                 </p>
                             </div>
                         </td>

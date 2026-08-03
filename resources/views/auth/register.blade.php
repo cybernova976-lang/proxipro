@@ -9,7 +9,7 @@
         <!-- Logo mobile -->
         <a href="{{ url('/') }}" class="flex items-center gap-2 mb-8">
             <x-brand-mark :size="40" class="w-10 h-10 rounded-xl bg-white shadow-md" :decorative="false" />
-            <span class="text-xl font-extrabold tracking-tight text-gray-900">{{ config('app.name', 'Lunamars') }}</span>
+            <span class="text-xl font-extrabold tracking-tight text-gray-900">{{ config('app.name', 'Prokejem') }}</span>
         </a>
 
         <!-- Carte du formulaire -->
@@ -533,7 +533,7 @@
     const commonPasswords = new Set([
         '123456', '12345678', '123456789', '1234567890', 'password', 'password123',
         'qwerty', 'azerty', 'admin', 'admin123', 'welcome', 'letmein', 'iloveyou',
-        '000000', '111111', 'abc123', 'motdepasse', 'motdepasse123', 'lunamars'
+        '000000', '111111', 'abc123', 'motdepasse', 'motdepasse123', 'prokejem'
     ]);
 
     function evaluatePasswordStrength(password) {

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Messagerie - Lunamars')
+@section('title', 'Messagerie - Prokejem')
 
 @push('styles')
 <style>
@@ -597,7 +597,7 @@
                             <circle cx="186" cy="50" r="8" fill="#00A884"/>
                         </svg>
                     </div>
-                    <h3 class="placeholder-title">Lunamars Messagerie</h3>
+                    <h3 class="placeholder-title">Prokejem Messagerie</h3>
                     <p class="placeholder-text">
                         Envoyez et recevez des messages en toute sécurité.<br>
                         Sélectionnez une conversation pour commencer.

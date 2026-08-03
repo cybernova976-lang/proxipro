@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
-    <title>{{ config('app.name', 'Lunamars') }} - Services entre particuliers et professionnels</title>
+    <title>{{ config('app.name', 'Prokejem') }} - Services entre particuliers et professionnels</title>
     <meta name="description" content="Trouvez des prestataires de confiance près de chez vous. Bricolage, jardinage, aide à domicile, cours particuliers...">
 
     <!-- Fonts -->
@@ -142,7 +142,7 @@
                 <div class="flex items-center">
                     <a href="{{ url('/') }}" class="flex items-center space-x-2">
                         <x-brand-mark :size="42" class="w-10 h-10 rounded-xl bg-white shadow-md" :decorative="false" />
-                        <span class="text-2xl font-bold gradient-text">{{ config('app.name', 'Lunamars') }}</span>
+                        <span class="text-2xl font-bold gradient-text">{{ config('app.name', 'Prokejem') }}</span>
                     </a>
                 </div>
 
@@ -636,7 +636,7 @@
                         <i class="fas fa-star"></i>
                         <i class="fas fa-star"></i>
                     </div>
-                    <p class="text-gray-600 mb-6">"En tant que professionnel, Lunamars m'a permis de développer ma clientèle locale. L'interface est intuitive et les clients sont sérieux."</p>
+                    <p class="text-gray-600 mb-6">"En tant que professionnel, Prokejem m'a permis de développer ma clientèle locale. L'interface est intuitive et les clients sont sérieux."</p>
                     <div class="flex items-center gap-4">
                         <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="User" class="w-12 h-12 rounded-full object-cover">
                         <div>
@@ -693,7 +693,7 @@
                 <div class="col-span-2 lg:col-span-2">
                     <a href="{{ url('/') }}" class="flex items-center space-x-2 mb-4">
                         <x-brand-mark :size="42" class="w-10 h-10 rounded-xl bg-white" :decorative="false" />
-                        <span class="text-2xl font-bold text-white">{{ config('app.name', 'Lunamars') }}</span>
+                        <span class="text-2xl font-bold text-white">{{ config('app.name', 'Prokejem') }}</span>
                     </a>
                     <p class="text-gray-400 mb-4 max-w-sm">La marketplace de services entre particuliers et professionnels. Trouvez l'aide dont vous avez besoin, près de chez vous.</p>
                     <div class="flex space-x-4">
@@ -749,7 +749,7 @@
             </div>
 
             <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-                <p class="text-gray-500 text-sm">&copy; {{ date('Y') }} Lunamars. Tous droits réservés.</p>
+                <p class="text-gray-500 text-sm">&copy; {{ date('Y') }} Prokejem. Tous droits réservés.</p>
                 <div class="flex space-x-6 mt-4 md:mt-0 text-sm">
                     <a href="#" class="text-gray-500 hover:text-white transition">Politique de confidentialité</a>
                     <a href="#" class="text-gray-500 hover:text-white transition">Conditions d'utilisation</a>

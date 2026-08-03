@@ -1,4 +1,4 @@
-"""Generate Lunamars web assets from the approved logo."""
+"""Generate Prokejem web assets from the approved logo."""
 
 from pathlib import Path
 
@@ -7,8 +7,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 BRAND_DIR = ROOT / "public" / "images" / "brand"
-LOGO_PATH = BRAND_DIR / "lunamars-logo.png"
-SYMBOL_PATH = BRAND_DIR / "lunamars-symbol.png"
+LOGO_PATH = BRAND_DIR / "prokejem-logo.png"
+SYMBOL_PATH = BRAND_DIR / "prokejem-symbol.png"
 SOCIAL_CARD_PATH = ROOT / "public" / "images" / "social-card.png"
 FAVICON_PATH = ROOT / "public" / "favicon.ico"
 
@@ -40,7 +40,7 @@ def create_social_card(logo: Image.Image) -> None:
     draw = ImageDraw.Draw(card)
 
     draw.rounded_rectangle((58, 56, 1142, 574), radius=42, fill=(255, 255, 255), outline=(226, 232, 240), width=2)
-    draw.rounded_rectangle((58, 56, 78, 574), radius=10, fill=(112, 145, 0))
+    draw.rounded_rectangle((58, 56, 78, 574), radius=10, fill=(20, 92, 181))
 
     max_logo_width = 760
     max_logo_height = 145
@@ -64,12 +64,12 @@ def create_social_card(logo: Image.Image) -> None:
     )
 
     badge = (126, 435, 766, 515)
-    draw.rounded_rectangle(badge, radius=20, fill=(247, 244, 232))
+    draw.rounded_rectangle(badge, radius=20, fill=(235, 243, 255))
     draw.text(
         (160, 458),
         "Particuliers  •  Professionnels  •  Partout",
         font=font(25, bold=True),
-        fill=(91, 109, 0),
+        fill=(24, 50, 88),
     )
 
     card.save(SOCIAL_CARD_PATH, optimize=True, quality=94)

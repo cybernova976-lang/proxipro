@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
-    <title>Admin - @yield('title', 'Lunamars')</title>
+    <title>Admin - @yield('title', 'Prokejem')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -197,7 +197,7 @@
                 <x-brand-mark :size="42" class="admin-brand-mark" :decorative="false" />
                 <div>
                     <h4 class="mb-0">Administration</h4>
-                    <small class="text-muted">{{ config('app.name', 'Lunamars') }}</small>
+                    <small class="text-muted">{{ config('app.name', 'Prokejem') }}</small>
                 </div>
             </div>
             <button class="sidebar-close-btn d-md-none" id="sidebarClose" aria-label="Fermer le menu">

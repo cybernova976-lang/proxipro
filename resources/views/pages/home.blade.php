@@ -4,33 +4,33 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
-    <title>{{ config('app.name', 'Lunamars') }} — Services entre particuliers et professionnels</title>
-    <meta name="description" content="Publiez votre besoin, recevez des propositions de prestataires et échangez en toute simplicité sur {{ config('app.name', 'Lunamars') }}.">
+    <title>{{ config('app.name', 'Prokejem') }} — Services entre particuliers et professionnels</title>
+    <meta name="description" content="Publiez votre besoin, recevez des propositions de prestataires et échangez en toute simplicité sur {{ config('app.name', 'Prokejem') }}.">
     <link rel="canonical" href="{{ url('/') }}">
     
     <!-- Open Graph / Social Sharing -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="{{ config('app.name', 'Lunamars') }} — Trouvez un prestataire près de chez vous">
+    <meta property="og:title" content="{{ config('app.name', 'Prokejem') }} — Trouvez un prestataire près de chez vous">
     <meta property="og:description" content="Décrivez votre besoin, comparez les propositions et choisissez le prestataire qui vous convient.">
     <meta property="og:url" content="{{ url('/') }}">
     <meta property="og:image" content="{{ asset('images/social-card.png') }}">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="{{ config('app.name', 'Lunamars') }}, services de proximité">
-    <meta property="og:site_name" content="{{ config('app.name', 'Lunamars') }}">
+    <meta property="og:image:alt" content="{{ config('app.name', 'Prokejem') }}, services de proximité">
+    <meta property="og:site_name" content="{{ config('app.name', 'Prokejem') }}">
     <meta property="og:locale" content="fr_FR">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ config('app.name', 'Lunamars') }} — Services de proximité">
+    <meta name="twitter:title" content="{{ config('app.name', 'Prokejem') }} — Services de proximité">
     <meta name="twitter:description" content="Publiez un besoin et comparez les propositions de prestataires.">
     <meta name="twitter:image" content="{{ asset('images/social-card.png') }}">
     <script type="application/ld+json">
         {!! json_encode([
             '@'.'context' => 'https://schema.org',
             '@type' => 'WebSite',
-            'name' => config('app.name', 'Lunamars'),
+            'name' => config('app.name', 'Prokejem'),
             'url' => url('/'),
-            'logo' => asset('images/brand/lunamars-logo.png'),
+            'logo' => asset('images/brand/prokejem-logo.png'),
             'potentialAction' => [
                 '@type' => 'SearchAction',
                 'target' => url('/ads') . '?q={search_term_string}',
@@ -488,7 +488,7 @@
             border-radius: 8px; display: inline-flex; align-items: center;
             justify-content: center; padding: 2px; overflow: hidden;
         }
-        .footer-brand-icon .lunamars-brand-mark {
+        .footer-brand-icon .prokejem-brand-mark {
             width: 100%; height: 100%; object-fit: contain; display: block;
         }
         .footer-brand p { font-size: 0.9rem; line-height: 1.7; margin-bottom: 20px; }
@@ -615,7 +615,7 @@
                         <i class="fas fa-envelope me-2 text-muted"></i>Contact
                     </a>
                     <button type="button" class="btn btn-light text-start fw-semibold" data-site-share-trigger>
-                        <i class="fas fa-share-nodes me-2 text-primary"></i>Partager {{ config('app.name', 'Lunamars') }}
+                        <i class="fas fa-share-nodes me-2 text-primary"></i>Partager {{ config('app.name', 'Prokejem') }}
                     </button>
                     @auth
                         <a href="{{ route('feed') }}" class="btn btn-primary rounded-3 mt-2 py-2">
@@ -1003,7 +1003,7 @@
                     <h4><x-brand-mark variant="wordmark" :size="42" :decorative="false" /></h4>
                     <p>La plateforme de mise en relation pour publier un besoin, comparer des propositions et travailler avec un prestataire près de chez vous.</p>
                     <button type="button" class="btn btn-outline-light rounded-3" data-site-share-trigger>
-                        <i class="fas fa-share-nodes me-2"></i>Partager {{ config('app.name', 'Lunamars') }}
+                        <i class="fas fa-share-nodes me-2"></i>Partager {{ config('app.name', 'Prokejem') }}
                     </button>
                     @if(collect(config('site.social', []))->filter()->isNotEmpty())
                     <div class="footer-social">
@@ -1051,7 +1051,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <span>&copy; {{ date('Y') }} {{ config('app.name', 'Lunamars') }}. Tous droits réservés.</span>
+                <span>&copy; {{ date('Y') }} {{ config('app.name', 'Prokejem') }}. Tous droits réservés.</span>
                 <span>Mise en relation de proximité</span>
             </div>
         </div>

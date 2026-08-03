@@ -1,5 +1,5 @@
 @php
-    $siteShareName = config('app.name', 'Lunamars');
+    $siteShareName = config('app.name', 'Prokejem');
     $siteShareUrl = url('/');
     $siteShareTitle = $siteShareName.' — Le bon service, près de chez vous';
     $siteShareDescription = 'La plateforme qui met en relation particuliers et professionnels pour trouver ou proposer des services de proximité.';

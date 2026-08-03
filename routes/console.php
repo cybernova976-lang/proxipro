@@ -12,8 +12,8 @@ Artisan::command('inspire', function () {
 Artisan::command('mail:test {to?}', function () {
     $to = $this->argument('to') ?: config('mail.from.address');
 
-    Mail::raw('Email de test depuis Lunamars.', function ($message) use ($to) {
-        $message->to($to)->subject('Email de test Lunamars');
+    Mail::raw('Email de test depuis Prokejem.', function ($message) use ($to) {
+        $message->to($to)->subject('Email de test Prokejem');
     });
 
     $this->info("Mail sent to {$to}");

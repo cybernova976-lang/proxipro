@@ -1,5 +1,5 @@
 @extends('pro.layout')
-@section('title', 'Mon Profil Pro - Lunamars')
+@section('title', 'Mon Profil Pro - Prokejem')
 
 @section('content')
 <div class="pro-content-header">

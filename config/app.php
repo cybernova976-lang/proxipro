@@ -1,13 +1,31 @@
 <?php
 
-$applicationName = trim((string) env('APP_NAME', 'Lunamars'));
+$applicationName = trim((string) env('APP_NAME', 'Prokejem'));
 
 // Empêche la valeur d'échafaudage Laravel d'apparaître dans l'interface,
 // les e-mails et les aperçus sociaux si l'environnement est mal configuré.
 $legacyApplicationName = 'proxi'.'pro';
+$previousBrandName = 'luna'.'mars';
 
-if ($applicationName === '' || in_array(strtolower($applicationName), ['laravel', $legacyApplicationName], true)) {
-    $applicationName = 'Lunamars';
+if ($applicationName === '' || in_array(strtolower($applicationName), ['laravel', $legacyApplicationName, $previousBrandName], true)) {
+    $applicationName = 'Prokejem';
+}
+
+$applicationUrl = rtrim(trim((string) env('APP_URL', 'https://www.prokejem.fr')), '/');
+$applicationUrlHost = strtolower((string) parse_url($applicationUrl, PHP_URL_HOST));
+$previousDomain = $previousBrandName.'.fr';
+
+// Les liens générés hors requête (e-mails, paiements, partages et commandes)
+// doivent toujours utiliser la marque publique, même si Railway conserve une
+// ancienne variable APP_URL après le changement de domaine.
+if (
+    $applicationUrl === ''
+    || $applicationUrlHost === ''
+    || $applicationUrlHost === $previousDomain
+    || $applicationUrlHost === 'www.'.$previousDomain
+    || $applicationUrlHost === 'web-production-daad.up.railway.app'
+) {
+    $applicationUrl = 'https://www.prokejem.fr';
 }
 
 return [
@@ -65,7 +83,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'https://localhost'),
+    'url' => $applicationUrl,
 
     /*
     |--------------------------------------------------------------------------

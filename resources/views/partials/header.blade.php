@@ -4,9 +4,9 @@
         <div class="d-flex justify-content-between align-items-center h-100">
             <!-- Logo -->
             <a href="{{ route('feed') }}" class="navbar-brand-modern">
-                <div class="brand-logo lunamars-logo-shell"><x-brand-mark :size="38" /></div>
+                <div class="brand-logo prokejem-logo-shell"><x-brand-mark :size="38" /></div>
                 <div class="d-none d-sm-block">
-                    <span class="brand-text">{{ config('app.name', 'Lunamars') }}</span>
+                    <span class="brand-text">{{ config('app.name', 'Prokejem') }}</span>
                 </div>
             </a>
             
@@ -163,7 +163,7 @@
         transition: all 0.3s;
     }
 
-    .brand-logo.lunamars-logo-shell {
+    .brand-logo.prokejem-logo-shell {
         overflow: hidden;
         padding: 2px;
         background: #fff;

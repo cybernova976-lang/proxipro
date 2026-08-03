@@ -1,4 +1,4 @@
-# Railway Deployment Guide — Lunamars
+# Railway Deployment Guide — Prokejem
 
 ## Why PostgreSQL instead of SQLite?
 
@@ -52,18 +52,18 @@ DB_PASSWORD=${{Postgres.PGPASSWORD}}
 ### Step 3 — Set the remaining application variables
 
 ```
-APP_NAME=Lunamars
+APP_NAME=Prokejem
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://www.lunamars.fr
+APP_URL=https://www.prokejem.fr
 APP_KEY=base64:...              # set once and keep the same value
 SESSION_DRIVER=database
 SESSION_SECURE_COOKIE=true
 SESSION_SAME_SITE=lax
 CACHE_STORE=file
 QUEUE_CONNECTION=database
-GOOGLE_REDIRECT_URI=https://www.lunamars.fr/auth/google/callback
-FACEBOOK_REDIRECT_URI=https://www.lunamars.fr/auth/facebook/callback
+GOOGLE_REDIRECT_URI=https://www.prokejem.fr/auth/google/callback
+FACEBOOK_REDIRECT_URI=https://www.prokejem.fr/auth/facebook/callback
 ```
 
 > **Important:** generate `APP_KEY` once with `php artisan key:generate --show`,
@@ -71,9 +71,9 @@ FACEBOOK_REDIRECT_URI=https://www.lunamars.fr/auth/facebook/callback
 > this key invalidates active sessions and can produce CSRF 419 errors in tabs
 > that were already open.
 
-In the Google OAuth client, also register `https://www.lunamars.fr` as an
+In the Google OAuth client, also register `https://www.prokejem.fr` as an
 authorized JavaScript origin and
-`https://www.lunamars.fr/auth/google/callback` as an authorized redirect URI.
+`https://www.prokejem.fr/auth/google/callback` as an authorized redirect URI.
 Use the equivalent Facebook callback above if Facebook login is enabled.
 
 ### Step 4 — Deploy

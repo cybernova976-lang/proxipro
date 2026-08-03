@@ -1,5 +1,5 @@
 {{-- ============================================== --}}
-{{-- SIDEBAR NAVIGATION - Lunamars               --}}
+{{-- SIDEBAR NAVIGATION - Prokejem               --}}
 {{-- Barre latérale avec thème clair              --}}
 {{-- ============================================== --}}
 

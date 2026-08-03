@@ -60,12 +60,12 @@ class AppServiceProvider extends ServiceProvider
                 ?: config('mail.from.address');
 
             return (new MailMessage)
-                ->subject('Réinitialisation de votre mot de passe Lunamars')
+                ->subject('Réinitialisation de votre mot de passe Prokejem')
                 ->view('emails.auth.reset-password', [
                     'resetUrl' => $url,
                     'userName' => $notifiable->name ?? null,
                     'supportEmail' => $supportEmail,
-                    'appName' => config('app.name', 'Lunamars'),
+                    'appName' => config('app.name', 'Prokejem'),
                 ]);
         });
 
@@ -75,12 +75,12 @@ class AppServiceProvider extends ServiceProvider
                 ?: config('mail.from.address');
 
             return (new MailMessage)
-                ->subject('Vérification de votre adresse e-mail Lunamars')
+                ->subject('Vérification de votre adresse e-mail Prokejem')
                 ->view('emails.auth.verify-email', [
                     'verificationUrl' => $url,
                     'userName' => $notifiable->name ?? null,
                     'supportEmail' => $supportEmail,
-                    'appName' => config('app.name', 'Lunamars'),
+                    'appName' => config('app.name', 'Prokejem'),
                 ]);
         });
 
@@ -114,13 +114,19 @@ class AppServiceProvider extends ServiceProvider
     {
         $mailDriver = Setting::get('mail_driver', config('mail.default'));
         $fromAddress = Setting::get('mail_from_address', config('mail.from.address'));
-        $fromName = Setting::get('mail_from_name', config('mail.from.name'));
+        $fromName = $this->normalizeBrandName(
+            Setting::get('mail_from_name', config('mail.from.name')),
+            config('mail.from.name')
+        );
         $adminEmail = Setting::get(
             'mail_admin_address',
             Setting::get('contact_email', config('mail.admin_email'))
         );
         $replyToAddress = Setting::get('mail_reply_to_address', config('mail.reply_to.address')) ?: $adminEmail;
-        $replyToName = Setting::get('mail_reply_to_name', config('mail.reply_to.name')) ?: $fromName;
+        $replyToName = $this->normalizeBrandName(
+            Setting::get('mail_reply_to_name', config('mail.reply_to.name')),
+            $fromName
+        );
 
         config([
             'mail.default' => $mailDriver,
@@ -130,6 +136,18 @@ class AppServiceProvider extends ServiceProvider
             'mail.reply_to.name' => $replyToName,
             'mail.admin_email' => $adminEmail,
         ]);
+    }
+
+    protected function normalizeBrandName(mixed $value, mixed $fallback): string
+    {
+        $value = trim((string) $value);
+        $previousBrandName = 'luna'.'mars';
+
+        if ($value === '' || strtolower($value) === $previousBrandName) {
+            return trim((string) $fallback) ?: 'Prokejem';
+        }
+
+        return $value;
     }
 
     protected function makeAbsoluteRoute(string $name, array $parameters = []): string

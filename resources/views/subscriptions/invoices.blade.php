@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Mes Factures - Lunamars')
+@section('title', 'Mes Factures - Prokejem')
 
 @section('content')
 <div class="container py-5">

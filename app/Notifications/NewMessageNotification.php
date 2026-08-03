@@ -52,7 +52,7 @@ class NewMessageNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject("💬 Nouveau message de {$this->sender->name}")
             ->view('emails.notifications.new-message', [
-                'appName' => config('app.name', 'Lunamars'),
+                'appName' => config('app.name', 'Prokejem'),
                 'supportEmail' => $supportEmail,
                 'recipientName' => $notifiable->name,
                 'senderName' => $this->sender->name,

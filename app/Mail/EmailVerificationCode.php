@@ -18,7 +18,7 @@ class EmailVerificationCode extends Mailable
     {
         $this->code = $code;
         $this->userName = $userName;
-        $this->appName = config('app.name', 'Lunamars');
+        $this->appName = config('app.name', 'Prokejem');
         $this->supportEmail = config('mail.reply_to.address')
             ?: config('mail.admin_email')
             ?: config('mail.from.address')
@@ -27,7 +27,7 @@ class EmailVerificationCode extends Mailable
 
     public function build()
     {
-        return $this->subject('Votre code de vérification Lunamars')
+        return $this->subject('Votre code de vérification Prokejem')
             ->view('emails.verification-code');
     }
 }

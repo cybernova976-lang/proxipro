@@ -37,7 +37,7 @@ class BoostExpiringNotification extends Notification
         return (new MailMessage)
             ->subject("{$icon} Votre {$label} expire bientôt — {$this->ad->title}")
             ->view('emails.notifications.boost-expiring', [
-                'appName' => config('app.name', 'Lunamars'),
+                'appName' => config('app.name', 'Prokejem'),
                 'supportEmail' => $supportEmail,
                 'recipientName' => $notifiable->name,
                 'label' => $label,

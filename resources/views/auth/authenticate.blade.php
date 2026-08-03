@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Connexion & Inscription - Lunamars</title>
+    <title>Connexion & Inscription - Prokejem</title>
     
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -376,7 +376,7 @@
             background: #fff;
         }
 
-        .auth-header .auth-brand-logo .lunamars-brand-mark {
+        .auth-header .auth-brand-logo .prokejem-brand-mark {
             display: block;
             width: 100%;
             height: 100%;
@@ -392,7 +392,7 @@
                 <div class="auth-header">
                     <div class="logo auth-brand-logo"><x-brand-mark :size="50" :decorative="false" /></div>
                     <h2>Connexion</h2>
-                    <p>Bienvenue sur Lunamars</p>
+                    <p>Bienvenue sur Prokejem</p>
                 </div>
                 
                 @if(session('status'))
