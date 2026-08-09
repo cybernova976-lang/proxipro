@@ -63,6 +63,20 @@ return [
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
+        // Boîte professionnelle utilisée uniquement pour les réponses envoyées
+        // depuis l'administration aux visiteurs du formulaire de contact.
+        'contact' => [
+            'transport' => 'smtp',
+            'scheme' => env('CONTACT_MAIL_SCHEME'),
+            'url' => env('CONTACT_MAIL_URL'),
+            'host' => env('CONTACT_MAIL_HOST', '127.0.0.1'),
+            'port' => env('CONTACT_MAIL_PORT', 587),
+            'username' => env('CONTACT_MAIL_USERNAME'),
+            'password' => env('CONTACT_MAIL_PASSWORD'),
+            'timeout' => (int) env('CONTACT_MAIL_TIMEOUT', 10),
+            'local_domain' => env('CONTACT_MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+        ],
+
         'ses' => [
             'transport' => 'ses',
         ],
@@ -144,6 +158,11 @@ return [
     'reply_to' => [
         'address' => env('MAIL_REPLY_TO_ADDRESS', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
         'name' => $replyToName,
+    ],
+
+    'contact_from' => [
+        'address' => env('CONTACT_MAIL_FROM_ADDRESS', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
+        'name' => env('CONTACT_MAIL_FROM_NAME', $fromName),
     ],
 
     'admin_email' => env('MAIL_ADMIN_ADDRESS', env('MAIL_FROM_ADDRESS', 'hello@example.com')),

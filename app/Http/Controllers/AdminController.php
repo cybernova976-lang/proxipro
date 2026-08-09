@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\AdminTestMail;
+use App\Mail\ContactMessageReply;
 use App\Models\Ad;
 use App\Models\Advertisement;
 use App\Models\BlockedEmail;
@@ -19,7 +20,9 @@ use App\Support\ProviderSubscriptionPlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 class AdminController extends Controller
 {
@@ -1868,13 +1871,36 @@ class AdminController extends Controller
 
     public function replyContactMessage(Request $request, $id)
     {
-        $request->validate([
+        $validated = $request->validate([
             'admin_reply' => 'required|string|max:10000',
         ]);
 
         $message = ContactMessage::findOrFail($id);
+
+        if (! filter_var($message->email, FILTER_VALIDATE_EMAIL)) {
+            return back()
+                ->withInput()
+                ->with('error', 'La réponse ne peut pas être envoyée : l’adresse e-mail du visiteur est invalide.');
+        }
+
+        try {
+            Mail::mailer('contact')
+                ->to($message->email, $message->name)
+                ->send(new ContactMessageReply($message, $validated['admin_reply']));
+        } catch (Throwable $exception) {
+            Log::error('Échec de l’envoi d’une réponse à un message de contact.', [
+                'contact_message_id' => $message->id,
+                'recipient' => $message->email,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return back()
+                ->withInput()
+                ->with('error', 'L’e-mail n’a pas pu être envoyé. Le message reste sans réponse : vérifiez la configuration Zimbra puis réessayez.');
+        }
+
         $message->update([
-            'admin_reply' => $request->admin_reply,
+            'admin_reply' => $validated['admin_reply'],
             'status' => 'replied',
             'replied_at' => now(),
         ]);
