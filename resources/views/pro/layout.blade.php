@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    @include('partials.pwa-head')
     <title>@yield('title', 'Espace Pro - Prokejem')</title>
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Inter:400,500,600,700,800&display=swap" rel="stylesheet">
@@ -1003,5 +1004,6 @@
     });
     </script>
     @yield('scripts')
+    @include('partials.pwa-install')
 </body>
 </html>

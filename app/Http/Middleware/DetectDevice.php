@@ -13,6 +13,7 @@ class DetectDevice
     {
         try {
             $agent = new Agent();
+            $agent->setUserAgent($request->userAgent() ?? '');
 
             $deviceType = 'desktop';
             if ($agent->isTablet()) {

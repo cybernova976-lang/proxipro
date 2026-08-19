@@ -453,7 +453,8 @@
     @media (max-width: 768px) {
         .messaging-container {
             padding: 10px;
-            height: calc(100vh - 70px);
+            height: calc(100vh - 68px);
+            height: calc(100dvh - 68px);
         }
         .messaging-wrapper {
             border-radius: 12px;
@@ -470,7 +471,8 @@
     @media (max-width: 576px) {
         .messaging-container {
             padding: 0;
-            height: calc(100vh - 60px);
+            height: calc(100vh - 68px);
+            height: calc(100dvh - 68px);
         }
         .messaging-wrapper {
             border-radius: 0;
