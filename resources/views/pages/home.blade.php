@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    @include('partials.pwa-head')
     <title>{{ config('app.name', 'Prokejem') }} — Services entre particuliers et professionnels</title>
     <meta name="description" content="Publiez votre besoin, recevez des propositions de prestataires et échangez en toute simplicité sur {{ config('app.name', 'Prokejem') }}.">
     <link rel="canonical" href="{{ url('/') }}">
@@ -572,6 +573,10 @@
             .hero-trust { margin-top: 34px; }
             .search-card { padding: 20px 16px; border-radius: 20px; }
         }
+
+        html.pwa-install-available #scrollTopBtn {
+            bottom: calc(84px + env(safe-area-inset-bottom)) !important;
+        }
         
         /* ===== ANIMATIONS ===== */
         .reveal {
@@ -602,11 +607,11 @@
                         @endif
                     @endauth
                 </ul>
-                <button class="nav-burger" id="navBurger" onclick="toggleMobileMenu()">
+                <button type="button" class="nav-burger" id="navBurger" onclick="toggleMobileMenu()" aria-label="Ouvrir le menu" aria-controls="mobileMenu" aria-expanded="false">
                     <i class="fas fa-bars" id="burgerIcon"></i>
                 </button>
             </div>
-            <div id="mobileMenu" style="padding-bottom: 16px; display: none; opacity: 0; transition: opacity 0.25s ease;">
+            <div id="mobileMenu" aria-hidden="true" style="padding-bottom: 16px; display: none; opacity: 0; transition: opacity 0.25s ease;">
                 <div class="d-flex flex-column gap-2">
                     <a href="{{ url('/ads') }}" class="d-block py-2 text-decoration-none text-dark fw-semibold">
                         <i class="fas fa-bullhorn me-2 text-muted"></i>Annonces
@@ -1060,7 +1065,7 @@
     @include('partials.site-share-modal')
 
     <!-- Scroll to Top Button -->
-    <button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" 
+    <button type="button" id="scrollTopBtn" aria-label="Revenir en haut de la page" onclick="window.scrollTo({top:0,behavior:'smooth'})"
         style="display:none;position:fixed;bottom:30px;right:30px;width:48px;height:48px;border-radius:50%;background:var(--primary);color:white;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(79,70,229,0.35);z-index:9999;font-size:1.1rem;transition:all 0.3s;opacity:0;transform:translateY(10px);">
         <i class="fas fa-arrow-up"></i>
     </button>
@@ -1071,7 +1076,9 @@
     function toggleMobileMenu() {
         var menu = document.getElementById('mobileMenu');
         var icon = document.getElementById('burgerIcon');
-        if (menu.style.display === 'none' || !menu.style.display) {
+        var button = document.getElementById('navBurger');
+        var willOpen = menu.style.display === 'none' || !menu.style.display;
+        if (willOpen) {
             menu.style.display = 'block';
             requestAnimationFrame(function() { menu.style.opacity = '1'; });
             icon.className = 'fas fa-times';
@@ -1080,6 +1087,9 @@
             icon.className = 'fas fa-bars';
             setTimeout(function() { menu.style.display = 'none'; }, 250);
         }
+        button.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        button.setAttribute('aria-label', willOpen ? 'Fermer le menu' : 'Ouvrir le menu');
+        menu.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -1135,5 +1145,6 @@
         document.querySelectorAll('[data-count]').forEach(el => counterObserver.observe(el));
     });
     </script>
+    @include('partials.pwa-install')
 </body>
 </html>

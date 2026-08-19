@@ -444,6 +444,7 @@
     
     .message-input-wrapper {
         flex: 1;
+        min-width: 0;
         background: white;
         border-radius: 8px;
         display: flex;
@@ -453,6 +454,8 @@
     
     .message-input {
         flex: 1;
+        width: 100%;
+        min-width: 0;
         border: none;
         padding: 12px 8px;
         font-size: 0.95rem;
@@ -779,7 +782,8 @@
     @media (max-width: 768px) {
         .messaging-container {
             padding: 10px;
-            height: calc(100vh - 70px);
+            height: calc(100vh - 68px);
+            height: calc(100dvh - 68px);
         }
         .messaging-wrapper {
             border-radius: 12px;
@@ -792,7 +796,8 @@
     @media (max-width: 576px) {
         .messaging-container {
             padding: 0;
-            height: calc(100vh - 60px);
+            height: calc(100vh - 68px);
+            height: calc(100dvh - 68px);
         }
         .messaging-wrapper {
             border-radius: 0;
@@ -803,6 +808,19 @@
         .message-bubble {
             max-width: 85%;
             font-size: 0.88rem;
+        }
+        .chat-input {
+            padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
+        }
+        .chat-input-form {
+            gap: 8px;
+            min-width: 0;
+        }
+        .input-btn,
+        .btn-send {
+            width: 38px;
+            height: 38px;
+            flex: 0 0 38px;
         }
     }
 </style>

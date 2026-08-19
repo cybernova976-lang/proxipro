@@ -7,6 +7,7 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    @include('partials.pwa-head')
 
     @php
         $defaultMetaDescription = 'Publiez un besoin, comparez les propositions et trouvez un prestataire près de chez vous.';
@@ -10190,5 +10191,6 @@
         @endif
     @endauth
     @include('partials.site-share-modal')
+    @include('partials.pwa-install')
 </body>
 </html>
