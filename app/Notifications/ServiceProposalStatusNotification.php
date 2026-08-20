@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\ServiceProposal;
+use App\Notifications\Concerns\SendsWebPushNotifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -10,7 +11,7 @@ use Illuminate\Notifications\Notification;
 
 class ServiceProposalStatusNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, SendsWebPushNotifications;
 
     public function __construct(protected ServiceProposal $proposal)
     {
@@ -24,7 +25,7 @@ class ServiceProposalStatusNotification extends Notification implements ShouldQu
             $channels[] = 'mail';
         }
 
-        return $channels;
+        return array_merge($channels, $this->webPushChannelsFor($notifiable));
     }
 
     public function viaConnections(): array

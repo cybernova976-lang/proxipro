@@ -18,6 +18,7 @@ use App\Http\Controllers\PointController;
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseInvoiceController;
+use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\QuoteToolController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReviewController;
@@ -268,6 +269,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications');
     Route::post('/settings/privacy', [SettingsController::class, 'updatePrivacy'])->name('settings.privacy');
     Route::post('/settings/delete-account', [SettingsController::class, 'deleteAccount'])->name('settings.delete-account');
+
+    Route::post('/push-notifications/subscriptions', [PushSubscriptionController::class, 'store'])
+        ->middleware('throttle:30,1')
+        ->name('push-subscriptions.store');
+    Route::delete('/push-notifications/subscriptions', [PushSubscriptionController::class, 'destroy'])
+        ->middleware('throttle:30,1')
+        ->name('push-subscriptions.destroy');
+    Route::post('/push-notifications/test', [PushSubscriptionController::class, 'test'])
+        ->middleware('throttle:5,1')
+        ->name('push-subscriptions.test');
 });
 
 // Routes objets perdus/trouvés

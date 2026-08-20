@@ -1145,6 +1145,7 @@
         document.querySelectorAll('[data-count]').forEach(el => counterObserver.observe(el));
     });
     </script>
+    @include('partials.push-notifications')
     @include('partials.pwa-install')
 </body>
 </html>

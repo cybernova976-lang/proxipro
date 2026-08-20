@@ -1004,6 +1004,7 @@
     });
     </script>
     @yield('scripts')
+    @include('partials.push-notifications')
     @include('partials.pwa-install')
 </body>
 </html>

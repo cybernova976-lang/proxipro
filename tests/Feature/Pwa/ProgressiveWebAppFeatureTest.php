@@ -64,8 +64,12 @@ class ProgressiveWebAppFeatureTest extends TestCase
         }
 
         $this->assertSame([180, 180], array_slice(getimagesize(public_path('pwa/apple-touch-icon.png')), 0, 2));
-        $this->assertStringContainsString("request.mode === 'navigate'", file_get_contents($serviceWorkerPath));
-        $this->assertStringContainsString("caches.match(OFFLINE_PAGE)", file_get_contents($serviceWorkerPath));
+        $serviceWorker = file_get_contents($serviceWorkerPath);
+        $this->assertStringContainsString("request.mode === 'navigate'", $serviceWorker);
+        $this->assertStringContainsString('caches.match(OFFLINE_PAGE)', $serviceWorker);
+        $this->assertStringContainsString("self.addEventListener('push'", $serviceWorker);
+        $this->assertStringContainsString('showNotification', $serviceWorker);
+        $this->assertStringContainsString("self.addEventListener('notificationclick'", $serviceWorker);
         $this->assertStringContainsString('Vous êtes hors connexion', file_get_contents($offlinePath));
     }
 }

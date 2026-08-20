@@ -96,9 +96,12 @@
                                         <p class="text-muted mb-0 small">Recevoir les notifications importantes par email</p>
                                     </label>
                                 </div>
+
+                                @include('partials.push-notification-controls')
+
                                 <div class="alert alert-light border mb-4 small text-muted">
                                     <i class="fas fa-info-circle me-1"></i>
-                                    Les notifications internes restent actives. Les alertes SMS et navigateur ne sont pas encore proposées.
+                                    Les notifications internes restent actives. Les notifications navigateur se règlent séparément sur chaque appareil.
                                 </div>
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-save me-2"></i>Enregistrer

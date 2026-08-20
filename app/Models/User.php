@@ -8,11 +8,12 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Cashier\Billable;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use Billable, HasFactory, Notifiable, SoftDeletes;
+    use Billable, HasFactory, HasPushSubscriptions, Notifiable, SoftDeletes;
 
     /**
      * Boot the model - Suppression en cascade des données liées
@@ -21,6 +22,8 @@ class User extends Authenticatable
     {
         // Lors d'un soft-delete : supprimer les annonces de l'utilisateur
         static::deleting(function (User $user) {
+            $user->pushSubscriptions()->delete();
+
             if (! $user->isForceDeleting()) {
                 $user->ads()->delete();
             }

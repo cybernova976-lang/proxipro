@@ -1,0 +1,9 @@
+# Secrets et configuration locale
+.env
+.env.*
+!.env.example
+
+# Fichiers de travail locaux sans rapport avec l'application
+.codex-artifacts/
+tmp/
+Guide_technique_Prokejem.txt

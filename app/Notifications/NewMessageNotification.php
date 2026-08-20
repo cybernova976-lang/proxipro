@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Notifications\Concerns\SendsWebPushNotifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -12,7 +13,7 @@ use Illuminate\Notifications\Notification;
 
 class NewMessageNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, SendsWebPushNotifications;
 
     public function __construct(
         protected Message $message,
@@ -30,7 +31,7 @@ class NewMessageNotification extends Notification implements ShouldQueue
             $channels[] = 'mail';
         }
 
-        return $channels;
+        return array_merge($channels, $this->webPushChannelsFor($notifiable));
     }
 
     public function viaConnections(): array

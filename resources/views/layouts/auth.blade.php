@@ -53,6 +53,7 @@
     <div class="min-h-screen flex">
         @yield('content')
     </div>
+    @include('partials.push-notifications')
     @include('partials.pwa-install')
 </body>
 </html>
