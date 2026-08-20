@@ -10191,6 +10191,7 @@
         @endif
     @endauth
     @include('partials.site-share-modal')
+    @include('partials.usage-analytics')
     @include('partials.push-notifications')
     @include('partials.pwa-install')
 </body>

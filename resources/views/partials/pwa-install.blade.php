@@ -219,6 +219,7 @@
         deferredInstallPrompt = null;
         hideInstallButton();
         iosDialog.hidden = true;
+        window.prokejemUsage?.track('pwa_install');
     });
 })();
 </script>

@@ -4,6 +4,7 @@ use App\Http\Controllers\AdController;
 use App\Http\Controllers\Admin\AdminServiceOrderController;
 use App\Http\Controllers\Admin\BlockedEmailController;
 use App\Http\Controllers\Admin\PaymentReconciliationController;
+use App\Http\Controllers\Admin\UsageDashboardController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BoostController;
 use App\Http\Controllers\CommentController;
@@ -31,6 +32,7 @@ use App\Http\Controllers\ServiceProviderController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\StripeCheckoutController;
 use App\Http\Controllers\ToolController;
+use App\Http\Controllers\UsageAnalyticsController;
 use App\Http\Controllers\VerificationController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -39,6 +41,9 @@ use Illuminate\Support\Facades\Route;
 // Page d'accueil publique
 Route::get('/', [HomePageController::class, 'index'])->name('homepage');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
+Route::post('/usage/events', UsageAnalyticsController::class)
+    ->middleware('throttle:120,1')
+    ->name('usage.store');
 
 if (app()->environment('local')) {
     // Routes de test visibles uniquement en développement local.
@@ -587,6 +592,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
     // Statistiques
     Route::get('/stats', [AdminController::class, 'stats'])->name('admin.stats');
+    Route::get('/usage', UsageDashboardController::class)->name('admin.usage');
 
     // Paramètres
     Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');

@@ -19,6 +19,7 @@
             <li>vérification : documents d’identité ou professionnels transmis et état de leur contrôle ;</li>
             <li>transactions : références de commande, montants, statut du paiement et identifiants fournis par Stripe — la plateforme ne conserve pas les numéros complets de carte ;</li>
             <li>données techniques et de sécurité : adresse IP, journaux, appareil, session et cookies strictement nécessaires ;</li>
+            <li>mesure d’audience : compteurs agrégés de pages vues, sessions quotidiennes, type d’appareil et utilisation de l’application installée, sans contenu privé ni identifiant de compte dans la table statistique ;</li>
             <li>localisation saisie ou, avec votre autorisation, position utilisée pour une recherche de proximité.</li>
         </ul>
 
@@ -42,6 +43,7 @@
                 <tr><td>Commandes, paiements et pièces comptables</td><td>Durée légale comptable ou fiscale applicable, pouvant atteindre 10 ans.</td></tr>
                 <tr><td>Pièces de vérification</td><td>Accès fortement limité et suppression après la décision dès qu’elles ne sont plus nécessaires ; le résultat du contrôle peut être conservé pour la preuve et la prévention de la fraude.</td></tr>
                 <tr><td>Journaux de sécurité et adresses IP</td><td>En principe 12 mois, sauf incident, fraude ou obligation légale.</td></tr>
+                <tr><td>Compteurs agrégés de mesure d’audience</td><td>25 mois au maximum, avec réexamen périodique de la durée utile.</td></tr>
                 <tr><td>Consentements et oppositions</td><td>Pendant la durée nécessaire à prouver et respecter le choix.</td></tr>
             </tbody>
         </table></div>

@@ -270,6 +270,11 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('admin.usage') }}" class="{{ request()->routeIs('admin.usage') ? 'active' : '' }}">
+                    <i class="fas fa-chart-line me-2"></i> Utilisation réelle
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('admin.stats') }}" class="{{ request()->routeIs('admin.stats') ? 'active' : '' }}">
                     <i class="fas fa-chart-bar me-2"></i> Statistiques
                 </a>

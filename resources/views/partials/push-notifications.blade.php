@@ -170,6 +170,7 @@
             await request(endpoints.store, 'POST', subscriptionPayload(subscription));
             localStorage.removeItem(dismissStorageKey);
             setState('active', 'Activées sur cet appareil.');
+            window.prokejemUsage?.track('push_enabled');
 
             await worker.showNotification('Notifications Prokejem activées', {
                 body: 'Vous recevrez ici vos nouveaux messages, propositions et demandes.',

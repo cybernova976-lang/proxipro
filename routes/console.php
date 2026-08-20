@@ -68,3 +68,9 @@ Schedule::call(function () {
         ->where('expires_at', '<=', now())
         ->update(['status' => 'expired']);
 })->name('ads:expire')->dailyAt('00:15')->withoutOverlapping();
+
+// Les compteurs d'audience sont uniquement agrégés et conservés au maximum 25 mois.
+Schedule::command('usage:prune --months=25')
+    ->dailyAt('02:30')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/usage-prune.log'));
