@@ -107,10 +107,16 @@
             }
 
             .sidebar {
-                margin-left: -250px;
+                top: 0;
+                left: 0;
+                margin-left: 0;
                 z-index: 1050;
                 overflow-y: auto;
                 width: min(86vw, 280px);
+                transform: translateX(-100%);
+                visibility: hidden;
+                pointer-events: none;
+                transition: transform 0.3s ease, visibility 0s linear 0.3s;
             }
             
             .main-content {
@@ -119,7 +125,10 @@
             }
             
             .sidebar.active {
-                margin-left: 0;
+                transform: translateX(0);
+                visibility: visible;
+                pointer-events: auto;
+                transition-delay: 0s;
             }
 
             .sidebar-close-btn {
@@ -196,7 +205,7 @@
 </head>
 <body class="device-{{ $deviceType ?? 'desktop' }}{{ ($isMobile ?? false) ? ' is-mobile' : '' }}">
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="adminSidebar">
         <div class="sidebar-header d-flex align-items-start justify-content-between">
             <div class="d-flex align-items-center gap-2">
                 <x-brand-mark :size="42" class="admin-brand-mark" :decorative="false" />
@@ -205,7 +214,7 @@
                     <small class="text-muted">{{ config('app.name', 'Prokejem') }}</small>
                 </div>
             </div>
-            <button class="sidebar-close-btn d-md-none" id="sidebarClose" aria-label="Fermer le menu">
+            <button type="button" class="sidebar-close-btn d-md-none" id="sidebarClose" aria-label="Fermer le menu">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -341,7 +350,8 @@
     <div class="main-content">
         <nav class="navbar navbar-light bg-white shadow-sm rounded mb-4">
             <div class="container-fluid">
-                <button class="btn btn-outline-primary d-md-none" id="sidebarToggle">
+                <button type="button" class="btn btn-outline-primary d-md-none" id="sidebarToggle"
+                        aria-controls="adminSidebar" aria-expanded="false" aria-label="Ouvrir le menu d’administration">
                     <i class="fas fa-bars"></i>
                 </button>
                 
@@ -405,12 +415,14 @@
         function openSidebar() {
             sidebar.classList.add('active');
             overlay.classList.add('active');
+            toggleBtn?.setAttribute('aria-expanded', 'true');
             document.body.style.overflow = 'hidden';
         }
 
         function closeSidebar() {
             sidebar.classList.remove('active');
             overlay.classList.remove('active');
+            toggleBtn?.setAttribute('aria-expanded', 'false');
             document.body.style.overflow = '';
         }
 
@@ -430,6 +442,24 @@
 
         if (overlay) {
             overlay.addEventListener('click', closeSidebar);
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && sidebar.classList.contains('active')) {
+                closeSidebar();
+                toggleBtn?.focus();
+            }
+        });
+
+        const desktopSidebarMedia = window.matchMedia('(min-width: 769px)');
+        const handleSidebarBreakpoint = function (event) {
+            if (event.matches) closeSidebar();
+        };
+
+        if (desktopSidebarMedia.addEventListener) {
+            desktopSidebarMedia.addEventListener('change', handleSidebarBreakpoint);
+        } else {
+            desktopSidebarMedia.addListener(handleSidebarBreakpoint);
         }
     </script>
 </body>

@@ -56,4 +56,14 @@ class MobileExperienceFeatureTest extends TestCase
         $this->assertStringContainsString('closeDashboardSidebar();', $sidebar);
         $this->assertStringNotContainsString("if (window.innerWidth <= 1024) {\n        toggleSidebar();", $sidebar);
     }
+
+    public function test_admin_mobile_sidebar_is_fully_hidden_outside_the_viewport(): void
+    {
+        $layout = file_get_contents(resource_path('views/admin/layouts/app.blade.php'));
+
+        $this->assertStringContainsString('transform: translateX(-100%);', $layout);
+        $this->assertStringContainsString('transform: translateX(0);', $layout);
+        $this->assertStringContainsString('aria-controls="adminSidebar" aria-expanded="false"', $layout);
+        $this->assertStringNotContainsString('margin-left: -250px;', $layout);
+    }
 }
