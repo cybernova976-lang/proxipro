@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\UsageDailyMetric;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Throwable;
 
 class UsageAnalytics
 {
@@ -33,6 +35,8 @@ class UsageAnalytics
         if (! in_array($eventName, self::EVENTS, true)) {
             return;
         }
+
+        $this->pruneExpiredMetricsOncePerDay();
 
         $metricDate = ($date ?? now())->toDateString();
         $routeName = $this->normalizeRouteName($routeName);
@@ -98,5 +102,21 @@ class UsageAnalytics
         }
 
         return Str::limit($routeName, 100, '');
+    }
+
+    private function pruneExpiredMetricsOncePerDay(): void
+    {
+        $cacheKey = 'usage_analytics.retention:'.today()->toDateString();
+
+        try {
+            if (! Cache::add($cacheKey, true, now()->addDay())) {
+                return;
+            }
+
+            $this->pruneBefore(today()->subMonthsNoOverflow(25));
+        } catch (Throwable $exception) {
+            Cache::forget($cacheKey);
+            report($exception);
+        }
     }
 }

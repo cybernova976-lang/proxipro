@@ -6,6 +6,7 @@ use App\Models\UsageDailyMetric;
 use App\Models\User;
 use App\Services\UsageAnalytics;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -112,6 +113,30 @@ class UsageAnalyticsFeatureTest extends TestCase
 
         $this->assertSame(1, UsageDailyMetric::query()->count());
         $this->assertTrue(UsageDailyMetric::query()->first()->metric_date->isToday());
+    }
+
+    public function test_a_new_measurement_applies_retention_without_the_scheduler(): void
+    {
+        UsageDailyMetric::query()->create([
+            'metric_date' => today()->subMonthsNoOverflow(26),
+            'event_name' => 'page_view',
+            'route_name' => 'homepage',
+            'device_type' => 'desktop',
+            'app_mode' => 'browser',
+            'count' => 1,
+        ]);
+        Cache::forget('usage_analytics.retention:'.today()->toDateString());
+
+        app(UsageAnalytics::class)->record('page_view', 'homepage', 'desktop', 'browser');
+
+        $this->assertDatabaseMissing('usage_daily_metrics', [
+            'metric_date' => today()->subMonthsNoOverflow(26)->toDateString(),
+        ]);
+        $this->assertDatabaseHas('usage_daily_metrics', [
+            'metric_date' => today()->toDateString(),
+            'event_name' => 'page_view',
+            'count' => 1,
+        ]);
     }
 
     public function test_public_pages_expose_measurement_information_and_device_opt_out(): void
