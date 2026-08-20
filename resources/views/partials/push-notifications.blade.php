@@ -63,6 +63,7 @@
         store: @json(route('push-subscriptions.store')),
         destroy: @json(route('push-subscriptions.destroy')),
         test: @json(route('push-subscriptions.test')),
+        settings: @json(route('settings.index').'#notifications'),
     };
     const prompt = document.getElementById('pushNotificationPrompt');
     const dismissStorageKey = 'prokejem_push_prompt_dismissed_until';
@@ -175,7 +176,7 @@
                 icon: '/pwa/icon-192.png',
                 badge: '/pwa/icon-192.png',
                 tag: 'prokejem-push-enabled',
-                data: { url: window.location.href },
+                data: { url: endpoints.settings },
             });
         } catch (error) {
             setState('error', error.message || 'Impossible d’activer les notifications.');

@@ -153,12 +153,12 @@ class WebPushNotificationsTest extends TestCase
 
         $payload = $notification->toWebPush($recipient, $notification)->toArray();
 
-        $this->assertSame('Notifications Prokejem activées', $payload['title']);
-        $this->assertStringContainsString('nouveaux messages, propositions et demandes', $payload['body']);
+        $this->assertSame('Test des notifications Prokejem', $payload['title']);
+        $this->assertStringContainsString('Le test a réussi', $payload['body']);
         $this->assertSame('/pwa/icon-192.png', $payload['icon']);
         $this->assertSame('fr', $payload['lang']);
         $this->assertSame('push_test', $payload['data']['type']);
-        $this->assertStringStartsWith(config('app.url'), $payload['data']['url']);
+        $this->assertSame(route('settings.index').'#notifications', $payload['data']['url']);
     }
 
     public function test_soft_deleted_user_loses_all_device_subscriptions(): void
@@ -198,6 +198,11 @@ class WebPushNotificationsTest extends TestCase
         $this->assertStringContainsString('Recevez les nouveaux messages, propositions et demandes', $content);
         $this->assertStringContainsString('data-push-notification-controls', $content);
         $this->assertStringContainsString('Notification.requestPermission()', $content);
+        $this->assertStringContainsString(
+            json_encode(route('settings.index').'#notifications', JSON_THROW_ON_ERROR),
+            $content
+        );
+        $this->assertStringNotContainsString('data: { url: window.location.href }', $content);
     }
 
     /**

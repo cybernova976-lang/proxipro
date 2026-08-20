@@ -19,8 +19,8 @@ class PushTestNotification extends Notification
     {
         return [
             'type' => 'push_test',
-            'title' => 'Notifications Prokejem activées',
-            'message' => 'Vous recevrez ici les nouveaux messages, propositions et demandes importantes.',
+            'title' => 'Test des notifications Prokejem',
+            'message' => 'Le test a réussi. Les notifications de Prokejem arrivent bien sur cet appareil.',
             'action_url' => route('settings.index').'#notifications',
         ];
     }
