@@ -46,4 +46,14 @@ class MobileExperienceFeatureTest extends TestCase
         $this->assertStringContainsString("request()->routeIs('messages.*')", $pwaInstall);
         $this->assertStringContainsString("classList.add('pwa-install-available')", $pwaInstall);
     }
+
+    public function test_dashboard_navigation_does_not_hijack_settings_page_anchors(): void
+    {
+        $sidebar = file_get_contents(resource_path('views/partials/sidebar.blade.php'));
+
+        $this->assertStringContainsString('if (!section || !dashboardSections.includes(section)) return;', $sidebar);
+        $this->assertStringContainsString("if (!document.getElementById('dashboardContent')) return;", $sidebar);
+        $this->assertStringContainsString('closeDashboardSidebar();', $sidebar);
+        $this->assertStringNotContainsString("if (window.innerWidth <= 1024) {\n        toggleSidebar();", $sidebar);
+    }
 }

@@ -532,11 +532,22 @@
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebarNav');
     const overlay = document.getElementById('sidebarOverlay');
+
+    if (!sidebar || !overlay) return;
     
     sidebar.classList.toggle('active');
     overlay.classList.toggle('active');
     
     document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+}
+
+function closeDashboardSidebar() {
+    const sidebar = document.getElementById('sidebarNav');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    if (sidebar) sidebar.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
 }
 
 window.addEventListener('resize', function() {
@@ -552,15 +563,16 @@ window.addEventListener('resize', function() {
 // ===== DASHBOARD SPA NAVIGATION =====
 var currentSection = 'overview';
 var isNavigating = false;
+var dashboardSections = ['overview', 'profile', 'profile-edit', 'settings', 'points', 'my-ads', 'messages', 'transactions', 'create-ad'];
 
 function dashboardNav(section) {
-    if (!section) return;
+    if (!section || !dashboardSections.includes(section)) return;
     // Prevent double-clicks while a fetch is in progress
     if (isNavigating) return;
 
     // Close mobile sidebar
     if (window.innerWidth <= 1024) {
-        toggleSidebar();
+        closeDashboardSidebar();
     }
 
     // Update active state in sidebar
@@ -667,8 +679,10 @@ window.addEventListener('popstate', function(event) {
 
 // Load section from hash on page load
 document.addEventListener('DOMContentLoaded', function() {
+    if (!document.getElementById('dashboardContent')) return;
+
     var hash = window.location.hash.replace('#', '');
-    if (hash && hash !== 'overview' && hash !== '') {
+    if (dashboardSections.includes(hash) && hash !== 'overview') {
         dashboardNav(hash);
     }
 });
