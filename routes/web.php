@@ -177,6 +177,7 @@ Route::get('/purchase/invoice', [PurchaseInvoiceController::class, 'download'])-
 // Routes pour le feed (page d'accueil après connexion)
 Route::middleware(['auth', 'geo'])->group(function () {
     Route::get('/feed', [FeedController::class, 'index'])->name('feed');
+    Route::get('/feed-maquette', [FeedController::class, 'index'])->name('feed.mockup');
     Route::get('/feed-test', [FeedController::class, 'indexTest'])->name('feed.test');
 
     // AJAX endpoints for category filtering
@@ -189,6 +190,12 @@ Route::middleware(['auth', 'geo'])->group(function () {
     // AJAX endpoint pour mettre à jour le rayon
     Route::post('/feed/update-radius', [FeedController::class, 'updateRadius'])->name('feed.update-radius');
 });
+
+// Aperçu de développement sans session. Cette route n'existe jamais en production.
+if (app()->environment('local')) {
+    Route::get('/feed-maquette-apercu', [FeedController::class, 'previewMockup'])
+        ->name('feed.mockup.preview');
+}
 
 // Routes pour les annonces sauvegardées
 Route::middleware(['auth'])->group(function () {

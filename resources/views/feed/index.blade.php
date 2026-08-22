@@ -7125,6 +7125,101 @@
             max-width: 100%;
         }
     }
+
+    .feed-mockup-launcher {
+        width: min(1180px, calc(100% - 32px));
+        margin: 18px auto 0;
+        padding: 16px 18px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        color: #0f2747;
+        background: linear-gradient(105deg, #eef5ff 0%, #f6fbff 52%, #ecfeff 100%);
+        border: 1px solid rgba(37, 99, 235, .18);
+        border-radius: 18px;
+        box-shadow: 0 12px 32px rgba(30, 64, 175, .08);
+    }
+
+    .feed-mockup-launcher__icon {
+        width: 46px;
+        height: 46px;
+        flex: 0 0 46px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        background: linear-gradient(135deg, #2557df, #23a6e8);
+        border-radius: 14px;
+        box-shadow: 0 8px 20px rgba(37, 87, 223, .22);
+    }
+
+    .feed-mockup-launcher__copy {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .feed-mockup-launcher__copy span {
+        display: inline-flex;
+        margin-bottom: 3px;
+        color: #2563eb;
+        font-size: .72rem;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .feed-mockup-launcher__copy strong {
+        display: block;
+        margin-bottom: 2px;
+        font-size: 1rem;
+    }
+
+    .feed-mockup-launcher__copy p {
+        margin: 0;
+        color: #58708f;
+        font-size: .86rem;
+    }
+
+    .feed-mockup-launcher__button {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 42px;
+        padding: 0 17px;
+        color: #fff;
+        background: #2563eb;
+        border-radius: 12px;
+        font-size: .86rem;
+        font-weight: 800;
+        text-decoration: none;
+        transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .feed-mockup-launcher__button:hover {
+        color: #fff;
+        background: #1d4ed8;
+        box-shadow: 0 9px 22px rgba(37, 99, 235, .24);
+        transform: translateY(-1px);
+    }
+
+    @media (max-width: 767.98px) {
+        .feed-mockup-launcher {
+            width: calc(100% - 20px);
+            margin-top: 12px;
+            padding: 14px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .feed-mockup-launcher__copy {
+            flex: 1 1 calc(100% - 62px);
+        }
+
+        .feed-mockup-launcher__button {
+            width: 100%;
+        }
+    }
 </style>
 @endpush
 
@@ -7233,6 +7328,20 @@
 
 <!-- Spacer pour compenser la barre fixe -->
 <div class="filter-bar-spacer"></div>
+
+<section class="feed-mockup-launcher" aria-labelledby="feedMockupLauncherTitle">
+    <div class="feed-mockup-launcher__icon" aria-hidden="true">
+        <i class="fas fa-magic"></i>
+    </div>
+    <div class="feed-mockup-launcher__copy">
+        <span>Nouveau · Version d'essai</span>
+        <strong id="feedMockupLauncherTitle">Découvrez la nouvelle expérience Prokejem</strong>
+        <p>Un accueil plus clair pour publier une demande ou trouver une mission rapidement.</p>
+    </div>
+    <a class="feed-mockup-launcher__button" href="{{ route('feed.mockup') }}">
+        Découvrir le nouveau feed <i class="fas fa-arrow-right"></i>
+    </a>
+</section>
 
 <!-- Contenu Principal -->
 <div class="content-container">

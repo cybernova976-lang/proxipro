@@ -251,6 +251,32 @@ class FeedController extends Controller
         );
         $homeProfessionalProfiles = $this->buildHighlightedProfessionalProfiles($user, 18);
 
+        if ($request->attributes->get('mockup_local_preview')) {
+            $previewData = $this->buildLocalMockupPreviewData();
+
+            if ($homePersonalRequests->isEmpty()) {
+                $homePersonalRequests = $previewData['requests'];
+            }
+            if ($homeProfessionalOffers->isEmpty()) {
+                $homeProfessionalOffers = $previewData['offers'];
+            }
+            if ($homeProfessionalProfiles->isEmpty()) {
+                $homeProfessionalProfiles = $previewData['providers'];
+            }
+
+            $previewCategoryTotals = [18, 14, 12, 9, 8, 7, 6, 5];
+            $previewCategoryIndex = 0;
+            $missionCategories = collect($missionCategories)
+                ->map(function ($category) use ($previewCategoryTotals, &$previewCategoryIndex) {
+                    $category['total'] = $previewCategoryTotals[$previewCategoryIndex]
+                        ?? (int) ($category['total'] ?? 0);
+                    $previewCategoryIndex++;
+
+                    return $category;
+                })
+                ->all();
+        }
+
         $homeShowcaseAdIds = $homePersonalRequests
             ->pluck('id')
             ->merge($homeProfessionalOffers->pluck('id'))
@@ -265,7 +291,9 @@ class FeedController extends Controller
         $proSuggestions = [];
         $proProfileCompletion = 0;
 
-        if ($user && ($user->isProfessionnel() || $user->isServiceProvider())) {
+        if (! $request->attributes->get('mockup_local_preview')
+            && $user
+            && ($user->isProfessionnel() || $user->isServiceProvider())) {
             $showOnboardingModal = $user->shouldShowOnboardingModal();
             $proSuggestions = $user->getProSuggestions();
             $proProfileCompletion = $user->getProProfileCompletionPercent();
@@ -273,6 +301,10 @@ class FeedController extends Controller
             // Toujours charger les catégories pour le formulaire d'onboarding,
             // y compris lorsqu'il est ouvert depuis les suggestions du feed.
             $onboardingCategories = MarketplaceCategoryRegistry::enabledServiceOptions();
+        }
+
+        if ($request->attributes->get('mockup_local_preview')) {
+            $proProfileCompletion = 72;
         }
 
         $adsMapData = $this->buildAdsMapData(
@@ -283,7 +315,9 @@ class FeedController extends Controller
                 ->get()
         );
 
-        return view('feed.index', compact(
+        $feedView = $request->routeIs('feed.mockup', 'feed.mockup.preview') ? 'feed.mockup' : 'feed.index';
+
+        return view($feedView, compact(
             'missionCategories',
             'ads',
             'topPros',
@@ -312,6 +346,131 @@ class FeedController extends Controller
             'proProfileCompletion',
             'adsMapData'
         ));
+    }
+
+    /**
+     * Render the functional mockup locally without creating an authenticated session.
+     * The route exposing this method is only registered in the local environment.
+     */
+    public function previewMockup(Request $request)
+    {
+        abort_unless(app()->environment('local'), 404);
+
+        $previewUser = \App\Models\User::query()
+            ->where(function ($query) {
+                $query->where('user_type', 'professionnel')
+                    ->orWhere('is_service_provider', true);
+            })
+            ->first() ?? \App\Models\User::query()->first();
+
+        if (! $previewUser) {
+            $previewUser = (new \App\Models\User)->forceFill([
+                'id' => 0,
+                'name' => 'Compte aperçu',
+                'email' => 'apercu-local@prokejem.test',
+                'user_type' => 'professionnel',
+                'account_type' => 'professionnel',
+                'is_service_provider' => true,
+                'city' => 'Paris',
+                'country' => 'France',
+                'geo_radius' => 25,
+            ]);
+        }
+
+        Auth::setUser($previewUser);
+        $request->attributes->set('mockup_local_preview', true);
+
+        return $this->index($request);
+    }
+
+    /**
+     * Provide realistic read-only content when the local database is empty.
+     * These models are never persisted and only exist for the preview request.
+     */
+    private function buildLocalMockupPreviewData(): array
+    {
+        $makeUser = function (int $id, string $name, array $attributes = []) {
+            return (new \App\Models\User)->forceFill(array_merge([
+                'id' => $id,
+                'name' => $name,
+                'email' => "apercu{$id}@prokejem.test",
+                'user_type' => 'professionnel',
+                'account_type' => 'professionnel',
+                'is_service_provider' => true,
+                'is_verified' => true,
+                'city' => 'Paris',
+                'country' => 'France',
+            ], $attributes));
+        };
+
+        $providers = collect([
+            $makeUser(-201, 'Sophie Martin', ['profession' => 'Plombière', 'bio' => 'Interventions soignées, devis clair et disponibilité rapide.', 'verified_reviews_avg' => 4.9, 'verified_reviews_count' => 47, 'ads_count' => 6, 'is_top_provider' => true]),
+            $makeUser(-202, 'Karim Bensaïd', ['profession' => 'Bricolage & montage', 'bio' => 'Montage de meubles, fixations et petits travaux à domicile.', 'verified_reviews_avg' => 4.8, 'verified_reviews_count' => 31, 'ads_count' => 5]),
+            $makeUser(-203, 'Claire Dubois', ['profession' => 'Ménage à domicile', 'bio' => 'Prestations ponctuelles ou régulières, matériel fourni sur demande.', 'verified_reviews_avg' => 4.9, 'verified_reviews_count' => 62, 'ads_count' => 4, 'is_top_provider' => true]),
+            $makeUser(-204, 'Lucas Bernard', ['profession' => 'Jardinier', 'bio' => 'Entretien, taille et remise en état de jardins et terrasses.', 'verified_reviews_avg' => 4.7, 'verified_reviews_count' => 24, 'ads_count' => 7]),
+        ]);
+
+        $clients = collect([
+            $makeUser(-301, 'Élodie R.', ['user_type' => 'particulier', 'account_type' => 'particulier', 'is_service_provider' => false]),
+            $makeUser(-302, 'Thomas L.', ['user_type' => 'particulier', 'account_type' => 'particulier', 'is_service_provider' => false]),
+            $makeUser(-303, 'Nadia M.', ['user_type' => 'particulier', 'account_type' => 'particulier', 'is_service_provider' => false]),
+            $makeUser(-304, 'Julien P.', ['user_type' => 'particulier', 'account_type' => 'particulier', 'is_service_provider' => false]),
+            $makeUser(-305, 'Manon D.', ['user_type' => 'particulier', 'account_type' => 'particulier', 'is_service_provider' => false]),
+        ]);
+
+        $requestRows = [
+            [-101, 'Réparer une fuite sous évier', 'Bricolage & Travaux', 'Une fuite est apparue sous l’évier de la cuisine. Intervention souhaitée rapidement.', 'Paris 15e', 65, true, now()->subHours(2)],
+            [-102, 'Monter une armoire trois portes', 'Bricolage & Travaux', 'Armoire neuve livrée en kit, montage à prévoir dans une chambre dégagée.', 'Boulogne-Billancourt', 90, false, now()->subHours(8)],
+            [-103, 'Nettoyage complet avant état des lieux', 'Nettoyage & Entretien', 'Appartement de 48 m² vide, cuisine et salle de bain à nettoyer en profondeur.', 'Paris 11e', 120, false, now()->subDay()],
+            [-104, 'Tailler une haie et évacuer les déchets', 'Jardinage & Extérieur', 'Environ 12 mètres de haie, accès facile depuis la rue.', 'Montreuil', 150, true, now()->subDays(2)],
+            [-105, 'Cours de mathématiques niveau seconde', 'Cours & Formation', 'Recherche accompagnement hebdomadaire pour reprendre les bases et gagner en méthode.', 'Vincennes', 30, false, now()->subDays(6)],
+        ];
+
+        $requests = collect($requestRows)->map(function (array $row, int $index) use ($clients) {
+            $ad = (new Ad)->forceFill([
+                'id' => $row[0],
+                'user_id' => $clients[$index]->id,
+                'title' => $row[1],
+                'category' => $row[2],
+                'description' => $row[3],
+                'location' => $row[4],
+                'price' => $row[5],
+                'price_type' => 'fixed',
+                'service_type' => 'demande',
+                'status' => 'active',
+                'is_urgent' => $row[6],
+                'urgent_until' => $row[6] ? now()->addDay() : null,
+                'created_at' => $row[7],
+            ]);
+            $ad->setRelation('user', $clients[$index]);
+
+            return $ad;
+        });
+
+        $offerRows = [
+            [-151, 'Dépannage plomberie express', 'Paris et petite couronne', 75, $providers[0]],
+            [-152, 'Montage de meubles à domicile', 'Paris ouest', 45, $providers[1]],
+            [-153, 'Ménage ponctuel ou régulier', 'Paris centre', 28, $providers[2]],
+        ];
+
+        $offers = collect($offerRows)->map(function (array $row) {
+            $ad = (new Ad)->forceFill([
+                'id' => $row[0],
+                'user_id' => $row[4]->id,
+                'title' => $row[1],
+                'location' => $row[2],
+                'price' => $row[3],
+                'price_type' => 'fixed',
+                'service_type' => 'offre',
+                'status' => 'active',
+                'created_at' => now()->subDays(2),
+            ]);
+            $ad->setRelation('user', $row[4]);
+
+            return $ad;
+        });
+
+        return compact('requests', 'offers', 'providers');
     }
 
     private function buildMainFeedAdsQuery(

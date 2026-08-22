@@ -6643,7 +6643,7 @@
     }
 </style>
 </head>
-<body class="device-{{ $deviceType ?? 'desktop' }}{{ ($isMobile ?? false) ? ' is-mobile' : '' }}{{ ($isTablet ?? false) ? ' is-tablet' : '' }}">
+<body class="device-{{ $deviceType ?? 'desktop' }}{{ ($isMobile ?? false) ? ' is-mobile' : '' }}{{ ($isTablet ?? false) ? ' is-tablet' : '' }}{{ request()->routeIs('feed.mockup', 'feed.mockup.preview') ? ' feed-mockup-route' : '' }}">
     {{-- Variables JS pour détection appareil côté client --}}
     <script>
         window.__device = {
@@ -6686,13 +6686,13 @@
                     @endphp
                     <!-- Navigation principale desktop -->
                     <nav class="header-nav-center d-none d-lg-flex align-items-center gap-1" aria-label="Navigation principale">
-                        <a href="{{ route('feed') }}" class="header-nav-btn {{ request()->routeIs('feed') ? 'active' : '' }}">
+                        <a href="{{ request()->routeIs('feed.mockup.preview') ? route('feed.mockup.preview') : (request()->routeIs('feed.mockup') ? route('feed.mockup') : route('feed')) }}" class="header-nav-btn {{ request()->routeIs('feed', 'feed.mockup', 'feed.mockup.preview') ? 'active' : '' }}">
                             <i class="fas fa-home"></i><span>Accueil</span>
                         </a>
                         <a href="{{ route('home') }}" class="header-nav-btn {{ request()->routeIs('home') ? 'active' : '' }}">
                             <i class="fas fa-th-large"></i><span>Tableau de bord</span>
                         </a>
-                        <a href="{{ route('ads.create') }}" class="header-nav-btn header-nav-btn-primary">
+                        <a href="{{ request()->routeIs('feed.mockup', 'feed.mockup.preview') ? route('demand.create') : route('ads.create') }}" class="header-nav-btn header-nav-btn-primary">
                             <i class="fas fa-plus-circle"></i><span>Demander un service</span>
                         </a>
                         <a href="{{ route('contact.index') }}" class="header-nav-btn">
@@ -6942,12 +6942,12 @@
 
         {{-- Sidebar de navigation --}}
         @auth
-            @if(!request()->routeIs('feed') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*'))
+            @if(!request()->routeIs('feed') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*'))
                 @include('partials.sidebar')
             @endif
         @endauth
 
-        <main class="@auth @if(!request()->routeIs('feed') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*')) main-content-with-sidebar @endif @endauth">
+        <main class="@auth @if(!request()->routeIs('feed') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*')) main-content-with-sidebar @endif @endauth">
             @yield('content')
         </main>
     </div>
