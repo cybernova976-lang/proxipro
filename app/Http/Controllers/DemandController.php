@@ -14,7 +14,12 @@ use Illuminate\Validation\Rule;
 
 class DemandController extends Controller
 {
-    public function __construct(private SavedSearchService $savedSearchService) {}
+    private const PUBLICATION_TERMS_VERSION = '2026-07-16';
+
+    public function __construct(
+        private SavedSearchService $savedSearchService,
+        private GeocodingService $geocodingService,
+    ) {}
 
     /**
      * Affiche le formulaire simplifié de demande de service
@@ -59,10 +64,19 @@ class DemandController extends Controller
             'country' => 'required|string',
             'city' => 'nullable|string',
             'location' => 'nullable|string',
-            'price' => 'nullable|numeric|min:0',
+            'desired_date' => 'required|date|after_or_equal:today',
+            'time_window' => 'required|in:flexible,morning,afternoon,evening',
+            'price_type' => 'required|in:fixed,negotiable',
+            'price' => [
+                'nullable',
+                Rule::requiredIf(fn () => $request->input('price_type') === 'fixed'),
+                'numeric',
+                'min:1',
+            ],
             'urgency' => 'nullable|in:normal,urgent,tres_urgent',
             'photos' => 'nullable|array|max:2',
             'photos.*' => 'image|mimes:jpeg,png,webp|max:5120',
+            'publication_confirmed' => 'accepted',
         ]);
 
         if (! in_array($request->category, $services[$request->main_category]['subcategories'] ?? [], true)) {
@@ -84,17 +98,27 @@ class DemandController extends Controller
 
         // Géocodage
         $fullAddress = $finalLocation.', '.$request->country;
-        $geocodingService = new GeocodingService;
-        $coordinates = $geocodingService->geocode($fullAddress);
+        $coordinates = $this->geocodingService->geocode($fullAddress);
 
         $ad = new Ad;
         $ad->title = $request->title;
         $ad->description = $request->description;
         $ad->category = $request->category;
+        $ad->main_category = $request->main_category;
+        $ad->publication_domain = 'services';
+        $ad->ad_details = [
+            'desired_date' => $request->desired_date,
+            'time_window' => $request->time_window,
+            'urgency' => $request->input('urgency', 'normal'),
+        ];
         $ad->location = $finalLocation;
         $ad->city = $selectedCity;
-        $ad->price = $request->price;
+        $ad->price_type = $request->price_type;
+        $ad->price = $request->price_type === 'fixed' ? $request->price : null;
         $ad->service_type = 'demande';
+        $ad->expires_at = now()->addDays(30);
+        $ad->publication_terms_accepted_at = now();
+        $ad->publication_terms_version = self::PUBLICATION_TERMS_VERSION;
         $ad->radius_km = 50;
         $ad->user_id = Auth::id();
         $ad->country = $request->country;
@@ -151,6 +175,8 @@ class DemandController extends Controller
         if ($ad->service_type !== 'demande') {
             return redirect()->route('feed');
         }
+
+        $ad->loadCount('serviceProposals');
 
         $category = $ad->category;
         $professionals = collect();

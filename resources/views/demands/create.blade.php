@@ -35,7 +35,7 @@ body { background: #f0f2f5; }
 /* Steps */
 .demand-steps {
     display: flex; align-items: center; justify-content: center;
-    gap: 0; margin-bottom: 28px;
+    gap: 0; margin-bottom: 28px; scroll-margin-top: 110px;
 }
 .demand-step {
     display: flex; align-items: center; gap: 8px;
@@ -53,6 +53,15 @@ body { background: #f0f2f5; }
 .demand-step-label.done { color: #22c55e; }
 .demand-step-line { width: 40px; height: 2px; background: #e5e7eb; margin: 0 8px; }
 .demand-step-line.done { background: #22c55e; }
+
+.demand-draft-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    margin: -10px 0 18px; padding: 11px 14px; border: 1px solid #dbeafe;
+    border-radius: 12px; background: #f8fbff; color: #475569; font-size: .84rem;
+}
+.demand-draft-status { display: inline-flex; align-items: center; gap: 8px; }
+.demand-draft-status i { color: #3b82f6; }
+.demand-draft-reset { border: 0; background: transparent; color: #2563eb; font-weight: 700; cursor: pointer; }
 
 /* Card */
 .demand-card {
@@ -141,6 +150,27 @@ body { background: #f0f2f5; }
 .demand-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 480px) { .demand-field-row { grid-template-columns: 1fr; } }
 
+.demand-step-heading { margin-bottom: 22px; }
+.demand-step-heading small { display: block; color: #3b82f6; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }
+.demand-step-heading h2 { margin: 0 0 6px; color: #111827; font-size: 1.35rem; font-weight: 800; }
+.demand-step-heading p { margin: 0; color: #64748b; font-size: .92rem; }
+.demand-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+.demand-choice {
+    display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 2px solid #e5e7eb;
+    border-radius: 14px; background: #fff; color: #374151; cursor: pointer; text-align: left;
+}
+.demand-choice:hover { border-color: #93c5fd; background: #f8fbff; }
+.demand-choice.selected { border-color: #3b82f6; background: #eff6ff; box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
+.demand-choice i { width: 22px; color: #3b82f6; margin-top: 2px; text-align: center; }
+.demand-choice strong, .demand-choice span { display: block; }
+.demand-choice span { margin-top: 3px; color: #64748b; font-size: .82rem; line-height: 1.4; }
+.demand-confirm {
+    display: flex; align-items: flex-start; gap: 11px; padding: 14px 16px; margin-top: 16px;
+    border: 1px solid #cbd5e1; border-radius: 12px; background: #fff;
+}
+.demand-confirm input { width: 18px; height: 18px; margin-top: 2px; flex: 0 0 auto; }
+.demand-confirm label { margin: 0; color: #374151; font-size: .88rem; line-height: 1.45; cursor: pointer; }
+
 /* Urgency */
 .demand-urgency { display: flex; gap: 10px; }
 .demand-urgency-btn {
@@ -221,6 +251,18 @@ body { background: #f0f2f5; }
 .demand-back-link:hover { color: #3b82f6; }
 
 @media (max-width: 768px) {
+    .demand-container { padding: 14px 12px 56px; }
+    .demand-hero { padding: 24px 12px 20px; margin-bottom: 16px; }
+    .demand-hero-icon { width: 64px; height: 64px; margin-bottom: 14px; font-size: 1.6rem; }
+    .demand-hero h1 { font-size: 1.55rem; }
+    .demand-hero p { font-size: .94rem; }
+    .demand-card-body { padding: 24px 18px; }
+    .demand-steps { width: 100%; max-width: 340px; margin-left: auto; margin-right: auto; justify-content: stretch; }
+    .demand-step { flex: 0 0 auto; }
+    .demand-step-label { display: none; }
+    .demand-step-num { width: 32px; height: 32px; font-size: .82rem; }
+    .demand-step-line { flex: 1 1 auto; width: auto; margin: 0 5px; }
+    .demand-choice-grid { grid-template-columns: 1fr; }
     .demand-nav {
         flex-direction: column;
         gap: 12px;
@@ -279,22 +321,22 @@ body { background: #f0f2f5; }
     </div>
     @endguest
 
+    <div class="demand-draft-bar" id="demandDraftBar" hidden>
+        <span class="demand-draft-status"><i class="fas fa-cloud-check-alt"></i><span id="demandDraftStatus">Brouillon enregistré sur cet appareil</span></span>
+        <button type="button" class="demand-draft-reset" id="demandDraftReset">Recommencer</button>
+    </div>
+
     <!-- Steps indicator -->
-    <div class="demand-steps" id="demandSteps">
-        <div class="demand-step">
-            <div class="demand-step-num active" id="stepNum1">1</div>
-            <span class="demand-step-label active" id="stepLabel1">Service</span>
-        </div>
-        <div class="demand-step-line" id="stepLine1"></div>
-        <div class="demand-step">
-            <div class="demand-step-num pending" id="stepNum2">2</div>
-            <span class="demand-step-label" id="stepLabel2">Détails</span>
-        </div>
-        <div class="demand-step-line" id="stepLine2"></div>
-        <div class="demand-step">
-            <div class="demand-step-num pending" id="stepNum3">3</div>
-            <span class="demand-step-label" id="stepLabel3">Publier</span>
-        </div>
+    <div class="demand-steps" id="demandSteps" aria-label="Progression de la publication">
+        @foreach(['Service', 'Lieu & date', 'Détails', 'Budget', 'Vérifier'] as $stepLabel)
+            <div class="demand-step">
+                <div class="demand-step-num {{ $loop->first ? 'active' : 'pending' }}" id="stepNum{{ $loop->iteration }}">{{ $loop->iteration }}</div>
+                <span class="demand-step-label {{ $loop->first ? 'active' : '' }}" id="stepLabel{{ $loop->iteration }}">{{ $stepLabel }}</span>
+            </div>
+            @unless($loop->last)
+                <div class="demand-step-line" id="stepLine{{ $loop->iteration }}"></div>
+            @endunless
+        @endforeach
     </div>
 
     <form method="POST" action="{{ route('demand.store') }}" enctype="multipart/form-data" id="demandForm">
@@ -302,6 +344,7 @@ body { background: #f0f2f5; }
         <input type="hidden" name="main_category" id="h_main_category">
         <input type="hidden" name="category" id="h_category">
         <input type="hidden" name="urgency" id="h_urgency" value="normal">
+        <input type="hidden" name="price_type" id="h_price_type" value="{{ old('price_type', 'negotiable') }}">
 
         <div class="demand-card">
             <div class="demand-card-body">
@@ -319,6 +362,11 @@ body { background: #f0f2f5; }
 
                 <!-- ═══ STEP 1 : Choix du service ═══ -->
                 <div class="demand-section active" id="demandStep1">
+                    <div class="demand-step-heading">
+                        <small>Étape 1 sur 5</small>
+                        <h2>Quel service recherchez-vous ?</h2>
+                        <p>Choisissez l’activité la plus proche de votre besoin.</p>
+                    </div>
                     <div class="demand-search">
                         <i class="fas fa-search"></i>
                         <input type="text" id="demandCatSearch" placeholder="Rechercher un service (ex: plombier, électricien...)" oninput="filterDemandCategories(this.value)">
@@ -349,23 +397,17 @@ body { background: #f0f2f5; }
                     </div>
                 </div>
 
-                <!-- ═══ STEP 2 : Détails de la demande ═══ -->
+                <!-- ═══ STEP 2 : Lieu et date ═══ -->
                 <div class="demand-section" id="demandStep2">
+                    <div class="demand-step-heading">
+                        <small>Étape 2 sur 5</small>
+                        <h2>Où et quand intervenir ?</h2>
+                        <p>Ces informations servent à présenter votre demande aux prestataires disponibles.</p>
+                    </div>
                     <div class="demand-selection-badge" id="demandSelectionBadge">
                         <i class="fas fa-tag"></i>
                         <span id="demandSelectionText"></span>
                         <button type="button" onclick="goToDemandStep(1)"><i class="fas fa-pen"></i> Modifier</button>
-                    </div>
-
-                    <div class="demand-field">
-                        <label><i class="fas fa-heading me-1"></i> Titre court <span class="required">*</span></label>
-                        <input type="text" name="title" id="demandTitle" placeholder="Ex: Recherche plombier pour fuite urgente" maxlength="255" value="{{ old('title') }}">
-                        <p class="hint">Résumez votre besoin en une phrase</p>
-                    </div>
-
-                    <div class="demand-field">
-                        <label><i class="fas fa-align-left me-1"></i> Décrivez votre besoin <span class="required">*</span></label>
-                        <textarea name="description" id="demandDesc" placeholder="Décrivez précisément ce dont vous avez besoin : type de travaux, préférences, délais souhaités...">{{ old('description') }}</textarea>
                     </div>
 
                     <div class="demand-field">
@@ -388,8 +430,90 @@ body { background: #f0f2f5; }
                         <input type="text" name="location" id="demandLocation" placeholder="Ou saisissez votre ville" style="display:none; margin-top:8px;" value="{{ old('location') }}">
                     </div>
 
+                    <div class="demand-field-row">
+                        <div class="demand-field">
+                            <label for="demandDesiredDate"><i class="fas fa-calendar-day me-1"></i> Date souhaitée <span class="required">*</span></label>
+                            <input type="date" name="desired_date" id="demandDesiredDate" min="{{ now()->toDateString() }}" value="{{ old('desired_date') }}">
+                        </div>
+                        <div class="demand-field">
+                            <label for="demandTimeWindow"><i class="fas fa-clock me-1"></i> Moment de la journée <span class="required">*</span></label>
+                            <select name="time_window" id="demandTimeWindow">
+                                <option value="">-- Choisir --</option>
+                                <option value="flexible" @selected(old('time_window') === 'flexible')>Je suis flexible</option>
+                                <option value="morning" @selected(old('time_window') === 'morning')>Matin</option>
+                                <option value="afternoon" @selected(old('time_window') === 'afternoon')>Après-midi</option>
+                                <option value="evening" @selected(old('time_window') === 'evening')>Soir</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="demand-error" id="step2Error">
+                        <i class="fas fa-exclamation-circle"></i> <span></span>
+                    </div>
+                </div>
+
+                <!-- ═══ STEP 3 : Détails et photos ═══ -->
+                <div class="demand-section" id="demandStep3">
+                    <div class="demand-step-heading">
+                        <small>Étape 3 sur 5</small>
+                        <h2>Expliquez simplement votre besoin</h2>
+                        <p>Un titre clair et quelques détails suffisent. Les photos restent facultatives.</p>
+                    </div>
+
                     <div class="demand-field">
-                        <label><i class="fas fa-clock me-1"></i> Urgence</label>
+                        <label for="demandTitle"><i class="fas fa-heading me-1"></i> Titre court <span class="required">*</span></label>
+                        <input type="text" name="title" id="demandTitle" placeholder="Ex : Réparer une fuite sous l’évier" maxlength="255" value="{{ old('title') }}">
+                        <p class="hint">Résumez votre besoin en une phrase.</p>
+                    </div>
+
+                    <div class="demand-field">
+                        <label for="demandDesc"><i class="fas fa-align-left me-1"></i> Description <span class="required">*</span></label>
+                        <textarea name="description" id="demandDesc" maxlength="2000" placeholder="Précisez le problème, les dimensions utiles et le résultat attendu.">{{ old('description') }}</textarea>
+                        <p class="hint"><span id="demandDescCount">0</span>/2000 caractères</p>
+                    </div>
+
+                    <div class="demand-field">
+                        <label><i class="fas fa-camera me-1"></i> Photos <span style="color:#9ca3af; font-weight:400;">(facultatif)</span></label>
+                        <div class="demand-photo-area" role="button" tabindex="0" id="demandPhotoArea">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Ajoutez jusqu’à 2 photos pour aider le prestataire à comprendre.</p>
+                        </div>
+                        <input type="file" id="demandPhotoInput" name="photos[]" multiple accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleDemandPhotos(this)">
+                        <div class="demand-photo-previews" id="demandPhotoPreviews"></div>
+                        <p class="hint">Les photos ne sont jamais enregistrées dans le brouillon local.</p>
+                    </div>
+
+                    <div class="demand-error" id="step3Error">
+                        <i class="fas fa-exclamation-circle"></i> <span></span>
+                    </div>
+                </div>
+
+                <!-- ═══ STEP 4 : Budget et urgence ═══ -->
+                <div class="demand-section" id="demandStep4">
+                    <div class="demand-step-heading">
+                        <small>Étape 4 sur 5</small>
+                        <h2>Quel budget avez-vous prévu ?</h2>
+                        <p>Vous pouvez indiquer un budget global ou laisser les prestataires proposer leur prix.</p>
+                    </div>
+
+                    <div class="demand-choice-grid" aria-label="Type de budget">
+                        <button type="button" class="demand-choice" data-price-type="fixed" onclick="selectPriceType('fixed')">
+                            <i class="fas fa-wallet"></i>
+                            <span><strong>J’ai un budget</strong><span>Indiquer un montant global estimé.</span></span>
+                        </button>
+                        <button type="button" class="demand-choice selected" data-price-type="negotiable" onclick="selectPriceType('negotiable')">
+                            <i class="fas fa-comments-dollar"></i>
+                            <span><strong>À discuter</strong><span>Recevoir des propositions chiffrées.</span></span>
+                        </button>
+                    </div>
+
+                    <div class="demand-field" id="demandPriceField" hidden>
+                        <label for="demandPrice"><i class="fas fa-euro-sign me-1"></i> Budget global <span class="required">*</span></label>
+                        <input type="number" name="price" id="demandPrice" placeholder="Ex : 150" min="1" step="0.01" value="{{ old('price') }}">
+                    </div>
+
+                    <div class="demand-field">
+                        <label><i class="fas fa-bolt me-1"></i> Niveau de priorité</label>
                         <div class="demand-urgency">
                             <button type="button" class="demand-urgency-btn selected" data-urgency="normal" style="--urgency-color:#22c55e; --urgency-bg:#f0fdf4;" onclick="selectUrgency('normal')">
                                 <div class="urgency-icon">🕐</div>
@@ -406,34 +530,20 @@ body { background: #f0f2f5; }
                         </div>
                     </div>
 
-                    <div class="demand-field">
-                        <label><i class="fas fa-euro-sign me-1"></i> Budget estimé <span style="color:#9ca3af; font-weight:400;">(facultatif)</span></label>
-                        <input type="number" name="price" id="demandPrice" placeholder="Laissez vide si à discuter" min="0" step="0.01" value="{{ old('price') }}">
-                    </div>
-
-                    <div class="demand-field">
-                        <label><i class="fas fa-camera me-1"></i> Photos <span style="color:#9ca3af; font-weight:400;">(facultatif)</span></label>
-                        <div class="demand-photo-area" onclick="document.getElementById('demandPhotoInput').click()">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <p>Cliquez pour ajouter des photos (max 2)</p>
-                        </div>
-                        <input type="file" id="demandPhotoInput" name="photos[]" multiple accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleDemandPhotos(this)">
-                        <div class="demand-photo-previews" id="demandPhotoPreviews"></div>
-                    </div>
-
-                    <div class="demand-error" id="step2Error">
+                    <div class="demand-error" id="step4Error">
                         <i class="fas fa-exclamation-circle"></i> <span></span>
                     </div>
                 </div>
 
-                <!-- ═══ STEP 3 : Récapitulatif ═══ -->
-                <div class="demand-section" id="demandStep3">
+                <!-- ═══ STEP 5 : Récapitulatif ═══ -->
+                <div class="demand-section" id="demandStep5">
                     <div style="text-align:center; margin-bottom:20px;">
+                        <small style="display:block;color:#3b82f6;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Étape 5 sur 5</small>
                         <div style="width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#22c55e,#16a34a); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; color:#fff; font-size:1.4rem;">
                             <i class="fas fa-check-double"></i>
                         </div>
-                        <h3 style="font-size:1.15rem; font-weight:700; color:#111827; margin-bottom:4px;">Vérifiez et publiez</h3>
-                        <p style="font-size:0.85rem; color:#6b7280;">Votre demande sera envoyée aux professionnels correspondants.</p>
+                        <h3 style="font-size:1.15rem; font-weight:700; color:#111827; margin-bottom:4px;">Vérifiez avant de publier</h3>
+                        <p style="font-size:0.85rem; color:#6b7280;">Vous pourrez encore modifier votre demande après sa publication.</p>
                     </div>
 
                     <div id="demandRecap" style="background:#f8fafc; border-radius:14px; padding:18px; margin-bottom:18px; border:1px solid #e5e7eb;">
@@ -446,12 +556,21 @@ body { background: #f0f2f5; }
                             <div>
                                 <strong style="color:#1e40af; font-size:0.9rem;">Que se passe-t-il ensuite ?</strong>
                                 <ul style="margin:6px 0 0; padding-left:18px; font-size:0.82rem; color:#1e40af;">
-                                    <li>Les professionnels correspondants sont immédiatement notifiés</li>
-                                    <li>Vous verrez les profils des pros disponibles dans votre zone</li>
-                                    <li>Vous pouvez les contacter directement depuis les résultats</li>
+                                    <li>Prokejem recherche les prestataires compatibles</li>
+                                    <li>Votre demande reste visible même si aucun profil n’est trouvé immédiatement</li>
+                                    <li>Vous suivez ensuite les propositions depuis votre feed</li>
                                 </ul>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="demand-confirm">
+                        <input type="checkbox" name="publication_confirmed" id="publicationConfirmed" value="1" @checked(old('publication_confirmed'))>
+                        <label for="publicationConfirmed">Je confirme que les informations de cette demande sont exactes et j’accepte sa publication publique pendant 30 jours.</label>
+                    </div>
+
+                    <div class="demand-error" id="step5Error">
+                        <i class="fas fa-exclamation-circle"></i> <span></span>
                     </div>
                 </div>
 
@@ -490,17 +609,26 @@ body { background: #f0f2f5; }
 const categoriesData = @json($categoriesData);
 const preCategory = @json($preCategory);
 const preSubcategory = @json($preSubcategory);
+const initialCategory = @json(old('main_category', $preCategory));
+const initialSubcategory = @json(old('category', $preSubcategory));
+const validationErrorKeys = @json($errors->keys());
+const hasServerInput = @json(session()->hasOldInput());
+const demandDraftIdentity = @json(Auth::id() ?: 'guest');
+const demandDraftKey = 'prokejem-demand-draft-v2-' + demandDraftIdentity;
+const guestDemandDraftKey = 'prokejem-demand-draft-v2-guest';
+const totalDemandSteps = 5;
 
 let currentStep = 1;
 let selectedCat = null;
 let selectedSub = null;
 let demandPhotos = [];
+let draftSaveTimer = null;
 
 const citiesByCountry = @json(config('locations.cities', []));
 
 // ─── Step navigation ───
 function updateStepUI() {
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i <= totalDemandSteps; i++) {
         const num = document.getElementById('stepNum' + i);
         const label = document.getElementById('stepLabel' + i);
         num.classList.remove('active', 'done', 'pending');
@@ -520,7 +648,7 @@ function updateStepUI() {
             num.textContent = i;
         }
     }
-    for (let i = 1; i <= 2; i++) {
+    for (let i = 1; i < totalDemandSteps; i++) {
         document.getElementById('stepLine' + i).classList.toggle('done', i < currentStep);
     }
 
@@ -528,33 +656,38 @@ function updateStepUI() {
     document.getElementById('demandStep' + currentStep).classList.add('active');
 
     document.getElementById('demandBtnBack').style.visibility = currentStep > 1 ? 'visible' : 'hidden';
-    document.getElementById('demandBtnNext').style.display = currentStep < 3 ? 'inline-flex' : 'none';
-    document.getElementById('demandBtnSubmit').style.display = currentStep === 3 ? 'inline-flex' : 'none';
+    document.getElementById('demandBtnNext').style.display = currentStep < totalDemandSteps ? 'inline-flex' : 'none';
+    document.getElementById('demandBtnSubmit').style.display = currentStep === totalDemandSteps ? 'inline-flex' : 'none';
 }
 
 function goToDemandStep(step) {
-    currentStep = step;
+    currentStep = Math.max(1, Math.min(totalDemandSteps, step));
     updateStepUI();
     updateNextBtn();
+    scrollDemandFormIntoView();
 }
 
 function nextDemandStep() {
     hideErrors();
+    const validators = {
+        1: validateStep1,
+        2: validateStep2,
+        3: validateStep3,
+        4: validateStep4,
+    };
+
+    if (validators[currentStep] && !validators[currentStep]()) return;
+
     if (currentStep === 1) {
-        if (!selectedSub) {
-            showError('step1Error', 'Veuillez sélectionner un service.');
-            return;
-        }
-        currentStep = 2;
         document.getElementById('demandSelectionText').textContent = selectedCat + ' → ' + selectedSub;
-        updateStepUI();
-        updateNextBtn();
-    } else if (currentStep === 2) {
-        if (!validateStep2()) return;
-        currentStep = 3;
-        buildRecap();
-        updateStepUI();
     }
+
+    currentStep++;
+    if (currentStep === totalDemandSteps) buildRecap();
+    updateStepUI();
+    updateNextBtn();
+    scheduleDraftSave();
+    scrollDemandFormIntoView();
 }
 
 function prevDemandStep() {
@@ -562,20 +695,30 @@ function prevDemandStep() {
         currentStep--;
         updateStepUI();
         updateNextBtn();
+        scrollDemandFormIntoView();
     }
+}
+
+function scrollDemandFormIntoView() {
+    document.getElementById('demandSteps').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function updateNextBtn() {
     const btn = document.getElementById('demandBtnNext');
     if (currentStep === 1) {
         btn.disabled = !selectedSub;
-    } else if (currentStep === 2) {
-        btn.disabled = false;
-    }
+    } else btn.disabled = false;
+}
+
+function validateStep1() {
+    if (selectedSub) return true;
+    showError('step1Error', 'Veuillez sélectionner un service.');
+    return false;
 }
 
 // ─── Step 1: Categories ───
-function selectDemandCategory(catName) {
+function selectDemandCategory(catName, subcategoryToSelect = null) {
+    if (!categoriesData[catName]) return;
     selectedCat = catName;
     selectedSub = null;
 
@@ -599,9 +742,19 @@ function selectDemandCategory(catName) {
             document.getElementById('h_main_category').value = catName;
             document.getElementById('h_category').value = sub;
             updateNextBtn();
+            scheduleDraftSave();
         };
         subList.appendChild(chip);
     });
+
+    if (subcategoryToSelect && subs.includes(subcategoryToSelect)) {
+        selectedSub = subcategoryToSelect;
+        document.getElementById('h_main_category').value = catName;
+        document.getElementById('h_category').value = subcategoryToSelect;
+        Array.from(subList.children).find(chip => chip.textContent === subcategoryToSelect)?.classList.add('selected');
+    }
+
+    updateNextBtn();
 }
 
 function resetDemandCategory() {
@@ -613,6 +766,7 @@ function resetDemandCategory() {
     document.getElementById('h_main_category').value = '';
     document.getElementById('h_category').value = '';
     updateNextBtn();
+    scheduleDraftSave();
 }
 
 function filterDemandCategories(query) {
@@ -624,8 +778,8 @@ function filterDemandCategories(query) {
     });
 }
 
-// ─── Step 2: Details ───
-function updateDemandCities() {
+// ─── Step 2: Location and date ───
+function updateDemandCities(cityToSelect = null) {
     const country = document.getElementById('demandCountry').value;
     const cityEl = document.getElementById('demandCity');
     const manualEl = document.getElementById('demandLocation');
@@ -635,9 +789,21 @@ function updateDemandCities() {
     if (country && citiesByCountry[country]) {
         cityEl.disabled = false;
         citiesByCountry[country].forEach(city => {
-            cityEl.innerHTML += '<option value="' + city + '">' + city + '</option>';
+            const option = document.createElement('option');
+            option.value = city;
+            option.textContent = city;
+            cityEl.appendChild(option);
         });
-        cityEl.innerHTML += '<option value="__other__">🔤 Autre ville</option>';
+        const otherOption = document.createElement('option');
+        otherOption.value = '__other__';
+        otherOption.textContent = '🔤 Autre ville';
+        cityEl.appendChild(otherOption);
+        if (cityToSelect && Array.from(cityEl.options).some(option => option.value === cityToSelect)) {
+            cityEl.value = cityToSelect;
+        } else if (cityToSelect) {
+            cityEl.value = '__other__';
+            manualEl.style.display = 'block';
+        }
     } else {
         cityEl.disabled = true;
     }
@@ -650,6 +816,7 @@ function updateDemandCities() {
             manualEl.style.display = 'none';
             manualEl.value = '';
         }
+        scheduleDraftSave();
     };
 }
 
@@ -657,6 +824,16 @@ function selectUrgency(level) {
     document.querySelectorAll('.demand-urgency-btn').forEach(b => b.classList.remove('selected'));
     document.querySelector('[data-urgency="' + level + '"]').classList.add('selected');
     document.getElementById('h_urgency').value = level;
+    scheduleDraftSave();
+}
+
+function selectPriceType(type) {
+    document.querySelectorAll('[data-price-type]').forEach(button => {
+        button.classList.toggle('selected', button.dataset.priceType === type);
+    });
+    document.getElementById('h_price_type').value = type;
+    document.getElementById('demandPriceField').hidden = type !== 'fixed';
+    scheduleDraftSave();
 }
 
 function handleDemandPhotos(input) {
@@ -697,16 +874,17 @@ function updatePhotoInput() {
 }
 
 function validateStep2() {
-    const title = document.getElementById('demandTitle').value.trim();
-    const desc = document.getElementById('demandDesc').value.trim();
     const country = document.getElementById('demandCountry').value;
     const city = document.getElementById('demandCity').value;
     const manual = document.getElementById('demandLocation').value.trim();
+    const desiredDate = document.getElementById('demandDesiredDate').value;
+    const timeWindow = document.getElementById('demandTimeWindow').value;
 
-    if (!title) { showError('step2Error', 'Le titre est obligatoire.'); document.getElementById('demandTitle').focus(); return false; }
-    if (!desc) { showError('step2Error', 'La description est obligatoire.'); document.getElementById('demandDesc').focus(); return false; }
     if (!country) { showError('step2Error', 'Veuillez sélectionner un pays.'); return false; }
     if (!city && !manual) { showError('step2Error', 'Veuillez sélectionner une ville.'); return false; }
+    if (!desiredDate) { showError('step2Error', 'Veuillez indiquer la date souhaitée.'); return false; }
+    if (desiredDate < document.getElementById('demandDesiredDate').min) { showError('step2Error', 'La date souhaitée ne peut pas être dans le passé.'); return false; }
+    if (!timeWindow) { showError('step2Error', 'Veuillez choisir un moment de la journée.'); return false; }
 
     // Copy city to location hidden if needed
     if (city && city !== '__other__' && !manual) {
@@ -715,7 +893,25 @@ function validateStep2() {
     return true;
 }
 
-// ─── Step 3: Recap ───
+function validateStep3() {
+    const title = document.getElementById('demandTitle').value.trim();
+    const desc = document.getElementById('demandDesc').value.trim();
+    if (!title) { showError('step3Error', 'Le titre est obligatoire.'); document.getElementById('demandTitle').focus(); return false; }
+    if (!desc) { showError('step3Error', 'La description est obligatoire.'); document.getElementById('demandDesc').focus(); return false; }
+    return true;
+}
+
+function validateStep4() {
+    const priceType = document.getElementById('h_price_type').value;
+    const price = Number(document.getElementById('demandPrice').value);
+    if (priceType === 'fixed' && (!Number.isFinite(price) || price < 1)) {
+        showError('step4Error', 'Indiquez un budget supérieur à 0 €, ou choisissez « À discuter ».');
+        return false;
+    }
+    return true;
+}
+
+// ─── Step 5: Recap ───
 function buildRecap() {
     const title = document.getElementById('demandTitle').value.trim();
     const desc = document.getElementById('demandDesc').value.trim();
@@ -723,38 +919,155 @@ function buildRecap() {
     const city = document.getElementById('demandCity').value;
     const manual = document.getElementById('demandLocation').value.trim();
     const price = document.getElementById('demandPrice').value;
+    const priceType = document.getElementById('h_price_type').value;
     const urgency = document.getElementById('h_urgency').value;
+    const desiredDate = document.getElementById('demandDesiredDate').value;
+    const timeWindow = document.getElementById('demandTimeWindow').value;
 
     const urgencyLabels = { normal: '🕐 Normal', urgent: '⚡ Urgent', tres_urgent: '🚨 Très urgent' };
+    const timeLabels = { flexible: 'Flexible', morning: 'Matin', afternoon: 'Après-midi', evening: 'Soir' };
     const locationText = manual || city || '';
+    const formattedDate = desiredDate ? new Intl.DateTimeFormat('fr-FR').format(new Date(desiredDate + 'T12:00:00')) : '';
+    const safe = escapeHtml;
 
     let html = `
         <div style="display:flex; flex-direction:column; gap:12px;">
             <div style="display:flex; align-items:center; gap:10px;">
                 <i class="fas fa-tag" style="color:#6366f1; width:20px; text-align:center;"></i>
-                <div><small style="color:#9ca3af;">Service</small><br><strong style="color:#111827;">${selectedCat} → ${selectedSub}</strong></div>
+                <div><small style="color:#9ca3af;">Service</small><br><strong style="color:#111827;">${safe(selectedCat)} → ${safe(selectedSub)}</strong></div>
             </div>
             <div style="display:flex; align-items:center; gap:10px;">
                 <i class="fas fa-heading" style="color:#3b82f6; width:20px; text-align:center;"></i>
-                <div><small style="color:#9ca3af;">Titre</small><br><strong style="color:#111827;">${title}</strong></div>
+                <div><small style="color:#9ca3af;">Titre</small><br><strong style="color:#111827;">${safe(title)}</strong></div>
             </div>
             <div style="display:flex; align-items:flex-start; gap:10px;">
                 <i class="fas fa-align-left" style="color:#10b981; width:20px; text-align:center; margin-top:4px;"></i>
-                <div><small style="color:#9ca3af;">Description</small><br><span style="color:#374151; font-size:0.88rem;">${desc.length > 150 ? desc.substring(0, 150) + '...' : desc}</span></div>
+                <div><small style="color:#9ca3af;">Description</small><br><span style="color:#374151; font-size:0.88rem;">${safe(desc.length > 150 ? desc.substring(0, 150) + '…' : desc)}</span></div>
             </div>
             <div style="display:flex; align-items:center; gap:10px;">
                 <i class="fas fa-map-marker-alt" style="color:#ef4444; width:20px; text-align:center;"></i>
-                <div><small style="color:#9ca3af;">Localisation</small><br><strong style="color:#111827;">${locationText}, ${country}</strong></div>
+                <div><small style="color:#9ca3af;">Localisation</small><br><strong style="color:#111827;">${safe(locationText)}, ${safe(country)}</strong></div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <i class="fas fa-calendar-day" style="color:#0ea5e9; width:20px; text-align:center;"></i>
+                <div><small style="color:#9ca3af;">Intervention souhaitée</small><br><strong style="color:#111827;">${safe(formattedDate)} · ${safe(timeLabels[timeWindow] || '')}</strong></div>
             </div>
             <div style="display:flex; align-items:center; gap:10px;">
                 <i class="fas fa-clock" style="color:#f59e0b; width:20px; text-align:center;"></i>
                 <div><small style="color:#9ca3af;">Urgence</small><br><strong style="color:#111827;">${urgencyLabels[urgency] || '🕐 Normal'}</strong></div>
             </div>
-            ${price ? `<div style="display:flex; align-items:center; gap:10px;"><i class="fas fa-euro-sign" style="color:#22c55e; width:20px; text-align:center;"></i><div><small style="color:#9ca3af;">Budget</small><br><strong style="color:#111827;">${price} €</strong></div></div>` : ''}
+            <div style="display:flex; align-items:center; gap:10px;"><i class="fas fa-euro-sign" style="color:#22c55e; width:20px; text-align:center;"></i><div><small style="color:#9ca3af;">Budget</small><br><strong style="color:#111827;">${priceType === 'fixed' ? safe(price) + ' €' : 'À discuter'}</strong></div></div>
             ${demandPhotos.length ? `<div style="display:flex; align-items:center; gap:10px;"><i class="fas fa-camera" style="color:#8b5cf6; width:20px; text-align:center;"></i><div><small style="color:#9ca3af;">Photos</small><br><strong style="color:#111827;">${demandPhotos.length} photo(s)</strong></div></div>` : ''}
         </div>
     `;
     document.getElementById('demandRecap').innerHTML = html;
+}
+
+function escapeHtml(value) {
+    const div = document.createElement('div');
+    div.textContent = value ?? '';
+    return div.innerHTML;
+}
+
+// ─── Local draft (text fields only; never photos) ───
+function draftPayload() {
+    return {
+        version: 2,
+        savedAt: new Date().toISOString(),
+        main_category: selectedCat,
+        category: selectedSub,
+        country: document.getElementById('demandCountry').value,
+        city: document.getElementById('demandCity').value,
+        location: document.getElementById('demandLocation').value,
+        desired_date: document.getElementById('demandDesiredDate').value,
+        time_window: document.getElementById('demandTimeWindow').value,
+        title: document.getElementById('demandTitle').value,
+        description: document.getElementById('demandDesc').value,
+        price_type: document.getElementById('h_price_type').value,
+        price: document.getElementById('demandPrice').value,
+        urgency: document.getElementById('h_urgency').value,
+    };
+}
+
+function scheduleDraftSave() {
+    window.clearTimeout(draftSaveTimer);
+    draftSaveTimer = window.setTimeout(saveDemandDraft, 350);
+}
+
+function saveDemandDraft() {
+    try {
+        const payload = draftPayload();
+        const hasContent = payload.main_category || payload.title.trim() || payload.description.trim() || payload.desired_date;
+        if (!hasContent) return;
+        localStorage.setItem(demandDraftKey, JSON.stringify(payload));
+        showDraftStatus('Brouillon enregistré sur cet appareil');
+    } catch (error) {
+        // Le formulaire reste pleinement utilisable si le stockage local est indisponible.
+    }
+}
+
+function loadDemandDraft() {
+    try {
+        let raw = localStorage.getItem(demandDraftKey);
+        if (!raw && demandDraftIdentity !== 'guest') {
+            raw = localStorage.getItem(guestDemandDraftKey);
+            if (raw) {
+                localStorage.setItem(demandDraftKey, raw);
+                localStorage.removeItem(guestDemandDraftKey);
+            }
+        }
+        return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+function restoreDemandDraft(draft) {
+    if (!draft || draft.version !== 2) return false;
+    if (draft.main_category && categoriesData[draft.main_category]) {
+        selectDemandCategory(draft.main_category, draft.category);
+    }
+    document.getElementById('demandCountry').value = draft.country || '';
+    updateDemandCities(draft.city || null);
+    document.getElementById('demandLocation').value = draft.location || '';
+    if (draft.city === '__other__' || (draft.location && !draft.city)) {
+        document.getElementById('demandLocation').style.display = 'block';
+    }
+    document.getElementById('demandDesiredDate').value = draft.desired_date || '';
+    document.getElementById('demandTimeWindow').value = draft.time_window || '';
+    document.getElementById('demandTitle').value = draft.title || '';
+    document.getElementById('demandDesc').value = draft.description || '';
+    document.getElementById('demandPrice').value = draft.price || '';
+    selectPriceType(draft.price_type === 'fixed' ? 'fixed' : 'negotiable');
+    selectUrgency(['normal', 'urgent', 'tres_urgent'].includes(draft.urgency) ? draft.urgency : 'normal');
+    updateDescriptionCount();
+    showDraftStatus('Brouillon restauré · vérifiez les informations avant de publier');
+    return true;
+}
+
+function showDraftStatus(message) {
+    document.getElementById('demandDraftStatus').textContent = message;
+    document.getElementById('demandDraftBar').hidden = false;
+}
+
+function clearDemandDraft() {
+    try {
+        localStorage.removeItem(demandDraftKey);
+        localStorage.removeItem(guestDemandDraftKey);
+    } catch (error) {}
+}
+
+function updateDescriptionCount() {
+    document.getElementById('demandDescCount').textContent = document.getElementById('demandDesc').value.length;
+}
+
+function firstStepForValidationErrors() {
+    if (validationErrorKeys.some(key => ['main_category', 'category'].includes(key))) return 1;
+    if (validationErrorKeys.some(key => ['country', 'city', 'location', 'desired_date', 'time_window'].includes(key))) return 2;
+    if (validationErrorKeys.some(key => ['title', 'description', 'photos', 'photos.0', 'photos.1'].includes(key))) return 3;
+    if (validationErrorKeys.some(key => ['price_type', 'price', 'urgency'].includes(key))) return 4;
+    if (validationErrorKeys.includes('publication_confirmed')) return 5;
+    return 1;
 }
 
 // ─── Helpers ───
@@ -769,30 +1082,57 @@ function hideErrors() {
 
 // ─── Init ───
 document.addEventListener('DOMContentLoaded', function() {
-    updateStepUI();
-
-    // Auto-select country from user profile
     const countryEl = document.getElementById('demandCountry');
-    if (countryEl.value) updateDemandCities();
+    const oldCity = @json(old('city'));
+    const storedDraft = !hasServerInput ? loadDemandDraft() : null;
+    const draft = storedDraft && (!preCategory || storedDraft.main_category === preCategory)
+        ? storedDraft
+        : null;
 
-    // Pre-select from URL params
-    if (preCategory && categoriesData[preCategory]) {
-        selectDemandCategory(preCategory);
-        if (preSubcategory) {
-            const subs = categoriesData[preCategory]?.subcategories || [];
-            if (subs.includes(preSubcategory)) {
-                selectedSub = preSubcategory;
-                document.getElementById('h_main_category').value = preCategory;
-                document.getElementById('h_category').value = preSubcategory;
-                setTimeout(() => {
-                    document.querySelectorAll('.demand-sub-chip').forEach(c => {
-                        if (c.textContent === preSubcategory) c.classList.add('selected');
-                    });
-                    updateNextBtn();
-                }, 50);
-            }
+    if (draft) {
+        restoreDemandDraft(draft);
+    } else {
+        if (countryEl.value) updateDemandCities(oldCity);
+        if (initialCategory && categoriesData[initialCategory]) {
+            selectDemandCategory(initialCategory, initialSubcategory);
         }
+        selectPriceType(@json(old('price_type', 'negotiable')));
+        selectUrgency(@json(old('urgency', 'normal')));
     }
+
+    currentStep = validationErrorKeys.length ? firstStepForValidationErrors() : 1;
+    updateStepUI();
+    updateNextBtn();
+    updateDescriptionCount();
+
+    const form = document.getElementById('demandForm');
+    form.addEventListener('input', event => {
+        if (event.target.id === 'demandDesc') updateDescriptionCount();
+        scheduleDraftSave();
+    });
+    form.addEventListener('change', scheduleDraftSave);
+    form.addEventListener('submit', event => {
+        if (!document.getElementById('publicationConfirmed').checked) {
+            event.preventDefault();
+            currentStep = totalDemandSteps;
+            updateStepUI();
+            showError('step5Error', 'Confirmez les informations avant de publier.');
+        }
+    });
+
+    document.getElementById('demandDraftReset').addEventListener('click', () => {
+        clearDemandDraft();
+        window.location.reload();
+    });
+
+    const photoArea = document.getElementById('demandPhotoArea');
+    photoArea.addEventListener('click', () => document.getElementById('demandPhotoInput').click());
+    photoArea.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            document.getElementById('demandPhotoInput').click();
+        }
+    });
 });
 </script>
 @endsection

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Feed;
 
 use App\Models\Ad;
+use App\Models\ServiceProposal;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
@@ -18,7 +19,10 @@ class NewFeedMockupFeatureTest extends TestCase
 
         $viewer = User::factory()->create([
             'user_type' => 'professionnel',
+            'account_type' => 'professionnel',
             'is_service_provider' => true,
+            'pro_service_categories' => ['Plombier'],
+            'pro_onboarding_completed' => true,
         ]);
 
         $requester = User::factory()->create([
@@ -39,6 +43,10 @@ class NewFeedMockupFeatureTest extends TestCase
             'is_urgent' => true,
             'urgent_until' => now()->addDay(),
         ]);
+        $ad->forceFill([
+            'created_at' => now()->subHours(4),
+            'updated_at' => now()->subHours(4),
+        ])->save();
 
         $viewer->savedAds()->attach($ad->id);
 
@@ -56,6 +64,11 @@ class NewFeedMockupFeatureTest extends TestCase
             ->assertSee('Vue client')
             ->assertSee('Vue prestataire')
             ->assertSee('Demande test prioritaire')
+            ->assertSee('Votre prochaine action')
+            ->assertSee('Encore sans réponse')
+            ->assertSee('data-priority="1"', false)
+            ->assertSee('mf-mobile-provider-action', false)
+            ->assertDontSee('3x plus')
             ->assertSee('data-mode-panel="client"', false)
             ->assertSee('data-mode-panel="provider"', false)
             ->assertSee('id="mockOpportunitySearch"', false)
@@ -84,6 +97,47 @@ class NewFeedMockupFeatureTest extends TestCase
             ->assertSee('Découvrez la nouvelle expérience Prokejem')
             ->assertSee('Découvrir le nouveau feed')
             ->assertSee(route('feed.mockup'), false);
+    }
+
+    public function test_client_view_starts_with_the_active_request_and_its_real_proposal_count(): void
+    {
+        $client = User::factory()->create([
+            'user_type' => 'particulier',
+            'account_type' => 'particulier',
+            'is_service_provider' => false,
+        ]);
+        $provider = User::factory()->create([
+            'user_type' => 'professionnel',
+            'account_type' => 'professionnel',
+            'is_service_provider' => true,
+        ]);
+
+        $requestAd = Ad::create([
+            'title' => 'Réparer la porte du garage',
+            'description' => 'La porte reste bloquée et doit être diagnostiquée.',
+            'category' => 'Bricolage',
+            'location' => 'Mamoudzou',
+            'service_type' => 'demande',
+            'status' => 'active',
+            'visibility' => 'public',
+            'user_id' => $client->id,
+        ]);
+
+        ServiceProposal::create([
+            'ad_id' => $requestAd->id,
+            'provider_id' => $provider->id,
+            'amount' => 95,
+            'message' => 'Je peux intervenir demain matin.',
+        ]);
+
+        $this->withoutMiddleware()
+            ->actingAs($client)
+            ->get(route('feed.mockup', ['mode' => 'client']))
+            ->assertOk()
+            ->assertSee('Votre demande en cours')
+            ->assertSee('Réparer la porte du garage')
+            ->assertSee('1 proposition reçue')
+            ->assertSee('Suivre ma demande');
     }
 
     public function test_new_feed_favorite_action_persists_and_removes_the_saved_ad(): void

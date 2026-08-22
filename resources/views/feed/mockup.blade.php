@@ -8,18 +8,41 @@
 
 @php
     $mockUser = Auth::user();
-    $mockRequests = collect($homePersonalRequests ?? [])->take(12)->values();
+    $mockPriorityRequests = collect($priorityProviderRequests ?? [])->values();
+    $mockPriorityRequestIds = $mockPriorityRequests->pluck('id')->map(fn ($id) => (int) $id);
+    $mockRequests = $mockPriorityRequests
+        ->concat(collect($homePersonalRequests ?? [])->reject(fn ($ad) => $mockPriorityRequestIds->contains((int) $ad->id)))
+        ->take(12)
+        ->values();
     $mockOffers = collect($homeProfessionalOffers ?? [])->take(6)->values();
     $mockProviders = collect($homeProfessionalProfiles ?? [])->take(8)->values();
-    $mockCategories = collect($missionCategories ?? [])->take(8);
+    $mockCategories = collect($missionCategories ?? [])->take(6);
     $mockIsProvider = $mockUser && ($mockUser->isProfessionnel() || $mockUser->isServiceProvider());
     $mockInitialMode = request('mode');
     if (!in_array($mockInitialMode, ['client', 'provider'], true)) {
         $mockInitialMode = $mockIsProvider ? 'provider' : 'client';
     }
     $mockFirstName = trim(explode(' ', trim($mockUser->name ?? 'Utilisateur'))[0] ?? 'Utilisateur');
-    $mockMyRequest = $mockRequests->firstWhere('user_id', $mockUser?->id);
+    $mockMyRequest = $activeClientRequest ?? null;
     $mockProfileCompletion = max(0, min(100, (int) ($proProfileCompletion ?? 0)));
+    $mockPrimarySuggestion = collect($proSuggestions ?? [])->first();
+    if (!$mockPrimarySuggestion && $mockProfileCompletion < 100) {
+        $mockPrimarySuggestion = [
+            'id' => 'complete_profile',
+            'icon' => 'fas fa-user-pen',
+            'title' => 'Complétez votre profil',
+            'description' => 'Ajoutez les informations qui manquent pour améliorer votre visibilité auprès des clients.',
+            'action_label' => 'Continuer',
+        ];
+    }
+    $mockRemainingSuggestions = max(0, count($proSuggestions ?? []) - 1);
+    $mockSuggestionUrl = $mockPrimarySuggestion ? match ($mockPrimarySuggestion['id']) {
+        'complete_onboarding', 'add_categories', 'add_location' => route('pro.onboarding'),
+        'verify_profile' => route('verification.index'),
+        'get_subscription' => route('pro.subscription'),
+        'create_ad' => route('ads.create'),
+        default => route('pro.profile.edit'),
+    } : route('pro.profile.edit');
     $mockSavedAdIds = collect($savedHomeAdIds ?? [])->map(fn ($id) => (int) $id);
     $mockIsLocalPreview = (bool) request()->attributes->get('mockup_local_preview');
     $mockFeedHomeRoute = request()->routeIs('feed.mockup.preview')
@@ -90,14 +113,33 @@
             <section class="mf-mode-panel" data-mode-panel="client">
                 <div class="mf-client-hero">
                     <div class="mf-client-hero-copy">
-                        <span>Votre besoin, notre priorité</span>
-                        <h2>De quel service avez-vous besoin ?</h2>
-                        <p>Décrivez votre demande, choisissez un créneau, puis comparez les prestataires disponibles.</p>
+                        @if($mockMyRequest)
+                            <span>Votre demande en cours</span>
+                            <h2>{{ Str::limit($mockMyRequest->title, 72) }}</h2>
+                            <p>
+                                @if((int) ($mockMyRequest->service_proposals_count ?? 0) > 0)
+                                    {{ (int) $mockMyRequest->service_proposals_count }} proposition{{ (int) $mockMyRequest->service_proposals_count > 1 ? 's' : '' }} reçue{{ (int) $mockMyRequest->service_proposals_count > 1 ? 's' : '' }}. Comparez-les avant de choisir.
+                                @else
+                                    Votre demande est publiée. Prokejem recherche maintenant des prestataires compatibles.
+                                @endif
+                            </p>
+                        @else
+                            <span>Votre besoin, notre priorité</span>
+                            <h2>De quel service avez-vous besoin ?</h2>
+                            <p>Décrivez votre demande, choisissez un créneau, puis comparez les prestataires disponibles.</p>
+                        @endif
                     </div>
-                    <button class="mf-request-composer" type="button" data-open-request>
-                        <span><i class="fas fa-search"></i> Ex. Réparer une fuite d'eau</span>
-                        <strong>Commencer <i class="fas fa-arrow-right"></i></strong>
-                    </button>
+                    @if($mockMyRequest)
+                        <div class="mf-client-status-actions">
+                            <a href="{{ route('ads.show', $mockMyRequest) }}">Suivre ma demande <i class="fas fa-arrow-right"></i></a>
+                            <button type="button" data-open-request><i class="fas fa-plus"></i> Publier un autre besoin</button>
+                        </div>
+                    @else
+                        <button class="mf-request-composer" type="button" data-open-request>
+                            <span><i class="fas fa-search"></i> Ex. Réparer une fuite d'eau</span>
+                            <strong>Commencer <i class="fas fa-arrow-right"></i></strong>
+                        </button>
+                    @endif
                     <div class="mf-trust-strip" aria-label="Garanties Prokejem">
                         <span><i class="fas fa-id-card"></i> Profils vérifiés</span>
                         <span><i class="fas fa-lock"></i> Paiement sécurisé</span>
@@ -180,10 +222,16 @@
 
             <section class="mf-mode-panel" data-mode-panel="provider" hidden>
                 <div class="mf-provider-summary">
-                    <div><span>Opportunités disponibles</span><strong>{{ $mockRequests->count() }}</strong><small>dans la sélection actuelle</small></div>
+                    <div><span>Demandes prioritaires</span><strong>{{ $mockPriorityRequests->count() }}</strong><small>encore sans proposition</small></div>
                     <div><span>Profil complété</span><strong>{{ $mockProfileCompletion }}%</strong><small>améliorez votre visibilité</small></div>
                     <div><span>Zone active</span><strong>{{ (int) ($userRadius ?? 50) }} km</strong><small>{{ $geoCity ?: 'Selon votre profil' }}</small></div>
                 </div>
+
+                <section class="mf-mobile-provider-action" aria-label="Votre prochaine action de profil">
+                    <i class="{{ $mockPrimarySuggestion['icon'] ?? 'fas fa-check' }}"></i>
+                    <div><span>Votre prochaine action</span><strong>{{ $mockPrimarySuggestion['title'] ?? 'Votre profil est prêt' }}</strong><small>{{ $mockPrimarySuggestion['description'] ?? 'Gardez vos informations à jour pour rester visible.' }}</small></div>
+                    <a href="{{ $mockSuggestionUrl }}" aria-label="{{ $mockPrimarySuggestion['action_label'] ?? 'Voir mon profil' }}"><i class="fas fa-arrow-right"></i></a>
+                </section>
 
                 <div class="mf-provider-hero">
                     <div><span>Flux d'opportunités</span><h2>Trouvez votre prochaine mission</h2><p>Les demandes urgentes, récentes et proches remontent en premier.</p></div>
@@ -199,6 +247,7 @@
                         <div><span>Recommandées pour vous</span><h2 id="mockOpportunitiesTitle">Demandes à proximité</h2></div>
                         <div class="mf-filter-pills" role="group" aria-label="Filtres rapides">
                             <button type="button" class="is-active" data-opportunity-filter="all">Toutes</button>
+                            <button type="button" data-opportunity-filter="priority">Prioritaires</button>
                             <button type="button" data-opportunity-filter="urgent">Urgentes</button>
                             <button type="button" data-opportunity-filter="recent">Récentes</button>
                         </div>
@@ -209,14 +258,16 @@
                             @php
                                 $mockRequestUrgent = $requestAd->is_urgent && (!$requestAd->urgent_until || $requestAd->urgent_until > now());
                                 $mockRequestRecent = $requestAd->created_at?->greaterThan(now()->subDays(7)) ?? false;
+                                $mockRequestPriority = $mockPriorityRequestIds->contains((int) $requestAd->id);
                                 $mockRequestAuthor = $requestAd->user;
                                 $mockRequestSearch = Str::lower(implode(' ', [$requestAd->title, $requestAd->description, $requestAd->category, $requestAd->location]));
                                 $mockRequestSaved = $mockSavedAdIds->contains((int) $requestAd->id);
                             @endphp
-                            <article class="mf-opportunity-card" data-opportunity-card data-urgent="{{ $mockRequestUrgent ? '1' : '0' }}" data-recent="{{ $mockRequestRecent ? '1' : '0' }}" data-category="{{ Str::lower($requestAd->category ?? '') }}" data-search="{{ $mockRequestSearch }}">
+                            <article class="mf-opportunity-card{{ $mockRequestPriority ? ' is-priority' : '' }}" data-opportunity-card data-priority="{{ $mockRequestPriority ? '1' : '0' }}" data-urgent="{{ $mockRequestUrgent ? '1' : '0' }}" data-recent="{{ $mockRequestRecent ? '1' : '0' }}" data-category="{{ Str::lower($requestAd->category ?? '') }}" data-search="{{ $mockRequestSearch }}">
                                 <div class="mf-opportunity-main">
                                     <div class="mf-opportunity-meta">
                                         <span class="mf-category-label">{{ Str::limit($requestAd->category ?? 'Service', 32) }}</span>
+                                        @if($mockRequestPriority)<span class="mf-priority-label"><i class="fas fa-hand-holding-heart"></i> Encore sans réponse</span>@endif
                                         @if($mockRequestUrgent)<span class="mf-urgent-label"><i class="fas fa-bolt"></i> Urgent</span>@endif
                                         <span>{{ $requestAd->created_at?->diffForHumans() }}</span>
                                     </div>
@@ -277,10 +328,12 @@
 
             <div data-context-panel="provider" hidden>
                 <section class="mf-context-card mf-profile-progress">
-                    <div class="mf-context-title"><i class="fas fa-magic"></i><div><h2>Votre visibilité</h2><p>Profil complété à {{ $mockProfileCompletion }}%</p></div></div>
+                    <span class="mf-context-kicker">Votre prochaine action</span>
+                    <div class="mf-context-title"><i class="{{ $mockPrimarySuggestion['icon'] ?? 'fas fa-check' }}"></i><div><h2>{{ $mockPrimarySuggestion['title'] ?? 'Votre profil est prêt' }}</h2><p>Profil complété à {{ $mockProfileCompletion }}%</p></div></div>
                     <div class="mf-progress"><span style="width: {{ $mockProfileCompletion }}%"></span></div>
-                    <ul><li class="is-done"><i class="fas fa-check"></i> Informations principales</li><li><i class="fas fa-camera"></i> Ajouter des réalisations</li><li><i class="fas fa-calendar-check"></i> Renseigner vos disponibilités</li></ul>
-                    <a href="{{ route('profile.edit') }}">Améliorer mon profil</a>
+                    <p>{{ $mockPrimarySuggestion['description'] ?? 'Vos informations essentielles sont complètes. Gardez-les à jour pour rester visible.' }}</p>
+                    <a href="{{ $mockSuggestionUrl }}">{{ $mockPrimarySuggestion['action_label'] ?? 'Voir mon profil' }} <i class="fas fa-arrow-right"></i></a>
+                    @if($mockRemainingSuggestions > 0)<small class="mf-remaining-actions">{{ $mockRemainingSuggestions }} autre{{ $mockRemainingSuggestions > 1 ? 's' : '' }} étape{{ $mockRemainingSuggestions > 1 ? 's' : '' }} disponible{{ $mockRemainingSuggestions > 1 ? 's' : '' }} dans votre profil.</small>@endif
                 </section>
                 <section class="mf-context-card">
                     <span class="mf-context-kicker">Raccourcis</span>
@@ -375,7 +428,10 @@
         cards.forEach((card) => {
             const matchesQuery = !query || (card.dataset.search || '').includes(query);
             const matchesCategory = !categoryValue || (card.dataset.category || '').includes(categoryValue);
-            const matchesQuick = quickFilter === 'all' || (quickFilter === 'urgent' && card.dataset.urgent === '1') || (quickFilter === 'recent' && card.dataset.recent === '1');
+            const matchesQuick = quickFilter === 'all'
+                || (quickFilter === 'priority' && card.dataset.priority === '1')
+                || (quickFilter === 'urgent' && card.dataset.urgent === '1')
+                || (quickFilter === 'recent' && card.dataset.recent === '1');
             card.hidden = !(matchesQuery && matchesCategory && matchesQuick);
             if (!card.hidden) visible += 1;
         });

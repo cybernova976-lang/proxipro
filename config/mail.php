@@ -3,8 +3,23 @@
 $applicationName = config('app.name', 'Prokejem');
 $legacyApplicationName = 'proxi'.'pro';
 $previousBrandName = 'luna'.'mars';
+$fromAddress = trim((string) env('MAIL_FROM_ADDRESS', 'info@prokejem.fr'));
+$replyToAddress = trim((string) env('MAIL_REPLY_TO_ADDRESS', 'contact@prokejem.fr'));
+$adminEmail = trim((string) env('MAIL_ADMIN_ADDRESS', 'contact@prokejem.fr'));
 $fromName = trim((string) env('MAIL_FROM_NAME', $applicationName));
 $replyToName = trim((string) env('MAIL_REPLY_TO_NAME', $fromName));
+
+if ($fromAddress === '') {
+    $fromAddress = 'info@prokejem.fr';
+}
+
+if ($replyToAddress === '') {
+    $replyToAddress = 'contact@prokejem.fr';
+}
+
+if ($adminEmail === '') {
+    $adminEmail = 'contact@prokejem.fr';
+}
 
 if ($fromName === '' || in_array(strtolower($fromName), ['example', 'laravel', $legacyApplicationName, $previousBrandName], true)) {
     $fromName = $applicationName;
@@ -151,20 +166,20 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
+        'address' => $fromAddress,
         'name' => $fromName,
     ],
 
     'reply_to' => [
-        'address' => env('MAIL_REPLY_TO_ADDRESS', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
+        'address' => $replyToAddress,
         'name' => $replyToName,
     ],
 
     'contact_from' => [
-        'address' => env('CONTACT_MAIL_FROM_ADDRESS', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
+        'address' => env('CONTACT_MAIL_FROM_ADDRESS', $fromAddress),
         'name' => env('CONTACT_MAIL_FROM_NAME', $fromName),
     ],
 
-    'admin_email' => env('MAIL_ADMIN_ADDRESS', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
+    'admin_email' => $adminEmail,
 
 ];

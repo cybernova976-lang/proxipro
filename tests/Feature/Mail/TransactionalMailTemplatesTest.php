@@ -8,6 +8,7 @@ use App\Models\Ad;
 use App\Models\User;
 use App\Notifications\NewAdMatchingNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class TransactionalMailTemplatesTest extends TestCase
@@ -36,6 +37,27 @@ class TransactionalMailTemplatesTest extends TestCase
         $this->assertStringContainsString('Sophie Martin', $html);
         $this->assertStringContainsString(config('app.name', 'Prokejem'), $html);
         $this->assertStringContainsString((string) config('mail.reply_to.address', config('mail.admin_email', config('mail.from.address'))), $html);
+    }
+
+    public function test_transactional_mail_uses_verified_sender_and_support_reply_to(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Nadia Dupont',
+            'email' => 'nadia@example.test',
+        ]);
+
+        $mailer = Mail::mailer('array');
+        $mailer->to('recipient@example.test')->send(new WelcomeMail($user));
+
+        $message = $mailer->getSymfonyTransport()
+            ->messages()
+            ->last()
+            ->getOriginalMessage();
+
+        $this->assertSame('info@prokejem.fr', $message->getFrom()[0]->getAddress());
+        $this->assertSame('Prokejem', $message->getFrom()[0]->getName());
+        $this->assertSame('contact@prokejem.fr', $message->getReplyTo()[0]->getAddress());
+        $this->assertSame('Prokejem', $message->getReplyTo()[0]->getName());
     }
 
     public function test_new_ad_matching_notification_uses_custom_template(): void

@@ -2,11 +2,14 @@
 
 namespace Tests\Feature\Analytics;
 
+use App\Models\Ad;
+use App\Models\ServiceProposal;
 use App\Models\UsageDailyMetric;
 use App\Models\User;
 use App\Services\UsageAnalytics;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -101,6 +104,70 @@ class UsageAnalyticsFeatureTest extends TestCase
         $this->actingAs($regularUser)
             ->get(route('admin.usage'))
             ->assertForbidden();
+    }
+
+    public function test_admin_dashboard_measures_the_demand_funnel_and_first_proposal_delay(): void
+    {
+        DB::table('usage_daily_metrics')->insert([
+            'metric_date' => today()->toDateString(),
+            'event_name' => 'page_view',
+            'route_name' => 'demand.create',
+            'device_type' => 'desktop',
+            'app_mode' => 'browser',
+            'count' => 4,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->assertDatabaseHas('usage_daily_metrics', [
+            'metric_date' => today()->toDateString(),
+            'event_name' => 'page_view',
+            'route_name' => 'demand.create',
+            'count' => 4,
+        ]);
+
+        $client = User::factory()->create();
+        $provider = User::factory()->create([
+            'user_type' => 'professionnel',
+            'is_service_provider' => true,
+        ]);
+        $publishedAt = now()->subHours(2)->startOfMinute();
+        $ad = Ad::create([
+            'title' => 'Demande avec première proposition mesurée',
+            'description' => 'Une demande utilisée pour vérifier les indicateurs du tunnel.',
+            'category' => 'Plombier',
+            'location' => 'Mamoudzou',
+            'service_type' => 'demande',
+            'status' => 'active',
+            'user_id' => $client->id,
+        ]);
+        $ad->forceFill(['created_at' => $publishedAt, 'updated_at' => $publishedAt])->saveQuietly();
+
+        $proposal = ServiceProposal::create([
+            'ad_id' => $ad->id,
+            'provider_id' => $provider->id,
+            'amount' => 90,
+            'message' => 'Je suis disponible et peux intervenir rapidement pour cette mission.',
+            'status' => ServiceProposal::STATUS_PENDING,
+        ]);
+        $firstProposalAt = $publishedAt->copy()->addMinutes(42);
+        $proposal->forceFill(['created_at' => $firstProposalAt, 'updated_at' => $firstProposalAt])->saveQuietly();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)
+            ->get(route('admin.usage', ['period' => 7]));
+
+        $response->assertOk()
+            ->assertSee('Tunnel de publication des demandes');
+
+        $summary = $response->viewData('summary');
+        $this->assertSame(4, $summary['demand_starts']);
+        $this->assertSame(1, $summary['demand_publications']);
+        $this->assertEquals(25, $summary['demand_completion_rate']);
+        $this->assertSame(1, $summary['demands_with_proposal']);
+        $this->assertEquals(100, $summary['demand_proposal_rate']);
+        $this->assertSame(42, $summary['median_first_proposal_minutes']);
+        $response->assertSee('42 min');
     }
 
     public function test_expired_aggregates_are_pruned_after_twenty_five_months(): void

@@ -4,6 +4,10 @@
 {{-- ============================================== --}}
 
 @if(Auth::check() && (Auth::user()->isProfessionnel() || Auth::user()->isServiceProvider()) && !empty($proSuggestions ?? []))
+@php
+    $primaryProSuggestion = $proSuggestions[0];
+    $remainingProSuggestions = array_slice($proSuggestions, 1);
+@endphp
 <style>
 /* ============================================
    PRO SUGGESTIONS BANNER
@@ -72,6 +76,21 @@
     flex-direction: column;
     gap: 8px;
 }
+.pro-suggest-more {
+    margin-top: 10px;
+    border-top: 1px solid #eef2f7;
+    padding-top: 9px;
+}
+.pro-suggest-more summary {
+    color: #4f46e5;
+    font-size: .72rem;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    list-style: none;
+}
+.pro-suggest-more summary::-webkit-details-marker { display: none; }
+.pro-suggest-more[open] summary { margin-bottom: 9px; }
 .pro-suggest-item {
     display: flex;
     align-items: center;
@@ -162,7 +181,7 @@
     <div class="pro-suggest-header">
         <div class="pro-suggest-title">
             <i class="fas fa-lightbulb"></i>
-            Optimisez votre profil
+            Votre prochaine action
         </div>
         <div class="pro-suggest-progress">
             <div class="pro-suggest-progress-bar">
@@ -178,7 +197,27 @@
     </div>
 
     <div class="pro-suggest-list">
-        @foreach(array_slice($proSuggestions, 0, 3) as $suggestion)
+        @php $suggestion = $primaryProSuggestion; @endphp
+        <div class="pro-suggest-item">
+            <div class="pro-suggest-icon" style="background: {{ $suggestion['color'] }}15; color: {{ $suggestion['color'] }};">
+                <i class="{{ $suggestion['icon'] }}"></i>
+            </div>
+            <div class="pro-suggest-info">
+                <strong>{{ $suggestion['title'] }}</strong>
+                <span>{{ $suggestion['description'] }}</span>
+            </div>
+            <button class="pro-suggest-action" style="background: {{ $suggestion['color'] }};"
+                onclick="{{ $suggestion['action'] }}">
+                {{ $suggestion['action_label'] }}
+            </button>
+        </div>
+    </div>
+
+    @if(count($remainingProSuggestions) > 0)
+    <details class="pro-suggest-more">
+        <summary><i class="fas fa-chevron-down me-1"></i> Voir les {{ count($remainingProSuggestions) }} autres étapes</summary>
+        <div class="pro-suggest-list">
+        @foreach($remainingProSuggestions as $suggestion)
         <div class="pro-suggest-item">
             <div class="pro-suggest-icon" style="background: {{ $suggestion['color'] }}15; color: {{ $suggestion['color'] }};">
                 <i class="{{ $suggestion['icon'] }}"></i>
@@ -193,32 +232,8 @@
             </button>
         </div>
         @endforeach
-    </div>
-
-    @if(count($proSuggestions) > 3)
-    <div style="text-align: center; margin-top: 10px;">
-        <button onclick="document.querySelectorAll('.pro-suggest-extra').forEach(e => e.style.display = ''); this.style.display = 'none';"
-            style="background: none; border: none; color: #6366f1; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
-            <i class="fas fa-chevron-down me-1"></i> Voir {{ count($proSuggestions) - 3 }} autre(s) suggestion(s)
-        </button>
-    </div>
-    <div class="pro-suggest-list" style="margin-top: 8px;">
-        @foreach(array_slice($proSuggestions, 3) as $suggestion)
-        <div class="pro-suggest-item pro-suggest-extra" style="display: none;">
-            <div class="pro-suggest-icon" style="background: {{ $suggestion['color'] }}15; color: {{ $suggestion['color'] }};">
-                <i class="{{ $suggestion['icon'] }}"></i>
-            </div>
-            <div class="pro-suggest-info">
-                <strong>{{ $suggestion['title'] }}</strong>
-                <span>{{ $suggestion['description'] }}</span>
-            </div>
-            <button class="pro-suggest-action" style="background: {{ $suggestion['color'] }};"
-                onclick="{{ $suggestion['action'] }}">
-                {{ $suggestion['action_label'] }}
-            </button>
         </div>
-        @endforeach
-    </div>
+    </details>
     @endif
 </div>
 @endif

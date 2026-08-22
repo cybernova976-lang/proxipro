@@ -61,6 +61,22 @@ body { background: #f0f2f5; }
 }
 .matching-success h3 { font-size: 1rem; font-weight: 700; color: #166534; margin-bottom: 4px; }
 .matching-success p { font-size: 0.85rem; color: #15803d; margin: 0; }
+.matching-success.is-searching { background: linear-gradient(135deg, #eff6ff, #eef2ff); border-color: #bfdbfe; }
+.matching-success.is-searching .matching-success-icon { background: linear-gradient(135deg, #3b82f6, #6366f1); }
+.matching-success.is-searching h3 { color: #1e3a8a; }
+.matching-success.is-searching p { color: #1d4ed8; }
+.matching-progress {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
+    margin-bottom: 24px; padding: 14px; border-radius: 16px; background: #fff;
+    box-shadow: 0 2px 12px rgba(15,23,42,.05);
+}
+.matching-progress-step { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; color: #64748b; font-size: .8rem; }
+.matching-progress-step i { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: #e2e8f0; color: #64748b; flex: 0 0 auto; }
+.matching-progress-step strong { display: block; color: #334155; font-size: .86rem; }
+.matching-progress-step.done { background: #f0fdf4; }
+.matching-progress-step.done i { background: #22c55e; color: #fff; }
+.matching-progress-step.active { background: #eff6ff; }
+.matching-progress-step.active i { background: #3b82f6; color: #fff; }
 
 /* Results header */
 .matching-results-header {
@@ -168,6 +184,17 @@ body { background: #f0f2f5; }
     display: inline-flex; align-items: center; gap: 8px; font-size: 0.92rem;
 }
 .matching-empty-btn:hover { color: #fff; text-decoration: none; transform: translateY(-1px); }
+.matching-solutions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 22px; text-align: left; }
+.matching-solution {
+    display: flex; flex-direction: column; gap: 8px; min-height: 145px; padding: 16px;
+    border: 1px solid #e2e8f0; border-radius: 14px; background: #f8fafc; color: #334155;
+    text-decoration: none; transition: all .2s; font: inherit; cursor: pointer;
+}
+.matching-solution:hover { border-color: #93c5fd; background: #eff6ff; color: #1e40af; text-decoration: none; transform: translateY(-2px); }
+.matching-solution i { color: #3b82f6; font-size: 1.2rem; }
+.matching-solution strong { font-size: .9rem; }
+.matching-solution span { color: #64748b; font-size: .79rem; line-height: 1.4; }
+.matching-copy-feedback { min-height: 20px; margin-top: 10px; color: #166534; font-size: .82rem; font-weight: 700; }
 
 /* Additional section */
 .matching-additional {
@@ -195,20 +222,54 @@ body { background: #f0f2f5; }
     background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;
 }
 .matching-action-boost:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245,158,11,0.3); color: #fff; text-decoration: none; }
+@media (max-width: 700px) {
+    .matching-progress, .matching-solutions { grid-template-columns: 1fr; }
+    .matching-progress-step { padding: 8px; }
+    .matching-solution { min-height: 0; }
+    .matching-demand-header { align-items: flex-start; }
+}
 </style>
 @endpush
 
 @section('content')
 <div class="matching-container">
+    @php
+        $exactMatchCount = $professionals->count();
+        $alternativeMatchCount = $additionalPros->count();
+        $totalMatchCount = $exactMatchCount + $alternativeMatchCount;
+        $demandDetails = is_array($ad->ad_details) ? $ad->ad_details : [];
+        $timeWindowLabels = ['flexible' => 'Flexible', 'morning' => 'Matin', 'afternoon' => 'Après-midi', 'evening' => 'Soir'];
+    @endphp
 
     <!-- Success banner -->
-    <div class="matching-success">
+    <div class="matching-success {{ $totalMatchCount === 0 ? 'is-searching' : '' }}">
         <div class="matching-success-icon">
-            <i class="fas fa-check"></i>
+            <i class="fas fa-{{ $totalMatchCount > 0 ? 'check' : 'search' }}"></i>
         </div>
         <div>
             <h3>Votre demande a été publiée avec succès !</h3>
-            <p>Les professionnels correspondants ont été notifiés. Voici ceux qui correspondent à votre besoin.</p>
+            @if($exactMatchCount > 0)
+                <p>{{ $exactMatchCount }} prestataire{{ $exactMatchCount > 1 ? 's' : '' }} compatible{{ $exactMatchCount > 1 ? 's' : '' }} identifié{{ $exactMatchCount > 1 ? 's' : '' }}. Vous pouvez consulter les profils pendant que votre demande reste active.</p>
+            @elseif($alternativeMatchCount > 0)
+                <p>Aucun profil ne correspond exactement pour l’instant, mais {{ $alternativeMatchCount }} prestataire{{ $alternativeMatchCount > 1 ? 's' : '' }} proche{{ $alternativeMatchCount > 1 ? 's' : '' }} de votre besoin peut être consulté.</p>
+            @else
+                <p>Aucun prestataire compatible n’est disponible immédiatement. Votre demande reste active et visible : vous pouvez maintenant l’améliorer ou la partager.</p>
+            @endif
+        </div>
+    </div>
+
+    <div class="matching-progress" aria-label="Suivi de votre demande">
+        <div class="matching-progress-step done">
+            <i class="fas fa-check"></i>
+            <div><strong>Demande publiée</strong><span>Visible pendant 30 jours</span></div>
+        </div>
+        <div class="matching-progress-step {{ $totalMatchCount > 0 ? 'done' : 'active' }}">
+            <i class="fas fa-{{ $totalMatchCount > 0 ? 'check' : 'sync-alt' }}"></i>
+            <div><strong>Recherche de prestataires</strong><span>{{ $totalMatchCount > 0 ? $totalMatchCount.' profil(s) identifié(s)' : 'Recherche en cours' }}</span></div>
+        </div>
+        <div class="matching-progress-step {{ $ad->service_proposals_count > 0 ? 'done' : 'active' }}">
+            <i class="fas fa-{{ $ad->service_proposals_count > 0 ? 'check' : 'comment-dots' }}"></i>
+            <div><strong>Propositions</strong><span>{{ $ad->service_proposals_count > 0 ? $ad->service_proposals_count.' reçue(s)' : 'En attente' }}</span></div>
         </div>
     </div>
 
@@ -228,6 +289,11 @@ body { background: #f0f2f5; }
                     @endif
                     @if($ad->price)
                         <span><i class="fas fa-euro-sign"></i> Budget : {{ number_format($ad->price, 0) }} €</span>
+                    @else
+                        <span><i class="fas fa-comments-dollar"></i> Budget à discuter</span>
+                    @endif
+                    @if(!empty($demandDetails['desired_date']))
+                        <span><i class="fas fa-calendar-day"></i> {{ \Illuminate\Support\Carbon::parse($demandDetails['desired_date'])->format('d/m/Y') }}{{ !empty($demandDetails['time_window']) ? ' · '.($timeWindowLabels[$demandDetails['time_window']] ?? '') : '' }}</span>
                     @endif
                 </div>
             </div>
@@ -297,11 +363,12 @@ body { background: #f0f2f5; }
             </div>
             @endforeach
         </div>
+    @endif
 
-        @if($additionalPros->count() > 0 && $parentCategory)
+    @if($additionalPros->count() > 0 && $parentCategory)
         <div class="matching-additional">
-            <h3><i class="fas fa-lightbulb" style="color:#f59e0b; margin-right:6px;"></i> Autres professionnels dans « {{ $parentCategory }} »</h3>
-            <p>Ces prestataires proposent des services similaires dans la même catégorie.</p>
+            <h3><i class="fas fa-lightbulb" style="color:#f59e0b; margin-right:6px;"></i> Alternatives dans « {{ $parentCategory }} »</h3>
+            <p>Ces prestataires proposent des services proches. Vérifiez leur profil avant de les contacter.</p>
             <div class="matching-grid">
                 @foreach($additionalPros as $pro)
                 <div class="pro-card">
@@ -346,19 +413,34 @@ body { background: #f0f2f5; }
                 @endforeach
             </div>
         </div>
-        @endif
+    @endif
 
-    @else
+    @if($totalMatchCount === 0)
         <!-- Empty state -->
         <div class="matching-empty">
             <div class="matching-empty-icon">
                 <i class="fas fa-search"></i>
             </div>
-            <h3>Aucun professionnel trouvé pour le moment</h3>
-            <p>Pas de souci ! Votre demande reste visible et les professionnels seront notifiés. Ils pourront vous contacter directement.</p>
-            <a href="{{ route('feed') }}" class="matching-empty-btn">
-                <i class="fas fa-home"></i> Retour au fil d'actualité
-            </a>
+            <h3>Aucun prestataire compatible immédiatement</h3>
+            <p>Votre demande reste publiée. Voici trois actions utiles pour augmenter ses chances d’obtenir une réponse.</p>
+            <div class="matching-solutions">
+                <a href="{{ route('ads.edit', $ad) }}" class="matching-solution">
+                    <i class="fas fa-pen"></i>
+                    <strong>Préciser ma demande</strong>
+                    <span>Ajoutez des détails ou des photos pour aider les prestataires à se positionner.</span>
+                </a>
+                <button type="button" class="matching-solution" onclick="copyDemandLink()">
+                    <i class="fas fa-share-alt"></i>
+                    <strong>Partager la demande</strong>
+                    <span>Copiez son lien pour le transmettre à votre réseau.</span>
+                </button>
+                <a href="{{ route('feed') }}" class="matching-solution">
+                    <i class="fas fa-home"></i>
+                    <strong>Suivre depuis le feed</strong>
+                    <span>Retrouvez le statut et les futures propositions sur votre accueil.</span>
+                </a>
+            </div>
+            <div class="matching-copy-feedback" id="matchingCopyFeedback" aria-live="polite"></div>
         </div>
     @endif
 
@@ -367,11 +449,46 @@ body { background: #f0f2f5; }
         <a href="{{ route('feed') }}" class="matching-action-btn matching-action-feed">
             <i class="fas fa-home"></i> Retour au feed
         </a>
-        @if($ad && !$ad->is_boosted)
+        @if($ad && !$ad->is_boosted && $totalMatchCount > 0)
         <a href="{{ route('ads.show', $ad->id) }}?boost=1" class="matching-action-btn matching-action-boost">
             <i class="fas fa-rocket"></i> Booster ma demande
         </a>
         @endif
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+(() => {
+    try {
+        localStorage.removeItem('prokejem-demand-draft-v2-{{ Auth::id() }}');
+        localStorage.removeItem('prokejem-demand-draft-v2-guest');
+    } catch (error) {}
+})();
+
+function copyDemandLink() {
+    const url = @json(route('ads.show', $ad));
+    const feedback = document.getElementById('matchingCopyFeedback');
+    const done = () => { if (feedback) feedback.textContent = 'Lien copié. Vous pouvez maintenant le partager.'; };
+
+    if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(url).then(done).catch(() => fallbackCopy(url, done));
+        return;
+    }
+    fallbackCopy(url, done);
+}
+
+function fallbackCopy(value, done) {
+    const input = document.createElement('textarea');
+    input.value = value;
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    input.remove();
+    done();
+}
+</script>
 @endsection

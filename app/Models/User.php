@@ -992,6 +992,10 @@ class User extends Authenticatable
             return $suggestions;
         }
 
+        $hasServiceCategories = ! empty($this->service_category)
+            || (! empty($this->pro_service_categories) && count((array) $this->pro_service_categories) > 0)
+            || $this->services()->where('is_active', true)->exists();
+
         // 1. Complete onboarding
         if (! $this->hasCompletedProOnboarding()) {
             $step = $this->pro_onboarding_step ?? 0;
@@ -1010,22 +1014,7 @@ class User extends Authenticatable
             ];
         }
 
-        // 2. No subscription
-        if (! $this->hasActiveProSubscription() && $this->hasCompletedProOnboarding()) {
-            $suggestions[] = [
-                'id' => 'get_subscription',
-                'priority' => 90,
-                'type' => 'info',
-                'icon' => 'fas fa-crown',
-                'title' => 'Passez à Prokejem Premium',
-                'description' => 'Recevez 3x plus de demandes et accédez aux outils avancés. À partir de 9,99€/mois.',
-                'action' => "window.location.href='".route('pro.subscription')."'",
-                'action_label' => 'Voir les offres',
-                'color' => '#f59e0b',
-            ];
-        }
-
-        // 3. Missing phone
+        // 2. Missing phone
         if (empty($this->phone)) {
             $suggestions[] = [
                 'id' => 'add_phone',
@@ -1040,8 +1029,8 @@ class User extends Authenticatable
             ];
         }
 
-        // 4. Missing categories
-        if (empty($this->pro_service_categories) || (is_array($this->pro_service_categories) && count($this->pro_service_categories) === 0)) {
+        // 3. Missing categories
+        if (! $hasServiceCategories) {
             $suggestions[] = [
                 'id' => 'add_categories',
                 'priority' => 85,
@@ -1055,7 +1044,7 @@ class User extends Authenticatable
             ];
         }
 
-        // 5. No location
+        // 4. No location
         if (! $this->hasGeoLocation() && empty($this->city)) {
             $suggestions[] = [
                 'id' => 'add_location',
@@ -1070,7 +1059,7 @@ class User extends Authenticatable
             ];
         }
 
-        // 6. Profile not verified
+        // 5. Profile not verified
         if (! $this->isProVerified()) {
             $suggestions[] = [
                 'id' => 'verify_profile',
@@ -1078,14 +1067,14 @@ class User extends Authenticatable
                 'type' => 'tip',
                 'icon' => 'fas fa-shield-alt',
                 'title' => 'Faites vérifier votre profil',
-                'description' => 'Les profils vérifiés reçoivent 3x plus de contacts clients.',
+                'description' => 'La vérification rassure les clients et augmente vos chances d\'être contacté.',
                 'action' => "window.location.href='".route('verification.index')."'",
                 'action_label' => 'Vérifier',
                 'color' => '#14b8a6',
             ];
         }
 
-        // 7. No bio
+        // 6. No bio
         if (empty($this->bio)) {
             $suggestions[] = [
                 'id' => 'add_bio',
@@ -1100,7 +1089,7 @@ class User extends Authenticatable
             ];
         }
 
-        // 8. No active ads
+        // 7. No active ads
         if ($this->ads()->where('status', 'active')->count() === 0 && $this->hasCompletedProOnboarding()) {
             $suggestions[] = [
                 'id' => 'create_ad',
@@ -1115,6 +1104,29 @@ class User extends Authenticatable
             ];
         }
 
+        // 8. Premium arrive après les actions essentielles et uniquement si
+        // la commercialisation est réellement activée dans l'administration.
+        $isReadyToDiscoverPremium = $this->hasCompletedProOnboarding()
+            && $hasServiceCategories
+            && ($this->hasGeoLocation() || ! empty($this->city))
+            && ! empty($this->bio);
+
+        if (\App\Support\PlatformFeatures::proSubscriptionsEnabled()
+            && ! $this->hasActiveProSubscription()
+            && $isReadyToDiscoverPremium) {
+            $suggestions[] = [
+                'id' => 'get_subscription',
+                'priority' => 20,
+                'type' => 'info',
+                'icon' => 'fas fa-crown',
+                'title' => 'Découvrez Prokejem Premium',
+                'description' => 'Débloquez la priorité dans les suggestions, le badge Premium et les outils professionnels inclus.',
+                'action' => "window.location.href='".route('pro.subscription')."'",
+                'action_label' => 'Comparer les offres',
+                'color' => '#f59e0b',
+            ];
+        }
+
         // Sort by priority descending
         usort($suggestions, fn ($a, $b) => $b['priority'] - $a['priority']);
 
@@ -1126,6 +1138,10 @@ class User extends Authenticatable
      */
     public function getProProfileCompletionPercent(): int
     {
+        $hasServiceCategories = ! empty($this->service_category)
+            || (! empty($this->pro_service_categories) && count((array) $this->pro_service_categories) > 0)
+            || $this->services()->where('is_active', true)->exists();
+
         $fields = [
             ! empty($this->company_name) || ! empty($this->name),
             ! empty($this->email),
@@ -1133,11 +1149,10 @@ class User extends Authenticatable
             ! empty($this->city) || ! empty($this->detected_city),
             ! empty($this->address),
             ! empty($this->bio),
-            ! empty($this->pro_service_categories) && count($this->pro_service_categories ?? []) > 0,
+            $hasServiceCategories,
             $this->hasGeoLocation(),
             ! empty($this->avatar),
             $this->isProVerified(),
-            $this->hasActiveProSubscription(),
             $this->hasCompletedProOnboarding(),
         ];
         $total = count($fields);

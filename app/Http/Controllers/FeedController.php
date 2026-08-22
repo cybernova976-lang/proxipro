@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 class FeedController extends Controller
 {
+    private array $viewerServiceCategoryCache = [];
+
     public function __construct(
         private FeedRankingService $feedRankingService
     ) {}
@@ -251,6 +253,24 @@ class FeedController extends Controller
         );
         $homeProfessionalProfiles = $this->buildHighlightedProfessionalProfiles($user, 18);
 
+        $activeClientRequest = $user?->exists
+            ? $user->ads()
+                ->marketplaceActive()
+                ->where('service_type', 'demande')
+                ->withCount('serviceProposals')
+                ->latest('created_at')
+                ->first()
+            : null;
+
+        $priorityProviderRequests = $this->buildPriorityProviderRequests(
+            user: $user,
+            userLat: $useNearbyScope && ! $geoFallbackUsed && $userLat !== null ? (float) $userLat : null,
+            userLng: $useNearbyScope && ! $geoFallbackUsed && $userLng !== null ? (float) $userLng : null,
+            userRadius: $useNearbyScope && ! $geoFallbackUsed ? $userRadius : null,
+            geoCity: $useNearbyScope && ! $geoFallbackUsed ? $geoCity : null,
+            geoCountry: $useNearbyScope && ! $geoFallbackUsed ? $geoCountry : null
+        );
+
         if ($request->attributes->get('mockup_local_preview')) {
             $previewData = $this->buildLocalMockupPreviewData();
 
@@ -262,6 +282,12 @@ class FeedController extends Controller
             }
             if ($homeProfessionalProfiles->isEmpty()) {
                 $homeProfessionalProfiles = $previewData['providers'];
+            }
+            if ($priorityProviderRequests->isEmpty()) {
+                $priorityProviderRequests = $previewData['requests']
+                    ->filter(fn (Ad $ad) => $ad->created_at?->lessThanOrEqualTo(now()->subHours(2)))
+                    ->take(3)
+                    ->values();
             }
 
             $previewCategoryTotals = [18, 14, 12, 9, 8, 7, 6, 5];
@@ -278,15 +304,20 @@ class FeedController extends Controller
         }
 
         $savedHomeAdIds = collect();
-        if ($user?->exists && $homePersonalRequests->isNotEmpty()) {
+        $saveableHomeRequests = $priorityProviderRequests
+            ->concat($homePersonalRequests)
+            ->unique('id')
+            ->values();
+
+        if ($user?->exists && $saveableHomeRequests->isNotEmpty()) {
             $savedHomeAdIds = $user->savedAds()
-                ->whereIn('ads.id', $homePersonalRequests->pluck('id')->all())
+                ->whereIn('ads.id', $saveableHomeRequests->pluck('id')->all())
                 ->pluck('ads.id')
                 ->map(fn ($id) => (int) $id)
                 ->values();
         }
 
-        $homeShowcaseAdIds = $homePersonalRequests
+        $homeShowcaseAdIds = $saveableHomeRequests
             ->pluck('id')
             ->merge($homeProfessionalOffers->pluck('id'))
             ->map(fn ($id) => (int) $id)
@@ -334,6 +365,8 @@ class FeedController extends Controller
             'homePersonalRequests',
             'homeProfessionalOffers',
             'homeProfessionalProfiles',
+            'activeClientRequest',
+            'priorityProviderRequests',
             'homeShowcaseAdIds',
             'savedHomeAdIds',
             'sort',
@@ -451,6 +484,7 @@ class FeedController extends Controller
                 'is_urgent' => $row[6],
                 'urgent_until' => $row[6] ? now()->addDay() : null,
                 'created_at' => $row[7],
+                'service_proposals_count' => 0,
             ]);
             $ad->setRelation('user', $clients[$index]);
 
@@ -691,6 +725,14 @@ class FeedController extends Controller
             ->where('service_type', $serviceType)
             ->with('user');
 
+        if ($serviceType === 'demande') {
+            $query->withCount('serviceProposals');
+        }
+
+        if ($currentUser?->exists) {
+            $query->where('user_id', '!=', $currentUser->id);
+        }
+
         $this->applyHomeShowcaseVisibility($query, $currentUser);
 
         if ($authorKind === 'particulier') {
@@ -726,6 +768,57 @@ class FeedController extends Controller
         return $this->feedRankingService->rank($candidates, $currentUser, $limit);
     }
 
+    /**
+     * Demandes compatibles qui attendent toujours une première proposition.
+     *
+     * L'application ne conserve pas encore le nombre de professionnels trouvés
+     * au moment exact de la publication. Le signal affiché reste donc volontairement
+     * factuel : aucune proposition après deux heures, et non « aucun prestataire trouvé ».
+     */
+    private function buildPriorityProviderRequests(
+        $user,
+        ?float $userLat = null,
+        ?float $userLng = null,
+        ?int $userRadius = null,
+        ?string $geoCity = null,
+        ?string $geoCountry = null,
+        int $limit = 4
+    ) {
+        if (! $user?->exists || (! $user->isProfessionnel() && ! $user->isServiceProvider())) {
+            return collect();
+        }
+
+        $viewerCategories = $this->viewerServiceCategories($user);
+        if ($viewerCategories === []) {
+            return collect();
+        }
+
+        $query = Ad::marketplaceActive()
+            ->where('service_type', 'demande')
+            ->where('user_id', '!=', $user->id)
+            ->where('created_at', '<=', now()->subHours(2))
+            ->whereIn('category', $viewerCategories)
+            ->whereDoesntHave('serviceProposals')
+            ->with('user')
+            ->withCount('serviceProposals');
+
+        $this->applyHomeShowcaseVisibility($query, $user);
+
+        $geoScoped = ($userLat !== null && $userLng !== null && $userRadius !== null) || $geoCity || $geoCountry;
+        if ($geoScoped) {
+            $this->applyAdGeoScope($query, $userLat, $userLng, $userRadius ?? 50, $geoCity, $geoCountry);
+        }
+
+        return $query
+            ->orderByRaw(
+                'CASE WHEN is_urgent = true AND (urgent_until IS NULL OR urgent_until > ?) THEN 0 ELSE 1 END',
+                [now()]
+            )
+            ->orderBy('created_at')
+            ->take($limit)
+            ->get();
+    }
+
     private function applyHomeShowcaseVisibility($query, $currentUser): void
     {
         $viewerCategories = $this->viewerServiceCategories($currentUser);
@@ -756,11 +849,27 @@ class FeedController extends Controller
             return [];
         }
 
-        return collect([
+        $cacheKey = (string) ($user->getKey() ?? spl_object_id($user));
+        if (array_key_exists($cacheKey, $this->viewerServiceCategoryCache)) {
+            return $this->viewerServiceCategoryCache[$cacheKey];
+        }
+
+        $profileCategories = collect([
             ...((array) ($user->service_subcategories ?? [])),
             ...((array) ($user->pro_service_categories ?? [])),
             $user->service_category,
-        ])->filter(fn ($category) => is_string($category) && trim($category) !== '')
+        ]);
+
+        $serviceCategories = $user->exists
+            ? $user->services()
+                ->where('is_active', true)
+                ->get(['main_category', 'subcategory'])
+                ->flatMap(fn ($service) => [$service->main_category, $service->subcategory])
+            : collect();
+
+        return $this->viewerServiceCategoryCache[$cacheKey] = $profileCategories
+            ->concat($serviceCategories)
+            ->filter(fn ($category) => is_string($category) && trim($category) !== '')
             ->map(fn ($category) => trim($category))
             ->unique()
             ->values()

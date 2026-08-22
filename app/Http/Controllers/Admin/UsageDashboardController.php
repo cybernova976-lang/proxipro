@@ -11,6 +11,7 @@ use App\Models\UsageDailyMetric;
 use App\Models\User;
 use App\Services\UsageAnalytics;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class UsageDashboardController extends Controller
@@ -39,6 +40,33 @@ class UsageDashboardController extends Controller
             ->where('app_mode', 'pwa')
             ->sum('count');
 
+        $periodStart = $start->copy()->startOfDay();
+        $periodEnd = $end->copy()->endOfDay();
+        $demandStarts = (int) $metrics
+            ->where('event_name', 'page_view')
+            ->where('route_name', 'demand.create')
+            ->sum('count');
+        $periodDemands = Ad::query()
+            ->where('service_type', 'demande')
+            ->whereBetween('created_at', [$periodStart, $periodEnd])
+            ->pluck('created_at', 'id');
+        $firstProposalDates = $periodDemands->isEmpty()
+            ? collect()
+            : ServiceProposal::query()
+                ->whereIn('ad_id', $periodDemands->keys())
+                ->select('ad_id', DB::raw('MIN(created_at) as first_proposal_at'))
+                ->groupBy('ad_id')
+                ->get();
+        $firstProposalMinutes = $firstProposalDates
+            ->map(function (ServiceProposal $proposal) use ($periodDemands) {
+                $publishedAt = $periodDemands->get($proposal->ad_id);
+
+                return $publishedAt
+                    ? Carbon::parse($publishedAt)->diffInMinutes(Carbon::parse($proposal->first_proposal_at))
+                    : null;
+            })
+            ->filter(fn ($minutes) => $minutes !== null);
+
         $summary = [
             'page_views' => $pageViews,
             'sessions' => $sessions,
@@ -48,6 +76,18 @@ class UsageDashboardController extends Controller
             'push_activations' => $sumEvent('push_enabled'),
             'push_devices' => DB::table('push_subscriptions')->count(),
             'push_users' => DB::table('push_subscriptions')->distinct()->count('subscribable_id'),
+            'demand_starts' => $demandStarts,
+            'demand_publications' => $periodDemands->count(),
+            'demand_completion_rate' => $demandStarts > 0
+                ? round(($periodDemands->count() / $demandStarts) * 100, 1)
+                : null,
+            'demands_with_proposal' => $firstProposalDates->count(),
+            'demand_proposal_rate' => $periodDemands->isNotEmpty()
+                ? round(($firstProposalDates->count() / $periodDemands->count()) * 100, 1)
+                : null,
+            'median_first_proposal_minutes' => $firstProposalMinutes->isNotEmpty()
+                ? (int) round($firstProposalMinutes->median())
+                : null,
         ];
 
         $dailyGroups = $metrics->groupBy(fn (UsageDailyMetric $metric) => $metric->metric_date->toDateString());
@@ -83,11 +123,11 @@ class UsageDashboardController extends Controller
         ]);
 
         $businessStats = [
-            'registrations' => User::query()->whereBetween('created_at', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])->count(),
-            'ads' => Ad::query()->whereBetween('created_at', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])->count(),
-            'messages' => Message::query()->whereBetween('created_at', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])->count(),
-            'proposals' => ServiceProposal::query()->whereBetween('created_at', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])->count(),
-            'orders' => ServiceOrder::query()->whereBetween('created_at', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])->count(),
+            'registrations' => User::query()->whereBetween('created_at', [$periodStart, $periodEnd])->count(),
+            'ads' => Ad::query()->whereBetween('created_at', [$periodStart, $periodEnd])->count(),
+            'messages' => Message::query()->whereBetween('created_at', [$periodStart, $periodEnd])->count(),
+            'proposals' => ServiceProposal::query()->whereBetween('created_at', [$periodStart, $periodEnd])->count(),
+            'orders' => ServiceOrder::query()->whereBetween('created_at', [$periodStart, $periodEnd])->count(),
             'paid_orders' => ServiceOrder::query()
                 ->whereBetween('paid_at', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])
                 ->whereIn('payment_status', [ServiceOrder::PAYMENT_PAID, ServiceOrder::PAYMENT_RELEASED])

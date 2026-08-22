@@ -54,6 +54,45 @@
     </div>
 </div>
 
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 pt-4 px-4">
+        <h2 class="h5 fw-bold mb-1"><i class="fas fa-bullhorn text-primary me-2"></i>Tunnel de publication des demandes</h2>
+        <p class="small text-muted mb-0">Le taux de publication est indicatif : il compare les vues agrégées du formulaire aux demandes réellement créées sur la période.</p>
+    </div>
+    <div class="card-body px-4 pb-4">
+        <div class="demand-funnel-grid">
+            <div>
+                <span>Ouvertures du formulaire</span>
+                <strong>{{ number_format($summary['demand_starts']) }}</strong>
+                <small>route <code>demand.create</code></small>
+            </div>
+            <div>
+                <span>Demandes publiées</span>
+                <strong>{{ number_format($summary['demand_publications']) }}</strong>
+                <small>{{ $summary['demand_completion_rate'] !== null ? $summary['demand_completion_rate'].' % des ouvertures' : 'Taux disponible après les premières vues' }}</small>
+            </div>
+            <div>
+                <span>Avec au moins une proposition</span>
+                <strong>{{ number_format($summary['demands_with_proposal']) }}</strong>
+                <small>{{ $summary['demand_proposal_rate'] !== null ? $summary['demand_proposal_rate'].' % des demandes' : 'Aucune demande sur la période' }}</small>
+            </div>
+            <div>
+                <span>Délai médian avant 1re proposition</span>
+                <strong>
+                    @if($summary['median_first_proposal_minutes'] === null)
+                        —
+                    @elseif($summary['median_first_proposal_minutes'] < 60)
+                        {{ $summary['median_first_proposal_minutes'] }} min
+                    @else
+                        {{ intdiv($summary['median_first_proposal_minutes'], 60) }} h {{ $summary['median_first_proposal_minutes'] % 60 }}
+                    @endif
+                </strong>
+                <small>Demandes ayant reçu une proposition</small>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-4 mb-4">
     <div class="col-xl-8">
         <div class="card border-0 shadow-sm h-100">
@@ -184,13 +223,19 @@
 .usage-bar-pwa { width:36%; background:#06b6d4; z-index:2; }
 .usage-bar-day small { font-size:.62rem; color:#94a3b8; min-height:20px; margin-top:5px; white-space:nowrap; }
 .usage-legend { width:10px; height:10px; border-radius:3px; display:inline-block; margin-right:5px; }
+.demand-funnel-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+.demand-funnel-grid > div { padding:16px; border:1px solid #dbeafe; border-radius:14px; background:linear-gradient(145deg,#f8fbff,#fff); }
+.demand-funnel-grid span, .demand-funnel-grid small { display:block; color:#64748b; }
+.demand-funnel-grid span { font-size:.8rem; font-weight:700; }
+.demand-funnel-grid strong { display:block; margin:6px 0 4px; color:#0f172a; font-size:1.45rem; }
+.demand-funnel-grid small { font-size:.72rem; line-height:1.35; }
 .business-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
 .business-grid div { padding:18px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; text-align:center; }
 .business-grid strong { display:block; font-size:1.35rem; color:#0f172a; }
 .business-grid span { font-size:.78rem; color:#64748b; }
-@media (max-width: 991.98px) { .usage-kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width: 991.98px) { .usage-kpi-grid, .demand-funnel-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width: 575.98px) {
-    .usage-kpi-grid, .business-grid { grid-template-columns:1fr; }
+    .usage-kpi-grid, .demand-funnel-grid, .business-grid { grid-template-columns:1fr; }
     .usage-kpi { padding:15px; }
     .usage-bars { height:210px; }
     .usage-bar-stack { height:170px; }
