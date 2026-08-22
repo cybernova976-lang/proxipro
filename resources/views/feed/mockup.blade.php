@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Maquette du nouveau feed - Prokejem')
+@section('title', 'Nouveau feed - Prokejem')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/feed-mockup.css') }}">
@@ -20,6 +20,8 @@
     $mockFirstName = trim(explode(' ', trim($mockUser->name ?? 'Utilisateur'))[0] ?? 'Utilisateur');
     $mockMyRequest = $mockRequests->firstWhere('user_id', $mockUser?->id);
     $mockProfileCompletion = max(0, min(100, (int) ($proProfileCompletion ?? 0)));
+    $mockSavedAdIds = collect($savedHomeAdIds ?? [])->map(fn ($id) => (int) $id);
+    $mockIsLocalPreview = (bool) request()->attributes->get('mockup_local_preview');
     $mockFeedHomeRoute = request()->routeIs('feed.mockup.preview')
         ? route('feed.mockup.preview')
         : route('feed.mockup');
@@ -74,7 +76,7 @@
         <main class="mf-content">
             <header class="mf-welcome">
                 <div>
-                    <span class="mf-eyebrow"><i class="fas fa-flask"></i> Maquette fonctionnelle</span>
+                    <span class="mf-eyebrow"><i class="fas fa-magic"></i> Nouvelle expérience</span>
                     <h1>Bonjour {{ $mockFirstName }},</h1>
                     <p data-mode-copy="client">Trouvez rapidement le bon prestataire pour votre besoin.</p>
                     <p data-mode-copy="provider" hidden>Repérez les demandes pertinentes et développez votre activité.</p>
@@ -209,6 +211,7 @@
                                 $mockRequestRecent = $requestAd->created_at?->greaterThan(now()->subDays(7)) ?? false;
                                 $mockRequestAuthor = $requestAd->user;
                                 $mockRequestSearch = Str::lower(implode(' ', [$requestAd->title, $requestAd->description, $requestAd->category, $requestAd->location]));
+                                $mockRequestSaved = $mockSavedAdIds->contains((int) $requestAd->id);
                             @endphp
                             <article class="mf-opportunity-card" data-opportunity-card data-urgent="{{ $mockRequestUrgent ? '1' : '0' }}" data-recent="{{ $mockRequestRecent ? '1' : '0' }}" data-category="{{ Str::lower($requestAd->category ?? '') }}" data-search="{{ $mockRequestSearch }}">
                                 <div class="mf-opportunity-main">
@@ -229,7 +232,17 @@
                                     <strong>{{ $requestAd->formatted_price }}</strong>
                                     <span>{{ $mockRequestAuthor?->is_verified ? 'Client vérifié' : 'Nouveau client' }}</span>
                                     <a href="{{ route('ads.show', $requestAd) }}">Voir la demande</a>
-                                    <button type="button" class="mf-save-preview" data-preview-save aria-pressed="false" title="Interaction de maquette"><i class="far fa-bookmark"></i><span>Enregistrer</span></button>
+                                    <button
+                                        type="button"
+                                        class="mf-save-preview{{ $mockRequestSaved ? ' is-saved' : '' }}"
+                                        data-save-ad
+                                        data-ad-id="{{ $requestAd->id }}"
+                                        data-preview-only="{{ $mockIsLocalPreview ? '1' : '0' }}"
+                                        aria-pressed="{{ $mockRequestSaved ? 'true' : 'false' }}"
+                                    >
+                                        <i class="{{ $mockRequestSaved ? 'fas' : 'far' }} fa-bookmark"></i>
+                                        <span>{{ $mockRequestSaved ? 'Enregistrée' : 'Enregistrer' }}</span>
+                                    </button>
                                 </div>
                             </article>
                         @empty
@@ -277,13 +290,15 @@
         </aside>
     </div>
 
-    <nav class="mf-mobile-nav" aria-label="Navigation mobile de la maquette">
+    <nav class="mf-mobile-nav" aria-label="Navigation mobile du nouveau feed">
         <a class="is-active" href="{{ $mockFeedHomeRoute }}"><i class="fas fa-home"></i><span>Accueil</span></a>
         <a href="{{ route('ads.index') }}"><i class="fas fa-clipboard-list"></i><span>Annonces</span></a>
         <button type="button" data-open-request><i class="fas fa-plus"></i><span>Publier</span></button>
         <a href="{{ route('messages.index') }}"><i class="fas fa-comments"></i><span>Messages</span></a>
         <a href="{{ route('profile.show') }}"><i class="fas fa-user"></i><span>Profil</span></a>
     </nav>
+
+    <div class="mf-toast" id="newFeedToast" role="status" aria-live="polite" hidden></div>
 
     <dialog class="mf-request-dialog" id="mockRequestDialog" aria-labelledby="mockRequestDialogTitle">
         <form method="dialog" class="mf-dialog-card">
@@ -374,14 +389,60 @@
         applyFilters();
     }));
 
-    app.querySelectorAll('[data-preview-save]').forEach((button) => button.addEventListener('click', () => {
-        const pressed = button.getAttribute('aria-pressed') === 'true';
-        button.setAttribute('aria-pressed', pressed ? 'false' : 'true');
-        button.classList.toggle('is-saved', !pressed);
-        button.querySelector('i')?.classList.toggle('far', pressed);
-        button.querySelector('i')?.classList.toggle('fas', !pressed);
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const toast = document.getElementById('newFeedToast');
+    let toastTimer;
+    const showFeedback = (message, type = 'success') => {
+        if (!toast) return;
+        window.clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.dataset.type = type;
+        toast.hidden = false;
+        toast.classList.add('is-visible');
+        toastTimer = window.setTimeout(() => {
+            toast.classList.remove('is-visible');
+            toast.hidden = true;
+        }, 2800);
+    };
+    const updateSaveButton = (button, saved) => {
+        button.setAttribute('aria-pressed', saved ? 'true' : 'false');
+        button.classList.toggle('is-saved', saved);
+        button.querySelector('i')?.classList.toggle('far', !saved);
+        button.querySelector('i')?.classList.toggle('fas', saved);
         const label = button.querySelector('span');
-        if (label) label.textContent = pressed ? 'Enregistrer' : 'Enregistrée';
+        if (label) label.textContent = saved ? 'Enregistrée' : 'Enregistrer';
+    };
+
+    app.querySelectorAll('[data-save-ad]').forEach((button) => button.addEventListener('click', async () => {
+        const wasSaved = button.getAttribute('aria-pressed') === 'true';
+        if (button.dataset.previewOnly === '1') {
+            updateSaveButton(button, !wasSaved);
+            showFeedback(!wasSaved ? 'Favori simulé dans l’aperçu local.' : 'Favori retiré de l’aperçu.', 'info');
+            return;
+        }
+
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        try {
+            const response = await fetch(`/ads/${encodeURIComponent(button.dataset.adId)}/toggle-save`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            updateSaveButton(button, Boolean(data.saved));
+            showFeedback(data.message || (data.saved ? 'Annonce sauvegardée.' : 'Annonce retirée des favoris.'));
+        } catch (error) {
+            updateSaveButton(button, wasSaved);
+            showFeedback('Impossible de modifier ce favori. Réessayez.', 'error');
+        } finally {
+            button.disabled = false;
+            button.removeAttribute('aria-busy');
+        }
     }));
 })();
 </script>

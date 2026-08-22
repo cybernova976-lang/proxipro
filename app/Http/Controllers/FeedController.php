@@ -277,6 +277,15 @@ class FeedController extends Controller
                 ->all();
         }
 
+        $savedHomeAdIds = collect();
+        if ($user?->exists && $homePersonalRequests->isNotEmpty()) {
+            $savedHomeAdIds = $user->savedAds()
+                ->whereIn('ads.id', $homePersonalRequests->pluck('id')->all())
+                ->pluck('ads.id')
+                ->map(fn ($id) => (int) $id)
+                ->values();
+        }
+
         $homeShowcaseAdIds = $homePersonalRequests
             ->pluck('id')
             ->merge($homeProfessionalOffers->pluck('id'))
@@ -326,6 +335,7 @@ class FeedController extends Controller
             'homeProfessionalOffers',
             'homeProfessionalProfiles',
             'homeShowcaseAdIds',
+            'savedHomeAdIds',
             'sort',
             'filterType',
             'userLat',

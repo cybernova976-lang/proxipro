@@ -177,7 +177,9 @@ Route::get('/purchase/invoice', [PurchaseInvoiceController::class, 'download'])-
 // Routes pour le feed (page d'accueil après connexion)
 Route::middleware(['auth', 'geo'])->group(function () {
     Route::get('/feed', [FeedController::class, 'index'])->name('feed');
-    Route::get('/feed-maquette', [FeedController::class, 'index'])->name('feed.mockup');
+    Route::get('/nouveau-feed', [FeedController::class, 'index'])->name('feed.mockup');
+    Route::get('/feed-maquette', fn () => redirect()->route('feed.mockup'))
+        ->name('feed.mockup.legacy');
     Route::get('/feed-test', [FeedController::class, 'indexTest'])->name('feed.test');
 
     // AJAX endpoints for category filtering
