@@ -3,7 +3,7 @@
 @section('title', 'Nouveau feed - Prokejem')
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('css/feed-mockup.css') }}">
+<link rel="stylesheet" href="{{ asset('css/feed-mockup.css') }}?v={{ filemtime(public_path('css/feed-mockup.css')) }}">
 @endpush
 
 @php

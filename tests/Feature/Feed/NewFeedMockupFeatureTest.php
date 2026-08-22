@@ -78,7 +78,8 @@ class NewFeedMockupFeatureTest extends TestCase
             ->assertSee('aria-pressed="true"', false)
             ->assertSee('/toggle-save', false)
             ->assertSee(route('demand.create'), false)
-            ->assertSee(asset('css/feed-mockup.css'), false);
+            ->assertSee(asset('css/feed-mockup.css'), false)
+            ->assertSee(asset('css/feed-mockup.css').'?v=', false);
 
         $this->assertSame('/nouveau-feed', route('feed.mockup', [], false));
 
