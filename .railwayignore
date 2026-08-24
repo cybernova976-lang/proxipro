@@ -7,6 +7,7 @@
 .codex-artifacts/
 tmp/
 Guide_technique_Prokejem.txt
+/scripts/preflight.ps1
 
 # Maquettes de travail conservees a la racine du projet.
 # On ne cible que ces deux fichiers : public/offline.html est la page
