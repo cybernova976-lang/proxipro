@@ -1,5 +1,6 @@
 @extends('pro.layout')
 @section('title', 'Abonnement Pro - Espace Pro')
+@section('topbar_title', 'Abonnement & Points')
 
 @section('content')
 <div class="pro-content-header subscription-page-header">

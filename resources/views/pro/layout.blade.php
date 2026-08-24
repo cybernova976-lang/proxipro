@@ -50,9 +50,10 @@
         height: var(--header-height);
         background: white;
         border-bottom: 1px solid var(--pro-border);
-        display: flex;
+        display: grid;
+        grid-template-columns: calc(var(--sidebar-width) - 1.5rem) minmax(180px, 1fr) auto;
         align-items: center;
-        justify-content: space-between;
+        gap: 1rem;
         padding: 0 1.5rem;
         z-index: 1050;
     }
@@ -61,6 +62,7 @@
         display: flex;
         align-items: center;
         gap: 1rem;
+        min-width: 0;
     }
 
     .pro-topbar-brand {
@@ -121,10 +123,93 @@
         background: #f1f5f9;
     }
 
+    .pro-topbar-context {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        padding-left: 1rem;
+        border-left: 1px solid var(--pro-border);
+    }
+
+    .pro-topbar-context-icon {
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        color: var(--pro-primary);
+        background: rgba(99, 102, 241, 0.1);
+    }
+
+    .pro-topbar-context-copy {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        line-height: 1.15;
+    }
+
+    .pro-topbar-workspace {
+        color: var(--pro-text-secondary);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .pro-topbar-page-title {
+        max-width: 100%;
+        overflow: hidden;
+        color: var(--pro-text);
+        font-size: 0.92rem;
+        font-weight: 700;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
     .pro-topbar-right {
         display: flex;
         align-items: center;
         gap: 0.75rem;
+        min-width: 0;
+    }
+
+    .pro-topbar-action {
+        position: relative;
+        min-width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0 0.75rem;
+        border: 1px solid var(--pro-border);
+        border-radius: 10px;
+        color: var(--pro-text-secondary);
+        background: white;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .pro-topbar-action:hover {
+        border-color: rgba(99, 102, 241, 0.35);
+        color: var(--pro-primary);
+        background: rgba(99, 102, 241, 0.06);
+    }
+
+    .pro-topbar-return {
+        border-color: rgba(99, 102, 241, 0.22);
+        color: var(--pro-primary-dark);
+        background: rgba(99, 102, 241, 0.07);
+    }
+
+    .pro-topbar-action-label {
+        display: none;
+        white-space: nowrap;
     }
 
     .pro-topbar-btn {
@@ -147,7 +232,8 @@
         color: var(--pro-primary);
     }
 
-    .pro-topbar-btn .badge-count {
+    .pro-topbar-btn .badge-count,
+    .pro-topbar-action .badge-count {
         position: absolute;
         top: 4px;
         right: 4px;
@@ -567,6 +653,27 @@
     }
 
     @media (max-width: 991px) {
+        .pro-topbar {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .pro-topbar-context {
+            display: none;
+        }
+
+        .pro-topbar-action {
+            width: 40px;
+            flex: 0 0 40px;
+            padding: 0;
+            border-color: transparent;
+            background: transparent;
+        }
+
+        .pro-topbar-action-label {
+            display: none !important;
+        }
+
         .pro-sidebar {
             transform: translateX(-100%);
             width: min(86vw, 310px);
@@ -609,6 +716,10 @@
             display: none;
         }
 
+        .pro-topbar-return .pro-topbar-action-label {
+            display: inline;
+        }
+
         .pro-sidebar {
             transform: translateX(0) !important;
             display: block !important;
@@ -616,6 +727,12 @@
 
         .pro-main {
             margin-left: var(--sidebar-width) !important;
+        }
+    }
+
+    @media (min-width: 1200px) {
+        .pro-topbar-action-label {
+            display: inline;
         }
     }
 
@@ -645,6 +762,7 @@
         }
 
         .pro-sidebar-toggle,
+        .pro-topbar-action,
         .pro-topbar-btn {
             width: 40px;
             height: 40px;
@@ -747,9 +865,9 @@
 </head>
 <body>
     {{-- TOP BAR --}}
-    <nav class="pro-topbar">
+    <nav class="pro-topbar" aria-label="Navigation de l'espace professionnel">
         <div class="pro-topbar-left">
-            <button class="pro-sidebar-toggle" id="sidebarToggle">
+            <button type="button" class="pro-sidebar-toggle" id="sidebarToggle" aria-label="Ouvrir le menu de l'espace professionnel" aria-controls="proSidebar" aria-expanded="false">
                 <i class="fas fa-bars"></i>
             </button>
             <a href="{{ route('pro.dashboard') }}" class="pro-topbar-brand">
@@ -758,18 +876,29 @@
                 <span class="pro-badge">PRO</span>
             </a>
         </div>
+        <div class="pro-topbar-context" aria-label="Page active">
+            <div class="pro-topbar-context-icon" aria-hidden="true">
+                <i class="fas fa-briefcase"></i>
+            </div>
+            <div class="pro-topbar-context-copy">
+                <span class="pro-topbar-workspace">Espace professionnel</span>
+                <span class="pro-topbar-page-title">@yield('topbar_title', 'Espace Pro')</span>
+            </div>
+        </div>
         <div class="pro-topbar-right">
-            <a href="{{ route('feed') }}" class="pro-topbar-btn" title="Retour au feed">
-                <i class="fas fa-home"></i>
+            <a href="{{ route('feed') }}" class="pro-topbar-action pro-topbar-return" aria-label="Retour au feed">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                <span class="pro-topbar-action-label">Retour au feed</span>
             </a>
-            <a href="{{ route('messages.index') }}" class="pro-topbar-btn" title="Messages">
-                <i class="fas fa-envelope"></i>
+            <a href="{{ route('messages.index') }}" class="pro-topbar-action" aria-label="Messages">
+                <i class="fas fa-envelope" aria-hidden="true"></i>
+                <span class="pro-topbar-action-label">Messages</span>
                 @if(Auth::user()->unreadMessagesCount() > 0)
                     <span class="badge-count">{{ Auth::user()->unreadMessagesCount() }}</span>
                 @endif
             </a>
-            <button class="pro-topbar-btn" title="Notifications">
-                <i class="fas fa-bell"></i>
+            <button type="button" class="pro-topbar-btn" aria-label="Notifications">
+                <i class="fas fa-bell" aria-hidden="true"></i>
             </button>
             <div class="dropdown">
                 <a href="#" class="pro-user-menu dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -802,7 +931,7 @@
     </nav>
 
     {{-- SIDEBAR OVERLAY --}}
-    <div class="pro-sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="pro-sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
 
     {{-- SIDEBAR --}}
     <aside class="pro-sidebar" id="proSidebar">
@@ -992,19 +1121,31 @@
     @include('partials.provider-modal')
 
     <script>
-    // Sidebar toggle
+    // Sidebar mobile accessible
     const sidebar = document.getElementById('proSidebar');
     const overlay = document.getElementById('sidebarOverlay');
     const toggle = document.getElementById('sidebarToggle');
 
+    const setProSidebarOpen = (open) => {
+        sidebar?.classList.toggle('show', open);
+        overlay?.classList.toggle('show', open);
+        toggle?.setAttribute('aria-expanded', String(open));
+        if (overlay) overlay.setAttribute('aria-hidden', String(!open));
+    };
+
     toggle?.addEventListener('click', () => {
-        sidebar.classList.toggle('show');
-        overlay.classList.toggle('show');
+        setProSidebarOpen(!sidebar?.classList.contains('show'));
     });
 
     overlay?.addEventListener('click', () => {
-        sidebar.classList.remove('show');
-        overlay.classList.remove('show');
+        setProSidebarOpen(false);
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && sidebar?.classList.contains('show')) {
+            setProSidebarOpen(false);
+            toggle?.focus();
+        }
     });
     </script>
     @yield('scripts')
