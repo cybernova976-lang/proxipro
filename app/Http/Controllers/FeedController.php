@@ -355,7 +355,169 @@ class FeedController extends Controller
                 ->get()
         );
 
-        $feedView = $request->routeIs('feed.mockup', 'feed.mockup.preview') ? 'feed.mockup' : 'feed.index';
+        // ======================================================================
+        // MODELE DE VUE DE LA PAGE D'ACCUEIL
+        // ----------------------------------------------------------------------
+        // Tout ce que la page d'accueil affiche est prepare ici : la vue et ses
+        // partials ne declenchent plus aucune requete.
+        // Regle de fond : aucun chiffre affiche n'est estime. Si la donnee
+        // n'existe pas, l'element correspondant n'est simplement pas rendu.
+        // ======================================================================
+
+        // --- role : deduit des donnees, jamais d'un onglet clique ---
+        $pkRole = ($user && ($user->isProfessionnel() || $user->isServiceProvider()))
+            ? 'provider'
+            : 'client';
+
+        // --- verification d'identite (zone 3) ---
+        $pkVerification = $user?->exists
+            ? \App\Models\IdentityVerification::where('user_id', $user->id)->latest()->first()
+            : null;
+        $pkVerificationStatus = $pkVerification?->status;
+        $pkIsVerified = (bool) ($user?->hasVerifiedProfileBadge() ?? false);
+
+        // --- une seule action suivante pour un prestataire ---
+        $pkSuggestion = collect($proSuggestions)->first();
+        $pkSuggestionUrl = $pkSuggestion
+            ? match ($pkSuggestion['id'] ?? '') {
+                'complete_onboarding', 'add_categories', 'add_location' => route('pro.onboarding'),
+                'verify_profile' => route('verification.index'),
+                'get_subscription' => route('pro.subscription'),
+                'create_ad' => route('ads.create'),
+                default => route('pro.profile.edit'),
+            }
+            : route('pro.profile.edit');
+        $pkCompletion = max(0, min(100, (int) $proProfileCompletion));
+
+        // --- zone 4 : le flux, six annonces au maximum ---
+        if ($pkRole === 'provider') {
+            $pkFeedTitle = 'Demandes qui correspondent a votre metier';
+            $pkFeedAds = collect($priorityProviderRequests)
+                ->concat($homePersonalRequests)
+                ->unique('id')
+                ->take(6)
+                ->values();
+        } else {
+            $pkFeedTitle = $geoCity ? 'Demandes pres de vous' : 'Dernieres demandes publiees';
+            $pkFeedAds = collect($homePersonalRequests)
+                ->reject(fn ($ad) => $activeClientRequest && (int) $ad->id === (int) $activeClientRequest->id)
+                ->take(6)
+                ->values();
+        }
+
+        // Flux trop maigre : on complete avec des offres de service plutot que
+        // de laisser une page vide. Mieux vaut six annonces vivantes.
+        if ($pkFeedAds->count() < 3) {
+            $pkFeedAds = $pkFeedAds
+                ->concat($homeProfessionalOffers)
+                ->unique('id')
+                ->take(6)
+                ->values();
+        }
+
+        $pkMatchingCount = $pkRole === 'provider' ? $pkFeedAds->count() : 0;
+
+        // --- favoris deja enregistres parmi les annonces reellement affichees ---
+        $pkSavedAdIds = collect();
+        if ($user?->exists && $pkFeedAds->isNotEmpty()) {
+            $pkSavedAdIds = $user->savedAds()
+                ->whereIn('ads.id', $pkFeedAds->pluck('id')->all())
+                ->pluck('ads.id')
+                ->map(fn ($id) => (int) $id)
+                ->values();
+        }
+
+        // --- zone 2 : les six categories les plus actives ---
+        $pkQuickCategories = collect($missionCategories)
+            ->sortByDesc(fn ($category) => (int) ($category['total'] ?? 0))
+            ->take(6)
+            ->all();
+
+        // --- index de recherche du champ d'intention (categories + sous-categories) ---
+        $pkSearchIndex = [];
+        foreach ($missionCategories as $pkParent => $pkData) {
+            $pkSearchIndex[] = [
+                'label' => $pkParent,
+                'parent' => $pkParent,
+                'sub' => null,
+                'icon' => $pkData['icon'] ?? 'fas fa-tools',
+                'search' => \Illuminate\Support\Str::of($pkParent)->lower()->ascii()->toString(),
+            ];
+            foreach (($pkData['subs'] ?? []) as $pkSub) {
+                $pkSubName = is_array($pkSub) ? ($pkSub['name'] ?? null) : $pkSub;
+                if (! $pkSubName) {
+                    continue;
+                }
+                $pkSearchIndex[] = [
+                    'label' => $pkSubName,
+                    'parent' => $pkParent,
+                    'sub' => $pkSubName,
+                    'icon' => $pkSub['icon'] ?? ($pkData['icon'] ?? 'fas fa-tag'),
+                    'search' => \Illuminate\Support\Str::of($pkSubName)->lower()->ascii()->toString(),
+                ];
+            }
+        }
+
+        // --- activite recente : trois chiffres mesures, mis en cache 10 minutes ---
+        $pkActivity = Cache::remember('feed:activity:v1', 600, function () {
+            $lines = [];
+
+            $weekRequests = Ad::marketplaceActive()
+                ->where('service_type', 'demande')
+                ->where('created_at', '>=', now()->subWeek())
+                ->count();
+            if ($weekRequests > 0) {
+                $lines[] = [
+                    'icon' => 'fas fa-bolt',
+                    'html' => '<b>'.$weekRequests.' demande'.($weekRequests > 1 ? 's' : '').'</b> publiee'
+                        .($weekRequests > 1 ? 's' : '').' cette semaine',
+                ];
+            }
+
+            $newProviders = \App\Models\User::where('created_at', '>=', now()->subDays(30))
+                ->where(function ($query) {
+                    $query->where('user_type', 'professionnel')
+                        ->orWhere('is_service_provider', true);
+                })
+                ->count();
+            if ($newProviders > 0) {
+                $lines[] = [
+                    'icon' => 'fas fa-user-plus',
+                    'html' => '<b>'.$newProviders.' prestataire'.($newProviders > 1 ? 's' : '').'</b> '
+                        .($newProviders > 1 ? 'ont' : 'a').' rejoint Prokejem ces 30 derniers jours',
+                ];
+            }
+
+            $activeAds = Ad::marketplaceActive()->count();
+            if ($activeAds > 0) {
+                $lines[] = [
+                    'icon' => 'fas fa-clipboard-list',
+                    'html' => '<b>'.$activeAds.' annonce'.($activeAds > 1 ? 's' : '').'</b> active'
+                        .($activeAds > 1 ? 's' : '').' en ce moment',
+                ];
+            }
+
+            return $lines;
+        });
+
+        // --- vues du profil ce mois-ci : chiffre reel, dedoublonne par visiteur ---
+        // Une seule requete, et uniquement pour un prestataire : c'est le seul
+        // role a qui ce chiffre est montre.
+        $pkProfileViews = 0;
+        if ($pkRole === 'provider' && $user?->exists) {
+            $pkProfileViews = app(\App\Services\ProfileViewCounter::class)->countThisMonth($user);
+        }
+
+        // --- abonnement : jamais permanent, seulement adosse a une valeur reelle ---
+        // On ne propose l'abonnement que s'il y a quelque chose de vrai a montrer :
+        // soit des vues de profil, soit des demandes compatibles.
+        $pkShowUpsell = $pkRole === 'provider'
+            && $user
+            && ! $user->hasActiveProSubscription()
+            && ($pkProfileViews > 0 || $pkMatchingCount > 0);
+
+        // La maquette a ete fusionnee dans la page d'accueil : une seule vue.
+        $feedView = 'feed.index';
 
         return view($feedView, compact(
             'missionCategories',
@@ -387,7 +549,23 @@ class FeedController extends Controller
             'onboardingCategories',
             'proSuggestions',
             'proProfileCompletion',
-            'adsMapData'
+            'adsMapData',
+            // page d'accueil
+            'pkRole',
+            'pkFeedTitle',
+            'pkFeedAds',
+            'pkSavedAdIds',
+            'pkQuickCategories',
+            'pkSearchIndex',
+            'pkMatchingCount',
+            'pkVerificationStatus',
+            'pkIsVerified',
+            'pkSuggestion',
+            'pkSuggestionUrl',
+            'pkCompletion',
+            'pkActivity',
+            'pkShowUpsell',
+            'pkProfileViews'
         ));
     }
 

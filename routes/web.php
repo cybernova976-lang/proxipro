@@ -177,8 +177,10 @@ Route::get('/purchase/invoice', [PurchaseInvoiceController::class, 'download'])-
 // Routes pour le feed (page d'accueil après connexion)
 Route::middleware(['auth', 'geo'])->group(function () {
     Route::get('/feed', [FeedController::class, 'index'])->name('feed');
-    Route::get('/nouveau-feed', [FeedController::class, 'index'])->name('feed.mockup');
-    Route::get('/feed-maquette', fn () => redirect()->route('feed.mockup'))
+    // La maquette a ete fusionnee dans la page d'accueil : ces deux adresses
+    // ne servent plus qu'a ne pas casser les liens deja partages.
+    Route::get('/nouveau-feed', fn () => redirect()->route('feed'))->name('feed.mockup');
+    Route::get('/feed-maquette', fn () => redirect()->route('feed'))
         ->name('feed.mockup.legacy');
     Route::get('/feed-test', [FeedController::class, 'indexTest'])->name('feed.test');
 

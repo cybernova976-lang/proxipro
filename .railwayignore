@@ -7,3 +7,9 @@
 .codex-artifacts/
 tmp/
 Guide_technique_Prokejem.txt
+
+# Maquettes de travail conservees a la racine du projet.
+# On ne cible que ces deux fichiers : public/offline.html est la page
+# hors-ligne de la PWA et doit continuer d'etre deployee.
+/feed-accueil-standalone.html
+/maquette-nouveau-feed-prokejem.html

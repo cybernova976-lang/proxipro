@@ -13,7 +13,7 @@ class NewFeedMockupFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_mockup_route_renders_role_based_feed_without_replacing_current_feed(): void
+    public function test_legacy_mockup_routes_redirect_to_the_unified_role_based_feed(): void
     {
         $this->assertFalse(Route::has('feed.mockup.preview'));
 
@@ -50,54 +50,35 @@ class NewFeedMockupFeatureTest extends TestCase
 
         $viewer->savedAds()->attach($ad->id);
 
-        $mockup = $this->withoutMiddleware()
+        $this->withoutMiddleware()
             ->actingAs($viewer)
-            ->get(route('feed.mockup'));
-
-        $this->assertFileExists(public_path('css/feed-mockup.css'));
-
-        $mockup
-            ->assertOk()
-            ->assertViewIs('feed.mockup')
-            ->assertSee('Nouvelle expérience')
-            ->assertDontSee('Maquette fonctionnelle')
-            ->assertSee('Vue client')
-            ->assertSee('Vue prestataire')
-            ->assertSee('Demande test prioritaire')
-            ->assertSee('Votre prochaine action')
-            ->assertSee('Encore sans réponse')
-            ->assertSee('data-priority="1"', false)
-            ->assertSee('mf-mobile-provider-action', false)
-            ->assertDontSee('3x plus')
-            ->assertSee('data-mode-panel="client"', false)
-            ->assertSee('data-mode-panel="provider"', false)
-            ->assertSee('id="mockOpportunitySearch"', false)
-            ->assertSee('id="mockRequestDialog"', false)
-            ->assertSee('data-save-ad', false)
-            ->assertSee('data-ad-id="'.$ad->id.'"', false)
-            ->assertSee('aria-pressed="true"', false)
-            ->assertSee('/toggle-save', false)
-            ->assertSee(route('demand.create'), false)
-            ->assertSee(asset('css/feed-mockup.css'), false)
-            ->assertSee(asset('css/feed-mockup.css').'?v=', false);
+            ->get(route('feed.mockup'))
+            ->assertRedirect(route('feed'));
 
         $this->assertSame('/nouveau-feed', route('feed.mockup', [], false));
 
         $this->withoutMiddleware()
             ->actingAs($viewer)
             ->get(route('feed.mockup.legacy'))
-            ->assertRedirect(route('feed.mockup'));
+            ->assertRedirect(route('feed'));
 
-        $currentFeed = $this->withoutMiddleware()
+        $this->assertFileExists(public_path('css/feed.css'));
+        $this->assertFileExists(public_path('js/feed.js'));
+
+        $feed = $this->withoutMiddleware()
             ->actingAs($viewer)
             ->get(route('feed'));
 
-        $currentFeed
+        $feed
             ->assertOk()
             ->assertViewIs('feed.index')
-            ->assertSee('Découvrez la nouvelle expérience Prokejem')
-            ->assertSee('Découvrir le nouveau feed')
-            ->assertSee(route('feed.mockup'), false);
+            ->assertSee('id="pkFeed"', false)
+            ->assertSee('Demande test prioritaire')
+            ->assertSee('data-pk-save="'.$ad->id.'"', false)
+            ->assertSee('aria-pressed="true"', false)
+            ->assertSee(route('ads.create', ['type' => 'service']), false)
+            ->assertSee(asset('css/feed.css'), false)
+            ->assertSee(asset('js/feed.js'), false);
     }
 
     public function test_client_view_starts_with_the_active_request_and_its_real_proposal_count(): void
@@ -133,12 +114,13 @@ class NewFeedMockupFeatureTest extends TestCase
 
         $this->withoutMiddleware()
             ->actingAs($client)
-            ->get(route('feed.mockup', ['mode' => 'client']))
+            ->get(route('feed'))
             ->assertOk()
             ->assertSee('Votre demande en cours')
             ->assertSee('Réparer la porte du garage')
-            ->assertSee('1 proposition reçue')
-            ->assertSee('Suivre ma demande');
+            ->assertSee('1 prestataire')
+            ->assertSee('vous a répondu')
+            ->assertSee('Voir les 1 réponse');
     }
 
     public function test_new_feed_favorite_action_persists_and_removes_the_saved_ad(): void

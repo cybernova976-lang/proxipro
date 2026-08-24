@@ -66,4 +66,14 @@ class MobileExperienceFeatureTest extends TestCase
         $this->assertStringContainsString('aria-controls="adminSidebar" aria-expanded="false"', $layout);
         $this->assertStringNotContainsString('margin-left: -250px;', $layout);
     }
+
+    public function test_admin_layout_offers_a_direct_return_to_the_feed(): void
+    {
+        $layout = file_get_contents(resource_path('views/admin/layouts/app.blade.php'));
+
+        $this->assertSame(2, substr_count($layout, 'href="{{ route(\'feed\') }}"'));
+        $this->assertStringContainsString('id="adminFeedReturn"', $layout);
+        $this->assertStringContainsString('Retourner à la page d’accueil feed', $layout);
+        $this->assertStringContainsString('admin-feed-link-label', $layout);
+    }
 }

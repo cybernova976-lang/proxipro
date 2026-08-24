@@ -53,7 +53,10 @@ class FeedMarketplaceRulesFeatureTest extends TestCase
             ->get(route('feed'));
 
         $response->assertOk()
-            ->assertSee('const obmCatsData =', false);
+            ->assertViewIs('feed.index')
+            ->assertViewHas('pkSearchIndex', fn (array $index) => collect($index)->isNotEmpty())
+            ->assertSee('id="pkIntentField"', false)
+            ->assertSee('id="pkFeedConfig"', false);
     }
 
     public function test_targeted_request_is_only_visible_to_matching_providers(): void

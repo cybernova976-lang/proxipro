@@ -772,6 +772,32 @@ class User extends Authenticatable
     }
 
     /**
+     * Vues de profil dedoublonnees (une ligne par visiteur et par jour).
+     */
+    public function profileViews()
+    {
+        return $this->hasMany(ProfileView::class, 'profile_user_id');
+    }
+
+    /**
+     * Nombre de vues de profil depuis une date donnee (incluse).
+     */
+    public function profileViewsSince(\Carbon\CarbonInterface $since): int
+    {
+        return $this->profileViews()
+            ->where('viewed_on', '>=', $since->toDateString())
+            ->count();
+    }
+
+    /**
+     * Nombre de vues de profil depuis le premier jour du mois en cours.
+     */
+    public function profileViewsThisMonth(): int
+    {
+        return $this->profileViewsSince(now()->startOfMonth());
+    }
+
+    /**
      * Avis donnés par l'utilisateur
      */
     public function reviewsGiven()

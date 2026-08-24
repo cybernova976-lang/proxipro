@@ -81,6 +81,13 @@
             background: rgba(255,255,255,0.1);
             border-left: 4px solid #3498db;
         }
+
+        .admin-feed-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            white-space: nowrap;
+        }
         
         .stat-card {
             border-radius: 10px;
@@ -144,6 +151,10 @@
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
+            }
+
+            .admin-feed-link-label {
+                display: none;
             }
 
             .main-content .container-fluid {
@@ -328,8 +339,8 @@
             </li>
             @endif
             <li class="mt-4">
-                <a href="{{ url('/') }}">
-                    <i class="fas fa-arrow-left me-2"></i> Retour au site
+                <a href="{{ route('feed') }}">
+                    <i class="fas fa-arrow-left me-2"></i> Retour au feed
                 </a>
             </li>
             <li>
@@ -350,10 +361,18 @@
     <div class="main-content">
         <nav class="navbar navbar-light bg-white shadow-sm rounded mb-4">
             <div class="container-fluid">
-                <button type="button" class="btn btn-outline-primary d-md-none" id="sidebarToggle"
-                        aria-controls="adminSidebar" aria-expanded="false" aria-label="Ouvrir le menu d’administration">
-                    <i class="fas fa-bars"></i>
-                </button>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-outline-primary d-md-none" id="sidebarToggle"
+                            aria-controls="adminSidebar" aria-expanded="false" aria-label="Ouvrir le menu d’administration">
+                        <i class="fas fa-bars" aria-hidden="true"></i>
+                    </button>
+
+                    <a href="{{ route('feed') }}" class="btn btn-outline-secondary admin-feed-link"
+                       id="adminFeedReturn" aria-label="Retourner à la page d’accueil feed">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                        <span class="admin-feed-link-label">Retour au feed</span>
+                    </a>
+                </div>
                 
                 <div class="d-flex align-items-center">
                     <span class="navbar-text me-3">

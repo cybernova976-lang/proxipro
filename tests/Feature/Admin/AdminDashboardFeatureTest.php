@@ -23,6 +23,8 @@ class AdminDashboardFeatureTest extends TestCase
         $response->assertSee(route('admin.verifications'), false);
         $response->assertSee(route('admin.service-orders.index'), false);
         $response->assertSee(route('admin.export'), false);
+        $response->assertSee('id="adminFeedReturn"', false);
+        $response->assertSee(route('feed'), false);
     }
 
     public function test_admin_can_export_the_platform_data_as_csv(): void

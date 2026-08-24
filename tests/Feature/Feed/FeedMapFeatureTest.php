@@ -11,21 +11,20 @@ class FeedMapFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_feed_displays_map_section_when_ads_have_coordinates(): void
+    public function test_feed_routes_geographic_exploration_to_the_full_announcements_page(): void
     {
         $viewer = User::factory()->create();
-        $author = User::factory()->create([
-            'plan' => 'pro',
-        ]);
+        $author = User::factory()->create(['plan' => 'pro']);
 
         Ad::create([
-            'title' => 'Annonce cartographiee',
-            'description' => 'Une annonce visible sur la carte',
+            'title' => 'Annonce cartographiée',
+            'description' => 'Une annonce géolocalisée accessible depuis la liste complète.',
             'category' => 'Plomberie',
             'location' => 'Mamoudzou',
             'price' => 110,
             'service_type' => 'offre',
             'status' => 'active',
+            'visibility' => 'public',
             'user_id' => $author->id,
             'country' => 'Mayotte',
             'latitude' => -12.7806,
@@ -34,26 +33,26 @@ class FeedMapFeatureTest extends TestCase
 
         $response = $this->withoutMiddleware()->actingAs($viewer)->get(route('feed'));
 
-        $response->assertOk();
-        $response->assertSee('Carte des annonces');
-        $response->assertSee('adsFeedMap');
-        $response->assertSee('Annonce cartographiee');
+        $response
+            ->assertOk()
+            ->assertSee('Annonce cartographiée')
+            ->assertSee('Voir toutes les annonces, la carte et les filtres')
+            ->assertSee(route('ads.index'), false)
+            ->assertDontSee('id="adsFeedMap"', false);
     }
 
-    public function test_feed_map_uses_dedicated_marker_data_beyond_first_page(): void
+    public function test_geographic_payload_keeps_markers_beyond_the_first_results_page(): void
     {
-        $viewer = User::factory()->create([
-            'user_type' => 'particulier',
-        ]);
+        $viewer = User::factory()->create(['user_type' => 'particulier']);
         $author = User::factory()->create([
             'user_type' => 'professionnel',
             'plan' => 'pro',
         ]);
 
-        foreach (range(1, 13) as $index) {
-            Ad::create([
-                'title' => 'Annonce carte ' . $index,
-                'description' => 'Annonce geolocalisee pour tester la carte',
+        $ads = collect(range(1, 13))->map(function (int $index) use ($author): Ad {
+            return Ad::create([
+                'title' => 'Annonce carte '.$index,
+                'description' => 'Annonce géolocalisée pour tester les marqueurs.',
                 'category' => 'Plomberie',
                 'location' => 'Mamoudzou',
                 'price' => 100 + $index,
@@ -67,11 +66,17 @@ class FeedMapFeatureTest extends TestCase
                 'created_at' => now()->subMinutes($index),
                 'updated_at' => now()->subMinutes($index),
             ]);
-        }
+        });
 
-        $response = $this->withoutMiddleware()->actingAs($viewer)->get(route('feed'));
+        $response = $this->withoutMiddleware()->actingAs($viewer)->getJson(route('feed.filter-ads', [
+            'format' => 'json',
+        ]));
 
         $response->assertOk();
-        $response->assertSee('Annonce carte 13');
+
+        $markerIds = collect($response->json('map_markers'))->pluck('id')->map(fn ($id) => (int) $id);
+
+        $this->assertCount(13, $markerIds);
+        $this->assertContains($ads->last()->id, $markerIds);
     }
 }

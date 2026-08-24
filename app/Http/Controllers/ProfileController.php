@@ -297,10 +297,10 @@ class ProfileController extends Controller
             && (Auth::id() === $user->id || (bool) (Auth::user()->is_admin ?? false));
         abort_if(! $user->profile_public && ! $canViewPrivateProfile, 404);
 
-        // Incrémenter le compteur de vues du profil (seulement si un autre utilisateur visite)
-        if (! Auth::check() || Auth::id() !== $user->id) {
-            $user->increment('profile_views');
-        }
+        // Compter la vue du profil. Le service ecarte l'auteur du profil, les
+        // robots, et ne compte qu'une fois par visiteur et par jour : un simple
+        // rafraichissement de la page ne fait plus monter le compteur.
+        app(\App\Services\ProfileViewCounter::class)->record($user, Auth::user(), request());
 
         // Récupérer les annonces actives de l'utilisateur
         $ads = Ad::where('user_id', $user->id)

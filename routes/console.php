@@ -74,3 +74,10 @@ Schedule::command('usage:prune --months=25')
     ->dailyAt('02:30')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/usage-prune.log'));
+
+// Les vues de profil detaillees sont conservees 13 mois : de quoi comparer un
+// mois a celui de l'annee precedente, sans garder d'historique inutile.
+Schedule::command('profile-views:prune --months=13')
+    ->dailyAt('02:45')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/profile-views-prune.log'));
