@@ -2,7 +2,7 @@
 @section('title', 'Abonnement Pro - Espace Pro')
 
 @section('content')
-<div class="pro-content-header" style="max-width: 960px; margin-left: auto; margin-right: auto;">
+<div class="pro-content-header subscription-page-header">
     <div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-1" style="font-size: 0.8rem;">
@@ -16,19 +16,19 @@
 </div>
 
 @if(session('success'))
-<div class="alert alert-success alert-dismissible fade show" role="alert" style="border-radius: 12px; max-width: 960px; margin-left: auto; margin-right: auto;">
+<div class="alert alert-success alert-dismissible fade show subscription-page-alert" role="alert">
     <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 @endif
 @if(session('error'))
-<div class="alert alert-danger alert-dismissible fade show" role="alert" style="border-radius: 12px; max-width: 960px; margin-left: auto; margin-right: auto;">
+<div class="alert alert-danger alert-dismissible fade show subscription-page-alert" role="alert">
     <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 @endif
 @if(session('info'))
-<div class="alert alert-info alert-dismissible fade show" role="alert" style="border-radius: 12px; max-width: 960px; margin-left: auto; margin-right: auto;">
+<div class="alert alert-info alert-dismissible fade show subscription-page-alert" role="alert">
     <i class="fas fa-info-circle me-2"></i>{{ session('info') }}
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
@@ -189,7 +189,7 @@
         @endphp
 
         @foreach($packs as $pack)
-        <div class="col-md-6 col-lg-4">
+        <div class="col-md-6 col-xl-4">
             <div class="pts-pack-mini {{ !empty($pack['popular']) ? 'pts-pack-featured' : '' }} {{ !empty($pack['best']) ? 'pts-pack-best' : '' }}">
                 @if(!empty($pack['popular']))
                     <span class="pts-mini-badge" style="background: #f59e0b;">Populaire</span>
@@ -201,11 +201,11 @@
                         <i class="{{ $pack['icon'] }}"></i>
                     </div>
                     <div class="flex-grow-1">
-                        <div class="fw-bold" style="font-size: 0.85rem; line-height: 1.2;">{{ $pack['name'] }}</div>
-                        <div style="font-size: 0.72rem; color: #94a3b8;">{{ $pack['pts'] }} points · {{ number_format($pack['price'] / $pack['pts'], 2, ',', ' ') }}€/pt</div>
+                        <div class="fw-bold pts-pack-name">{{ $pack['name'] }}</div>
+                        <div class="pts-pack-meta">{{ $pack['pts'] }} points · {{ number_format($pack['price'] / $pack['pts'], 2, ',', ' ') }}€/pt</div>
                     </div>
                     <div class="text-end">
-                        <div class="fw-bold" style="font-size: 1.1rem; color: #0f172a;">{{ number_format($pack['price'], 0) }}€</div>
+                        <div class="fw-bold pts-pack-price">{{ number_format($pack['price'], 0) }}€</div>
                     </div>
                     <button class="btn btn-sm btn-pts-mini" onclick="purchasePoints('{{ $pack['key'] }}', this)">
                         <i class="fas fa-shopping-cart"></i>
@@ -292,11 +292,16 @@
 @endif
 
 <style>
-/* Constrain card blocks width on subscription page */
+/* Let the subscription workspace use the same desktop width as the other Pro pages. */
+.subscription-page-header,
+.subscription-page-alert,
 .sub-page-card {
-    max-width: 960px;
-    margin-left: auto;
-    margin-right: auto;
+    width: 100%;
+    max-width: none;
+}
+
+.subscription-page-alert {
+    border-radius: 12px;
 }
 
 /* Subscription plan cards - compact */
@@ -379,6 +384,18 @@
     font-size: 0.85rem;
     flex-shrink: 0;
 }
+.pts-pack-name {
+    font-size: 0.85rem;
+    line-height: 1.25;
+}
+.pts-pack-meta {
+    color: #94a3b8;
+    font-size: 0.72rem;
+}
+.pts-pack-price {
+    color: #0f172a;
+    font-size: 1.1rem;
+}
 .btn-pts-mini {
     background: linear-gradient(135deg, #0f172a, #1e3a5f);
     color: white;
@@ -393,6 +410,44 @@
     background: linear-gradient(135deg, #1e3a5f, #2563eb);
     color: white;
     transform: scale(1.05);
+}
+
+@media (min-width: 1200px) {
+    .subscription-page-header {
+        margin-bottom: 2rem;
+    }
+
+    .sub-page-card {
+        padding: 1.75rem;
+    }
+
+    .pts-pack-mini {
+        min-height: 78px;
+        padding: 15px 16px;
+    }
+
+    .pts-mini-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 1rem;
+    }
+
+    .pts-pack-name {
+        font-size: 0.95rem;
+    }
+
+    .pts-pack-meta {
+        font-size: 0.78rem;
+    }
+
+    .pts-pack-price {
+        font-size: 1.2rem;
+    }
+
+    .btn-pts-mini {
+        min-width: 40px;
+        min-height: 40px;
+    }
 }
 
 @media (max-width: 576px) {

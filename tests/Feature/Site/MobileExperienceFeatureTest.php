@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Site;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -75,5 +76,29 @@ class MobileExperienceFeatureTest extends TestCase
         $this->assertStringContainsString('id="adminFeedReturn"', $layout);
         $this->assertStringContainsString('Retourner à la page d’accueil feed', $layout);
         $this->assertStringContainsString('admin-feed-link-label', $layout);
+    }
+
+    public function test_pro_subscription_uses_the_desktop_workspace_without_mobile_chrome(): void
+    {
+        $layout = file_get_contents(resource_path('views/pro/layout.blade.php'));
+        $subscription = file_get_contents(resource_path('views/pro/subscription.blade.php'));
+
+        $this->assertMatchesRegularExpression(
+            '/@media \(min-width: 992px\).*?\.pro-sidebar-toggle\s*\{\s*display: none;/s',
+            $layout
+        );
+        $this->assertStringContainsString('pro-content-header subscription-page-header', $subscription);
+        $this->assertStringContainsString('.subscription-page-header,', $subscription);
+        $this->assertStringContainsString('max-width: none;', $subscription);
+        $this->assertStringContainsString('@media (min-width: 1200px)', $subscription);
+        $this->assertStringNotContainsString('max-width: 960px', $subscription);
+
+        $provider = User::factory()->create(['is_service_provider' => true]);
+
+        $this->actingAs($provider)
+            ->get(route('pro.subscription'))
+            ->assertOk()
+            ->assertSee('pro-content-header subscription-page-header', false)
+            ->assertSee('sub-page-card', false);
     }
 }

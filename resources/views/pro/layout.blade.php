@@ -605,6 +605,10 @@
     }
 
     @media (min-width: 992px) {
+        .pro-sidebar-toggle {
+            display: none;
+        }
+
         .pro-sidebar {
             transform: translateX(0) !important;
             display: block !important;
