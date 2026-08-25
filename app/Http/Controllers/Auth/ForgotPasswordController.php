@@ -48,4 +48,24 @@ class ForgotPasswordController extends Controller
             ? $this->sendResetLinkResponse($request, $response)
             : $this->sendResetLinkFailedResponse($request, $response);
     }
+
+    /**
+     * Confirmation d'envoi.
+     *
+     * Laravel ne renvoie que le message de statut. On y ajoute l'adresse
+     * saisie afin que la page puisse l'afficher : c'est ce qui permet a
+     * l'utilisateur de reperer immediatement une faute de frappe, cause la
+     * plus frequente d'un e-mail « jamais recu ».
+     *
+     * L'adresse affichee est celle que l'utilisateur vient de taper, jamais
+     * une donnee tiree de la base : cela ne revele donc pas si un compte
+     * existe. Blade l'echappe a l'affichage.
+     */
+    protected function sendResetLinkResponse(Request $request, $response)
+    {
+        return back()->with([
+            'status' => trans($response),
+            'reset_link_email' => $request->input('email'),
+        ]);
+    }
 }
