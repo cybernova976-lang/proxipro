@@ -35,3 +35,5 @@ tmpclaude-*
 /database/*.sqlite*
 /structure_check.txt
 /feed-accueil-standalone.html
+/tmp/
+/.codex-artifacts/

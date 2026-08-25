@@ -1,0 +1,593 @@
+GUIDE TECHNIQUE DE PROKEJEM
+Architecture, hébergement, réseau, sécurité, messagerie et paiements
+Mise à jour : 12 août 2026
+
+======================================================================
+1. À QUOI SERT CE DOCUMENT ?
+======================================================================
+
+Ce document explique avec des mots simples comment fonctionne Prokejem et
+pourquoi les différentes technologies ont été choisies. Il peut servir de
+référence lorsque vous configurez Railway, OVHcloud, Cloudflare, Google,
+Facebook, la messagerie ou Stripe.
+
+Prokejem est une plateforme de mise en relation. Elle permet notamment :
+
+- aux particuliers de publier leurs besoins ;
+- aux professionnels et prestataires de publier leurs services ;
+- aux professionnels de répondre aux demandes qui les concernent ;
+- aux utilisateurs de communiquer par messagerie ;
+- aux professionnels d'utiliser un espace Pro avec devis et factures ;
+- à l'administration de gérer les utilisateurs, annonces, abonnements,
+  vérifications, paiements, signalements et messages de contact.
+
+Il ne s'agit donc pas d'un simple site vitrine. Prokejem est une application
+web dynamique, avec des comptes utilisateurs, une base de données, des règles
+métier, des paiements et une administration.
+
+
+======================================================================
+2. LES GRANDES PARTIES DU SYSTÈME
+======================================================================
+
+Le fonctionnement général est le suivant :
+
+Utilisateur
+   |
+   v
+prokejem.fr / www.prokejem.fr
+   |
+   v
+Cloudflare : DNS, protection, certificat HTTPS, filtrage et cache
+   |
+   v
+Railway : hébergement de l'application Laravel
+   |
+   +--> PostgreSQL : données des comptes, annonces, paiements, etc.
+   |
+   +--> OVHcloud Zimbra : messagerie contact@prokejem.fr
+   |
+   +--> Google / Facebook : connexion sociale OAuth
+   |
+   +--> Stripe : paiements lorsque le compte marchand sera opérationnel
+
+OVHcloud reste le bureau d'enregistrement du nom de domaine prokejem.fr.
+Cloudflare gère actuellement le DNS public du domaine. Railway exécute le
+site. Chaque service a donc un rôle différent et complémentaire.
+
+
+======================================================================
+3. POURQUOI LARAVEL EST ADAPTÉ À PROKEJEM
+======================================================================
+
+Laravel est un framework PHP. Un framework est une structure de développement
+qui fournit des outils déjà organisés pour créer une application de manière
+plus fiable. PHP est le langage exécuté sur le serveur.
+
+Laravel est particulièrement adapté à Prokejem pour plusieurs raisons :
+
+1. Comptes et sécurité
+   Laravel possède des mécanismes solides pour l'authentification, les mots de
+   passe chiffrés, les sessions, les autorisations et la protection des
+   formulaires.
+
+2. Base de données
+   Eloquent, l'outil de gestion de données de Laravel, facilite les relations
+   entre utilisateurs, annonces, catégories, abonnements, transactions,
+   messages et factures.
+
+3. Règles métier
+   Les quotas de publication, les statuts de compte, les badges, les points,
+   les vérifications et les abonnements peuvent être regroupés dans des
+   services clairement testables.
+
+4. Administration
+   Laravel permet d'avoir un espace public, un espace utilisateur, un espace
+   professionnel et un espace administrateur dans la même application, tout
+   en contrôlant précisément les droits d'accès.
+
+5. E-mails et tâches différées
+   Il gère les e-mails, notifications et files d'attente. Une file d'attente
+   permet d'exécuter certaines actions en arrière-plan afin de ne pas ralentir
+   la page affichée à l'utilisateur.
+
+6. Paiement
+   Laravel s'intègre bien à Stripe et permet de sécuriser le traitement des
+   confirmations de paiement et des webhooks.
+
+7. Tests
+   Le projet peut comporter des tests automatiques afin de vérifier les règles
+   essentielles après chaque modification.
+
+Laravel n'est pas « meilleur » dans tous les cas, mais il correspond bien à
+une marketplace comme Prokejem : application transactionnelle, beaucoup de
+règles, plusieurs types d'utilisateurs et besoin d'une administration forte.
+
+
+======================================================================
+4. COMMENT UNE PAGE EST AFFICHÉE
+======================================================================
+
+Lorsqu'un visiteur ouvre https://www.prokejem.fr :
+
+1. Le navigateur demande où se trouve www.prokejem.fr.
+2. Le système DNS répond que le domaine passe par Cloudflare.
+3. Cloudflare reçoit la demande, applique ses protections et transmet la
+   requête à Railway.
+4. Railway remet la requête à l'application Laravel sur son port interne.
+5. Laravel examine la route demandée, par exemple /feed ou /connexion.
+6. Un contrôleur prépare les informations nécessaires.
+7. Laravel interroge PostgreSQL si des données sont nécessaires.
+8. Une vue Blade construit la page HTML.
+9. La réponse remonte par Railway puis Cloudflare jusqu'au navigateur.
+
+Une route est l'adresse interne d'une fonction du site. Un contrôleur est le
+composant qui décide quoi faire. Une vue Blade est le modèle de présentation
+HTML généré par Laravel.
+
+
+======================================================================
+5. RAILWAY : L'HÉBERGEMENT DE L'APPLICATION
+======================================================================
+
+Railway est la plateforme qui exécute le code de Prokejem. Elle récupère les
+mises à jour depuis GitHub, construit l'application et lance le serveur.
+
+Railway héberge actuellement :
+
+- l'application Laravel ;
+- le service PostgreSQL ;
+- les variables d'environnement ;
+- les journaux techniques ;
+- le déploiement automatique après les mises à jour GitHub.
+
+Le port 8080 est le port interne sur lequel le serveur web de l'application
+écoute dans Railway. Un port peut être comparé à une porte numérotée : Railway
+sait par quelle porte transmettre les requêtes au bon service. Les visiteurs
+ne tapent pas « :8080 » car Railway et Cloudflare gèrent cela en arrière-plan.
+
+Railway fournit aussi une adresse technique en up.railway.app. Elle reste utile
+pour les diagnostics, mais l'adresse publique normale doit être
+https://www.prokejem.fr.
+
+
+======================================================================
+6. OVHCLOUD : DOMAINE ET MESSAGERIE
+======================================================================
+
+OVHcloud est le bureau d'enregistrement de prokejem.fr. Cela signifie que le
+nom de domaine a été acheté et est renouvelé chez OVHcloud.
+
+OVHcloud fournit également la messagerie Zimbra utilisée pour
+contact@prokejem.fr. Le domaine et la messagerie peuvent être chez OVHcloud
+même si le site lui-même est hébergé chez Railway.
+
+Un registrar, ou bureau d'enregistrement, est l'entreprise qui enregistre le
+nom de domaine auprès du registre compétent et gère son renouvellement.
+
+
+======================================================================
+7. DNS : L'ANNUAIRE D'INTERNET
+======================================================================
+
+DNS signifie Domain Name System. Il traduit un nom facile à retenir, comme
+prokejem.fr, en informations techniques permettant de joindre les services.
+
+Principaux types d'enregistrements utilisés :
+
+- A : fait pointer un nom vers une adresse IPv4.
+- AAAA : fait pointer un nom vers une adresse IPv6.
+- CNAME : crée un alias vers un autre nom de domaine.
+- MX : indique les serveurs qui reçoivent les e-mails du domaine.
+- TXT : stocke du texte de vérification ou des politiques comme SPF et DMARC.
+- NS : indique quels serveurs sont responsables de la zone DNS.
+- DS : relie le domaine à DNSSEC chez le registre.
+
+La zone DNS est la liste complète des enregistrements d'un domaine.
+
+Pour Prokejem, les noms du site dirigent vers les cibles fournies par Railway.
+Les enregistrements MX restent dirigés vers les serveurs de messagerie OVH.
+
+
+======================================================================
+8. CLOUDFLARE ET LES SERVEURS LUCY / NILE
+======================================================================
+
+Cloudflare se place entre les visiteurs et Railway. Il gère désormais la zone
+DNS de prokejem.fr et protège le trafic web.
+
+Les serveurs suivants ont été attribués à Prokejem :
+
+- lucy.ns.cloudflare.com
+- nile.ns.cloudflare.com
+
+Ce sont des serveurs de noms autoritaires, appelés nameservers ou serveurs NS.
+Ils ne sont ni des boîtes e-mail ni des serveurs contenant le code du site.
+Leur rôle est de répondre officiellement aux questions DNS concernant
+prokejem.fr.
+
+Deux serveurs sont utilisés pour assurer la redondance : si l'un rencontre un
+problème, l'autre peut continuer à répondre.
+
+Cloudflare est utile pour :
+
+- cacher l'adresse technique directe de l'origine ;
+- absorber ou filtrer une partie des attaques ;
+- atténuer les attaques DDoS ;
+- fournir le HTTPS au visiteur ;
+- appliquer des règles de sécurité ;
+- mettre en cache certains contenus statiques ;
+- améliorer la rapidité grâce à son réseau mondial ;
+- rediriger proprement prokejem.fr vers www.prokejem.fr.
+
+Le nuage orange de Cloudflare signifie « proxifié ». Le visiteur passe d'abord
+par Cloudflare. Le nuage gris signifie « DNS uniquement » : Cloudflare indique
+la destination, mais ne fait pas transiter ce trafic dans son proxy. Les
+enregistrements de messagerie, de vérification, DKIM et DMARC doivent
+généralement rester en DNS uniquement.
+
+
+======================================================================
+9. HTTPS, TLS ET CERTIFICATS
+======================================================================
+
+HTTPS est la version sécurisée de HTTP. Il chiffre les échanges entre le
+navigateur et le site. Le cadenas du navigateur indique qu'un certificat est
+utilisé.
+
+TLS est le protocole de chiffrement utilisé par HTTPS. SSL est l'ancien nom,
+encore souvent employé dans les interfaces sous l'expression « SSL/TLS ».
+
+Avec le mode Full de Cloudflare :
+
+- la connexion entre le visiteur et Cloudflare est chiffrée ;
+- la connexion entre Cloudflare et Railway est également chiffrée.
+
+Il faut éviter le mode Flexible, car celui-ci ne chiffre pas correctement la
+partie entre Cloudflare et le serveur d'origine.
+
+
+======================================================================
+10. DNSSEC : PROTÉGER LES RÉPONSES DNS
+======================================================================
+
+DNSSEC signifie Domain Name System Security Extensions. Il ajoute une
+signature cryptographique aux informations DNS. Le but est d'empêcher qu'un
+attaquant falsifie une réponse DNS et redirige les visiteurs vers une fausse
+destination.
+
+Le principe est le suivant :
+
+1. Cloudflare signe la zone DNS.
+2. Cloudflare fournit un enregistrement DS.
+3. Le DS est ajouté chez OVHcloud, le registrar.
+4. Le registre .fr publie cette preuve.
+5. Les résolveurs peuvent vérifier la chaîne de confiance.
+
+L'enregistrement DS de Prokejem est actif chez OVHcloud et Cloudflare indique
+que prokejem.fr est protégé par DNSSEC.
+
+Attention : il ne faut jamais changer les serveurs DNS sans préparer DNSSEC.
+Un ancien enregistrement DS associé à de nouveaux serveurs non correspondants
+pourrait rendre le domaine inaccessible.
+
+
+======================================================================
+11. MESSAGERIE ZIMBRA ET SMTP
+======================================================================
+
+Zimbra est le service de messagerie utilisé pour la boîte
+contact@prokejem.fr. Cette boîte permet d'envoyer et de recevoir des e-mails
+professionnels.
+
+SMTP est le protocole utilisé pour envoyer les e-mails. IMAP est généralement
+utilisé pour consulter et synchroniser les messages reçus.
+
+Laravel peut envoyer les réponses de l'administration par SMTP en utilisant
+la boîte Zimbra. Les valeurs sensibles, notamment le mot de passe SMTP, sont
+enregistrées dans les variables Railway et ne doivent jamais être ajoutées au
+dépôt GitHub.
+
+La différence importante est la suivante :
+
+- la messagerie interne du site relie des comptes inscrits dans Prokejem ;
+- le formulaire de contact peut être utilisé par une personne non inscrite ;
+- la réponse à un message de contact doit donc être envoyée par e-mail à
+  l'adresse indiquée par le visiteur.
+
+
+======================================================================
+12. SPF, DKIM ET DMARC
+======================================================================
+
+Ces trois mécanismes protègent la réputation du domaine et limitent
+l'usurpation d'adresse e-mail.
+
+SPF
+---
+SPF signifie Sender Policy Framework. C'est un enregistrement TXT qui indique
+quels serveurs ont le droit d'envoyer des messages pour prokejem.fr.
+
+Le SPF doit autoriser les serveurs réellement utilisés, ici notamment le
+service de messagerie OVHcloud. Il ne faut normalement avoir qu'un seul
+enregistrement SPF par domaine.
+
+DKIM
+----
+DKIM signifie DomainKeys Identified Mail. Zimbra ajoute une signature
+cryptographique dans les e-mails sortants. Le destinataire vérifie cette
+signature à l'aide des clés publiées dans le DNS.
+
+Prokejem utilise les sélecteurs DKIM fournis par OVHcloud sous forme de CNAME.
+Ils doivent rester en « DNS uniquement » dans Cloudflare. Le diagnostic OVH
+indique désormais que la configuration DKIM est correcte et la signature a
+été activée.
+
+Un sélecteur est simplement un nom permettant au fournisseur de choisir la
+bonne clé DKIM. Plusieurs sélecteurs facilitent la rotation des clés.
+
+DMARC
+-----
+DMARC signifie Domain-based Message Authentication, Reporting and
+Conformance. Il indique aux destinataires quoi faire lorsqu'un e-mail échoue
+aux contrôles SPF et DKIM, et permet de recevoir des rapports.
+
+La politique initiale de Prokejem est volontairement en observation :
+
+v=DMARC1; p=none; rua=mailto:contact@prokejem.fr; adkim=r; aspf=r; pct=100
+
+- v=DMARC1 : version du protocole ;
+- p=none : observer sans rejeter les messages ;
+- rua : adresse recevant les rapports agrégés ;
+- adkim=r et aspf=r : alignement souple ;
+- pct=100 : politique appliquée à 100 % des messages.
+
+Après une période d'observation et lorsque toutes les sources légitimes sont
+identifiées, la politique pourra être renforcée vers p=quarantine, puis
+éventuellement p=reject. Il ne faut pas faire ce changement trop tôt, sinon
+des e-mails légitimes risquent d'être classés en spam ou refusés.
+
+
+======================================================================
+13. GOOGLE ET FACEBOOK OAUTH
+======================================================================
+
+OAuth est un protocole d'autorisation. Il permet à un utilisateur de se
+connecter avec Google ou Facebook sans donner son mot de passe Google ou
+Facebook à Prokejem.
+
+Déroulement simplifié :
+
+1. L'utilisateur clique sur « Continuer avec Google » ou Facebook.
+2. Il est envoyé vers le fournisseur.
+3. Le fournisseur demande son consentement.
+4. Il renvoie l'utilisateur vers une URL de callback autorisée.
+5. Prokejem reçoit un code sécurisé et demande les informations autorisées.
+6. Le compte est créé ou connecté.
+
+Callbacks de production :
+
+- https://www.prokejem.fr/auth/google/callback
+- https://www.prokejem.fr/auth/facebook/callback
+
+Une erreur redirect_uri_mismatch apparaît lorsqu'une adresse de callback
+envoyée par Prokejem ne correspond pas exactement à celle enregistrée chez le
+fournisseur. Le protocole, www, chemin et barre finale doivent correspondre.
+
+Les identifiants clients et secrets OAuth sont stockés dans Railway. Les
+secrets ne doivent jamais être partagés, affichés publiquement ou enregistrés
+dans GitHub.
+
+
+======================================================================
+14. STRIPE ET LES PAIEMENTS
+======================================================================
+
+Stripe est le prestataire prévu pour les paiements par carte : achats de
+points, boosts, vérification ou abonnements selon les fonctionnalités actives.
+
+Une intégration fiable ne doit pas considérer qu'un paiement est réussi
+uniquement parce que l'utilisateur revient sur une page de succès. La preuve
+principale doit être fournie par Stripe grâce à un webhook.
+
+Un webhook est un message automatique envoyé de serveur à serveur. Stripe
+informe Prokejem qu'un événement s'est produit, par exemple un paiement validé
+ou remboursé. Laravel vérifie la signature du webhook puis met à jour la
+transaction de manière idempotente.
+
+Idempotent signifie qu'un même événement reçu plusieurs fois ne doit pas
+créditer plusieurs fois les points ou l'abonnement.
+
+Tant que les vraies clés marchandes ne sont pas disponibles, le site doit
+rester en mode test ou désactiver clairement les fonctions nécessitant un
+encaissement réel. Les clés de test et de production ne doivent jamais être
+mélangées.
+
+
+======================================================================
+15. POSTGRESQL : LA BASE DE DONNÉES
+======================================================================
+
+PostgreSQL est le système qui conserve les données structurées de Prokejem :
+
+- comptes et profils ;
+- annonces et catégories ;
+- messages et notifications ;
+- abonnements et transactions ;
+- demandes de vérification ;
+- devis et factures ;
+- paramètres d'administration.
+
+Une migration Laravel décrit une modification de la structure de la base, par
+exemple l'ajout d'une colonne. Une sauvegarde doit exister avant toute opération
+risquée en production.
+
+
+======================================================================
+16. VARIABLES D'ENVIRONNEMENT RAILWAY
+======================================================================
+
+Les variables d'environnement sont des réglages séparés du code. Elles
+permettent de modifier la configuration sans publier les mots de passe dans
+GitHub.
+
+Exemples importants :
+
+- APP_ENV=production
+- APP_DEBUG=false
+- APP_URL=https://www.prokejem.fr
+- SESSION_DOMAIN=.prokejem.fr, si requis par la configuration des sessions
+- SESSION_SECURE_COOKIE=true
+- GOOGLE_REDIRECT_URI=https://www.prokejem.fr/auth/google/callback
+- FACEBOOK_REDIRECT_URI=https://www.prokejem.fr/auth/facebook/callback
+- MAIL_FROM_ADDRESS=contact@prokejem.fr
+- MAIL_FROM_NAME=Prokejem
+- variables SMTP Zimbra
+- variables de connexion PostgreSQL
+- clés OAuth Google et Facebook
+- clés Stripe et secret de webhook quand ils seront disponibles
+
+APP_DEBUG doit rester à false en production. Avec true, une erreur peut
+afficher des informations techniques sensibles aux visiteurs.
+
+
+======================================================================
+17. GITHUB ET DÉPLOIEMENT
+======================================================================
+
+Git est le système qui conserve l'historique des modifications du code.
+GitHub héberge le dépôt distant cybernova976-lang/proxipro.
+
+Un commit est un ensemble cohérent de modifications enregistré avec un
+message. Un push envoie les commits locaux vers GitHub. Railway détecte ensuite
+le nouveau commit, construit l'application et déploie la nouvelle version.
+
+Les fichiers contenant des mots de passe, clés API ou secrets ne doivent
+jamais être committés. Ils restent dans Railway.
+
+
+======================================================================
+18. CHECK-LIST DE PRODUCTION
+======================================================================
+
+Après chaque déploiement important, vérifier :
+
+- ouverture de https://www.prokejem.fr ;
+- redirection de prokejem.fr vers www.prokejem.fr ;
+- présence du cadenas HTTPS ;
+- inscription par e-mail ;
+- connexion par mot de passe ;
+- connexion Google ;
+- connexion Facebook ;
+- réinitialisation du mot de passe ;
+- réception du code de vérification ;
+- ajout et affichage d'une photo de profil ;
+- création, modification et suppression d'une annonce ;
+- responsive sur téléphone et ordinateur ;
+- envoi du formulaire de contact ;
+- réponse administrateur reçue par e-mail ;
+- diagnostics MX, SPF et DKIM chez OVHcloud ;
+- DMARC présent dans Cloudflare ;
+- DNSSEC actif chez OVHcloud et Cloudflare ;
+- journaux Railway sans erreur 500 ;
+- paiements test et webhooks avant toute activation réelle ;
+- sauvegarde de la base PostgreSQL.
+
+
+======================================================================
+19. GLOSSAIRE RAPIDE
+======================================================================
+
+API
+Interface permettant à deux logiciels de communiquer.
+
+Base de données
+Système organisé qui conserve les informations de l'application.
+
+Cache
+Copie temporaire d'un contenu afin de l'afficher plus rapidement.
+
+Callback
+Adresse vers laquelle un fournisseur renvoie l'utilisateur après une action.
+
+CDN
+Réseau mondial qui distribue les contenus au plus près des visiteurs.
+
+CNAME
+Alias DNS reliant un nom à un autre nom.
+
+Cookie de session
+Petit identifiant sécurisé permettant au site de reconnaître une connexion.
+
+DNS
+Annuaire qui traduit les noms de domaine en destinations techniques.
+
+DNSSEC
+Signature des données DNS pour éviter leur falsification.
+
+DKIM
+Signature cryptographique des e-mails sortants.
+
+DMARC
+Politique contrôlant les échecs SPF/DKIM et fournissant des rapports.
+
+DDoS
+Attaque qui surcharge un service avec un très grand nombre de requêtes.
+
+Framework
+Ensemble organisé d'outils servant de base à une application.
+
+HTTPS/TLS
+Chiffrement des échanges entre le navigateur et le site.
+
+MX
+Enregistrement DNS indiquant les serveurs qui reçoivent les e-mails.
+
+Nameserver / NS
+Serveur officiellement responsable des réponses DNS d'un domaine.
+
+OAuth
+Connexion déléguée à Google ou Facebook sans partager le mot de passe.
+
+Proxy
+Intermédiaire qui reçoit une requête avant de la transmettre à l'origine.
+
+Registrar
+Entreprise auprès de laquelle le domaine est enregistré et renouvelé.
+
+Route
+Adresse interne associée à une fonction de l'application.
+
+SMTP
+Protocole d'envoi des e-mails.
+
+SPF
+Liste des serveurs autorisés à envoyer des e-mails pour un domaine.
+
+Variable d'environnement
+Réglage externe au code, souvent utilisé pour les secrets.
+
+Webhook
+Notification automatique envoyée d'un serveur à un autre.
+
+
+======================================================================
+20. RÉSUMÉ FINAL
+======================================================================
+
+Prokejem repose sur une architecture cohérente pour une marketplace :
+
+- Laravel organise les fonctions et les règles métier ;
+- PostgreSQL conserve les données ;
+- Railway exécute l'application et déploie le code GitHub ;
+- OVHcloud enregistre le domaine et fournit Zimbra ;
+- Cloudflare gère le DNS, le HTTPS, la protection et l'accélération ;
+- DNSSEC protège l'authenticité des réponses DNS ;
+- SPF, DKIM et DMARC protègent les e-mails ;
+- Google et Facebook simplifient l'inscription grâce à OAuth ;
+- Stripe pourra sécuriser les encaissements et confirmations de paiement.
+
+Cette séparation des rôles peut sembler complexe au début, mais elle est
+normale : chaque service est spécialisé. Le point essentiel est de documenter
+les réglages, protéger les secrets et effectuer une vérification complète après
+chaque changement de domaine ou de déploiement.
