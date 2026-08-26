@@ -40,9 +40,14 @@
 
                                     @if (session('reset_link_email'))
                                         <div>Nous venons d'envoyer le lien de réinitialisation à&nbsp;:</div>
+                                        {{-- Les balises email_off sont des commentaires HTML, pas Blade :
+                                             elles traversent la compilation et demandent à Cloudflare
+                                             (Scrape Shield) de ne pas remplacer l'adresse par
+                                             [email protected]. Sans elles, l'utilisateur sans
+                                             JavaScript ne lit jamais l'adresse qu'il a saisie. --}}
                                         <div class="fw-bold mt-2"
                                              style="display: inline-block; max-width: 100%; padding: 0.45rem 0.85rem; background: rgba(255,255,255,0.75); border: 1px solid rgba(22,101,52,0.22); border-radius: 10px; word-break: break-all; line-height: 1.4;">
-                                            <i class="fas fa-envelope me-2" style="opacity: 0.7;"></i>{{ session('reset_link_email') }}
+                                            <i class="fas fa-envelope me-2" style="opacity: 0.7;"></i><!--email_off-->{{ session('reset_link_email') }}<!--/email_off-->
                                         </div>
                                         <div class="small mt-2" style="opacity: 0.85;">
                                             Ce n'est pas la bonne adresse ? Corrigez-la ci-dessous et renvoyez le lien.
