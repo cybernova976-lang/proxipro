@@ -1,4 +1,15 @@
-{{-- Zone 5 · prestataires recommandes — notes issues d'avis verifies uniquement --}}
+{{--
+    Zone 5 · prestataires recommandes.
+
+    La carte est batie autour de la photo : c'est le visage qui donne envie de
+    cliquer. Toutes les informations affichees viennent de donnees reelles du
+    profil, aucune n'est inventee.
+
+    Quand un prestataire n'a pas encore d'avis, on n'ecrit pas « Nouveau
+    prestataire » : sur une plateforme jeune, toutes les cartes porteraient la
+    meme mention et elle ne dirait rien. On affiche a la place ce qui existe
+    vraiment — services publies, puis anciennete.
+--}}
 @php
     $pkProviders = collect($homeProfessionalProfiles ?? [])->take(4);
 @endphp
@@ -21,11 +32,12 @@
                 $pkRatingRaw = $pkPro->verified_reviews_avg ?? $pkPro->reviews_avg_rating ?? null;
                 $pkReviews = (int) ($pkPro->verified_reviews_count ?? $pkPro->reviews_count ?? 0);
                 $pkService = $pkPro->relationLoaded('services') ? $pkPro->services->first() : null;
+                // ?: et non ?? : une chaine vide doit basculer sur la suite.
                 $pkJob = $pkPro->profession
-                    ?? $pkPro->service_category
-                    ?? $pkService?->subcategory
-                    ?? $pkService?->main_category
-                    ?? 'Prestataire de services';
+                    ?: ($pkPro->service_category
+                    ?: ($pkService?->subcategory
+                    ?: ($pkService?->main_category
+                    ?: 'Prestataire de services')));
                 $pkCity = $pkPro->city ?: null;
                 $pkHourlyRate = $pkPro->hourly_rate && ($pkPro->show_hourly_rate ?? true)
                     ? number_format((float) $pkPro->hourly_rate, 0, ',', ' ')
@@ -44,6 +56,10 @@
                     ->take(2);
                 $pkIsTopProvider = (bool) ($pkPro->is_top_provider ?? false);
                 $pkIsVerified = $pkPro->hasVerifiedProfileBadge();
+
+                // A defaut d'avis, on montre un fait verifiable plutot qu'une
+                // etiquette generique.
+                $pkActiveAds = (int) ($pkPro->ads_count ?? 0);
             @endphp
             <a href="{{ route('profile.public', $pkPro->id) }}" class="pk-pro">
                 <span class="pk-pro__visual">
@@ -64,15 +80,22 @@
                         @if($pkHourlyRate)<strong class="pk-pro__price">{{ $pkHourlyRate }} €/h</strong>@endif
                     </span>
                     <span class="pk-pro__job">{{ Str::limit($pkJob, 34) }}</span>
-                    <span class="pk-pro__rate">
-                        <i class="fas fa-star"></i>
-                        @if($pkReviews > 0 && $pkRatingRaw)
+                    @if($pkReviews > 0 && $pkRatingRaw)
+                        {{-- L'etoile n'apparait qu'avec une note reelle. --}}
+                        <span class="pk-pro__rate">
+                            <i class="fas fa-star"></i>
                             {{ number_format((float) $pkRatingRaw, 1, ',', '') }}
                             <span>({{ $pkReviews }} avis vérifiés)</span>
-                        @else
-                            <span>Nouveau prestataire</span>
-                        @endif
-                    </span>
+                        </span>
+                    @elseif($pkActiveAds > 0)
+                        <span class="pk-pro__rate pk-pro__rate--plain">
+                            {{ $pkActiveAds }} service{{ $pkActiveAds > 1 ? 's' : '' }} en ligne
+                        </span>
+                    @elseif($pkPro->created_at)
+                        <span class="pk-pro__rate pk-pro__rate--plain">
+                            Inscrit depuis {{ $pkPro->created_at->translatedFormat('F Y') }}
+                        </span>
+                    @endif
                     @if($pkCity)
                         <span class="pk-pro__meta"><i class="fas fa-map-marker-alt"></i> {{ Str::limit($pkCity, 24) }}</span>
                     @endif
