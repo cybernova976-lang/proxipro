@@ -577,11 +577,19 @@ class FeedController extends Controller
     {
         abort_unless(app()->environment('local'), 404);
 
+        $previewAsClient = $request->query('role') === 'client';
+
         $previewUser = \App\Models\User::query()
-            ->where(function ($query) {
-                $query->where('user_type', 'professionnel')
-                    ->orWhere('is_service_provider', true);
-            })
+            ->when(
+                $previewAsClient,
+                fn ($query) => $query
+                    ->where('user_type', 'particulier')
+                    ->where('is_service_provider', false),
+                fn ($query) => $query->where(function ($query) {
+                    $query->where('user_type', 'professionnel')
+                        ->orWhere('is_service_provider', true);
+                })
+            )
             ->first() ?? \App\Models\User::query()->first();
 
         if (! $previewUser) {
@@ -589,9 +597,9 @@ class FeedController extends Controller
                 'id' => 0,
                 'name' => 'Compte aperçu',
                 'email' => 'apercu-local@prokejem.test',
-                'user_type' => 'professionnel',
-                'account_type' => 'professionnel',
-                'is_service_provider' => true,
+                'user_type' => $previewAsClient ? 'particulier' : 'professionnel',
+                'account_type' => $previewAsClient ? 'particulier' : 'professionnel',
+                'is_service_provider' => ! $previewAsClient,
                 'city' => 'Paris',
                 'country' => 'France',
                 'geo_radius' => 25,

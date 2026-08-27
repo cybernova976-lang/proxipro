@@ -1,14 +1,9 @@
 {{--
     Zone 5 · prestataires recommandes.
 
-    La carte est batie autour de la photo : c'est le visage qui donne envie de
-    cliquer. Toutes les informations affichees viennent de donnees reelles du
-    profil, aucune n'est inventee.
-
-    Quand un prestataire n'a pas encore d'avis, on n'ecrit pas « Nouveau
-    prestataire » : sur une plateforme jeune, toutes les cartes porteraient la
-    meme mention et elle ne dirait rien. On affiche a la place ce qui existe
-    vraiment — services publies, puis anciennete.
+    Carte d'identite compacte : photo, metier, tarif, avis, localisation et
+    competences. Aucun libelle de remplissage n'est invente quand une donnee
+    manque. La verification reste visible sous la forme d'un signe discret.
 --}}
 @php
     $pkProviders = collect($homeProfessionalProfiles ?? [])->take(4);
@@ -19,7 +14,7 @@
     <div class="pk-sechead">
         <div>
             <h2 id="pkProsTitle">Prestataires recommandés</h2>
-            <p class="pk-sechead__sub">Notes calculées sur les avis vérifiés uniquement</p>
+            <p class="pk-sechead__sub">Compétences, tarifs et avis utiles pour faire votre choix</p>
         </div>
         <a href="{{ route('ads.index', ['type' => 'offres']) }}" class="pk-sechead__more">
             Voir les profils <i class="fas fa-arrow-right"></i>
@@ -54,61 +49,55 @@
                     ->reject(fn ($specialty) => mb_strtolower($specialty) === mb_strtolower($pkJob))
                     ->unique()
                     ->take(2);
-                $pkIsTopProvider = (bool) ($pkPro->is_top_provider ?? false);
                 $pkIsVerified = $pkPro->hasVerifiedProfileBadge();
-
-                // A defaut d'avis, on montre un fait verifiable plutot qu'une
-                // etiquette generique.
-                $pkActiveAds = (int) ($pkPro->ads_count ?? 0);
             @endphp
-            <a href="{{ route('profile.public', $pkPro->id) }}" class="pk-pro">
-                <span class="pk-pro__visual">
-                    @if($pkPro->avatar)
-                        <img src="{{ storage_url($pkPro->avatar) }}" alt="Photo de {{ $pkPro->name }}" loading="lazy">
-                    @else
-                        <span class="pk-pro__fallback" aria-hidden="true">{{ Str::upper(Str::substr($pkPro->name, 0, 1)) }}</span>
-                    @endif
-                    @if($pkIsTopProvider)
-                        <span class="pk-pro__badge"><i class="fas fa-award"></i> Recommandé</span>
-                    @elseif($pkIsVerified)
-                        <span class="pk-pro__badge is-verified"><i class="fas fa-shield-alt"></i> Profil vérifié</span>
-                    @endif
-                </span>
-                <span class="pk-pro__body">
-                    <span class="pk-pro__headline">
-                        <b>{{ Str::limit($pkPro->name, 24) }}</b>
-                        @if($pkHourlyRate)<strong class="pk-pro__price">{{ $pkHourlyRate }} €/h</strong>@endif
+            <article class="pk-pro">
+                <a href="{{ route('profile.public', $pkPro->id) }}"
+                   class="pk-pro__identity"
+                   aria-label="Voir le profil de {{ $pkPro->name }}">
+                    <span class="pk-pro__visual">
+                        @if($pkPro->avatar)
+                            <img src="{{ storage_url($pkPro->avatar) }}" alt="Photo de {{ $pkPro->name }}" loading="lazy">
+                        @else
+                            <span class="pk-pro__fallback" aria-hidden="true">{{ Str::upper(Str::substr($pkPro->name, 0, 1)) }}</span>
+                        @endif
                     </span>
-                    <span class="pk-pro__job">{{ Str::limit($pkJob, 34) }}</span>
-                    @if($pkReviews > 0 && $pkRatingRaw)
-                        {{-- L'etoile n'apparait qu'avec une note reelle. --}}
-                        <span class="pk-pro__rate">
-                            <i class="fas fa-star"></i>
-                            {{ number_format((float) $pkRatingRaw, 1, ',', '') }}
-                            <span>({{ $pkReviews }} avis vérifiés)</span>
+                    <span class="pk-pro__body">
+                        @if($pkIsVerified)
+                            <span class="pk-pro__verified" title="Identité vérifiée" aria-label="Identité vérifiée">
+                                <i class="fas fa-check" aria-hidden="true"></i>
+                            </span>
+                        @endif
+                        <span class="pk-pro__headline">
+                            <b>{{ Str::limit($pkPro->name, 26) }}</b>
                         </span>
-                    @elseif($pkActiveAds > 0)
-                        <span class="pk-pro__rate pk-pro__rate--plain">
-                            {{ $pkActiveAds }} service{{ $pkActiveAds > 1 ? 's' : '' }} en ligne
+                        <span class="pk-pro__jobline">
+                            <span class="pk-pro__job">{{ Str::limit($pkJob, 38) }}</span>
+                            @if($pkHourlyRate)<strong class="pk-pro__price">{{ $pkHourlyRate }} €/h</strong>@endif
                         </span>
-                    @elseif($pkPro->created_at)
-                        <span class="pk-pro__rate pk-pro__rate--plain">
-                            Inscrit depuis {{ $pkPro->created_at->translatedFormat('F Y') }}
-                        </span>
-                    @endif
-                    @if($pkCity)
-                        <span class="pk-pro__meta"><i class="fas fa-map-marker-alt"></i> {{ Str::limit($pkCity, 24) }}</span>
-                    @endif
-                    @if($pkSpecialties->isNotEmpty())
-                        <span class="pk-pro__tags">
-                            @foreach($pkSpecialties as $pkSpecialty)
-                                <span class="pk-pro__tag">{{ Str::limit($pkSpecialty, 24) }}</span>
-                            @endforeach
-                        </span>
-                    @endif
-                    <span class="pk-pro__go">Découvrir ce profil <i class="fas fa-arrow-right"></i></span>
-                </span>
-            </a>
+                        @if($pkReviews > 0 && $pkRatingRaw)
+                            <span class="pk-pro__rate">
+                                <i class="fas fa-star" aria-hidden="true"></i>
+                                {{ number_format((float) $pkRatingRaw, 1, ',', '') }}
+                                <span>({{ $pkReviews }} avis)</span>
+                            </span>
+                        @endif
+                        @if($pkCity)
+                            <span class="pk-pro__meta"><i class="fas fa-map-marker-alt" aria-hidden="true"></i> {{ Str::limit($pkCity, 26) }}</span>
+                        @endif
+                        @if($pkSpecialties->isNotEmpty())
+                            <span class="pk-pro__tags">
+                                @foreach($pkSpecialties as $pkSpecialty)
+                                    <span class="pk-pro__tag">{{ Str::limit($pkSpecialty, 26) }}</span>
+                                @endforeach
+                            </span>
+                        @endif
+                    </span>
+                </a>
+                <a href="{{ route('profile.public', $pkPro->id) }}" class="pk-pro__go">
+                    Voir le profil <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                </a>
+            </article>
         @endforeach
     </div>
 </section>

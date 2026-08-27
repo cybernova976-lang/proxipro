@@ -59,6 +59,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             'plan' => 'pro',
             'profession' => 'Plombier',
             'city' => 'Mamoudzou',
+            'is_verified' => true,
             'hourly_rate' => 35,
             'show_hourly_rate' => true,
             'specialties' => ['Dépannage rapide', 'Recherche de fuite'],
@@ -81,7 +82,13 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             ->assertSee('35 €/h')
             ->assertSee('Dépannage rapide')
             ->assertSee('pk-pro__visual', false)
-            ->assertSee('Découvrir ce profil')
+            ->assertSee('pk-pro__identity', false)
+            ->assertSee('pk-pro__verified', false)
+            ->assertSee('Voir le profil')
+            ->assertSee('pk-replies--waiting', false)
+            ->assertSee('En attente de réponses')
+            ->assertDontSee('service en ligne')
+            ->assertDontSee('Profil vérifié')
             ->assertSee('Voir toutes les annonces, la carte et les filtres')
             ->assertDontSee('home-showcase-section', false)
             ->assertDontSee('adsFeedMap', false);
@@ -90,6 +97,10 @@ class FeedHomeShowcaseFeatureTest extends TestCase
 
         $this->assertStringContainsString('linear-gradient(135deg, #f8fbff', $css);
         $this->assertStringContainsString('.pk-pro__visual', $css);
+        $this->assertStringContainsString('grid-template-columns: repeat(2, minmax(0, 1fr))', $css);
+        $this->assertStringContainsString('.pk-pro__verified', $css);
+        $this->assertStringContainsString('.pk-replies--waiting', $css);
+        $this->assertStringContainsString('width: 124px; height: 116px', $css);
         $this->assertStringContainsString('scroll-snap-type: x mandatory', $css);
         $this->assertStringNotContainsString('linear-gradient(150deg, var(--pk-950), var(--pk-800))', $css);
     }

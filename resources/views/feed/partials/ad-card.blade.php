@@ -133,7 +133,9 @@
             </span>
             <span class="nm">{{ $pkName }}</span>
             @if($pkVerified)
-                <span class="pk-verified" title="Identité vérifiée"><i class="fas fa-check"></i> Vérifié</span>
+                <span class="pk-verified" title="Identité vérifiée" aria-label="Identité vérifiée">
+                    <i class="fas fa-check" aria-hidden="true"></i>
+                </span>
             @endif
         </span>
 
@@ -147,7 +149,9 @@
                     <i class="fas fa-bolt"></i> Aucune réponse — soyez le premier
                 </span>
             @else
-                <span class="pk-replies">En attente de réponses</span>
+                <span class="pk-replies pk-replies--waiting">
+                    <i class="far fa-clock" aria-hidden="true"></i> En attente de réponses
+                </span>
             @endif
         @endif
 
