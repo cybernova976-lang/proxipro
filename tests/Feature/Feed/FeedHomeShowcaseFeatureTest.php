@@ -58,6 +58,10 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             'is_service_provider' => true,
             'plan' => 'pro',
             'profession' => 'Plombier',
+            'city' => 'Mamoudzou',
+            'hourly_rate' => 35,
+            'show_hourly_rate' => true,
+            'specialties' => ['Dépannage rapide', 'Recherche de fuite'],
             'bio' => 'Intervient pour les dépannages et travaux de plomberie.',
         ]);
 
@@ -74,8 +78,19 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             ->assertSee('Demande urgente prioritaire')
             ->assertSee('Prestataires recommandés')
             ->assertSee('Artisan recommandé')
+            ->assertSee('35 €/h')
+            ->assertSee('Dépannage rapide')
+            ->assertSee('pk-pro__visual', false)
+            ->assertSee('Découvrir ce profil')
             ->assertSee('Voir toutes les annonces, la carte et les filtres')
             ->assertDontSee('home-showcase-section', false)
             ->assertDontSee('adsFeedMap', false);
+
+        $css = file_get_contents(public_path('css/feed.css'));
+
+        $this->assertStringContainsString('linear-gradient(135deg, #f8fbff', $css);
+        $this->assertStringContainsString('.pk-pro__visual', $css);
+        $this->assertStringContainsString('scroll-snap-type: x mandatory', $css);
+        $this->assertStringNotContainsString('linear-gradient(150deg, var(--pk-950), var(--pk-800))', $css);
     }
 }

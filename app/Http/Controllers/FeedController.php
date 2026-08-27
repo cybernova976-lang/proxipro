@@ -625,10 +625,10 @@ class FeedController extends Controller
         };
 
         $providers = collect([
-            $makeUser(-201, 'Sophie Martin', ['profession' => 'Plombière', 'bio' => 'Interventions soignées, devis clair et disponibilité rapide.', 'verified_reviews_avg' => 4.9, 'verified_reviews_count' => 47, 'ads_count' => 6, 'is_top_provider' => true]),
-            $makeUser(-202, 'Karim Bensaïd', ['profession' => 'Bricolage & montage', 'bio' => 'Montage de meubles, fixations et petits travaux à domicile.', 'verified_reviews_avg' => 4.8, 'verified_reviews_count' => 31, 'ads_count' => 5]),
-            $makeUser(-203, 'Claire Dubois', ['profession' => 'Ménage à domicile', 'bio' => 'Prestations ponctuelles ou régulières, matériel fourni sur demande.', 'verified_reviews_avg' => 4.9, 'verified_reviews_count' => 62, 'ads_count' => 4, 'is_top_provider' => true]),
-            $makeUser(-204, 'Lucas Bernard', ['profession' => 'Jardinier', 'bio' => 'Entretien, taille et remise en état de jardins et terrasses.', 'verified_reviews_avg' => 4.7, 'verified_reviews_count' => 24, 'ads_count' => 7]),
+            $makeUser(-201, 'Sophie Martin', ['profession' => 'Plombière', 'bio' => 'Interventions soignées, devis clair et disponibilité rapide.', 'hourly_rate' => 42, 'show_hourly_rate' => true, 'specialties' => ['Dépannage urgent', 'Travail soigné'], 'verified_reviews_avg' => 4.9, 'verified_reviews_count' => 47, 'ads_count' => 6, 'is_top_provider' => true]),
+            $makeUser(-202, 'Karim Bensaïd', ['profession' => 'Bricolage & montage', 'bio' => 'Montage de meubles, fixations et petits travaux à domicile.', 'hourly_rate' => 30, 'show_hourly_rate' => true, 'specialties' => ['Montage de meubles', 'Résultat garanti'], 'verified_reviews_avg' => 4.8, 'verified_reviews_count' => 31, 'ads_count' => 5]),
+            $makeUser(-203, 'Claire Dubois', ['profession' => 'Ménage à domicile', 'bio' => 'Prestations ponctuelles ou régulières, matériel fourni sur demande.', 'hourly_rate' => 24, 'show_hourly_rate' => true, 'specialties' => ['Efficace et discrète', 'Matériel fourni'], 'verified_reviews_avg' => 4.9, 'verified_reviews_count' => 62, 'ads_count' => 4, 'is_top_provider' => true]),
+            $makeUser(-204, 'Lucas Bernard', ['profession' => 'Jardinier', 'bio' => 'Entretien, taille et remise en état de jardins et terrasses.', 'hourly_rate' => 28, 'show_hourly_rate' => true, 'specialties' => ['Taille et entretien', 'Conseils personnalisés'], 'verified_reviews_avg' => 4.7, 'verified_reviews_count' => 24, 'ads_count' => 7]),
         ]);
 
         $clients = collect([
