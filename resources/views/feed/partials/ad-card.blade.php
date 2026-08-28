@@ -152,12 +152,14 @@
                     {{ Str::upper(Str::substr($pkName, 0, 1)) }}
                 @endif
             </span>
-            <span class="nm">{{ $pkName }}</span>
-            @if($pkVerified)
-                <span class="pk-verified" title="Identité vérifiée" aria-label="Identité vérifiée">
-                    <i class="fas fa-check" aria-hidden="true"></i>
-                </span>
-            @endif
+            <span class="pk-ad__author-name">
+                <span class="nm">{{ $pkName }}</span>
+                @if($pkVerified)
+                    <span class="pk-verified" title="Identité vérifiée" aria-label="Identité vérifiée">
+                        <i class="fas fa-check" aria-hidden="true"></i>
+                    </span>
+                @endif
+            </span>
         </span>
 
         @if($pkIsDemande)

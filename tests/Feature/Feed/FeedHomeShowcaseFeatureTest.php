@@ -146,6 +146,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         ])->render();
 
         $this->assertStringContainsString('pk-ad__media pk-ad__media--3', $html);
+        $this->assertStringContainsString('href="'.route('ads.show', $ad).'"', $html);
         $this->assertSame(3, substr_count($html, 'data-pk-feed-photo'));
         $this->assertStringContainsString(storage_url('ads/feed-photo-1.webp'), $html);
         $this->assertStringContainsString(storage_url('ads/feed-photo-2.webp'), $html);
@@ -154,7 +155,15 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString('4 photos', $html);
         $this->assertStringContainsString('pk-ad__desc', $html);
         $this->assertStringContainsString('pk-ad__foot', $html);
+        $this->assertStringContainsString('pk-ad__author-name', $html);
+        $this->assertStringContainsString('Auteur de la demande', $html);
         $this->assertStringContainsString('Proposer mes services', $html);
+
+        $css = file_get_contents(public_path('css/feed.css'));
+        $this->assertStringContainsString('.pk-ad__media .pk-ad__photo:first-child { display: block; }', $css);
+        $this->assertStringContainsString('.pk-ad__author { display: contents; }', $css);
+        $this->assertStringContainsString('max-width: none; white-space: normal', $css);
+        $this->assertStringContainsString('grid-column: 2; grid-row: 2; margin: 0', $css);
     }
 
     /**

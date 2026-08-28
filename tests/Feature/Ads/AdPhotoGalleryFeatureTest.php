@@ -46,6 +46,8 @@ class AdPhotoGalleryFeatureTest extends TestCase
             ->assertSee('ad-photo--main', false)
             ->assertSee('4 photos')
             ->assertSee('openLightbox(0)', false)
+            ->assertSee('id="lightbox-image"', false)
+            ->assertSee('max-width: 90%; max-height: 90%; object-fit: contain;', false)
             ->assertDontSee('<span class="badge-type', false);
     }
 

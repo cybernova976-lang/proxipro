@@ -455,6 +455,7 @@
   border-top: 1px solid var(--pk-rule); padding: 10px 16px 11px;
 }
 .pk-ad__author { display: flex; align-items: center; gap: 9px; min-width: 0; flex: 1 1 210px; }
+.pk-ad__author-name { display: inline-flex; align-items: center; gap: 7px; min-width: 0; }
 .pk-ad__author .av {
   width: 36px; height: 36px; border-radius: 50%; flex: none; overflow: hidden;
   background: var(--pk-100); color: var(--pk-700);
@@ -519,21 +520,45 @@
 }
 
 @media (max-width: 640px) {
-  .pk-ad { padding: 12px 12px 0; grid-template-columns: 118px minmax(0, 1fr); gap: 0 11px; }
+  .pk-ad { padding: 12px 12px 0; grid-template-columns: 132px minmax(0, 1fr); gap: 0 11px; }
   .pk-ad--nothumb { grid-template-columns: minmax(0, 1fr); }
-  .pk-ad__media { width: 118px; height: 110px; }
-  .pk-ad__media--3 { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 2px; }
+  /* Une seule photo dans le feed mobile. Le compteur conserve le total et le
+     lien ouvre la page de l'annonce, ou la galerie complete reste accessible. */
+  .pk-ad__media,
+  .pk-ad__media--2,
+  .pk-ad__media--3 { display: block; width: 132px; height: 122px; }
+  .pk-ad__media .pk-ad__photo { display: none; width: 100%; height: 100%; }
+  .pk-ad__media .pk-ad__photo:first-child { display: block; }
   .pk-ad__photo-count { right: 5px; bottom: 5px; padding: 3px 6px; font-size: .6rem; }
   .pk-ad__body { gap: 6px; }
   .pk-ad__desc { display: none; }
-  .pk-ad__foot { grid-column: 1 / -1; margin: 12px -12px 0; padding: 10px 12px 11px; }
-  .pk-ad__author { flex: 1 1 130px; }
-  .pk-ad__author .av { width: 34px; height: 34px; }
-  .pk-ad__author .nm { max-width: 12ch; }
-  .pk-replies { flex: none; margin-left: auto; font-size: .74rem; }
+  .pk-ad__foot {
+    grid-column: 1 / -1; margin: 12px -12px 0; padding: 10px 12px 11px;
+    display: grid; grid-template-columns: 34px minmax(0, 1fr);
+    gap: 2px 9px; align-items: center;
+  }
+  .pk-ad__author { display: contents; }
+  .pk-ad__author .av { grid-column: 1; grid-row: 1 / span 2; width: 34px; height: 34px; }
+  .pk-ad__author-name { grid-column: 2; grid-row: 1; align-items: flex-start; }
+  .pk-ad__author .nm {
+    max-width: none; white-space: normal; overflow: visible; text-overflow: clip;
+    line-height: 1.2; overflow-wrap: anywhere;
+  }
+  .pk-replies {
+    grid-column: 2; grid-row: 2; margin: 0; font-size: .71rem;
+    white-space: normal; line-height: 1.25;
+  }
   .pk-ad h3 { font-size: .97rem; }
-  .pk-ad__cta { margin-left: 0; width: 100%; }
+  .pk-ad__cta { grid-column: 1 / -1; grid-row: 3; margin: 7px 0 0; width: 100%; }
   .pk-ad__cta .pk-btn-sm { flex: 1; justify-content: center; }
+}
+
+@media (max-width: 390px) {
+  .pk-ad { grid-template-columns: 118px minmax(0, 1fr); }
+  .pk-ad--nothumb { grid-template-columns: minmax(0, 1fr); }
+  .pk-ad__media,
+  .pk-ad__media--2,
+  .pk-ad__media--3 { width: 118px; height: 112px; }
 }
 
 .pk-seeall {
