@@ -202,4 +202,37 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringNotContainsString('pk-ad__photo-count', $none);
         $this->assertStringContainsString('pk-ad--nothumb', $none);
     }
+
+    /**
+     * Piege de cascade : .pk-ad--nothumb et .pk-ad ont la meme specificite, et
+     * une media query n'en ajoute pas. Toute media query qui redefinit les
+     * colonnes de .pk-ad ecrase donc le cas « sans photo » par simple ordre du
+     * fichier, et l'annonce garde une colonne vide. Ce test verifie que chacune
+     * rappelle .pk-ad--nothumb.
+     */
+    public function test_every_media_query_that_resizes_the_ad_grid_restores_the_photoless_card(): void
+    {
+        $css = file_get_contents(public_path('css/feed.css'));
+
+        preg_match_all('/@media[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/', $css, $blocks);
+
+        $checked = 0;
+
+        foreach ($blocks[0] as $block) {
+            if (! preg_match('/\.pk-ad\s*\{[^}]*grid-template-columns/', $block)) {
+                continue;
+            }
+
+            $checked++;
+
+            $this->assertMatchesRegularExpression(
+                '/\.pk-ad--nothumb\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/',
+                $block,
+                'Une media query redefinit les colonnes de .pk-ad sans rappeler .pk-ad--nothumb : '
+                .'les annonces sans photo y garderont une colonne vide.'
+            );
+        }
+
+        $this->assertGreaterThan(0, $checked, 'Aucune media query ne redimensionne la grille des cartes.');
+    }
 }

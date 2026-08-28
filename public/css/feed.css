@@ -471,13 +471,14 @@
   display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
 }
 .pk-replies b { color: var(--pk-ink); font-weight: 700; }
+/* Tous les statuts ont la meme forme que « 1 reponse » : du texte discret
+   aligne a droite. La pastille encadree qui portait « En attente de reponses »
+   pesait autant que le bouton d'action et ecrasait le nom de l'auteur. Seule
+   la couleur distingue les etats. */
 .pk-replies--first { color: var(--pk-warn); font-weight: 600; }
 .pk-replies--first i { color: var(--pk-warn); }
-.pk-replies--waiting {
-  padding: 6px 10px; border: 1px solid var(--pk-200); border-radius: 999px;
-  color: var(--pk-700); background: var(--pk-50); font-weight: 700;
-}
-.pk-replies--waiting i { color: var(--pk-violet); }
+.pk-replies--waiting { color: var(--pk-ink-2); font-weight: 600; }
+.pk-replies--waiting i { color: var(--pk-ink-3); }
 
 .pk-ad__cta { margin-left: 0; display: flex; align-items: center; gap: 8px; }
 .pk-ad__foot > .pk-ad__cta:first-child,
@@ -499,14 +500,20 @@
 .pk-save[aria-pressed="true"] { border-color: var(--pk-600); color: var(--pk-600); background: var(--pk-50); }
 .pk-save[aria-busy="true"] { opacity: .55; pointer-events: none; }
 
-/* 1024 : la colonne photo passe en largeur fixe, sinon 34% l'etire trop. */
+/* 1024 : la colonne photo passe en largeur fixe, sinon 34% l'etire trop.
+   .pk-ad--nothumb doit etre repete dans chaque media query : il a la meme
+   specificite que .pk-ad, et une media query n'en ajoute pas. Sans ce rappel,
+   la regle ci-dessous gagne par l'ordre du fichier et une annonce sans photo
+   garde une colonne vide. */
 @media (max-width: 1024px) {
   .pk-ad { grid-template-columns: 168px minmax(0, 1fr); }
+  .pk-ad--nothumb { grid-template-columns: minmax(0, 1fr); }
   .pk-ad__media { height: 126px; }
 }
 
 @media (max-width: 640px) {
   .pk-ad { padding: 12px 12px 0; grid-template-columns: 118px minmax(0, 1fr); gap: 0 11px; }
+  .pk-ad--nothumb { grid-template-columns: minmax(0, 1fr); }
   .pk-ad__media { width: 118px; height: 110px; }
   .pk-ad__media--3 { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 2px; }
   .pk-ad__photo-count { right: 5px; bottom: 5px; padding: 3px 6px; font-size: .6rem; }
@@ -517,7 +524,6 @@
   .pk-ad__author .av { width: 34px; height: 34px; }
   .pk-ad__author .nm { max-width: 12ch; }
   .pk-replies { flex: none; margin-left: auto; font-size: .74rem; }
-  .pk-replies--waiting { padding: 5px 8px; }
   .pk-ad h3 { font-size: .97rem; }
   .pk-ad__cta { margin-left: 0; width: 100%; }
   .pk-ad__cta .pk-btn-sm { flex: 1; justify-content: center; }
