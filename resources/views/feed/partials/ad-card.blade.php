@@ -7,7 +7,8 @@
       $pkSaved  Collection d'identifiants d'annonces deja enregistrees
 
     Regles d'affichage :
-      · la vignette n'apparait que si l'annonce a une photo (pas de placeholder)
+      · la galerie n'apparait que si l'annonce a une photo (pas de placeholder)
+      · trois apercus au maximum ; le compteur annonce le total reel
       · la fraicheur est toujours relative (« il y a 2 h »), jamais une date
       · le nombre de reponses n'est affiche que pour les demandes
 --}}
@@ -15,7 +16,7 @@
     $pkRole  = $pkRole  ?? 'client';
     $pkSaved = collect($pkSaved ?? []);
 
-    // --- photo : la premiere du tableau, quelle que soit la forme stockee ---
+    // --- photos : trois apercus maximum, quelle que soit la forme stockee ---
     $pkPhotos = $ad->photos ?? [];
     if (is_string($pkPhotos)) {
         $pkDecoded = json_decode($pkPhotos, true);
@@ -28,19 +29,28 @@
     $pkPhotos = array_values(array_filter($pkPhotos));
     $pkPhotoCount = count($pkPhotos);
 
-    $pkThumb = null;
-    if ($pkPhotoCount > 0) {
-        $pkFirst = ltrim(trim((string) $pkPhotos[0]), '/');
-        if (str_starts_with($pkFirst, 'http://') || str_starts_with($pkFirst, 'https://')) {
-            $pkThumb = $pkFirst;
-        } elseif (str_starts_with($pkFirst, 'storage/')) {
-            $pkThumb = asset($pkFirst);
-        } elseif (str_starts_with($pkFirst, 'public/')) {
-            $pkThumb = storage_url(str_replace('public/', '', $pkFirst));
-        } else {
-            $pkThumb = storage_url($pkFirst);
+    $pkPhotoUrl = static function ($photo) {
+        $path = ltrim(trim((string) $photo), '/');
+        if ($path === '') {
+            return null;
         }
-    }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+        if (str_starts_with($path, 'storage/')) {
+            return asset($path);
+        }
+        if (str_starts_with($path, 'public/')) {
+            return storage_url(str_replace('public/', '', $path));
+        } else {
+            return storage_url($path);
+        }
+    };
+
+    $pkVisiblePhotos = array_values(array_filter(array_map($pkPhotoUrl, array_slice($pkPhotos, 0, 3))));
+    $pkVisiblePhotoCount = count($pkVisiblePhotos);
+    $pkThumb = $pkVisiblePhotos[0] ?? null;
 
     // --- statuts ---
     $pkIsUrgent  = $ad->is_urgent && (! $ad->urgent_until || $ad->urgent_until->isFuture());
@@ -81,10 +91,17 @@
 <article class="pk-ad{{ $pkThumb ? '' : ' pk-ad--nothumb' }}{{ $pkIsUrgent ? ' is-urgent' : '' }}">
 
     @if($pkThumb)
-        <a class="pk-ad__thumb" href="{{ $pkUrl }}" tabindex="-1" aria-hidden="true">
-            <img src="{{ $pkThumb }}" alt="" loading="lazy" decoding="async">
-            @if($pkPhotoCount > 1)
-                <span class="pk-ad__thumb-count"><i class="fas fa-images"></i> {{ $pkPhotoCount }}</span>
+        <a class="pk-ad__media pk-ad__media--{{ $pkVisiblePhotoCount }}" href="{{ $pkUrl }}" tabindex="-1" aria-hidden="true">
+            @foreach($pkVisiblePhotos as $pkPhotoIndex => $pkPhoto)
+                <span class="pk-ad__photo{{ $pkPhotoIndex === 0 ? ' pk-ad__photo--main' : '' }}" data-pk-feed-photo>
+                    <img src="{{ $pkPhoto }}" alt="" loading="lazy" decoding="async">
+                </span>
+            @endforeach
+            @if($pkPhotoCount > 0)
+                <span class="pk-ad__photo-count">
+                    <i class="far fa-{{ $pkPhotoCount > 1 ? 'images' : 'image' }}" aria-hidden="true"></i>
+                    {{ $pkPhotoCount }} photo{{ $pkPhotoCount > 1 ? 's' : '' }}
+                </span>
             @endif
         </a>
     @endif
@@ -120,6 +137,10 @@
             @endif
             <span><i class="fas fa-euro-sign"></i> <b>{{ $ad->formatted_price }}</b></span>
         </div>
+
+        @if(trim((string) $ad->description) !== '')
+            <p class="pk-ad__desc">{{ Str::limit(strip_tags($ad->description), 150) }}</p>
+        @endif
     </div>
 
     <div class="pk-ad__foot">

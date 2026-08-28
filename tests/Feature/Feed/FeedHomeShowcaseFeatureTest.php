@@ -109,8 +109,97 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString('border-radius: inherit; object-fit: cover', $css);
         $this->assertStringContainsString('.pk-pro__verified', $css);
         $this->assertStringContainsString('.pk-replies--waiting', $css);
-        $this->assertStringContainsString('width: 124px; height: 116px', $css);
+        $this->assertStringContainsString('.pk-ad__media--3', $css);
+        $this->assertStringContainsString('height: 138px', $css);
+        $this->assertStringContainsString('grid-column: 1 / -1', $css);
         $this->assertStringContainsString('scroll-snap-type: x mandatory', $css);
         $this->assertStringNotContainsString('linear-gradient(150deg, var(--pk-950), var(--pk-800))', $css);
+    }
+
+    public function test_feed_ad_card_displays_at_most_three_photos_in_the_compact_layout(): void
+    {
+        $requester = User::factory()->create([
+            'name' => 'Auteur de la demande',
+            'user_type' => 'particulier',
+        ]);
+        $ad = Ad::create([
+            'title' => 'Besoin de plusieurs interventions',
+            'description' => 'Une description utile qui accompagne la galerie sans augmenter inutilement la hauteur de la carte.',
+            'category' => 'Bricolage',
+            'location' => 'Mamoudzou',
+            'service_type' => 'demande',
+            'status' => 'active',
+            'visibility' => 'public',
+            'photos' => [
+                'ads/feed-photo-1.webp',
+                'ads/feed-photo-2.webp',
+                'ads/feed-photo-3.webp',
+                'ads/feed-photo-4.webp',
+            ],
+            'user_id' => $requester->id,
+        ]);
+
+        $html = view('feed.partials.ad-card', [
+            'ad' => $ad,
+            'pkRole' => 'provider',
+            'pkSaved' => collect(),
+        ])->render();
+
+        $this->assertStringContainsString('pk-ad__media pk-ad__media--3', $html);
+        $this->assertSame(3, substr_count($html, 'data-pk-feed-photo'));
+        $this->assertStringContainsString(storage_url('ads/feed-photo-1.webp'), $html);
+        $this->assertStringContainsString(storage_url('ads/feed-photo-2.webp'), $html);
+        $this->assertStringContainsString(storage_url('ads/feed-photo-3.webp'), $html);
+        $this->assertStringNotContainsString(storage_url('ads/feed-photo-4.webp'), $html);
+        $this->assertStringContainsString('4 photos', $html);
+        $this->assertStringContainsString('pk-ad__desc', $html);
+        $this->assertStringContainsString('pk-ad__foot', $html);
+        $this->assertStringContainsString('Proposer mes services', $html);
+    }
+
+    /**
+     * La maquette montre le compteur des la premiere photo (« 1 photo »),
+     * et deux apercus de largeur egale quand il y en a deux.
+     */
+    public function test_feed_ad_card_photo_layout_matches_the_mockup_for_one_and_two_photos(): void
+    {
+        $requester = User::factory()->create(['user_type' => 'particulier']);
+
+        $makeAd = function (array $photos) use ($requester): Ad {
+            return Ad::create([
+                'title' => 'Cherche aide pour personne âgée',
+                'description' => 'Je recherche une personne sérieuse pour accompagner une personne âgée.',
+                'category' => 'Aide aux personnes âgées',
+                'location' => 'Mamoudzou',
+                'service_type' => 'demande',
+                'status' => 'active',
+                'visibility' => 'public',
+                'photos' => $photos,
+                'user_id' => $requester->id,
+            ]);
+        };
+
+        $render = fn (Ad $ad): string => view('feed.partials.ad-card', [
+            'ad' => $ad,
+            'pkRole' => 'provider',
+            'pkSaved' => collect(),
+        ])->render();
+
+        $one = $render($makeAd(['ads/feed-photo-1.webp']));
+        $this->assertStringContainsString('pk-ad__media pk-ad__media--1', $one);
+        $this->assertSame(1, substr_count($one, 'data-pk-feed-photo'));
+        $this->assertStringContainsString('1 photo', $one);
+        $this->assertStringNotContainsString('1 photos', $one);
+
+        $two = $render($makeAd(['ads/feed-photo-1.webp', 'ads/feed-photo-2.webp']));
+        $this->assertStringContainsString('pk-ad__media pk-ad__media--2', $two);
+        $this->assertSame(2, substr_count($two, 'data-pk-feed-photo'));
+        $this->assertStringContainsString('2 photos', $two);
+
+        // Sans photo, aucune galerie et aucun compteur.
+        $none = $render($makeAd([]));
+        $this->assertStringNotContainsString('pk-ad__media', $none);
+        $this->assertStringNotContainsString('pk-ad__photo-count', $none);
+        $this->assertStringContainsString('pk-ad--nothumb', $none);
     }
 }
