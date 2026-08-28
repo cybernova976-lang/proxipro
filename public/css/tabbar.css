@@ -1,0 +1,62 @@
+/* ==========================================================================
+   PROKEJEM — Barre d'onglets mobile
+   ==========================================================================
+
+   Chargee sur toutes les pages par layouts/app.blade.php.
+
+   Ce fichier est volontairement autonome. La barre etait auparavant definie
+   dans feed.css, qui n'est charge que sur /feed : elle ne pouvait donc pas
+   apparaitre ailleurs. Elle porte ici ses propres variables, pour deux
+   raisons :
+
+     · elle est rendue hors de .pk-feed, donc elle n'herite d'aucune variable
+       de la palette du feed. Un var() introuvable rend la declaration
+       invalide, et le fond blanc retombe alors sur transparent — on voyait
+       les cartes defiler au travers ;
+     · charger feed.css sur tout le site pour quatre couleurs serait
+       disproportionne, et melangerait les styles du feed au reste.
+
+   Tout est prefixe pk- et porte par .pk-tabbar : rien ne fuit vers le
+   gabarit commun.
+   ========================================================================== */
+
+.pk-tabbar {
+  --pk-surface: #FFFFFF;
+  --pk-rule:    #E1E7F0;
+  --pk-ink-3:   #7B879B;
+  --pk-600:     #2563eb;
+
+  display: none;
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  grid-template-columns: repeat(5, 1fr);
+  background: var(--pk-surface);
+  border-top: 1px solid var(--pk-rule);
+  padding: 7px 6px calc(7px + env(safe-area-inset-bottom, 0px));
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 1030;
+  box-shadow: 0 -2px 16px -8px rgba(25, 26, 46, .3);
+}
+.pk-tabbar a, .pk-tabbar button {
+  display: grid; justify-items: center; gap: 3px; text-align: center;
+  font-size: .64rem; font-weight: 600; color: var(--pk-ink-3); padding: 5px 2px;
+  text-decoration: none;
+}
+.pk-tabbar a:hover { color: var(--pk-600); text-decoration: none; }
+.pk-tabbar i { font-size: 1.2rem; }
+.pk-tabbar .is-active { color: var(--pk-600); }
+.pk-tabbar .pk-tabbar__pub { color: var(--pk-600); font-weight: 700; }
+.pk-tabbar .pk-tabbar__pub i {
+  width: 44px; height: 44px; border-radius: 14px; margin-top: -14px;
+  background: var(--pk-600); color: #fff;
+  display: grid; place-items: center; font-size: 1.3rem;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, .32), 0 8px 18px -8px rgba(79, 70, 229, .7);
+}
+
+/* La cale est rendue par le meme partial que la barre : elle n'existe donc
+   que lorsque la barre existe. Une regle sur body aurait creuse un vide de
+   92 px sur les pages qui ne l'affichent pas (visiteur non connecte). */
+.pk-tabbar-spacer { display: none; }
+
+@media (max-width: 900px) {
+  .pk-tabbar { display: grid; }
+  .pk-tabbar-spacer { display: block; height: 92px; }
+}

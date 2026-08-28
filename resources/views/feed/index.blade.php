@@ -114,8 +114,9 @@
     <div class="pk-toast" id="pkToast" role="status" aria-live="polite"></div>
 </div>
 
-{{-- Barre d'onglets mobile --}}
-@include('feed.partials.mobile-tabbar')
+{{-- La barre d'onglets mobile n'est plus incluse ici : elle est desormais
+     rendue par layouts/app.blade.php pour apparaitre sur toutes les pages.
+     L'inclure a nouveau ici en afficherait deux. --}}
 
 {{-- Configuration transmise au script : aucune donnee sensible --}}
 @php

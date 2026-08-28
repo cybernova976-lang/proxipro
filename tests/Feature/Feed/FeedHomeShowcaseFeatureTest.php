@@ -237,37 +237,148 @@ class FeedHomeShowcaseFeatureTest extends TestCase
     }
 
     /**
-     * La barre d'onglets est rendue hors de .pk-feed. Si les variables de
-     * couleur ne sont declarees que sur .pk-feed, chaque var() de la barre
-     * devient invalide : son fond blanc retombe sur transparent et on voit les
-     * cartes defiler au travers.
+     * La barre d'onglets est rendue hors de .pk-feed, et desormais sur toutes
+     * les pages. Elle doit donc porter ses propres variables : un var()
+     * introuvable rend la declaration invalide, et son fond blanc retombe sur
+     * transparent — on voyait les cartes defiler au travers.
      */
-    public function test_the_mobile_tabbar_is_reached_by_the_palette_variables(): void
+    public function test_the_mobile_tabbar_carries_its_own_palette(): void
     {
-        $feed = file_get_contents(resource_path('views/feed/index.blade.php'));
-        $css  = file_get_contents(public_path('css/feed.css'));
-
-        // La barre est incluse en colonne 0, donc hors du conteneur .pk-feed
-        // dont tout le contenu est indente : c'est ce qui rend le rappel de
-        // variables indispensable.
-        $this->assertMatchesRegularExpression(
-            '/^@include\(.feed\.partials\.mobile-tabbar/m',
-            $feed,
-            "La barre d'onglets n'est plus incluse hors de .pk-feed : ce test doit etre revu."
-        );
-
         // Les commentaires sont retires d'abord : celui qui documente ce piege
         // cite .pk-tabbar, et le laisser en place suffirait a faire passer le
         // test alors que le selecteur, lui, aurait perdu la barre.
-        $stripped = preg_replace('#/\*.*?\*/#s', '', $css);
+        $css = preg_replace('#/\*.*?\*/#s', '', file_get_contents(public_path('css/tabbar.css')));
 
-        preg_match('/([^{};]*)\{[^{}]*--pk-surface:/', $stripped, $m);
+        preg_match('/([^{};]*)\{[^{}]*--pk-surface:/', $css, $m);
 
-        $this->assertNotEmpty($m, 'Le bloc declarant --pk-surface est introuvable.');
+        $this->assertNotEmpty($m, 'Le bloc declarant --pk-surface est introuvable dans tabbar.css.');
         $this->assertStringContainsString(
             '.pk-tabbar',
             $m[1],
-            'Les variables de couleur ne sont pas portees par .pk-tabbar : son fond redeviendra transparent.'
+            'Les variables ne sont pas portees par .pk-tabbar : son fond redeviendra transparent.'
         );
+
+        foreach (['--pk-rule', '--pk-ink-3', '--pk-600'] as $variable) {
+            $this->assertStringContainsString(
+                $variable.':',
+                $css,
+                "La barre utilise {$variable} sans la declarer : filet, libelles ou bouton « Publier » perdront leur couleur."
+            );
+        }
+    }
+
+    /**
+     * La barre doit etre rendue par le gabarit commun, et une seule fois : le
+     * feed l'incluait avant, l'y laisser en afficherait deux.
+     */
+    public function test_the_mobile_tabbar_is_rendered_once_by_the_shared_layout(): void
+    {
+        $layout = file_get_contents(resource_path('views/layouts/app.blade.php'));
+        $feed   = file_get_contents(resource_path('views/feed/index.blade.php'));
+
+        $this->assertStringContainsString(
+            "@include('feed.partials.mobile-tabbar')",
+            $layout,
+            "Le gabarit commun n'inclut plus la barre : elle disparaitrait de toutes les pages."
+        );
+
+        $this->assertStringContainsString(
+            'css/tabbar.css',
+            $layout,
+            "Le gabarit commun ne charge plus tabbar.css : la barre s'afficherait sans style."
+        );
+
+        $this->assertStringNotContainsString(
+            "@include('feed.partials.mobile-tabbar')",
+            $feed,
+            'Le feed inclut de nouveau la barre : elle s y afficherait en double.'
+        );
+
+        // La preuve qui compte : la page reellement rendue, pas le gabarit.
+        $user = User::factory()->create([
+            'user_type' => 'particulier',
+            'is_service_provider' => false,
+        ]);
+
+        $html = $this->actingAs($user)->get(route('feed'))->assertOk()->getContent();
+
+        $this->assertSame(
+            1,
+            substr_count($html, '<nav class="pk-tabbar"'),
+            'Le feed doit afficher exactement une barre d onglets.'
+        );
+    }
+
+    /**
+     * Un visiteur non connecte ne doit pas voir la barre : quatre de ses cinq
+     * liens menent a des pages qui exigent une session.
+     */
+    /**
+     * Le fond de la demande : la barre existait, mais seulement sur /feed.
+     * Elle doit maintenant accompagner l'utilisateur partout, avec le bon
+     * lien de publication selon qu'il est particulier ou professionnel.
+     */
+    public function test_the_mobile_tabbar_appears_outside_the_feed_with_the_right_publish_link(): void
+    {
+        $particulier = User::factory()->create([
+            'user_type' => 'particulier',
+            'is_service_provider' => false,
+        ]);
+
+        $this->actingAs($particulier)
+            ->get(route('ads.index'))
+            ->assertOk()
+            ->assertSee('pk-tabbar', false)
+            ->assertSee('pk-tabbar-spacer', false)
+            ->assertSee(route('demand.create'), false);
+
+        $professionnel = User::factory()->create([
+            'user_type' => 'professionnel',
+            'is_service_provider' => true,
+        ]);
+
+        $this->actingAs($professionnel)
+            ->get(route('ads.index'))
+            ->assertOk()
+            ->assertSee('pk-tabbar', false)
+            ->assertSee(route('ads.create', ['type' => 'service']), false);
+    }
+
+    /**
+     * L'onglet actif suit la route courante : sur /ads c'est « Annonces », pas
+     * « Accueil » comme le codait la version precedente, figee sur le feed.
+     */
+    public function test_the_mobile_tabbar_highlights_the_current_page(): void
+    {
+        $user = User::factory()->create([
+            'user_type' => 'particulier',
+            'is_service_provider' => false,
+        ]);
+
+        $html = $this->actingAs($user)->get(route('ads.index'))->assertOk()->getContent();
+
+        preg_match('#<nav class="pk-tabbar".*?</nav>#s', $html, $nav);
+        $this->assertNotEmpty($nav, "La barre est absente de la page /ads.");
+
+        preg_match_all('/<a\s[^>]*class="([^"]*)"[^>]*>.*?<span>([^<]+)<\/span>/s', $nav[0], $links, PREG_SET_ORDER);
+
+        $actifs = [];
+        foreach ($links as $link) {
+            if (str_contains($link[1], 'is-active')) {
+                $actifs[] = trim($link[2]);
+            }
+        }
+
+        $this->assertSame(['Annonces'], $actifs, "Un seul onglet doit etre actif, et c'est « Annonces » sur /ads.");
+    }
+
+    public function test_the_mobile_tabbar_stays_hidden_for_guests(): void
+    {
+        // /ads utilise le gabarit commun et reste ouvert aux visiteurs : c'est
+        // donc bien la garde @auth du partial qui est eprouvee ici, et non le
+        // simple fait que la page emploie un autre gabarit.
+        $this->get(route('ads.index'))
+            ->assertOk()
+            ->assertDontSee('pk-tabbar', false);
     }
 }

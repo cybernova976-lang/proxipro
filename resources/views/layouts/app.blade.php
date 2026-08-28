@@ -4053,6 +4053,12 @@
             background: var(--primary);
         }
     </style>
+
+    {{-- Barre d'onglets mobile, presente sur toutes les pages. Feuille
+         autonome et legere : charger feed.css ici pour quatre couleurs
+         melangerait les styles du feed au reste du site. --}}
+    <link rel="stylesheet" href="{{ asset('css/tabbar.css') }}?v={{ @filemtime(public_path('css/tabbar.css')) ?: 1 }}">
+
     @stack('styles')
 <style>
     /* =========================================
@@ -10194,5 +10200,9 @@
     @include('partials.usage-analytics')
     @include('partials.push-notifications')
     @include('partials.pwa-install')
+
+    {{-- Barre d'onglets mobile — sur toutes les pages du gabarit. Le partial
+         se tait de lui-meme pour un visiteur non connecte. --}}
+    @include('feed.partials.mobile-tabbar')
 </body>
 </html>

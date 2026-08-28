@@ -10,15 +10,12 @@
      · une echelle d'espacement en multiples de 4 px
    ========================================================================== */
 
-/* Les variables sont portees par .pk-feed ET .pk-tabbar. La barre d'onglets est
-   rendue hors du conteneur (elle est en position fixe, cf. feed/index.blade.php),
-   donc elle n'heritait d'aucune variable : chaque var() y devenait invalide, la
-   declaration entiere etait jetee, et le fond blanc retombait sur sa valeur
-   initiale, transparent. On voyait les cartes defiler au travers, et le bouton
-   « Publier » perdait son bleu. Toute zone rendue hors de .pk-feed doit etre
-   ajoutee ici. */
-.pk-feed,
-.pk-tabbar {
+/* Ces variables ne sortent pas de .pk-feed. Toute zone rendue hors du
+   conteneur doit porter les siennes : un var() introuvable rend la
+   declaration invalide et la couleur retombe sur sa valeur initiale — un
+   fond blanc y devient transparent. C'est ce qui est arrive a la barre
+   d'onglets, qui possede desormais sa propre feuille, public/css/tabbar.css. */
+.pk-feed {
   /* --- bleu Prokejem + accent de confiance --- */
   --pk-50:  #eff6ff;
   --pk-100: #dbeafe;
@@ -737,38 +734,10 @@
   border-top: 1px solid var(--pk-rule); padding-top: 11px;
 }
 
-/* ==========================================================================
-   Barre d'onglets mobile
-   ========================================================================== */
-
-.pk-tabbar {
-  display: none;
-  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  grid-template-columns: repeat(5, 1fr);
-  background: var(--pk-surface);
-  border-top: 1px solid var(--pk-rule);
-  padding: 7px 6px calc(7px + env(safe-area-inset-bottom, 0px));
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 1030;
-  box-shadow: 0 -2px 16px -8px rgba(25, 26, 46, .3);
-}
-.pk-tabbar a, .pk-tabbar button {
-  display: grid; justify-items: center; gap: 3px; text-align: center;
-  font-size: .64rem; font-weight: 600; color: var(--pk-ink-3); padding: 5px 2px;
-}
-.pk-tabbar i { font-size: 1.2rem; }
-.pk-tabbar .is-active { color: var(--pk-600); }
-.pk-tabbar .pk-tabbar__pub { color: var(--pk-600); font-weight: 700; }
-.pk-tabbar .pk-tabbar__pub i {
-  width: 44px; height: 44px; border-radius: 14px; margin-top: -14px;
-  background: var(--pk-600); color: #fff;
-  display: grid; place-items: center; font-size: 1.3rem;
-  box-shadow: 0 2px 4px rgba(79, 70, 229, .32), 0 8px 18px -8px rgba(79, 70, 229, .7);
-}
-
-@media (max-width: 900px) {
-  .pk-tabbar { display: grid; }
-  .pk-feed { padding-bottom: 92px; }
-}
+/* La barre d'onglets mobile a quitte ce fichier : elle s'affiche desormais sur
+   toutes les pages, pas seulement sur /feed. Voir public/css/tabbar.css et son
+   inclusion dans layouts/app.blade.php. La cale qui reservait sa place sous le
+   contenu du feed est partie avec elle, pour la meme raison. */
 
 /* ==========================================================================
    Notification legere (favoris, erreurs)
