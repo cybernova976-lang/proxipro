@@ -10,7 +10,15 @@
      · une echelle d'espacement en multiples de 4 px
    ========================================================================== */
 
-.pk-feed {
+/* Les variables sont portees par .pk-feed ET .pk-tabbar. La barre d'onglets est
+   rendue hors du conteneur (elle est en position fixe, cf. feed/index.blade.php),
+   donc elle n'heritait d'aucune variable : chaque var() y devenait invalide, la
+   declaration entiere etait jetee, et le fond blanc retombait sur sa valeur
+   initiale, transparent. On voyait les cartes defiler au travers, et le bouton
+   « Publier » perdait son bleu. Toute zone rendue hors de .pk-feed doit etre
+   ajoutee ici. */
+.pk-feed,
+.pk-tabbar {
   /* --- bleu Prokejem + accent de confiance --- */
   --pk-50:  #eff6ff;
   --pk-100: #dbeafe;
@@ -47,8 +55,10 @@
   --pk-r-lg: 16px;
   --pk-sh-1: 0 1px 2px rgba(25, 26, 46, .05);
   --pk-sh-2: 0 1px 3px rgba(25, 26, 46, .06), 0 8px 24px -14px rgba(25, 26, 46, .22);
+}
 
-  /* --- reglages de base de la page --- */
+/* --- reglages de base de la page, pour le seul conteneur --- */
+.pk-feed {
   font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.55;
@@ -733,6 +743,7 @@
 
 .pk-tabbar {
   display: none;
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   grid-template-columns: repeat(5, 1fr);
   background: var(--pk-surface);
   border-top: 1px solid var(--pk-rule);

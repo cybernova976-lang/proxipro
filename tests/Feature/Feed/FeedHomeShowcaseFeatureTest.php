@@ -235,4 +235,39 @@ class FeedHomeShowcaseFeatureTest extends TestCase
 
         $this->assertGreaterThan(0, $checked, 'Aucune media query ne redimensionne la grille des cartes.');
     }
+
+    /**
+     * La barre d'onglets est rendue hors de .pk-feed. Si les variables de
+     * couleur ne sont declarees que sur .pk-feed, chaque var() de la barre
+     * devient invalide : son fond blanc retombe sur transparent et on voit les
+     * cartes defiler au travers.
+     */
+    public function test_the_mobile_tabbar_is_reached_by_the_palette_variables(): void
+    {
+        $feed = file_get_contents(resource_path('views/feed/index.blade.php'));
+        $css  = file_get_contents(public_path('css/feed.css'));
+
+        // La barre est incluse en colonne 0, donc hors du conteneur .pk-feed
+        // dont tout le contenu est indente : c'est ce qui rend le rappel de
+        // variables indispensable.
+        $this->assertMatchesRegularExpression(
+            '/^@include\(.feed\.partials\.mobile-tabbar/m',
+            $feed,
+            "La barre d'onglets n'est plus incluse hors de .pk-feed : ce test doit etre revu."
+        );
+
+        // Les commentaires sont retires d'abord : celui qui documente ce piege
+        // cite .pk-tabbar, et le laisser en place suffirait a faire passer le
+        // test alors que le selecteur, lui, aurait perdu la barre.
+        $stripped = preg_replace('#/\*.*?\*/#s', '', $css);
+
+        preg_match('/([^{};]*)\{[^{}]*--pk-surface:/', $stripped, $m);
+
+        $this->assertNotEmpty($m, 'Le bloc declarant --pk-surface est introuvable.');
+        $this->assertStringContainsString(
+            '.pk-tabbar',
+            $m[1],
+            'Les variables de couleur ne sont pas portees par .pk-tabbar : son fond redeviendra transparent.'
+        );
+    }
 }
