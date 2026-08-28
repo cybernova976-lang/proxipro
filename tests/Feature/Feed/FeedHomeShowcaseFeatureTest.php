@@ -85,6 +85,9 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             ->assertSee('pk-pro__identity', false)
             ->assertSee('pk-pro__verified', false)
             ->assertSee('Voir le profil')
+            ->assertSee('pk-pro__actions', false)
+            ->assertSee('Demander ce service')
+            ->assertSee(route('messages.create.conversation'), false)
             ->assertSee('pk-replies--waiting', false)
             ->assertSee('En attente de réponses')
             ->assertDontSee('service en ligne')
@@ -98,6 +101,12 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString('linear-gradient(135deg, #f8fbff', $css);
         $this->assertStringContainsString('.pk-pro__visual', $css);
         $this->assertStringContainsString('grid-template-columns: repeat(2, minmax(0, 1fr))', $css);
+        $this->assertStringContainsString('height: 250px', $css);
+        $this->assertStringContainsString('grid-template-rows: 195px 55px', $css);
+        $this->assertStringContainsString('.pk-pro__actions', $css);
+        $this->assertStringContainsString('.pk-pro__action--request', $css);
+        $this->assertStringContainsString('border-radius: var(--pk-r-lg)', $css);
+        $this->assertStringContainsString('border-radius: inherit; object-fit: cover', $css);
         $this->assertStringContainsString('.pk-pro__verified', $css);
         $this->assertStringContainsString('.pk-replies--waiting', $css);
         $this->assertStringContainsString('width: 124px; height: 116px', $css);

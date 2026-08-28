@@ -94,9 +94,19 @@
                         @endif
                     </span>
                 </a>
-                <a href="{{ route('profile.public', $pkPro->id) }}" class="pk-pro__go">
-                    Voir le profil <i class="fas fa-arrow-right" aria-hidden="true"></i>
-                </a>
+                <div class="pk-pro__actions">
+                    <a href="{{ route('profile.public', $pkPro->id) }}" class="pk-pro__action pk-pro__action--profile">
+                        Voir le profil
+                    </a>
+                    <form action="{{ route('messages.create.conversation') }}" method="POST" class="pk-pro__request">
+                        @csrf
+                        <input type="hidden" name="recipient_id" value="{{ $pkPro->id }}">
+                        <input type="hidden" name="message" value="Bonjour, je souhaite demander vos services de {{ Str::lower($pkJob) }}.">
+                        <button type="submit" class="pk-pro__action pk-pro__action--request">
+                            Demander ce service
+                        </button>
+                    </form>
+                </div>
             </article>
         @endforeach
     </div>
