@@ -8,12 +8,31 @@
     
     .ad-detail-container { max-width: 1200px; margin: 0 auto; padding: 30px 15px; }
     .ad-main-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 25px; border: 1px solid rgba(0,0,0,0.08); overflow: hidden; box-shadow: 0 15px 50px rgba(0,0,0,0.1); }
-    .ad-image-section { background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%); min-height: 300px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-    .ad-image-section i { font-size: 80px; color: rgba(255,255,255,0.3); }
-    .ad-image-section img { width: 100%; height: 100%; object-fit: cover; }
-    .badge-type { position: absolute; top: 20px; left: 20px; padding: 10px 20px; border-radius: 30px; font-weight: 600; }
-    .badge-offre { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
-    .badge-demande { background: linear-gradient(135deg, #17a2b8, #6f42c1); color: white; }
+    .ad-image-section { position: relative; overflow: hidden; min-height: 300px; background: #e8eef6; }
+    .ad-photo-gallery { display: grid; width: 100%; height: clamp(300px, 28vw, 390px); gap: 4px; background: #dbe4ef; }
+    .ad-photo-gallery--single { display: block; }
+    .ad-photo-gallery--double { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ad-photo-gallery--multiple { grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr); grid-template-rows: repeat(2, minmax(0, 1fr)); }
+    .ad-photo-gallery--multiple .ad-photo--main { grid-row: 1 / 3; }
+    .ad-photo {
+        position: relative; overflow: hidden; display: block; min-width: 0; min-height: 0;
+        padding: 0; border: 0; background: #dbe4ef; cursor: zoom-in;
+    }
+    .ad-photo img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .25s ease; }
+    .ad-photo-gallery--single .ad-photo img { object-fit: contain; }
+    .ad-photo:hover img { transform: scale(1.018); }
+    .ad-photo:focus-visible { outline: 3px solid #2563eb; outline-offset: -3px; z-index: 2; }
+    .ad-gallery-count {
+        position: absolute; right: 16px; bottom: 16px; z-index: 3;
+        display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px;
+        border: 1px solid rgba(255,255,255,.72); border-radius: 10px;
+        color: #fff; background: rgba(15,23,42,.78); backdrop-filter: blur(8px);
+        font-size: .78rem; font-weight: 700; cursor: pointer;
+    }
+    .ad-gallery-count i { font-size: .85rem; color: inherit; }
+    .ad-gallery-count:hover { background: rgba(15,23,42,.92); }
+    .ad-image-placeholder { height: clamp(300px, 28vw, 390px); display: grid; place-items: center; }
+    .ad-image-placeholder i { font-size: 72px; color: rgba(71,85,105,.28); }
     .ad-content-section { padding: 35px; }
     .ad-title { color: #2d3748; font-size: 1.8rem; font-weight: 700; margin-bottom: 15px; }
     .ad-meta { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; }
@@ -64,8 +83,8 @@
         .ad-content-section { padding: 25px 20px; }
         .ad-title { font-size: 1.5rem; }
         .ad-price { font-size: 1.6rem; }
-        .ad-image-section { min-height: 250px; }
-        .ad-image-section i { font-size: 60px; }
+        .ad-image-section { min-height: 280px; }
+        .ad-photo-gallery, .ad-image-placeholder { height: 320px; }
         .seller-card { padding: 20px; }
         .similar-ads { margin-top: 30px; }
     }
@@ -73,9 +92,10 @@
     @media (max-width: 768px) {
         .ad-detail-container { padding: 16px 10px; }
         .ad-main-card { border-radius: 16px; }
-        .ad-image-section { min-height: 200px; }
-        .ad-image-section i { font-size: 50px; }
-        .badge-type { top: 12px; left: 12px; padding: 7px 14px; font-size: 0.82rem; }
+        .ad-image-section { min-height: 240px; }
+        .ad-photo-gallery, .ad-image-placeholder { height: 260px; }
+        .ad-photo-gallery--multiple { grid-template-columns: minmax(0, 1.7fr) minmax(105px, 1fr); }
+        .ad-gallery-count { right: 12px; bottom: 12px; padding: 7px 10px; }
         .ad-content-section { padding: 20px 16px; }
         .ad-title { font-size: 1.3rem; margin-bottom: 12px; }
         .ad-price { font-size: 1.4rem; margin-bottom: 20px; }
@@ -100,8 +120,8 @@
     @media (max-width: 576px) {
         .ad-detail-container { padding: 10px 6px; }
         .ad-main-card { border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
-        .ad-image-section { min-height: 180px; }
-        .badge-type { top: 8px; left: 8px; padding: 6px 12px; font-size: 0.75rem; border-radius: 20px; }
+        .ad-image-section { min-height: 210px; }
+        .ad-photo-gallery, .ad-image-placeholder { height: 220px; }
         .ad-content-section { padding: 16px 14px; }
         .ad-title { font-size: 1.15rem; }
         .ad-price { font-size: 1.25rem; }
@@ -117,7 +137,8 @@
     }
 
     @media (max-width: 420px) {
-        .ad-image-section { min-height: 160px; }
+        .ad-image-section { min-height: 190px; }
+        .ad-photo-gallery, .ad-image-placeholder { height: 200px; }
         .ad-content-section { padding: 14px 12px; }
         .ad-title { font-size: 1.05rem; }
         .ad-price { font-size: 1.15rem; }
@@ -141,61 +162,74 @@
         <div class="row">
             <div class="col-lg-8 mb-4">
                 <div class="ad-main-card">
+                    @php
+                        $photos = $ad->photos ?? [];
+                        if (is_string($photos)) {
+                            $decoded = json_decode($photos, true);
+                            $photos = is_array($decoded) ? $decoded : [];
+                        }
+                        $photos = array_values(array_filter($photos));
+                        $photoCount = count($photos);
+                    @endphp
+
                     <div class="ad-image-section">
-                        <span class="badge-type {{ $ad->service_type == 'offre' ? 'badge-offre' : 'badge-demande' }}">
-                            <i class="fas {{ $ad->service_type == 'offre' ? 'fa-hand-holding' : 'fa-search' }} me-1"></i>
-                            {{ $ad->service_type == 'offre' ? 'Offre' : 'Demande' }}
-                        </span>
-                        @php
-                            $photos = $ad->photos ?? [];
-                            if (is_string($photos)) {
-                                $decoded = json_decode($photos, true);
-                                $photos = is_array($decoded) ? $decoded : [];
-                            }
-                            $photos = array_filter($photos);
-                            $photoCount = count($photos);
-                        @endphp
-                        
-                        @if($photoCount > 0)
-                            @if($photoCount === 1)
-                                <img src="{{ storage_url($photos[0]) }}" alt="Photo" id="main-photo" style="cursor: pointer;" onclick="openLightbox(0)">
-                            @else
-                                <div class="photo-gallery" style="display: grid; grid-template-columns: 2fr 1fr; gap: 4px; width: 100%; height: 100%;">
-                                    <div class="main-photo" style="cursor: pointer;" onclick="openLightbox(0)">
-                                        <img src="{{ storage_url($photos[0]) }}" alt="Photo 1" style="width: 100%; height: 100%; object-fit: cover;">
-                                    </div>
-                                    <div class="side-photos" style="display: flex; flex-direction: column; gap: 4px;">
-                                        @foreach(array_slice($photos, 1, 2) as $index => $photo)
-                                        <div class="side-photo" style="flex: 1; position: relative; cursor: pointer;" onclick="openLightbox({{ $index + 1 }})">
-                                            <img src="{{ storage_url($photo) }}" alt="Photo {{ $index + 2 }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                            @if($index === 1 && $photoCount > 3)
-                                            <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: bold;">
-                                                +{{ $photoCount - 3 }}
-                                            </div>
-                                            @endif
-                                        </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
+                        @if($photoCount === 1)
+                            <div class="ad-photo-gallery ad-photo-gallery--single">
+                                <button type="button" class="ad-photo ad-photo--main" onclick="openLightbox(0)" aria-label="Agrandir la photo de l'annonce">
+                                    <img src="{{ storage_url($photos[0]) }}" alt="Photo de l'annonce : {{ $ad->title }}">
+                                </button>
+                            </div>
+                        @elseif($photoCount === 2)
+                            <div class="ad-photo-gallery ad-photo-gallery--double">
+                                @foreach($photos as $index => $photo)
+                                    <button type="button" class="ad-photo" onclick="openLightbox({{ $index }})" aria-label="Agrandir la photo {{ $index + 1 }} sur {{ $photoCount }}">
+                                        <img src="{{ storage_url($photo) }}" alt="Photo {{ $index + 1 }} de l'annonce : {{ $ad->title }}">
+                                    </button>
+                                @endforeach
+                            </div>
+                            <button type="button" class="ad-gallery-count" onclick="openLightbox(0)" aria-label="Afficher les {{ $photoCount }} photos de l'annonce">
+                                <i class="far fa-images" aria-hidden="true"></i>
+                                {{ $photoCount }} photos
+                            </button>
+                        @elseif($photoCount >= 3)
+                            <div class="ad-photo-gallery ad-photo-gallery--multiple">
+                                <button type="button" class="ad-photo ad-photo--main" onclick="openLightbox(0)" aria-label="Agrandir la photo principale">
+                                    <img src="{{ storage_url($photos[0]) }}" alt="Photo principale de l'annonce : {{ $ad->title }}">
+                                </button>
+                                @foreach(array_slice($photos, 1, 2) as $index => $photo)
+                                    <button type="button" class="ad-photo" onclick="openLightbox({{ $index + 1 }})" aria-label="Agrandir la photo {{ $index + 2 }} sur {{ $photoCount }}">
+                                        <img src="{{ storage_url($photo) }}" alt="Photo {{ $index + 2 }} de l'annonce : {{ $ad->title }}">
+                                    </button>
+                                @endforeach
+                            </div>
+                            <button type="button" class="ad-gallery-count" onclick="openLightbox(0)" aria-label="Afficher les {{ $photoCount }} photos de l'annonce">
+                                <i class="far fa-images" aria-hidden="true"></i>
+                                {{ $photoCount }} photos
+                            </button>
                         @else
-                            <i class="fas fa-image"></i>
+                            <div class="ad-image-placeholder" aria-label="Cette annonce ne contient aucune photo">
+                                <i class="far fa-image" aria-hidden="true"></i>
+                            </div>
                         @endif
                     </div>
                     
                     <!-- Lightbox Modal -->
                     @if($photoCount > 0)
                     <div id="lightbox-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; align-items: center; justify-content: center;">
-                        <button onclick="closeLightbox()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; color: white; font-size: 2rem; cursor: pointer; z-index: 10001;">
+                        <button type="button" onclick="closeLightbox()" aria-label="Fermer la galerie" style="position: absolute; top: 20px; right: 20px; background: none; border: none; color: white; font-size: 2rem; cursor: pointer; z-index: 10001;">
                             <i class="fas fa-times"></i>
                         </button>
-                        <button onclick="prevPhoto()" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 1.2rem;">
+                        @if($photoCount > 1)
+                        <button type="button" onclick="prevPhoto()" aria-label="Afficher la photo précédente" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 1.2rem;">
                             <i class="fas fa-chevron-left"></i>
                         </button>
+                        @endif
                         <img id="lightbox-image" src="" alt="Photo" style="max-width: 90%; max-height: 90%; object-fit: contain;">
-                        <button onclick="nextPhoto()" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 1.2rem;">
+                        @if($photoCount > 1)
+                        <button type="button" onclick="nextPhoto()" aria-label="Afficher la photo suivante" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 1.2rem;">
                             <i class="fas fa-chevron-right"></i>
                         </button>
+                        @endif
                         <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: white; font-size: 1rem;">
                             <span id="lightbox-counter">1 / {{ $photoCount }}</span>
                         </div>
