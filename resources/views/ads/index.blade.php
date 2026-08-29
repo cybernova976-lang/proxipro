@@ -30,9 +30,9 @@
     .results-count { color: #2d3748; font-size: 1.1rem; }
     .results-count strong { color: #7c3aed; }
     
-    .ad-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 18px; border: 1px solid rgba(0,0,0,0.05); overflow: hidden; transition: all 0.3s; height: 100%; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+    .ad-card { background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); border-radius: 18px; border: 1px solid #e2e8f0; overflow: hidden; transition: all 0.3s; height: 100%; display: flex; flex-direction: column; box-shadow: 0 5px 20px rgba(15,23,42,0.06); }
     .ad-card:hover { transform: translateY(-5px); border-color: rgba(124, 58, 237,0.3); box-shadow: 0 15px 40px rgba(124, 58, 237,0.15); }
-    .ad-card-image { height: 160px; background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+    .ad-card-image { height: 176px; background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
     .ad-card-image i { font-size: 50px; color: rgba(255,255,255,0.3); }
     .ad-card-image img { width: 100%; height: 100%; object-fit: cover; }
     .ad-badge { position: absolute; top: 12px; left: 12px; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
@@ -41,30 +41,33 @@
     .ad-badge-boosted { position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
     .ad-badge-urgent { position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; animation: urgentPulse 2s ease-in-out infinite; }
     @keyframes urgentPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-    .ad-card-body { padding: 20px; }
-    .ad-card-category { display: inline-block; background: rgba(124, 58, 237,0.1); color: #7c3aed; padding: 4px 10px; border-radius: 15px; font-size: 0.75rem; font-weight: 500; margin-bottom: 10px; }
+    .ad-card-body { padding: 18px 20px 16px; flex: 0 0 auto; }
+    .ad-card-category { display: inline-block; background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 15px; font-size: 0.75rem; font-weight: 600; margin-bottom: 10px; }
     .ad-card-title { color: #2d3748; font-weight: 600; font-size: 1rem; margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .ad-card-location { color: #718096; font-size: 0.85rem; margin-bottom: 10px; }
-    .ad-card-price { color: #28a745; font-weight: 700; font-size: 1.1rem; }
-    .ad-card-footer { padding: 15px 20px; border-top: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+    .ad-card-meta { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 14px; }
+    .ad-card-location { color: #64748b; font-size: 0.85rem; margin: 0; min-width: 0; }
+    .ad-card-price { color: #1d4ed8; font-weight: 750; font-size: 1.05rem; white-space: nowrap; }
+    .ad-card-footer { margin-top: auto; padding: 13px 16px; border-top: 1px solid #e2e8f0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; background: #f8fafc; }
     .ad-card-user {
-        color: #a0aec0;
+        color: #334155;
         font-size: 0.8rem;
+        font-weight: 600;
         display: inline-flex;
         align-items: center;
         gap: 8px;
+        min-width: 0;
     }
     .ad-card-user-avatar {
-        width: 28px;
-        height: 28px;
+        width: 34px;
+        height: 34px;
         border-radius: 50%;
         object-fit: cover;
         border: 1px solid #e2e8f0;
         flex-shrink: 0;
     }
     .ad-card-user-fallback {
-        width: 28px;
-        height: 28px;
+        width: 34px;
+        height: 34px;
         border-radius: 50%;
         display: inline-flex;
         align-items: center;
@@ -77,19 +80,32 @@
     }
     .ad-card-user-name {
         line-height: 1.2;
+        min-width: 0;
+        overflow-wrap: anywhere;
     }
-    .btn-view { background: linear-gradient(135deg, #7c3aed, #9333ea); color: white; border: none; border-radius: 10px; padding: 8px 16px; font-size: 0.85rem; font-weight: 500; }
-    .btn-view:hover { color: white; box-shadow: 0 5px 15px rgba(124, 58, 237,0.4); }
+    .ad-card-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+    .btn-view { background: #2563eb; color: white; border: none; border-radius: 10px; padding: 9px 14px; font-size: 0.82rem; font-weight: 700; white-space: nowrap; }
+    .btn-view:hover { background: #1d4ed8; color: white; box-shadow: 0 5px 15px rgba(37,99,235,0.28); }
     
     .empty-state { text-align: center; padding: 60px 20px; }
     .empty-state i { font-size: 80px; color: #cbd5e0; margin-bottom: 20px; }
     .empty-state h4 { color: #2d3748; margin-bottom: 10px; }
     .empty-state p { color: #718096; }
     
-    .pagination { gap: 5px; }
-    .page-link { background: #f7fafc; border: 1px solid #e2e8f0; color: #4a5568; border-radius: 10px !important; padding: 10px 15px; }
-    .page-link:hover { background: white; color: #7c3aed; }
-    .page-item.active .page-link { background: #7c3aed; border-color: #7c3aed; color: white; }
+    .ads-pagination-shell { margin-top: 32px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .ads-pagination-summary { margin: 0; color: #64748b; font-size: 0.84rem; }
+    .ads-pagination { display: flex; align-items: center; justify-content: center; gap: 7px; flex-wrap: wrap; }
+    .ads-pagination__pages { display: flex; align-items: center; gap: 6px; }
+    .ads-pagination__link,
+    .ads-pagination__current,
+    .ads-pagination__disabled { min-width: 40px; height: 40px; padding: 0 12px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #dbe3ef; text-decoration: none; font-size: 0.84rem; font-weight: 650; }
+    .ads-pagination__link { background: #fff; color: #334155; }
+    .ads-pagination__link:hover { border-color: #2563eb; color: #1d4ed8; background: #eff6ff; }
+    .ads-pagination__current { background: #2563eb; border-color: #2563eb; color: #fff; }
+    .ads-pagination__disabled { background: #f8fafc; color: #94a3b8; }
+    .ads-pagination__ellipsis { color: #94a3b8; padding: 0 2px; }
+    .ads-pagination__label { margin: 0 5px; }
+    .ads-pagination__mobile-page { display: none; }
     
     @media (max-width: 992px) {
         .filters-sidebar { position: static; margin-bottom: 25px; }
@@ -111,7 +127,7 @@
         .category-chip { padding: 6px 12px; font-size: 0.8rem; }
         .empty-state { padding: 40px 16px; }
         .empty-state i { font-size: 60px; }
-        .page-link { padding: 8px 12px; font-size: 0.88rem; }
+        .ads-pagination-shell { margin-top: 26px; }
     }
 
     @media (max-width: 576px) {
@@ -123,40 +139,103 @@
         .results-header { flex-direction: column; align-items: flex-start; gap: 8px; }
         .results-count { font-size: 0.92rem; }
         .ad-card { border-radius: 12px; }
-        .ad-card-image { height: 130px; }
+        .ad-card { height: auto; }
+        .ad-card-image { height: 178px; }
         .ad-card-image i { font-size: 36px; }
         .ad-badge { top: 8px; left: 8px; padding: 4px 10px; font-size: 0.7rem; }
         .ad-badge-boosted, .ad-badge-urgent { top: 8px; right: 8px; padding: 4px 10px; font-size: 0.7rem; }
-        .ad-card-body { padding: 12px; }
+        .ad-card-body { padding: 14px 15px 13px; }
         .ad-card-category { font-size: 0.7rem; padding: 3px 8px; }
         .ad-card-title { font-size: 0.88rem; }
+        .ad-card-meta { align-items: baseline; }
         .ad-card-location { font-size: 0.8rem; }
         .ad-card-price { font-size: 1rem; }
-        .ad-card-footer { padding: 10px 12px; }
-        .ad-card-user { font-size: 0.75rem; gap: 6px; }
+        .ad-card-footer { padding: 11px 12px; gap: 9px; }
+        .ad-card-user { font-size: 0.76rem; gap: 7px; }
         .ad-card-user-avatar,
-        .ad-card-user-fallback { width: 24px; height: 24px; }
-        .btn-view { padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; }
+        .ad-card-user-fallback { width: 34px; height: 34px; }
+        .btn-view { padding: 8px 11px; font-size: 0.76rem; border-radius: 8px; }
         .category-chip { padding: 5px 10px; font-size: 0.75rem; margin: 2px; }
         .empty-state { padding: 30px 12px; }
         .empty-state i { font-size: 50px; }
         .empty-state h4 { font-size: 1.05rem; }
         .empty-state p { font-size: 0.85rem; }
-        .page-link { padding: 7px 10px; font-size: 0.82rem; }
+        .ads-pagination-shell { margin-top: 22px; gap: 9px; }
+        .ads-pagination-summary { font-size: 0.78rem; }
+        .ads-pagination { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+        .ads-pagination__pages { display: none; }
+        .ads-pagination__link,
+        .ads-pagination__current,
+        .ads-pagination__disabled { min-width: 0; height: 42px; padding: 0 10px; }
+        .ads-pagination > :last-child { justify-self: stretch; }
+        .ads-pagination > :first-child { justify-self: stretch; }
+        .ads-pagination__mobile-page { display: inline; color: #64748b; font-size: 0.78rem; font-weight: 650; white-space: nowrap; }
+        .ads-pagination > .ads-pagination__link,
+        .ads-pagination > .ads-pagination__disabled { width: 100%; }
     }
 
     @media (max-width: 420px) {
         .content-container { padding: 10px 6px; }
-        .ad-card-image { height: 120px; }
-        .ad-card-body { padding: 10px; }
+        .ad-card-image { height: 164px; }
+        .ad-card-body { padding: 12px; }
         .ad-card-title { font-size: 0.85rem; }
         .ad-card-price { font-size: 0.95rem; }
-        .ad-card-footer { padding: 8px 10px; flex-direction: column; gap: 8px; align-items: flex-start; }
+        .ad-card-footer { padding: 10px; }
+        .ad-card-user-name { font-size: 0.73rem; }
+        .btn-view { padding-inline: 10px; }
+    }
+
+    /* Le layout commun contient aussi d'anciens styles `.ad-card`.
+       Ce périmètre garantit que la liste d'annonces garde son propre rendu. */
+    .ads-index-page .ad-card {
+        background: rgba(255,255,255,0.98);
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(15,23,42,0.06);
+    }
+    .ads-index-page .ad-card-image {
+        height: 176px;
+        margin: 0;
+        border-radius: 0;
+        background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    }
+    .ads-index-page .ad-card-body { padding: 18px 20px 16px; }
+    .ads-index-page .ad-card-category { color: #2563eb; font-weight: 600; margin-bottom: 10px; }
+    .ads-index-page .ad-card-title { font-size: 1rem; margin-bottom: 8px; }
+    .ads-index-page .ad-card-price { color: #1d4ed8; font-weight: 750; }
+    .ads-index-page .ad-card-footer {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        justify-content: initial;
+        gap: 12px;
+        margin-top: auto;
+        padding: 13px 16px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    @media (max-width: 576px) {
+        .ads-index-page .ad-card { height: auto; border-radius: 12px; }
+        .ads-index-page .ad-card-image { height: 178px; }
+        .ads-index-page .ad-card-body { padding: 14px 15px 13px; }
+        .ads-index-page .ad-card-title { font-size: 0.88rem; }
+        .ads-index-page .ad-card-footer { gap: 9px; padding: 11px 12px; }
+    }
+
+    @media (max-width: 420px) {
+        .ads-index-page .ad-card-image { height: 164px; }
+        .ads-index-page .ad-card-body { padding: 12px; }
+        .ads-index-page .ad-card-footer { padding: 10px; }
     }
 </style>
 @endpush
 
 @section('content')
+<div class="ads-index-page">
     <!-- Search Section -->
     <div class="search-hero">
         <div class="container">
@@ -235,8 +314,8 @@
                     <div class="row g-4">
                         @foreach($ads as $ad)
                             <div class="col-md-6 col-xl-4">
-                                <div class="ad-card">
-                                    <div class="ad-card-image">
+                                <article class="ad-card">
+                                    <a href="{{ route('ads.show', $ad) }}" class="ad-card-image" aria-label="Voir l’annonce : {{ $ad->title }}">
                                         <span class="ad-badge {{ $ad->service_type == 'offre' ? 'ad-badge-offre' : 'ad-badge-demande' }}">
                                             {{ $ad->service_type == 'offre' ? 'Offre' : 'Demande' }}
                                         </span>
@@ -250,21 +329,21 @@
                                             </span>
                                         @endif
                                         @if(!empty($ad->photos) && isset($ad->photos[0]))
-                                            <img src="{{ storage_url($ad->photos[0]) }}" alt="Photo">
+                                            <img src="{{ storage_url($ad->photos[0]) }}" alt="Photo de l’annonce {{ $ad->title }}">
                                         @else
                                             <i class="fas fa-image"></i>
                                         @endif
-                                    </div>
+                                    </a>
                                     <div class="ad-card-body">
                                         <span class="ad-card-category">{{ $ad->category }}</span>
                                         <h5 class="ad-card-title">{{ $ad->title }}</h5>
-                                        <p class="ad-card-location"><i class="fas fa-map-marker-alt me-1"></i>{{ Str::limit($ad->location, 25) }}</p>
-                                        <div class="ad-card-price">
-                                            {{ $ad->formatted_price }}
+                                        <div class="ad-card-meta">
+                                            <p class="ad-card-location"><i class="fas fa-map-marker-alt me-1"></i>{{ Str::limit($ad->location, 25) }}</p>
+                                            <div class="ad-card-price">{{ $ad->formatted_price }}</div>
                                         </div>
                                     </div>
                                     <div class="ad-card-footer">
-                                        <a href="{{ route('profile.public', $ad->user_id) }}" class="ad-card-user text-decoration-none">
+                                        <a href="{{ route('profile.public', $ad->user_id) }}" class="ad-card-user text-decoration-none" title="Voir le profil de {{ $ad->user->name ?? 'cet utilisateur' }}">
                                             @if($ad->user && $ad->user->avatar)
                                                 <img src="{{ storage_url($ad->user->avatar) }}" alt="{{ $ad->user->name ?? 'Utilisateur' }}" class="ad-card-user-avatar">
                                             @else
@@ -272,8 +351,8 @@
                                             @endif
                                             <span class="ad-card-user-name">{{ $ad->user->name ?? 'Anonyme' }}</span>
                                         </a>
-                                        <div class="d-flex gap-2 align-items-center">
-                                            <a href="{{ route('ads.show', $ad) }}" class="btn btn-view">Voir <i class="fas fa-arrow-right ms-1"></i></a>
+                                        <div class="ad-card-actions">
+                                            <a href="{{ route('ads.show', $ad) }}" class="btn btn-view">Voir l’annonce <i class="fas fa-arrow-right ms-1"></i></a>
                                             @auth
                                                 @if(Auth::id() === $ad->user_id)
                                                     <a href="{{ route('ads.edit', $ad) }}" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="fas fa-edit"></i></a>
@@ -284,20 +363,19 @@
                                             @endauth
                                         </div>
                                     </div>
-                                </div>
+                                </article>
                             </div>
                         @endforeach
                     </div>
                     
                     @if($ads->hasPages())
-                        <div class="d-flex justify-content-center mt-5">
-                            {{ $ads->withQueryString()->links() }}
-                        </div>
+                        @include('ads.partials.pagination', ['paginator' => $ads->withQueryString()])
                     @endif
                 @endif
             </div>
         </div>
     </div>
+</div>
 @endsection
 
 @section('scripts')

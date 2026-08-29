@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Site;
 
+use App\Models\Ad;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -19,6 +20,48 @@ class MobileExperienceFeatureTest extends TestCase
             ->get(route('ads.index'))
             ->assertOk()
             ->assertSee('body class="device-mobile is-mobile"', false);
+    }
+
+    public function test_ads_listing_uses_compact_mobile_cards_and_a_french_pagination(): void
+    {
+        $owner = User::factory()->create([
+            'name' => 'Abdou OUSSENI Chebani Razamakotoravolani',
+        ]);
+
+        foreach (range(1, 13) as $index) {
+            Ad::create([
+                'title' => 'Annonce mobile '.$index,
+                'description' => 'Une annonce utilisée pour vérifier la présentation mobile.',
+                'category' => 'Plomberie',
+                'location' => 'Mamoudzou',
+                'service_type' => 'demande',
+                'status' => 'active',
+                'visibility' => 'public',
+                'user_id' => $owner->id,
+                'created_at' => now()->subMinutes($index),
+                'updated_at' => now()->subMinutes($index),
+            ]);
+        }
+
+        $response = $this->get(route('ads.index'));
+
+        $response
+            ->assertOk()
+            ->assertSee('ad-card-meta', false)
+            ->assertSee('ad-card-actions', false)
+            ->assertSee('Voir l’annonce')
+            ->assertSee('ads-pagination-shell', false)
+            ->assertSee('Affichage de 1 à 12 sur 13 annonces')
+            ->assertSee('Page 1 sur 2')
+            ->assertDontSee('pagination.previous')
+            ->assertDontSee('pagination.next')
+            ->assertDontSee('Showing 1 to 12 of 13 results');
+
+        $view = file_get_contents(resource_path('views/ads/index.blade.php'));
+
+        $this->assertStringContainsString('grid-template-columns: minmax(0, 1fr) auto;', $view);
+        $this->assertStringContainsString('.ad-card { height: auto; }', $view);
+        $this->assertStringNotContainsString('flex-direction: column; gap: 8px; align-items: flex-start;', $view);
     }
 
     public function test_home_mobile_navigation_is_accessible_and_avoids_the_pwa_control(): void
