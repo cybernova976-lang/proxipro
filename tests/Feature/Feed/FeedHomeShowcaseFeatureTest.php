@@ -119,7 +119,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
     public function test_feed_ad_card_displays_at_most_three_photos_in_the_compact_layout(): void
     {
         $requester = User::factory()->create([
-            'name' => 'Auteur de la demande',
+            'name' => 'Abdou OUSSENI Chebani Razamakotoravolani',
             'user_type' => 'particulier',
         ]);
         $ad = Ad::create([
@@ -155,15 +155,41 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString('4 photos', $html);
         $this->assertStringContainsString('pk-ad__desc', $html);
         $this->assertStringContainsString('pk-ad__foot', $html);
+        $this->assertStringContainsString('pk-ad__authorbar', $html);
         $this->assertStringContainsString('pk-ad__author-name', $html);
-        $this->assertStringContainsString('Auteur de la demande', $html);
+        $this->assertStringContainsString('Abdou OUSSENI Chebani Razamakotoravolani', $html);
         $this->assertStringContainsString('Proposer mes services', $html);
+
+        $authorbarPosition = strpos($html, 'pk-ad__authorbar');
+        $mediaPosition = strpos($html, 'pk-ad__media');
+        $bodyPosition = strpos($html, 'pk-ad__body');
+        $footerPosition = strpos($html, 'pk-ad__foot');
+
+        $this->assertNotFalse($authorbarPosition);
+        $this->assertNotFalse($mediaPosition);
+        $this->assertNotFalse($bodyPosition);
+        $this->assertNotFalse($footerPosition);
+        $this->assertLessThan($mediaPosition, $authorbarPosition, "L'identite de l'auteur doit preceder les photos.");
+        $this->assertLessThan($bodyPosition, $authorbarPosition, "L'identite de l'auteur doit ouvrir la carte.");
+        $this->assertLessThan($footerPosition, $authorbarPosition, "L'identite de l'auteur ne doit plus etre releguee au pied de carte.");
+
+        $footerHtml = substr($html, $footerPosition);
+        $this->assertStringNotContainsString('pk-ad__authorbar', $footerHtml);
+        $this->assertStringNotContainsString('pk-ad__author-name', $footerHtml);
 
         $css = file_get_contents(public_path('css/feed.css'));
         $this->assertStringContainsString('.pk-ad__media .pk-ad__photo:first-child { display: block; }', $css);
-        $this->assertStringContainsString('.pk-ad__author { display: contents; }', $css);
-        $this->assertStringContainsString('max-width: none; white-space: normal', $css);
-        $this->assertStringContainsString('grid-column: 2; grid-row: 2; margin: 0', $css);
+        preg_match('/\.pk-ad__author \.nm\s*\{([^}]*)\}/s', $css, $authorNameRule);
+        $this->assertNotEmpty($authorNameRule, "La regle du nom de l'auteur est introuvable.");
+        $this->assertStringContainsString('overflow-wrap: anywhere', $authorNameRule[1]);
+        $this->assertStringNotContainsString('text-overflow: ellipsis', $authorNameRule[1]);
+        $this->assertStringNotContainsString('white-space: nowrap', $authorNameRule[1]);
+
+        preg_match('/\.pk-feed-list\s*\{([^}]*)\}/s', $css, $feedListRule);
+        $this->assertNotEmpty($feedListRule, 'La regle de la liste des annonces est introuvable.');
+        preg_match('/gap:\s*(\d+)px/', $feedListRule[1], $gap);
+        $this->assertNotEmpty($gap, 'La liste doit definir un espacement explicite entre les annonces.');
+        $this->assertGreaterThanOrEqual(16, (int) $gap[1], 'Les annonces sont encore trop collees les unes aux autres.');
     }
 
     /**
@@ -284,6 +310,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
     {
         $layout = file_get_contents(resource_path('views/layouts/app.blade.php'));
         $feed   = file_get_contents(resource_path('views/feed/index.blade.php'));
+        $tabbar = file_get_contents(resource_path('views/feed/partials/mobile-tabbar.blade.php'));
 
         $this->assertStringContainsString(
             "@include('feed.partials.mobile-tabbar')",
@@ -295,6 +322,13 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             'css/tabbar.css',
             $layout,
             "Le gabarit commun ne charge plus tabbar.css : la barre s'afficherait sans style."
+        );
+
+        $this->assertFileExists(public_path('js/tabbar.js'));
+        $this->assertStringContainsString(
+            'js/tabbar.js',
+            $layout.$tabbar,
+            "Ni le gabarit commun ni le composant ne charge le retour visuel immediat de la barre mobile."
         );
 
         $this->assertStringNotContainsString(
@@ -315,6 +349,31 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             1,
             substr_count($html, '<nav class="pk-tabbar"'),
             'Le feed doit afficher exactement une barre d onglets.'
+        );
+        $this->assertSame(5, substr_count($html, 'data-pk-tab'));
+        $this->assertStringContainsString(asset('js/tabbar.js'), $html);
+    }
+
+    /**
+     * Un appui doit produire un retour visuel avant meme la navigation. Un
+     * second appui sur l'onglet deja ouvert ne doit pas recharger toute la
+     * page (particulierement couteuse pour le feed).
+     */
+    public function test_the_mobile_tabbar_gives_immediate_feedback_and_avoids_same_page_reload(): void
+    {
+        $css = file_get_contents(public_path('css/tabbar.css'));
+        $js = file_get_contents(public_path('js/tabbar.js'));
+
+        $this->assertStringContainsString('touch-action: manipulation', $css);
+        $this->assertMatchesRegularExpression('/\.pk-tabbar\s+a\.is-pending\b/', $css);
+
+        $this->assertStringContainsString('data-pk-tab', $js);
+        $this->assertStringContainsString('is-pending', $js);
+        $this->assertStringContainsString('window.location.href', $js);
+        $this->assertMatchesRegularExpression(
+            '/if\s*\(\s*isExactCurrentUrl\(link\)\s*\)\s*\{[^}]*event\.preventDefault\(\)/s',
+            $js,
+            "Le script doit empecher le rechargement lorsque l'onglet vise correspond exactement a l'URL ouverte."
         );
     }
 

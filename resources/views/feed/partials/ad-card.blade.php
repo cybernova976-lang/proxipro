@@ -90,6 +90,45 @@
 
 <article class="pk-ad{{ $pkThumb ? '' : ' pk-ad--nothumb' }}{{ $pkIsUrgent ? ' is-urgent' : '' }}">
 
+    <header class="pk-ad__authorbar">
+        @if($pkAuthor)
+            <a class="pk-ad__author" href="{{ route('profile.public', $pkAuthor->id) }}" aria-label="Voir le profil de {{ $pkName }}">
+        @else
+            <span class="pk-ad__author">
+        @endif
+                <span class="av">
+                    @if($pkAuthor?->avatar)
+                        <img src="{{ storage_url($pkAuthor->avatar) }}" alt="" loading="lazy" decoding="async">
+                    @else
+                        {{ Str::upper(Str::substr($pkName, 0, 1)) }}
+                    @endif
+                </span>
+                <span class="pk-ad__author-copy">
+                    <span class="pk-ad__author-name">
+                        <span class="nm">{{ $pkName }}</span>
+                        @if($pkVerified)
+                            <span class="pk-verified" title="Identité vérifiée" aria-label="Identité vérifiée">
+                                <i class="fas fa-check" aria-hidden="true"></i>
+                            </span>
+                        @endif
+                    </span>
+                    <span class="pk-ad__published">
+                        {{ $pkIsDemande ? 'Demande publiée' : 'Service publié' }}
+                    </span>
+                </span>
+        @if($pkAuthor)
+            </a>
+        @else
+            </span>
+        @endif
+
+        @if($ad->created_at)
+            <time class="pk-ad__age" datetime="{{ $ad->created_at->toIso8601String() }}">
+                {{ $ad->created_at->diffForHumans() }}
+            </time>
+        @endif
+    </header>
+
     @if($pkThumb)
         <a class="pk-ad__media pk-ad__media--{{ $pkVisiblePhotoCount }}" href="{{ $pkUrl }}" tabindex="-1" aria-hidden="true">
             @foreach($pkVisiblePhotos as $pkPhotoIndex => $pkPhoto)
@@ -109,10 +148,6 @@
     <div class="pk-ad__body">
         <div class="pk-ad__top">
             <span class="pk-ad__cat">{{ Str::limit($ad->category ?: ($ad->main_category ?: 'Service'), 28) }}</span>
-            @if($ad->created_at)
-                <span class="pk-ad__sep">·</span>
-                <span>{{ $ad->created_at->diffForHumans() }}</span>
-            @endif
             @if($pkIsUrgent)
                 <span class="pk-tag pk-tag--urgent"><i class="fas fa-bolt"></i> Urgent</span>
             @elseif($pkIsFresh)
@@ -144,24 +179,6 @@
     </div>
 
     <div class="pk-ad__foot">
-        <span class="pk-ad__author">
-            <span class="av">
-                @if($pkAuthor?->avatar)
-                    <img src="{{ storage_url($pkAuthor->avatar) }}" alt="" loading="lazy">
-                @else
-                    {{ Str::upper(Str::substr($pkName, 0, 1)) }}
-                @endif
-            </span>
-            <span class="pk-ad__author-name">
-                <span class="nm">{{ $pkName }}</span>
-                @if($pkVerified)
-                    <span class="pk-verified" title="Identité vérifiée" aria-label="Identité vérifiée">
-                        <i class="fas fa-check" aria-hidden="true"></i>
-                    </span>
-                @endif
-            </span>
-        </span>
-
         @if($pkIsDemande)
             @if($pkReplies > 0)
                 <span class="pk-replies">

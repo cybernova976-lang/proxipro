@@ -112,15 +112,34 @@ class NewFeedMockupFeatureTest extends TestCase
             'message' => 'Je peux intervenir demain matin.',
         ]);
 
-        $this->withoutMiddleware()
+        $response = $this->withoutMiddleware()
             ->actingAs($client)
             ->get(route('feed'))
             ->assertOk()
+            ->assertSee('pk-state--active-request', false)
+            ->assertSee('pk-state__request-head', false)
+            ->assertSee('pk-state__status', false)
             ->assertSee('Votre demande en cours')
             ->assertSee('Réparer la porte du garage')
             ->assertSee('1 prestataire')
             ->assertSee('vous a répondu')
             ->assertSee('Voir les 1 réponse');
+
+        $html = $response->getContent();
+        preg_match('/<section\b[^>]*pk-state--active-request[^>]*>(.*?)<\/section>/s', $html, $stateCard);
+
+        $this->assertNotEmpty($stateCard, 'La demande en cours doit posseder son propre traitement visuel.');
+        $this->assertStringContainsString('pk-state__request-head', $stateCard[1]);
+        $this->assertStringContainsString('pk-state__status', $stateCard[1]);
+
+        $css = file_get_contents(public_path('css/feed.css'));
+        preg_match('/\.pk-state--active-request\s*\{([^}]*)\}/s', $css, $activeRequestRule);
+        $this->assertNotEmpty($activeRequestRule, 'Le modificateur de la demande en cours ne possede aucune regle CSS.');
+        $this->assertMatchesRegularExpression(
+            '/(?:background|border|box-shadow)\s*:/',
+            $activeRequestRule[1],
+            'La demande en cours doit se distinguer visuellement des autres blocs du feed.'
+        );
     }
 
     public function test_new_feed_favorite_action_persists_and_removes_the_saved_ad(): void

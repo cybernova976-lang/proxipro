@@ -69,8 +69,16 @@
 @elseif($pkMyRequest)
 
     {{-- ============ Client avec une demande en cours ============ --}}
-    <section class="pk-state" aria-labelledby="pkStateTitle">
-        <span class="pk-state__eyebrow"><i class="far fa-clock"></i> Votre demande en cours</span>
+    <section class="pk-state pk-state--active-request" aria-labelledby="pkStateTitle">
+        <div class="pk-state__request-head">
+            <span class="pk-state__eyebrow"><i class="far fa-clock"></i> Votre demande en cours</span>
+            <span class="pk-state__status{{ $pkProposals > 0 ? ' pk-state__status--answered' : '' }}">
+                <span class="pk-state__status-dot" aria-hidden="true"></span>
+                {{ $pkProposals > 0
+                    ? $pkProposals . ' réponse' . ($pkProposals > 1 ? 's' : '') . ' reçue' . ($pkProposals > 1 ? 's' : '')
+                    : 'Demande publiée' }}
+            </span>
+        </div>
         <h1 id="pkStateTitle">{{ Str::limit($pkMyRequest->title, 72) }}</h1>
         <p>
             @if($pkProposals > 0)

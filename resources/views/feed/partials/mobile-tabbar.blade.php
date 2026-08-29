@@ -66,6 +66,7 @@
     <nav class="pk-tabbar" aria-label="Navigation principale">
         @foreach($pkTabs as $pkTab)
             <a href="{{ $pkTab['url'] }}"
+               data-pk-tab
                class="{{ trim($pkTab['class'].($pkTab['active'] ? ' is-active' : '')) }}"
                @if($pkTab['active']) aria-current="page" @endif>
                 <i class="{{ $pkTab['icon'] }}"></i><span>{{ $pkTab['label'] }}</span>
@@ -77,4 +78,5 @@
          par une regle sur body : elle n'existe ainsi que lorsque la barre
          existe, et ne creuse pas un vide sur les pages sans barre. --}}
     <div class="pk-tabbar-spacer" aria-hidden="true"></div>
+    <script src="{{ asset('js/tabbar.js') }}?v={{ @filemtime(public_path('js/tabbar.js')) ?: 1 }}" defer></script>
 @endauth
