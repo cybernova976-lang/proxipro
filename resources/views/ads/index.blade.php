@@ -30,8 +30,15 @@
     .results-count { color: #2d3748; font-size: 1.1rem; }
     .results-count strong { color: #7c3aed; }
     
-    .ad-card { background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); border-radius: 18px; border: 1px solid #e2e8f0; overflow: hidden; transition: all 0.3s; height: 100%; display: flex; flex-direction: column; box-shadow: 0 5px 20px rgba(15,23,42,0.06); }
-    .ad-card:hover { transform: translateY(-5px); border-color: rgba(124, 58, 237,0.3); box-shadow: 0 15px 40px rgba(124, 58, 237,0.15); }
+    /* Delimitation : un filet net plutot qu'une ombre diffuse. Une ombre large
+       et pale ne dessine pas de bord — les cartes se fondaient les unes dans
+       les autres, surtout quand deux annonces portent la meme photo. */
+    .ad-card { background: #fff; border-radius: 18px; border: 1px solid #dde4ef; overflow: hidden; transition: border-color .18s, box-shadow .18s, transform .18s; height: 100%; display: flex; flex-direction: column; box-shadow: 0 1px 2px rgba(15,23,42,.05), 0 10px 24px -18px rgba(15,23,42,.45); }
+    .ad-card:hover { transform: translateY(-3px); border-color: #93c5fd; box-shadow: 0 2px 6px rgba(15,23,42,.07), 0 18px 34px -20px rgba(37,99,235,.45); }
+
+    /* En-tete : auteur a gauche, anciennete a droite. */
+    .ad-card-head { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-bottom: 1px solid #eef2f7; background: #fff; }
+    .ad-card-date { margin-left: auto; flex: none; color: #94a3b8; font-size: 0.75rem; white-space: nowrap; }
     .ad-card-image { height: 176px; background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
     .ad-card-image i { font-size: 50px; color: rgba(255,255,255,0.3); }
     .ad-card-image img { width: 100%; height: 100%; object-fit: cover; }
@@ -47,16 +54,18 @@
     .ad-card-meta { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 14px; }
     .ad-card-location { color: #64748b; font-size: 0.85rem; margin: 0; min-width: 0; }
     .ad-card-price { color: #1d4ed8; font-weight: 750; font-size: 1.05rem; white-space: nowrap; }
-    .ad-card-footer { margin-top: auto; padding: 13px 16px; border-top: 1px solid #e2e8f0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; background: #f8fafc; }
+    .ad-card-footer { margin-top: auto; padding: 12px 14px; border-top: 1px solid #eef2f7; display: flex; align-items: center; background: #fbfcfe; }
     .ad-card-user {
         color: #334155;
-        font-size: 0.8rem;
+        font-size: 0.82rem;
         font-weight: 600;
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 9px;
         min-width: 0;
+        flex: 1 1 auto;
     }
+    .ad-card-user:hover .ad-card-user-name { color: #1d4ed8; }
     .ad-card-user-avatar {
         width: 34px;
         height: 34px;
@@ -83,7 +92,8 @@
         min-width: 0;
         overflow-wrap: anywhere;
     }
-    .ad-card-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+    .ad-card-actions { display: flex; align-items: center; gap: 8px; width: 100%; }
+    .ad-card-actions .btn-view { flex: 1; text-align: center; }
     .btn-view { background: #2563eb; color: white; border: none; border-radius: 10px; padding: 9px 14px; font-size: 0.82rem; font-weight: 700; white-space: nowrap; }
     .btn-view:hover { background: #1d4ed8; color: white; box-shadow: 0 5px 15px rgba(37,99,235,0.28); }
     
@@ -188,15 +198,16 @@
     /* Le layout commun contient aussi d'anciens styles `.ad-card`.
        Ce périmètre garantit que la liste d'annonces garde son propre rendu. */
     .ads-index-page .ad-card {
-        background: rgba(255,255,255,0.98);
-        border: 1px solid #e2e8f0;
+        background: #fff;
+        border: 1px solid #dde4ef;
         border-radius: 18px;
         display: flex;
         flex-direction: column;
         height: 100%;
         overflow: hidden;
-        box-shadow: 0 5px 20px rgba(15,23,42,0.06);
+        box-shadow: 0 1px 2px rgba(15,23,42,.05), 0 10px 24px -18px rgba(15,23,42,.45);
     }
+    .ads-index-page .ad-card-head { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-bottom: 1px solid #eef2f7; }
     .ads-index-page .ad-card-image {
         height: 176px;
         margin: 0;
@@ -208,14 +219,12 @@
     .ads-index-page .ad-card-title { font-size: 1rem; margin-bottom: 8px; }
     .ads-index-page .ad-card-price { color: #1d4ed8; font-weight: 750; }
     .ads-index-page .ad-card-footer {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        justify-content: initial;
-        gap: 12px;
+        display: flex;
+        align-items: center;
         margin-top: auto;
-        padding: 13px 16px;
-        background: #f8fafc;
-        border-top: 1px solid #e2e8f0;
+        padding: 12px 14px;
+        background: #fbfcfe;
+        border-top: 1px solid #eef2f7;
     }
 
     @media (max-width: 576px) {
@@ -230,6 +239,14 @@
         .ads-index-page .ad-card-image { height: 164px; }
         .ads-index-page .ad-card-body { padding: 12px; }
         .ads-index-page .ad-card-footer { padding: 10px; }
+    }
+
+    /* Sur telephone, les cartes s'enchainent en une seule colonne : on ecarte
+       davantage pour que le fond respire visiblement entre deux annonces. */
+    @media (max-width: 576px) {
+        .ads-index-page .row.g-4 { --bs-gutter-y: 1.75rem; }
+        .ads-index-page .ad-card-head { padding: 10px 12px; gap: 8px; }
+        .ads-index-page .ad-card-date { font-size: 0.72rem; }
     }
 </style>
 @endpush
@@ -315,6 +332,21 @@
                         @foreach($ads as $ad)
                             <div class="col-md-6 col-xl-4">
                                 <article class="ad-card">
+                                    {{-- L'auteur en tete : c'est ce qui distingue une carte
+                                         de la suivante quand les photos se ressemblent. --}}
+                                    <div class="ad-card-head">
+                                        <a href="{{ route('profile.public', $ad->user_id) }}" class="ad-card-user text-decoration-none" title="Voir le profil de {{ $ad->user->name ?? 'cet utilisateur' }}">
+                                            @if($ad->user && $ad->user->avatar)
+                                                <img src="{{ storage_url($ad->user->avatar) }}" alt="" class="ad-card-user-avatar" loading="lazy">
+                                            @else
+                                                <span class="ad-card-user-fallback">{{ strtoupper(substr($ad->user->name ?? 'U', 0, 1)) }}</span>
+                                            @endif
+                                            <span class="ad-card-user-name">{{ $ad->user->name ?? 'Anonyme' }}</span>
+                                        </a>
+                                        @if($ad->created_at)
+                                            <span class="ad-card-date">{{ $ad->created_at->diffForHumans() }}</span>
+                                        @endif
+                                    </div>
                                     <a href="{{ route('ads.show', $ad) }}" class="ad-card-image" aria-label="Voir l’annonce : {{ $ad->title }}">
                                         <span class="ad-badge {{ $ad->service_type == 'offre' ? 'ad-badge-offre' : 'ad-badge-demande' }}">
                                             {{ $ad->service_type == 'offre' ? 'Offre' : 'Demande' }}
@@ -343,14 +375,6 @@
                                         </div>
                                     </div>
                                     <div class="ad-card-footer">
-                                        <a href="{{ route('profile.public', $ad->user_id) }}" class="ad-card-user text-decoration-none" title="Voir le profil de {{ $ad->user->name ?? 'cet utilisateur' }}">
-                                            @if($ad->user && $ad->user->avatar)
-                                                <img src="{{ storage_url($ad->user->avatar) }}" alt="{{ $ad->user->name ?? 'Utilisateur' }}" class="ad-card-user-avatar">
-                                            @else
-                                                <span class="ad-card-user-fallback">{{ strtoupper(substr($ad->user->name ?? 'U', 0, 1)) }}</span>
-                                            @endif
-                                            <span class="ad-card-user-name">{{ $ad->user->name ?? 'Anonyme' }}</span>
-                                        </a>
                                         <div class="ad-card-actions">
                                             <a href="{{ route('ads.show', $ad) }}" class="btn btn-view">Voir l’annonce <i class="fas fa-arrow-right ms-1"></i></a>
                                             @auth
