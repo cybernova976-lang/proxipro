@@ -26,4 +26,13 @@ class LoginSessionStabilityFeatureTest extends TestCase
         $response->assertSee('auth\/csrf-token', false);
         $response->assertSee('HTMLFormElement.prototype.submit.call(loginForm);', false);
     }
+
+    public function test_login_uses_the_compiled_tailwind_stylesheet_in_production(): void
+    {
+        $response = $this->get(route('login'));
+
+        $response->assertOk();
+        $response->assertDontSee('cdn.tailwindcss.com', false);
+        $response->assertSee('/build/assets/app-', false);
+    }
 }
