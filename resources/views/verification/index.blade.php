@@ -262,6 +262,30 @@
         user-select: none;
     }
 
+    .verification-native-control {
+        position: relative;
+        overflow: hidden;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .verification-native-input {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        opacity: 0;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    .verification-native-control:focus-within {
+        outline: 3px solid rgba(37, 99, 235, 0.25);
+        outline-offset: 2px;
+    }
+
     .verification-file-action.is-camera {
         border-color: #bfdbfe;
         background: #eff6ff;
@@ -879,17 +903,17 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="upload-zone w-100" id="pageFrontZone">
-                                    <input type="file" name="document_front" accept="image/*,.pdf,application/pdf" class="visually-hidden verification-file-input" id="page_document_front">
-                                    <input type="file" name="document_front_camera" accept="image/*" capture="environment" class="visually-hidden verification-file-input" id="page_document_front_camera">
                                     <i class="fas fa-camera d-block"></i>
                                     <h5 class="mb-1" id="pageFrontTitle">Page d’identité ou recto</h5>
                                     <p class="text-muted small mb-0" id="pageFrontHelp">Prenez une photo nette ou choisissez un fichier</p>
                                     <div class="verification-upload-actions">
-                                        <label class="verification-file-action" for="page_document_front" role="button" tabindex="0">
-                                            <i class="fas fa-folder-open"></i>Fichiers
+                                        <label class="verification-file-action verification-native-control">
+                                            <i class="fas fa-folder-open"></i><span>Fichiers</span>
+                                            <input type="file" name="document_front" accept="image/*,.pdf,application/pdf" class="verification-native-input" id="page_document_front" aria-label="Choisir le recto du document">
                                         </label>
-                                        <label class="verification-file-action is-camera" for="page_document_front_camera" role="button" tabindex="0">
-                                            <i class="fas fa-camera"></i>Prendre une photo
+                                        <label class="verification-file-action is-camera verification-native-control">
+                                            <i class="fas fa-camera"></i><span>Prendre une photo</span>
+                                            <input type="file" name="document_front_camera" accept="image/*" capture="environment" class="verification-native-input" id="page_document_front_camera" aria-label="Photographier le recto du document">
                                         </label>
                                     </div>
                                     <img id="pageFrontPreview" class="upload-preview">
@@ -900,17 +924,17 @@
                             </div>
                             <div class="col-md-6" id="pageBackColumn">
                                 <div class="upload-zone w-100" id="pageBackZone">
-                                    <input type="file" name="document_back" accept="image/*,.pdf,application/pdf" class="visually-hidden verification-file-input" id="page_document_back">
-                                    <input type="file" name="document_back_camera" accept="image/*" capture="environment" class="visually-hidden verification-file-input" id="page_document_back_camera">
                                     <i class="fas fa-camera d-block"></i>
                                     <h5 class="mb-1">Verso du document</h5>
                                     <p class="text-muted small mb-0">Carte d’identité, permis ou titre de séjour</p>
                                     <div class="verification-upload-actions">
-                                        <label class="verification-file-action" for="page_document_back" role="button" tabindex="0">
-                                            <i class="fas fa-folder-open"></i>Fichiers
+                                        <label class="verification-file-action verification-native-control">
+                                            <i class="fas fa-folder-open"></i><span>Fichiers</span>
+                                            <input type="file" name="document_back" accept="image/*,.pdf,application/pdf" class="verification-native-input" id="page_document_back" aria-label="Choisir le verso du document">
                                         </label>
-                                        <label class="verification-file-action is-camera" for="page_document_back_camera" role="button" tabindex="0">
-                                            <i class="fas fa-camera"></i>Prendre une photo
+                                        <label class="verification-file-action is-camera verification-native-control">
+                                            <i class="fas fa-camera"></i><span>Prendre une photo</span>
+                                            <input type="file" name="document_back_camera" accept="image/*" capture="environment" class="verification-native-input" id="page_document_back_camera" aria-label="Photographier le verso du document">
                                         </label>
                                     </div>
                                     <img id="pageBackPreview" class="upload-preview">
@@ -925,17 +949,17 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="upload-zone w-100" id="pageSelfieZone">
-                                    <input type="file" name="selfie" accept="image/*" class="visually-hidden verification-file-input" id="page_selfie">
-                                    <input type="file" name="selfie_camera" accept="image/*" capture="user" class="visually-hidden verification-file-input" id="page_selfie_camera">
                                     <i class="fas fa-user-circle d-block"></i>
                                     <h5 class="mb-1">Selfie avec document</h5>
                                     <p class="text-muted small mb-0">Tenez le document à côté de votre visage</p>
                                     <div class="verification-upload-actions">
-                                        <label class="verification-file-action" for="page_selfie" role="button" tabindex="0">
-                                            <i class="fas fa-folder-open"></i>Fichiers
+                                        <label class="verification-file-action verification-native-control">
+                                            <i class="fas fa-folder-open"></i><span>Fichiers</span>
+                                            <input type="file" name="selfie" accept="image/*" class="verification-native-input" id="page_selfie" aria-label="Choisir le selfie avec le document">
                                         </label>
-                                        <label class="verification-file-action is-camera" for="page_selfie_camera" role="button" tabindex="0">
-                                            <i class="fas fa-camera"></i>Prendre une photo
+                                        <label class="verification-file-action is-camera verification-native-control">
+                                            <i class="fas fa-camera"></i><span>Prendre une photo</span>
+                                            <input type="file" name="selfie_camera" accept="image/*" capture="user" class="verification-native-input" id="page_selfie_camera" aria-label="Prendre un selfie avec le document">
                                         </label>
                                     </div>
                                     <img id="pageSelfiePreview" class="upload-preview">
@@ -1231,16 +1255,6 @@
         });
     });
     updateDocumentForm();
-
-    // The labels open the native picker without JavaScript. This handler only
-    // adds the same behaviour for keyboard users (Enter or Space).
-    document.querySelectorAll('label.verification-file-action[for]').forEach(label => {
-        label.addEventListener('keydown', event => {
-            if (event.key !== 'Enter' && event.key !== ' ') return;
-            event.preventDefault();
-            document.getElementById(label.htmlFor)?.click();
-        });
-    });
 
     function replaceVerificationInputFile(input, file) {
         const transfer = new DataTransfer();
