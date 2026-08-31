@@ -59,7 +59,7 @@ class MobileExperienceFeatureTest extends TestCase
 
         $view = file_get_contents(resource_path('views/ads/index.blade.php'));
 
-        $this->assertStringContainsString('grid-template-columns: minmax(0, 1fr) auto;', $view);
+        $this->assertStringContainsString('grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);', $view);
         $this->assertStringContainsString('.ad-card { height: auto; }', $view);
         $this->assertStringNotContainsString('flex-direction: column; gap: 8px; align-items: flex-start;', $view);
     }

@@ -258,6 +258,8 @@
         color: #334155;
         font-size: 0.82rem;
         font-weight: 700;
+        cursor: pointer;
+        user-select: none;
     }
 
     .verification-file-action.is-camera {
@@ -272,90 +274,6 @@
         font-size: 0.78rem;
         font-weight: 700;
         overflow-wrap: anywhere;
-    }
-
-    .verification-camera-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 1200;
-        display: grid;
-        place-items: center;
-        padding: 16px;
-        background: rgba(15, 23, 42, 0.88);
-    }
-
-    .verification-camera-overlay[hidden] {
-        display: none;
-    }
-
-    .verification-camera-panel {
-        width: min(100%, 520px);
-        overflow: hidden;
-        border-radius: 14px;
-        background: #0f172a;
-        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.36);
-    }
-
-    .verification-camera-header,
-    .verification-camera-actions {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px;
-        background: #fff;
-    }
-
-    .verification-camera-header {
-        justify-content: space-between;
-    }
-
-    .verification-camera-header strong {
-        color: #0f172a;
-        font-size: 0.95rem;
-    }
-
-    .verification-camera-close,
-    .verification-camera-switch {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        border: 1px solid #cbd5e1;
-        border-radius: 9px;
-        background: #fff;
-        color: #334155;
-    }
-
-    .verification-camera-video {
-        display: block;
-        width: 100%;
-        max-height: 64vh;
-        aspect-ratio: 3 / 4;
-        object-fit: cover;
-        background: #020617;
-    }
-
-    .verification-camera-actions {
-        justify-content: center;
-    }
-
-    .verification-camera-capture {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        min-height: 44px;
-        padding: 10px 18px;
-        border: 0;
-        border-radius: 9px;
-        background: #2563eb;
-        color: #fff;
-        font-weight: 750;
-    }
-
-    body.verification-camera-open {
-        overflow: hidden;
     }
 
     .upload-zone .verification-file-action i {
@@ -961,18 +879,18 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="upload-zone w-100" id="pageFrontZone">
-                                    <input type="file" name="document_front" accept="image/*,.pdf,application/pdf" class="d-none" id="page_document_front">
-                                    <input type="file" name="document_front_camera" accept="image/*" capture="environment" class="d-none" id="page_document_front_camera">
+                                    <input type="file" name="document_front" accept="image/*,.pdf,application/pdf" class="visually-hidden verification-file-input" id="page_document_front">
+                                    <input type="file" name="document_front_camera" accept="image/*" capture="environment" class="visually-hidden verification-file-input" id="page_document_front_camera">
                                     <i class="fas fa-camera d-block"></i>
                                     <h5 class="mb-1" id="pageFrontTitle">Page d’identité ou recto</h5>
                                     <p class="text-muted small mb-0" id="pageFrontHelp">Prenez une photo nette ou choisissez un fichier</p>
                                     <div class="verification-upload-actions">
-                                        <button type="button" class="verification-file-action" data-file-target="page_document_front">
+                                        <label class="verification-file-action" for="page_document_front" role="button" tabindex="0">
                                             <i class="fas fa-folder-open"></i>Fichiers
-                                        </button>
-                                        <button type="button" class="verification-file-action is-camera" data-camera-target="page_document_front" data-camera-fallback="page_document_front_camera" data-camera-facing="environment">
+                                        </label>
+                                        <label class="verification-file-action is-camera" for="page_document_front_camera" role="button" tabindex="0">
                                             <i class="fas fa-camera"></i>Prendre une photo
-                                        </button>
+                                        </label>
                                     </div>
                                     <img id="pageFrontPreview" class="upload-preview">
                                 </div>
@@ -982,18 +900,18 @@
                             </div>
                             <div class="col-md-6" id="pageBackColumn">
                                 <div class="upload-zone w-100" id="pageBackZone">
-                                    <input type="file" name="document_back" accept="image/*,.pdf,application/pdf" class="d-none" id="page_document_back">
-                                    <input type="file" name="document_back_camera" accept="image/*" capture="environment" class="d-none" id="page_document_back_camera">
+                                    <input type="file" name="document_back" accept="image/*,.pdf,application/pdf" class="visually-hidden verification-file-input" id="page_document_back">
+                                    <input type="file" name="document_back_camera" accept="image/*" capture="environment" class="visually-hidden verification-file-input" id="page_document_back_camera">
                                     <i class="fas fa-camera d-block"></i>
                                     <h5 class="mb-1">Verso du document</h5>
                                     <p class="text-muted small mb-0">Carte d’identité, permis ou titre de séjour</p>
                                     <div class="verification-upload-actions">
-                                        <button type="button" class="verification-file-action" data-file-target="page_document_back">
+                                        <label class="verification-file-action" for="page_document_back" role="button" tabindex="0">
                                             <i class="fas fa-folder-open"></i>Fichiers
-                                        </button>
-                                        <button type="button" class="verification-file-action is-camera" data-camera-target="page_document_back" data-camera-fallback="page_document_back_camera" data-camera-facing="environment">
+                                        </label>
+                                        <label class="verification-file-action is-camera" for="page_document_back_camera" role="button" tabindex="0">
                                             <i class="fas fa-camera"></i>Prendre une photo
-                                        </button>
+                                        </label>
                                     </div>
                                     <img id="pageBackPreview" class="upload-preview">
                                 </div>
@@ -1007,18 +925,18 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="upload-zone w-100" id="pageSelfieZone">
-                                    <input type="file" name="selfie" accept="image/*" class="d-none" id="page_selfie">
-                                    <input type="file" name="selfie_camera" accept="image/*" capture="user" class="d-none" id="page_selfie_camera">
+                                    <input type="file" name="selfie" accept="image/*" class="visually-hidden verification-file-input" id="page_selfie">
+                                    <input type="file" name="selfie_camera" accept="image/*" capture="user" class="visually-hidden verification-file-input" id="page_selfie_camera">
                                     <i class="fas fa-user-circle d-block"></i>
                                     <h5 class="mb-1">Selfie avec document</h5>
                                     <p class="text-muted small mb-0">Tenez le document à côté de votre visage</p>
                                     <div class="verification-upload-actions">
-                                        <button type="button" class="verification-file-action" data-file-target="page_selfie">
+                                        <label class="verification-file-action" for="page_selfie" role="button" tabindex="0">
                                             <i class="fas fa-folder-open"></i>Fichiers
-                                        </button>
-                                        <button type="button" class="verification-file-action is-camera" data-camera-target="page_selfie" data-camera-fallback="page_selfie_camera" data-camera-facing="user">
+                                        </label>
+                                        <label class="verification-file-action is-camera" for="page_selfie_camera" role="button" tabindex="0">
                                             <i class="fas fa-camera"></i>Prendre une photo
-                                        </button>
+                                        </label>
                                     </div>
                                     <img id="pageSelfiePreview" class="upload-preview">
                                 </div>
@@ -1226,37 +1144,9 @@
     </div>
 </div>
 
-<div class="verification-camera-overlay" id="verificationCameraOverlay" hidden aria-hidden="true">
-    <div class="verification-camera-panel" role="dialog" aria-modal="true" aria-labelledby="verificationCameraTitle">
-        <div class="verification-camera-header">
-            <strong id="verificationCameraTitle">Prendre une photo</strong>
-            <button type="button" class="verification-camera-close" id="verificationCameraClose" aria-label="Fermer l’appareil photo">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <video class="verification-camera-video" id="verificationCameraVideo" autoplay playsinline muted></video>
-        <canvas id="verificationCameraCanvas" hidden></canvas>
-        <div class="verification-camera-actions">
-            <button type="button" class="verification-camera-switch" id="verificationCameraSwitch" title="Changer de caméra" aria-label="Changer de caméra">
-                <i class="fas fa-sync-alt"></i>
-            </button>
-            <button type="button" class="verification-camera-capture" id="verificationCameraCapture">
-                <i class="fas fa-camera"></i>
-                <span>Utiliser cette photo</span>
-            </button>
-        </div>
-    </div>
-</div>
-
 @push('scripts')
 <script>
     const verificationImageTasks = new Set();
-    const verificationCameraState = {
-        stream: null,
-        targetId: null,
-        fallbackId: null,
-        facingMode: 'environment'
-    };
 
     function resetVerificationUpload(inputIds, previewId, zoneId) {
         inputIds.forEach(id => {
@@ -1342,11 +1232,13 @@
     });
     updateDocumentForm();
 
-    document.querySelectorAll('[data-file-target]').forEach(button => {
-        button.addEventListener('click', event => {
+    // The labels open the native picker without JavaScript. This handler only
+    // adds the same behaviour for keyboard users (Enter or Space).
+    document.querySelectorAll('label.verification-file-action[for]').forEach(label => {
+        label.addEventListener('keydown', event => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
             event.preventDefault();
-            event.stopPropagation();
-            document.getElementById(button.dataset.fileTarget)?.click();
+            document.getElementById(label.htmlFor)?.click();
         });
     });
 
@@ -1453,97 +1345,6 @@
             });
         }
     }
-
-    function stopVerificationCamera() {
-        verificationCameraState.stream?.getTracks().forEach(track => track.stop());
-        verificationCameraState.stream = null;
-        const video = document.getElementById('verificationCameraVideo');
-        if (video) video.srcObject = null;
-    }
-
-    function closeVerificationCamera() {
-        stopVerificationCamera();
-        const overlay = document.getElementById('verificationCameraOverlay');
-        overlay.hidden = true;
-        overlay.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('verification-camera-open');
-    }
-
-    async function startVerificationCamera() {
-        const overlay = document.getElementById('verificationCameraOverlay');
-        const video = document.getElementById('verificationCameraVideo');
-
-        stopVerificationCamera();
-        verificationCameraState.stream = await navigator.mediaDevices.getUserMedia({
-            audio: false,
-            video: {
-                facingMode: { ideal: verificationCameraState.facingMode },
-                width: { ideal: 1920 },
-                height: { ideal: 1440 }
-            }
-        });
-        video.srcObject = verificationCameraState.stream;
-        overlay.hidden = false;
-        overlay.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('verification-camera-open');
-        await video.play();
-    }
-
-    document.querySelectorAll('[data-camera-target]').forEach(button => {
-        button.addEventListener('click', async event => {
-            event.preventDefault();
-            event.stopPropagation();
-            verificationCameraState.targetId = button.dataset.cameraTarget;
-            verificationCameraState.fallbackId = button.dataset.cameraFallback;
-            verificationCameraState.facingMode = button.dataset.cameraFacing || 'environment';
-
-            if (!navigator.mediaDevices?.getUserMedia) {
-                document.getElementById(verificationCameraState.fallbackId)?.click();
-                return;
-            }
-
-            try {
-                await startVerificationCamera();
-            } catch (error) {
-                closeVerificationCamera();
-                alert('L’appareil photo n’est pas accessible. Autorisez la caméra dans votre navigateur ou utilisez le bouton Fichiers.');
-            }
-        });
-    });
-
-    document.getElementById('verificationCameraClose')?.addEventListener('click', closeVerificationCamera);
-    document.getElementById('verificationCameraSwitch')?.addEventListener('click', async () => {
-        verificationCameraState.facingMode = verificationCameraState.facingMode === 'user' ? 'environment' : 'user';
-        try {
-            await startVerificationCamera();
-        } catch (error) {
-            closeVerificationCamera();
-            alert('Impossible de changer de caméra.');
-        }
-    });
-    document.getElementById('verificationCameraCapture')?.addEventListener('click', () => {
-        const video = document.getElementById('verificationCameraVideo');
-        const canvas = document.getElementById('verificationCameraCanvas');
-        const input = document.getElementById(verificationCameraState.targetId);
-        if (!video || !canvas || !input || !video.videoWidth || !video.videoHeight) return;
-
-        const maxDimension = 1800;
-        const ratio = Math.min(1, maxDimension / Math.max(video.videoWidth, video.videoHeight));
-        canvas.width = Math.max(1, Math.round(video.videoWidth * ratio));
-        canvas.height = Math.max(1, Math.round(video.videoHeight * ratio));
-        canvas.getContext('2d', { alpha: false }).drawImage(video, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(blob => {
-            if (!blob) return;
-            const file = new File([blob], `verification-${Date.now()}.jpg`, {
-                type: 'image/jpeg',
-                lastModified: Date.now()
-            });
-            replaceVerificationInputFile(input, file);
-            input.dispatchEvent(new Event('change', { bubbles: true }));
-            closeVerificationCamera();
-        }, 'image/jpeg', 0.84);
-    });
-    window.addEventListener('pagehide', stopVerificationCamera);
 
     // New submission form
     setupFilePreview('page_document_front', 'pageFrontPreview', 'pageFrontZone');

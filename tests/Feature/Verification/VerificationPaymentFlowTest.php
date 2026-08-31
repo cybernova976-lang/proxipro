@@ -263,7 +263,7 @@ class VerificationPaymentFlowTest extends TestCase
             ->assertOk();
     }
 
-    public function test_verification_form_exposes_the_inline_camera_and_mobile_publish_action(): void
+    public function test_verification_form_exposes_native_file_and_camera_controls(): void
     {
         $user = User::factory()->completeForVerification()->create([
             'identity_verified' => false,
@@ -275,8 +275,18 @@ class VerificationPaymentFlowTest extends TestCase
         $response->assertSee('Publier');
         $response->assertSee('Vos documents seront transmis à l’administration uniquement après le paiement sécurisé de');
         $response->assertSee('5,00 €');
-        $response->assertSee('data-camera-target="page_document_front"', false);
-        $response->assertSee('id="verificationCameraOverlay"', false);
+        $response->assertSee('for="page_document_front"', false);
+        $response->assertSee('for="page_document_front_camera"', false);
+        $response->assertSee('id="page_document_front_camera"', false);
+        $response->assertSee('capture="environment"', false);
+        $response->assertSee('for="page_document_back"', false);
+        $response->assertSee('for="page_document_back_camera"', false);
+        $response->assertSee('for="page_selfie"', false);
+        $response->assertSee('for="page_selfie_camera"', false);
+        $response->assertSee('capture="user"', false);
+        $response->assertSee("label.verification-file-action[for]", false);
+        $response->assertDontSee('data-file-target=', false);
+        $response->assertDontSee('data-camera-target=', false);
         $response->assertSee('Page d’identité du passeport');
         $response->assertSee('maxDimension = 1800');
     }
