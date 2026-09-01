@@ -221,6 +221,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/service-orders/connect/onboarding', [ServiceOrderController::class, 'connectOnboarding'])->name('service-orders.connect.onboarding');
     Route::get('/service-orders/connect/return', [ServiceOrderController::class, 'connectReturn'])->name('service-orders.connect.return');
     Route::get('/propositions', [ServiceProposalController::class, 'index'])->name('proposals.index');
+    Route::get('/ads/{ad}/propositions/comparer', [ServiceProposalController::class, 'compare'])->name('proposals.compare');
     Route::post('/ads/{ad}/propositions', [ServiceProposalController::class, 'store'])->name('proposals.store');
     Route::post('/propositions/{proposal}/accepter', [ServiceProposalController::class, 'accept'])->name('proposals.accept');
     Route::post('/propositions/{proposal}/refuser', [ServiceProposalController::class, 'refuse'])->name('proposals.refuse');

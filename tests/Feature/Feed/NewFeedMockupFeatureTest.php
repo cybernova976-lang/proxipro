@@ -123,7 +123,8 @@ class NewFeedMockupFeatureTest extends TestCase
             ->assertSee('Réparer la porte du garage')
             ->assertSee('1 prestataire')
             ->assertSee('vous a répondu')
-            ->assertSee('Voir les 1 réponse');
+            ->assertSee('Voir les 1 réponse')
+            ->assertSee(route('proposals.compare', $requestAd), false);
 
         $html = $response->getContent();
         preg_match('/<section\b[^>]*pk-state--active-request[^>]*>(.*?)<\/section>/s', $html, $stateCard);

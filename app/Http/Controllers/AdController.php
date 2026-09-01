@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ad;
+use App\Models\ServiceProposal;
 use App\Models\User;
 use App\Models\UserService;
 use App\Notifications\NewAdMatchingNotification;
@@ -559,6 +560,14 @@ class AdController extends Controller
         );
 
         $isSaved = Auth::check() ? Auth::user()->hasSavedAd($ad) : false;
+
+        if (Auth::id() === $ad->user_id && $ad->service_type === 'demande') {
+            $ad->loadCount([
+                'serviceProposals as comparable_proposals_count' => fn ($query) => $query
+                    ->whereIn('status', [ServiceProposal::STATUS_PENDING, ServiceProposal::STATUS_ACCEPTED]),
+            ]);
+        }
+
         $publicationContext = $this->publicationSchema->resolve($ad->main_category, $ad->category);
         $publicationDomain = $ad->publication_domain ?: $publicationContext['domain'];
         $publicationDetails = $this->publicationSchema->presentationDetails($publicationDomain, $ad->ad_details);

@@ -96,7 +96,9 @@
             @endif
         </p>
         <div class="pk-state__actions">
-            <a href="{{ $pkNeedsAttention ? route('ads.edit', $pkMyRequest) : route('ads.show', $pkMyRequest) }}" class="pk-btn-white">
+            <a href="{{ $pkNeedsAttention
+                ? route('ads.edit', $pkMyRequest)
+                : ($pkProposals > 0 ? route('proposals.compare', $pkMyRequest) : route('ads.show', $pkMyRequest)) }}" class="pk-btn-white">
                 {{ $pkProposals > 0
                     ? 'Voir les ' . $pkProposals . ' réponse' . ($pkProposals > 1 ? 's' : '')
                     : ($pkNeedsAttention ? 'Améliorer ma demande' : 'Suivre ma demande') }}

@@ -31,6 +31,44 @@ class ServiceProposalController extends Controller
         return view('proposals.index', compact('sentProposals', 'receivedProposals'));
     }
 
+    public function compare(Ad $ad)
+    {
+        abort_unless($ad->user_id === Auth::id(), 403);
+        abort_unless($ad->service_type === 'demande', 404);
+
+        $proposals = $ad->serviceProposals()
+            ->whereIn('status', [ServiceProposal::STATUS_PENDING, ServiceProposal::STATUS_ACCEPTED])
+            ->with([
+                'serviceOrder',
+                'provider' => fn ($query) => $query
+                    ->with(['services' => fn ($services) => $services->where('is_active', true)->limit(2)])
+                    ->withCount('verifiedReviewsReceived')
+                    ->withAvg(
+                        ['verifiedReviewsReceived as verified_reviews_avg' => fn ($reviews) => $reviews],
+                        'rating'
+                    ),
+            ])
+            ->orderByRaw('CASE WHEN status = ? THEN 0 ELSE 1 END', [ServiceProposal::STATUS_ACCEPTED])
+            ->orderBy('amount')
+            ->orderBy('scheduled_for')
+            ->get();
+
+        $pendingProposals = $proposals->where('status', ServiceProposal::STATUS_PENDING);
+        $minimumAmount = $pendingProposals->min(fn (ServiceProposal $proposal) => (float) $proposal->amount);
+        $earliestDate = $pendingProposals
+            ->pluck('scheduled_for')
+            ->filter()
+            ->sort()
+            ->first();
+
+        return view('proposals.compare', compact(
+            'ad',
+            'proposals',
+            'minimumAmount',
+            'earliestDate'
+        ));
+    }
+
     public function store(Request $request, Ad $ad)
     {
         $provider = Auth::user();

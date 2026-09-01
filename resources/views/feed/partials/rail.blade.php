@@ -26,7 +26,7 @@
         @elseif($pkMyRequest && $pkProposals > 0)
             <h2>{{ $pkProposals }} réponse{{ $pkProposals > 1 ? 's' : '' }} vous {{ $pkProposals > 1 ? 'attendent' : 'attend' }}</h2>
             <p>Comparez les profils, les prix et les délais avant de choisir votre prestataire.</p>
-            <a href="{{ route('ads.show', $pkMyRequest) }}" class="pk-btn-soft">Comparer <i class="fas fa-arrow-right"></i></a>
+            <a href="{{ route('proposals.compare', $pkMyRequest) }}" class="pk-btn-soft">Comparer <i class="fas fa-arrow-right"></i></a>
         @elseif($pkMyRequest && $pkNeedsAttention)
             <h2>Votre demande peut être précisée</h2>
             <p>Elle est toujours sans réponse. Un détail, une photo ou un créneau plus souple peut faciliter la première proposition.</p>

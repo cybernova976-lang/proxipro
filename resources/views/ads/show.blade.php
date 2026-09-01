@@ -427,6 +427,11 @@
                             @endif
                             <a href="{{ route('profile.public', $ad->user_id) }}" class="btn btn-contact btn-contact-secondary"><i class="fas fa-user me-2"></i>Voir le profil</a>
                         @else
+                            @if($ad->service_type === 'demande' && ($ad->comparable_proposals_count ?? 0) > 0)
+                                <a href="{{ route('proposals.compare', $ad) }}" class="btn btn-contact mb-2" style="background:#2563eb;color:#fff;border:none;">
+                                    <i class="fas fa-balance-scale me-2"></i>Comparer {{ $ad->comparable_proposals_count }} proposition{{ $ad->comparable_proposals_count > 1 ? 's' : '' }}
+                                </a>
+                            @endif
                             <a href="{{ route('ads.edit', $ad) }}" class="btn btn-contact btn-contact-primary"><i class="fas fa-edit me-2"></i>Modifier</a>
                             <form action="{{ route('ads.destroy', $ad) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette annonce ? Cette action est irréversible.')">
                                 @csrf

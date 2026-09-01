@@ -10,7 +10,7 @@
 <main class="proposal-page">
     <header class="proposal-hero">
         <h1><i class="fas fa-file-signature me-2"></i>Propositions et devis</h1>
-        <p>Comparez les offres reçues ou suivez celles que vous avez envoyées.</p>
+        <p>Comparez les propositions sur des critères factuels ou suivez celles que vous avez envoyées.</p>
     </header>
 
     @if(session('success'))
@@ -45,11 +45,14 @@
                         @endif
                         <p class="proposal-message">{{ $proposal->message }}</p>
                         <div class="d-flex flex-wrap gap-2 mt-3">
+                            <a href="{{ route('proposals.compare', $proposal->ad) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-balance-scale me-1"></i>Comparer
+                            </a>
                             <a href="{{ route('ads.show', $proposal->ad) }}" class="btn btn-sm btn-outline-secondary">Voir la demande</a>
                             @if($proposal->status === \App\Models\ServiceProposal::STATUS_PENDING)
                                 <form method="POST" action="{{ route('proposals.accept', $proposal) }}">
                                     @csrf
-                                    <button class="btn btn-sm btn-success"><i class="fas fa-check me-1"></i>Accepter et payer</button>
+                                    <button class="btn btn-sm btn-success"><i class="fas fa-check me-1"></i>Choisir</button>
                                 </form>
                                 <form method="POST" action="{{ route('proposals.refuse', $proposal) }}">
                                     @csrf
