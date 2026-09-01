@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Ad;
 use App\Models\User;
+use App\Support\MarketplaceGuideCatalog;
 use Illuminate\Http\Response;
 
 class SeoController extends Controller
@@ -15,10 +16,17 @@ class SeoController extends Controller
             ['loc' => route('ads.index'), 'lastmod' => null, 'priority' => '0.9'],
             ['loc' => route('demand.create'), 'lastmod' => null, 'priority' => '0.8'],
             ['loc' => route('contact.index'), 'lastmod' => null, 'priority' => '0.5'],
+            ['loc' => route('guides.index'), 'lastmod' => null, 'priority' => '0.7'],
             ['loc' => route('legal.terms'), 'lastmod' => null, 'priority' => '0.3'],
             ['loc' => route('legal.privacy'), 'lastmod' => null, 'priority' => '0.3'],
             ['loc' => route('legal.mentions'), 'lastmod' => null, 'priority' => '0.3'],
         ]);
+
+        MarketplaceGuideCatalog::all()->each(fn (array $guide) => $urls->push([
+            'loc' => route('guides.show', $guide['slug']),
+            'lastmod' => null,
+            'priority' => '0.6',
+        ]));
 
         try {
             Ad::query()

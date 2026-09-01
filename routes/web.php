@@ -13,6 +13,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\HomePageController;
 use App\Http\Controllers\LostItemController;
+use App\Http\Controllers\MarketplaceGuideController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PointController;
@@ -41,6 +42,10 @@ use Illuminate\Support\Facades\Route;
 // Page d'accueil publique
 Route::get('/', [HomePageController::class, 'index'])->name('homepage');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
+Route::get('/conseils', [MarketplaceGuideController::class, 'index'])->name('guides.index');
+Route::get('/conseils/{slug}', [MarketplaceGuideController::class, 'show'])
+    ->where('slug', '[a-z0-9-]+')
+    ->name('guides.show');
 Route::post('/usage/events', UsageAnalyticsController::class)
     ->middleware('throttle:120,1')
     ->name('usage.store');

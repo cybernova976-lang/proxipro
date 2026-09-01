@@ -596,6 +596,7 @@
                 </a>
                 <ul class="nav-links">
                     <li><a href="{{ url('/ads') }}">Annonces</a></li>
+                    <li><a href="{{ route('guides.index') }}">Conseils</a></li>
                     <li><a href="{{ route('contact.index') }}">Contact</a></li>
                     <li><a href="#" data-site-share-trigger><i class="fas fa-share-nodes me-1"></i>Partager</a></li>
                     @auth
@@ -615,6 +616,9 @@
                 <div class="d-flex flex-column gap-2">
                     <a href="{{ url('/ads') }}" class="d-block py-2 text-decoration-none text-dark fw-semibold">
                         <i class="fas fa-bullhorn me-2 text-muted"></i>Annonces
+                    </a>
+                    <a href="{{ route('guides.index') }}" class="d-block py-2 text-decoration-none text-dark fw-semibold">
+                        <i class="fas fa-compass me-2 text-muted"></i>Conseils
                     </a>
                     <a href="{{ route('contact.index') }}" class="d-block py-2 text-decoration-none text-dark fw-semibold">
                         <i class="fas fa-envelope me-2 text-muted"></i>Contact
@@ -1024,6 +1028,7 @@
                     <h5>Plateforme</h5>
                     <ul>
                         <li><a href="{{ route('demand.create') }}">Trouver un professionnel</a></li>
+                        <li><a href="{{ route('guides.index') }}">Conseils pratiques</a></li>
                         <li><a href="{{ route('register') }}">Créer un compte</a></li>
                         <li><a href="{{ route('contact.index') }}">Nous contacter</a></li>
                     </ul>

@@ -6911,6 +6911,7 @@
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('points.dashboard') }}"><i class="fas fa-coins text-warning"></i>Mes Points <span class="badge bg-success ms-auto">{{ Auth::user()->available_points ?? 0 }}</span></a></li>
                                 <li><hr class="dropdown-divider my-2"></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('contact.index') }}"><i class="fas fa-headset" style="color: #3b82f6;"></i>Contact</a></li>
+                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('guides.index') }}"><i class="fas fa-compass" style="color: #0f9f92;"></i>Conseils pratiques</a></li>
                                 <li><button type="button" class="dropdown-item dropdown-item-modern" data-site-share-trigger><i class="fas fa-share-nodes" style="color: #7c3aed;"></i>Partager {{ config('app.name', 'Prokejem') }}</button></li>
                                 @if(Auth::user()->isProfessionnel() || Auth::user()->isServiceProvider() || Auth::user()->hasCompletedProOnboarding())
                                 <li><hr class="dropdown-divider my-2"></li>

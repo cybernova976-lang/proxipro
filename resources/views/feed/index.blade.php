@@ -12,7 +12,8 @@
       3. progression    — une seule action suivante
       4. le flux        — six annonces, un seul modele de carte
       5. prestataires   — quatre profils
-      6. reassurance    — le paiement protege en trois etapes
+      6. conseils       — trois reperes adaptes au role
+      7. reassurance    — le paiement protege en trois etapes
 
     La recherche, les filtres et la carte geographique vivent sur /annonces.
     La publication passe uniquement par /demande et /ads/create.
@@ -105,7 +106,10 @@
                 @endif
             </section>
 
-            {{-- Zone 6 · reassurance adaptee au role --}}
+            {{-- Zone 6 · conseils pratiques, en fin de parcours --}}
+            @include('feed.partials.guides')
+
+            {{-- Zone 7 · reassurance adaptee au role --}}
             @include('feed.partials.trust')
 
         </div>

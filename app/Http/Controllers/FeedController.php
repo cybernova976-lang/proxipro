@@ -6,6 +6,7 @@ use App\Models\Ad;
 use App\Services\AdLifecycleService;
 use App\Services\FeedRankingService;
 use App\Support\MarketplaceCategoryRegistry;
+use App\Support\MarketplaceGuideCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -518,6 +519,10 @@ class FeedController extends Controller
             && ! $user->hasActiveProSubscription()
             && ($pkProfileViews > 0 || $pkMatchingCount > 0);
 
+        // Trois conseils au maximum : utiles au role, compacts et places en
+        // fin de feed pour ne pas concurrencer l'action principale.
+        $pkGuides = MarketplaceGuideCatalog::forAudience($pkRole)->take(3)->values();
+
         // La maquette a ete fusionnee dans la page d'accueil : une seule vue.
         $feedView = 'feed.index';
 
@@ -569,7 +574,8 @@ class FeedController extends Controller
             'pkCompletion',
             'pkActivity',
             'pkShowUpsell',
-            'pkProfileViews'
+            'pkProfileViews',
+            'pkGuides'
         ));
     }
 

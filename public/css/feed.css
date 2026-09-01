@@ -161,6 +161,44 @@
 }
 .pk-btn-outline-light:hover { background: rgba(255, 255, 255, .15); color: #fff; }
 
+/* ===========================================================================
+   Conseils pratiques — compacts, trois cartes maximum
+   ========================================================================== */
+
+.pk-guides { min-width: 0; }
+.pk-guide-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.pk-guide-card {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--pk-rule);
+  border-radius: var(--pk-r-md);
+  background: var(--pk-surface);
+  box-shadow: var(--pk-sh-1);
+  transition: border-color .15s, transform .12s, box-shadow .15s;
+}
+.pk-guide-card:hover { color: var(--pk-ink); border-color: var(--pk-300); transform: translateY(-1px); box-shadow: var(--pk-sh-2); }
+.pk-guide-card__icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; color: var(--pk-700); background: var(--pk-50); }
+.pk-guide-card__copy { min-width: 0; display: flex; flex-direction: column; }
+.pk-guide-card__copy small { color: var(--pk-ink-3); font-size: .61rem; font-weight: 700; }
+.pk-guide-card__copy strong { margin-top: 3px; color: var(--pk-ink); font-size: .76rem; line-height: 1.35; overflow-wrap: anywhere; }
+.pk-guide-card__arrow { color: var(--pk-300); font-size: .68rem; }
+
+@media (max-width: 760px) {
+  .pk-guide-list {
+    grid-template-columns: repeat(3, minmax(235px, 82vw));
+    overflow-x: auto;
+    padding: 1px 1px 8px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .pk-guide-list::-webkit-scrollbar { display: none; }
+  .pk-guide-card { scroll-snap-align: start; }
+}
+
 /* ==========================================================================
    Zone 1 · barre d'intention
    ========================================================================== */
