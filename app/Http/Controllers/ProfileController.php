@@ -290,8 +290,12 @@ class ProfileController extends Controller
     public function publicProfile($id)
     {
         // Forcer le rechargement depuis la base de données (sans cache)
-        $user = \App\Models\User::with('services')->where('id', $id)->firstOrFail();
-        $user->refresh(); // Force le rafraîchissement des données depuis la DB
+        $user = \App\Models\User::with([
+            'services' => fn ($query) => $query
+                ->where('is_active', true)
+                ->orderByDesc('is_verified')
+                ->orderBy('subcategory'),
+        ])->where('id', $id)->firstOrFail();
 
         $canViewPrivateProfile = Auth::check()
             && (Auth::id() === $user->id || (bool) (Auth::user()->is_admin ?? false));
@@ -302,15 +306,24 @@ class ProfileController extends Controller
         // rafraichissement de la page ne fait plus monter le compteur.
         app(\App\Services\ProfileViewCounter::class)->record($user, Auth::user(), request());
 
-        // Récupérer les annonces actives de l'utilisateur
-        $ads = Ad::where('user_id', $user->id)
-            ->where('status', 'active')
+        // Ne jamais remettre en avant une publication expirée ou appartenant
+        // à une verticale désactivée depuis le profil public.
+        $activeAds = Ad::marketplaceActive()->where('user_id', $user->id);
+        $ads = (clone $activeAds)
             ->orderBy('created_at', 'desc')
             ->paginate(12);
 
+        $completedServicesCount = ServiceOrder::query()
+            ->where('seller_id', $user->id)
+            ->where('status', ServiceOrder::STATUS_COMPLETED)
+            ->where('payment_status', ServiceOrder::PAYMENT_RELEASED)
+            ->count();
+
         // Statistiques publiques
         $stats = [
-            'total_ads' => Ad::where('user_id', $user->id)->where('status', 'active')->count(),
+            'total_ads' => (clone $activeAds)->count(),
+            'active_offers' => (clone $activeAds)->where('service_type', 'offre')->count(),
+            'completed_services' => $completedServicesCount,
             'member_since' => $user->created_at->format('M Y'),
         ];
 

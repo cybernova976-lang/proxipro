@@ -25,7 +25,7 @@ class ProDocument extends Model
         return match($this->type) {
             'insurance' => 'Attestation d\'assurance',
             'kbis' => 'Extrait Kbis',
-            'certificate' => 'Certificat / Qualification',
+            'certificate', 'certification' => 'Certificat / Qualification',
             'diploma' => 'Diplôme',
             'identity' => 'Pièce d\'identité',
             'other' => 'Autre document',
@@ -38,7 +38,7 @@ class ProDocument extends Model
         return match($this->type) {
             'insurance' => 'fas fa-shield-alt',
             'kbis' => 'fas fa-building',
-            'certificate' => 'fas fa-award',
+            'certificate', 'certification' => 'fas fa-award',
             'diploma' => 'fas fa-graduation-cap',
             'identity' => 'fas fa-id-card',
             'other' => 'fas fa-file-alt',

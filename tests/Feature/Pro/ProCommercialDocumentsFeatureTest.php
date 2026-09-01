@@ -3,11 +3,14 @@
 namespace Tests\Feature\Pro;
 
 use App\Models\ProClient;
+use App\Models\ProDocument;
 use App\Models\ProInvoice;
 use App\Models\ProQuote;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProCommercialDocumentsFeatureTest extends TestCase
@@ -24,6 +27,30 @@ class ProCommercialDocumentsFeatureTest extends TestCase
 
         $this->actingAs($user)->get(route('pro.quotes.create'))
             ->assertRedirect(route('pro.account-status'));
+    }
+
+    public function test_provider_can_upload_a_professional_document_for_review(): void
+    {
+        config(['filesystems.default' => 'public']);
+        Storage::fake('public');
+        $user = $this->professional();
+        $file = UploadedFile::fake()->create('attestation.pdf', 120, 'application/pdf');
+
+        $this->actingAs($user)->post(route('pro.documents.store'), [
+            'title' => 'Attestation de qualification',
+            'type' => 'certification',
+            'file' => $file,
+            'notes' => 'Document en cours de validité.',
+        ])->assertRedirect(route('pro.documents'))
+            ->assertSessionHasNoErrors();
+
+        $document = ProDocument::sole();
+        $this->assertSame('Attestation de qualification', $document->name);
+        $this->assertSame('Attestation de qualification', $document->title);
+        $this->assertSame('certification', $document->type);
+        $this->assertSame('pending', $document->status);
+        $this->assertSame('Certificat / Qualification', $document->getTypeLabel());
+        Storage::disk('public')->assertExists($document->file_path);
     }
 
     public function test_professional_can_prepare_draft_before_registration_is_complete(): void

@@ -12,8 +12,13 @@
 @php
     $isOwnProfile = auth()->check() && auth()->id() === $user->id;
     $profileVerified = $user->hasVerifiedProfileBadge();
+    $professionalVerified = $user->isProVerified();
     $profileCompleteForVerification = $user->hasCompleteVerificationProfile();
     $isParticularAccount = $user->user_type !== 'professionnel' && $user->account_type !== 'professionnel';
+    $isProviderProfile = $user->is_service_provider
+        || $user->user_type === 'professionnel'
+        || $user->account_type === 'professionnel';
+    $completedServicesCount = (int) ($stats['completed_services'] ?? 0);
     $primaryService = $user->relationLoaded('services') ? $user->services->first() : null;
     $displayProfession = $user->profession
         ?: ($primaryService?->subcategory ?? $primaryService?->category ?? null);
@@ -122,7 +127,7 @@
                     <div class="mb-2">
                         @if($profileVerified)
                             <span class="badge bg-success px-3 py-2">
-                                <i class="fas fa-check-circle me-1"></i>Profil vérifié
+                                <i class="fas fa-check-circle me-1"></i>Identité vérifiée
                             </span>
                         @elseif($isOwnProfile)
                             <a href="{{ route('verification.index') }}" class="btn btn-sm btn-outline-success rounded-pill px-3 py-2">
@@ -187,41 +192,21 @@
                             <i class="fas fa-star {{ $i <= round($ratingAverage ?? 0) ? 'text-warning' : 'text-muted' }}"></i>
                         @endfor
                         <span class="ms-2 fw-bold">{{ number_format($ratingAverage ?? 0, 1) }}</span>
-                        <span class="text-muted">({{ $ratingCount ?? 0 }} avis)</span>
+                        <span class="text-muted">({{ $ratingCount ?? 0 }} avis vérifiés)</span>
                     </div>
                     
-                    @if($user->hasActiveProSubscription() || $user->user_type === 'professionnel' || $user->hasCompletedProOnboarding() || ($user->is_service_provider && $user->service_provider_verified))
-                    <!-- Badges -->
-                    <div class="mb-4">
-                        @if($user->hasActiveProSubscription())
-                            <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;">
-                                <i class="fas fa-briefcase me-1"></i>Professionnel
-                            </span>
-                        @elseif($user->user_type === 'professionnel' || $user->hasCompletedProOnboarding())
-                            <span class="badge bg-primary px-3 py-2">
-                                <i class="fas fa-briefcase me-1"></i>Professionnel
-                            </span>
-                        @endif
-                        @if($user->is_service_provider && $user->service_provider_verified)
-                            <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
-                                <i class="fas fa-user-check me-1"></i>Prestataire vérifié
-                            </span>
-                        @endif
-                    </div>
-                    @endif
-
                     <!-- Contact Button -->
                     <div class="d-grid gap-2">
                         @auth
                             @if(!$isOwnProfile)
-                                <form action="{{ route('messages.create.conversation') }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="recipient_id" value="{{ $user->id }}">
-                                    <input type="hidden" name="message" value="Bonjour, je souhaite vous contacter.">
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        <i class="fas fa-envelope me-2"></i>Contacter
-                                    </button>
-                                </form>
+                                <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#profileContactModal">
+                                    <i class="fas fa-paper-plane me-2"></i>Présenter mon besoin
+                                </button>
+                                @if($user->services->isNotEmpty())
+                                    <a href="#profile-services" class="btn btn-outline-primary w-100">
+                                        <i class="fas fa-tools me-2"></i>Voir ses services
+                                    </a>
+                                @endif
                             @else
                                 @if($providerAction)
                                     @if(isset($providerAction['href']))
@@ -308,30 +293,6 @@
                 </div>
             </div>
 
-            <!-- Compétences Prestataire -->
-            @if($user->is_service_provider && $user->services && $user->services->count() > 0)
-            <div class="card border-0 shadow-sm mt-4 profile-detail-card">
-                <div class="card-header bg-transparent">
-                    <h6 class="mb-0"><i class="fas fa-tools me-2 text-success"></i>Compétences</h6>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex flex-wrap gap-2">
-                        @foreach($user->services as $service)
-                            <span class="profile-skill-chip">
-                                {{ $service->subcategory }}
-                            </span>
-                        @endforeach
-                    </div>
-
-                    @if($user->services->first() && $user->services->first()->experience_years)
-                    <div class="mt-3 text-muted">
-                        <i class="fas fa-history me-1"></i>
-                        {{ $user->services->first()->experience_years }} années d'expérience
-                    </div>
-                    @endif
-                </div>
-            </div>
-            @endif
         </div>
         
         <!-- Main Content -->
@@ -339,8 +300,8 @@
             <!-- Stats -->
             <div class="profile-metrics mb-4" aria-label="Indicateurs du profil">
                 <div class="profile-metric">
-                    <span class="profile-metric-value text-primary">{{ $stats['total_ads'] ?? 0 }}</span>
-                    <span class="profile-metric-label">Annonces actives</span>
+                    <span class="profile-metric-value text-primary">{{ $completedServicesCount }}</span>
+                    <span class="profile-metric-label">Prestations finalisées</span>
                 </div>
                 <div class="profile-metric">
                     <span class="profile-metric-value text-warning">{{ number_format($ratingAverage ?? 0, 1) }}<small>/5</small></span>
@@ -354,6 +315,10 @@
                 <div class="profile-metric">
                     <span class="profile-metric-value text-success">{{ $ratingCount ?? 0 }}</span>
                     <span class="profile-metric-label">Avis vérifiés</span>
+                </div>
+                <div class="profile-metric">
+                    <span class="profile-metric-value text-primary">{{ $stats['active_offers'] ?? 0 }}</span>
+                    <span class="profile-metric-label">Services proposés</span>
                 </div>
             </div>
 
@@ -379,6 +344,22 @@
                             <i class="fas fa-calendar-check"></i>
                             <div><strong>Membre depuis {{ $user->created_at->translatedFormat('F Y') }}</strong><span>{{ $accountLabel }}</span></div>
                         </div>
+                        <div class="profile-trust-item {{ $completedServicesCount > 0 ? 'is-confirmed' : 'is-neutral' }}">
+                            <i class="fas fa-clipboard-check"></i>
+                            <div>
+                                <strong>{{ $completedServicesCount }} prestation{{ $completedServicesCount !== 1 ? 's' : '' }} finalisée{{ $completedServicesCount !== 1 ? 's' : '' }}</strong>
+                                <span>Commande terminée et payée sur Prokejem</span>
+                            </div>
+                        </div>
+                        @if($user->user_type === 'professionnel' || $user->account_type === 'professionnel')
+                        <div class="profile-trust-item {{ $professionalVerified ? 'is-confirmed' : 'is-pending' }}">
+                            <i class="fas {{ $professionalVerified ? 'fa-building-circle-check' : 'fa-building' }}"></i>
+                            <div>
+                                <strong>{{ $professionalVerified ? 'Statut professionnel vérifié' : 'Statut professionnel non vérifié' }}</strong>
+                                <span>{{ $professionalVerified ? 'Justificatif professionnel validé par la plateforme' : 'Aucun justificatif professionnel validé' }}</span>
+                            </div>
+                        </div>
+                        @endif
                         @if($user->pro_intervention_radius)
                         <div class="profile-trust-item is-neutral">
                             <i class="fas fa-location-dot"></i>
@@ -393,6 +374,48 @@
                     </div>
                 </div>
             </section>
+
+            @if($isProviderProfile && $user->services->isNotEmpty())
+            <section class="card border-0 shadow-sm mb-4 profile-section" id="profile-services" aria-labelledby="services-title">
+                <div class="card-body">
+                    <div class="profile-section-heading">
+                        <span class="profile-section-icon"><i class="fas fa-tools"></i></span>
+                        <div>
+                            <h2 id="services-title">Services et savoir-faire</h2>
+                            <p>Compétences actives déclarées par le prestataire.</p>
+                        </div>
+                    </div>
+                    <div class="profile-service-grid">
+                        @foreach($user->services as $service)
+                            <article class="profile-service-card">
+                                <div class="profile-service-card__head">
+                                    <div>
+                                        <span class="profile-service-card__category">{{ $service->main_category }}</span>
+                                        <h3>{{ $service->subcategory }}</h3>
+                                    </div>
+                                    @if($service->is_verified)
+                                        <span class="profile-service-card__verified" title="Compétence vérifiée">
+                                            <i class="fas fa-check"></i> Vérifiée
+                                        </span>
+                                    @endif
+                                </div>
+                                @if($service->experience_years > 0)
+                                    <div class="profile-service-card__experience">
+                                        <i class="fas fa-award"></i>
+                                        {{ $service->experience_years }} an{{ $service->experience_years > 1 ? 's' : '' }} d’expérience déclarée
+                                    </div>
+                                @endif
+                                @if($service->description)
+                                    <p>{{ $service->description }}</p>
+                                @else
+                                    <p class="text-muted">Contactez ce prestataire pour préciser votre besoin et vérifier sa disponibilité.</p>
+                                @endif
+                            </article>
+                        @endforeach
+                    </div>
+                </div>
+            </section>
+            @endif
             
             <!-- Bio -->
             @if($user->bio)
@@ -526,6 +549,14 @@
                                             <i class="fas fa-star {{ $i <= $review->rating ? 'text-warning' : 'text-muted' }}"></i>
                                         @endfor
                                     </div>
+                                    @if($review->serviceOrder?->ad)
+                                        <div class="profile-review-proof">
+                                            <span><i class="fas fa-shield-check"></i> Prestation payée sur Prokejem</span>
+                                            <a href="{{ route('ads.show', $review->serviceOrder->ad) }}">
+                                                Pour « {{ Str::limit($review->serviceOrder->ad->title, 70) }} »
+                                            </a>
+                                        </div>
+                                    @endif
                                     @if($review->comment)
                                         <div>{{ $review->comment }}</div>
                                     @endif
@@ -543,6 +574,51 @@
         </div>
     </div>
 </div>
+
+@auth
+@if(!$isOwnProfile)
+<div class="modal fade" id="profileContactModal" tabindex="-1" aria-labelledby="profileContactModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content profile-contact-modal">
+            <div class="modal-header">
+                <div>
+                    <span class="profile-contact-modal__eyebrow">Premier contact</span>
+                    <h2 class="modal-title fs-5" id="profileContactModalLabel">Présenter mon besoin à {{ $user->name }}</h2>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <form action="{{ route('messages.create.conversation') }}" method="POST">
+                @csrf
+                <input type="hidden" name="recipient_id" value="{{ $user->id }}">
+                <div class="modal-body">
+                    <p class="profile-contact-modal__hint">
+                        Précisez la prestation, le lieu et vos disponibilités. Aucun message ne sera envoyé avant votre validation.
+                    </p>
+                    <label for="profileContactMessage" class="form-label fw-semibold">Votre message</label>
+                    <textarea
+                        class="form-control"
+                        id="profileContactMessage"
+                        name="message"
+                        rows="6"
+                        minlength="10"
+                        maxlength="3000"
+                        required
+                        placeholder="Bonjour, je recherche une personne pour…"
+                    >{{ old('message') }}</textarea>
+                    <div class="form-text">10 à 3 000 caractères.</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-2"></i>Envoyer mon message
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
+@endauth
 
 {{-- Modals pour l'édition du profil (seulement si c'est le propriétaire) --}}
 @auth
@@ -745,7 +821,7 @@
     }
     .profile-metrics {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         background: #fff;
     }
     .profile-metric {
@@ -867,6 +943,63 @@
         font-size: .72rem;
         line-height: 1.3;
     }
+    .profile-service-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .85rem;
+    }
+    .profile-service-card {
+        min-width: 0;
+        padding: 1rem;
+        border: 1px solid #dfe7f4;
+        border-radius: 16px;
+        background: linear-gradient(145deg, #fff, #f8faff);
+    }
+    .profile-service-card__head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: .75rem;
+    }
+    .profile-service-card__category {
+        display: block;
+        color: #64748b;
+        font-size: .7rem;
+        font-weight: 700;
+        letter-spacing: .035em;
+        text-transform: uppercase;
+    }
+    .profile-service-card h3 {
+        margin: .2rem 0 0;
+        color: #16233a;
+        font-size: .95rem;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+    }
+    .profile-service-card__verified {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        flex: 0 0 auto;
+        padding: .3rem .5rem;
+        border-radius: 999px;
+        color: #047857;
+        background: #e7f8f1;
+        font-size: .68rem;
+        font-weight: 750;
+    }
+    .profile-service-card__experience {
+        margin-top: .75rem;
+        color: #3c5d96;
+        font-size: .78rem;
+        font-weight: 650;
+    }
+    .profile-service-card p {
+        margin: .65rem 0 0;
+        color: #66748a;
+        font-size: .8rem;
+        line-height: 1.55;
+    }
     .profile-bio {
         color: #4d5a70;
         line-height: 1.75;
@@ -930,6 +1063,45 @@
         border-radius: 15px;
         background: #fbfcfe;
     }
+    .profile-review-proof {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: .4rem .65rem;
+        margin: 0 0 .65rem;
+        font-size: .74rem;
+    }
+    .profile-review-proof span {
+        color: #047857;
+        font-weight: 750;
+    }
+    .profile-review-proof a {
+        color: #4d648a;
+        text-decoration: none;
+    }
+    .profile-contact-modal {
+        overflow: hidden;
+        border: 0;
+        border-radius: 20px;
+        box-shadow: 0 25px 70px rgba(15, 23, 42, .2);
+    }
+    .profile-contact-modal__eyebrow {
+        display: block;
+        margin-bottom: .2rem;
+        color: #2563eb;
+        font-size: .68rem;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+    .profile-contact-modal__hint {
+        padding: .8rem;
+        border-radius: 12px;
+        color: #52627a;
+        background: #f2f6ff;
+        font-size: .82rem;
+        line-height: 1.5;
+    }
     .profile-review-avatar {
         width: 34px;
         height: 34px;
@@ -985,9 +1157,12 @@
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
         .profile-metric:nth-child(3) {
-            grid-column: 1 / -1;
+            grid-column: auto;
             border-top: 1px solid #e9edf4;
             border-left: 0;
+        }
+        .profile-metric:nth-child(4) {
+            border-top: 1px solid #e9edf4;
         }
         .profile-metric-value {
             font-size: 1.35rem;
@@ -1002,6 +1177,9 @@
             padding: 1rem;
         }
         .profile-trust-grid {
+            grid-template-columns: 1fr;
+        }
+        .profile-service-grid {
             grid-template-columns: 1fr;
         }
         .profile-trust-item strong,

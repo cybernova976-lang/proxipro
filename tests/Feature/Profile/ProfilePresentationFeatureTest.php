@@ -2,7 +2,11 @@
 
 namespace Tests\Feature\Profile;
 
+use App\Models\Ad;
+use App\Models\Review;
+use App\Models\ServiceOrder;
 use App\Models\User;
+use App\Models\UserService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -134,6 +138,107 @@ class ProfilePresentationFeatureTest extends TestCase
             ->assertSee('@media (max-width: 575.98px)', false)
             ->assertSee('Annonces de Amina Martin')
             ->assertSee('Avis vérifiés');
+    }
+
+    public function test_public_provider_profile_only_surfaces_active_services_and_real_marketplace_proofs(): void
+    {
+        $provider = User::factory()->create([
+            'name' => 'Amina Services',
+            'account_type' => 'professionnel',
+            'user_type' => 'professionnel',
+            'is_service_provider' => true,
+            'is_verified' => true,
+            'pro_verified' => true,
+            'profile_public' => true,
+        ]);
+        $client = User::factory()->create(['name' => 'Client Prokejem']);
+
+        UserService::create([
+            'user_id' => $provider->id,
+            'main_category' => 'Bricolage & Travaux',
+            'subcategory' => 'Plombier',
+            'experience_years' => 7,
+            'description' => 'Dépannage et rénovation sanitaire.',
+            'is_verified' => true,
+            'is_active' => true,
+        ]);
+        UserService::create([
+            'user_id' => $provider->id,
+            'main_category' => 'Bricolage & Travaux',
+            'subcategory' => 'Service masqué',
+            'description' => 'Cette compétence ne doit pas être publique.',
+            'is_active' => false,
+        ]);
+
+        $activeAd = Ad::create([
+            'user_id' => $provider->id,
+            'title' => 'Dépannage plomberie soigné',
+            'description' => 'Intervention sur fuite et installation sanitaire.',
+            'main_category' => 'Bricolage & Travaux',
+            'category' => 'Plombier',
+            'location' => 'Mamoudzou',
+            'service_type' => 'offre',
+            'status' => 'active',
+            'expires_at' => now()->addMonth(),
+        ]);
+        Ad::create([
+            'user_id' => $provider->id,
+            'title' => 'Ancienne offre expirée',
+            'description' => 'Cette offre ne doit plus apparaître.',
+            'main_category' => 'Bricolage & Travaux',
+            'category' => 'Plombier',
+            'location' => 'Mamoudzou',
+            'service_type' => 'offre',
+            'status' => 'active',
+            'expires_at' => now()->subDay(),
+        ]);
+
+        $completedOrder = ServiceOrder::create([
+            'order_number' => 'CMD-PROFILE-0001',
+            'ad_id' => $activeAd->id,
+            'buyer_id' => $client->id,
+            'seller_id' => $provider->id,
+            'amount' => 150,
+            'seller_amount' => 135,
+            'status' => ServiceOrder::STATUS_COMPLETED,
+            'payment_status' => ServiceOrder::PAYMENT_RELEASED,
+            'released_at' => now(),
+        ]);
+        ServiceOrder::create([
+            'order_number' => 'CMD-PROFILE-0002',
+            'ad_id' => $activeAd->id,
+            'buyer_id' => $client->id,
+            'seller_id' => $provider->id,
+            'amount' => 80,
+            'status' => ServiceOrder::STATUS_AWAITING_PAYMENT,
+            'payment_status' => ServiceOrder::PAYMENT_AWAITING,
+        ]);
+        Review::create([
+            'reviewer_id' => $client->id,
+            'reviewed_user_id' => $provider->id,
+            'ad_id' => $activeAd->id,
+            'service_order_id' => $completedOrder->id,
+            'rating' => 5,
+            'comment' => 'Intervention ponctuelle et très propre.',
+        ]);
+
+        $response = $this->actingAs($client)->get(route('profile.public', $provider));
+
+        $response->assertOk()
+            ->assertSee('Services et savoir-faire')
+            ->assertSee('Dépannage et rénovation sanitaire.')
+            ->assertSee('Compétence vérifiée', false)
+            ->assertDontSee('Service masqué')
+            ->assertDontSee('Cette compétence ne doit pas être publique.')
+            ->assertSee('1 prestation finalisée')
+            ->assertSee('Statut professionnel vérifié')
+            ->assertSee('Dépannage plomberie soigné')
+            ->assertDontSee('Ancienne offre expirée')
+            ->assertSee('Prestation payée sur Prokejem')
+            ->assertSee('id="profileContactModal"', false)
+            ->assertSee('Aucun message ne sera envoyé avant votre validation.')
+            ->assertSee('name="message"', false)
+            ->assertDontSee('type="hidden" name="message"', false);
     }
 
     public function test_own_profile_routes_photo_changes_through_the_cropper_and_shows_readiness(): void

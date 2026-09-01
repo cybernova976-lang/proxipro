@@ -976,6 +976,7 @@ class ProDashboardController extends Controller
 
         ProDocument::create([
             'user_id' => $user->id,
+            'name' => $validated['title'],
             'title' => $validated['title'],
             'type' => $validated['type'],
             'file_path' => $path,
