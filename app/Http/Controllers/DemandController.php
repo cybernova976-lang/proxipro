@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Ad;
 use App\Models\User;
 use App\Models\UserService;
+use App\Services\AdLifecycleService;
 use App\Services\GeocodingService;
 use App\Services\SavedSearchService;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ class DemandController extends Controller
     public function __construct(
         private SavedSearchService $savedSearchService,
         private GeocodingService $geocodingService,
+        private AdLifecycleService $adLifecycle,
     ) {}
 
     /**
@@ -85,6 +87,17 @@ class DemandController extends Controller
             ])->withInput();
         }
 
+        if ($this->adLifecycle->hasRecentDuplicate(
+            Auth::id(),
+            $request->title,
+            $request->category,
+            'demande'
+        )) {
+            return back()->withErrors([
+                'title' => 'Une demande identique a déjà été publiée au cours des dernières 24 heures.',
+            ])->withInput();
+        }
+
         $finalLocation = $request->location;
         if (empty($finalLocation) && $request->city && $request->city !== '__other__') {
             $finalLocation = $request->city;
@@ -116,7 +129,7 @@ class DemandController extends Controller
         $ad->price_type = $request->price_type;
         $ad->price = $request->price_type === 'fixed' ? $request->price : null;
         $ad->service_type = 'demande';
-        $ad->expires_at = now()->addDays(30);
+        $ad->expires_at = $this->adLifecycle->expiresAtFor('demande');
         $ad->publication_terms_accepted_at = now();
         $ad->publication_terms_version = self::PUBLICATION_TERMS_VERSION;
         $ad->radius_km = 50;

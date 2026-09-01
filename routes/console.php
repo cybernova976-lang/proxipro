@@ -61,13 +61,10 @@ Schedule::command('points:daily-reset')
     ->appendOutputTo(storage_path('logs/points-daily-reset.log'));
 
 // Retire chaque nuit les annonces arrivées au terme de leur durée de publication.
-Schedule::call(function () {
-    \App\Models\Ad::query()
-        ->where('status', 'active')
-        ->whereNotNull('expires_at')
-        ->where('expires_at', '<=', now())
-        ->update(['status' => 'expired']);
-})->name('ads:expire')->dailyAt('00:15')->withoutOverlapping();
+Schedule::command('ads:expire')
+    ->dailyAt('00:15')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/ads-expire.log'));
 
 // Les compteurs d'audience sont uniquement agrégés et conservés au maximum 25 mois.
 Schedule::command('usage:prune --months=25')

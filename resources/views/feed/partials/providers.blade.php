@@ -10,7 +10,7 @@
 @endphp
 
 @if($pkProviders->isNotEmpty())
-<section aria-labelledby="pkProsTitle">
+<section id="pkProviderList" aria-labelledby="pkProsTitle">
     <div class="pk-sechead">
         <div>
             <h2 id="pkProsTitle">Prestataires recommandés</h2>

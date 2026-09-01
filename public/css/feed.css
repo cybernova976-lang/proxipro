@@ -301,6 +301,10 @@
 .pk-state__status--answered .pk-state__status-dot {
   background: var(--pk-ok); box-shadow: 0 0 0 4px var(--pk-ok-bg);
 }
+.pk-state__status--attention { border-color: #f6c96b; color: #9a5b00; background: #fffaf0; }
+.pk-state__status--attention .pk-state__status-dot {
+  background: #f59e0b; box-shadow: 0 0 0 4px #fef3c7;
+}
 
 .pk-quickcats {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));

@@ -142,6 +142,41 @@ class NewFeedMockupFeatureTest extends TestCase
         );
     }
 
+    public function test_client_with_an_unanswered_request_gets_a_concrete_recovery_action(): void
+    {
+        $client = User::factory()->create([
+            'user_type' => 'particulier',
+            'account_type' => 'particulier',
+            'is_service_provider' => false,
+        ]);
+
+        $requestAd = Ad::create([
+            'title' => 'Réparer une fuite restée sans réponse',
+            'description' => 'La demande est assez ancienne pour proposer une action corrective.',
+            'main_category' => 'Bricolage & Travaux',
+            'category' => 'Plombier',
+            'location' => 'Mamoudzou',
+            'service_type' => 'demande',
+            'status' => 'active',
+            'visibility' => 'public',
+            'user_id' => $client->id,
+            'expires_at' => now()->addDays(30),
+        ]);
+        $requestAd->forceFill([
+            'created_at' => now()->subHours(3),
+            'updated_at' => now()->subHours(3),
+        ])->save();
+
+        $this->withoutMiddleware()
+            ->actingAs($client)
+            ->get(route('feed'))
+            ->assertOk()
+            ->assertSee('Toujours aucune réponse')
+            ->assertSee('Améliorer ma demande')
+            ->assertSee(route('ads.edit', $requestAd), false)
+            ->assertSee('Consulter les prestataires');
+    }
+
     public function test_new_feed_favorite_action_persists_and_removes_the_saved_ad(): void
     {
         $viewer = User::factory()->create();

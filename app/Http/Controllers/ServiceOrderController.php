@@ -48,7 +48,12 @@ class ServiceOrderController extends Controller
         $user = Auth::user();
 
         abort_if($ad->user_id === $user->id, 403);
-        abort_unless($ad->service_type === 'offre' && $ad->status === 'active', 422);
+        abort_unless(
+            $ad->service_type === 'offre'
+                && $ad->status === 'active'
+                && (! $ad->expires_at || $ad->expires_at->isFuture()),
+            422
+        );
 
         $request->validate([
             'amount' => 'required|numeric|min:1',

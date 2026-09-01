@@ -11,6 +11,7 @@
     $pkOpenRequests = collect($priorityProviderRequests ?? []);
     $pkMyRequest = $activeClientRequest ?? null;
     $pkProposals = (int) ($pkMyRequest->service_proposals_count ?? 0);
+    $pkNeedsAttention = (bool) ($activeClientRequestNeedsAttention ?? false);
 @endphp
 
 @if(($pkRole ?? 'client') === 'provider')
@@ -72,11 +73,11 @@
     <section class="pk-state pk-state--active-request" aria-labelledby="pkStateTitle">
         <div class="pk-state__request-head">
             <span class="pk-state__eyebrow"><i class="far fa-clock"></i> Votre demande en cours</span>
-            <span class="pk-state__status{{ $pkProposals > 0 ? ' pk-state__status--answered' : '' }}">
+            <span class="pk-state__status{{ $pkProposals > 0 ? ' pk-state__status--answered' : ($pkNeedsAttention ? ' pk-state__status--attention' : '') }}">
                 <span class="pk-state__status-dot" aria-hidden="true"></span>
                 {{ $pkProposals > 0
                     ? $pkProposals . ' réponse' . ($pkProposals > 1 ? 's' : '') . ' reçue' . ($pkProposals > 1 ? 's' : '')
-                    : 'Demande publiée' }}
+                    : ($pkNeedsAttention ? 'Toujours aucune réponse' : 'Demande publiée') }}
             </span>
         </div>
         <h1 id="pkStateTitle">{{ Str::limit($pkMyRequest->title, 72) }}</h1>
@@ -86,18 +87,24 @@
                 vous {{ $pkProposals > 1 ? 'ont' : 'a' }} répondu.</strong>
                 Comparez les profils et les prix, puis choisissez celui qui vous convient.
                 Le paiement n’est débloqué qu’après votre validation.
+            @elseif($pkNeedsAttention)
+                <strong>Votre demande est visible mais n’a pas encore reçu de proposition.</strong>
+                Ajoutez une précision, une photo ou un créneau plus souple pour aider les prestataires à se décider.
             @else
                 Votre demande est publiée. Les prestataires de votre zone la reçoivent :
                 vous serez prévenu dès la première réponse.
             @endif
         </p>
         <div class="pk-state__actions">
-            <a href="{{ route('ads.show', $pkMyRequest) }}" class="pk-btn-white">
-                {{ $pkProposals > 0 ? 'Voir les ' . $pkProposals . ' réponse' . ($pkProposals > 1 ? 's' : '') : 'Suivre ma demande' }}
+            <a href="{{ $pkNeedsAttention ? route('ads.edit', $pkMyRequest) : route('ads.show', $pkMyRequest) }}" class="pk-btn-white">
+                {{ $pkProposals > 0
+                    ? 'Voir les ' . $pkProposals . ' réponse' . ($pkProposals > 1 ? 's' : '')
+                    : ($pkNeedsAttention ? 'Améliorer ma demande' : 'Suivre ma demande') }}
                 <i class="fas fa-arrow-right"></i>
             </a>
-            <a href="{{ route('demand.create') }}" class="pk-btn-outline-light">
-                <i class="fas fa-plus"></i> Publier un autre besoin
+            <a href="{{ $pkNeedsAttention ? route('ads.index', ['type' => 'offres']) : route('demand.create') }}" class="pk-btn-outline-light">
+                <i class="fas fa-{{ $pkNeedsAttention ? 'users' : 'plus' }}"></i>
+                {{ $pkNeedsAttention ? 'Consulter les prestataires' : 'Publier un autre besoin' }}
             </a>
         </div>
     </section>

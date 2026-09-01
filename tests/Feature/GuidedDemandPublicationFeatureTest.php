@@ -91,6 +91,41 @@ class GuidedDemandPublicationFeatureTest extends TestCase
         $this->assertDatabaseCount('ads', 0);
     }
 
+    public function test_guided_publication_rejects_a_recent_duplicate_even_with_spacing_and_case_changes(): void
+    {
+        Notification::fake();
+        $this->mock(GeocodingService::class, function ($mock): void {
+            $mock->shouldReceive('geocode')->once()->andReturn(null);
+        });
+
+        $client = User::factory()->create();
+        $payload = [
+            'main_category' => 'Bricolage & Travaux',
+            'category' => 'Plombier',
+            'country' => 'Mayotte',
+            'city' => 'Mamoudzou',
+            'location' => 'Mamoudzou',
+            'desired_date' => today()->addDays(3)->toDateString(),
+            'time_window' => 'flexible',
+            'title' => 'Réparer une fuite sous mon évier',
+            'description' => 'Une fuite légère apparaît sous l’évier lorsque le robinet est ouvert.',
+            'price_type' => 'negotiable',
+            'publication_confirmed' => '1',
+        ];
+
+        $this->actingAs($client)->post(route('demand.store'), $payload)->assertRedirect();
+
+        $this->actingAs($client)
+            ->from(route('demand.create'))
+            ->post(route('demand.store'), array_merge($payload, [
+                'title' => '  RÉPARER   UNE FUITE SOUS MON ÉVIER  ',
+            ]))
+            ->assertRedirect(route('demand.create'))
+            ->assertSessionHasErrors('title');
+
+        $this->assertDatabaseCount('ads', 1);
+    }
+
     public function test_matching_page_explains_the_no_provider_fallback_without_false_notification_claim(): void
     {
         $client = User::factory()->create();

@@ -244,6 +244,10 @@
     /* Sur telephone, les cartes s'enchainent en une seule colonne : on ecarte
        davantage pour que le fond respire visiblement entre deux annonces. */
     @media (max-width: 576px) {
+        .ads-index-page .content-container > .row,
+        .ads-index-page .content-container .row.g-4 { margin-left: 0; margin-right: 0; }
+        .ads-index-page .content-container > .row > *,
+        .ads-index-page .content-container .row.g-4 > * { padding-left: 0; padding-right: 0; }
         .ads-index-page .row.g-4 { --bs-gutter-y: 1.75rem; }
         .ads-index-page .ad-card-head { padding: 10px 12px; gap: 8px; }
         .ads-index-page .ad-card-date { font-size: 0.72rem; }
@@ -367,7 +371,21 @@
                                         @endif
                                     </a>
                                     <div class="ad-card-body">
-                                        <span class="ad-card-category">{{ $ad->category }}</span>
+                                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                            <span class="ad-card-category mb-0">{{ $ad->category }}</span>
+                                            @if($isMyAds)
+                                                @php
+                                                    $publicationExpired = $ad->status === 'expired'
+                                                        || ($ad->expires_at && $ad->expires_at->isPast());
+                                                    $publicationStatus = $publicationExpired
+                                                        ? ['label' => 'Expirée', 'class' => 'bg-secondary']
+                                                        : ($ad->status === 'active'
+                                                            ? ['label' => 'Active', 'class' => 'bg-success']
+                                                            : ['label' => 'Archivée', 'class' => 'bg-light text-dark border']);
+                                                @endphp
+                                                <span class="badge {{ $publicationStatus['class'] }}">{{ $publicationStatus['label'] }}</span>
+                                            @endif
+                                        </div>
                                         <h5 class="ad-card-title">{{ $ad->title }}</h5>
                                         <div class="ad-card-meta">
                                             <p class="ad-card-location"><i class="fas fa-map-marker-alt me-1"></i>{{ Str::limit($ad->location, 25) }}</p>
@@ -380,7 +398,18 @@
                                             @auth
                                                 @if(Auth::id() === $ad->user_id)
                                                     <a href="{{ route('ads.edit', $ad) }}" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="fas fa-edit"></i></a>
-                                                    @if(!($ad->is_boosted && $ad->boost_end && $ad->boost_end->isFuture()) && !($ad->is_urgent && $ad->urgent_until && $ad->urgent_until->isFuture()))
+                                                    @if($isMyAds && (($publicationExpired ?? false) || $ad->status !== 'active'))
+                                                        <form action="{{ route('ads.republish', $ad) }}" method="POST" class="d-inline">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-success btn-sm" title="Republier"><i class="fas fa-redo"></i></button>
+                                                        </form>
+                                                    @elseif($isMyAds)
+                                                        <form action="{{ route('ads.archive', $ad) }}" method="POST" class="d-inline" onsubmit="return confirm('Archiver cette annonce ?');">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Archiver"><i class="fas fa-box-archive"></i></button>
+                                                        </form>
+                                                    @elseif(!($ad->is_boosted && $ad->boost_end && $ad->boost_end->isFuture()) && !($ad->is_urgent && $ad->urgent_until && $ad->urgent_until->isFuture()))
                                                         <a href="{{ route('boost.show', $ad) }}" class="btn btn-warning btn-sm" title="Booster" style="color: white;"><i class="fas fa-rocket"></i></a>
                                                     @endif
                                                 @endif

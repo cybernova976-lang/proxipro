@@ -148,6 +148,8 @@ Route::middleware('auth')->group(function () {
 // Routes pour les annonces
 Route::middleware(['auth'])->group(function () {
     Route::get('/ads/my-ads', [AdController::class, 'myAds'])->name('ads.myads');
+    Route::patch('/ads/{ad}/archive', [AdController::class, 'archive'])->name('ads.archive');
+    Route::post('/ads/{ad}/republish', [AdController::class, 'republish'])->name('ads.republish');
     Route::post('/ads/store-from-popup', [AdController::class, 'storeFromPopup'])->middleware('throttle:10,60')->name('ads.storeFromPopup');
     Route::post('/ads', [AdController::class, 'store'])->middleware('throttle:10,60')->name('ads.store');
     Route::resource('ads', AdController::class)->except(['index', 'show', 'store']);

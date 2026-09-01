@@ -35,7 +35,12 @@ class ServiceProposalController extends Controller
     {
         $provider = Auth::user();
 
-        abort_unless($ad->service_type === 'demande' && $ad->status === 'active', 422);
+        abort_unless(
+            $ad->service_type === 'demande'
+                && $ad->status === 'active'
+                && (! $ad->expires_at || $ad->expires_at->isFuture()),
+            422
+        );
         abort_if($ad->user_id === $provider->id, 403);
 
         if (! $provider->isProfessionnel() && ! $provider->isServiceProvider()) {

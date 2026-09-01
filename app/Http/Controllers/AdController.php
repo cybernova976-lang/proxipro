@@ -6,6 +6,7 @@ use App\Models\Ad;
 use App\Models\User;
 use App\Models\UserService;
 use App\Notifications\NewAdMatchingNotification;
+use App\Services\AdLifecycleService;
 use App\Services\AdPublicationSchema;
 use App\Services\GeocodingService;
 use App\Services\SavedSearchService;
@@ -21,7 +22,8 @@ class AdController extends Controller
 
     public function __construct(
         private SavedSearchService $savedSearchService,
-        private AdPublicationSchema $publicationSchema
+        private AdPublicationSchema $publicationSchema,
+        private AdLifecycleService $adLifecycle
     ) {}
 
     /**
@@ -47,6 +49,13 @@ class AdController extends Controller
         $minPrice = $request->input('min_price');
         $maxPrice = $request->input('max_price');
         $serviceType = $request->input('service_type');
+        if (! $serviceType) {
+            $serviceType = match ($request->input('type')) {
+                'offres' => 'offre',
+                'demandes' => 'demande',
+                default => null,
+            };
+        }
         $sort = $request->input('sort', 'newest');
 
         // Recherche par mot-clé
@@ -221,7 +230,12 @@ class AdController extends Controller
                     ->withInput();
             }
 
-            if ($this->hasRecentDuplicate(Auth::id(), $request->title, $request->category)) {
+            if ($this->adLifecycle->hasRecentDuplicate(
+                Auth::id(),
+                $request->title,
+                $request->category,
+                $request->service_type
+            )) {
                 return back()
                     ->withErrors(['title' => 'Une annonce identique a déjà été publiée au cours des dernières 24 heures.'])
                     ->withInput();
@@ -267,7 +281,7 @@ class AdController extends Controller
             $ad->price_type = $priceType;
             $ad->price = $price;
             $ad->service_type = $request->service_type;
-            $ad->expires_at = $this->publicationExpiry($request->service_type);
+            $ad->expires_at = $this->adLifecycle->expiresAtFor($request->service_type);
             $ad->publication_terms_accepted_at = now();
             $ad->publication_terms_version = self::PUBLICATION_TERMS_VERSION;
             $ad->radius_km = $request->radius_km ?? 10;
@@ -408,7 +422,12 @@ class AdController extends Controller
             ], 422);
         }
 
-        if ($this->hasRecentDuplicate(Auth::id(), $request->title, $request->category)) {
+        if ($this->adLifecycle->hasRecentDuplicate(
+            Auth::id(),
+            $request->title,
+            $request->category,
+            $request->service_type
+        )) {
             return response()->json([
                 'success' => false,
                 'errors' => ['title' => ['Une annonce identique a déjà été publiée au cours des dernières 24 heures.']],
@@ -450,7 +469,7 @@ class AdController extends Controller
         $ad->price_type = $priceType;
         $ad->price = $price;
         $ad->service_type = $request->service_type;
-        $ad->expires_at = $this->publicationExpiry($request->service_type);
+        $ad->expires_at = $this->adLifecycle->expiresAtFor($request->service_type);
         $ad->publication_terms_accepted_at = now();
         $ad->publication_terms_version = self::PUBLICATION_TERMS_VERSION;
         $ad->radius_km = 10;
@@ -530,9 +549,12 @@ class AdController extends Controller
     {
         $canInspectDisabledAd = Auth::check()
             && (Auth::id() === $ad->user_id || Auth::user()?->isAdmin());
+        $isPublicationActive = $ad->status === 'active'
+            && (! $ad->expires_at || $ad->expires_at->isFuture());
 
         abort_unless(
-            MarketplaceCategoryRegistry::isVisible($ad->main_category, $ad->category) || $canInspectDisabledAd,
+            ($isPublicationActive && MarketplaceCategoryRegistry::isVisible($ad->main_category, $ad->category))
+                || $canInspectDisabledAd,
             404
         );
 
@@ -776,6 +798,64 @@ class AdController extends Controller
         return redirect()->back()->with('success', 'Annonce supprimée avec succès.');
     }
 
+    public function archive(Ad $ad)
+    {
+        if (Auth::id() !== $ad->user_id) {
+            abort(403);
+        }
+
+        if ($ad->status !== 'active') {
+            return redirect()->back()->with('info', 'Cette annonce n’est déjà plus publiée.');
+        }
+
+        $ad->update(['status' => 'inactive']);
+
+        return redirect()->back()->with('success', 'Annonce archivée. Elle n’apparaît plus dans les résultats.');
+    }
+
+    public function republish(Ad $ad)
+    {
+        if (Auth::id() !== $ad->user_id) {
+            abort(403);
+        }
+
+        $isExpired = $ad->expires_at && $ad->expires_at->isPast();
+        if ($ad->status === 'active' && ! $isExpired) {
+            return redirect()->back()->with('info', 'Cette annonce est déjà active.');
+        }
+
+        if (! MarketplaceCategoryRegistry::isEnabled($ad->main_category, $ad->category)) {
+            return redirect()->back()->withErrors([
+                'general' => 'Cette catégorie est temporairement indisponible et ne peut pas être republiée.',
+            ]);
+        }
+
+        if (! Auth::user()->canPublishNewAd()) {
+            return redirect()->back()->withErrors([
+                'general' => 'Vous avez atteint votre limite d’annonces actives. Archivez-en une avant de republier celle-ci.',
+            ]);
+        }
+
+        if ($this->adLifecycle->hasRecentDuplicate(
+            Auth::id(),
+            $ad->title,
+            $ad->category,
+            $ad->service_type,
+            $ad->id
+        )) {
+            return redirect()->back()->withErrors([
+                'general' => 'Une annonce identique est déjà active. Modifiez-la plutôt que de créer un doublon.',
+            ]);
+        }
+
+        $this->adLifecycle->republish($ad);
+
+        return redirect()->route('ads.show', $ad)->with(
+            'success',
+            'Annonce republiée pour '.($ad->service_type === 'demande' ? '30 jours' : '90 jours').'.'
+        );
+    }
+
     private function canPublishProfessionalOffer(?User $user): bool
     {
         if (! $user) {
@@ -791,17 +871,6 @@ class AdController extends Controller
             || $hasPaidPlan;
     }
 
-    private function hasRecentDuplicate(int $userId, string $title, string $category): bool
-    {
-        return Ad::query()
-            ->where('user_id', $userId)
-            ->where('category', $category)
-            ->whereRaw('LOWER(title) = ?', [mb_strtolower(trim($title))])
-            ->where('created_at', '>=', now()->subDay())
-            ->whereIn('status', ['active', 'pending'])
-            ->exists();
-    }
-
     private function ensureCategoryIsEnabled(array $publicationContext, ?string $category): void
     {
         if (MarketplaceCategoryRegistry::isEnabled($publicationContext['main_category'] ?? null, $category)) {
@@ -811,13 +880,6 @@ class AdController extends Controller
         throw \Illuminate\Validation\ValidationException::withMessages([
             'category' => 'Cette activité est temporairement indisponible. Choisissez une catégorie actuellement ouverte sur la plateforme.',
         ]);
-    }
-
-    private function publicationExpiry(string $serviceType)
-    {
-        return $serviceType === 'demande'
-            ? now()->addDays(30)
-            : now()->addDays(90);
     }
 
     private function resolvePriceType(Request $request, ?Ad $ad = null, ?string $publicationDomain = null): string

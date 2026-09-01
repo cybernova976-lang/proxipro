@@ -6,6 +6,7 @@
     $pkIsProvider = ($pkRole ?? 'client') === 'provider';
     $pkMyRequest = $activeClientRequest ?? null;
     $pkProposals = (int) ($pkMyRequest->service_proposals_count ?? 0);
+    $pkNeedsAttention = (bool) ($activeClientRequestNeedsAttention ?? false);
     $pkOpenRequests = collect($priorityProviderRequests ?? []);
 @endphp
 
@@ -26,6 +27,10 @@
             <h2>{{ $pkProposals }} réponse{{ $pkProposals > 1 ? 's' : '' }} vous {{ $pkProposals > 1 ? 'attendent' : 'attend' }}</h2>
             <p>Comparez les profils, les prix et les délais avant de choisir votre prestataire.</p>
             <a href="{{ route('ads.show', $pkMyRequest) }}" class="pk-btn-soft">Comparer <i class="fas fa-arrow-right"></i></a>
+        @elseif($pkMyRequest && $pkNeedsAttention)
+            <h2>Votre demande peut être précisée</h2>
+            <p>Elle est toujours sans réponse. Un détail, une photo ou un créneau plus souple peut faciliter la première proposition.</p>
+            <a href="{{ route('ads.edit', $pkMyRequest) }}" class="pk-btn-soft">Améliorer la demande <i class="fas fa-arrow-right"></i></a>
         @else
             <h2>Publiez en quelques minutes</h2>
             <p>Un parcours guidé vous pose uniquement les questions utiles : service, lieu, créneau, budget. Vous pouvez y ajouter des photos.</p>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ad;
+use App\Services\AdLifecycleService;
 use App\Services\FeedRankingService;
 use App\Support\MarketplaceCategoryRegistry;
 use Illuminate\Http\Request;
@@ -15,7 +16,8 @@ class FeedController extends Controller
     private array $viewerServiceCategoryCache = [];
 
     public function __construct(
-        private FeedRankingService $feedRankingService
+        private FeedRankingService $feedRankingService,
+        private AdLifecycleService $adLifecycle
     ) {}
 
     public function index(Request $request)
@@ -261,6 +263,13 @@ class FeedController extends Controller
                 ->latest('created_at')
                 ->first()
             : null;
+
+        $activeClientRequestNeedsAttention = $activeClientRequest
+            ? $this->adLifecycle->needsFirstResponseAttention(
+                $activeClientRequest,
+                (int) ($activeClientRequest->service_proposals_count ?? 0)
+            )
+            : false;
 
         $priorityProviderRequests = $this->buildPriorityProviderRequests(
             user: $user,
@@ -521,6 +530,7 @@ class FeedController extends Controller
             'homeProfessionalOffers',
             'homeProfessionalProfiles',
             'activeClientRequest',
+            'activeClientRequestNeedsAttention',
             'priorityProviderRequests',
             'homeShowcaseAdIds',
             'savedHomeAdIds',
