@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Ad;
 use App\Models\ProClient;
 use App\Models\ProDocument;
 use App\Models\ProInvoice;
 use App\Models\ProQuote;
+use App\Models\ServiceOrder;
+use App\Models\ServiceProposal;
 use App\Models\User;
 use App\Services\ProviderSubscriptionService;
 use App\Support\MarketplaceCategoryRegistry;
@@ -174,12 +177,139 @@ class ProDashboardController extends Controller
             'active_ads' => $user->ads()->where('status', 'active')->count(),
         ];
 
+        $providerCategories = $this->providerServiceCategories($user);
+        $stats['new_opportunities'] = $providerCategories->isEmpty()
+            ? 0
+            : $this->matchingOpportunityQuery($user, $providerCategories)->count();
+        $stats['pending_proposals'] = ServiceProposal::query()
+            ->where('provider_id', $user->id)
+            ->where('status', ServiceProposal::STATUS_PENDING)
+            ->count();
+        $stats['active_missions'] = ServiceOrder::query()
+            ->where('seller_id', $user->id)
+            ->whereIn('status', [
+                ServiceOrder::STATUS_PENDING_ACCEPTANCE,
+                ServiceOrder::STATUS_AWAITING_PAYMENT,
+                ServiceOrder::STATUS_FUNDED,
+                ServiceOrder::STATUS_DISPUTED,
+            ])
+            ->count();
+
         $recentClients = $user->proClients()->latest('last_interaction_at')->take(5)->get();
         $recentQuotes = $user->proQuotes()->with('client')->latest()->take(5)->get();
         $recentInvoices = $user->proInvoices()->with('client')->latest()->take(5)->get();
         $subscription = $user->proSubscription;
 
         return view('pro.dashboard', compact('user', 'stats', 'recentClients', 'recentQuotes', 'recentInvoices', 'subscription') + ['isPro' => true]);
+    }
+
+    /**
+     * Tableau de prospection du prestataire, depuis la demande compatible
+     * jusqu'a la mission terminee.
+     */
+    public function opportunities()
+    {
+        $user = $this->ensurePro();
+        $providerCategories = $this->providerServiceCategories($user);
+
+        $newOpportunities = $providerCategories->isEmpty()
+            ? collect()
+            : $this->matchingOpportunityQuery($user, $providerCategories)
+                ->with(['user'])
+                ->when(filled($user->city), function ($query) use ($user) {
+                    $query->orderByRaw('CASE WHEN city = ? OR location = ? THEN 0 ELSE 1 END', [
+                        $user->city,
+                        $user->city,
+                    ]);
+                })
+                ->orderByDesc('is_urgent')
+                ->latest()
+                ->take(18)
+                ->get();
+
+        $sentProposals = ServiceProposal::query()
+            ->with(['ad.user', 'serviceOrder'])
+            ->where('provider_id', $user->id)
+            ->where('status', ServiceProposal::STATUS_PENDING)
+            ->latest()
+            ->take(18)
+            ->get();
+
+        $activeMissions = ServiceOrder::query()
+            ->with(['ad', 'buyer'])
+            ->where('seller_id', $user->id)
+            ->whereIn('status', [
+                ServiceOrder::STATUS_PENDING_ACCEPTANCE,
+                ServiceOrder::STATUS_AWAITING_PAYMENT,
+                ServiceOrder::STATUS_FUNDED,
+                ServiceOrder::STATUS_DISPUTED,
+            ])
+            ->latest()
+            ->take(18)
+            ->get();
+
+        $completedMissions = ServiceOrder::query()
+            ->with(['ad', 'buyer'])
+            ->where('seller_id', $user->id)
+            ->where('status', ServiceOrder::STATUS_COMPLETED)
+            ->where('payment_status', ServiceOrder::PAYMENT_RELEASED)
+            ->latest('released_at')
+            ->take(12)
+            ->get();
+
+        $pipelineCounts = [
+            'new' => $newOpportunities->count(),
+            'proposed' => $sentProposals->count(),
+            'active' => $activeMissions->count(),
+            'completed' => $completedMissions->count(),
+        ];
+
+        return view('pro.opportunities', compact(
+            'user',
+            'providerCategories',
+            'newOpportunities',
+            'sentProposals',
+            'activeMissions',
+            'completedMissions',
+            'pipelineCounts'
+        ));
+    }
+
+    private function providerServiceCategories(User $user)
+    {
+        $storedCategories = collect([$user->service_category])
+            ->merge((array) $user->service_subcategories)
+            ->merge((array) $user->pro_service_categories)
+            ->flatMap(function ($value) {
+                if (! is_scalar($value)) {
+                    return [];
+                }
+
+                return preg_split('/[,;|]/u', (string) $value) ?: [];
+            });
+
+        return $user->services()
+            ->where('is_active', true)
+            ->get(['main_category', 'subcategory'])
+            ->flatMap(fn ($service) => [$service->main_category, $service->subcategory])
+            ->merge($storedCategories)
+            ->map(fn ($category) => trim((string) $category))
+            ->filter()
+            ->unique(fn ($category) => mb_strtolower($category))
+            ->values();
+    }
+
+    private function matchingOpportunityQuery(User $user, $providerCategories)
+    {
+        return Ad::query()
+            ->marketplaceActive()
+            ->where('service_type', 'demande')
+            ->where('user_id', '!=', $user->id)
+            ->where(function ($query) use ($providerCategories) {
+                $query->whereIn('category', $providerCategories)
+                    ->orWhereIn('main_category', $providerCategories);
+            })
+            ->whereDoesntHave('serviceProposals', fn ($query) => $query->where('provider_id', $user->id));
     }
 
     // =========================================

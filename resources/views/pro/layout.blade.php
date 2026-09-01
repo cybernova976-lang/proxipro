@@ -955,6 +955,12 @@
         {{-- Commercial --}}
         <div class="pro-sidebar-section">
             <div class="pro-sidebar-label">Commercial</div>
+            <a href="{{ route('pro.opportunities') }}" class="pro-nav-item {{ request()->routeIs('pro.opportunities') ? 'active' : '' }}">
+                <div class="pro-nav-icon" style="background: rgba(37,99,235,0.1); color: #2563eb;">
+                    <i class="fas fa-route"></i>
+                </div>
+                Mes opportunités
+            </a>
             <a href="{{ route('pro.clients') }}" class="pro-nav-item {{ request()->routeIs('pro.clients*') ? 'active' : '' }}">
                 <div class="pro-nav-icon" style="background: rgba(59,130,246,0.1); color: #3b82f6;">
                     <i class="fas fa-users"></i>

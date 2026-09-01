@@ -480,6 +480,7 @@ Route::middleware(['auth'])->prefix('pro')->name('pro.')->group(function () {
 
     // Dashboard
     Route::get('/', [$ctrl, 'dashboard'])->name('dashboard');
+    Route::get('/opportunities', [$ctrl, 'opportunities'])->name('opportunities');
 
     // Profil
     Route::get('/profile', [$ctrl, 'profile'])->name('profile');

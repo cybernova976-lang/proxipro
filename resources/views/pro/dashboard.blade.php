@@ -102,6 +102,40 @@
     </div>
 </div>
 
+{{-- Opportunity pipeline --}}
+<div class="pro-card mb-4" style="border-color: #bfdbfe; background: linear-gradient(135deg, #eff6ff, #ffffff 68%);">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+        <div>
+            <div class="text-primary text-uppercase fw-bold mb-1" style="font-size: .68rem; letter-spacing: .08em;">Prospection</div>
+            <h2 class="h5 fw-bold mb-1">Votre pipeline de missions</h2>
+            <p class="text-muted mb-0" style="font-size: .78rem;">Repérez la prochaine demande utile et suivez chaque proposition jusqu’au paiement.</p>
+        </div>
+        <a href="{{ route('pro.opportunities') }}" class="btn btn-pro-primary pro-mobile-full">
+            Ouvrir mes opportunités <i class="fas fa-arrow-right ms-1"></i>
+        </a>
+    </div>
+    <div class="row g-2 mt-2">
+        <div class="col-4">
+            <div class="p-3 rounded-3 bg-white border h-100">
+                <div class="fs-4 fw-bold text-primary">{{ $stats['new_opportunities'] }}</div>
+                <div class="text-muted" style="font-size: .72rem;">À examiner</div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="p-3 rounded-3 bg-white border h-100">
+                <div class="fs-4 fw-bold text-warning">{{ $stats['pending_proposals'] }}</div>
+                <div class="text-muted" style="font-size: .72rem;">Propositions</div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="p-3 rounded-3 bg-white border h-100">
+                <div class="fs-4 fw-bold text-success">{{ $stats['active_missions'] }}</div>
+                <div class="text-muted" style="font-size: .72rem;">Missions actives</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-4">
     {{-- Recent Quotes --}}
     <div class="col-lg-6">
