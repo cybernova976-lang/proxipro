@@ -473,7 +473,7 @@
             <div class="pts-guarantees">
                 <div class="pts-guarantee"><i class="fas fa-shield-alt"></i> Paiement sécurisé Stripe</div>
                 <div class="pts-guarantee"><i class="fas fa-bolt"></i> Points crédités instantanément</div>
-                <div class="pts-guarantee"><i class="fas fa-undo"></i> Satisfait ou remboursé</div>
+                <div class="pts-guarantee"><i class="fas fa-file-contract"></i> Conditions affichées avant validation</div>
             </div>
 
             {{-- Services Table --}}
@@ -517,8 +517,8 @@
                         </tr>
                         <tr>
                             <td><i class="fas fa-user-check text-primary me-2"></i>Vérification de profil</td>
-                            <td>10,00 €</td>
-                            <td><span class="pts-tag blue"><i class="fas fa-coins me-1"></i>20 pts</span></td>
+                            <td>{{ number_format(\App\Models\IdentityVerification::getVerificationPrice('profile_verification'), 2, ',', ' ') }} €</td>
+                            <td><span class="pts-tag blue"><i class="fas fa-credit-card me-1"></i>Carte uniquement</span></td>
                         </tr>
                     </tbody>
                 </table>

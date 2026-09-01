@@ -202,4 +202,13 @@ class IdentityVerification extends Model
             default => 10,
         };
     }
+
+    /**
+     * La verification d'identite du profil se regle uniquement par carte.
+     * Les points restent reserves au badge prestataire historique.
+     */
+    public static function supportsPointsPayment($type): bool
+    {
+        return $type !== 'profile_verification';
+    }
 }

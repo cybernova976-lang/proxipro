@@ -89,7 +89,8 @@ class VerificationController extends Controller
             'has_pending_payment' => (bool) $pendingPayment,
             'pending_verification_id' => $pendingPayment?->id,
             'profile_verification_price' => IdentityVerification::getVerificationPrice('profile_verification'),
-            'profile_verification_points' => IdentityVerification::getVerificationPointsCost('profile_verification'),
+            'profile_verification_points' => null,
+            'profile_verification_payment_methods' => ['card'],
             'service_provider_price' => IdentityVerification::getVerificationPrice('service_provider'),
             'service_provider_points' => IdentityVerification::getVerificationPointsCost('service_provider'),
             'user_points' => $user->available_points ?? 0,
@@ -383,7 +384,7 @@ class VerificationController extends Controller
             ->where('payment_status', 'pending')
             ->firstOrFail();
 
-        if ($verification->type === 'profile_verification') {
+        if (! IdentityVerification::supportsPointsPayment($verification->type)) {
             return response()->json([
                 'success' => false,
                 'message' => 'La vérification de profil nécessite un paiement sécurisé de 5 € par carte.',

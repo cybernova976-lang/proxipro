@@ -11,7 +11,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_unified_home_feed_prioritizes_requests_and_limits_the_main_list(): void
+    public function test_client_home_prioritizes_providers_and_service_offers_instead_of_other_clients_requests(): void
     {
         $viewer = User::factory()->create([
             'user_type' => 'particulier',
@@ -52,7 +52,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             'updated_at' => now()->subDays(30),
         ]);
 
-        User::factory()->create([
+        $provider = User::factory()->create([
             'name' => 'Artisan recommandé',
             'user_type' => 'professionnel',
             'is_service_provider' => true,
@@ -66,17 +66,30 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             'bio' => 'Intervient pour les dépannages et travaux de plomberie.',
         ]);
 
+        $serviceOffer = Ad::create([
+            'title' => 'Dépannage plomberie disponible',
+            'description' => 'Intervention de plomberie proposée aux clients de la zone.',
+            'category' => 'Plomberie',
+            'location' => 'Mamoudzou',
+            'service_type' => 'offre',
+            'status' => 'active',
+            'visibility' => 'public',
+            'user_id' => $provider->id,
+        ]);
+
         $response = $this->withoutMiddleware()->actingAs($viewer)->get(route('feed'));
 
         $response
             ->assertOk()
             ->assertViewIs('feed.index')
             ->assertViewHas('pkRole', 'client')
-            ->assertViewHas('pkFeedAds', function ($ads) use ($urgentRequest): bool {
-                return $ads->count() === 6 && $ads->first()?->is($urgentRequest);
+            ->assertViewHas('pkFeedAds', function ($ads) use ($serviceOffer): bool {
+                return $ads->count() === 1 && $ads->first()?->is($serviceOffer);
             })
             ->assertSee('id="pkFeedList"', false)
-            ->assertSee('Demande urgente prioritaire')
+            ->assertSee('Services proposés récemment')
+            ->assertSee('Dépannage plomberie disponible')
+            ->assertDontSee('Demande urgente prioritaire')
             ->assertSee('Prestataires recommandés')
             ->assertSee('Artisan recommandé')
             ->assertSee('35 €/h')
@@ -88,11 +101,9 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             ->assertSee('pk-pro__actions', false)
             ->assertSee('Demander ce service')
             ->assertSee(route('messages.create.conversation'), false)
-            ->assertSee('pk-replies--waiting', false)
-            ->assertSee('En attente de réponses')
             ->assertDontSee('service en ligne')
             ->assertDontSee('Profil vérifié')
-            ->assertSee('Voir toutes les annonces, la carte et les filtres')
+            ->assertSee('Voir tous les services, la carte et les filtres')
             ->assertDontSee('home-showcase-section', false)
             ->assertDontSee('adsFeedMap', false);
 
@@ -114,6 +125,55 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString('grid-column: 1 / -1', $css);
         $this->assertStringContainsString('scroll-snap-type: x mandatory', $css);
         $this->assertStringNotContainsString('linear-gradient(150deg, var(--pk-950), var(--pk-800))', $css);
+    }
+
+    public function test_provider_home_is_a_demand_inbox_without_competitor_profiles(): void
+    {
+        $provider = User::factory()->create([
+            'name' => 'Prestataire plomberie',
+            'user_type' => 'professionnel',
+            'account_type' => 'professionnel',
+            'is_service_provider' => true,
+            'profession' => 'Plombier',
+            'service_category' => 'Plombier',
+            'pro_status' => 'active',
+        ]);
+        $requester = User::factory()->create(['user_type' => 'particulier']);
+        $request = Ad::create([
+            'title' => 'Fuite sous évier à réparer',
+            'description' => 'Une demande réelle à laquelle le prestataire peut répondre.',
+            'category' => 'Plombier',
+            'location' => 'Mamoudzou',
+            'service_type' => 'demande',
+            'status' => 'active',
+            'visibility' => 'public',
+            'user_id' => $requester->id,
+        ]);
+
+        $response = $this->withoutMiddleware()->actingAs($provider)->get(route('feed'));
+
+        $response->assertOk()->assertViewHas('pkRole', 'provider');
+        $this->assertTrue(
+            $response->viewData('pkFeedAds')->contains(fn ($ad) => $ad->is($request)),
+            'La demande compatible doit etre presente dans le feed prestataire.'
+        );
+
+        $html = $response->getContent();
+        foreach ([
+            'Rechercher une demande compatible',
+            'Voir les demandes',
+            'Demandes qui correspondent à votre métier',
+            'Fuite sous évier à réparer',
+            'Proposer mes services',
+            'Décrochez vos missions',
+        ] as $expected) {
+            $this->assertTrue(str_contains($html, $expected), 'Texte prestataire manquant : '.$expected);
+        }
+        $this->assertFalse(str_contains($html, 'Prestataires recommandés'), 'Le prestataire ne doit pas voir les profils concurrents.');
+
+        $javascript = file_get_contents(public_path('js/feed.js'));
+        $this->assertStringContainsString("config.requestsUrl", $javascript);
+        $this->assertStringContainsString("params.push('search='", $javascript);
     }
 
     public function test_feed_ad_card_displays_at_most_three_photos_in_the_compact_layout(): void

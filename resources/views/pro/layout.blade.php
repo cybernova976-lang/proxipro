@@ -1060,7 +1060,10 @@
         </div>
 
         {{-- Subscription card --}}
-        @php $activeSub = Auth::user()->proSubscription; @endphp
+        @php
+            $activeSub = Auth::user()->proSubscription;
+            $subscriptionsAvailable = $proSubscriptionsEnabled ?? \App\Support\PlatformFeatures::proSubscriptionsEnabled();
+        @endphp
         <div class="pro-sidebar-section">
             @if($activeSub)
                 <div class="pro-sidebar-sub-card">
@@ -1068,12 +1071,20 @@
                     <p>Actif jusqu'au {{ $activeSub->ends_at->format('d/m/Y') }}</p>
                     <p>{{ $activeSub->daysRemaining() }} jours restants</p>
                 </div>
-            @else
+            @elseif($subscriptionsAvailable)
                 <div class="pro-sidebar-sub-card" style="background: linear-gradient(135deg, #f97316, #ef4444);">
                     <h6><i class="fas fa-star me-1"></i> Pas d'abonnement</h6>
                     <p>Activez votre abonnement pour recevoir des demandes clients</p>
                     <a href="{{ route('pro.subscription') }}" class="btn-upgrade">
                         <i class="fas fa-rocket me-1"></i> S'abonner
+                    </a>
+                </div>
+            @else
+                <div class="pro-sidebar-sub-card" style="background: linear-gradient(135deg, #2563eb, #0891b2);">
+                    <h6><i class="fas fa-gift me-1"></i> Accès lancement</h6>
+                    <p>L'espace prestataire est actuellement accessible sans abonnement.</p>
+                    <a href="{{ route('pro.subscription') }}" class="btn-upgrade">
+                        <i class="fas fa-info-circle me-1"></i> Voir les conditions
                     </a>
                 </div>
             @endif

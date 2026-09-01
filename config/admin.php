@@ -142,7 +142,7 @@ return [
         'boost_15_days' => ['price_eur' => 1000, 'price_points' => 20],
         'boost_30_days' => ['price_eur' => 1500, 'price_points' => 30],
         'refresh_ad' => ['price_points' => 10],
-        'profile_verification' => ['price_eur' => 1000, 'price_points' => 20],
+        'profile_verification' => ['price_eur' => 500, 'price_points' => null],
         'ad_publishing' => 'free',
     ],
 ];

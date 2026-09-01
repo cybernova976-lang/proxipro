@@ -83,10 +83,6 @@ class VerificationRequest extends Model
     // Prix de vérification
     public static function getVerificationPrice($type)
     {
-        return match($type) {
-            'profile_verification' => 10.00,
-            'service_provider' => 10.00,
-            default => 10.00,
-        };
+        return IdentityVerification::getVerificationPrice($type);
     }
 }

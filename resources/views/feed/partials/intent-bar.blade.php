@@ -2,9 +2,10 @@
 @php
     $pkUser = Auth::user();
     $pkIsProvider = ($pkRole ?? 'client') === 'provider';
-    $pkPublishUrl = $pkIsProvider
-        ? route('ads.create', ['type' => 'service'])
-        : route('demand.create');
+    $pkPublishUrl = route('demand.create');
+    $pkIntentUrl = $pkIsProvider
+        ? route('ads.index', ['type' => 'demandes'])
+        : $pkPublishUrl;
 @endphp
 
 <div class="pk-card pk-intent">
@@ -18,11 +19,11 @@
         </span>
     @endauth
 
-    <form class="pk-intent__form" id="pkIntentForm" action="{{ $pkPublishUrl }}" method="GET" role="search">
+    <form class="pk-intent__form" id="pkIntentForm" action="{{ $pkIntentUrl }}" method="GET" role="search">
         <div class="pk-intent__wrap">
             <i class="fas fa-search pk-intent__icon" aria-hidden="true"></i>
             <label class="pk-sr" for="pkIntentField">
-                {{ $pkIsProvider ? 'Quel service proposez-vous ?' : 'De quoi avez-vous besoin ?' }}
+                {{ $pkIsProvider ? 'Quelle demande recherchez-vous ?' : 'De quoi avez-vous besoin ?' }}
             </label>
             <input type="text"
                    class="pk-intent__field"
@@ -33,13 +34,13 @@
                    aria-expanded="false"
                    aria-controls="pkSuggest"
                    aria-autocomplete="list"
-                   placeholder="{{ $pkIsProvider ? 'Quel service proposez-vous ?' : 'De quoi avez-vous besoin ? Ex. fuite d\'eau' }}">
+                   placeholder="{{ $pkIsProvider ? 'Rechercher une demande compatible' : 'De quoi avez-vous besoin ? Ex. fuite d\'eau' }}">
             <div class="pk-suggest" id="pkSuggest" role="listbox" hidden></div>
         </div>
     </form>
 
-    <a href="{{ $pkPublishUrl }}" class="pk-btn">
-        <i class="fas fa-plus"></i>
-        <span>{{ $pkIsProvider ? 'Publier une offre' : 'Publier une demande' }}</span>
+    <a href="{{ $pkIsProvider ? '#pkFeedList' : $pkPublishUrl }}" class="pk-btn">
+        <i class="fas {{ $pkIsProvider ? 'fa-bullseye' : 'fa-plus' }}"></i>
+        <span>{{ $pkIsProvider ? 'Voir les demandes' : 'Publier une demande' }}</span>
     </a>
 </div>

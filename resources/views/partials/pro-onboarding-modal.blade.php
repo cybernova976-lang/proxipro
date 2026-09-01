@@ -752,7 +752,7 @@
                             <strong style="font-size: 0.82rem; color: #059669;">Paiement 100% sécurisé</strong>
                         </div>
                         <p style="font-size: 0.72rem; color: #64748b; margin: 0;">
-                            Paiement crypté par Stripe. Annulation à tout moment. Satisfait ou remboursé 14 jours.
+                            Paiement sécurisé par Stripe. Les conditions et modalités de résiliation sont affichées avant validation.
                         </p>
                     </div>
                 </div>

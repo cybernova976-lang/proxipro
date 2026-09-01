@@ -46,7 +46,12 @@
             {{-- Zone 3 · une seule action suivante --}}
             @include('feed.partials.profile-progress')
 
-            {{-- Zone 4 · le flux --}}
+            {{-- Pour un client, les prestataires passent avant le catalogue. --}}
+            @if($pkRole === 'client')
+                @include('feed.partials.providers')
+            @endif
+
+            {{-- Zone 4 · le flux adapte au role --}}
             <section aria-labelledby="pkFeedTitle">
                 <div class="pk-sechead">
                     <div>
@@ -63,7 +68,7 @@
                             </span>
                         </p>
                     </div>
-                    <a href="{{ route('ads.index') }}" class="pk-sechead__more">
+                    <a href="{{ $pkBrowseUrl }}" class="pk-sechead__more">
                         Tout voir <i class="fas fa-arrow-right"></i>
                     </a>
                 </div>
@@ -90,18 +95,17 @@
                 </div>
 
                 @if($pkFeedAds->isNotEmpty())
-                    <a href="{{ route('ads.index') }}" class="pk-seeall">
+                    <a href="{{ $pkBrowseUrl }}" class="pk-seeall">
                         <i class="fas fa-clipboard-list"></i>
-                        Voir toutes les annonces, la carte et les filtres
+                        {{ $pkRole === 'provider'
+                            ? 'Voir toutes les demandes, la carte et les filtres'
+                            : 'Voir tous les services, la carte et les filtres' }}
                         <i class="fas fa-arrow-right"></i>
                     </a>
                 @endif
             </section>
 
-            {{-- Zone 5 · prestataires recommandes --}}
-            @include('feed.partials.providers')
-
-            {{-- Zone 6 · reassurance --}}
+            {{-- Zone 6 · reassurance adaptee au role --}}
             @include('feed.partials.trust')
 
         </div>
@@ -124,6 +128,7 @@
         'role' => $pkRole,
         'demandUrl' => route('demand.create'),
         'offerUrl' => route('ads.create'),
+        'requestsUrl' => route('ads.index', ['type' => 'demandes']),
         'saveUrl' => url('/ads/:id/toggle-save'),
         'categories' => $pkSearchIndex,
     ];

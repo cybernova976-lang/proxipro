@@ -19,7 +19,7 @@
   try {
     config = JSON.parse(document.getElementById('pkFeedConfig').textContent);
   } catch (e) {
-    config = { categories: [], demandUrl: '/demande', offerUrl: '/ads/create', saveUrl: '/ads/:id/toggle-save', role: 'client' };
+    config = { categories: [], demandUrl: '/demande', offerUrl: '/ads/create', requestsUrl: '/ads?type=demandes', saveUrl: '/ads/:id/toggle-save', role: 'client' };
   }
 
   var csrf = document.querySelector('meta[name="csrf-token"]');
@@ -56,14 +56,19 @@
       .trim();
   }
 
-  // Destination de publication selon le role : une demande pour un client,
-  // une offre de service pour un prestataire.
+  // Un client est guide vers la publication. Un prestataire utilise le meme
+  // champ pour filtrer les demandes existantes, jamais pour publier par erreur.
   function publishUrl(category, subcategory) {
-    var base = config.role === 'provider' ? config.offerUrl : config.demandUrl;
+    var provider = config.role === 'provider';
+    var base = provider ? config.requestsUrl : config.demandUrl;
     var params = [];
-    if (config.role === 'provider') params.push('type=service');
-    if (category) params.push('category=' + encodeURIComponent(category));
-    if (subcategory) params.push('subcategory=' + encodeURIComponent(subcategory));
+    if (provider) {
+      var requestSearch = subcategory || category;
+      if (requestSearch) params.push('search=' + encodeURIComponent(requestSearch));
+    } else {
+      if (category) params.push('category=' + encodeURIComponent(category));
+      if (subcategory) params.push('subcategory=' + encodeURIComponent(subcategory));
+    }
     return params.length ? base + (base.indexOf('?') === -1 ? '?' : '&') + params.join('&') : base;
   }
 

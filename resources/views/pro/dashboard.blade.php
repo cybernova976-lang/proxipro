@@ -403,6 +403,7 @@
         <div class="pro-card h-100">
             <div class="pro-card-title">
                 <i class="fas fa-file-alt text-warning"></i> Aperçu — Derniers devis
+                <span class="badge bg-light text-secondary border ms-2">Données de démonstration</span>
             </div>
             <div class="teaser-locked" style="border-radius: 12px;">
                 <div class="teaser-lock-badge"><i class="fas fa-lock"></i></div>

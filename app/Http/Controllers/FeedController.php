@@ -391,31 +391,23 @@ class FeedController extends Controller
 
         // --- zone 4 : le flux, six annonces au maximum ---
         if ($pkRole === 'provider') {
-            $pkFeedTitle = 'Demandes qui correspondent a votre metier';
+            $pkFeedTitle = 'Demandes qui correspondent à votre métier';
             $pkFeedAds = collect($priorityProviderRequests)
                 ->concat($homePersonalRequests)
                 ->unique('id')
                 ->take(6)
                 ->values();
         } else {
-            $pkFeedTitle = $geoCity ? 'Demandes pres de vous' : 'Dernieres demandes publiees';
-            $pkFeedAds = collect($homePersonalRequests)
-                ->reject(fn ($ad) => $activeClientRequest && (int) $ad->id === (int) $activeClientRequest->id)
-                ->take(6)
-                ->values();
-        }
-
-        // Flux trop maigre : on complete avec des offres de service plutot que
-        // de laisser une page vide. Mieux vaut six annonces vivantes.
-        if ($pkFeedAds->count() < 3) {
-            $pkFeedAds = $pkFeedAds
-                ->concat($homeProfessionalOffers)
-                ->unique('id')
+            $pkFeedTitle = $geoCity ? 'Services disponibles près de vous' : 'Services proposés récemment';
+            $pkFeedAds = collect($homeProfessionalOffers)
                 ->take(6)
                 ->values();
         }
 
         $pkMatchingCount = $pkRole === 'provider' ? $pkFeedAds->count() : 0;
+        $pkBrowseUrl = route('ads.index', [
+            'type' => $pkRole === 'provider' ? 'demandes' : 'offres',
+        ]);
 
         // --- favoris deja enregistres parmi les annonces reellement affichees ---
         $pkSavedAdIds = collect();
@@ -513,6 +505,7 @@ class FeedController extends Controller
         // soit des vues de profil, soit des demandes compatibles.
         $pkShowUpsell = $pkRole === 'provider'
             && $user
+            && \App\Support\PlatformFeatures::proSubscriptionsEnabled()
             && ! $user->hasActiveProSubscription()
             && ($pkProfileViews > 0 || $pkMatchingCount > 0);
 
@@ -553,6 +546,7 @@ class FeedController extends Controller
             // page d'accueil
             'pkRole',
             'pkFeedTitle',
+            'pkBrowseUrl',
             'pkFeedAds',
             'pkSavedAdIds',
             'pkQuickCategories',

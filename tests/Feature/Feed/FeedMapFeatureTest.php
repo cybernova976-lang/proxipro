@@ -36,8 +36,8 @@ class FeedMapFeatureTest extends TestCase
         $response
             ->assertOk()
             ->assertSee('Annonce cartographiée')
-            ->assertSee('Voir toutes les annonces, la carte et les filtres')
-            ->assertSee(route('ads.index'), false)
+            ->assertSee('Voir tous les services, la carte et les filtres')
+            ->assertSee(route('ads.index', ['type' => 'offres']), false)
             ->assertDontSee('id="adsFeedMap"', false);
     }
 

@@ -609,7 +609,7 @@
                     </button>
                     <div class="placeholder-divider">
                         <hr>
-                        <span><i class="fas fa-lock me-1"></i> Chiffrement de bout en bout</span>
+                        <span><i class="fas fa-user-shield me-1"></i> Accès réservé aux participants</span>
                         <hr>
                     </div>
                 </div>
