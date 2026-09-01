@@ -8,6 +8,7 @@ use App\Models\UserService;
 use App\Services\AdLifecycleService;
 use App\Services\GeocodingService;
 use App\Services\SavedSearchService;
+use App\Support\ServiceDemandIntakeSchema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -41,8 +42,9 @@ class DemandController extends Controller
         // Pré-sélection si paramètres dans l'URL
         $preCategory = $request->get('category');
         $preSubcategory = $request->get('subcategory');
+        $intakeSchemas = ServiceDemandIntakeSchema::forForm(array_keys($categoriesData));
 
-        return view('demands.create', compact('categoriesData', 'preCategory', 'preSubcategory'));
+        return view('demands.create', compact('categoriesData', 'preCategory', 'preSubcategory', 'intakeSchemas'));
     }
 
     /**
@@ -79,7 +81,8 @@ class DemandController extends Controller
             'photos' => 'nullable|array|max:2',
             'photos.*' => 'image|mimes:jpeg,png,webp|max:5120',
             'publication_confirmed' => 'accepted',
-        ]);
+            ...ServiceDemandIntakeSchema::validationRules($request->input('main_category')),
+        ], [], ServiceDemandIntakeSchema::validationAttributes($request->input('main_category')));
 
         if (! in_array($request->category, $services[$request->main_category]['subcategories'] ?? [], true)) {
             return back()->withErrors([
@@ -118,11 +121,15 @@ class DemandController extends Controller
         $ad->description = $request->description;
         $ad->category = $request->category;
         $ad->main_category = $request->main_category;
-        $ad->publication_domain = 'services';
+        $ad->publication_domain = 'service';
         $ad->ad_details = [
             'desired_date' => $request->desired_date,
             'time_window' => $request->time_window,
             'urgency' => $request->input('urgency', 'normal'),
+            'service_details' => ServiceDemandIntakeSchema::sanitize(
+                $request->main_category,
+                $request->input('service_details', [])
+            ),
         ];
         $ad->location = $finalLocation;
         $ad->city = $selectedCity;

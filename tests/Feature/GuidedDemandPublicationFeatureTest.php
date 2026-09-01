@@ -25,6 +25,9 @@ class GuidedDemandPublicationFeatureTest extends TestCase
             ->assertSee('name="time_window"', false)
             ->assertSee('name="price_type"', false)
             ->assertSee('name="publication_confirmed"', false)
+            ->assertSee('Deux précisions pour mieux vous orienter')
+            ->assertSee('const intakeSchemas', false)
+            ->assertSee('service_details[${key}]', false)
             ->assertSee('prokejem-demand-draft-v2-', false)
             ->assertSee('Les photos ne sont jamais enregistrées dans le brouillon local');
     }
@@ -51,6 +54,10 @@ class GuidedDemandPublicationFeatureTest extends TestCase
             'description' => 'Une fuite légère apparaît sous l’évier lorsque le robinet est ouvert.',
             'price_type' => 'negotiable',
             'urgency' => 'urgent',
+            'service_details' => [
+                'work_scope' => 'repair',
+                'site_type' => 'house',
+            ],
             'publication_confirmed' => '1',
         ]);
 
@@ -58,14 +65,23 @@ class GuidedDemandPublicationFeatureTest extends TestCase
 
         $response->assertRedirect(route('demand.matching', $ad));
         $this->assertSame('Bricolage & Travaux', $ad->main_category);
-        $this->assertSame('services', $ad->publication_domain);
+        $this->assertSame('service', $ad->publication_domain);
         $this->assertSame('negotiable', $ad->price_type);
         $this->assertNull($ad->price);
         $this->assertSame($desiredDate, $ad->ad_details['desired_date']);
         $this->assertSame('morning', $ad->ad_details['time_window']);
+        $this->assertSame('repair', $ad->ad_details['service_details']['work_scope']);
+        $this->assertSame('house', $ad->ad_details['service_details']['site_type']);
         $this->assertTrue($ad->is_urgent);
         $this->assertNotNull($ad->publication_terms_accepted_at);
         $this->assertTrue($ad->expires_at->isAfter(now()->addDays(29)));
+
+        $this->get(route('ads.show', $ad))
+            ->assertOk()
+            ->assertSee('Réparation ou dépannage')
+            ->assertSee('Maison')
+            ->assertSee('Date souhaitée')
+            ->assertSee('Moment de la journée');
     }
 
     public function test_fixed_budget_and_publication_confirmation_are_validated(): void
@@ -84,6 +100,10 @@ class GuidedDemandPublicationFeatureTest extends TestCase
                 'title' => 'Réparer une fuite sous mon évier',
                 'description' => 'Une fuite légère apparaît sous l’évier lorsque le robinet est ouvert.',
                 'price_type' => 'fixed',
+                'service_details' => [
+                    'work_scope' => 'repair',
+                    'site_type' => 'house',
+                ],
             ])
             ->assertRedirect(route('demand.create'))
             ->assertSessionHasErrors(['price', 'publication_confirmed']);
@@ -110,6 +130,10 @@ class GuidedDemandPublicationFeatureTest extends TestCase
             'title' => 'Réparer une fuite sous mon évier',
             'description' => 'Une fuite légère apparaît sous l’évier lorsque le robinet est ouvert.',
             'price_type' => 'negotiable',
+            'service_details' => [
+                'work_scope' => 'repair',
+                'site_type' => 'house',
+            ],
             'publication_confirmed' => '1',
         ];
 
@@ -124,6 +148,69 @@ class GuidedDemandPublicationFeatureTest extends TestCase
             ->assertSessionHasErrors('title');
 
         $this->assertDatabaseCount('ads', 1);
+    }
+
+    public function test_guided_publication_rejects_details_that_do_not_match_the_selected_trade_family(): void
+    {
+        $client = User::factory()->create();
+
+        $this->actingAs($client)
+            ->from(route('demand.create'))
+            ->post(route('demand.store'), [
+                'main_category' => 'Bricolage & Travaux',
+                'category' => 'Plombier',
+                'country' => 'Mayotte',
+                'city' => 'Mamoudzou',
+                'desired_date' => today()->addDay()->toDateString(),
+                'time_window' => 'flexible',
+                'title' => 'Réparer une fuite sous mon évier',
+                'description' => 'Une fuite légère apparaît sous l’évier lorsque le robinet est ouvert.',
+                'price_type' => 'negotiable',
+                'service_details' => [
+                    'work_scope' => 'passenger',
+                    'site_type' => 'house',
+                ],
+                'publication_confirmed' => '1',
+            ])
+            ->assertRedirect(route('demand.create'))
+            ->assertSessionHasErrors('service_details.work_scope');
+
+        $this->assertDatabaseCount('ads', 0);
+    }
+
+    public function test_generic_ad_edit_keeps_the_guided_service_answers_when_the_trade_family_is_unchanged(): void
+    {
+        $client = User::factory()->create();
+        $ad = $this->demand($client);
+        $ad->update([
+            'publication_domain' => 'service',
+            'ad_details' => [
+                'desired_date' => today()->addDays(3)->toDateString(),
+                'time_window' => 'morning',
+                'urgency' => 'normal',
+                'service_details' => [
+                    'work_scope' => 'repair',
+                    'site_type' => 'house',
+                ],
+            ],
+        ]);
+
+        $this->actingAs($client)->put(route('ads.update', $ad), [
+            'title' => 'Réparer une fuite sous mon évier rapidement',
+            'description' => $ad->description,
+            'main_category' => 'Bricolage & Travaux',
+            'category' => 'Plombier',
+            'country' => 'Mayotte',
+            'city' => 'Mamoudzou',
+            'location' => 'Mamoudzou',
+            'price_type' => 'negotiable',
+            'service_type' => 'demande',
+        ])->assertRedirect(route('ads.show', $ad));
+
+        $ad->refresh();
+        $this->assertSame('repair', $ad->ad_details['service_details']['work_scope']);
+        $this->assertSame('house', $ad->ad_details['service_details']['site_type']);
+        $this->assertSame('morning', $ad->ad_details['time_window']);
     }
 
     public function test_matching_page_explains_the_no_provider_fallback_without_false_notification_claim(): void

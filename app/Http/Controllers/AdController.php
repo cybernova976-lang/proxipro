@@ -12,6 +12,7 @@ use App\Services\AdPublicationSchema;
 use App\Services\GeocodingService;
 use App\Services\SavedSearchService;
 use App\Support\MarketplaceCategoryRegistry;
+use App\Support\ServiceDemandIntakeSchema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -571,6 +572,10 @@ class AdController extends Controller
         $publicationContext = $this->publicationSchema->resolve($ad->main_category, $ad->category);
         $publicationDomain = $ad->publication_domain ?: $publicationContext['domain'];
         $publicationDetails = $this->publicationSchema->presentationDetails($publicationDomain, $ad->ad_details);
+        if (in_array($publicationDomain, ['service', 'services'], true) && $ad->service_type === 'demande') {
+            $publicationDomain = 'service';
+            $publicationDetails = ServiceDemandIntakeSchema::presentationDetails($ad->main_category, $ad->ad_details);
+        }
 
         return view('ads.show', compact('ad', 'isSaved', 'publicationDomain', 'publicationDetails'));
     }
@@ -678,12 +683,30 @@ class AdController extends Controller
             $ad->title = $request->title;
             $ad->description = $request->description;
             $ad->category = $request->category;
+            $previousMainCategory = $ad->main_category;
+            $previousDetails = is_array($ad->ad_details) ? $ad->ad_details : [];
             $ad->main_category = $publicationContext['main_category'];
             $ad->publication_domain = $publicationContext['domain'];
-            $ad->ad_details = $this->publicationSchema->sanitizeDetails(
+            $updatedDetails = $this->publicationSchema->sanitizeDetails(
                 $publicationContext['domain'],
                 $request->input('ad_details', [])
             );
+            if ($publicationContext['domain'] === 'service' && $request->service_type === 'demande') {
+                foreach (['desired_date', 'time_window', 'urgency'] as $commonDetail) {
+                    if (array_key_exists($commonDetail, $previousDetails)) {
+                        $updatedDetails[$commonDetail] = $previousDetails[$commonDetail];
+                    }
+                }
+
+                if ($previousMainCategory === $publicationContext['main_category']
+                    && is_array($previousDetails['service_details'] ?? null)) {
+                    $updatedDetails['service_details'] = ServiceDemandIntakeSchema::sanitize(
+                        $publicationContext['main_category'],
+                        $previousDetails['service_details']
+                    );
+                }
+            }
+            $ad->ad_details = $updatedDetails;
             $ad->location = $finalLocation;
             $ad->city = $selectedCity;
             $ad->country = $request->country;

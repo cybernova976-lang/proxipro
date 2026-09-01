@@ -164,6 +164,21 @@ body { background: #f0f2f5; }
 .demand-choice i { width: 22px; color: #3b82f6; margin-top: 2px; text-align: center; }
 .demand-choice strong, .demand-choice span { display: block; }
 .demand-choice span { margin-top: 3px; color: #64748b; font-size: .82rem; line-height: 1.4; }
+.demand-intake-card {
+    margin-bottom: 24px; padding: 18px; border: 1px solid #bfdbfe;
+    border-radius: 16px; background: linear-gradient(145deg, #f8fbff, #eef4ff);
+}
+.demand-intake-card[hidden] { display: none; }
+.demand-intake-head { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 16px; }
+.demand-intake-icon {
+    width: 38px; height: 38px; flex: 0 0 38px; display: grid; place-items: center;
+    border-radius: 11px; color: #2563eb; background: #dbeafe;
+}
+.demand-intake-head strong { display: block; color: #172554; font-size: .94rem; }
+.demand-intake-head p { margin: .25rem 0 0; color: #52627a; font-size: .8rem; line-height: 1.45; }
+.demand-intake-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.demand-intake-grid .demand-field { margin-bottom: 0; }
+.demand-intake-grid .demand-field label { font-size: .84rem; }
 .demand-confirm {
     display: flex; align-items: flex-start; gap: 11px; padding: 14px 16px; margin-top: 16px;
     border: 1px solid #cbd5e1; border-radius: 12px; background: #fff;
@@ -263,6 +278,7 @@ body { background: #f0f2f5; }
     .demand-step-num { width: 32px; height: 32px; font-size: .82rem; }
     .demand-step-line { flex: 1 1 auto; width: auto; margin: 0 5px; }
     .demand-choice-grid { grid-template-columns: 1fr; }
+    .demand-intake-grid { grid-template-columns: 1fr; }
     .demand-nav {
         flex-direction: column;
         gap: 12px;
@@ -460,6 +476,17 @@ body { background: #f0f2f5; }
                         <p>Un titre clair et quelques détails suffisent. Les photos restent facultatives.</p>
                     </div>
 
+                    <div class="demand-intake-card" id="demandIntakeCard" hidden>
+                        <div class="demand-intake-head">
+                            <span class="demand-intake-icon"><i class="fas fa-wand-magic-sparkles"></i></span>
+                            <div>
+                                <strong>Deux précisions pour mieux vous orienter</strong>
+                                <p id="demandIntakeIntroduction"></p>
+                            </div>
+                        </div>
+                        <div class="demand-intake-grid" id="demandIntakeFields"></div>
+                    </div>
+
                     <div class="demand-field">
                         <label for="demandTitle"><i class="fas fa-heading me-1"></i> Titre court <span class="required">*</span></label>
                         <input type="text" name="title" id="demandTitle" placeholder="Ex : Réparer une fuite sous l’évier" maxlength="255" value="{{ old('title') }}">
@@ -607,6 +634,8 @@ body { background: #f0f2f5; }
 @section('scripts')
 <script>
 const categoriesData = @json($categoriesData);
+const intakeSchemas = @json($intakeSchemas);
+const oldServiceDetails = @json(old('service_details', []));
 const preCategory = @json($preCategory);
 const preSubcategory = @json($preSubcategory);
 const initialCategory = @json(old('main_category', $preCategory));
@@ -741,6 +770,7 @@ function selectDemandCategory(catName, subcategoryToSelect = null) {
             selectedSub = sub;
             document.getElementById('h_main_category').value = catName;
             document.getElementById('h_category').value = sub;
+            renderDemandIntake();
             updateNextBtn();
             scheduleDraftSave();
         };
@@ -752,6 +782,7 @@ function selectDemandCategory(catName, subcategoryToSelect = null) {
         document.getElementById('h_main_category').value = catName;
         document.getElementById('h_category').value = subcategoryToSelect;
         Array.from(subList.children).find(chip => chip.textContent === subcategoryToSelect)?.classList.add('selected');
+        renderDemandIntake();
     }
 
     updateNextBtn();
@@ -765,6 +796,8 @@ function resetDemandCategory() {
     document.getElementById('demandSubSection').style.display = 'none';
     document.getElementById('h_main_category').value = '';
     document.getElementById('h_category').value = '';
+    document.getElementById('demandIntakeCard').hidden = true;
+    document.getElementById('demandIntakeFields').innerHTML = '';
     updateNextBtn();
     scheduleDraftSave();
 }
@@ -775,6 +808,86 @@ function filterDemandCategories(query) {
         const catName = btn.getAttribute('data-cat').toLowerCase();
         const subs = (categoriesData[btn.getAttribute('data-cat')]?.subcategories || []).join(' ').toLowerCase();
         btn.style.display = (!q || catName.includes(q) || subs.includes(q)) ? '' : 'none';
+    });
+}
+
+function renderDemandIntake(values = {}) {
+    const card = document.getElementById('demandIntakeCard');
+    const container = document.getElementById('demandIntakeFields');
+    const schema = intakeSchemas[selectedCat];
+    const fields = schema?.fields || {};
+    container.innerHTML = '';
+
+    if (!selectedSub || !Object.keys(fields).length) {
+        card.hidden = true;
+        return;
+    }
+
+    document.getElementById('demandIntakeIntroduction').textContent = schema.introduction || '';
+
+    Object.entries(fields).forEach(([key, field]) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'demand-field';
+
+        const label = document.createElement('label');
+        const inputId = 'demandServiceDetail_' + key;
+        label.htmlFor = inputId;
+        label.textContent = field.label || key;
+        if (field.required) {
+            const required = document.createElement('span');
+            required.className = 'required';
+            required.textContent = ' *';
+            label.appendChild(required);
+        }
+
+        let input;
+        if (field.type === 'select') {
+            input = document.createElement('select');
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = field.placeholder || '-- Choisir --';
+            input.appendChild(placeholder);
+            Object.entries(field.options || {}).forEach(([value, text]) => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = text;
+                input.appendChild(option);
+            });
+        } else {
+            input = document.createElement('input');
+            input.type = field.type === 'number' ? 'number' : 'text';
+            if (field.min !== undefined) input.min = field.min;
+            if (field.max !== undefined) input.max = field.max;
+            if (field.step !== undefined) input.step = field.step;
+            if (field.maxlength !== undefined) input.maxLength = field.maxlength;
+            input.placeholder = field.placeholder || '';
+        }
+
+        input.id = inputId;
+        input.name = `service_details[${key}]`;
+        input.dataset.serviceDetail = key;
+        input.required = Boolean(field.required);
+        input.value = values[key] ?? '';
+        input.addEventListener('change', scheduleDraftSave);
+        wrapper.appendChild(label);
+        wrapper.appendChild(input);
+        container.appendChild(wrapper);
+    });
+
+    card.hidden = false;
+}
+
+function currentServiceDetails() {
+    const details = {};
+    document.querySelectorAll('[data-service-detail]').forEach(input => {
+        if (input.value !== '') details[input.dataset.serviceDetail] = input.value;
+    });
+    return details;
+}
+
+function setServiceDetails(values = {}) {
+    document.querySelectorAll('[data-service-detail]').forEach(input => {
+        input.value = values[input.dataset.serviceDetail] ?? '';
     });
 }
 
@@ -879,6 +992,8 @@ function validateStep2() {
     const manual = document.getElementById('demandLocation').value.trim();
     const desiredDate = document.getElementById('demandDesiredDate').value;
     const timeWindow = document.getElementById('demandTimeWindow').value;
+    const serviceDetails = currentServiceDetails();
+    const intakeFields = intakeSchemas[selectedCat]?.fields || {};
 
     if (!country) { showError('step2Error', 'Veuillez sélectionner un pays.'); return false; }
     if (!city && !manual) { showError('step2Error', 'Veuillez sélectionner une ville.'); return false; }
@@ -898,6 +1013,13 @@ function validateStep3() {
     const desc = document.getElementById('demandDesc').value.trim();
     if (!title) { showError('step3Error', 'Le titre est obligatoire.'); document.getElementById('demandTitle').focus(); return false; }
     if (!desc) { showError('step3Error', 'La description est obligatoire.'); document.getElementById('demandDesc').focus(); return false; }
+    const missingDetail = Array.from(document.querySelectorAll('[data-service-detail][required]'))
+        .find(input => !input.value);
+    if (missingDetail) {
+        showError('step3Error', 'Répondez aux deux questions adaptées au service choisi.');
+        missingDetail.focus();
+        return false;
+    }
     return true;
 }
 
@@ -929,6 +1051,11 @@ function buildRecap() {
     const locationText = manual || city || '';
     const formattedDate = desiredDate ? new Intl.DateTimeFormat('fr-FR').format(new Date(desiredDate + 'T12:00:00')) : '';
     const safe = escapeHtml;
+    const serviceDetailRows = Object.entries(serviceDetails).map(([key, value]) => {
+        const field = intakeFields[key] || {};
+        const displayValue = field.options?.[value] || value;
+        return `<div style="display:flex;align-items:flex-start;gap:10px;"><i class="fas fa-circle-check" style="color:#2563eb;width:20px;text-align:center;margin-top:4px;"></i><div><small style="color:#9ca3af;">${safe(field.label || key)}</small><br><strong style="color:#111827;">${safe(displayValue)}</strong></div></div>`;
+    }).join('');
 
     let html = `
         <div style="display:flex; flex-direction:column; gap:12px;">
@@ -936,6 +1063,7 @@ function buildRecap() {
                 <i class="fas fa-tag" style="color:#6366f1; width:20px; text-align:center;"></i>
                 <div><small style="color:#9ca3af;">Service</small><br><strong style="color:#111827;">${safe(selectedCat)} → ${safe(selectedSub)}</strong></div>
             </div>
+            ${serviceDetailRows}
             <div style="display:flex; align-items:center; gap:10px;">
                 <i class="fas fa-heading" style="color:#3b82f6; width:20px; text-align:center;"></i>
                 <div><small style="color:#9ca3af;">Titre</small><br><strong style="color:#111827;">${safe(title)}</strong></div>
@@ -986,6 +1114,7 @@ function draftPayload() {
         price_type: document.getElementById('h_price_type').value,
         price: document.getElementById('demandPrice').value,
         urgency: document.getElementById('h_urgency').value,
+        service_details: currentServiceDetails(),
     };
 }
 
@@ -1026,6 +1155,7 @@ function restoreDemandDraft(draft) {
     if (!draft || draft.version !== 2) return false;
     if (draft.main_category && categoriesData[draft.main_category]) {
         selectDemandCategory(draft.main_category, draft.category);
+        setServiceDetails(draft.service_details || {});
     }
     document.getElementById('demandCountry').value = draft.country || '';
     updateDemandCities(draft.city || null);
@@ -1064,7 +1194,7 @@ function updateDescriptionCount() {
 function firstStepForValidationErrors() {
     if (validationErrorKeys.some(key => ['main_category', 'category'].includes(key))) return 1;
     if (validationErrorKeys.some(key => ['country', 'city', 'location', 'desired_date', 'time_window'].includes(key))) return 2;
-    if (validationErrorKeys.some(key => ['title', 'description', 'photos', 'photos.0', 'photos.1'].includes(key))) return 3;
+    if (validationErrorKeys.some(key => ['title', 'description', 'photos', 'photos.0', 'photos.1'].includes(key) || key.startsWith('service_details'))) return 3;
     if (validationErrorKeys.some(key => ['price_type', 'price', 'urgency'].includes(key))) return 4;
     if (validationErrorKeys.includes('publication_confirmed')) return 5;
     return 1;
@@ -1095,6 +1225,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (countryEl.value) updateDemandCities(oldCity);
         if (initialCategory && categoriesData[initialCategory]) {
             selectDemandCategory(initialCategory, initialSubcategory);
+            setServiceDetails(oldServiceDetails);
         }
         selectPriceType(@json(old('price_type', 'negotiable')));
         selectUrgency(@json(old('urgency', 'normal')));
