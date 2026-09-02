@@ -407,6 +407,12 @@
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
         border-radius: 12px;
         padding: 8px;
+        /* Le menu du compte professionnel depasse la hauteur du viewport :
+           sans defilement, le lien Deconnexion reste hors ecran. */
+        max-height: calc(100vh - 96px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
     }
     
     .dropdown-item-modern {

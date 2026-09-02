@@ -3926,15 +3926,48 @@
             color: #dc2626;
         }
 
-        /* Dropdown scrollable on mobile */
+        /* Dropdown scrollable sur toutes les tailles d'ecran :
+           le menu du compte professionnel depasse la hauteur du viewport
+           et le lien Deconnexion devenait inaccessible sur desktop. */
+        .dropdown-menu-modern {
+            max-height: calc(100vh - 96px);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
         @media (max-width: 767.98px) {
             .dropdown-menu-modern {
                 max-height: 80vh;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
             }
         }
         
+        /* Message flash global (annonce expiree, etc.) */
+        .pk-flash-info {
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+            max-width: 720px;
+            margin: 1rem auto 0;
+            padding: .8rem 1rem;
+            border: 1px solid #bfdbfe;
+            border-left: 5px solid #2563eb;
+            border-radius: 12px;
+            background: #eff6ff;
+            color: #1e3a8a;
+            font-size: .9rem;
+            font-weight: 600;
+        }
+        .pk-flash-info .pk-flash-close {
+            margin-left: auto;
+            padding: 0 .25rem;
+            border: 0;
+            background: transparent;
+            color: inherit;
+            opacity: .6;
+            cursor: pointer;
+        }
+        .pk-flash-info .pk-flash-close:hover { opacity: 1; }
+
         /* User Avatar */
         .user-avatar {
             width: 36px;
@@ -6957,6 +6990,15 @@
         @endauth
 
         <main class="@auth @if(!request()->routeIs('feed') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*')) main-content-with-sidebar @endif @endauth">
+            @if(session('info'))
+                <div class="pk-flash-info" role="status">
+                    <i class="fas fa-circle-info"></i>
+                    <span>{{ session('info') }}</span>
+                    <button type="button" class="pk-flash-close" aria-label="Fermer" onclick="this.closest('.pk-flash-info').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            @endif
             @yield('content')
         </main>
     </div>

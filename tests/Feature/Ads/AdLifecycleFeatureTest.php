@@ -87,6 +87,20 @@ class AdLifecycleFeatureTest extends TestCase
             ->assertStatus(422);
     }
 
+    public function test_expired_ad_redirects_a_signed_in_visitor_to_the_feed(): void
+    {
+        $owner = User::factory()->create();
+        $visitor = User::factory()->create();
+        $ad = $this->ad($owner, ['expires_at' => now()->subMinute()]);
+
+        $this->actingAs($visitor)
+            ->get(route('ads.show', $ad))
+            ->assertRedirect(route('feed'))
+            ->assertSessionHas('info');
+
+        $this->get(route('ads.show', $ad))->assertNotFound();
+    }
+
     public function test_role_aliases_filter_the_full_announcements_page(): void
     {
         $viewer = User::factory()->create();

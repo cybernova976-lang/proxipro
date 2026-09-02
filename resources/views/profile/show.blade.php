@@ -350,6 +350,49 @@
             </div>
             @endif
             
+            <!-- Realisations professionnelles -->
+            @if($user->isServiceProvider())
+            <div class="card border-0 shadow-sm mb-4 own-profile-section-card" id="own-profile-realizations">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-images me-2 text-primary"></i>Mes réalisations</h6>
+                    <a href="{{ route('profile.edit') }}#profile-realizations" class="btn btn-sm btn-outline-primary">
+                        {{ $user->professionalRealizations->isEmpty() ? 'Ajouter des photos' : 'Gérer' }}
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if($user->professionalRealizations->isNotEmpty())
+                        <p class="text-muted small mb-3">
+                            {{ $user->professionalRealizations->count() }}/6 photo{{ $user->professionalRealizations->count() > 1 ? 's' : '' }} de vos travaux, visible{{ $user->professionalRealizations->count() > 1 ? 's' : '' }} par les clients sur votre profil public.
+                        </p>
+                        <div class="own-realization-grid">
+                            @foreach($user->professionalRealizations as $realization)
+                                <button type="button"
+                                        class="own-realization-card"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#ownRealizationModal"
+                                        data-realization-src="{{ storage_url($realization->photo_path) }}"
+                                        data-realization-alt="Ma réalisation professionnelle {{ $loop->iteration }}"
+                                        aria-label="Agrandir la réalisation {{ $loop->iteration }}">
+                                    <img src="{{ storage_url($realization->photo_path) }}"
+                                         alt="Ma réalisation professionnelle {{ $loop->iteration }}"
+                                         loading="lazy">
+                                    <span><i class="fas fa-expand-alt"></i> Voir</span>
+                                </button>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="own-realization-empty">
+                            <i class="fas fa-camera-retro"></i>
+                            <div>
+                                <strong>Aucune réalisation pour l’instant</strong>
+                                <p class="mb-0">Ajoutez jusqu’à 6 photos de vos travaux : les profils illustrés sont nettement plus contactés.</p>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+            @endif
+
             <!-- Recent Ads -->
             <div class="card border-0 shadow-sm own-profile-section-card">
                 <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
@@ -562,6 +605,86 @@
             aspect-ratio: 1 / 1.02;
         }
     }
+    .own-realization-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .75rem;
+    }
+    .own-realization-card {
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 4 / 3;
+        padding: 0;
+        border: 0;
+        border-radius: 14px;
+        background: #e2e8f0;
+        cursor: zoom-in;
+    }
+    .own-realization-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform .2s ease;
+    }
+    .own-realization-card:hover img,
+    .own-realization-card:focus-visible img {
+        transform: scale(1.035);
+    }
+    .own-realization-card span {
+        position: absolute;
+        right: .5rem;
+        bottom: .5rem;
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        padding: .3rem .5rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, .82);
+        color: #fff;
+        font-size: .68rem;
+        font-weight: 700;
+    }
+    .own-realization-empty {
+        display: flex;
+        align-items: flex-start;
+        gap: .85rem;
+        padding: 1rem;
+        border: 1px dashed #cbd5e1;
+        border-radius: 14px;
+        background: #f8fafc;
+    }
+    .own-realization-empty i {
+        font-size: 1.4rem;
+        color: #2563eb;
+    }
+    .own-realization-empty p {
+        color: #64748b;
+        font-size: .85rem;
+    }
+    .own-realization-modal {
+        overflow: hidden;
+        border: 0;
+        border-radius: 18px;
+    }
+    .own-realization-modal .modal-body {
+        display: grid;
+        place-items: center;
+        min-height: 240px;
+        padding: 0;
+        background: #0f172a;
+    }
+    .own-realization-modal img {
+        display: block;
+        max-width: 100%;
+        max-height: min(78vh, 900px);
+        object-fit: contain;
+    }
+    @media (max-width: 575.98px) {
+        .own-realization-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: .55rem;
+        }
+    }
 </style>
 @endpush
 
@@ -643,4 +766,30 @@ function showAdDetail(ad) {
     new bootstrap.Modal(document.getElementById('adDetailModal')).show();
 }
 </script>
+
+@if($user->isServiceProvider() && $user->professionalRealizations->isNotEmpty())
+<div class="modal fade" id="ownRealizationModal" tabindex="-1" aria-labelledby="ownRealizationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content own-realization-modal">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="ownRealizationModalLabel">Ma réalisation</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <img src="" alt="" id="ownRealizationModalImage">
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+document.getElementById('ownRealizationModal')?.addEventListener('show.bs.modal', function(event) {
+    const trigger = event.relatedTarget;
+    const image = document.getElementById('ownRealizationModalImage');
+    if (!trigger || !image) return;
+
+    image.src = trigger.dataset.realizationSrc || '';
+    image.alt = trigger.dataset.realizationAlt || 'Ma réalisation professionnelle';
+});
+</script>
+@endif
 @endsection

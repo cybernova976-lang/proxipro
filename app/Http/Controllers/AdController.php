@@ -554,11 +554,23 @@ class AdController extends Controller
         $isPublicationActive = $ad->status === 'active'
             && (! $ad->expires_at || $ad->expires_at->isFuture());
 
-        abort_unless(
-            ($isPublicationActive && MarketplaceCategoryRegistry::isVisible($ad->main_category, $ad->category))
-                || $canInspectDisabledAd,
-            404
-        );
+        $isVisiblePublication = $isPublicationActive
+            && MarketplaceCategoryRegistry::isVisible($ad->main_category, $ad->category);
+
+        if (! $isVisiblePublication && ! $canInspectDisabledAd) {
+            // Les notifications et les messages conservent des liens vers des annonces
+            // qui ont pu expirer entre-temps. Pour un membre connecte, un 404 brut est
+            // incomprehensible : on le ramene au fil avec une explication.
+            if (Auth::check()) {
+                return redirect()
+                    ->route('feed')
+                    ->with('info', $ad->expires_at && $ad->expires_at->isPast()
+                        ? 'Cette annonce a expiré et n’est plus consultable.'
+                        : 'Cette annonce n’est plus disponible.');
+            }
+
+            abort(404);
+        }
 
         $isSaved = Auth::check() ? Auth::user()->hasSavedAd($ad) : false;
 
