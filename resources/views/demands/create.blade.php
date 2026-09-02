@@ -620,20 +620,31 @@ body { background: #f0f2f5; }
                 <button type="button" class="demand-btn demand-btn-next" id="demandBtnNext" onclick="nextDemandStep()" disabled>
                     Continuer <i class="fas fa-arrow-right"></i>
                 </button>
-                <button type="submit" class="demand-btn demand-btn-submit" id="demandBtnSubmit" style="display:none;">
+                @guest
+                <a href="{{ route('login') }}"
+                   class="demand-btn demand-btn-submit"
+                   id="demandBtnSubmit"
+                   style="display:none;"
+                   onclick="saveDemandDraft()">
                     <span class="demand-btn-submit-content">
-                        <i class="fas fa-{{ auth()->check() ? 'paper-plane' : 'sign-in-alt' }}"></i>
+                        <i class="fas fa-sign-in-alt"></i>
                         <span class="demand-btn-submit-text">
-                            @guest
                             <span>Continuer</span>
                             <span>Connexion ou inscription</span>
-                            @else
+                        </span>
+                    </span>
+                </a>
+                @else
+                <button type="submit" class="demand-btn demand-btn-submit" id="demandBtnSubmit" style="display:none;">
+                    <span class="demand-btn-submit-content">
+                        <i class="fas fa-paper-plane"></i>
+                        <span class="demand-btn-submit-text">
                             <span>Publier</span>
                             <span>et trouver des pros</span>
-                            @endguest
                         </span>
                     </span>
                 </button>
+                @endguest
             </div>
         </div>
     </form>
@@ -1099,6 +1110,8 @@ function buildRecap() {
     const urgency = document.getElementById('h_urgency').value;
     const desiredDate = document.getElementById('demandDesiredDate').value;
     const timeWindow = document.getElementById('demandTimeWindow').value;
+    const serviceDetails = currentServiceDetails();
+    const intakeFields = intakeSchemas[selectedCat]?.fields || {};
 
     const urgencyLabels = { normal: '🕐 Normal', urgent: '⚡ Urgent', tres_urgent: '🚨 Très urgent' };
     const timeLabels = { flexible: 'Flexible', morning: 'Matin', afternoon: 'Après-midi', evening: 'Soir' };

@@ -35,7 +35,11 @@ class GuidedDemandPublicationFeatureTest extends TestCase
             ->assertSee('window.location.assign(guestDemandLoginUrl);', false)
             ->assertSee('markDemandFields', false)
             ->assertSee('id="publicationConfirmed"', false)
+            ->assertSee('href="'.route('login').'"', false)
+            ->assertSee('onclick="saveDemandDraft()"', false)
             ->assertSee('<span>Continuer</span>', false)
+            ->assertSee('const serviceDetails = currentServiceDetails();', false)
+            ->assertSee('const intakeFields = intakeSchemas[selectedCat]?.fields || {};', false)
             ->assertSee(asset('js/form-validation.js').'?v=20260902', false)
             ->assertDontSee('onclick="window.location.href=', false)
             ->assertSee('Les photos ne sont jamais enregistrées dans le brouillon local');
