@@ -97,8 +97,38 @@ class AdLifecycleFeatureTest extends TestCase
             ->get(route('ads.show', $ad))
             ->assertRedirect(route('feed'))
             ->assertSessionHas('info');
+    }
+
+    public function test_expired_ad_returns_not_found_for_a_guest(): void
+    {
+        $owner = User::factory()->create();
+        $ad = $this->ad($owner, ['expires_at' => now()->subMinute()]);
 
         $this->get(route('ads.show', $ad))->assertNotFound();
+    }
+
+    public function test_deleted_ad_redirects_a_signed_in_visitor_to_the_feed(): void
+    {
+        $owner = User::factory()->create();
+        $visitor = User::factory()->create();
+        $ad = $this->ad($owner);
+        $url = route('ads.show', $ad);
+        $ad->delete();
+
+        $this->actingAs($visitor)
+            ->get($url)
+            ->assertRedirect(route('feed'))
+            ->assertSessionHas('info', 'Cette annonce n’existe plus.');
+    }
+
+    public function test_deleted_ad_returns_not_found_for_a_guest(): void
+    {
+        $owner = User::factory()->create();
+        $ad = $this->ad($owner);
+        $url = route('ads.show', $ad);
+        $ad->delete();
+
+        $this->get($url)->assertNotFound();
     }
 
     public function test_role_aliases_filter_the_full_announcements_page(): void

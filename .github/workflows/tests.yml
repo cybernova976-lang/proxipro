@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - codex/prokejem-pwa-mobile
       - '*.x'
   pull_request:
   schedule:

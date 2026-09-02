@@ -44,6 +44,14 @@ class ProfessionalRealizationGalleryFeatureTest extends TestCase
             Storage::disk('public')->assertExists($realization->photo_path);
         }
 
+        $this->get(route('profile.show'))
+            ->assertOk()
+            ->assertSee(route('profile.edit').'#profile-realizations', false);
+
+        $this->get(route('profile.edit'))
+            ->assertOk()
+            ->assertSee('id="profile-realizations"', false);
+
         $this->get(route('profile.public', $professional))
             ->assertOk()
             ->assertSee('Réalisations professionnelles')

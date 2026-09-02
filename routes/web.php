@@ -160,7 +160,19 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('ads', AdController::class)->except(['index', 'show', 'store']);
     Route::delete('/ads/{ad}/photos/{index}', [AdController::class, 'deletePhoto'])->name('ads.photos.delete');
 });
-Route::resource('ads', AdController::class)->only(['index', 'show']);
+Route::resource('ads', AdController::class)->only(['index', 'show'])
+    ->missing(function (\Illuminate\Http\Request $request) {
+        // Les notifications et les messages gardent des liens vers des annonces
+        // qui ont pu etre supprimees depuis. Un membre connecte est ramene au fil
+        // avec une explication plutot que sur un 404 brut.
+        if (\Illuminate\Support\Facades\Auth::check()) {
+            return redirect()
+                ->route('feed')
+                ->with('info', 'Cette annonce n’existe plus.');
+        }
+
+        abort(404);
+    });
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::get('/home/export-transactions-pdf', [App\Http\Controllers\HomeController::class, 'exportTransactionsPdf'])->middleware('auth')->name('home.export-transactions-pdf');
