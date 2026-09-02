@@ -180,6 +180,60 @@
                                 <div class="form-text">Décochez pour masquer votre tarif aux autres utilisateurs.</div>
                             </div>
                         </div>
+
+                        <hr class="my-4">
+                        <section class="professional-gallery-editor" aria-labelledby="professionalGalleryTitle">
+                            <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+                                <div>
+                                    <h6 class="fw-bold mb-1" id="professionalGalleryTitle">
+                                        <i class="fas fa-images me-2 text-primary"></i>Mes réalisations professionnelles
+                                    </h6>
+                                    <p class="text-muted small mb-0">Présentez jusqu’à 6 travaux réellement réalisés. Les photos seront visibles sur votre profil public.</p>
+                                </div>
+                                <span class="professional-gallery-count">{{ $user->professionalRealizations->count() }}/6</span>
+                            </div>
+
+                            <div class="professional-gallery-editor__grid" id="professionalGalleryGrid">
+                                @foreach($user->professionalRealizations as $realization)
+                                    <article class="professional-gallery-editor__item">
+                                        <img src="{{ storage_url($realization->photo_path) }}"
+                                             alt="Réalisation professionnelle {{ $loop->iteration }}"
+                                             loading="lazy">
+                                        <button type="submit"
+                                                class="professional-gallery-editor__delete"
+                                                form="deleteProfessionalRealization{{ $realization->id }}"
+                                                aria-label="Supprimer cette réalisation"
+                                                title="Supprimer cette réalisation">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </article>
+                                @endforeach
+
+                                @if($user->professionalRealizations->count() < 6)
+                                    <label for="professionalRealizationPhotos" class="professional-gallery-editor__add">
+                                        <i class="fas fa-plus"></i>
+                                        <strong>Ajouter des travaux</strong>
+                                        <span>{{ 6 - $user->professionalRealizations->count() }} emplacement(s) disponible(s)</span>
+                                    </label>
+                                @endif
+                            </div>
+
+                            <input type="file"
+                                   class="visually-hidden @error('professional_realization_photos') is-invalid @enderror"
+                                   id="professionalRealizationPhotos"
+                                   name="professional_realization_photos[]"
+                                   accept="image/jpeg,image/png,image/webp"
+                                   multiple
+                                   data-remaining-slots="{{ 6 - $user->professionalRealizations->count() }}">
+                            <div class="form-text mt-2">JPG, PNG ou WebP · 5 Mo maximum par photo.</div>
+                            <div class="professional-gallery-selection small mt-2" id="professionalGallerySelection" role="status" aria-live="polite"></div>
+                            @error('professional_realization_photos')
+                                <div class="text-danger small mt-2">{{ $message }}</div>
+                            @enderror
+                            @error('professional_realization_photos.*')
+                                <div class="text-danger small mt-2">{{ $message }}</div>
+                            @enderror
+                        </section>
                         @endif
                         
                         <hr class="my-4">
@@ -191,6 +245,16 @@
                             </button>
                         </div>
                     </form>
+
+                    @foreach($user->professionalRealizations as $realization)
+                        <form id="deleteProfessionalRealization{{ $realization->id }}"
+                              action="{{ route('profile.realizations.destroy', $realization) }}"
+                              method="POST"
+                              class="d-none">
+                            @csrf
+                            @method('DELETE')
+                        </form>
+                    @endforeach
                 </div>
             </div>
 
@@ -306,6 +370,84 @@
 </div>
 @endsection
 
+@push('styles')
+<style>
+.professional-gallery-count {
+    flex: 0 0 auto;
+    padding: .35rem .65rem;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 800;
+    font-size: .78rem;
+}
+.professional-gallery-editor__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .8rem;
+}
+.professional-gallery-editor__item,
+.professional-gallery-editor__add {
+    position: relative;
+    overflow: hidden;
+    min-height: 145px;
+    aspect-ratio: 4 / 3;
+    border-radius: 16px;
+}
+.professional-gallery-editor__item {
+    background: #e2e8f0;
+}
+.professional-gallery-editor__item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.professional-gallery-editor__delete {
+    position: absolute;
+    top: .55rem;
+    right: .55rem;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, .8);
+    color: #fff;
+}
+.professional-gallery-editor__add {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    padding: 1rem;
+    border: 2px dashed #93c5fd;
+    background: #f8fbff;
+    color: #1d4ed8;
+    text-align: center;
+    cursor: pointer;
+}
+.professional-gallery-editor__add i {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #dbeafe;
+}
+.professional-gallery-editor__add span {
+    color: #64748b;
+    font-size: .75rem;
+}
+.professional-gallery-selection.is-error { color: #dc2626; }
+.professional-gallery-selection.is-ready { color: #047857; }
+@media (max-width: 575.98px) {
+    .professional-gallery-editor__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .professional-gallery-editor__item,
+    .professional-gallery-editor__add { min-height: 120px; }
+}
+</style>
+@endpush
+
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -314,6 +456,56 @@ const avatarPreview = document.getElementById('avatarPreview');
 const avatarPlaceholder = document.getElementById('avatarPlaceholder');
 const avatarCroppedInput = document.getElementById('avatar_cropped');
 const avatarFeedback = document.getElementById('avatarFeedback');
+const professionalGalleryInput = document.getElementById('professionalRealizationPhotos');
+const professionalGalleryGrid = document.getElementById('professionalGalleryGrid');
+const professionalGallerySelection = document.getElementById('professionalGallerySelection');
+let professionalGalleryPreviewUrls = [];
+
+function renderProfessionalGallerySelection(files) {
+    professionalGalleryPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+    professionalGalleryPreviewUrls = [];
+    professionalGalleryGrid?.querySelectorAll('[data-new-realization]').forEach(item => item.remove());
+
+    files.forEach(file => {
+        const item = document.createElement('article');
+        item.className = 'professional-gallery-editor__item';
+        item.dataset.newRealization = 'true';
+
+        const image = document.createElement('img');
+        const previewUrl = URL.createObjectURL(file);
+        professionalGalleryPreviewUrls.push(previewUrl);
+        image.src = previewUrl;
+        image.alt = 'Nouvelle réalisation à enregistrer';
+
+        item.appendChild(image);
+        professionalGalleryGrid?.insertBefore(item, professionalGalleryGrid.querySelector('.professional-gallery-editor__add'));
+    });
+}
+
+professionalGalleryInput?.addEventListener('change', function() {
+    const remainingSlots = Number(this.dataset.remainingSlots || 0);
+    const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const selectedFiles = Array.from(this.files);
+    const validFiles = selectedFiles
+        .filter(file => acceptedTypes.includes(file.type) && file.size <= 5 * 1024 * 1024)
+        .slice(0, remainingSlots);
+    const transfer = new DataTransfer();
+    validFiles.forEach(file => transfer.items.add(file));
+    this.files = transfer.files;
+
+    renderProfessionalGallerySelection(validFiles);
+    professionalGallerySelection.classList.remove('is-error', 'is-ready');
+
+    if (validFiles.length !== selectedFiles.length) {
+        professionalGallerySelection.textContent = `Seules ${remainingSlots} photo(s) valides de 5 Mo maximum peuvent être ajoutées.`;
+        professionalGallerySelection.classList.add('is-error');
+    } else if (validFiles.length) {
+        professionalGallerySelection.textContent = `${validFiles.length} nouvelle(s) réalisation(s) prête(s) à être enregistrée(s).`;
+        professionalGallerySelection.classList.add('is-ready');
+    } else {
+        professionalGallerySelection.textContent = '';
+    }
+});
 
 const cropModalEl = document.getElementById('avatarCropModal');
 const cropModal = window.bootstrap?.Modal ? new window.bootstrap.Modal(cropModalEl) : null;

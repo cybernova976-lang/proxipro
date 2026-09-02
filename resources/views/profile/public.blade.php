@@ -375,6 +375,36 @@
                 </div>
             </section>
 
+            @if($isProviderProfile && $user->professionalRealizations->isNotEmpty())
+            <section class="card border-0 shadow-sm mb-4 profile-section" id="profile-realizations" aria-labelledby="realizations-title">
+                <div class="card-body">
+                    <div class="profile-section-heading">
+                        <span class="profile-section-icon profile-section-icon-realizations"><i class="fas fa-images"></i></span>
+                        <div>
+                            <h2 id="realizations-title">Réalisations professionnelles</h2>
+                            <p>{{ $user->professionalRealizations->count() }} exemple{{ $user->professionalRealizations->count() > 1 ? 's' : '' }} de travaux publié{{ $user->professionalRealizations->count() > 1 ? 's' : '' }} par ce prestataire.</p>
+                        </div>
+                    </div>
+                    <div class="profile-realization-grid">
+                        @foreach($user->professionalRealizations as $realization)
+                            <button type="button"
+                                    class="profile-realization-card"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#professionalRealizationModal"
+                                    data-realization-src="{{ storage_url($realization->photo_path) }}"
+                                    data-realization-alt="Réalisation professionnelle {{ $loop->iteration }} de {{ $user->name }}"
+                                    aria-label="Agrandir la réalisation {{ $loop->iteration }}">
+                                <img src="{{ storage_url($realization->photo_path) }}"
+                                     alt="Réalisation professionnelle {{ $loop->iteration }} de {{ $user->name }}"
+                                     loading="lazy">
+                                <span><i class="fas fa-expand-alt"></i> Voir la photo</span>
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+            </section>
+            @endif
+
             @if($isProviderProfile && $user->services->isNotEmpty())
             <section class="card border-0 shadow-sm mb-4 profile-section" id="profile-services" aria-labelledby="services-title">
                 <div class="card-body">
@@ -574,6 +604,22 @@
         </div>
     </div>
 </div>
+
+@if($isProviderProfile && $user->professionalRealizations->isNotEmpty())
+<div class="modal fade" id="professionalRealizationModal" tabindex="-1" aria-labelledby="professionalRealizationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content profile-realization-modal">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="professionalRealizationModalLabel">Réalisation de {{ $user->name }}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <img src="" alt="" id="professionalRealizationModalImage">
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 @auth
 @if(!$isOwnProfile)
@@ -943,6 +989,67 @@
         font-size: .72rem;
         line-height: 1.3;
     }
+    .profile-section-icon-realizations {
+        color: #1d4ed8;
+        background: #dbeafe;
+    }
+    .profile-realization-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .85rem;
+    }
+    .profile-realization-card {
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 4 / 3;
+        padding: 0;
+        border: 0;
+        border-radius: 17px;
+        background: #dbe4f0;
+        cursor: zoom-in;
+    }
+    .profile-realization-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform .2s ease;
+    }
+    .profile-realization-card:hover img,
+    .profile-realization-card:focus-visible img {
+        transform: scale(1.035);
+    }
+    .profile-realization-card span {
+        position: absolute;
+        right: .6rem;
+        bottom: .6rem;
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .35rem .55rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, .82);
+        color: #fff;
+        font-size: .68rem;
+        font-weight: 750;
+    }
+    .profile-realization-modal {
+        overflow: hidden;
+        border: 0;
+        border-radius: 20px;
+    }
+    .profile-realization-modal .modal-body {
+        display: grid;
+        place-items: center;
+        min-height: 260px;
+        padding: 0;
+        background: #0f172a;
+    }
+    .profile-realization-modal img {
+        display: block;
+        max-width: 100%;
+        max-height: min(78vh, 900px);
+        object-fit: contain;
+    }
     .profile-service-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1179,6 +1286,15 @@
         .profile-trust-grid {
             grid-template-columns: 1fr;
         }
+        .profile-realization-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: .65rem;
+        }
+        .profile-realization-card span {
+            right: .4rem;
+            bottom: .4rem;
+            padding: .3rem .45rem;
+        }
         .profile-service-grid {
             grid-template-columns: 1fr;
         }
@@ -1319,5 +1435,17 @@ function saveCategories() {
 </script>
 @endif
 @endauth
+@if($isProviderProfile && $user->professionalRealizations->isNotEmpty())
+<script>
+document.getElementById('professionalRealizationModal')?.addEventListener('show.bs.modal', function(event) {
+    const trigger = event.relatedTarget;
+    const image = document.getElementById('professionalRealizationModalImage');
+    if (!trigger || !image) return;
+
+    image.src = trigger.dataset.realizationSrc || '';
+    image.alt = trigger.dataset.realizationAlt || 'Réalisation professionnelle';
+});
+</script>
+@endif
 @endpush
 @endsection

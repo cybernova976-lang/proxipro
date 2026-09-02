@@ -7,6 +7,8 @@
     <title>Admin - @yield('title', 'Prokejem')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('css/form-validation.css') }}?v=20260902">
+    <script defer src="{{ asset('js/form-validation.js') }}?v=20260902"></script>
     <style>
         :root {
             --sidebar-width: 250px;

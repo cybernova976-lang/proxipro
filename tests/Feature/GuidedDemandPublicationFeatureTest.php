@@ -29,7 +29,45 @@ class GuidedDemandPublicationFeatureTest extends TestCase
             ->assertSee('const intakeSchemas', false)
             ->assertSee('service_details[${key}]', false)
             ->assertSee('prokejem-demand-draft-v2-', false)
+            ->assertSee('const isGuestDemand = true', false)
+            ->assertSee('markDemandFields', false)
+            ->assertSee('id="publicationConfirmed"', false)
+            ->assertSee('<span>Continuer</span>', false)
+            ->assertSee(asset('js/form-validation.js').'?v=20260902', false)
+            ->assertDontSee('onclick="window.location.href=', false)
             ->assertSee('Les photos ne sont jamais enregistrées dans le brouillon local');
+    }
+
+    public function test_guest_finishing_step_five_is_redirected_to_login_before_publication(): void
+    {
+        $response = $this->post(route('demand.store'), [
+            'main_category' => 'Bricolage & Travaux',
+            'category' => 'Plombier',
+            'country' => 'Mayotte',
+            'city' => 'Mamoudzou',
+            'location' => 'Mamoudzou',
+            'desired_date' => today()->addDays(3)->toDateString(),
+            'time_window' => 'morning',
+            'title' => 'Réparer une fuite sous mon évier',
+            'description' => 'Une fuite légère apparaît sous l’évier lorsque le robinet est ouvert.',
+            'price_type' => 'negotiable',
+            'service_details' => [
+                'work_scope' => 'repair',
+                'site_type' => 'house',
+            ],
+            'publication_confirmed' => '1',
+        ]);
+
+        $response->assertRedirect(route('login'));
+        $this->assertDatabaseCount('ads', 0);
+    }
+
+    public function test_registration_form_uses_shared_required_field_highlighting(): void
+    {
+        $this->get(route('register'))
+            ->assertOk()
+            ->assertSee(asset('css/form-validation.css').'?v=20260902', false)
+            ->assertSee(asset('js/form-validation.js').'?v=20260902', false);
     }
 
     public function test_authenticated_client_can_publish_a_complete_guided_demand(): void

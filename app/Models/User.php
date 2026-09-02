@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -39,6 +40,9 @@ class User extends Authenticatable
 
             // Supprimer les services
             $user->services()->delete();
+
+            // Supprimer les photos de réalisations et leurs fichiers.
+            $user->professionalRealizations->each->delete();
 
             // Supprimer les avis reçus et donnés
             $user->reviewsReceived()->delete();
@@ -291,6 +295,16 @@ class User extends Authenticatable
     public function services()
     {
         return $this->hasMany(UserService::class);
+    }
+
+    /**
+     * Photos de travaux affichées sur le profil public du prestataire.
+     */
+    public function professionalRealizations(): HasMany
+    {
+        return $this->hasMany(ProfessionalRealization::class)
+            ->orderBy('position')
+            ->orderBy('id');
     }
 
     /**

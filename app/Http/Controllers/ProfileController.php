@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ad;
+use App\Models\ProfessionalRealization;
 use App\Models\ServiceOrder;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ class ProfileController extends Controller
     public function show()
     {
         // Forcer le rechargement depuis la base de données
-        $user = \App\Models\User::with('services')->where('id', Auth::id())->firstOrFail();
+        $user = \App\Models\User::with(['services', 'professionalRealizations'])->where('id', Auth::id())->firstOrFail();
         $user->refresh(); // Force le rafraîchissement des données depuis la DB
 
         // Récupérer les annonces de l'utilisateur
@@ -47,7 +48,7 @@ class ProfileController extends Controller
      */
     public function edit()
     {
-        $user = Auth::user();
+        $user = Auth::user()->load('professionalRealizations');
 
         return view('profile.edit', compact('user'));
     }
@@ -73,9 +74,27 @@ class ProfileController extends Controller
             'avatar_cropped' => 'nullable|string|max:7000000',
             'hourly_rate' => 'nullable|numeric|min:0|max:999',
             'show_hourly_rate' => 'nullable',
+            'professional_realization_photos' => ['nullable', 'array', 'max:6'],
+            'professional_realization_photos.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ];
 
         $request->validate($rules);
+
+        $realizationPhotos = array_values($request->file('professional_realization_photos', []));
+        if ($realizationPhotos !== []) {
+            if (! $user->isServiceProvider()) {
+                return back()->withErrors([
+                    'professional_realization_photos' => 'La galerie de réalisations est réservée aux profils prestataires.',
+                ])->withInput();
+            }
+
+            $remainingSlots = max(0, 6 - $user->professionalRealizations()->count());
+            if (count($realizationPhotos) > $remainingSlots) {
+                return back()->withErrors([
+                    'professional_realization_photos' => "Vous pouvez afficher 6 réalisations maximum. Il vous reste {$remainingSlots} emplacement(s).",
+                ])->withInput();
+            }
+        }
 
         $data = $request->only([
             'name',
@@ -213,6 +232,39 @@ class ProfileController extends Controller
             }
         }
 
+        if ($realizationPhotos !== []) {
+            $defaultDisk = config('filesystems.default', 'public');
+            $nextPosition = ((int) $user->professionalRealizations()->max('position')) + 1;
+            $storedPaths = [];
+            $createdIds = [];
+
+            try {
+                foreach ($realizationPhotos as $photo) {
+                    $path = $photo->store('professional-realizations/'.$user->id, $defaultDisk);
+                    if (! $path) {
+                        throw new \RuntimeException('Le stockage de la réalisation a échoué.');
+                    }
+
+                    $storedPaths[] = $path;
+                    $createdIds[] = $user->professionalRealizations()->create([
+                        'photo_path' => $path,
+                        'position' => $nextPosition++,
+                    ])->id;
+                }
+            } catch (\Throwable $e) {
+                ProfessionalRealization::query()->whereIn('id', $createdIds)->delete();
+                Storage::disk($defaultDisk)->delete($storedPaths);
+                Log::error('Erreur upload des réalisations professionnelles: '.$e->getMessage(), [
+                    'user_id' => $user->id,
+                    'exception' => get_class($e),
+                ]);
+
+                return back()->withErrors([
+                    'professional_realization_photos' => 'Impossible d’ajouter les photos de réalisations. Veuillez réessayer.',
+                ])->withInput();
+            }
+        }
+
         // Rediriger vers le profil public si c'est la page d'origine
         $referer = $request->headers->get('referer', '');
         if (str_contains($referer, '/user/')) {
@@ -222,6 +274,28 @@ class ProfileController extends Controller
 
         return redirect()->route('profile.show')
             ->with('success', 'Profil mis à jour avec succès !');
+    }
+
+    /**
+     * Retirer une photo de réalisation du profil du prestataire.
+     */
+    public function destroyProfessionalRealization(ProfessionalRealization $professionalRealization)
+    {
+        abort_unless((int) $professionalRealization->user_id === (int) Auth::id(), 403);
+
+        $user = Auth::user();
+        $professionalRealization->delete();
+
+        $user->professionalRealizations()
+            ->get()
+            ->values()
+            ->each(function (ProfessionalRealization $realization, int $index): void {
+                if ((int) $realization->position !== $index + 1) {
+                    $realization->update(['position' => $index + 1]);
+                }
+            });
+
+        return back()->with('success', 'La photo de réalisation a été supprimée.');
     }
 
     /**
@@ -295,6 +369,7 @@ class ProfileController extends Controller
                 ->where('is_active', true)
                 ->orderByDesc('is_verified')
                 ->orderBy('subcategory'),
+            'professionalRealizations',
         ])->where('id', $id)->firstOrFail();
 
         $canViewPrivateProfile = Auth::check()

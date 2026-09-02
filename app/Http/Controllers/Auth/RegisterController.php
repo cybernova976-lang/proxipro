@@ -197,7 +197,9 @@ class RegisterController extends Controller
     protected function validator(array $data)
     {
         $rules = [
-            'email' => ['required', 'string', 'email:rfc,dns', 'max:255', new EmailNotBlocked, Rule::unique('users', 'email')->whereNull('deleted_at')],
+            // The verification code proves ownership. A live DNS lookup here would
+            // reject valid addresses whenever the resolver is temporarily unavailable.
+            'email' => ['required', 'string', 'email:rfc', 'max:255', new EmailNotBlocked, Rule::unique('users', 'email')->whereNull('deleted_at')],
             'referral_code' => ['nullable', 'string', 'max:20', Rule::exists('users', 'referral_code')],
             'country' => ['required', 'string', 'max:100', Rule::in(array_keys(config('locations.countries', [])))],
             'city' => ['required', 'string', 'max:100', Rule::notIn(['__other__'])],

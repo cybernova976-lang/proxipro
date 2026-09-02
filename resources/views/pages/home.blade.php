@@ -48,6 +48,8 @@
     
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('css/form-validation.css') }}?v=20260902">
+    <script defer src="{{ asset('js/form-validation.js') }}?v=20260902"></script>
 
     <style>
         :root {

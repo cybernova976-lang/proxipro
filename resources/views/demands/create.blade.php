@@ -257,6 +257,15 @@ body { background: #f0f2f5; }
     background: #fef2f2; color: #dc2626; padding: 10px 14px; border-radius: 10px;
     font-size: 0.85rem; margin-top: 10px; display: none; align-items: center; gap: 8px;
 }
+.demand-step-invalid {
+    padding: 10px;
+    border-radius: 16px;
+    background: #fff7f7;
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, .18);
+}
+.demand-confirm.pk-required-missing {
+    border-color: #dc2626;
+}
 
 /* Back to category link */
 .demand-back-link {
@@ -430,7 +439,7 @@ body { background: #f0f2f5; }
                         <label><i class="fas fa-map-marker-alt me-1"></i> Localisation <span class="required">*</span></label>
                         <div class="demand-field-row">
                             <div>
-                                <select name="country" id="demandCountry" onchange="updateDemandCities()">
+                                <select name="country" id="demandCountry" onchange="updateDemandCities()" required>
                                     <option value="">-- Pays --</option>
                                     @foreach(config('locations.countries', []) as $countryName => $flag)
                                         <option value="{{ $countryName }}" {{ (old('country') ?? Auth::user()->country ?? '') == $countryName ? 'selected' : '' }}>{{ $flag }} {{ $countryName }}</option>
@@ -449,11 +458,11 @@ body { background: #f0f2f5; }
                     <div class="demand-field-row">
                         <div class="demand-field">
                             <label for="demandDesiredDate"><i class="fas fa-calendar-day me-1"></i> Date souhaitée <span class="required">*</span></label>
-                            <input type="date" name="desired_date" id="demandDesiredDate" min="{{ now()->toDateString() }}" value="{{ old('desired_date') }}">
+                            <input type="date" name="desired_date" id="demandDesiredDate" min="{{ now()->toDateString() }}" value="{{ old('desired_date') }}" required>
                         </div>
                         <div class="demand-field">
                             <label for="demandTimeWindow"><i class="fas fa-clock me-1"></i> Moment de la journée <span class="required">*</span></label>
-                            <select name="time_window" id="demandTimeWindow">
+                            <select name="time_window" id="demandTimeWindow" required>
                                 <option value="">-- Choisir --</option>
                                 <option value="flexible" @selected(old('time_window') === 'flexible')>Je suis flexible</option>
                                 <option value="morning" @selected(old('time_window') === 'morning')>Matin</option>
@@ -489,13 +498,13 @@ body { background: #f0f2f5; }
 
                     <div class="demand-field">
                         <label for="demandTitle"><i class="fas fa-heading me-1"></i> Titre court <span class="required">*</span></label>
-                        <input type="text" name="title" id="demandTitle" placeholder="Ex : Réparer une fuite sous l’évier" maxlength="255" value="{{ old('title') }}">
+                        <input type="text" name="title" id="demandTitle" placeholder="Ex : Réparer une fuite sous l’évier" maxlength="255" value="{{ old('title') }}" required>
                         <p class="hint">Résumez votre besoin en une phrase.</p>
                     </div>
 
                     <div class="demand-field">
                         <label for="demandDesc"><i class="fas fa-align-left me-1"></i> Description <span class="required">*</span></label>
-                        <textarea name="description" id="demandDesc" maxlength="2000" placeholder="Précisez le problème, les dimensions utiles et le résultat attendu.">{{ old('description') }}</textarea>
+                        <textarea name="description" id="demandDesc" maxlength="2000" placeholder="Précisez le problème, les dimensions utiles et le résultat attendu." required>{{ old('description') }}</textarea>
                         <p class="hint"><span id="demandDescCount">0</span>/2000 caractères</p>
                     </div>
 
@@ -592,7 +601,7 @@ body { background: #f0f2f5; }
                     </div>
 
                     <div class="demand-confirm">
-                        <input type="checkbox" name="publication_confirmed" id="publicationConfirmed" value="1" @checked(old('publication_confirmed'))>
+                        <input type="checkbox" name="publication_confirmed" id="publicationConfirmed" value="1" @checked(old('publication_confirmed')) required>
                         <label for="publicationConfirmed">Je confirme que les informations de cette demande sont exactes et j’accepte sa publication publique pendant 30 jours.</label>
                     </div>
 
@@ -611,13 +620,13 @@ body { background: #f0f2f5; }
                 <button type="button" class="demand-btn demand-btn-next" id="demandBtnNext" onclick="nextDemandStep()" disabled>
                     Continuer <i class="fas fa-arrow-right"></i>
                 </button>
-                <button @guest type="button" onclick="window.location.href='{{ route('login') }}'" @else type="submit" @endguest class="demand-btn demand-btn-submit" id="demandBtnSubmit" style="display:none;">
+                <button type="submit" class="demand-btn demand-btn-submit" id="demandBtnSubmit" style="display:none;">
                     <span class="demand-btn-submit-content">
                         <i class="fas fa-{{ auth()->check() ? 'paper-plane' : 'sign-in-alt' }}"></i>
                         <span class="demand-btn-submit-text">
                             @guest
-                            <span>Se connecter</span>
-                            <span>pour publier</span>
+                            <span>Continuer</span>
+                            <span>Connexion ou inscription</span>
                             @else
                             <span>Publier</span>
                             <span>et trouver des pros</span>
@@ -641,7 +650,9 @@ const preSubcategory = @json($preSubcategory);
 const initialCategory = @json(old('main_category', $preCategory));
 const initialSubcategory = @json(old('category', $preSubcategory));
 const validationErrorKeys = @json($errors->keys());
+const validationErrors = @json($errors->toArray());
 const hasServerInput = @json(session()->hasOldInput());
+const isGuestDemand = @json(Auth::guest());
 const demandDraftIdentity = @json(Auth::id() ?: 'guest');
 const demandDraftKey = 'prokejem-demand-draft-v2-' + demandDraftIdentity;
 const guestDemandDraftKey = 'prokejem-demand-draft-v2-guest';
@@ -734,20 +745,42 @@ function scrollDemandFormIntoView() {
 
 function updateNextBtn() {
     const btn = document.getElementById('demandBtnNext');
-    if (currentStep === 1) {
-        btn.disabled = !selectedSub;
-    } else btn.disabled = false;
+    btn.disabled = false;
+}
+
+function markDemandFields(fields, errorId, summary) {
+    fields.forEach(item => {
+        if (window.ProkejemFormValidation?.mark) {
+            window.ProkejemFormValidation.mark(item.field, item.message);
+        } else {
+            item.field.classList.add('pk-field-invalid');
+            item.field.setAttribute('aria-invalid', 'true');
+        }
+    });
+    showError(errorId, summary);
+    const first = fields[0]?.field;
+    if (first) {
+        (first.closest('.demand-field, .demand-confirm') || first).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        window.setTimeout(() => first.focus({ preventScroll: true }), 220);
+    }
+    return false;
 }
 
 function validateStep1() {
     if (selectedSub) return true;
+    const selectionArea = selectedCat
+        ? document.getElementById('demandSubList')
+        : document.getElementById('demandCatGrid');
+    selectionArea.classList.add('demand-step-invalid');
     showError('step1Error', 'Veuillez sélectionner un service.');
+    selectionArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return false;
 }
 
 // ─── Step 1: Categories ───
 function selectDemandCategory(catName, subcategoryToSelect = null) {
     if (!categoriesData[catName]) return;
+    document.getElementById('demandCatGrid').classList.remove('demand-step-invalid');
     selectedCat = catName;
     selectedSub = null;
 
@@ -767,6 +800,7 @@ function selectDemandCategory(catName, subcategoryToSelect = null) {
         chip.onclick = function() {
             document.querySelectorAll('.demand-sub-chip').forEach(c => c.classList.remove('selected'));
             chip.classList.add('selected');
+            document.getElementById('demandSubList').classList.remove('demand-step-invalid');
             selectedSub = sub;
             document.getElementById('h_main_category').value = catName;
             document.getElementById('h_category').value = sub;
@@ -898,6 +932,8 @@ function updateDemandCities(cityToSelect = null) {
     const manualEl = document.getElementById('demandLocation');
     cityEl.innerHTML = '<option value="">-- Ville --</option>';
     manualEl.style.display = 'none';
+    manualEl.required = false;
+    cityEl.required = Boolean(country && citiesByCountry[country]);
 
     if (country && citiesByCountry[country]) {
         cityEl.disabled = false;
@@ -916,6 +952,7 @@ function updateDemandCities(cityToSelect = null) {
         } else if (cityToSelect) {
             cityEl.value = '__other__';
             manualEl.style.display = 'block';
+            manualEl.required = true;
         }
     } else {
         cityEl.disabled = true;
@@ -924,9 +961,11 @@ function updateDemandCities(cityToSelect = null) {
     cityEl.onchange = function() {
         if (this.value === '__other__') {
             manualEl.style.display = 'block';
+            manualEl.required = true;
             manualEl.focus();
         } else {
             manualEl.style.display = 'none';
+            manualEl.required = false;
             manualEl.value = '';
         }
         scheduleDraftSave();
@@ -946,6 +985,7 @@ function selectPriceType(type) {
     });
     document.getElementById('h_price_type').value = type;
     document.getElementById('demandPriceField').hidden = type !== 'fixed';
+    document.getElementById('demandPrice').required = type === 'fixed';
     scheduleDraftSave();
 }
 
@@ -992,14 +1032,19 @@ function validateStep2() {
     const manual = document.getElementById('demandLocation').value.trim();
     const desiredDate = document.getElementById('demandDesiredDate').value;
     const timeWindow = document.getElementById('demandTimeWindow').value;
-    const serviceDetails = currentServiceDetails();
-    const intakeFields = intakeSchemas[selectedCat]?.fields || {};
+    const missing = [];
 
-    if (!country) { showError('step2Error', 'Veuillez sélectionner un pays.'); return false; }
-    if (!city && !manual) { showError('step2Error', 'Veuillez sélectionner une ville.'); return false; }
-    if (!desiredDate) { showError('step2Error', 'Veuillez indiquer la date souhaitée.'); return false; }
-    if (desiredDate < document.getElementById('demandDesiredDate').min) { showError('step2Error', 'La date souhaitée ne peut pas être dans le passé.'); return false; }
-    if (!timeWindow) { showError('step2Error', 'Veuillez choisir un moment de la journée.'); return false; }
+    if (!country) missing.push({ field: document.getElementById('demandCountry'), message: 'Sélectionnez un pays.' });
+    if (!city && !manual) missing.push({ field: document.getElementById('demandCity'), message: 'Sélectionnez une ville.' });
+    if (city === '__other__' && !manual) missing.push({ field: document.getElementById('demandLocation'), message: 'Saisissez votre ville.' });
+    if (!desiredDate) missing.push({ field: document.getElementById('demandDesiredDate'), message: 'Indiquez la date souhaitée.' });
+    if (!timeWindow) missing.push({ field: document.getElementById('demandTimeWindow'), message: 'Choisissez un moment de la journée.' });
+    if (missing.length) return markDemandFields(missing, 'step2Error', 'Complétez les informations obligatoires indiquées en rouge.');
+    if (desiredDate < document.getElementById('demandDesiredDate').min) {
+        return markDemandFields([
+            { field: document.getElementById('demandDesiredDate'), message: 'La date souhaitée ne peut pas être dans le passé.' },
+        ], 'step2Error', 'Corrigez la date souhaitée.');
+    }
 
     // Copy city to location hidden if needed
     if (city && city !== '__other__' && !manual) {
@@ -1011,15 +1056,13 @@ function validateStep2() {
 function validateStep3() {
     const title = document.getElementById('demandTitle').value.trim();
     const desc = document.getElementById('demandDesc').value.trim();
-    if (!title) { showError('step3Error', 'Le titre est obligatoire.'); document.getElementById('demandTitle').focus(); return false; }
-    if (!desc) { showError('step3Error', 'La description est obligatoire.'); document.getElementById('demandDesc').focus(); return false; }
-    const missingDetail = Array.from(document.querySelectorAll('[data-service-detail][required]'))
-        .find(input => !input.value);
-    if (missingDetail) {
-        showError('step3Error', 'Répondez aux deux questions adaptées au service choisi.');
-        missingDetail.focus();
-        return false;
-    }
+    const missing = [];
+    if (!title) missing.push({ field: document.getElementById('demandTitle'), message: 'Le titre est obligatoire.' });
+    if (!desc) missing.push({ field: document.getElementById('demandDesc'), message: 'La description est obligatoire.' });
+    Array.from(document.querySelectorAll('[data-service-detail][required]'))
+        .filter(input => !input.value)
+        .forEach(input => missing.push({ field: input, message: 'Cette précision est obligatoire.' }));
+    if (missing.length) return markDemandFields(missing, 'step3Error', 'Complétez les informations obligatoires indiquées en rouge.');
     return true;
 }
 
@@ -1027,10 +1070,20 @@ function validateStep4() {
     const priceType = document.getElementById('h_price_type').value;
     const price = Number(document.getElementById('demandPrice').value);
     if (priceType === 'fixed' && (!Number.isFinite(price) || price < 1)) {
-        showError('step4Error', 'Indiquez un budget supérieur à 0 €, ou choisissez « À discuter ».');
-        return false;
+        return markDemandFields([
+            { field: document.getElementById('demandPrice'), message: 'Indiquez un budget supérieur à 0 €.' },
+        ], 'step4Error', 'Indiquez un budget valide, ou choisissez « À discuter ».');
     }
     return true;
+}
+
+function validateStep5() {
+    const confirmation = document.getElementById('publicationConfirmed');
+    if (confirmation.checked) return true;
+
+    return markDemandFields([
+        { field: confirmation, message: 'Cette confirmation est obligatoire avant de continuer.' },
+    ], 'step5Error', 'Confirmez les informations avant de continuer.');
 }
 
 // ─── Step 5: Recap ───
@@ -1162,6 +1215,7 @@ function restoreDemandDraft(draft) {
     document.getElementById('demandLocation').value = draft.location || '';
     if (draft.city === '__other__' || (draft.location && !draft.city)) {
         document.getElementById('demandLocation').style.display = 'block';
+        document.getElementById('demandLocation').required = true;
     }
     document.getElementById('demandDesiredDate').value = draft.desired_date || '';
     document.getElementById('demandTimeWindow').value = draft.time_window || '';
@@ -1200,6 +1254,41 @@ function firstStepForValidationErrors() {
     return 1;
 }
 
+function fieldForValidationError(key) {
+    const fields = {
+        country: 'demandCountry',
+        city: 'demandCity',
+        location: 'demandLocation',
+        desired_date: 'demandDesiredDate',
+        time_window: 'demandTimeWindow',
+        title: 'demandTitle',
+        description: 'demandDesc',
+        price: 'demandPrice',
+        publication_confirmed: 'publicationConfirmed',
+    };
+    if (fields[key]) return document.getElementById(fields[key]);
+    if (key.startsWith('service_details.')) {
+        return document.querySelector('[data-service-detail="' + key.split('.').slice(1).join('.') + '"]');
+    }
+    return null;
+}
+
+function applyServerValidationHighlights() {
+    validationErrorKeys.forEach(key => {
+        if (['main_category', 'category'].includes(key)) {
+            (selectedCat ? document.getElementById('demandSubList') : document.getElementById('demandCatGrid'))
+                .classList.add('demand-step-invalid');
+            return;
+        }
+        if (key === 'photos' || key.startsWith('photos.')) {
+            document.getElementById('demandPhotoArea').classList.add('demand-step-invalid');
+            return;
+        }
+        const field = fieldForValidationError(key);
+        if (field) window.ProkejemFormValidation?.mark(field, validationErrors[key]?.[0]);
+    });
+}
+
 // ─── Helpers ───
 function showError(id, msg) {
     const el = document.getElementById(id);
@@ -1208,6 +1297,8 @@ function showError(id, msg) {
 }
 function hideErrors() {
     document.querySelectorAll('.demand-error').forEach(e => e.style.display = 'none');
+    document.querySelectorAll('.demand-step-invalid').forEach(e => e.classList.remove('demand-step-invalid'));
+    document.querySelectorAll('.pk-field-invalid').forEach(field => window.ProkejemFormValidation?.clear(field));
 }
 
 // ─── Init ───
@@ -1235,6 +1326,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateStepUI();
     updateNextBtn();
     updateDescriptionCount();
+    if (validationErrorKeys.length) applyServerValidationHighlights();
 
     const form = document.getElementById('demandForm');
     form.addEventListener('input', event => {
@@ -1243,12 +1335,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     form.addEventListener('change', scheduleDraftSave);
     form.addEventListener('submit', event => {
-        if (!document.getElementById('publicationConfirmed').checked) {
+        if (!validateStep5()) {
             event.preventDefault();
             currentStep = totalDemandSteps;
             updateStepUI();
-            showError('step5Error', 'Confirmez les informations avant de publier.');
+            return;
         }
+        if (isGuestDemand) saveDemandDraft();
     });
 
     document.getElementById('demandDraftReset').addEventListener('click', () => {
