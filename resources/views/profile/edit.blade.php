@@ -190,7 +190,7 @@
                                     </h6>
                                     <p class="text-muted small mb-0">Présentez jusqu’à 6 travaux réellement réalisés. Les photos seront visibles sur votre profil public.</p>
                                 </div>
-                                <span class="professional-gallery-count">{{ $user->professionalRealizations->count() }}/6</span>
+                                <span class="professional-gallery-count" id="professionalGalleryCount">{{ $user->professionalRealizations->count() }}/6</span>
                             </div>
 
                             <div class="professional-gallery-editor__grid" id="professionalGalleryGrid">
@@ -210,10 +210,10 @@
                                 @endforeach
 
                                 @if($user->professionalRealizations->count() < 6)
-                                    <label for="professionalRealizationPhotos" class="professional-gallery-editor__add">
+                                    <label for="professionalRealizationPhotos" class="professional-gallery-editor__add" id="professionalGalleryAdd">
                                         <i class="fas fa-plus"></i>
                                         <strong>Ajouter des travaux</strong>
-                                        <span>{{ 6 - $user->professionalRealizations->count() }} emplacement(s) disponible(s)</span>
+                                        <span id="professionalGalleryAvailable">{{ 6 - $user->professionalRealizations->count() }} emplacement(s) disponible(s)</span>
                                     </label>
                                 @endif
                             </div>
@@ -459,14 +459,54 @@ const avatarFeedback = document.getElementById('avatarFeedback');
 const professionalGalleryInput = document.getElementById('professionalRealizationPhotos');
 const professionalGalleryGrid = document.getElementById('professionalGalleryGrid');
 const professionalGallerySelection = document.getElementById('professionalGallerySelection');
+const professionalGalleryCount = document.getElementById('professionalGalleryCount');
+const professionalGalleryAdd = document.getElementById('professionalGalleryAdd');
+const professionalGalleryAvailable = document.getElementById('professionalGalleryAvailable');
+const professionalGalleryRemainingSlots = Number(professionalGalleryInput?.dataset.remainingSlots || 0);
 let professionalGalleryPreviewUrls = [];
+let professionalGalleryFiles = [];
+
+function professionalGalleryFileKey(file) {
+    return [file.name, file.size, file.lastModified, file.type].join('::');
+}
+
+function syncProfessionalGalleryInput() {
+    if (!professionalGalleryInput) return;
+
+    const transfer = new DataTransfer();
+    professionalGalleryFiles.forEach(file => transfer.items.add(file));
+    professionalGalleryInput.files = transfer.files;
+}
+
+function updateProfessionalGalleryAvailability() {
+    const availableSlots = Math.max(0, professionalGalleryRemainingSlots - professionalGalleryFiles.length);
+    const existingCount = 6 - professionalGalleryRemainingSlots;
+
+    if (professionalGalleryCount) {
+        professionalGalleryCount.textContent = `${existingCount + professionalGalleryFiles.length}/6`;
+    }
+    if (professionalGalleryAvailable) {
+        professionalGalleryAvailable.textContent = `${availableSlots} emplacement(s) disponible(s)`;
+    }
+    if (professionalGalleryAdd) {
+        professionalGalleryAdd.hidden = availableSlots === 0;
+    }
+}
+
+function setProfessionalGalleryFeedback(message = '', type = '') {
+    if (!professionalGallerySelection) return;
+
+    professionalGallerySelection.textContent = message;
+    professionalGallerySelection.classList.toggle('is-error', type === 'error');
+    professionalGallerySelection.classList.toggle('is-ready', type === 'ready');
+}
 
 function renderProfessionalGallerySelection(files) {
     professionalGalleryPreviewUrls.forEach(url => URL.revokeObjectURL(url));
     professionalGalleryPreviewUrls = [];
     professionalGalleryGrid?.querySelectorAll('[data-new-realization]').forEach(item => item.remove());
 
-    files.forEach(file => {
+    files.forEach((file, index) => {
         const item = document.createElement('article');
         item.className = 'professional-gallery-editor__item';
         item.dataset.newRealization = 'true';
@@ -478,32 +518,75 @@ function renderProfessionalGallerySelection(files) {
         image.alt = 'Nouvelle réalisation à enregistrer';
 
         item.appendChild(image);
-        professionalGalleryGrid?.insertBefore(item, professionalGalleryGrid.querySelector('.professional-gallery-editor__add'));
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'professional-gallery-editor__delete';
+        removeButton.setAttribute('aria-label', `Retirer ${file.name} de la sélection`);
+        removeButton.title = 'Retirer cette photo';
+        removeButton.innerHTML = '<i class="fas fa-times" aria-hidden="true"></i>';
+        removeButton.addEventListener('click', () => {
+            professionalGalleryFiles.splice(index, 1);
+            syncProfessionalGalleryInput();
+            renderProfessionalGallerySelection(professionalGalleryFiles);
+            updateProfessionalGalleryAvailability();
+            setProfessionalGalleryFeedback(
+                professionalGalleryFiles.length
+                    ? `${professionalGalleryFiles.length} nouvelle(s) réalisation(s) prête(s) à être enregistrée(s).`
+                    : '',
+                professionalGalleryFiles.length ? 'ready' : ''
+            );
+        });
+
+        item.appendChild(removeButton);
+        professionalGalleryGrid?.insertBefore(item, professionalGalleryAdd);
     });
 }
 
 professionalGalleryInput?.addEventListener('change', function() {
-    const remainingSlots = Number(this.dataset.remainingSlots || 0);
     const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'];
     const selectedFiles = Array.from(this.files);
-    const validFiles = selectedFiles
-        .filter(file => acceptedTypes.includes(file.type) && file.size <= 5 * 1024 * 1024)
-        .slice(0, remainingSlots);
-    const transfer = new DataTransfer();
-    validFiles.forEach(file => transfer.items.add(file));
-    this.files = transfer.files;
+    const knownFiles = new Set(professionalGalleryFiles.map(professionalGalleryFileKey));
+    let rejectedFiles = 0;
+    let duplicateFiles = 0;
 
-    renderProfessionalGallerySelection(validFiles);
-    professionalGallerySelection.classList.remove('is-error', 'is-ready');
+    selectedFiles.forEach(file => {
+        if (!acceptedTypes.includes(file.type) || file.size > 5 * 1024 * 1024) {
+            rejectedFiles++;
+            return;
+        }
 
-    if (validFiles.length !== selectedFiles.length) {
-        professionalGallerySelection.textContent = `Seules ${remainingSlots} photo(s) valides de 5 Mo maximum peuvent être ajoutées.`;
-        professionalGallerySelection.classList.add('is-error');
-    } else if (validFiles.length) {
-        professionalGallerySelection.textContent = `${validFiles.length} nouvelle(s) réalisation(s) prête(s) à être enregistrée(s).`;
-        professionalGallerySelection.classList.add('is-ready');
+        const key = professionalGalleryFileKey(file);
+        if (knownFiles.has(key)) {
+            duplicateFiles++;
+            return;
+        }
+
+        if (professionalGalleryFiles.length >= professionalGalleryRemainingSlots) {
+            rejectedFiles++;
+            return;
+        }
+
+        professionalGalleryFiles.push(file);
+        knownFiles.add(key);
+    });
+
+    syncProfessionalGalleryInput();
+    renderProfessionalGallerySelection(professionalGalleryFiles);
+    updateProfessionalGalleryAvailability();
+
+    if (rejectedFiles > 0) {
+        setProfessionalGalleryFeedback(
+            `${professionalGalleryFiles.length} photo(s) prête(s). ${rejectedFiles} fichier(s) ignoré(s) : vérifiez le format, la taille de 5 Mo et la limite de 6 photos.`,
+            'error'
+        );
+    } else if (professionalGalleryFiles.length) {
+        const duplicateMessage = duplicateFiles > 0 ? ` ${duplicateFiles} doublon(s) ignoré(s).` : '';
+        setProfessionalGalleryFeedback(
+            `${professionalGalleryFiles.length} nouvelle(s) réalisation(s) prête(s) à être enregistrée(s).${duplicateMessage}`,
+            'ready'
+        );
     } else {
-        professionalGallerySelection.textContent = '';
+        setProfessionalGalleryFeedback();
     }
 });
 

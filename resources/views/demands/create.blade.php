@@ -364,7 +364,7 @@ body { background: #f0f2f5; }
         @endforeach
     </div>
 
-    <form method="POST" action="{{ route('demand.store') }}" enctype="multipart/form-data" id="demandForm">
+    <form method="POST" action="{{ route('demand.store') }}" enctype="multipart/form-data" id="demandForm" novalidate>
         @csrf
         <input type="hidden" name="main_category" id="h_main_category">
         <input type="hidden" name="category" id="h_category">
@@ -653,6 +653,7 @@ const validationErrorKeys = @json($errors->keys());
 const validationErrors = @json($errors->toArray());
 const hasServerInput = @json(session()->hasOldInput());
 const isGuestDemand = @json(Auth::guest());
+const guestDemandLoginUrl = @json(route('login'));
 const demandDraftIdentity = @json(Auth::id() ?: 'guest');
 const demandDraftKey = 'prokejem-demand-draft-v2-' + demandDraftIdentity;
 const guestDemandDraftKey = 'prokejem-demand-draft-v2-guest';
@@ -1335,13 +1336,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     form.addEventListener('change', scheduleDraftSave);
     form.addEventListener('submit', event => {
+        if (isGuestDemand) {
+            event.preventDefault();
+            saveDemandDraft();
+            window.location.assign(guestDemandLoginUrl);
+            return;
+        }
+
         if (!validateStep5()) {
             event.preventDefault();
             currentStep = totalDemandSteps;
             updateStepUI();
             return;
         }
-        if (isGuestDemand) saveDemandDraft();
     });
 
     document.getElementById('demandDraftReset').addEventListener('click', () => {

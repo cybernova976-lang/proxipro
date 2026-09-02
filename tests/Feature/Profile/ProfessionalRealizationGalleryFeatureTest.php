@@ -60,6 +60,25 @@ class ProfessionalRealizationGalleryFeatureTest extends TestCase
             ->assertSee(storage_url($professional->professionalRealizations->first()->photo_path), false);
     }
 
+    public function test_professional_gallery_editor_accumulates_multiple_file_selections(): void
+    {
+        $professional = User::factory()->create([
+            'account_type' => 'professionnel',
+            'user_type' => 'professionnel',
+            'is_service_provider' => true,
+        ]);
+
+        $this->actingAs($professional)
+            ->get(route('profile.edit'))
+            ->assertOk()
+            ->assertSee('name="professional_realization_photos[]"', false)
+            ->assertSee('multiple', false)
+            ->assertSee('let professionalGalleryFiles = [];', false)
+            ->assertSee('professionalGalleryFiles.push(file);', false)
+            ->assertSee('syncProfessionalGalleryInput();', false)
+            ->assertSee('Retirer cette photo', false);
+    }
+
     public function test_gallery_rejects_a_seventh_photo_and_non_provider_uploads(): void
     {
         config(['filesystems.default' => 'public']);
