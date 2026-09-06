@@ -21,7 +21,7 @@
             : 'client';
 
         $pkPublishUrl = $pkTabRole === 'provider'
-            ? route('ads.create', ['type' => 'service'])
+            ? route('ads.create', ['type' => 'offre'])
             : route('demand.create');
 
         $pkTabs = [

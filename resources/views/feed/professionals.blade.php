@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Tous les professionnels — Prokejem')
+@section('title', 'Annuaire des prestataires — Prokejem')
 
 @push('styles')
 <style>
@@ -60,9 +60,7 @@
         font-size: 1.05rem;
         font-weight: 700;
         color: #1e293b;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        overflow-wrap: anywhere;
     }
     .pro-card-profession {
         font-size: 0.85rem;
@@ -92,6 +90,8 @@
     }
     .pro-card-footer {
         display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
         align-items: center;
         justify-content: space-between;
         padding: 12px 20px;
@@ -99,7 +99,7 @@
         background: #fafbfc;
     }
     .pro-card-rating {
-        color: #f59e0b;
+        color: #475569;
         font-weight: 600;
         font-size: 0.88rem;
     }
@@ -125,6 +125,7 @@
         margin-bottom: 24px;
     }
     .pros-filter-bar select {
+        max-width: 100%;
         padding: 8px 14px;
         border: 1px solid #e2e8f0;
         border-radius: 8px;
@@ -155,26 +156,33 @@
 @section('content')
 <div class="container" style="padding-top: 24px; padding-bottom: 60px;">
     <h1 style="font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-bottom: 20px;">
-        <i class="fas fa-users me-2" style="color: #6366f1;"></i>Tous les professionnels
+        <i class="fas fa-users me-2" style="color: #2563eb;"></i>Annuaire des prestataires
     </h1>
+    <p class="text-muted">Professionnels et particuliers prestataires, avec ou sans abonnement. Profils classés par nom.</p>
 
     {{-- Barre de filtres --}}
-    <div class="pros-filter-bar">
-        <select id="proCategoryFilter" onchange="filterPros()">
+    <form class="pros-filter-bar" method="GET" action="{{ route('feed.professionals') }}">
+        <label class="visually-hidden" for="proCategoryFilter">Catégorie de service</label>
+        <select id="proCategoryFilter" name="category">
             <option value="">Toutes les catégories</option>
             @foreach($categories as $catName => $catData)
                 <option value="{{ $catName }}" {{ request('category') == $catName ? 'selected' : '' }}>{{ $catName }}</option>
             @endforeach
         </select>
-    </div>
+        <button type="submit" class="btn btn-primary">Filtrer</button>
+        @if($category || $subcategory)
+            <a href="{{ route('feed.professionals') }}" class="btn btn-outline-secondary">Tous les prestataires</a>
+        @endif
+    </form>
+    <p class="text-muted small" role="status">{{ $professionals->total() }} profil{{ $professionals->total() > 1 ? 's' : '' }} trouvé{{ $professionals->total() > 1 ? 's' : '' }}</p>
 
     {{-- Grille de pros --}}
     <div class="pros-grid" id="prosGrid">
-        @forelse($premiumPros as $pro)
+        @forelse($professionals as $pro)
             <a href="{{ route('profile.public', $pro->id) }}" class="pro-card">
                 <div class="pro-card-top">
                     @if($pro->avatar)
-                        <img src="{{ storage_url($pro->avatar) }}" alt="{{ $pro->name }}" class="pro-card-avatar">
+                        <img src="{{ storage_url($pro->avatar) }}" alt="" class="pro-card-avatar" loading="lazy" width="64" height="64">
                     @else
                         <div class="pro-card-avatar-placeholder">{{ strtoupper(substr($pro->name, 0, 1)) }}</div>
                     @endif
@@ -182,8 +190,8 @@
                         <div class="pro-card-name">{{ $pro->name }}</div>
                         @if($pro->profession)
                             <div class="pro-card-profession">{{ $pro->profession }}</div>
-                        @elseif($pro->service_category)
-                            <div class="pro-card-profession">{{ Str::limit($pro->service_category, 40) }}</div>
+                        @elseif($pro->services->first()?->subcategory ?? $pro->service_category)
+                            <div class="pro-card-profession">{{ $pro->services->first()?->subcategory ?? $pro->service_category }}</div>
                         @endif
                         @if($pro->location_preference ?? ($pro->city ?? null))
                             <div class="pro-card-location"><i class="fas fa-map-marker-alt me-1"></i>{{ Str::limit($pro->location_preference ?? $pro->city, 30) }}</div>
@@ -197,39 +205,45 @@
                 </div>
                 <div class="pro-card-footer">
                     <div class="pro-card-rating">
-                        <i class="fas fa-star"></i>
-                        {{ $pro->reviews_avg_rating ? number_format($pro->reviews_avg_rating, 1) : 'Nouveau' }}
+                        @if($pro->reviews_count > 0)
+                            <i class="fas fa-star text-warning" aria-hidden="true"></i>
+                            {{ number_format($pro->reviews_avg_rating, 1, ',', ' ') }}/5 · {{ $pro->reviews_count }} avis vérifié{{ $pro->reviews_count > 1 ? 's' : '' }}
+                        @else
+                            Pas encore d’avis vérifié
+                        @endif
                     </div>
                     <div>
-                        @if($pro->hasActiveProSubscription())
-                            <span class="pro-card-badge premium"><i class="fas fa-crown me-1"></i>Premium</span>
-                        @elseif($pro->user_type === 'professionnel' || $pro->hasCompletedProOnboarding())
+                        @if($pro->user_type === 'professionnel' || $pro->hasCompletedProOnboarding())
                             <span class="pro-card-badge pro"><i class="fas fa-briefcase me-1"></i>Pro</span>
                         @elseif($pro->is_service_provider)
                             <span class="pro-card-badge provider"><i class="fas fa-user-check me-1"></i>Prestataire</span>
                         @endif
                     </div>
-                    <div class="pro-card-stats">{{ $pro->ads_count ?? 0 }} annonces</div>
+                    <span class="text-primary small fw-semibold">Voir le profil <i class="fas fa-arrow-right" aria-hidden="true"></i></span>
                 </div>
             </a>
         @empty
             <div class="pros-empty" style="grid-column: 1 / -1;">
                 <i class="fas fa-users-slash"></i>
-                <p>Aucun professionnel disponible pour le moment.</p>
+                <p>Aucun profil ne correspond à cette recherche.</p>
                 <a href="{{ route('feed') }}" class="btn btn-primary mt-3"><i class="fas fa-arrow-left me-2"></i>Retour au feed</a>
             </div>
         @endforelse
     </div>
+    @if($professionals->hasPages())
+        <nav class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-4" aria-label="Pagination des prestataires">
+            @if($professionals->onFirstPage())
+                <span class="btn btn-outline-secondary disabled" aria-disabled="true">Précédent</span>
+            @else
+                <a class="btn btn-outline-primary" href="{{ $professionals->previousPageUrl() }}" rel="prev">Précédent</a>
+            @endif
+            <span class="small">Page {{ $professionals->currentPage() }} sur {{ $professionals->lastPage() }}</span>
+            @if($professionals->hasMorePages())
+                <a class="btn btn-outline-primary" href="{{ $professionals->nextPageUrl() }}" rel="next">Suivant</a>
+            @else
+                <span class="btn btn-outline-secondary disabled" aria-disabled="true">Suivant</span>
+            @endif
+        </nav>
+    @endif
 </div>
 @endsection
-
-@push('scripts')
-<script>
-function filterPros() {
-    const cat = document.getElementById('proCategoryFilter').value;
-    const params = new URLSearchParams();
-    if (cat) params.append('category', cat);
-    window.location.href = '{{ route("feed.professionals") }}' + (params.toString() ? '?' + params.toString() : '');
-}
-</script>
-@endpush

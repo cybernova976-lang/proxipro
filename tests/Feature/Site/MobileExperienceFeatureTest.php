@@ -87,7 +87,10 @@ class MobileExperienceFeatureTest extends TestCase
         $this->assertStringContainsString('env(safe-area-inset-bottom)', $conversationView);
         $this->assertStringContainsString('.message-input-wrapper', $conversationView);
         $this->assertStringContainsString('min-width: 0;', $conversationView);
-        $this->assertStringContainsString("request()->routeIs('messages.*')", $pwaInstall);
+        $this->actingAs(User::factory()->create())
+            ->get(route('messages.index'))
+            ->assertOk()
+            ->assertSee('const installSurfaceAllowed = false;', false);
         $this->assertStringContainsString("classList.add('pwa-install-available')", $pwaInstall);
     }
 

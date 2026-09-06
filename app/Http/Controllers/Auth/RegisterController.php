@@ -186,7 +186,7 @@ class RegisterController extends Controller
             return $response;
         }
 
-        return redirect($this->redirectPath());
+        return redirect(\App\Support\DemandPublicationContinuation::destination($request));
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ad;
+use App\Models\User;
 use App\Services\AdLifecycleService;
 use App\Services\FeedRankingService;
 use App\Support\MarketplaceCategoryRegistry;
@@ -396,7 +397,7 @@ class FeedController extends Controller
                 'create_ad' => route('ads.create'),
                 default => route('pro.profile.edit'),
             }
-            : route('pro.profile.edit');
+        : route('pro.profile.edit');
         $pkCompletion = max(0, min(100, (int) $proProfileCompletion));
 
         // --- zone 4 : le flux, six annonces au maximum ---
@@ -2036,6 +2037,10 @@ class FeedController extends Controller
      */
     public function getProfessionalsByCategory(Request $request)
     {
+        $request->validate([
+            'category' => ['nullable', 'string', 'max:120'],
+            'subcategory' => ['nullable', 'string', 'max:120'],
+        ]);
         $category = $request->get('category');
         $subcategory = $request->get('subcategory');
         $missionCategories = $this->getHomeMegaCategories();
@@ -2050,6 +2055,12 @@ class FeedController extends Controller
             // Main category selected - include all its subcategories
             $categoriesToSearch = collect($missionCategories[$category]['subs'])->pluck('name')->toArray();
             $categoriesToSearch[] = $category;
+        }
+
+        // L'annuaire complet ne doit pas être limité aux emplacements promotionnels
+        // de l'ancien widget AJAX (abonnés, annonces boostées, nouveaux inscrits).
+        if (! $request->ajax() && ! $request->wantsJson() && ! in_array($request->get('format'), ['json', 'html'], true)) {
+            return $this->professionalDirectory($request, $missionCategories, $categoriesToSearch);
         }
 
         // Base query: professionals OR particuliers prestataires
@@ -2182,17 +2193,45 @@ class FeedController extends Controller
             ]);
         }
 
-        // Return partial HTML for AJAX, or full page for direct access
-        if ($request->ajax() || $request->get('format') === 'html') {
-            return view('feed.partials.premium-pros-items', compact('premiumPros', 'category', 'subcategory'));
+        // Les accès pleine page ont déjà été traités par l'annuaire ci-dessus.
+        return view('feed.partials.premium-pros-items', compact('premiumPros', 'category', 'subcategory'));
+    }
+
+    private function professionalDirectory(Request $request, array $categories, array $categoriesToSearch)
+    {
+        $category = $request->string('category')->toString();
+        $subcategory = $request->string('subcategory')->toString();
+        if ($category !== '' && $categoriesToSearch === []) {
+            $categoriesToSearch = [$category];
         }
 
-        return view('feed.professionals', [
-            'premiumPros' => $premiumPros,
-            'category' => $category,
-            'subcategory' => $subcategory,
-            'categories' => $missionCategories,
-        ]);
+        $query = User::query()
+            ->where('is_active', true)
+            ->where('profile_public', true)
+            ->where(function ($query) {
+                $query->where('user_type', 'professionnel')
+                    ->orWhere(fn ($query) => $query->where('user_type', 'particulier')->where('is_service_provider', true));
+            })
+            ->with(['services' => fn ($query) => $query->where('is_active', true)->orderBy('subcategory')])
+            ->withCount(['verifiedReviewsReceived as reviews_count'])
+            ->withAvg('verifiedReviewsReceived as reviews_avg_rating', 'rating');
+
+        if ($categoriesToSearch !== []) {
+            $query->where(function ($query) use ($categoriesToSearch) {
+                $query->whereIn('profession', $categoriesToSearch)
+                    ->orWhereIn('service_category', $categoriesToSearch)
+                    ->orWhereHas('services', fn ($services) => $services->where('is_active', true)
+                        ->where(fn ($service) => $service->whereIn('main_category', $categoriesToSearch)
+                            ->orWhereIn('subcategory', $categoriesToSearch)))
+                    ->orWhereHas('ads', fn ($ads) => $ads->marketplaceActive()->where('service_type', 'offre')
+                        ->whereIn('category', $categoriesToSearch));
+            });
+        }
+
+        // Ordre stable, sans présenter un abonnement comme un gage de qualité.
+        $professionals = $query->orderBy('name')->orderBy('id')->paginate(12)->withQueryString();
+
+        return view('feed.professionals', compact('professionals', 'category', 'subcategory', 'categories'));
     }
 
     /**

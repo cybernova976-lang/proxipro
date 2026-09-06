@@ -188,11 +188,15 @@
                     
                     <!-- Rating -->
                     <div class="mb-3">
+                        @if(($ratingCount ?? 0) > 0)
                         @for($i = 1; $i <= 5; $i++)
                             <i class="fas fa-star {{ $i <= round($ratingAverage ?? 0) ? 'text-warning' : 'text-muted' }}"></i>
                         @endfor
                         <span class="ms-2 fw-bold">{{ number_format($ratingAverage ?? 0, 1) }}</span>
                         <span class="text-muted">({{ $ratingCount ?? 0 }} avis vérifiés)</span>
+                        @else
+                            <span class="text-muted">Pas encore d’avis vérifié</span>
+                        @endif
                     </div>
                     
                     <!-- Contact Button -->
@@ -304,6 +308,7 @@
                     <span class="profile-metric-label">Prestations finalisées</span>
                 </div>
                 <div class="profile-metric">
+                    @if(($ratingCount ?? 0) > 0)
                     <span class="profile-metric-value text-warning">{{ number_format($ratingAverage ?? 0, 1) }}<small>/5</small></span>
                     <span class="profile-metric-label">Note moyenne</span>
                     <span class="profile-stars" aria-label="Note de {{ number_format($ratingAverage ?? 0, 1) }} sur 5">
@@ -311,6 +316,10 @@
                             <i class="fas fa-star {{ $i <= round($ratingAverage ?? 0) ? 'text-warning' : 'text-muted' }}"></i>
                         @endfor
                     </span>
+                    @else
+                        <span class="profile-metric-value text-muted" aria-hidden="true">—</span>
+                        <span class="profile-metric-label">Pas encore noté</span>
+                    @endif
                 </div>
                 <div class="profile-metric">
                     <span class="profile-metric-value text-success">{{ $ratingCount ?? 0 }}</span>

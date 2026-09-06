@@ -104,7 +104,7 @@
                     : ($pkNeedsAttention ? 'Améliorer ma demande' : 'Suivre ma demande') }}
                 <i class="fas fa-arrow-right"></i>
             </a>
-            <a href="{{ $pkNeedsAttention ? route('ads.index', ['type' => 'offres']) : route('demand.create') }}" class="pk-btn-outline-light">
+            <a href="{{ $pkNeedsAttention ? route('feed.professionals') : route('demand.create') }}" class="pk-btn-outline-light">
                 <i class="fas fa-{{ $pkNeedsAttention ? 'users' : 'plus' }}"></i>
                 {{ $pkNeedsAttention ? 'Consulter les prestataires' : 'Publier un autre besoin' }}
             </a>

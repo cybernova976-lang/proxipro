@@ -106,6 +106,12 @@
     @media (prefers-reduced-motion: reduce) {
         .pwa-install-button { transition: none; }
     }
+
+    @media (max-width: 900px) {
+        body:has(.pk-tabbar) .pwa-install-button {
+            bottom: calc(90px + env(safe-area-inset-bottom));
+        }
+    }
 </style>
 
 <button
@@ -154,7 +160,10 @@
     const installButton = document.getElementById('pwaInstallButton');
     const iosDialog = document.getElementById('pwaIosDialog');
     const iosDialogClose = document.getElementById('pwaIosDialogClose');
-    const installSurfaceAllowed = @json(!request()->routeIs('messages.*'));
+    @php
+        $installSurfaceAllowed = !request()->routeIs('messages.*', 'demand.*', 'ads.create', 'ads.edit', 'login', 'register');
+    @endphp
+    const installSurfaceAllowed = @json($installSurfaceAllowed);
 
     if (!installButton || !iosDialog || !iosDialogClose) return;
 

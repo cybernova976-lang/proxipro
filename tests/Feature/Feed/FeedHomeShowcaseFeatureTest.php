@@ -172,7 +172,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertFalse(str_contains($html, 'Prestataires recommandés'), 'Le prestataire ne doit pas voir les profils concurrents.');
 
         $javascript = file_get_contents(public_path('js/feed.js'));
-        $this->assertStringContainsString("config.requestsUrl", $javascript);
+        $this->assertStringContainsString('config.requestsUrl', $javascript);
         $this->assertStringContainsString("params.push('search='", $javascript);
     }
 
@@ -369,7 +369,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
     public function test_the_mobile_tabbar_is_rendered_once_by_the_shared_layout(): void
     {
         $layout = file_get_contents(resource_path('views/layouts/app.blade.php'));
-        $feed   = file_get_contents(resource_path('views/feed/index.blade.php'));
+        $feed = file_get_contents(resource_path('views/feed/index.blade.php'));
         $tabbar = file_get_contents(resource_path('views/feed/partials/mobile-tabbar.blade.php'));
 
         $this->assertStringContainsString(
@@ -388,7 +388,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString(
             'js/tabbar.js',
             $layout.$tabbar,
-            "Ni le gabarit commun ni le composant ne charge le retour visuel immediat de la barre mobile."
+            'Ni le gabarit commun ni le composant ne charge le retour visuel immediat de la barre mobile.'
         );
 
         $this->assertStringNotContainsString(
@@ -469,7 +469,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             ->get(route('ads.index'))
             ->assertOk()
             ->assertSee('pk-tabbar', false)
-            ->assertSee(route('ads.create', ['type' => 'service']), false);
+            ->assertSee(route('ads.create', ['type' => 'offre']), false);
     }
 
     /**
@@ -486,7 +486,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $html = $this->actingAs($user)->get(route('ads.index'))->assertOk()->getContent();
 
         preg_match('#<nav class="pk-tabbar".*?</nav>#s', $html, $nav);
-        $this->assertNotEmpty($nav, "La barre est absente de la page /ads.");
+        $this->assertNotEmpty($nav, 'La barre est absente de la page /ads.');
 
         preg_match_all('/<a\s[^>]*class="([^"]*)"[^>]*>.*?<span>([^<]+)<\/span>/s', $nav[0], $links, PREG_SET_ORDER);
 
@@ -507,6 +507,6 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         // simple fait que la page emploie un autre gabarit.
         $this->get(route('ads.index'))
             ->assertOk()
-            ->assertDontSee('pk-tabbar', false);
+            ->assertDontSee('<nav class="pk-tabbar"', false);
     }
 }

@@ -35,7 +35,7 @@ class GuidedDemandPublicationFeatureTest extends TestCase
             ->assertSee('window.location.assign(guestDemandLoginUrl);', false)
             ->assertSee('markDemandFields', false)
             ->assertSee('id="publicationConfirmed"', false)
-            ->assertSee('href="'.route('login').'"', false)
+            ->assertSee('href="'.route('login', ['continue' => 'demand']).'"', false)
             ->assertSee('onclick="saveDemandDraft()"', false)
             ->assertSee('<span>Continuer</span>', false)
             ->assertSee('const serviceDetails = currentServiceDetails();', false)

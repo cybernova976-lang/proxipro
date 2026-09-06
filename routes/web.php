@@ -73,8 +73,9 @@ if (app()->environment('local')) {
 
 // Authentication Routes...
 Route::get('login', function () {
+    \App\Support\DemandPublicationContinuation::remember(request());
     if (Auth::check()) {
-        return redirect()->route('feed');
+        return redirect()->to(\App\Support\DemandPublicationContinuation::destination(request()));
     }
 
     return view('auth.login');
@@ -84,8 +85,9 @@ Route::post('logout', [App\Http\Controllers\Auth\LoginController::class, 'logout
 
 // Registration Routes...
 Route::get('register', function () {
+    \App\Support\DemandPublicationContinuation::remember(request());
     if (Auth::check()) {
-        return redirect()->route('feed');
+        return redirect()->to(\App\Support\DemandPublicationContinuation::destination(request()));
     }
 
     return view('auth.register');

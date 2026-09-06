@@ -16,7 +16,7 @@
             <h2 id="pkProsTitle">Prestataires recommandés</h2>
             <p class="pk-sechead__sub">Compétences, tarifs et avis utiles pour faire votre choix</p>
         </div>
-        <a href="{{ route('ads.index', ['type' => 'offres']) }}" class="pk-sechead__more">
+        <a href="{{ route('feed.professionals') }}" class="pk-sechead__more">
             Voir les profils <i class="fas fa-arrow-right"></i>
         </a>
     </div>

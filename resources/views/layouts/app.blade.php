@@ -6733,7 +6733,7 @@
                         <a href="{{ route('home') }}" class="header-nav-btn {{ request()->routeIs('home') ? 'active' : '' }}">
                             <i class="fas fa-th-large"></i><span>Tableau de bord</span>
                         </a>
-                        <a href="{{ request()->routeIs('feed.mockup', 'feed.mockup.preview') ? route('demand.create') : route('ads.create') }}" class="header-nav-btn header-nav-btn-primary">
+                        <a href="{{ route('demand.create') }}" class="header-nav-btn header-nav-btn-primary">
                             <i class="fas fa-plus-circle"></i><span>Demander un service</span>
                         </a>
                         <a href="{{ route('contact.index') }}" class="header-nav-btn">
@@ -6744,7 +6744,7 @@
                         </button>
                     </nav>
 
-                    <a href="{{ route('ads.create', ['type' => 'demande']) }}"
+                    <a href="{{ route('demand.create') }}"
                        class="mobile-service-request d-lg-none"
                        aria-label="Publier une annonce">
                         <i class="fas fa-plus-circle"></i>
@@ -6984,12 +6984,12 @@
 
         {{-- Sidebar de navigation --}}
         @auth
-            @if(!request()->routeIs('feed') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*'))
+            @if(!request()->routeIs('feed', 'feed.professionals', 'demand.*') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*'))
                 @include('partials.sidebar')
             @endif
         @endauth
 
-        <main class="@auth @if(!request()->routeIs('feed') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*')) main-content-with-sidebar @endif @endauth">
+        <main class="@auth @if(!request()->routeIs('feed', 'feed.professionals', 'demand.*') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*')) main-content-with-sidebar @endif @endauth">
             @if(session('info'))
                 <div class="pk-flash-info" role="status">
                     <i class="fas fa-circle-info"></i>
@@ -10232,6 +10232,7 @@
 
     {{-- Include modals for authenticated users --}}
     @auth
+      @if(!request()->routeIs('demand.*', 'ads.create', 'ads.edit'))
         @include('partials.provider-modal')
         @include('partials.category-selection-modal')
         @if(Auth::user()->isOAuthUser() && !Auth::user()->profile_completed && !Auth::user()->hasCompletedProOnboarding() && !Auth::user()->hasActiveProSubscription())
@@ -10240,6 +10241,7 @@
         @if(session('show_provider_welcome') && !Auth::user()->hasCompletedProOnboarding() && !Auth::user()->hasActiveProSubscription())
             @include('partials.provider-welcome-modal')
         @endif
+      @endif
     @endauth
     @include('partials.site-share-modal')
     @include('partials.usage-analytics')

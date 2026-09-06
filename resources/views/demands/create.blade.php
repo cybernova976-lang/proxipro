@@ -339,9 +339,9 @@ body { background: #f0f2f5; }
         <div>
             <strong>Un compte gratuit est nécessaire pour publier.</strong>
             <div style="font-size:.88rem;margin-top:3px;">Vous pouvez préparer votre demande ci-dessous. Connectez-vous avant l'envoi pour suivre les propositions reçues.</div>
-            <a href="{{ route('login') }}" style="display:inline-block;margin-top:7px;font-weight:700;color:#3730a3;">Se connecter</a>
+            <a href="{{ route('login', ['continue' => 'demand']) }}" onclick="saveDemandDraft()" style="display:inline-block;margin-top:7px;font-weight:700;color:#3730a3;">Se connecter</a>
             <span aria-hidden="true"> · </span>
-            <a href="{{ route('register') }}" style="font-weight:700;color:#3730a3;">Créer un compte</a>
+            <a href="{{ route('register', ['continue' => 'demand']) }}" onclick="saveDemandDraft()" style="font-weight:700;color:#3730a3;">Créer un compte</a>
         </div>
     </div>
     @endguest
@@ -621,7 +621,7 @@ body { background: #f0f2f5; }
                     Continuer <i class="fas fa-arrow-right"></i>
                 </button>
                 @guest
-                <a href="{{ route('login') }}"
+                <a href="{{ route('login', ['continue' => 'demand']) }}"
                    class="demand-btn demand-btn-submit"
                    id="demandBtnSubmit"
                    style="display:none;"
@@ -664,7 +664,11 @@ const validationErrorKeys = @json($errors->keys());
 const validationErrors = @json($errors->toArray());
 const hasServerInput = @json(session()->hasOldInput());
 const isGuestDemand = @json(Auth::guest());
-const guestDemandLoginUrl = @json(route('login'));
+@php
+    $guestDemandLoginUrl = route('login', ['continue' => 'demand']);
+@endphp
+const guestDemandLoginUrl = @json($guestDemandLoginUrl);
+const resumeDemandAfterAuth = @json(auth()->check() && request()->boolean('resume'));
 const demandDraftIdentity = @json(Auth::id() ?: 'guest');
 const demandDraftKey = 'prokejem-demand-draft-v2-' + demandDraftIdentity;
 const guestDemandDraftKey = 'prokejem-demand-draft-v2-guest';
@@ -1204,7 +1208,14 @@ function saveDemandDraft() {
 
 function loadDemandDraft() {
     try {
-        let raw = localStorage.getItem(demandDraftKey);
+        // Après une connexion explicite, le nouveau brouillon invité prime sur
+        // un éventuel ancien brouillon de ce compte, sans mélanger les identités.
+        let raw = resumeDemandAfterAuth ? localStorage.getItem(guestDemandDraftKey) : null;
+        if (raw && demandDraftIdentity !== 'guest') {
+            localStorage.setItem(demandDraftKey, raw);
+            localStorage.removeItem(guestDemandDraftKey);
+        }
+        raw = raw || localStorage.getItem(demandDraftKey);
         if (!raw && demandDraftIdentity !== 'guest') {
             raw = localStorage.getItem(guestDemandDraftKey);
             if (raw) {
@@ -1337,6 +1348,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     currentStep = validationErrorKeys.length ? firstStepForValidationErrors() : 1;
+    if (resumeDemandAfterAuth && draft && !validationErrorKeys.length) {
+        // Revalider le brouillon : une date peut avoir expiré entre-temps.
+        const validators = [validateStep1, validateStep2, validateStep3, validateStep4];
+        currentStep = totalDemandSteps;
+        for (let index = 0; index < validators.length; index++) {
+            if (!validators[index]()) {
+                currentStep = index + 1;
+                break;
+            }
+        }
+        if (currentStep === totalDemandSteps) buildRecap();
+    }
     updateStepUI();
     updateNextBtn();
     updateDescriptionCount();

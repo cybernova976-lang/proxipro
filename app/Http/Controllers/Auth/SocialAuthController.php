@@ -109,7 +109,7 @@ class SocialAuthController extends Controller
                 Auth::login($user, true);
                 session()->flash('show_provider_welcome', true);
 
-                return redirect()->route('feed')->with('success', 'Votre compte a été réactivé et connecté via '.ucfirst($provider).' !');
+                return redirect()->to(\App\Support\DemandPublicationContinuation::destination(request()))->with('success', 'Votre compte a été réactivé et connecté via '.ucfirst($provider).' !');
             }
 
             // ── 4. Utilisateur existant actif ──
@@ -132,7 +132,7 @@ class SocialAuthController extends Controller
 
                 Auth::login($user, true);
 
-                return redirect()->route('feed')->with('success', 'Connexion réussie via '.ucfirst($provider).' !');
+                return redirect()->to(\App\Support\DemandPublicationContinuation::destination(request()))->with('success', 'Connexion réussie via '.ucfirst($provider).' !');
             }
 
             // ── 5. Nouvel utilisateur → Création du compte ──
@@ -174,7 +174,7 @@ class SocialAuthController extends Controller
             // Connecter l'utilisateur
             Auth::login($user, true);
 
-            return redirect()->route('feed')->with('success', 'Bienvenue ! Votre compte a été créé via '.ucfirst($provider).'.');
+            return redirect()->to(\App\Support\DemandPublicationContinuation::destination(request()))->with('success', 'Bienvenue ! Votre compte a été créé via '.ucfirst($provider).'.');
 
         } catch (\Laravel\Socialite\Two\InvalidStateException $e) {
             \Log::warning('Social auth invalid state (user may have used back button): '.$e->getMessage());

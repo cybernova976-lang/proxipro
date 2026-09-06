@@ -978,7 +978,8 @@
                 || $hasPaidPlan
             );
             $requestedType = request('type');
-            $selectedServiceType = old('service_type', $requestedType === 'demande' ? 'demande' : ($canPublishProfessionalOffer ? 'offre' : 'demande'));
+            // Le rôle autorise une offre, mais ne permet pas de deviner l'intention.
+            $selectedServiceType = old('service_type', in_array($requestedType, ['offre', 'offres', 'service'], true) && $canPublishProfessionalOffer ? 'offre' : 'demande');
             if (!$canPublishProfessionalOffer && $selectedServiceType === 'offre') {
                 $selectedServiceType = 'demande';
             }
@@ -1772,9 +1773,11 @@
             }, 400);
         }
 
-        // Clean URL without reloading
+        // Retirer le préremplissage de l'URL, mais conserver l'intention lors d'un rechargement.
         if (window.history.replaceState && (paramCategory || paramType || paramDescription)) {
-            window.history.replaceState({}, '', window.location.pathname);
+            const publicationType = document.getElementById('service_type').value || 'demande';
+            const cleanParams = new URLSearchParams({ type: publicationType });
+            window.history.replaceState({}, '', window.location.pathname + '?' + cleanParams.toString());
         }
     });
 

@@ -76,7 +76,7 @@ class NewFeedMockupFeatureTest extends TestCase
             ->assertSee('Demande test prioritaire')
             ->assertSee('data-pk-save="'.$ad->id.'"', false)
             ->assertSee('aria-pressed="true"', false)
-            ->assertSee(route('ads.create', ['type' => 'service']), false)
+            ->assertSee(route('ads.create', ['type' => 'offre']), false)
             ->assertSee(asset('css/feed.css'), false)
             ->assertSee(asset('js/feed.js'), false);
     }

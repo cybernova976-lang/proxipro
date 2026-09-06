@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\EmailVerificationCode;
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\DemandPublicationContinuation;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -136,6 +137,7 @@ class LoginController extends Controller
             }
 
             if ($verificationEnabled && is_null($user->email_verified_at)) {
+                $resumeDemand = $request->session()->get(DemandPublicationContinuation::SESSION_KEY, false);
                 try {
                     $this->guard()->logout();
                     $request->session()->invalidate();
@@ -147,6 +149,9 @@ class LoginController extends Controller
                     ]);
                 }
 
+                if ($resumeDemand) {
+                    $request->session()->put(DemandPublicationContinuation::SESSION_KEY, true);
+                }
                 $request->session()->put(EmailVerificationCodeController::PENDING_USER_SESSION_KEY, $user->id);
 
                 // Generate a fresh verification code
@@ -197,9 +202,7 @@ class LoginController extends Controller
             ]);
         }
 
-        // Always redirect to feed, ignore any stored intended URL
-        // This prevents mobile users from being redirected to /home (dashboard)
-        // when they had previously bookmarked or visited /home before logging in
-        return redirect()->to($this->redirectPath());
+        // Conserver le feed par défaut, sauf reprise explicite d'une demande.
+        return redirect()->to(DemandPublicationContinuation::destination($request));
     }
 }
