@@ -88,7 +88,51 @@ class UsageDashboardController extends Controller
             'median_first_proposal_minutes' => $firstProposalMinutes->isNotEmpty()
                 ? (int) round($firstProposalMinutes->median())
                 : null,
+            'demand_auth_redirects' => $sumEvent('demand_auth_redirect'),
+            'demand_draft_resumes' => $sumEvent('demand_draft_resumed'),
         ];
+
+        $stepLabels = [
+            1 => 'Service',
+            2 => 'Lieu et date',
+            3 => 'Détails',
+            4 => 'Budget',
+            5 => 'Vérification',
+        ];
+        $demandJourney = collect($stepLabels)->map(function (string $label, int $step) use ($metrics) {
+            $contextPrefix = 'demand.step.'.$step.'.';
+            $views = $metrics
+                ->where('event_name', 'demand_step_view')
+                ->filter(fn (UsageDailyMetric $metric) => str_starts_with($metric->route_name, $contextPrefix));
+            $errors = $metrics
+                ->where('event_name', 'demand_validation_error')
+                ->filter(fn (UsageDailyMetric $metric) => str_starts_with($metric->route_name, $contextPrefix));
+
+            return [
+                'step' => $step,
+                'label' => $label,
+                'views' => (int) $views->sum('count'),
+                'guest_views' => (int) $views->where('route_name', $contextPrefix.'guest')->sum('count'),
+                'member_views' => (int) $views->where('route_name', $contextPrefix.'member')->sum('count'),
+                'errors' => (int) $errors->sum('count'),
+            ];
+        })->values();
+
+        $demandJourney = $demandJourney->map(function (array $row, int $index) use ($demandJourney) {
+            $nextViews = (int) ($demandJourney->get($index + 1)['views'] ?? 0);
+            $row['next_rate'] = $row['views'] > 0 && $index < 4
+                ? round(($nextViews / $row['views']) * 100, 1)
+                : null;
+
+            return $row;
+        });
+
+        $demandJourneyDevices = collect(UsageAnalytics::DEVICE_TYPES)->mapWithKeys(fn (string $deviceType) => [
+            $deviceType => (int) $metrics
+                ->where('event_name', 'demand_step_view')
+                ->where('device_type', $deviceType)
+                ->sum('count'),
+        ]);
 
         $dailyGroups = $metrics->groupBy(fn (UsageDailyMetric $metric) => $metric->metric_date->toDateString());
         $dailyUsage = collect(range(0, $period - 1))->map(function (int $offset) use ($start, $dailyGroups) {
@@ -142,6 +186,8 @@ class UsageDashboardController extends Controller
             'dailyUsage',
             'topPages',
             'deviceBreakdown',
+            'demandJourney',
+            'demandJourneyDevices',
             'businessStats'
         ));
     }

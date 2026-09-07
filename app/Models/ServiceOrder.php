@@ -167,4 +167,9 @@ class ServiceOrder extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    public function serviceReminder()
+    {
+        return $this->hasOne(ServiceReminder::class);
+    }
 }

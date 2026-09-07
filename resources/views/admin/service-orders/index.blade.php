@@ -61,7 +61,7 @@
             </thead>
             <tbody>
                 @forelse($orders as $order)
-                    <tr>
+                    <tr id="order-{{ $order->id }}">
                         <td>
                             <div class="fw-semibold">{{ $order->order_number }}</div>
                             <small class="text-muted">{{ $order->created_at->format('d/m/Y H:i') }}</small>

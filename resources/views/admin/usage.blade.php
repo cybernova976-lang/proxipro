@@ -90,6 +90,57 @@
                 <small>Demandes ayant reçu une proposition</small>
             </div>
         </div>
+
+        <div class="journey-measure mt-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+                <div>
+                    <h3 class="h6 fw-bold mb-1">Passage étape par étape</h3>
+                    <p class="small text-muted mb-0">Chaque étape est comptée au maximum une fois par visite du formulaire. L’écart avec l’étape suivante indique une perte observée, pas un utilisateur unique abandonné.</p>
+                </div>
+                <div class="journey-resume-badges">
+                    <span><strong>{{ number_format($summary['demand_auth_redirects']) }}</strong> passages vers la connexion</span>
+                    <span><strong>{{ number_format($summary['demand_draft_resumes']) }}</strong> brouillons repris</span>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle journey-table mb-2">
+                    <thead>
+                        <tr>
+                            <th>Étape</th>
+                            <th class="text-end">Affichages</th>
+                            <th class="text-end">Invités</th>
+                            <th class="text-end">Connectés</th>
+                            <th class="text-end">Erreurs</th>
+                            <th class="text-end">Vers l’étape suivante</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($demandJourney as $journeyStep)
+                            <tr>
+                                <td><span class="journey-step-number">{{ $journeyStep['step'] }}</span><strong>{{ $journeyStep['label'] }}</strong></td>
+                                <td class="text-end fw-bold">{{ number_format($journeyStep['views']) }}</td>
+                                <td class="text-end">{{ number_format($journeyStep['guest_views']) }}</td>
+                                <td class="text-end">{{ number_format($journeyStep['member_views']) }}</td>
+                                <td class="text-end {{ $journeyStep['errors'] > 0 ? 'text-danger fw-bold' : 'text-muted' }}">{{ number_format($journeyStep['errors']) }}</td>
+                                <td class="text-end">
+                                    {{ $journeyStep['next_rate'] !== null ? $journeyStep['next_rate'].' %' : '—' }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            @php($journeyDeviceTotal = (int) $demandJourneyDevices->sum())
+            <p class="small text-muted mb-0">
+                Appareils sur ces étapes :
+                <strong>{{ number_format($demandJourneyDevices->get('mobile', 0)) }}</strong> mobile,
+                <strong>{{ number_format($demandJourneyDevices->get('tablet', 0)) }}</strong> tablette,
+                <strong>{{ number_format($demandJourneyDevices->get('desktop', 0)) }}</strong> ordinateur
+                ({{ number_format($journeyDeviceTotal) }} affichages d’étape).
+            </p>
+        </div>
     </div>
 </div>
 
@@ -229,6 +280,12 @@
 .demand-funnel-grid span { font-size:.8rem; font-weight:700; }
 .demand-funnel-grid strong { display:block; margin:6px 0 4px; color:#0f172a; font-size:1.45rem; }
 .demand-funnel-grid small { font-size:.72rem; line-height:1.35; }
+.journey-measure { padding-top:20px; border-top:1px solid #e2e8f0; }
+.journey-resume-badges { display:flex; flex-wrap:wrap; gap:8px; }
+.journey-resume-badges span { padding:8px 11px; border-radius:999px; background:#eff6ff; color:#1e40af; font-size:.75rem; }
+.journey-step-number { display:inline-grid; place-items:center; width:27px; height:27px; margin-right:9px; border-radius:50%; background:#dbeafe; color:#1d4ed8; font-size:.75rem; font-weight:800; }
+.journey-table th { color:#64748b; font-size:.72rem; white-space:nowrap; }
+.journey-table td { font-size:.82rem; }
 .business-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
 .business-grid div { padding:18px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; text-align:center; }
 .business-grid strong { display:block; font-size:1.35rem; color:#0f172a; }

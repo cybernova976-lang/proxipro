@@ -21,7 +21,7 @@
             <tbody>
             @forelse($events as $event)
                 @php($badge = match($event->status) {'processed' => 'success', 'ignored' => 'secondary', 'failed' => 'danger', default => 'warning'})
-                <tr>
+                <tr id="event-{{ $event->id }}">
                     <td class="text-nowrap">{{ $event->created_at?->format('d/m/Y H:i:s') }}</td>
                     <td><code>{{ $event->event_type }}</code><div class="small text-muted">{{ $event->event_id }}</div></td>
                     <td><code>{{ $event->object_id ?: '—' }}</code></td>

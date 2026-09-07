@@ -74,7 +74,7 @@ Référence : [audit concurrentiel du 5 septembre](AUDIT-CONCURRENTIEL-PROKEJEM-
 
 ## 7 septembre 2026 — Lot 3 : suivi unifié des demandes
 
-État actuel : implémentation et validation locale terminées. Aucun commit, envoi GitHub ou déploiement Railway n'a encore été effectué pour ce lot.
+État actuel : implémentation, validation locale et livraison terminées. Commit `035e2c20` envoyé sur `codex/prokejem-pwa-mobile` ; déploiement Railway `ede64b6b-6b09-44b5-b6ba-9a6b77d824ad` réussi le 7 septembre 2026. Le service `web`, `/up` et la feuille de style dédiée répondaient correctement après déploiement.
 
 ### Modifications locales
 
@@ -98,4 +98,42 @@ Référence : [audit concurrentiel du 5 septembre](AUDIT-CONCURRENTIEL-PROKEJEM-
 
 - Le test responsive automatisé ne remplace pas un contrôle sur un téléphone Android ou iPhone réel.
 - Les données utilisées pour le contrôle visuel sont uniquement locales et ne doivent pas être confondues avec les données de production.
-- Le lot doit encore être commité, envoyé vers GitHub et déployé sur Railway après autorisation explicite.
+- La route authentifiée a été contrôlée visuellement en local. En production, le contrôle sans session a confirmé la redirection attendue vers `/login`, pas le contenu privé d'un compte réel.
+
+## 7 septembre 2026 — Lot 4 : exploitation et mesure
+
+État actuel : implémentation et validation locale terminées. Aucun commit, envoi GitHub ou déploiement Railway n'a encore été effectué pour ce lot.
+
+### Modifications locales
+
+- Le parcours de demande mesure maintenant l’affichage de chacune des cinq étapes, les erreurs de validation, le passage d’un invité vers la connexion et la reprise du brouillon après authentification.
+- Les compteurs distinguent invité/connecté, mobile/tablette/ordinateur et navigateur/PWA. Ils restent journaliers et agrégés : aucun identifiant de compte, texte saisi, document, adresse IP ou paramètre d’URL n’est enregistré.
+- Le tableau « Utilisation réelle » affiche les cinq étapes, les erreurs et le passage vers l’étape suivante. L’interface précise qu’un écart entre deux étapes n’est pas une mesure exacte d’utilisateurs uniques ayant abandonné.
+- La politique de mesure indique désormais explicitement les dimensions du formulaire et l’absence de conservation des réponses saisies.
+- Une page administrateur « À traiter » réunit les demandes anciennes sans proposition, vérifications d’identité en attente, signalements, litiges et webhooks Stripe en échec.
+- Chaque dossier expose sa priorité, l’équipe responsable, l’échéance interne recommandée, la prochaine action et un lien vers l’écran source. La file ne modifie, ne relance et ne clôture rien automatiquement au nom d’un utilisateur.
+- Les lignes des paiements et litiges possèdent une ancre stable pour ouvrir directement le dossier ciblé.
+- La politique interne `POLITIQUE-EXPLOITATION-LANCEMENT-PROKEJEM.md` définit la séparation service/marketing, les limites de relance, le consentement pour les besoins récurrents et des seuils minimaux avant d’intensifier la monétisation.
+- Après une commande terminée, le client peut programmer volontairement un rappel ponctuel, mensuel, trimestriel, semestriel ou annuel. Il choisit la prochaine date et peut demander un e-mail en complément de la notification interne.
+- Le rappel peut être modifié, mis en pause, réactivé ou supprimé. L’interface affiche la prochaine échéance, le dernier envoi et le nombre d’envois. La commande planifiée recale directement dans le futur un rappel récurrent ancien afin d’éviter plusieurs envois rapprochés.
+- Le traitement n’ajoute aucune annonce ou commande et ne sélectionne aucun prestataire. L’e-mail exige à la fois le choix explicite du rappel et l’autorisation générale des notifications e-mail du compte.
+- La notification interne et son compteur sont enregistrés dans la même transaction : un échec de stockage laisse le rappel à traiter. Le résultat de l’e-mail est suivi séparément ; un échec ou une interruption n’est pas affiché comme un envoi confirmé et ne déclenche pas de renvoi automatique potentiellement en double.
+- Réactiver un rappel dont la date est passée nécessite de choisir une date future. Une commande devenue inéligible ou un compte supprimé ne reçoit plus de rappel.
+
+### Contrôles locaux
+
+- 13 tests ciblés réussis, 90 assertions.
+- Suite complète finale : **286 tests réussis, 1 930 assertions**. Les rappels disposent de **10 tests, 48 assertions**, incluant les erreurs de stockage/e-mail, la réactivation et les commandes inéligibles. Exécution PHPUnit directe avec environnement SQLite isolé : 2 min 30 s.
+- Compilation Blade, format PHP, build Vite et `git diff --check` réussis. Le build conserve les avertissements Sass de dépréciation déjà connus, sans échec.
+- Navigateur local : passage réel de l’étape 1 à l’étape 2 ; le compteur agrégé `demand.step.2.guest` a été créé une seule fois.
+- Navigateur local administrateur : les cinq lignes du tunnel, les erreurs et le taux de passage sont visibles. La file « À traiter » affiche la demande locale sans réponse et ses actions attendues.
+- Contrôle responsive de la file à une largeur utile de 433 px malgré une consigne de 390 px : aucune largeur de page excédentaire mesurée (`scrollWidth` 416 px pour `innerWidth` 433 px). Ce contrôle ne remplace pas un téléphone physique.
+- Navigateur local, base SQLite isolée : ouverture du formulaire, choix mensuel et e-mail, clic réel sur « Programmer le rappel », puis état « Actif » et valeurs conservées. Largeur mobile utile mesurée de 433 px, `scrollWidth` de 425 px. Les derniers ajustements de messages d’erreur sont également contrôlés par rendu Laravel.
+
+### Limites avant livraison
+
+- Les compteurs commenceront à être utiles après une période réelle d’observation ; les données historiques ne peuvent pas reconstituer les étapes passées.
+- Les échéances affichées sont des objectifs internes, pas des garanties contractuelles communiquées aux utilisateurs.
+- Les relances des demandes sans réponse et les campagnes marketing restent désactivées. Seul le rappel de service expressément programmé par le client est automatisé ; il ne republie rien et ne déclenche aucune transaction.
+- Le lot n’est pas encore commité ni envoyé vers GitHub. Railway est reporté à la demande de l’utilisateur. Au déploiement, exécuter la migration `2026_09_07_000001_create_service_reminders_table.php` et vérifier le fonctionnement effectif du planificateur (déjà prévu dans `nixpacks.toml`).
+- Aucun e-mail réel n’a été envoyé pour ces tests. La confirmation de remise en boîte et le contrôle sur téléphone physique restent à effectuer après déploiement.

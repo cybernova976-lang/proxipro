@@ -106,6 +106,87 @@ class UsageAnalyticsFeatureTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_demand_journey_events_are_aggregated_by_step_audience_and_device_only(): void
+    {
+        $payload = [
+            'event_name' => 'demand_step_view',
+            'step' => 2,
+            'route_name' => 'a-client-value-that-must-be-ignored',
+            'app_mode' => 'browser',
+            'description' => 'Ce texte ne doit jamais être enregistré.',
+        ];
+
+        $this->withHeader('User-Agent', self::MOBILE_USER_AGENT)
+            ->postJson(route('usage.store'), $payload)
+            ->assertNoContent();
+
+        $member = User::factory()->create();
+        $this->actingAs($member)
+            ->postJson(route('usage.store'), [
+                'event_name' => 'demand_validation_error',
+                'step' => 2,
+                'route_name' => 'admin.users',
+                'app_mode' => 'pwa',
+            ])
+            ->assertNoContent();
+
+        $this->assertDatabaseHas('usage_daily_metrics', [
+            'event_name' => 'demand_step_view',
+            'route_name' => 'demand.step.2.guest',
+            'device_type' => 'mobile',
+            'app_mode' => 'browser',
+            'count' => 1,
+        ]);
+        $this->assertDatabaseHas('usage_daily_metrics', [
+            'event_name' => 'demand_validation_error',
+            'route_name' => 'demand.step.2.member',
+            'app_mode' => 'pwa',
+            'count' => 1,
+        ]);
+        $this->assertDatabaseMissing('usage_daily_metrics', [
+            'route_name' => 'a-client-value-that-must-be-ignored',
+        ]);
+    }
+
+    public function test_journey_event_without_a_valid_step_is_ignored(): void
+    {
+        $this->postJson(route('usage.store'), [
+            'event_name' => 'demand_step_view',
+            'app_mode' => 'browser',
+        ])->assertNoContent();
+
+        $this->assertDatabaseCount('usage_daily_metrics', 0);
+    }
+
+    public function test_admin_dashboard_reports_each_demand_step_without_claiming_unique_abandonment(): void
+    {
+        $analytics = app(UsageAnalytics::class);
+        $analytics->record('demand_step_view', 'demand.step.1.guest', 'mobile');
+        $analytics->record('demand_step_view', 'demand.step.1.member', 'desktop');
+        $analytics->record('demand_step_view', 'demand.step.2.guest', 'mobile');
+        $analytics->record('demand_validation_error', 'demand.step.2.guest', 'mobile');
+        $analytics->record('demand_auth_redirect', 'demand.step.5.guest', 'mobile');
+        $analytics->record('demand_draft_resumed', 'demand.step.5.member', 'desktop');
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $response = $this->actingAs($admin)->get(route('admin.usage', ['period' => 7]));
+
+        $response->assertOk()
+            ->assertSee('Passage étape par étape')
+            ->assertSee('pas un utilisateur unique abandonné')
+            ->assertSee('passages vers la connexion')
+            ->assertSee('brouillons repris');
+
+        $journey = $response->viewData('demandJourney');
+        $this->assertSame(2, $journey[0]['views']);
+        $this->assertSame(1, $journey[0]['guest_views']);
+        $this->assertSame(1, $journey[0]['member_views']);
+        $this->assertEquals(50, $journey[0]['next_rate']);
+        $this->assertSame(1, $journey[1]['errors']);
+        $this->assertSame(1, $response->viewData('summary')['demand_auth_redirects']);
+        $this->assertSame(1, $response->viewData('summary')['demand_draft_resumes']);
+    }
+
     public function test_admin_dashboard_measures_the_demand_funnel_and_first_proposal_delay(): void
     {
         DB::table('usage_daily_metrics')->insert([
@@ -213,6 +294,8 @@ class UsageAnalyticsFeatureTest extends TestCase
             ->assertSee('Mesure d’audience sur cet appareil')
             ->assertSee('Désactiver la mesure')
             ->assertSee('prokejem_usage_disabled', false)
+            ->assertSee('étape du formulaire de demande')
+            ->assertSee('ni réponse saisie dans un formulaire')
             ->assertSee('25 mois');
 
         $homepage = $this->get(route('homepage'));
@@ -222,5 +305,11 @@ class UsageAnalyticsFeatureTest extends TestCase
             json_encode(route('usage.store'), JSON_THROW_ON_ERROR),
             $homepage->getContent(),
         );
+
+        $demandForm = $this->get(route('demand.create'));
+        $demandForm->assertOk()
+            ->assertSee("trackDemandEvent('demand_validation_error'", false)
+            ->assertSee("trackDemandEvent('demand_auth_redirect'", false)
+            ->assertSee('trackDemandStepView(currentStep)', false);
     }
 }

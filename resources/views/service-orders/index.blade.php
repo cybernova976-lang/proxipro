@@ -22,6 +22,28 @@
     .service-order-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
     .service-order-note { margin-top: 12px; padding: 12px; border-radius: 12px; background:#fff7ed; color:#9a3412; font-size:0.84rem; }
     .service-order-reason { width:100%; border:1px solid #cbd5e1; border-radius:12px; padding:10px 12px; font-size:0.84rem; min-height:84px; }
+    .service-reminder { margin-top:16px; border:1px solid #bfdbfe; border-radius:14px; background:#eff6ff; overflow:hidden; }
+    .service-reminder summary { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 14px; color:#1e3a8a; font-size:0.86rem; font-weight:800; cursor:pointer; list-style:none; }
+    .service-reminder summary::-webkit-details-marker { display:none; }
+    .service-reminder-summary { display:flex; align-items:center; gap:8px; }
+    .service-reminder-state { padding:4px 8px; border-radius:999px; background:#dbeafe; color:#1d4ed8; font-size:0.7rem; white-space:nowrap; }
+    .service-reminder-state.is-paused { background:#f1f5f9; color:#64748b; }
+    .service-reminder-body { padding:0 14px 14px; border-top:1px solid #dbeafe; }
+    .service-reminder-explainer { margin:12px 0; color:#475569; font-size:0.78rem; line-height:1.45; }
+    .service-reminder-fields { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:10px; }
+    .service-reminder-field label { display:block; margin-bottom:5px; color:#334155; font-size:0.73rem; font-weight:700; }
+    .service-reminder-field input,
+    .service-reminder-field select { width:100%; min-height:40px; border:1px solid #cbd5e1; border-radius:10px; background:#fff; padding:8px 10px; color:#0f172a; font-size:0.8rem; }
+    .service-reminder-email { display:flex; align-items:flex-start; gap:8px; margin:11px 0; color:#334155; font-size:0.76rem; }
+    .service-reminder-email input { margin-top:2px; }
+    .service-reminder-controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .service-reminder-history { margin:10px 0 0; color:#64748b; font-size:0.72rem; }
+    @media (max-width: 575.98px) {
+        .service-orders-page { padding:22px 14px 110px; }
+        .service-orders-grid { grid-template-columns:minmax(0, 1fr); }
+        .service-order-stats { grid-template-columns:1fr; gap:8px; }
+        .service-reminder-fields { grid-template-columns:1fr; }
+    }
 </style>
 @endpush
 
@@ -29,6 +51,10 @@
 <div class="service-orders-page">
     <h1 class="service-orders-title"><i class="fas fa-shield-alt me-2" style="color:#0f766e;"></i>Commandes securisees</h1>
     <p class="service-orders-subtitle">Suivez vos commandes acheteur et les demandes recues en tant que vendeur.</p>
+
+    @if(session('success'))
+        <div class="alert alert-success" role="status">{{ session('success') }}</div>
+    @endif
 
     @if(($needsStripeConnectOnboarding ?? false) && auth()->user()?->role !== 'admin')
         <div class="alert alert-warning d-flex justify-content-between align-items-center gap-3 flex-wrap" style="border-radius:16px;">
@@ -101,6 +127,106 @@
                         @endif
                         @if($order->refused_reason)
                             <div class="service-order-note">Refus: {{ $order->refused_reason }}</div>
+                        @endif
+                        @if($order->status === \App\Models\ServiceOrder::STATUS_COMPLETED)
+                            @php($reminder = $order->serviceReminder)
+                            <details class="service-reminder" @if($errors->any() && (int) old('service_order_id') === $order->id) open @endif>
+                                <summary>
+                                    <span class="service-reminder-summary">
+                                        <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                                        {{ $reminder ? 'Mon rappel de service' : 'Me rappeler ce service' }}
+                                    </span>
+                                    @if($reminder)
+                                        <span class="service-reminder-state {{ $reminder->is_active ? '' : 'is-paused' }}">
+                                            {{ $reminder->is_active ? 'Actif' : ($reminder->frequency === 'once' && $reminder->last_sent_at ? 'Terminé' : 'En pause') }}
+                                        </span>
+                                    @else
+                                        <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                                    @endif
+                                </summary>
+                                <div class="service-reminder-body">
+                                    <p class="service-reminder-explainer">
+                                        Choisissez vous-même la date. Prokejem vous préviendra seulement : aucune annonce, réservation ou paiement ne sera créé automatiquement.
+                                    </p>
+                                    @if($errors->any() && (int) old('service_order_id') === $order->id)
+                                        <div class="alert alert-danger py-2 px-3 small" role="alert">
+                                            Corrigez les champs indiqués avant d’enregistrer le rappel.
+                                        </div>
+                                    @endif
+                                    <form action="{{ $reminder ? route('service-reminders.update', $reminder) : route('service-reminders.store', $order) }}" method="POST">
+                                        @csrf
+                                        @if($reminder) @method('PUT') @endif
+                                        <input type="hidden" name="service_order_id" value="{{ $order->id }}">
+                                        <div class="service-reminder-fields">
+                                            <div class="service-reminder-field">
+                                                <label for="reminder-date-{{ $order->id }}">Prochain rappel</label>
+                                                <small class="d-block text-muted mb-1">Heure {{ config('app.timezone') }}</small>
+                                                <input id="reminder-date-{{ $order->id }}" type="datetime-local" name="next_reminder_at" class="{{ $errors->has('next_reminder_at') && (int) old('service_order_id') === $order->id ? 'is-invalid' : '' }}"
+                                                    min="{{ now()->addMinute()->format('Y-m-d\TH:i') }}"
+                                                    value="{{ old('service_order_id') == $order->id ? old('next_reminder_at') : ($reminder?->next_reminder_at?->format('Y-m-d\TH:i') ?? now()->addMonth()->format('Y-m-d\TH:i')) }}"
+                                                    required>
+                                                @if($errors->has('next_reminder_at') && (int) old('service_order_id') === $order->id)
+                                                    <div class="invalid-feedback d-block">{{ $errors->first('next_reminder_at') }}</div>
+                                                @endif
+                                            </div>
+                                            <div class="service-reminder-field">
+                                                <label for="reminder-frequency-{{ $order->id }}">Fréquence</label>
+                                                <select id="reminder-frequency-{{ $order->id }}" name="frequency" class="{{ $errors->has('frequency') && (int) old('service_order_id') === $order->id ? 'is-invalid' : '' }}" required>
+                                                    @foreach([
+                                                        'once' => 'Une seule fois',
+                                                        'monthly' => 'Tous les mois',
+                                                        'quarterly' => 'Tous les 3 mois',
+                                                        'semiannual' => 'Tous les 6 mois',
+                                                        'yearly' => 'Tous les ans',
+                                                    ] as $value => $label)
+                                                        <option value="{{ $value }}" @selected((old('service_order_id') == $order->id ? old('frequency') : ($reminder?->frequency ?? 'once')) === $value)>{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @if($errors->has('frequency') && (int) old('service_order_id') === $order->id)
+                                                    <div class="invalid-feedback d-block">{{ $errors->first('frequency') }}</div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <label class="service-reminder-email">
+                                            <input type="checkbox" name="send_email" value="1" @checked(old('service_order_id') == $order->id ? old('send_email') : ($reminder?->send_email ?? false))>
+                                            <span>M’envoyer aussi un e-mail (en plus de la notification dans Prokejem).</span>
+                                        </label>
+                                        @if(! auth()->user()->email_notifications)
+                                            <p class="service-reminder-history mb-2">Les e-mails sont désactivés dans vos <a href="{{ route('settings.index') }}#notifications">préférences de notification</a>.</p>
+                                        @endif
+                                        <div class="service-reminder-controls">
+                                            <button type="submit" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-check me-1" aria-hidden="true"></i>{{ $reminder ? 'Enregistrer les modifications' : 'Programmer le rappel' }}
+                                            </button>
+                                        </div>
+                                    </form>
+                                    @if($reminder)
+                                        <div class="service-reminder-controls mt-2">
+                                            <form action="{{ route('service-reminders.toggle', $reminder) }}" method="POST">
+                                                @csrf
+                                                <input type="hidden" name="service_order_id" value="{{ $order->id }}">
+                                                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                                    <i class="fas {{ $reminder->is_active ? 'fa-pause' : 'fa-play' }} me-1" aria-hidden="true"></i>{{ $reminder->is_active ? 'Mettre en pause' : 'Réactiver' }}
+                                                </button>
+                                            </form>
+                                            <form action="{{ route('service-reminders.destroy', $reminder) }}" method="POST" onsubmit="return confirm('Supprimer définitivement ce rappel ?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fas fa-trash me-1" aria-hidden="true"></i>Supprimer</button>
+                                            </form>
+                                        </div>
+                                        <p class="service-reminder-history">
+                                            {{ $reminder->is_active ? 'Prochain rappel' : 'Date programmée' }} : {{ $reminder->next_reminder_at->format('d/m/Y à H:i') }} · {{ $reminder->frequency_label }}
+                                            @if($reminder->last_sent_at)
+                                                · Dernière notification dans Prokejem : {{ $reminder->last_sent_at->format('d/m/Y à H:i') }} ({{ $reminder->reminders_sent_count }} au total)
+                                            @endif
+                                        </p>
+                                        @if(in_array($reminder->last_email_status, ['failed', 'pending'], true))
+                                            <p class="service-reminder-history" role="status">L’envoi du dernier e-mail n’a pas pu être confirmé. Le rappel est disponible dans vos notifications Prokejem.</p>
+                                        @endif
+                                    @endif
+                                </div>
+                            </details>
                         @endif
                     </div>
                 @endforeach

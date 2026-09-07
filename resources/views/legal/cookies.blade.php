@@ -13,7 +13,7 @@
 
         <h4 class="mt-4">2. Mesure d’audience et publicité</h4>
         <p>Prokejem réalise une mesure d’audience interne, limitée à l’amélioration du service. Elle utilise la session déjà nécessaire au fonctionnement du site et ne dépose aucun cookie publicitaire ou identifiant tiers.</p>
-        <p>Seuls des compteurs agrégés par jour, page, type d’appareil et mode d’ouverture (navigateur ou application installée) sont conservés. La table de mesure ne contient ni identifiant de compte, ni adresse IP, ni user-agent complet, ni recherche, ni contenu de message, ni paramètre d’URL. Ces compteurs sont supprimés au plus tard après 25 mois et ne sont pas transmis à un tiers.</p>
+        <p>Seuls des compteurs agrégés par jour, page, étape du formulaire de demande, statut invité ou connecté, type d’appareil et mode d’ouverture (navigateur ou application installée) sont conservés. La table de mesure ne contient ni identifiant de compte, ni adresse IP, ni user-agent complet, ni réponse saisie dans un formulaire, ni recherche, ni contenu de message, ni paramètre d’URL. Ces compteurs sont supprimés au plus tard après 25 mois et ne sont pas transmis à un tiers.</p>
         <div class="border rounded-3 p-3 my-3" id="audienceMeasurementChoice">
             <p class="mb-2 fw-semibold">Mesure d’audience sur cet appareil</p>
             <p class="small text-muted mb-3" id="audienceMeasurementStatus">Vérification du choix…</p>

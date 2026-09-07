@@ -27,7 +27,7 @@ class ServiceOrderController extends Controller
     {
         $user = Auth::user();
 
-        $ordersAsBuyer = ServiceOrder::with(['ad', 'seller'])
+        $ordersAsBuyer = ServiceOrder::with(['ad', 'seller', 'serviceReminder'])
             ->where('buyer_id', $user->id)
             ->latest()
             ->get();

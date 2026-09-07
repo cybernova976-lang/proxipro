@@ -679,8 +679,19 @@ let selectedCat = null;
 let selectedSub = null;
 let demandPhotos = [];
 let draftSaveTimer = null;
+const trackedDemandSteps = new Set();
 
 const citiesByCountry = @json(config('locations.cities', []));
+
+function trackDemandEvent(eventName, step = currentStep) {
+    window.prokejemUsage?.track(eventName, { step });
+}
+
+function trackDemandStepView(step) {
+    if (trackedDemandSteps.has(step)) return;
+    trackedDemandSteps.add(step);
+    trackDemandEvent('demand_step_view', step);
+}
 
 // ─── Step navigation ───
 function updateStepUI() {
@@ -714,6 +725,7 @@ function updateStepUI() {
     document.getElementById('demandBtnBack').style.visibility = currentStep > 1 ? 'visible' : 'hidden';
     document.getElementById('demandBtnNext').style.display = currentStep < totalDemandSteps ? 'inline-flex' : 'none';
     document.getElementById('demandBtnSubmit').style.display = currentStep === totalDemandSteps ? 'inline-flex' : 'none';
+    trackDemandStepView(currentStep);
 }
 
 function goToDemandStep(step) {
@@ -765,6 +777,7 @@ function updateNextBtn() {
 }
 
 function markDemandFields(fields, errorId, summary) {
+    trackDemandEvent('demand_validation_error');
     fields.forEach(item => {
         if (window.ProkejemFormValidation?.mark) {
             window.ProkejemFormValidation.mark(item.field, item.message);
@@ -784,6 +797,7 @@ function markDemandFields(fields, errorId, summary) {
 
 function validateStep1() {
     if (selectedSub) return true;
+    trackDemandEvent('demand_validation_error', 1);
     const selectionArea = selectedCat
         ? document.getElementById('demandSubList')
         : document.getElementById('demandCatGrid');
@@ -1349,6 +1363,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     currentStep = validationErrorKeys.length ? firstStepForValidationErrors() : 1;
     if (resumeDemandAfterAuth && draft && !validationErrorKeys.length) {
+        trackDemandEvent('demand_draft_resumed', totalDemandSteps);
         // Revalider le brouillon : une date peut avoir expiré entre-temps.
         const validators = [validateStep1, validateStep2, validateStep3, validateStep4];
         currentStep = totalDemandSteps;
@@ -1375,6 +1390,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isGuestDemand) {
             event.preventDefault();
             saveDemandDraft();
+            trackDemandEvent('demand_auth_redirect', totalDemandSteps);
             window.location.assign(guestDemandLoginUrl);
             return;
         }

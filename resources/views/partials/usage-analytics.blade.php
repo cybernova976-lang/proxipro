@@ -7,7 +7,15 @@
     const csrfToken = @json(csrf_token());
     const routeName = @json(request()->route()?->getName() ?: 'other');
     const optOutKey = 'prokejem_usage_disabled';
-    const allowedEvents = ['page_view', 'pwa_install', 'push_enabled'];
+    const allowedEvents = [
+        'page_view',
+        'pwa_install',
+        'push_enabled',
+        'demand_step_view',
+        'demand_validation_error',
+        'demand_auth_redirect',
+        'demand_draft_resumed',
+    ];
     let pageViewSent = false;
 
     const disabled = () => {
@@ -25,7 +33,7 @@
         ? 'pwa'
         : 'browser';
 
-    const track = (eventName) => {
+    const track = (eventName, details = {}) => {
         if (disabled() || !allowedEvents.includes(eventName)) return false;
 
         const payload = new FormData();
@@ -33,6 +41,9 @@
         payload.append('event_name', eventName);
         payload.append('route_name', routeName);
         payload.append('app_mode', appMode());
+        if (Number.isInteger(details.step) && details.step >= 1 && details.step <= 5) {
+            payload.append('step', String(details.step));
+        }
 
         if (navigator.sendBeacon && navigator.sendBeacon(endpoint, payload)) return true;
 

@@ -15,6 +15,10 @@ class UsageAnalytics
         'session_start',
         'pwa_install',
         'push_enabled',
+        'demand_step_view',
+        'demand_validation_error',
+        'demand_auth_redirect',
+        'demand_draft_resumed',
     ];
 
     public const DEVICE_TYPES = ['mobile', 'tablet', 'desktop'];

@@ -249,6 +249,11 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('admin.operations') }}" class="{{ request()->routeIs('admin.operations') ? 'active' : '' }}">
+                    <i class="fas fa-list-check me-2" style="color: #dc2626;"></i> À traiter
+                </a>
+            </li>
+            <li>
                 @php
                     $activeBoostsCount = \App\Models\Ad::where('is_boosted', true)->where('boost_end', '>', now())->count()
                         + \App\Models\Ad::where('is_urgent', true)->where(function($q) { $q->whereNull('urgent_until')->orWhere('urgent_until', '>', now()); })->count();

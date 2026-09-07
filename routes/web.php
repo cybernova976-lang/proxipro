@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdController;
 use App\Http\Controllers\Admin\AdminServiceOrderController;
 use App\Http\Controllers\Admin\BlockedEmailController;
+use App\Http\Controllers\Admin\OperationsQueueController;
 use App\Http\Controllers\Admin\PaymentReconciliationController;
 use App\Http\Controllers\Admin\UsageDashboardController;
 use App\Http\Controllers\AdminController;
@@ -31,6 +32,7 @@ use App\Http\Controllers\SeoController;
 use App\Http\Controllers\ServiceOrderController;
 use App\Http\Controllers\ServiceProposalController;
 use App\Http\Controllers\ServiceProviderController;
+use App\Http\Controllers\ServiceReminderController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\StripeCheckoutController;
 use App\Http\Controllers\ToolController;
@@ -239,6 +241,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/service-orders/{serviceOrder}/checkout', [ServiceOrderController::class, 'checkout'])->name('service-orders.checkout');
     Route::post('/service-orders/{serviceOrder}/release', [ServiceOrderController::class, 'release'])->name('service-orders.release');
     Route::post('/service-orders/{serviceOrder}/dispute', [ServiceOrderController::class, 'dispute'])->name('service-orders.dispute');
+    Route::post('/service-orders/{serviceOrder}/reminder', [ServiceReminderController::class, 'store'])->name('service-reminders.store');
+    Route::put('/service-reminders/{serviceReminder}', [ServiceReminderController::class, 'update'])->name('service-reminders.update');
+    Route::post('/service-reminders/{serviceReminder}/toggle', [ServiceReminderController::class, 'toggle'])->name('service-reminders.toggle');
+    Route::delete('/service-reminders/{serviceReminder}', [ServiceReminderController::class, 'destroy'])->name('service-reminders.destroy');
     Route::get('/service-orders/connect/onboarding', [ServiceOrderController::class, 'connectOnboarding'])->name('service-orders.connect.onboarding');
     Route::get('/service-orders/connect/return', [ServiceOrderController::class, 'connectReturn'])->name('service-orders.connect.return');
     Route::get('/propositions', [ServiceProposalController::class, 'index'])->name('proposals.index');
@@ -580,6 +586,7 @@ Route::middleware(['auth'])->prefix('pro')->name('pro.')->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/export', [AdminController::class, 'exportData'])->name('admin.export');
+    Route::get('/operations', OperationsQueueController::class)->name('admin.operations');
 
     // Gestion des utilisateurs
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');

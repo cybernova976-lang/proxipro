@@ -78,3 +78,10 @@ Schedule::command('profile-views:prune --months=13')
     ->dailyAt('02:45')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/profile-views-prune.log'));
+
+// Envoie uniquement les rappels volontairement programmés par les clients.
+// Cette tâche ne republie jamais une annonce et ne déclenche aucun paiement.
+Schedule::command('service-reminders:send')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/service-reminders.log'));
