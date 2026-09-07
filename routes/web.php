@@ -10,6 +10,7 @@ use App\Http\Controllers\BoostController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DemandTrackingController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\HomePageController;
 use App\Http\Controllers\LostItemController;
@@ -154,6 +155,7 @@ Route::middleware('auth')->group(function () {
 
 // Routes pour les annonces
 Route::middleware(['auth'])->group(function () {
+    Route::get('/mes-demandes', DemandTrackingController::class)->name('demands.tracking');
     Route::get('/ads/my-ads', [AdController::class, 'myAds'])->name('ads.myads');
     Route::patch('/ads/{ad}/archive', [AdController::class, 'archive'])->name('ads.archive');
     Route::post('/ads/{ad}/republish', [AdController::class, 'republish'])->name('ads.republish');

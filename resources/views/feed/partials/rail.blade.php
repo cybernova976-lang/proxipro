@@ -42,7 +42,7 @@
     <div class="pk-rcard">
         <span class="pk-rcard__lab">Raccourcis</span>
         <nav class="pk-shortcuts">
-            <a href="{{ route('ads.myads') }}"><i class="fas fa-clipboard-list"></i> Mes annonces</a>
+            <a href="{{ $pkIsProvider ? route('ads.myads') : route('demands.tracking') }}"><i class="fas fa-clipboard-list"></i> {{ $pkIsProvider ? 'Mes annonces' : 'Suivi de mes demandes' }}</a>
             <a href="{{ route('messages.index') }}">
                 <i class="far fa-comments"></i> Messages
                 @if(($pkUnreadMessages ?? 0) > 0)<span class="n">{{ $pkUnreadMessages }}</span>@endif

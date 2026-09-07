@@ -473,32 +473,47 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             ->assertSee(route('ads.create', ['type' => 'offre']), false);
     }
 
-    /**
-     * L'onglet actif suit la route courante : sur /ads c'est « Annonces », pas
-     * « Accueil » comme le codait la version precedente, figee sur le feed.
-     */
+    /** L'onglet de parcours suit le rôle et la route courante. */
     public function test_the_mobile_tabbar_highlights_the_current_page(): void
     {
-        $user = User::factory()->create([
+        $client = User::factory()->create([
             'user_type' => 'particulier',
             'is_service_provider' => false,
         ]);
 
-        $html = $this->actingAs($user)->get(route('ads.index'))->assertOk()->getContent();
+        $clientHtml = $this->actingAs($client)->get(route('demands.tracking'))->assertOk()->getContent();
 
-        preg_match('#<nav class="pk-tabbar".*?</nav>#s', $html, $nav);
-        $this->assertNotEmpty($nav, 'La barre est absente de la page /ads.');
+        preg_match('#<nav class="pk-tabbar".*?</nav>#s', $clientHtml, $clientNav);
+        $this->assertNotEmpty($clientNav, 'La barre est absente de la page de suivi.');
 
-        preg_match_all('/<a\s[^>]*class="([^"]*)"[^>]*>.*?<span>([^<]+)<\/span>/s', $nav[0], $links, PREG_SET_ORDER);
+        preg_match_all('/<a\s[^>]*class="([^"]*)"[^>]*>.*?<span>([^<]+)<\/span>/s', $clientNav[0], $clientLinks, PREG_SET_ORDER);
 
-        $actifs = [];
-        foreach ($links as $link) {
+        $clientActifs = [];
+        foreach ($clientLinks as $link) {
             if (str_contains($link[1], 'is-active')) {
-                $actifs[] = trim($link[2]);
+                $clientActifs[] = trim($link[2]);
             }
         }
 
-        $this->assertSame(['Annonces'], $actifs, "Un seul onglet doit etre actif, et c'est « Annonces » sur /ads.");
+        $this->assertSame(['Suivi'], $clientActifs);
+
+        $provider = User::factory()->create([
+            'user_type' => 'professionnel',
+            'is_service_provider' => true,
+        ]);
+
+        $providerHtml = $this->actingAs($provider)->get(route('ads.index'))->assertOk()->getContent();
+        preg_match('#<nav class="pk-tabbar".*?</nav>#s', $providerHtml, $providerNav);
+        preg_match_all('/<a\s[^>]*class="([^"]*)"[^>]*>.*?<span>([^<]+)<\/span>/s', $providerNav[0], $providerLinks, PREG_SET_ORDER);
+
+        $providerActifs = [];
+        foreach ($providerLinks as $link) {
+            if (str_contains($link[1], 'is-active')) {
+                $providerActifs[] = trim($link[2]);
+            }
+        }
+
+        $this->assertSame(['Annonces'], $providerActifs);
     }
 
     public function test_the_mobile_tabbar_stays_hidden_for_guests(): void

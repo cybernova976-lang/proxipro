@@ -71,3 +71,31 @@ Référence : [audit concurrentiel du 5 septembre](AUDIT-CONCURRENTIEL-PROKEJEM-
 - Exécuter la nouvelle migration `caption` est obligatoire au déploiement.
 - Un test manuel sur un vrai téléphone reste nécessaire, notamment le sélecteur photo natif Android/iPhone.
 - Le statut final du déploiement Railway du lot 1 doit toujours être revérifié ; cela ne change pas l'état local du lot 2.
+
+## 7 septembre 2026 — Lot 3 : suivi unifié des demandes
+
+État actuel : implémentation et validation locale terminées. Aucun commit, envoi GitHub ou déploiement Railway n'a encore été effectué pour ce lot.
+
+### Modifications locales
+
+- Une page client dédiée `/mes-demandes` réunit les demandes publiées et leur progression : publiée, propositions, prestataire choisi, mission en cours et terminée.
+- Chaque demande affiche un état compréhensible, une explication et une seule action principale adaptée : améliorer la demande, comparer les propositions, finaliser le paiement ou suivre la mission.
+- Les demandes anciennes sans réponse sont mises en évidence sans fausse promesse de mise en relation.
+- Le résumé distingue les demandes en recherche, celles avec réponses à examiner et les missions actives.
+- Le feed mène directement vers la demande suivie et limite son bloc principal à deux actions. Le menu mobile client remplace « Annonces » par « Suivi » ; le menu professionnel conserve « Annonces ».
+- Les commandes possèdent une ancre stable afin qu'une action du suivi ouvre directement la mission concernée.
+
+### Contrôles locaux
+
+- 25 tests fonctionnels ciblés réussis, 182 assertions.
+- Suite complète finale : **270 tests réussis, 1 838 assertions**.
+- Format PHP, compilation Blade et `git diff --check` réussis.
+- Compilation Vite réussie ; avertissements Sass de dépréciation déjà connus, sans échec.
+- Navigateur local : état vide puis demande sans proposition contrôlés avec une base SQLite isolée. Le statut, l'action corrective et les cinq étapes sont visibles.
+- Navigation mobile : clic réel sur « Suivi » depuis le feed, arrivée sur `/mes-demandes`, titre attendu et onglet « Suivi » actif. La largeur utile constatée par l'outil était de 433 px malgré une consigne de 390 px ; aucun débordement horizontal n'a été mesuré (`scrollWidth` 426 px pour `innerWidth` 433 px).
+
+### Limites avant livraison
+
+- Le test responsive automatisé ne remplace pas un contrôle sur un téléphone Android ou iPhone réel.
+- Les données utilisées pour le contrôle visuel sont uniquement locales et ne doivent pas être confondues avec les données de production.
+- Le lot doit encore être commité, envoyé vers GitHub et déployé sur Railway après autorisation explicite.

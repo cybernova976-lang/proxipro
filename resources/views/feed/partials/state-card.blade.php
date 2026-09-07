@@ -98,15 +98,14 @@
         <div class="pk-state__actions">
             <a href="{{ $pkNeedsAttention
                 ? route('ads.edit', $pkMyRequest)
-                : ($pkProposals > 0 ? route('proposals.compare', $pkMyRequest) : route('ads.show', $pkMyRequest)) }}" class="pk-btn-white">
+                : ($pkProposals > 0 ? route('proposals.compare', $pkMyRequest) : route('demands.tracking').'#request-'.$pkMyRequest->id) }}" class="pk-btn-white">
                 {{ $pkProposals > 0
                     ? 'Voir les ' . $pkProposals . ' réponse' . ($pkProposals > 1 ? 's' : '')
                     : ($pkNeedsAttention ? 'Améliorer ma demande' : 'Suivre ma demande') }}
                 <i class="fas fa-arrow-right"></i>
             </a>
-            <a href="{{ $pkNeedsAttention ? route('feed.professionals') : route('demand.create') }}" class="pk-btn-outline-light">
-                <i class="fas fa-{{ $pkNeedsAttention ? 'users' : 'plus' }}"></i>
-                {{ $pkNeedsAttention ? 'Consulter les prestataires' : 'Publier un autre besoin' }}
+            <a href="{{ route('demands.tracking').'#request-'.$pkMyRequest->id }}" class="pk-btn-outline-light">
+                <i class="fas fa-route"></i> Toutes les étapes
             </a>
         </div>
     </section>

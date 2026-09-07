@@ -47,7 +47,7 @@
         @if($ordersAsBuyer->count() > 0)
             <div class="service-orders-grid">
                 @foreach($ordersAsBuyer as $order)
-                    <div class="service-order-card">
+                    <div id="order-{{ $order->id }}" class="service-order-card">
                         <div class="service-order-top">
                             <div>
                                 <div class="service-order-number">{{ $order->order_number }}</div>
@@ -115,7 +115,7 @@
         @if($ordersAsSeller->count() > 0)
             <div class="service-orders-grid">
                 @foreach($ordersAsSeller as $order)
-                    <div class="service-order-card">
+                    <div id="order-{{ $order->id }}" class="service-order-card">
                         <div class="service-order-top">
                             <div>
                                 <div class="service-order-number">{{ $order->order_number }}</div>

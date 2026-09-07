@@ -33,10 +33,11 @@
                 'class'  => '',
             ],
             [
-                'url'    => route('ads.index'),
+                'url'    => $pkTabRole === 'client' ? route('demands.tracking') : route('ads.index'),
                 'icon'   => 'fas fa-clipboard-list',
-                'label'  => 'Annonces',
-                'active' => request()->routeIs('ads.index') || request()->routeIs('ads.show'),
+                'label'  => $pkTabRole === 'client' ? 'Suivi' : 'Annonces',
+                'active' => ($pkTabRole === 'client' && request()->routeIs('demands.tracking'))
+                    || ($pkTabRole === 'provider' && (request()->routeIs('ads.index') || request()->routeIs('ads.show'))),
                 'class'  => '',
             ],
             [

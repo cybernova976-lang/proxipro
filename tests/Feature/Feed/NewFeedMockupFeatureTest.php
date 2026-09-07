@@ -175,7 +175,8 @@ class NewFeedMockupFeatureTest extends TestCase
             ->assertSee('Toujours aucune réponse')
             ->assertSee('Améliorer ma demande')
             ->assertSee(route('ads.edit', $requestAd), false)
-            ->assertSee('Consulter les prestataires');
+            ->assertSee('Toutes les étapes')
+            ->assertSee(route('demands.tracking').'#request-'.$requestAd->id, false);
     }
 
     public function test_new_feed_favorite_action_persists_and_removes_the_saved_ad(): void
