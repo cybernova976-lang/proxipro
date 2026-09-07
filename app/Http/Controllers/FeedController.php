@@ -2040,6 +2040,9 @@ class FeedController extends Controller
         $request->validate([
             'category' => ['nullable', 'string', 'max:120'],
             'subcategory' => ['nullable', 'string', 'max:120'],
+            'q' => ['nullable', 'string', 'max:100'],
+            'city' => ['nullable', 'string', 'max:120'],
+            'country' => ['nullable', 'string', 'max:120'],
         ]);
         $category = $request->get('category');
         $subcategory = $request->get('subcategory');
@@ -2228,10 +2231,34 @@ class FeedController extends Controller
             });
         }
 
+        $search = trim($request->string('q')->toString());
+        $city = trim($request->string('city')->toString());
+        $country = trim($request->string('country')->toString());
+        $directoryCountries = (clone $query)->whereNotNull('country')->where('country', '!=', '')
+            ->distinct()->orderBy('country')->pluck('country');
+
+        if ($search !== '') {
+            // Échapper les jokers pour rechercher le texte effectivement saisi.
+            $pattern = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($search)).'%';
+            $query->where(function ($query) use ($pattern) {
+                $query->whereRaw("LOWER(name) LIKE ? ESCAPE '!'", [$pattern])
+                    ->orWhereRaw("LOWER(profession) LIKE ? ESCAPE '!'", [$pattern])
+                    ->orWhereRaw("LOWER(service_category) LIKE ? ESCAPE '!'", [$pattern])
+                    ->orWhereHas('services', fn ($services) => $services->where('is_active', true)
+                        ->whereRaw("LOWER(subcategory) LIKE ? ESCAPE '!'", [$pattern]));
+            });
+        }
+        if ($city !== '') {
+            $query->whereRaw('LOWER(TRIM(city)) = ?', [mb_strtolower($city)]);
+        }
+        if ($country !== '') {
+            $query->where('country', $country);
+        }
+
         // Ordre stable, sans présenter un abonnement comme un gage de qualité.
         $professionals = $query->orderBy('name')->orderBy('id')->paginate(12)->withQueryString();
 
-        return view('feed.professionals', compact('professionals', 'category', 'subcategory', 'categories'));
+        return view('feed.professionals', compact('professionals', 'category', 'subcategory', 'categories', 'search', 'city', 'country', 'directoryCountries'));
     }
 
     /**

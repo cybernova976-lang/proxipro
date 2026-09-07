@@ -1,247 +1,92 @@
 @extends('layouts.app')
-
 @section('title', 'Annuaire des prestataires — Prokejem')
-
 @push('styles')
-<style>
-    .pros-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 20px;
-    }
-    .pro-card {
-        background: #fff;
-        border-radius: 14px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-        overflow: hidden;
-        transition: transform 0.2s, box-shadow 0.2s;
-        text-decoration: none;
-        color: inherit;
-        display: flex;
-        flex-direction: column;
-    }
-    .pro-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-        color: inherit;
-        text-decoration: none;
-    }
-    .pro-card-top {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 20px 20px 12px;
-    }
-    .pro-card-avatar {
-        width: 64px;
-        height: 64px;
-        border-radius: 12px;
-        object-fit: cover;
-        flex-shrink: 0;
-    }
-    .pro-card-avatar-placeholder {
-        width: 64px;
-        height: 64px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        font-weight: 700;
-        flex-shrink: 0;
-    }
-    .pro-card-identity {
-        min-width: 0;
-        flex: 1;
-    }
-    .pro-card-name {
-        font-size: 1.05rem;
-        font-weight: 700;
-        color: #1e293b;
-        overflow-wrap: anywhere;
-    }
-    .pro-card-profession {
-        font-size: 0.85rem;
-        color: #6366f1;
-        font-weight: 500;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .pro-card-location {
-        font-size: 0.78rem;
-        color: #94a3b8;
-        margin-top: 2px;
-    }
-    .pro-card-body {
-        padding: 0 20px 16px;
-        flex: 1;
-    }
-    .pro-card-bio {
-        font-size: 0.84rem;
-        color: #64748b;
-        line-height: 1.45;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-    .pro-card-footer {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 20px;
-        border-top: 1px solid #f1f5f9;
-        background: #fafbfc;
-    }
-    .pro-card-rating {
-        color: #475569;
-        font-weight: 600;
-        font-size: 0.88rem;
-    }
-    .pro-card-rating i { margin-right: 3px; }
-    .pro-card-badge {
-        font-size: 0.7rem;
-        padding: 3px 10px;
-        border-radius: 20px;
-        font-weight: 600;
-        color: white;
-    }
-    .pro-card-badge.premium { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
-    .pro-card-badge.pro { background: linear-gradient(135deg, #f59e0b, #d97706); }
-    .pro-card-badge.provider { background: linear-gradient(135deg, #10b981, #059669); }
-    .pro-card-stats {
-        font-size: 0.78rem;
-        color: #94a3b8;
-    }
-    .pros-filter-bar {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-bottom: 24px;
-    }
-    .pros-filter-bar select {
-        max-width: 100%;
-        padding: 8px 14px;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 0.88rem;
-        background: white;
-        color: #334155;
-        cursor: pointer;
-    }
-    .pros-empty {
-        text-align: center;
-        padding: 60px 20px;
-        color: #94a3b8;
-    }
-    .pros-empty i {
-        font-size: 3rem;
-        margin-bottom: 16px;
-        display: block;
-        opacity: 0.4;
-    }
-    @media (max-width: 640px) {
-        .pros-grid { grid-template-columns: 1fr; }
-        .pros-page-header { padding: 24px 0 20px; }
-        .pros-page-header h1 { font-size: 1.4rem; }
-    }
-</style>
+<link rel="stylesheet" href="{{ asset('css/provider-directory.css') }}?v=20260906">
 @endpush
-
 @section('content')
-<div class="container" style="padding-top: 24px; padding-bottom: 60px;">
-    <h1 style="font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-bottom: 20px;">
-        <i class="fas fa-users me-2" style="color: #2563eb;"></i>Annuaire des prestataires
-    </h1>
-    <p class="text-muted">Professionnels et particuliers prestataires, avec ou sans abonnement. Profils classés par nom.</p>
-
-    {{-- Barre de filtres --}}
-    <form class="pros-filter-bar" method="GET" action="{{ route('feed.professionals') }}">
-        <label class="visually-hidden" for="proCategoryFilter">Catégorie de service</label>
-        <select id="proCategoryFilter" name="category">
-            <option value="">Toutes les catégories</option>
-            @foreach($categories as $catName => $catData)
-                <option value="{{ $catName }}" {{ request('category') == $catName ? 'selected' : '' }}>{{ $catName }}</option>
-            @endforeach
-        </select>
-        <button type="submit" class="btn btn-primary">Filtrer</button>
-        @if($category || $subcategory)
-            <a href="{{ route('feed.professionals') }}" class="btn btn-outline-secondary">Tous les prestataires</a>
-        @endif
-    </form>
-    <p class="text-muted small" role="status">{{ $professionals->total() }} profil{{ $professionals->total() > 1 ? 's' : '' }} trouvé{{ $professionals->total() > 1 ? 's' : '' }}</p>
-
-    {{-- Grille de pros --}}
-    <div class="pros-grid" id="prosGrid">
-        @forelse($professionals as $pro)
-            <a href="{{ route('profile.public', $pro->id) }}" class="pro-card">
-                <div class="pro-card-top">
-                    @if($pro->avatar)
-                        <img src="{{ storage_url($pro->avatar) }}" alt="" class="pro-card-avatar" loading="lazy" width="64" height="64">
-                    @else
-                        <div class="pro-card-avatar-placeholder">{{ strtoupper(substr($pro->name, 0, 1)) }}</div>
-                    @endif
-                    <div class="pro-card-identity">
-                        <div class="pro-card-name">{{ $pro->name }}</div>
-                        @if($pro->profession)
-                            <div class="pro-card-profession">{{ $pro->profession }}</div>
-                        @elseif($pro->services->first()?->subcategory ?? $pro->service_category)
-                            <div class="pro-card-profession">{{ $pro->services->first()?->subcategory ?? $pro->service_category }}</div>
-                        @endif
-                        @if($pro->location_preference ?? ($pro->city ?? null))
-                            <div class="pro-card-location"><i class="fas fa-map-marker-alt me-1"></i>{{ Str::limit($pro->location_preference ?? $pro->city, 30) }}</div>
-                        @endif
-                    </div>
-                </div>
-                <div class="pro-card-body">
-                    @if($pro->bio)
-                        <div class="pro-card-bio">{{ $pro->bio }}</div>
-                    @endif
-                </div>
-                <div class="pro-card-footer">
-                    <div class="pro-card-rating">
-                        @if($pro->reviews_count > 0)
-                            <i class="fas fa-star text-warning" aria-hidden="true"></i>
-                            {{ number_format($pro->reviews_avg_rating, 1, ',', ' ') }}/5 · {{ $pro->reviews_count }} avis vérifié{{ $pro->reviews_count > 1 ? 's' : '' }}
-                        @else
-                            Pas encore d’avis vérifié
-                        @endif
-                    </div>
-                    <div>
-                        @if($pro->user_type === 'professionnel' || $pro->hasCompletedProOnboarding())
-                            <span class="pro-card-badge pro"><i class="fas fa-briefcase me-1"></i>Pro</span>
-                        @elseif($pro->is_service_provider)
-                            <span class="pro-card-badge provider"><i class="fas fa-user-check me-1"></i>Prestataire</span>
-                        @endif
-                    </div>
-                    <span class="text-primary small fw-semibold">Voir le profil <i class="fas fa-arrow-right" aria-hidden="true"></i></span>
-                </div>
-            </a>
-        @empty
-            <div class="pros-empty" style="grid-column: 1 / -1;">
-                <i class="fas fa-users-slash"></i>
-                <p>Aucun profil ne correspond à cette recherche.</p>
-                <a href="{{ route('feed') }}" class="btn btn-primary mt-3"><i class="fas fa-arrow-left me-2"></i>Retour au feed</a>
+<div class="container provider-directory">
+    <header class="directory-heading">
+        <a href="{{ route('feed') }}" class="directory-back">← Retour à l’accueil</a>
+        <p class="directory-eyebrow">LES BONNES PERSONNES POUR VOTRE PROJET</p>
+        <h1>Annuaire des prestataires</h1>
+        <p>Comparez les services, les réalisations et les avis. Puis échangez avec le prestataire de votre choix.</p>
+    </header>
+    <form class="directory-search" method="GET" action="{{ route('feed.professionals') }}" role="search" aria-label="Rechercher un prestataire">
+        <div class="directory-field">
+            <label for="directorySearch">Métier ou nom</label>
+            <input id="directorySearch" name="q" value="{{ $search }}" maxlength="100" placeholder="Ex. plombier" type="search">
+        </div>
+        <div class="directory-field">
+            <label for="directoryCity">Ville déclarée</label>
+            <input id="directoryCity" name="city" value="{{ $city }}" maxlength="120" placeholder="Ex. Mamoudzou" aria-describedby="directoryLocationHelp">
+        </div>
+        <div class="directory-field">
+            <label for="directoryCountry">Pays / territoire</label>
+            <select id="directoryCountry" name="country">
+                <option value="">Tous</option>
+                @foreach($directoryCountries->merge([$country])->filter()->unique()->sort() as $choice)
+                    <option value="{{ $choice }}" @selected($country === $choice)>{{ $choice }}</option>
+                @endforeach
+            </select>
+        </div>
+        <button class="directory-button directory-button-primary" type="submit">Rechercher</button>
+        <div class="directory-field directory-category">
+            <label for="proCategoryFilter">Catégorie de service</label>
+            <select id="proCategoryFilter" name="category">
+                <option value="">Toutes les catégories</option>
+                @foreach($categories as $catName => $catData)
+                    <option value="{{ $catName }}" @selected($category === $catName)>{{ $catName }}</option>
+                @endforeach
+            </select>
+        </div>
+        @if($subcategory)
+            <div class="directory-field directory-category">
+                <label for="directorySpecialty">Spécialité</label>
+                <select name="subcategory" id="directorySpecialty"><option value="{{ $subcategory }}">{{ $subcategory }}</option><option value="">Toutes les spécialités</option></select>
             </div>
+        @endif
+        <p id="directoryLocationHelp" class="directory-help">Le lieu correspond à la ville renseignée sur le profil. La disponibilité et le déplacement sont à confirmer avec le prestataire.</p>
+    </form>
+    <div class="directory-results">
+        <div><h2 role="status">{{ $professionals->total() }} profil{{ $professionals->total() > 1 ? 's' : '' }} trouvé{{ $professionals->total() > 1 ? 's' : '' }}</h2>
+        <p>Avec ou sans abonnement · Classés par nom</p>
+        @if($search !== '' || $city !== '' || $country !== '' || $category || $subcategory)
+            <p class="directory-applied" aria-label="Filtres appliqués">
+                <strong>Filtres appliqués :</strong>
+                @foreach(collect([$search, $city, $country, $subcategory ?: $category])->filter()->unique() as $activeFilter)
+                    <span>{{ $activeFilter }}</span>
+                @endforeach
+            </p>
+        @endif
+        </div>
+        @if($search || $city || $country || $category || $subcategory)
+            <a href="{{ route('feed.professionals') }}">Effacer les filtres</a>
+        @endif
+    </div>
+    <div class="directory-grid" id="prosGrid">
+        @forelse($professionals as $pro)
+            @include('profile.partials.directory-card', ['pro' => $pro])
+        @empty
+            <section class="directory-empty">
+                <h2>Aucun profil ne correspond à ces critères</h2>
+                <p>Essayez un autre métier ou élargissez vous-même la recherche. Nous n’ajoutons pas de résultats hors de votre sélection.</p>
+                <a class="directory-button directory-button-primary" href="{{ route('feed.professionals', ['category' => $category, 'subcategory' => $subcategory, 'q' => $search]) }}">Rechercher sans lieu</a>
+                <a class="directory-button" href="{{ route('demand.create') }}">Publier mon besoin</a>
+            </section>
         @endforelse
     </div>
     @if($professionals->hasPages())
-        <nav class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-4" aria-label="Pagination des prestataires">
+        <nav class="directory-pagination" aria-label="Pagination des prestataires">
             @if($professionals->onFirstPage())
-                <span class="btn btn-outline-secondary disabled" aria-disabled="true">Précédent</span>
+                <span aria-disabled="true">Précédent</span>
             @else
-                <a class="btn btn-outline-primary" href="{{ $professionals->previousPageUrl() }}" rel="prev">Précédent</a>
+                <a class="directory-button" href="{{ $professionals->previousPageUrl() }}" rel="prev">Précédent</a>
             @endif
-            <span class="small">Page {{ $professionals->currentPage() }} sur {{ $professionals->lastPage() }}</span>
+            <span>Page {{ $professionals->currentPage() }} sur {{ $professionals->lastPage() }}</span>
             @if($professionals->hasMorePages())
-                <a class="btn btn-outline-primary" href="{{ $professionals->nextPageUrl() }}" rel="next">Suivant</a>
+                <a class="directory-button" href="{{ $professionals->nextPageUrl() }}" rel="next">Suivant</a>
             @else
-                <span class="btn btn-outline-secondary disabled" aria-disabled="true">Suivant</span>
+                <span aria-disabled="true">Suivant</span>
             @endif
         </nav>
     @endif

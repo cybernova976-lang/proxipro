@@ -109,7 +109,7 @@
 
                     <!-- Name + Pro Badge -->
                     <div class="d-flex align-items-center justify-content-center flex-wrap gap-2 mb-1">
-                        <h4 class="fw-bold mb-0">{{ $user->name }}</h4>
+                        <h1 class="h4 fw-bold mb-0">{{ $user->name }}</h1>
                         @if($user->hasActiveProSubscription())
                             <span class="badge" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
                                 <i class="fas fa-crown me-1"></i>Premium
@@ -181,11 +181,6 @@
                         </p>
                     @endif
                     
-                    <!-- Bio courte -->
-                    @if($user->bio)
-                        <p class="text-muted small mb-3 profile-short-bio">{{ Str::limit($user->bio, 120) }}</p>
-                    @endif
-                    
                     <!-- Rating -->
                     <div class="mb-3">
                         @if(($ratingCount ?? 0) > 0)
@@ -203,8 +198,8 @@
                     <div class="d-grid gap-2">
                         @auth
                             @if(!$isOwnProfile)
-                                <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#profileContactModal">
-                                    <i class="fas fa-paper-plane me-2"></i>Présenter mon besoin
+                                <button type="button" id="profile-contact" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#profileContactModal">
+                                    <i class="fas fa-paper-plane me-2"></i>Décrire mon besoin
                                 </button>
                                 @if($user->services->isNotEmpty())
                                     <a href="#profile-services" class="btn btn-outline-primary w-100">
@@ -259,28 +254,14 @@
             </div>
             
             <!-- Info Card -->
-            <div class="card border-0 shadow-sm mt-4 profile-detail-card">
-                <div class="card-header bg-transparent">
-                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations</h6>
-                </div>
+            <details class="card border-0 shadow-sm mt-3 profile-detail-card">
+                <summary>Informations complémentaires</summary>
                 <div class="card-body">
                     <ul class="list-unstyled mb-0">
-                        @if($profileLocation)
-                        <li class="mb-3 d-flex align-items-center">
-                            <i class="fas fa-map-marker-alt text-muted me-3" style="width: 20px;"></i>
-                            {{ $profileLocation }}
-                        </li>
-                        @endif
                         @if($user->business_type)
                         <li class="mb-3 d-flex align-items-center">
                             <i class="fas fa-building text-muted me-3" style="width: 20px;"></i>
                             {{ $user->business_type === 'entreprise' ? 'Entreprise' : 'Auto-entrepreneur' }}
-                        </li>
-                        @endif
-                        @if($user->hourly_rate && ($user->show_hourly_rate ?? true))
-                        <li class="mb-3 d-flex align-items-center">
-                            <i class="fas fa-euro-sign text-success me-3" style="width: 20px;"></i>
-                            <span class="fw-semibold">{{ number_format((float)$user->hourly_rate, 0, ',', ' ') }} €/h</span>
                         </li>
                         @endif
                         @if($user->years_experience)
@@ -295,51 +276,22 @@
                         </li>
                     </ul>
                 </div>
-            </div>
+            </details>
 
         </div>
         
         <!-- Main Content -->
         <div class="col-lg-8 profile-main-column">
-            <!-- Stats -->
-            <div class="profile-metrics mb-4" aria-label="Indicateurs du profil">
-                <div class="profile-metric">
-                    <span class="profile-metric-value text-primary">{{ $completedServicesCount }}</span>
-                    <span class="profile-metric-label">Prestations finalisées</span>
-                </div>
-                <div class="profile-metric">
-                    @if(($ratingCount ?? 0) > 0)
-                    <span class="profile-metric-value text-warning">{{ number_format($ratingAverage ?? 0, 1) }}<small>/5</small></span>
-                    <span class="profile-metric-label">Note moyenne</span>
-                    <span class="profile-stars" aria-label="Note de {{ number_format($ratingAverage ?? 0, 1) }} sur 5">
-                        @for($i = 1; $i <= 5; $i++)
-                            <i class="fas fa-star {{ $i <= round($ratingAverage ?? 0) ? 'text-warning' : 'text-muted' }}"></i>
-                        @endfor
-                    </span>
-                    @else
-                        <span class="profile-metric-value text-muted" aria-hidden="true">—</span>
-                        <span class="profile-metric-label">Pas encore noté</span>
-                    @endif
-                </div>
-                <div class="profile-metric">
-                    <span class="profile-metric-value text-success">{{ $ratingCount ?? 0 }}</span>
-                    <span class="profile-metric-label">Avis vérifiés</span>
-                </div>
-                <div class="profile-metric">
-                    <span class="profile-metric-value text-primary">{{ $stats['active_offers'] ?? 0 }}</span>
-                    <span class="profile-metric-label">Services proposés</span>
-                </div>
-            </div>
+            <nav class="profile-section-nav" aria-label="Sections du profil">
+                @if($isProviderProfile && $user->professionalRealizations->isNotEmpty())<a href="#profile-realizations">Réalisations</a>@endif
+                @if($isProviderProfile && $user->services->isNotEmpty())<a href="#profile-services">Services</a>@endif
+                <a href="#profile-reviews">Avis</a>
+                @if($user->bio)<a href="#profile-about">À propos</a>@endif
+            </nav>
 
-            <section class="card border-0 shadow-sm mb-4 profile-section" aria-labelledby="trust-title">
+            <details class="card border-0 shadow-sm mb-4 profile-section profile-trust-details">
+                <summary>Confiance et repères <span>Voir les vérifications et l’expérience déclarée</span></summary>
                 <div class="card-body">
-                    <div class="profile-section-heading">
-                        <span class="profile-section-icon profile-section-icon-success"><i class="fas fa-shield-alt"></i></span>
-                        <div>
-                            <h2 id="trust-title">Confiance et repères</h2>
-                            <p>Les informations utiles avant de prendre contact.</p>
-                        </div>
-                    </div>
                     <div class="profile-trust-grid">
                         <div class="profile-trust-item {{ $profileVerified ? 'is-confirmed' : 'is-pending' }}">
                             <i class="fas {{ $profileVerified ? 'fa-check-circle' : 'fa-clock' }}"></i>
@@ -382,7 +334,7 @@
                         @endif
                     </div>
                 </div>
-            </section>
+            </details>
 
             @if($isProviderProfile && $user->professionalRealizations->isNotEmpty())
             <section class="card border-0 shadow-sm mb-4 profile-section" id="profile-realizations" aria-labelledby="realizations-title">
@@ -396,18 +348,21 @@
                     </div>
                     <div class="profile-realization-grid">
                         @foreach($user->professionalRealizations as $realization)
+                            <figure class="profile-realization-figure">
                             <button type="button"
                                     class="profile-realization-card"
                                     data-bs-toggle="modal"
                                     data-bs-target="#professionalRealizationModal"
                                     data-realization-src="{{ storage_url($realization->photo_path) }}"
-                                    data-realization-alt="Réalisation professionnelle {{ $loop->iteration }} de {{ $user->name }}"
+                                    data-realization-alt="{{ $realization->caption ?: 'Réalisation professionnelle '.$loop->iteration.' de '.$user->name }}"
                                     aria-label="Agrandir la réalisation {{ $loop->iteration }}">
                                 <img src="{{ storage_url($realization->photo_path) }}"
                                      alt="Réalisation professionnelle {{ $loop->iteration }} de {{ $user->name }}"
                                      loading="lazy">
                                 <span><i class="fas fa-expand-alt"></i> Voir la photo</span>
                             </button>
+                            <figcaption>@if($realization->caption)<strong>{{ $realization->caption }}</strong><br>@endif Réalisation {{ $loop->iteration }} · Photo déclarée par le prestataire</figcaption>
+                            </figure>
                         @endforeach
                     </div>
                 </div>
@@ -458,7 +413,7 @@
             
             <!-- Bio -->
             @if($user->bio)
-            <section class="card border-0 shadow-sm mb-4 profile-section">
+            <section class="card border-0 shadow-sm mb-4 profile-section" id="profile-about">
                 <div class="card-body">
                     <div class="profile-section-heading">
                         <span class="profile-section-icon"><i class="fas fa-user"></i></span>
@@ -518,11 +473,12 @@
             @endauth
             
             <!-- Ads List -->
-            <section class="card border-0 shadow-sm mb-4 profile-section">
+            <details class="card border-0 shadow-sm mb-4 profile-section profile-other-ads">
+                <summary>Annonces de {{ $user->name }}</summary>
                 <div class="card-body">
                     <div class="profile-section-heading">
                         <span class="profile-section-icon"><i class="fas fa-images"></i></span>
-                        <div><h2>Annonces de {{ $user->name }}</h2><p>Services, demandes et réalisations actuellement visibles.</p></div>
+                        <div><h2>Publications actives</h2><p>Offres et demandes publiées par ce membre.</p></div>
                     </div>
                     @if($ads->count() > 0)
                         <div class="row g-3">
@@ -561,14 +517,14 @@
                         </div>
                     @endif
                 </div>
-            </section>
+            </details>
 
             <!-- Reviews -->
-            <section class="card border-0 shadow-sm profile-section">
+            <section class="card border-0 shadow-sm profile-section" id="profile-reviews">
                 <div class="card-body">
                     <div class="profile-section-heading">
                         <span class="profile-section-icon profile-section-icon-warning"><i class="fas fa-star"></i></span>
-                        <div><h2>Avis sur {{ $user->name }}</h2><p>Uniquement après une prestation terminée et payée sur la plateforme.</p></div>
+                        <div><h2>Avis vérifiés sur {{ $user->name }}</h2><p>Uniquement après une prestation terminée et payée sur la plateforme.</p></div>
                     </div>
                     @if(isset($reviews) && $reviews->count() > 0)
                         <div class="d-flex flex-column gap-3">
@@ -605,7 +561,7 @@
                     @else
                         <div class="text-center py-4 text-muted">
                             <i class="fas fa-star-half-alt fa-2x mb-2 opacity-50"></i>
-                            <p class="mb-0">Aucun avis pour le moment.</p>
+                            <p class="mb-0">Pas encore noté · Aucun avis pour le moment.</p>
                         </div>
                     @endif
                 </div>
@@ -624,6 +580,12 @@
             </div>
             <div class="modal-body">
                 <img src="" alt="" id="professionalRealizationModalImage">
+            </div>
+            <div class="modal-footer profile-gallery-controls">
+                <button type="button" class="btn btn-outline-primary" id="realizationPrevious" aria-label="Photo précédente">←</button>
+                <span id="realizationCounter" role="status" aria-live="polite"></span>
+                <button type="button" class="btn btn-outline-primary" id="realizationNext" aria-label="Photo suivante">→</button>
+                <a id="realizationOriginal" target="_blank" rel="noopener" class="btn btn-light">Ouvrir l’original</a>
             </div>
         </div>
     </div>
@@ -822,8 +784,10 @@
         padding: 1.15rem 1.15rem 1.35rem;
     }
     .profile-photo-shell {
-        width: 100%;
-        aspect-ratio: 4 / 4.35;
+        width: 176px;
+        max-width: 100%;
+        margin-inline: auto;
+        aspect-ratio: 1;
         overflow: visible;
     }
     .profile-portrait {
@@ -1008,6 +972,7 @@
         gap: .85rem;
     }
     .profile-realization-card {
+        width: 100%;
         position: relative;
         overflow: hidden;
         aspect-ratio: 4 / 3;
@@ -1233,9 +1198,9 @@
             position: static;
         }
         .profile-photo-shell {
-            max-width: 420px;
+            max-width: 176px;
             margin-inline: auto;
-            aspect-ratio: 4 / 3.7;
+            aspect-ratio: 1;
         }
     }
     @media (max-width: 575.98px) {
@@ -1263,7 +1228,8 @@
             border-radius: 16px;
         }
         .profile-photo-shell {
-            aspect-ratio: 1 / 1.02;
+            width: 112px;
+            aspect-ratio: 1;
         }
         .profile-metric {
             min-height: 102px;
@@ -1315,10 +1281,35 @@
             line-height: 1.35;
         }
     }
+    .profile-section-nav { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+    .profile-section-nav a { padding:10px 14px; min-height:44px; border:1px solid #cbd7e8; border-radius:10px; color:#2456a6; background:#fff; text-decoration:none; font-weight:650; font-size:.85rem; }
+    .profile-section-nav a:focus-visible, .public-profile-page summary:focus-visible { outline:3px solid #78a5fa; outline-offset:3px; }
+    .profile-section[id], #profile-contact { scroll-margin-top:110px; }
+    .public-profile-page details > summary { padding:16px 18px; cursor:pointer; color:#263c5d; font-size:.9rem; font-weight:700; }
+    .public-profile-page details > summary span { display:block; font-size:.75rem; font-weight:400; color:#5b6f88; margin-top:4px; }
+    .profile-realization-figure { min-width:0; margin:0; }
+    .profile-realization-figure figcaption { margin-top:7px; font-size:.72rem; color:#53657b; line-height:1.4; }
+    .profile-gallery-controls { justify-content:center; gap:12px; }
+    .profile-gallery-controls [role="status"] { min-width:72px; text-align:center; color:#445674; }
+    .profile-realization-modal img { max-height:65dvh; }
+    @media(max-width:575px) {
+        .profile-photo-shell.mb-4 { margin-bottom:14px !important; }
+        .profile-identity-body h1 { font-size:1.25rem; overflow-wrap:anywhere; }
+        .profile-gallery-controls { gap:8px; padding:10px; }
+        .profile-gallery-controls a { font-size:.8rem; }
+    }
 </style>
 @endpush
 
 @push('scripts')
+@if(auth()->check() && !$isOwnProfile && request()->boolean('contact'))
+<script>
+window.addEventListener('load', () => {
+    const modal = document.getElementById('profileContactModal');
+    if (modal && window.bootstrap?.Modal) window.bootstrap.Modal.getOrCreateInstance(modal).show();
+});
+</script>
+@endif
 @auth
 @if(auth()->id() === $user->id)
 <script>
@@ -1446,14 +1437,31 @@ function saveCategories() {
 @endauth
 @if($isProviderProfile && $user->professionalRealizations->isNotEmpty())
 <script>
-document.getElementById('professionalRealizationModal')?.addEventListener('show.bs.modal', function(event) {
-    const trigger = event.relatedTarget;
+(() => {
+    const modal = document.getElementById('professionalRealizationModal');
+    const photos = Array.from(document.querySelectorAll('[data-realization-src]'));
     const image = document.getElementById('professionalRealizationModalImage');
-    if (!trigger || !image) return;
-
-    image.src = trigger.dataset.realizationSrc || '';
-    image.alt = trigger.dataset.realizationAlt || 'Réalisation professionnelle';
-});
+    let current = 0;
+    const show = (index) => {
+        if (!photos.length) return;
+        current = (index + photos.length) % photos.length;
+        image.src = photos[current].dataset.realizationSrc;
+        image.alt = photos[current].dataset.realizationAlt;
+        document.getElementById('realizationOriginal').href = image.src;
+        document.getElementById('realizationCounter').textContent = (current + 1) + ' / ' + photos.length;
+        document.getElementById('realizationPrevious').disabled = photos.length < 2;
+        document.getElementById('realizationNext').disabled = photos.length < 2;
+    };
+    modal?.addEventListener('show.bs.modal', event => show(Math.max(0, photos.indexOf(event.relatedTarget))));
+    document.getElementById('realizationPrevious')?.addEventListener('click', () => show(current - 1));
+    document.getElementById('realizationNext')?.addEventListener('click', () => show(current + 1));
+    modal?.addEventListener('keydown', event => {
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+            event.preventDefault();
+            show(current + (event.key === 'ArrowRight' ? 1 : -1));
+        }
+    });
+})();
 </script>
 @endif
 @endpush

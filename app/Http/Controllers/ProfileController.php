@@ -76,11 +76,24 @@ class ProfileController extends Controller
             'show_hourly_rate' => 'nullable',
             'professional_realization_photos' => ['nullable', 'array', 'max:6'],
             'professional_realization_photos.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'professional_realization_captions' => ['nullable', 'array', 'max:6'],
+            'professional_realization_captions.*' => ['nullable', 'string', 'max:140'],
+            'realization_captions' => ['nullable', 'array', 'max:6'],
+            'realization_captions.*' => ['nullable', 'string', 'max:140'],
         ];
 
         $request->validate($rules);
 
         $realizationPhotos = array_values($request->file('professional_realization_photos', []));
+        $realizationCaptions = (array) $request->input('realization_captions', []);
+        if ($realizationCaptions !== []) {
+            $ownedIds = $user->professionalRealizations()->pluck('id')->map(fn ($id) => (string) $id)->all();
+            foreach (array_keys($realizationCaptions) as $id) {
+                if (! $user->isServiceProvider() || ! in_array((string) $id, $ownedIds, true)) {
+                    return back()->withErrors(['realization_captions' => 'Vous ne pouvez modifier que les légendes de vos propres réalisations.'])->withInput();
+                }
+            }
+        }
         if ($realizationPhotos !== []) {
             if (! $user->isServiceProvider()) {
                 return back()->withErrors([
@@ -239,7 +252,7 @@ class ProfileController extends Controller
             $createdIds = [];
 
             try {
-                foreach ($realizationPhotos as $photo) {
+                foreach ($realizationPhotos as $photoIndex => $photo) {
                     $path = $photo->store('professional-realizations/'.$user->id, $defaultDisk);
                     if (! $path) {
                         throw new \RuntimeException('Le stockage de la réalisation a échoué.');
@@ -249,6 +262,7 @@ class ProfileController extends Controller
                     $createdIds[] = $user->professionalRealizations()->create([
                         'photo_path' => $path,
                         'position' => $nextPosition++,
+                        'caption' => trim((string) $request->input('professional_realization_captions.'.$photoIndex)) ?: null,
                     ])->id;
                 }
             } catch (\Throwable $e) {
@@ -263,6 +277,10 @@ class ProfileController extends Controller
                     'professional_realization_photos' => 'Impossible d’ajouter les photos de réalisations. Veuillez réessayer.',
                 ])->withInput();
             }
+        }
+
+        foreach ($realizationCaptions as $id => $caption) {
+            $user->professionalRealizations()->whereKey($id)->update(['caption' => trim((string) $caption) ?: null]);
         }
 
         // Rediriger vers le profil public si c'est la page d'origine

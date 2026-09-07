@@ -37,4 +37,37 @@ Référence : [audit concurrentiel du 5 septembre](AUDIT-CONCURRENTIEL-PROKEJEM-
 - Les annonces historiques potentiellement mal classées ne sont pas requalifiées automatiquement. Une vérification individuelle reste nécessaire avant toute correction de production.
 - Les tests OAuth sont simulés : ils ne prouvent pas la configuration Google/Facebook réelle en production.
 - Un test sur un vrai téléphone Android/iPhone et les contrôles après déploiement restent nécessaires ; l'émulation Chrome ne les remplace pas.
-- Le lot 2 (annuaire métier/zone et refonte compacte des profils), le lot 3 (suivi des demandes) et le lot 4 (exploitation/mesure) ne sont pas annoncés comme réalisés.
+- Le lot 2 est documenté ci-dessous. Les lots 3 (suivi des demandes) et 4 (exploitation/mesure) ne sont pas annoncés comme réalisés.
+
+## 7 septembre 2026 — Lot 2 : annuaire et profils
+
+État avant livraison : implémentation et validation locale terminées. Le commit, l'envoi GitHub et le déploiement Railway doivent encore être confirmés séparément.
+
+### Modifications locales
+
+- L'annuaire recherche les prestataires publics actifs par nom, métier, service actif, ville déclarée et pays/territoire. Les caractères `%` et `_` sont traités comme du texte, pas comme des jokers SQL. La recherche ne s'élargit pas automatiquement lorsqu'elle ne trouve rien.
+- La ville est un filtre exact sur la ville déclarée du profil. Ce n'est pas encore une recherche par rayon, une preuve de disponibilité ni une promesse de déplacement ; cette limite est indiquée à l'utilisateur.
+- Les cartes d'annuaire affichent le nom complet, le métier, le lieu, le tarif public déclaré et les avis vérifiés lorsqu'ils existent. Le signe vert signifie uniquement « identité vérifiée ». Deux actions restent visibles : voir le profil et décrire le besoin.
+- Les cartes du feed et celles de l'annuaire conduisent désormais vers la même fenêtre de contact du profil. Le texte est saisi et validé par le client ; aucun message prérempli n'est envoyé par un clic sur la carte.
+- Le profil public est raccourci et structuré par ancres : Réalisations, Services, Avis et À propos. Les informations secondaires, repères de confiance et annonces sont repliables ; les indicateurs répétés ont été retirés.
+- La galerie publique affiche le contexte déclaré de chaque photo, une légende facultative, un compteur, les commandes précédente/suivante et l'accès au fichier original. Elle ne prétend pas qu'une photo prouve une mission Prokejem.
+- L'éditeur accepte toujours six photos maximum, y compris une sélection multiple ou plusieurs sélections successives. Les légendes restent associées à leur fichier après ajout ou retrait d'une photo. Un utilisateur ne peut modifier que les légendes de ses propres réalisations.
+
+### Contrôles locaux
+
+- 39 tests ciblés réussis, 353 assertions.
+- Suite complète finale : **267 tests réussis, 1 807 assertions**. Rapport dans `storage/logs/lot2-final-tests.xml`.
+- Trois tests JavaScript dédiés à la sélection multiple : accumulation, conservation des légendes après retrait, doublons/formats/limite de six. Tous réussis.
+- Compilation Vite finale réussie en 38,89 s ; avertissements Sass de dépréciation déjà connus, sans échec.
+- Compilation Blade, format PHP et `git diff --check` réussis.
+- Chrome local : annuaire filtré sur `plomb` + `Mamoudzou` + `Mayotte`, un résultat attendu ; nom complet et deux actions visibles ; largeur utile mobile constatée de 382 px pour 390 px demandés, sans débordement horizontal.
+- Chrome local : après remplacement de la ville par `Ville sans profil` et clic réel sur « Rechercher », l'URL est mise à jour, le compteur passe à zéro et l'état vide attendu s'affiche. Les filtres actifs restent visibles.
+- Chrome local : fenêtre de contact ouverte pour le prestataire ciblé et annulée sans envoi. Le formulaire indique explicitement qu'aucun message ne part avant validation.
+- Chrome local : galerie ouverte, photo suivante et précédente fonctionnelles, compteur `1 / 2` puis `2 / 2`, images chargées et contenues dans l'écran. En largeur utile 382 px, `scrollWidth` = 382 px.
+- Le sélecteur HTML est bien multiple. L'insertion automatisée de fichiers dans Chrome a été bloquée par l'autorisation « Allow access to file URLs » de l'extension ; la logique d'accumulation a donc été contrôlée par tests JavaScript et le stockage de six fichiers par tests Laravel, pas par un enregistrement manuel dans Chrome.
+
+### Limites avant livraison
+
+- Exécuter la nouvelle migration `caption` est obligatoire au déploiement.
+- Un test manuel sur un vrai téléphone reste nécessaire, notamment le sélecteur photo natif Android/iPhone.
+- Le statut final du déploiement Railway du lot 1 doit toujours être revérifié ; cela ne change pas l'état local du lot 2.

@@ -195,7 +195,7 @@
 
                             <div class="professional-gallery-editor__grid" id="professionalGalleryGrid">
                                 @foreach($user->professionalRealizations as $realization)
-                                    <article class="professional-gallery-editor__item">
+                                    <article class="professional-gallery-editor__item has-caption">
                                         <img src="{{ storage_url($realization->photo_path) }}"
                                              alt="Réalisation professionnelle {{ $loop->iteration }}"
                                              loading="lazy">
@@ -206,6 +206,10 @@
                                                 title="Supprimer cette réalisation">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
+                                        <label class="professional-gallery-caption" for="realizationCaption{{ $realization->id }}">
+                                            Légende (facultative)
+                                            <input id="realizationCaption{{ $realization->id }}" name="realization_captions[{{ $realization->id }}]" value="{{ old('realization_captions.'.$realization->id, $realization->caption) }}" maxlength="140" placeholder="Ex. Rénovation d’une salle de bain">
+                                        </label>
                                     </article>
                                 @endforeach
 
@@ -226,6 +230,10 @@
                                    multiple
                                    data-remaining-slots="{{ 6 - $user->professionalRealizations->count() }}">
                             <div class="form-text mt-2">JPG, PNG ou WebP · 5 Mo maximum par photo.</div>
+                            <div class="form-text">Une légende courte permet d’expliquer le travail présenté. Elle reste une déclaration du prestataire.</div>
+                            @foreach(['realization_captions', 'realization_captions.*', 'professional_realization_captions.*'] as $captionField)
+                                @error($captionField)<div class="text-danger small mt-2">{{ $message }}</div>@enderror
+                            @endforeach
                             <div class="professional-gallery-selection small mt-2" id="professionalGallerySelection" role="status" aria-live="polite"></div>
                             @error('professional_realization_photos')
                                 <div class="text-danger small mt-2">{{ $message }}</div>
@@ -402,6 +410,10 @@
     height: 100%;
     object-fit: cover;
 }
+.professional-gallery-editor__item.has-caption { aspect-ratio: auto; background: #f8fafc; border: 1px solid #d9e3f0; }
+.professional-gallery-editor__item.has-caption img { display: block; height: 145px; }
+.professional-gallery-caption { display: block; padding: 10px; color: #405575; font-size: .75rem; font-weight: 600; }
+.professional-gallery-caption input { display: block; width: 100%; min-width: 0; min-height: 44px; margin-top: 6px; padding: 7px; border: 1px solid #becce0; border-radius: 7px; background: #fff; color: #243a59; font-size: 16px; font-weight: 400; }
 .professional-gallery-editor__delete {
     position: absolute;
     top: .55rem;
@@ -465,6 +477,7 @@ const professionalGalleryAvailable = document.getElementById('professionalGaller
 const professionalGalleryRemainingSlots = Number(professionalGalleryInput?.dataset.remainingSlots || 0);
 let professionalGalleryPreviewUrls = [];
 let professionalGalleryFiles = [];
+const professionalGalleryCaptions = new Map();
 
 function professionalGalleryFileKey(file) {
     return [file.name, file.size, file.lastModified, file.type].join('::');
@@ -508,7 +521,7 @@ function renderProfessionalGallerySelection(files) {
 
     files.forEach((file, index) => {
         const item = document.createElement('article');
-        item.className = 'professional-gallery-editor__item';
+        item.className = 'professional-gallery-editor__item has-caption';
         item.dataset.newRealization = 'true';
 
         const image = document.createElement('img');
@@ -538,6 +551,17 @@ function renderProfessionalGallerySelection(files) {
         });
 
         item.appendChild(removeButton);
+        const captionLabel = document.createElement('label');
+        captionLabel.className = 'professional-gallery-caption';
+        captionLabel.textContent = 'Légende (facultative)';
+        const caption = document.createElement('input');
+        caption.name = 'professional_realization_captions[' + index + ']';
+        caption.maxLength = 140;
+        caption.placeholder = 'Quel travail avez-vous réalisé ?';
+        caption.value = professionalGalleryCaptions.get(professionalGalleryFileKey(file)) || '';
+        caption.addEventListener('input', () => professionalGalleryCaptions.set(professionalGalleryFileKey(file), caption.value));
+        captionLabel.appendChild(caption);
+        item.appendChild(captionLabel);
         professionalGalleryGrid?.insertBefore(item, professionalGalleryAdd);
     });
 }

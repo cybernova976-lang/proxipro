@@ -79,6 +79,48 @@ class ProfessionalRealizationGalleryFeatureTest extends TestCase
             ->assertSee('Retirer cette photo', false);
     }
 
+    public function test_photo_captions_are_saved_per_image_and_can_be_updated_only_by_the_owner(): void
+    {
+        config(['filesystems.default' => 'public']);
+        Storage::fake('public');
+        $owner = User::factory()->create(['user_type' => 'professionnel', 'profile_public' => true]);
+        $this->actingAs($owner)->put(route('profile.update'), [
+            'name' => $owner->name, 'email' => $owner->email,
+            'professional_realization_photos' => [$this->photo('one.png'), $this->photo('two.png')],
+            'professional_realization_captions' => ['Salle de bain rénovée', 'Pose de carrelage'],
+        ])->assertSessionHasNoErrors();
+        $photos = $owner->professionalRealizations()->get();
+        $this->assertCount(2, $photos);
+        $this->assertSame('Salle de bain rénovée', $photos[0]->caption);
+        $this->assertSame('Pose de carrelage', $photos[1]->caption);
+        $this->get(route('profile.public', $owner))->assertOk()->assertSee('Salle de bain rénovée')->assertSee('Pose de carrelage');
+
+        $other = User::factory()->create(['user_type' => 'professionnel']);
+        $this->actingAs($other)->put(route('profile.update'), [
+            'name' => $other->name, 'email' => $other->email,
+            'realization_captions' => [$photos[0]->id => 'Modification interdite'],
+        ])->assertSessionHasErrors('realization_captions');
+        $this->assertSame('Salle de bain rénovée', $photos[0]->fresh()->caption);
+
+        $this->actingAs($owner)->put(route('profile.update'), [
+            'name' => $owner->name, 'email' => $owner->email,
+            'realization_captions' => [$photos[0]->id => '<script>alert(1)</script>'],
+        ])->assertSessionHasNoErrors();
+        $this->get(route('profile.public', $owner))->assertOk()
+            ->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false)->assertDontSee('<script>alert(1)</script>', false);
+    }
+
+    public function test_caption_length_is_validated_before_saving_photos(): void
+    {
+        $owner = User::factory()->create(['user_type' => 'professionnel']);
+        $this->actingAs($owner)->put(route('profile.update'), [
+            'name' => $owner->name, 'email' => $owner->email,
+            'professional_realization_photos' => [$this->photo('one.png')],
+            'professional_realization_captions' => [str_repeat('a', 141)],
+        ])->assertSessionHasErrors('professional_realization_captions.0');
+        $this->assertDatabaseCount('professional_realizations', 0);
+    }
+
     public function test_gallery_rejects_a_seventh_photo_and_non_provider_uploads(): void
     {
         config(['filesystems.default' => 'public']);

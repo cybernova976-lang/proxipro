@@ -15,6 +15,7 @@ class ProfessionalRealization extends Model
         'user_id',
         'photo_path',
         'position',
+        'caption',
     ];
 
     protected static function booted(): void
