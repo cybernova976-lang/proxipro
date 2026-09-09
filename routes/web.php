@@ -288,6 +288,9 @@ Route::middleware(['auth'])->prefix('become-provider')->name('become-provider.')
 // Routes pour publier une demande simplifiée + matching
 Route::get('/demande', [\App\Http\Controllers\DemandController::class, 'create'])->name('demand.create');
 Route::middleware(['auth'])->prefix('demande')->name('demand.')->group(function () {
+    Route::put('/brouillon', [\App\Http\Controllers\DemandController::class, 'saveDraft'])
+        ->middleware('throttle:30,1')
+        ->name('draft.save');
     Route::post('/', [\App\Http\Controllers\DemandController::class, 'store'])->name('store');
     Route::get('/{ad}/professionnels', [\App\Http\Controllers\DemandController::class, 'matching'])->name('matching');
     Route::get('/{ad}/matching-api', [\App\Http\Controllers\DemandController::class, 'matchingApi'])->name('matching.api');
@@ -587,6 +590,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/export', [AdminController::class, 'exportData'])->name('admin.export');
     Route::get('/operations', OperationsQueueController::class)->name('admin.operations');
+    Route::get('/emails', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'index'])->name('admin.emails.index');
+    Route::get('/emails/{managedEmail}', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'show'])->name('admin.emails.show');
+    Route::get('/emails/{managedEmail}/preview', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'preview'])->name('admin.emails.preview');
+    Route::put('/emails/{managedEmail}', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'update'])->name('admin.emails.update');
+    Route::post('/emails/{managedEmail}/approve', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'approve'])->name('admin.emails.approve');
+    Route::post('/emails/{managedEmail}/cancel', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'cancel'])->name('admin.emails.cancel');
 
     // Gestion des utilisateurs
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');

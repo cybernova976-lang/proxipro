@@ -85,3 +85,9 @@ Schedule::command('service-reminders:send')
     ->everyFifteenMinutes()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/service-reminders.log'));
+
+// Une seule relance pour les brouillons de demande associés à un compte vérifié.
+Schedule::command('demand-drafts:send-reminders')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/demand-draft-reminders.log'));

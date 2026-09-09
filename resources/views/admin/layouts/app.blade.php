@@ -255,6 +255,15 @@
             </li>
             <li>
                 @php
+                    $pendingEmailCount = \App\Models\ManagedEmail::where('status', 'pending')->count();
+                @endphp
+                <a href="{{ route('admin.emails.index') }}" class="{{ request()->routeIs('admin.emails.*') ? 'active' : '' }}" style="position:relative;">
+                    <i class="fas fa-envelope-open-text me-2" style="color:#60a5fa;"></i> E-mails à valider
+                    @if($pendingEmailCount > 0)<span class="badge bg-danger rounded-pill" style="position:absolute;right:15px;top:50%;transform:translateY(-50%);">{{ $pendingEmailCount }}</span>@endif
+                </a>
+            </li>
+            <li>
+                @php
                     $activeBoostsCount = \App\Models\Ad::where('is_boosted', true)->where('boost_end', '>', now())->count()
                         + \App\Models\Ad::where('is_urgent', true)->where(function($q) { $q->whereNull('urgent_until')->orWhere('urgent_until', '>', now()); })->count();
                 @endphp

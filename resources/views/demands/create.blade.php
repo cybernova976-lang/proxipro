@@ -664,6 +664,9 @@ const validationErrorKeys = @json($errors->keys());
 const validationErrors = @json($errors->toArray());
 const hasServerInput = @json(session()->hasOldInput());
 const isGuestDemand = @json(Auth::guest());
+const demandDraftSyncUrl = @json(Auth::check() ? route('demand.draft.save') : null);
+const serverDemandDraft = @json($serverDraft);
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 @php
     $guestDemandLoginUrl = route('login', ['continue' => 'demand']);
 @endphp
@@ -1186,6 +1189,7 @@ function escapeHtml(value) {
 function draftPayload() {
     return {
         version: 2,
+        current_step: currentStep,
         savedAt: new Date().toISOString(),
         main_category: selectedCat,
         category: selectedSub,
@@ -1215,9 +1219,30 @@ function saveDemandDraft() {
         if (!hasContent) return;
         localStorage.setItem(demandDraftKey, JSON.stringify(payload));
         showDraftStatus('Brouillon enregistré sur cet appareil');
+        syncDemandDraft(payload);
     } catch (error) {
         // Le formulaire reste pleinement utilisable si le stockage local est indisponible.
     }
+}
+
+function syncDemandDraft(payload) {
+    if (!demandDraftSyncUrl) return;
+
+    fetch(demandDraftSyncUrl, {
+        method: 'PUT',
+        credentials: 'same-origin',
+        keepalive: true,
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+        },
+        body: JSON.stringify({ current_step: currentStep, payload }),
+    }).then(response => {
+        if (response.ok) showDraftStatus('Brouillon enregistré et sécurisé dans votre compte');
+    }).catch(() => {
+        // La copie locale reste disponible si le réseau est momentanément indisponible.
+    });
 }
 
 function loadDemandDraft() {
@@ -1237,7 +1262,7 @@ function loadDemandDraft() {
                 localStorage.removeItem(guestDemandDraftKey);
             }
         }
-        return raw ? JSON.parse(raw) : null;
+        return raw ? JSON.parse(raw) : serverDemandDraft;
     } catch (error) {
         return null;
     }
@@ -1366,8 +1391,9 @@ document.addEventListener('DOMContentLoaded', function() {
         trackDemandEvent('demand_draft_resumed', totalDemandSteps);
         // Revalider le brouillon : une date peut avoir expiré entre-temps.
         const validators = [validateStep1, validateStep2, validateStep3, validateStep4];
-        currentStep = totalDemandSteps;
-        for (let index = 0; index < validators.length; index++) {
+        const requestedStep = Math.max(1, Math.min(totalDemandSteps, Number(draft.current_step) || totalDemandSteps));
+        currentStep = requestedStep;
+        for (let index = 0; index < Math.min(requestedStep - 1, validators.length); index++) {
             if (!validators[index]()) {
                 currentStep = index + 1;
                 break;

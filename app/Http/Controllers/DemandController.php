@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ad;
+use App\Models\DemandDraft;
 use App\Models\User;
 use App\Models\UserService;
 use App\Services\AdLifecycleService;
@@ -43,8 +44,49 @@ class DemandController extends Controller
         $preCategory = $request->get('category');
         $preSubcategory = $request->get('subcategory');
         $intakeSchemas = ServiceDemandIntakeSchema::forForm(array_keys($categoriesData));
+        $serverDraft = null;
+        if ($request->user()) {
+            $storedDraft = DemandDraft::where('user_id', $request->user()->id)->first();
+            if ($storedDraft) {
+                $serverDraft = array_merge($storedDraft->payload, [
+                    'current_step' => $storedDraft->current_step,
+                ]);
+            }
+        }
 
-        return view('demands.create', compact('categoriesData', 'preCategory', 'preSubcategory', 'intakeSchemas'));
+        return view('demands.create', compact('categoriesData', 'preCategory', 'preSubcategory', 'intakeSchemas', 'serverDraft'));
+    }
+
+    /**
+     * Synchronise uniquement les champs textuels d'un brouillon authentifié.
+     * Les photos restent locales jusqu'à la publication.
+     */
+    public function saveDraft(Request $request)
+    {
+        $validated = $request->validate([
+            'current_step' => ['required', 'integer', 'between:1,5'],
+            'payload' => ['required', 'array'],
+        ]);
+
+        $allowed = [
+            'version', 'main_category', 'category', 'country', 'city', 'location',
+            'desired_date', 'time_window', 'title', 'description', 'price_type',
+            'price', 'urgency', 'service_details',
+        ];
+        $payload = collect($validated['payload'])->only($allowed)->all();
+        $payload['version'] = 2;
+        $payload['current_step'] = $validated['current_step'];
+
+        DemandDraft::updateOrCreate(
+            ['user_id' => $request->user()->id],
+            [
+                'payload' => $payload,
+                'current_step' => $validated['current_step'],
+                'last_activity_at' => now(),
+            ]
+        );
+
+        return response()->json(['saved' => true]);
     }
 
     /**
@@ -181,6 +223,8 @@ class DemandController extends Controller
         } catch (\Throwable $exception) {
             Log::warning('Saved search matching failed for demand #'.$ad->id.': '.$exception->getMessage());
         }
+
+        DemandDraft::where('user_id', Auth::id())->delete();
 
         return redirect()->route('demand.matching', $ad);
     }
