@@ -3,6 +3,7 @@
 @section('title', 'E-mails à valider')
 
 @section('content')
+<a href="{{ route('admin.emails.create') }}" class="btn btn-primary mb-3"><i class="fas fa-pen me-2"></i>Rédiger un e-mail</a>
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
     <div><h1 class="h3 fw-bold mb-1"><i class="fas fa-envelope-open-text text-primary me-2"></i>E-mails à valider</h1><p class="text-muted mb-0">Aucun message de relance n'est envoyé sans votre validation.</p></div>
     <span class="badge bg-primary fs-6">{{ $emails->total() }} message{{ $emails->total() > 1 ? 's' : '' }}</span>

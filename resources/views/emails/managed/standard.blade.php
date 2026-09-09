@@ -8,11 +8,9 @@
 <tr><td style="padding:24px 28px 18px;text-align:center;border-bottom:1px solid #e8eef8;"><img src="{{ asset('images/brand/prokejem-logo.png') }}" width="180" alt="Prokejem" style="display:inline-block;width:180px;max-width:70%;height:auto;"></td></tr>
 @if(count($email->image_paths ?? []))
 <tr><td style="padding:0;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;"><tr>
     @foreach(array_slice($email->image_paths, 0, 3) as $path)
-        <td width="{{ 100 / min(count($email->image_paths), 3) }}%" style="padding:0;"><img src="{{ storage_url($path) }}" alt="Illustration" width="206" style="display:block;width:100%;height:190px;object-fit:cover;"></td>
+        <img src="{{ storage_url($path) }}" alt="Illustration" width="620" style="display:block;width:100%;max-width:620px;height:auto;">
     @endforeach
-    </tr></table>
 </td></tr>
 @endif
 <tr><td style="padding:34px 30px 30px;">
@@ -21,6 +19,6 @@
     <div style="margin:0 0 22px;color:#536176;font-size:16px;line-height:1.65;white-space:pre-line;">{{ $email->body }}</div>
     @if($email->cta_label && $email->cta_url)<div style="text-align:center;margin:28px 0 10px;"><a href="{{ $email->cta_url }}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-size:16px;font-weight:700;line-height:1;padding:17px 28px;border-radius:12px;box-shadow:0 10px 22px rgba(37,99,235,.22);">{{ $email->cta_label }} &nbsp;→</a></div>@endif
 </td></tr>
-<tr><td style="padding:20px 28px;background:#f8fafc;text-align:center;color:#758195;font-size:12px;line-height:1.6;">Besoin d'aide ? <a href="mailto:{{ $supportEmail }}" style="color:#2563eb;text-decoration:none;">{{ $supportEmail }}</a><br>Ce message a été préparé et validé depuis l'administration Prokejem.</td></tr>
+<tr><td style="padding:20px 28px;background:#f8fafc;text-align:center;color:#758195;font-size:12px;line-height:1.6;">Besoin d'aide ? <a href="mailto:{{ $supportEmail }}" style="color:#2563eb;text-decoration:none;">{{ $supportEmail }}</a><br><a href="{{ route('settings.index') }}#notifications">Gérer mes préférences e-mail</a></td></tr>
 </table></td></tr></table>
 </body></html>

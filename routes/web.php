@@ -591,6 +591,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/export', [AdminController::class, 'exportData'])->name('admin.export');
     Route::get('/operations', OperationsQueueController::class)->name('admin.operations');
     Route::get('/emails', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'index'])->name('admin.emails.index');
+    Route::get('/emails/create', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'create'])->name('admin.emails.create');
+    Route::post('/emails', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'store'])->name('admin.emails.store');
     Route::get('/emails/{managedEmail}', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'show'])->name('admin.emails.show');
     Route::get('/emails/{managedEmail}/preview', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'preview'])->name('admin.emails.preview');
     Route::put('/emails/{managedEmail}', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'update'])->name('admin.emails.update');

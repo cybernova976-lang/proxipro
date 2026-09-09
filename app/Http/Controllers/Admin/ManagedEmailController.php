@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\ManagedEmailMail;
 use App\Models\ManagedEmail;
+use App\Models\User;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -12,6 +15,64 @@ use Illuminate\Support\Facades\Storage;
 
 class ManagedEmailController extends Controller
 {
+    private function recipients()
+    {
+        return User::query()->where('newsletter_subscribed', true)
+            ->where('email_notifications', true)->whereNotNull('email_verified_at')
+            ->where('is_active', true);
+    }
+
+    public function create()
+    {
+        return view('admin.emails.create', ['recipients' => $this->recipients()
+            ->orderBy('name')->get(['id', 'name', 'email'])]);
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'subject' => ['required', 'string', 'max:255'],
+            'eyebrow' => ['nullable', 'string', 'max:255'],
+            'headline' => ['required', 'string', 'max:255'],
+            'body' => ['required', 'string', 'max:5000'],
+            'cta_label' => ['nullable', 'required_with:cta_url', 'string', 'max:80'],
+            'cta_url' => ['nullable', 'required_with:cta_label', 'url:http,https', 'max:2000'],
+            'audience' => ['required', Rule::in(['all', 'selected'])],
+            'recipients' => ['required_if:audience,selected', 'array'],
+            'recipients.*' => ['integer', 'distinct'],
+            'images' => ['nullable', 'array', 'max:3'],
+            'images.*' => ['image', 'mimes:jpeg,png,webp', 'max:5120'],
+        ]);
+        $recipients = $this->recipients()
+            ->when($data['audience'] === 'selected', fn ($q) => $q->whereIn('id', $data['recipients']))->get();
+        if ($recipients->isEmpty() || ($data['audience'] === 'selected' && $recipients->count() !== count($data['recipients']))) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['recipients' => 'Sélectionnez des destinataires éligibles. Actualisez la liste si leurs préférences ont changé.']);
+        }
+        $paths = [];
+        try {
+            DB::transaction(function () use ($request, $data, $recipients, &$paths) {
+                $batch = (string) Str::uuid();
+                foreach ($recipients as $recipient) {
+                    $images = [];
+                    foreach ($request->file('images', []) as $image) {
+                        $images[] = $paths[] = $image->store('managed-emails', config('filesystems.default', 'public'));
+                    }
+                    ManagedEmail::create([
+                        ...collect($data)->only(['subject', 'eyebrow', 'headline', 'body', 'cta_label', 'cta_url'])->all(),
+                        'user_id' => $recipient->id, 'recipient_email' => $recipient->email,
+                        'recipient_name' => $recipient->name, 'source_key' => $batch.':'.$recipient->id,
+                        'type' => 'newsletter', 'status' => ManagedEmail::STATUS_PENDING,
+                        'image_paths' => $images, 'metadata' => ['batch' => $batch, 'created_by' => $request->user()->id],
+                    ]);
+                }
+            });
+        } catch (\Throwable $exception) {
+            Storage::disk(config('filesystems.default', 'public'))->delete($paths);
+            throw $exception;
+        }
+        return redirect()->route('admin.emails.index')->with('success', $recipients->count().' message(s) préparé(s). Vous pouvez maintenant vérifier et valider chaque envoi.');
+    }
+
     public function index(Request $request)
     {
         $status = $request->string('status')->toString();
@@ -84,6 +145,9 @@ class ManagedEmailController extends Controller
         $email = DB::transaction(function () use ($managedEmail, $request) {
             $email = ManagedEmail::lockForUpdate()->findOrFail($managedEmail->id);
             abort_unless(in_array($email->status, [ManagedEmail::STATUS_PENDING, ManagedEmail::STATUS_FAILED], true), 409);
+            if ($email->type === 'newsletter') {
+                abort_unless($this->recipients()->whereKey($email->user_id)->where('email', $email->recipient_email)->exists(), 409, 'Ce destinataire ne souhaite plus recevoir cette communication.');
+            }
             $email->update([
                 'status' => ManagedEmail::STATUS_SENDING,
                 'approved_by' => $request->user()->id,
