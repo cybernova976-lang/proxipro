@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\ManagedEmailMail;
 use App\Models\ManagedEmail;
 use App\Models\User;
+use App\Support\ManagedEmailContent;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
@@ -30,6 +31,7 @@ class ManagedEmailController extends Controller
 
     public function store(Request $request)
     {
+        $blocks = ManagedEmailContent::read($request);
         $data = $request->validate([
             'subject' => ['required', 'string', 'max:255'],
             'eyebrow' => ['nullable', 'string', 'max:255'],
@@ -40,7 +42,7 @@ class ManagedEmailController extends Controller
             'audience' => ['required', Rule::in(['all', 'selected'])],
             'recipients' => ['required_if:audience,selected', 'array'],
             'recipients.*' => ['integer', 'distinct'],
-            'images' => ['nullable', 'array', 'max:3'],
+            'images' => ['nullable', 'array', 'list', 'max:3'],
             'images.*' => ['image', 'mimes:jpeg,png,webp', 'max:5120'],
         ]);
         $recipients = $this->recipients()
@@ -50,7 +52,7 @@ class ManagedEmailController extends Controller
         }
         $paths = [];
         try {
-            DB::transaction(function () use ($request, $data, $recipients, &$paths) {
+            DB::transaction(function () use ($request, $data, $recipients, $blocks, &$paths) {
                 $batch = (string) Str::uuid();
                 foreach ($recipients as $recipient) {
                     $images = [];
@@ -62,7 +64,8 @@ class ManagedEmailController extends Controller
                         'user_id' => $recipient->id, 'recipient_email' => $recipient->email,
                         'recipient_name' => $recipient->name, 'source_key' => $batch.':'.$recipient->id,
                         'type' => 'newsletter', 'status' => ManagedEmail::STATUS_PENDING,
-                        'image_paths' => $images, 'metadata' => ['batch' => $batch, 'created_by' => $request->user()->id],
+                        'image_paths' => $images, 'metadata' => ['batch' => $batch, 'created_by' => $request->user()->id,
+                            ...($blocks !== null ? ['content_blocks' => ManagedEmailContent::resolve($blocks, $images)] : [])],
                     ]);
                 }
             });
@@ -103,6 +106,8 @@ class ManagedEmailController extends Controller
     {
         abort_unless(in_array($managedEmail->status, [ManagedEmail::STATUS_PENDING, ManagedEmail::STATUS_FAILED], true), 409);
 
+        $blocks = ManagedEmailContent::read($request, $managedEmail->image_paths ?? []);
+
         $validated = $request->validate([
             'subject' => ['required', 'string', 'max:255'],
             'eyebrow' => ['nullable', 'string', 'max:255'],
@@ -110,11 +115,34 @@ class ManagedEmailController extends Controller
             'body' => ['required', 'string', 'max:5000'],
             'cta_label' => ['nullable', 'string', 'max:80'],
             'cta_url' => ['nullable', 'url', 'max:2000'],
-            'images' => ['nullable', 'array', 'max:3'],
+            'images' => ['nullable', 'array', 'list', 'max:3'],
             'images.*' => ['image', 'mimes:jpeg,png,webp', 'max:5120'],
             'remove_images' => ['nullable', 'array'],
             'remove_images.*' => ['string'],
         ]);
+
+        if ($blocks !== null) {
+            $uploaded = [];
+            try {
+                foreach ($request->file('images', []) as $image) {
+                    $uploaded[] = $image->store('managed-emails', config('filesystems.default', 'public'));
+                }
+                $resolved = ManagedEmailContent::resolve($blocks, $uploaded, $managedEmail->image_paths ?? []);
+                $paths = collect($resolved)->where('type', 'image')->pluck('path')->values()->all();
+                $removed = array_diff($managedEmail->image_paths ?? [], $paths);
+                $managedEmail->update([
+                    ...collect($validated)->only(['subject', 'eyebrow', 'headline', 'body', 'cta_label', 'cta_url'])->all(),
+                    'image_paths' => $paths,
+                    'metadata' => [...($managedEmail->metadata ?? []), 'content_blocks' => $resolved],
+                    'status' => ManagedEmail::STATUS_PENDING, 'failure_message' => null,
+                ]);
+            } catch (\Throwable $exception) {
+                Storage::disk(config('filesystems.default', 'public'))->delete($uploaded);
+                throw $exception;
+            }
+            Storage::disk(config('filesystems.default', 'public'))->delete(array_values($removed));
+            return back()->with('success', 'Mise en page enregistrée. Vérifiez le message avant de valider son envoi.');
+        }
 
         $paths = collect($managedEmail->image_paths ?? []);
         $removals = collect($validated['remove_images'] ?? [])->intersect($paths);
