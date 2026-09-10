@@ -67,7 +67,9 @@
  boxes.forEach(box=>box.addEventListener('change',()=>{audience.value='selected';count();}));
  document.getElementById('recipientSearch').oninput=event=>{const query=event.target.value.toLocaleLowerCase();document.querySelectorAll('.recipient').forEach(row=>{row.classList.toggle('d-none',!row.textContent.toLocaleLowerCase().includes(query));});};
  document.getElementById('mobilePreview').onclick=()=>{preview.style.maxWidth=preview.style.maxWidth?'':'390px';};
- form.addEventListener('input',updatePreview); count(); updatePreview();
+ // File inputs fire input before change: only photos() may refresh their preview.
+ // Otherwise an older iframe navigation can retain revoked image URLs.
+ form.addEventListener('input',event=>{if(event.target.type !== 'file') updatePreview();}); count(); updatePreview();
 })();
 </script>
 @endsection
