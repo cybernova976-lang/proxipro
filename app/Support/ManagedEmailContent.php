@@ -25,13 +25,15 @@ class ManagedEmailContent
         $blocks = json_decode($raw, true);
         Validator::make(['blocks' => $blocks], [
             'blocks' => ['required', 'array', 'min:1', 'max:30'],
-            'blocks.*' => ['array:type,text,ref,width,align,caption'],
-            'blocks.*.type' => ['required', Rule::in(['text', 'image'])],
+            'blocks.*' => ['array:type,text,ref,width,align,caption,label,url'],
+            'blocks.*.type' => ['required', Rule::in(['text', 'image', 'button'])],
             'blocks.*.text' => ['nullable', 'string', 'max:5000'],
             'blocks.*.ref' => ['nullable', 'string', 'max:40'],
             'blocks.*.width' => ['nullable', 'integer', 'min:80', 'max:560'],
             'blocks.*.align' => ['nullable', Rule::in(['left', 'center', 'right'])],
             'blocks.*.caption' => ['nullable', 'string', 'max:200'],
+            'blocks.*.label' => ['nullable', 'string', 'max:80'],
+            'blocks.*.url' => ['nullable', 'string', 'max:2000'],
         ])->validate();
         $normalized = [];
         $imageRefs = [];
@@ -43,6 +45,24 @@ class ManagedEmailContent
                     $normalized[] = ['type' => 'text', 'text' => $value];
                     $text[] = $value;
                 }
+                continue;
+            }
+            if ($block['type'] === 'button') {
+                $button = Validator::make($block, [
+                    'label' => ['required', 'string', 'max:80'],
+                    'url' => ['required', 'url:http,https', 'max:2000'],
+                    'align' => ['nullable', Rule::in(['left', 'center', 'right'])],
+                ])->validate();
+                $label = trim($button['label']);
+                if ($label === '') {
+                    throw ValidationException::withMessages(['content_layout' => 'Le texte du bouton est obligatoire.']);
+                }
+                $normalized[] = [
+                    'type' => 'button',
+                    'label' => $label,
+                    'url' => $button['url'],
+                    'align' => $button['align'] ?? 'center',
+                ];
                 continue;
             }
             $ref = $block['ref'] ?? '';

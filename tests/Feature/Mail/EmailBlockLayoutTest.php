@@ -34,6 +34,7 @@ class EmailBlockLayoutTest extends TestCase
         $blocks = [
             ['type'=>'image','ref'=>'new:0','width'=>80,'align'=>'left','caption'=>'Portrait'],
             ['type'=>'text','text'=>'INTRODUCTION UNIQUE'],
+            ['type'=>'button','label'=>'Découvrir le service','url'=>'https://www.prokejem.fr/demande','align'=>'center'],
             ['type'=>'image','ref'=>'new:1','width'=>320,'align'=>'center','caption'=>'Au milieu'],
             ['type'=>'text','text'=>'CONCLUSION UNIQUE'],
             ['type'=>'image','ref'=>'new:2','width'=>560,'align'=>'right','caption'=>'Dernière photo'],
@@ -45,19 +46,26 @@ class EmailBlockLayoutTest extends TestCase
         $this->assertSame("INTRODUCTION UNIQUE\n\nCONCLUSION UNIQUE", $email->body);
         $html=(new ManagedEmailMail($email))->render();
         $this->assertTrue(strpos($html,'alt="Portrait"') < strpos($html,'INTRODUCTION UNIQUE'));
-        $this->assertTrue(strpos($html,'INTRODUCTION UNIQUE') < strpos($html,'alt="Au milieu"'));
+        $this->assertTrue(strpos($html,'INTRODUCTION UNIQUE') < strpos($html,'Découvrir le service'));
+        $this->assertTrue(strpos($html,'Découvrir le service') < strpos($html,'alt="Au milieu"'));
+        $this->assertStringContainsString('href="https://www.prokejem.fr/demande"', $html);
         $this->assertTrue(strpos($html,'CONCLUSION UNIQUE') < strpos($html,'alt="Dernière photo"'));
         $this->assertStringContainsString('width="80"', $html);
-        $this->get(route('admin.emails.show',$email))->assertOk()->assertSee('Composez votre message par blocs');
+        $this->get(route('admin.emails.show',$email))->assertOk()
+            ->assertSee('Composez votre message par blocs')
+            ->assertSee('Ajouter un bouton avec lien');
         $kept=$email->image_paths[1];
         $this->put(route('admin.emails.update',$email), ['subject'=>'Test','headline'=>'Titre',
             'content_layout'=>json_encode([
                 ['type'=>'text','text'=>'Texte modifié <script>alert(1)</script>'],
+                ['type'=>'button','label'=>'Voir maintenant','url'=>'https://www.prokejem.fr/feed','align'=>'left'],
                 ['type'=>'image','ref'=>'existing:1','width'=>160,'align'=>'right','caption'=>'Photo conservée'],
             ])])->assertRedirect();
         $email->refresh();
         $this->assertSame([$kept],$email->image_paths);
-        $this->assertSame(160,$email->metadata['content_blocks'][1]['width']);
+        $this->assertSame('button',$email->metadata['content_blocks'][1]['type']);
+        $this->assertSame(160,$email->metadata['content_blocks'][2]['width']);
+        $this->assertNull($email->cta_url);
         Storage::disk(config('filesystems.default'))->assertExists($kept);
         $this->assertStringNotContainsString('<script>alert(1)</script>',(new ManagedEmailMail($email))->render());
         $this->assertSame('pending',$email->status);
@@ -71,9 +79,12 @@ class EmailBlockLayoutTest extends TestCase
             ['type'=>'image','ref'=>'existing:0','width'=>80],
             ['type'=>'image','ref'=>'new:0','width'=>9000],
             ['type'=>'image','ref'=>'../../private.png','width'=>80],
-        ] as $image) {
+            ['type'=>'button','label'=>'Lien dangereux','url'=>'javascript:alert(1)'],
+            ['type'=>'button','label'=>'','url'=>'https://www.prokejem.fr'],
+            ['type'=>'button','label'=>'   ','url'=>'https://www.prokejem.fr'],
+        ] as $invalidBlock) {
             $this->postJson(route('admin.emails.store'), ['subject'=>'Test','headline'=>'Titre','audience'=>'all',
-                'content_layout'=>json_encode([['type'=>'text','text'=>'Bonjour'],$image])])->assertUnprocessable();
+                'content_layout'=>json_encode([['type'=>'text','text'=>'Bonjour'],$invalidBlock])])->assertUnprocessable();
         }
         $this->postJson(route('admin.emails.store'), ['subject'=>'Test','headline'=>'Titre','audience'=>'all','content_layout'=>'not json'])->assertUnprocessable();
         $this->assertDatabaseCount('managed_emails',0);

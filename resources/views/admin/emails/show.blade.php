@@ -23,7 +23,6 @@
                 <div class="mb-3"><label class="form-label fw-bold">Sur-titre</label><input class="form-control" name="eyebrow" maxlength="255" value="{{ old('eyebrow', $managedEmail->eyebrow) }}"></div>
                 <div class="mb-3"><label class="form-label fw-bold">Grand titre</label><input class="form-control" name="headline" maxlength="255" required value="{{ old('headline', $managedEmail->headline) }}"></div>
                 @include('admin.emails.blocks')
-                <div class="row g-2"><div class="col-md-5 mb-3"><label class="form-label fw-bold">Texte du bouton</label><input class="form-control" name="cta_label" maxlength="80" value="{{ old('cta_label', $managedEmail->cta_label) }}"></div><div class="col-md-7 mb-3"><label class="form-label fw-bold">Lien du bouton</label><input type="url" class="form-control" name="cta_url" value="{{ old('cta_url', $managedEmail->cta_url) }}"></div></div>
                 <button class="btn btn-outline-primary w-100" type="submit"><i class="fas fa-save me-1"></i>Enregistrer et actualiser l'aperçu</button>
             </fieldset>
         </form>

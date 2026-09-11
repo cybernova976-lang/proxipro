@@ -14,8 +14,6 @@
 <label for="{{ $name }}" class="form-label mt-3">{{ $label }}</label><input id="{{ $name }}" name="{{ $name }}" class="form-control" maxlength="255" value="{{ old($name) }}" @if($name !== 'eyebrow') required @endif>
 @endforeach
 @include('admin.emails.blocks')
-<label for="cta_label" class="form-label mt-3">Texte du bouton (facultatif)</label><input id="cta_label" name="cta_label" class="form-control" maxlength="80" value="{{ old('cta_label') }}">
-<label for="cta_url" class="form-label mt-3">Destination du bouton</label><input id="cta_url" name="cta_url" type="url" class="form-control" value="{{ old('cta_url') }}" placeholder="https://www.prokejem.fr/">
 </div></section>
 <section class="card border-0 shadow-sm"><div class="card-body">
 <h2 class="h5">2. Vos destinataires</h2>

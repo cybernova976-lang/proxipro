@@ -20,6 +20,11 @@
         @foreach($email->metadata['content_blocks'] as $block)
             @if($block['type'] === 'text')
                 <div style="margin:0 0 20px;color:#536176;font-size:16px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;">{{ $block['text'] }}</div>
+            @elseif($block['type'] === 'button' && !empty($block['label']) && !empty($block['url']))
+                @php($align = in_array($block['align'] ?? '', ['left','center','right'], true) ? $block['align'] : 'center')
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="{{ $align }}" style="padding:6px 0 24px;">
+                    <a href="{{ $block['url'] }}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:16px 26px;border-radius:999px;box-shadow:0 10px 22px rgba(37,99,235,.22);">{{ $block['label'] }} &nbsp;→</a>
+                </td></tr></table>
             @elseif($block['type'] === 'image' && !empty($block['path']) && in_array($block['path'], $email->image_paths ?? [], true))
                 @php($width = max(80, min(560, (int) ($block['width'] ?? 560))))
                 @php($align = in_array($block['align'] ?? '', ['left','center','right'], true) ? $block['align'] : 'center')

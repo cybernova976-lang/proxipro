@@ -131,7 +131,9 @@ class ManagedEmailController extends Controller
                 $paths = collect($resolved)->where('type', 'image')->pluck('path')->values()->all();
                 $removed = array_diff($managedEmail->image_paths ?? [], $paths);
                 $managedEmail->update([
-                    ...collect($validated)->only(['subject', 'eyebrow', 'headline', 'body', 'cta_label', 'cta_url'])->all(),
+                    ...collect($validated)->only(['subject', 'eyebrow', 'headline', 'body'])->all(),
+                    'cta_label' => null,
+                    'cta_url' => null,
                     'image_paths' => $paths,
                     'metadata' => [...($managedEmail->metadata ?? []), 'content_blocks' => $resolved],
                     'status' => ManagedEmail::STATUS_PENDING, 'failure_message' => null,
