@@ -454,10 +454,6 @@
   background: var(--pk-surface);
   border: 1px solid #d6dfec;
   border-radius: var(--pk-r-lg);
-  padding: 0 16px;
-  display: grid;
-  grid-template-columns: minmax(210px, 34%) minmax(0, 1fr);
-  gap: 0 16px;
   overflow: hidden;
   box-shadow: 0 2px 5px rgba(15, 23, 42, .05), 0 12px 28px -22px rgba(30, 64, 175, .6);
   transition: border-color .15s, box-shadow .15s, transform .12s;
@@ -465,10 +461,19 @@
 .pk-ad:hover { border-color: #b9c9df; box-shadow: var(--pk-sh-2); transform: translateY(-1px); }
 .pk-ad.is-urgent { border-left: 3px solid var(--pk-urgent); }
 
+/* La galerie et le contenu partagent une seule ligne. Les actions vivent dans
+   la colonne de contenu : plus de bandeau vide sous les photos. */
+.pk-ad__main {
+  display: grid;
+  grid-template-columns: minmax(230px, 34%) minmax(0, 1fr);
+  gap: 16px;
+  padding: 14px 16px 16px;
+  min-width: 0;
+}
+
 /* -- galerie compacte : une a trois photos visibles, sans allonger la carte -- */
 .pk-ad__media {
-  grid-column: 1; grid-row: 2;
-  width: 100%; height: 138px; min-width: 0;
+  width: 100%; height: 156px; min-width: 0;
   border-radius: var(--pk-r-md); overflow: hidden;
   background: var(--pk-surface-2);
   position: relative; display: grid; gap: 3px;
@@ -491,19 +496,17 @@
   display: inline-flex; align-items: center; gap: 4px;
   backdrop-filter: blur(5px);
 }
-.pk-ad--nothumb { grid-template-columns: minmax(0, 1fr); }
-.pk-ad--nothumb .pk-ad__authorbar,
-.pk-ad--nothumb .pk-ad__body,
-.pk-ad--nothumb .pk-ad__foot { grid-column: 1; }
+.pk-ad--nothumb .pk-ad__main { grid-template-columns: minmax(0, 1fr); }
 
 .pk-ad__authorbar {
-  grid-column: 1 / -1; grid-row: 1;
-  min-width: 0; margin: 0 -16px 14px; padding: 11px 16px;
+  min-width: 0; padding: 11px 16px;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   background: #fbfcff; border-bottom: 1px solid #e2e8f1;
 }
-.pk-ad__body { grid-column: 2; grid-row: 2; display: grid; gap: 8px; align-content: start; min-width: 0; }
-.pk-ad__foot { grid-column: 1 / -1; grid-row: 3; margin: 14px -16px 0; }
+.pk-ad__body {
+  display: flex; flex-direction: column; align-items: stretch;
+  gap: 7px; min-width: 0; min-height: 156px;
+}
 
 .pk-ad__top {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -539,7 +542,7 @@
 
 .pk-ad__foot {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  border-top: 1px solid var(--pk-rule); padding: 10px 16px 11px;
+  margin-top: auto; padding-top: 9px;
 }
 .pk-ad__author {
   display: flex; align-items: center; gap: 10px; min-width: 0;
@@ -600,42 +603,42 @@
 .pk-save[aria-pressed="true"] { border-color: var(--pk-600); color: var(--pk-600); background: var(--pk-50); }
 .pk-save[aria-busy="true"] { opacity: .55; pointer-events: none; }
 
-/* 1024 : la colonne photo passe en largeur fixe, sinon 34% l'etire trop.
-   .pk-ad--nothumb doit etre repete dans chaque media query : il a la meme
-   specificite que .pk-ad, et une media query n'en ajoute pas. Sans ce rappel,
-   la regle ci-dessous gagne par l'ordre du fichier et une annonce sans photo
-   garde une colonne vide. */
+/* 1024 : la colonne photo passe en largeur fixe, sinon 34% l'etire trop. */
 @media (max-width: 1024px) {
-  .pk-ad { grid-template-columns: 168px minmax(0, 1fr); }
-  .pk-ad--nothumb { grid-template-columns: minmax(0, 1fr); }
-  .pk-ad__media { height: 126px; }
+  .pk-ad__main { grid-template-columns: 190px minmax(0, 1fr); }
+  .pk-ad--nothumb .pk-ad__main { grid-template-columns: minmax(0, 1fr); }
+  .pk-ad__media { height: 150px; }
+  .pk-ad__body { min-height: 150px; }
 }
 
 @media (max-width: 640px) {
   .pk-feed-list { gap: 16px; margin-top: 14px; }
   .pk-ad {
-    padding: 0 12px; grid-template-columns: 132px minmax(0, 1fr); gap: 0 11px;
     box-shadow: 0 3px 8px rgba(15, 23, 42, .06), 0 14px 26px -22px rgba(30, 64, 175, .7);
   }
-  .pk-ad--nothumb { grid-template-columns: minmax(0, 1fr); }
-  .pk-ad__authorbar { margin: 0 -12px 12px; padding: 10px 12px; gap: 9px; }
+  .pk-ad__authorbar { padding: 10px 12px; gap: 9px; }
   .pk-ad__author { gap: 9px; }
   .pk-ad__author .av { width: 34px; height: 34px; }
   .pk-ad__author .nm { font-size: .82rem; }
   .pk-ad__published { font-size: .64rem; }
   .pk-ad__age { font-size: .66rem; }
-  /* Une seule photo dans le feed mobile. Le compteur conserve le total et le
-     lien ouvre la page de l'annonce, ou la galerie complete reste accessible. */
+  .pk-ad__main,
+  .pk-ad--nothumb .pk-ad__main {
+    display: grid; grid-template-columns: minmax(0, 1fr);
+    gap: 12px; padding: 12px;
+  }
+  /* Une seule grande photo dans le feed mobile. Le compteur conserve le total
+     et le lien ouvre la page de l'annonce, ou la galerie reste accessible. */
   .pk-ad__media,
   .pk-ad__media--2,
-  .pk-ad__media--3 { display: block; width: 132px; height: 122px; }
+  .pk-ad__media--3 { display: block; width: 100%; height: clamp(164px, 48vw, 210px); }
   .pk-ad__media .pk-ad__photo { display: none; width: 100%; height: 100%; }
   .pk-ad__media .pk-ad__photo:first-child { display: block; }
   .pk-ad__photo-count { right: 5px; bottom: 5px; padding: 3px 6px; font-size: .6rem; }
-  .pk-ad__body { gap: 6px; }
-  .pk-ad__desc { display: none; }
+  .pk-ad__body { gap: 6px; min-height: 0; }
+  .pk-ad__desc { -webkit-line-clamp: 2; }
   .pk-ad__foot {
-    grid-column: 1 / -1; margin: 12px -12px 0; padding: 10px 12px 11px;
+    margin-top: 3px; padding-top: 10px; border-top: 1px solid var(--pk-rule);
     display: grid; grid-template-columns: minmax(0, 1fr) auto;
     gap: 8px 10px; align-items: center;
   }
@@ -649,11 +652,6 @@
 }
 
 @media (max-width: 390px) {
-  .pk-ad { grid-template-columns: 118px minmax(0, 1fr); }
-  .pk-ad--nothumb { grid-template-columns: minmax(0, 1fr); }
-  .pk-ad__media,
-  .pk-ad__media--2,
-  .pk-ad__media--3 { width: 118px; height: 112px; }
   .pk-ad__age { max-width: 10ch; white-space: normal; text-align: right; line-height: 1.15; }
   .pk-ad__foot { grid-template-columns: minmax(0, 1fr) auto; gap: 7px; }
   .pk-ad__cta { gap: 6px; }

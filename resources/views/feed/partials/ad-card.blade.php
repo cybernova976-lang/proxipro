@@ -129,91 +129,93 @@
         @endif
     </header>
 
-    @if($pkThumb)
-        <a class="pk-ad__media pk-ad__media--{{ $pkVisiblePhotoCount }}" href="{{ $pkUrl }}" tabindex="-1" aria-hidden="true">
-            @foreach($pkVisiblePhotos as $pkPhotoIndex => $pkPhoto)
-                <span class="pk-ad__photo{{ $pkPhotoIndex === 0 ? ' pk-ad__photo--main' : '' }}" data-pk-feed-photo>
-                    <img src="{{ $pkPhoto }}" alt="" loading="lazy" decoding="async">
-                </span>
-            @endforeach
-            @if($pkPhotoCount > 0)
-                <span class="pk-ad__photo-count">
-                    <i class="far fa-{{ $pkPhotoCount > 1 ? 'images' : 'image' }}" aria-hidden="true"></i>
-                    {{ $pkPhotoCount }} photo{{ $pkPhotoCount > 1 ? 's' : '' }}
-                </span>
-            @endif
-        </a>
-    @endif
-
-    <div class="pk-ad__body">
-        <div class="pk-ad__top">
-            <span class="pk-ad__cat">{{ Str::limit($ad->category ?: ($ad->main_category ?: 'Service'), 28) }}</span>
-            @if($pkIsUrgent)
-                <span class="pk-tag pk-tag--urgent"><i class="fas fa-bolt"></i> Urgent</span>
-            @elseif($pkIsFresh)
-                <span class="pk-tag pk-tag--new">Nouveau</span>
-            @endif
-            @if($pkIsBoosted)
-                <span class="pk-tag pk-tag--boost"><i class="fas fa-rocket"></i> Boosté</span>
-            @endif
-        </div>
-
-        <h3><a href="{{ $pkUrl }}">{{ Str::limit($ad->title, 80) }}</a></h3>
-
-        <div class="pk-ad__facts">
-            @if($pkPlace)
-                <span>
-                    <i class="fas fa-map-marker-alt"></i>
-                    {{ Str::limit($pkPlace, 24) }}@if($pkDistance) · <b>{{ $pkDistance }} km</b>@endif
-                </span>
-            @endif
-            @if($pkWhen)
-                <span><i class="far fa-calendar"></i> <b>{{ $pkWhen }}</b></span>
-            @endif
-            <span><i class="fas fa-euro-sign"></i> <b>{{ $ad->formatted_price }}</b></span>
-        </div>
-
-        @if(trim((string) $ad->description) !== '')
-            <p class="pk-ad__desc">{{ Str::limit(strip_tags($ad->description), 150) }}</p>
-        @endif
-    </div>
-
-    <div class="pk-ad__foot">
-        @if($pkIsDemande)
-            @if($pkReplies > 0)
-                <span class="pk-replies">
-                    <i class="far fa-comment"></i> <b>{{ $pkReplies }}</b> réponse{{ $pkReplies > 1 ? 's' : '' }}
-                </span>
-            @elseif($pkRole === 'provider')
-                <span class="pk-replies pk-replies--first">
-                    <i class="fas fa-bolt"></i> Aucune réponse — soyez le premier
-                </span>
-            @else
-                <span class="pk-replies pk-replies--waiting">
-                    <i class="far fa-clock" aria-hidden="true"></i> En attente de réponses
-                </span>
-            @endif
-        @endif
-
-        <span class="pk-ad__cta">
-            @auth
-                <button type="button"
-                        class="pk-save"
-                        data-pk-save="{{ $ad->id }}"
-                        aria-pressed="{{ $pkIsSaved ? 'true' : 'false' }}"
-                        aria-label="{{ $pkIsSaved ? 'Retirer des favoris' : 'Enregistrer dans les favoris' }}">
-                    <i class="{{ $pkIsSaved ? 'fas' : 'far' }} fa-bookmark"></i>
-                </button>
-            @endauth
-            <a href="{{ $pkUrl }}" class="pk-btn-sm">
-                @if($pkRole === 'provider' && $pkIsDemande)
-                    Proposer mes services
-                @elseif($pkIsDemande)
-                    Voir la demande
-                @else
-                    Voir l'offre
+    <div class="pk-ad__main">
+        @if($pkThumb)
+            <a class="pk-ad__media pk-ad__media--{{ $pkVisiblePhotoCount }}" href="{{ $pkUrl }}" tabindex="-1" aria-hidden="true">
+                @foreach($pkVisiblePhotos as $pkPhotoIndex => $pkPhoto)
+                    <span class="pk-ad__photo{{ $pkPhotoIndex === 0 ? ' pk-ad__photo--main' : '' }}" data-pk-feed-photo>
+                        <img src="{{ $pkPhoto }}" alt="" loading="lazy" decoding="async">
+                    </span>
+                @endforeach
+                @if($pkPhotoCount > 0)
+                    <span class="pk-ad__photo-count">
+                        <i class="far fa-{{ $pkPhotoCount > 1 ? 'images' : 'image' }}" aria-hidden="true"></i>
+                        {{ $pkPhotoCount }} photo{{ $pkPhotoCount > 1 ? 's' : '' }}
+                    </span>
                 @endif
             </a>
-        </span>
+        @endif
+
+        <div class="pk-ad__body">
+            <div class="pk-ad__top">
+                <span class="pk-ad__cat">{{ Str::limit($ad->category ?: ($ad->main_category ?: 'Service'), 28) }}</span>
+                @if($pkIsUrgent)
+                    <span class="pk-tag pk-tag--urgent"><i class="fas fa-bolt"></i> Urgent</span>
+                @elseif($pkIsFresh)
+                    <span class="pk-tag pk-tag--new">Nouveau</span>
+                @endif
+                @if($pkIsBoosted)
+                    <span class="pk-tag pk-tag--boost"><i class="fas fa-rocket"></i> Boosté</span>
+                @endif
+            </div>
+
+            <h3><a href="{{ $pkUrl }}">{{ Str::limit($ad->title, 80) }}</a></h3>
+
+            <div class="pk-ad__facts">
+                @if($pkPlace)
+                    <span>
+                        <i class="fas fa-map-marker-alt"></i>
+                        {{ Str::limit($pkPlace, 24) }}@if($pkDistance) · <b>{{ $pkDistance }} km</b>@endif
+                    </span>
+                @endif
+                @if($pkWhen)
+                    <span><i class="far fa-calendar"></i> <b>{{ $pkWhen }}</b></span>
+                @endif
+                <span><i class="fas fa-euro-sign"></i> <b>{{ $ad->formatted_price }}</b></span>
+            </div>
+
+            @if(trim((string) $ad->description) !== '')
+                <p class="pk-ad__desc">{{ Str::limit(strip_tags($ad->description), 150) }}</p>
+            @endif
+
+            <div class="pk-ad__foot">
+                @if($pkIsDemande)
+                    @if($pkReplies > 0)
+                        <span class="pk-replies">
+                            <i class="far fa-comment"></i> <b>{{ $pkReplies }}</b> réponse{{ $pkReplies > 1 ? 's' : '' }}
+                        </span>
+                    @elseif($pkRole === 'provider')
+                        <span class="pk-replies pk-replies--first">
+                            <i class="fas fa-bolt"></i> Aucune réponse — soyez le premier
+                        </span>
+                    @else
+                        <span class="pk-replies pk-replies--waiting">
+                            <i class="far fa-clock" aria-hidden="true"></i> En attente de réponses
+                        </span>
+                    @endif
+                @endif
+
+                <span class="pk-ad__cta">
+                    @auth
+                        <button type="button"
+                                class="pk-save"
+                                data-pk-save="{{ $ad->id }}"
+                                aria-pressed="{{ $pkIsSaved ? 'true' : 'false' }}"
+                                aria-label="{{ $pkIsSaved ? 'Retirer des favoris' : 'Enregistrer dans les favoris' }}">
+                            <i class="{{ $pkIsSaved ? 'fas' : 'far' }} fa-bookmark"></i>
+                        </button>
+                    @endauth
+                    <a href="{{ $pkUrl }}" class="pk-btn-sm">
+                        @if($pkRole === 'provider' && $pkIsDemande)
+                            Proposer mes services
+                        @elseif($pkIsDemande)
+                            Voir la demande
+                        @else
+                            Voir l'offre
+                        @endif
+                    </a>
+                </span>
+            </div>
+        </div>
     </div>
 </article>

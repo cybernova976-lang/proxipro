@@ -122,8 +122,10 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString('.pk-pro__verified', $css);
         $this->assertStringContainsString('.pk-replies--waiting', $css);
         $this->assertStringContainsString('.pk-ad__media--3', $css);
-        $this->assertStringContainsString('height: 138px', $css);
-        $this->assertStringContainsString('grid-column: 1 / -1', $css);
+        $this->assertStringContainsString('height: 156px', $css);
+        $this->assertStringContainsString('.pk-ad__main', $css);
+        $this->assertStringContainsString('margin-top: auto; padding-top: 9px', $css);
+        $this->assertStringContainsString('height: clamp(164px, 48vw, 210px)', $css);
         $this->assertStringContainsString('scroll-snap-type: x mandatory', $css);
         $this->assertStringNotContainsString('linear-gradient(150deg, var(--pk-950), var(--pk-800))', $css);
     }
@@ -216,6 +218,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString('4 photos', $html);
         $this->assertStringContainsString('pk-ad__desc', $html);
         $this->assertStringContainsString('pk-ad__foot', $html);
+        $this->assertStringContainsString('pk-ad__main', $html);
         $this->assertStringContainsString('pk-ad__authorbar', $html);
         $this->assertStringContainsString('pk-ad__author-name', $html);
         $this->assertStringContainsString('Abdou OUSSENI Chebani Razamakotoravolani', $html);
@@ -299,37 +302,27 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString('pk-ad--nothumb', $none);
     }
 
-    /**
-     * Piege de cascade : .pk-ad--nothumb et .pk-ad ont la meme specificite, et
-     * une media query n'en ajoute pas. Toute media query qui redefinit les
-     * colonnes de .pk-ad ecrase donc le cas « sans photo » par simple ordre du
-     * fichier, et l'annonce garde une colonne vide. Ce test verifie que chacune
-     * rappelle .pk-ad--nothumb.
-     */
-    public function test_every_media_query_that_resizes_the_ad_grid_restores_the_photoless_card(): void
+    /** La grille compacte doit disparaitre proprement quand l'annonce n'a pas de photo. */
+    public function test_responsive_ad_grid_preserves_the_photoless_card(): void
     {
         $css = file_get_contents(public_path('css/feed.css'));
 
-        preg_match_all('/@media[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/', $css, $blocks);
-
-        $checked = 0;
-
-        foreach ($blocks[0] as $block) {
-            if (! preg_match('/\.pk-ad\s*\{[^}]*grid-template-columns/', $block)) {
-                continue;
-            }
-
-            $checked++;
-
-            $this->assertMatchesRegularExpression(
-                '/\.pk-ad--nothumb\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/',
-                $block,
-                'Une media query redefinit les colonnes de .pk-ad sans rappeler .pk-ad--nothumb : '
-                .'les annonces sans photo y garderont une colonne vide.'
-            );
-        }
-
-        $this->assertGreaterThan(0, $checked, 'Aucune media query ne redimensionne la grille des cartes.');
+        $this->assertMatchesRegularExpression(
+            '/\.pk-ad__main\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:/s',
+            $css
+        );
+        $this->assertMatchesRegularExpression(
+            '/\.pk-ad--nothumb \.pk-ad__main\s*\{\s*grid-template-columns:\s*minmax\(0,\s*1fr\);\s*\}/',
+            $css
+        );
+        $this->assertStringContainsString(
+            '.pk-ad--nothumb .pk-ad__main { grid-template-columns: minmax(0, 1fr); }',
+            $css
+        );
+        $this->assertStringContainsString(
+            '.pk-ad--nothumb .pk-ad__main {',
+            $css
+        );
     }
 
     /**
