@@ -32,6 +32,7 @@
     }
 
     .pwa-install-button[hidden],
+    body:has(.push-notification-prompt:not([hidden])) .pwa-install-button,
     .pwa-ios-dialog[hidden] {
         display: none !important;
     }

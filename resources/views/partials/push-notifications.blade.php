@@ -30,6 +30,17 @@
     }
     .push-notification-accept { border: 0; color: #fff; background: #4f46e5; }
     .push-notification-dismiss { border: 1px solid #cbd5e1; color: #475569; background: #fff; }
+    .push-notification-prompt [data-push-feedback] { color: #9f1239; font-size: .88rem; line-height: 1.45; }
+    .push-notification-prompt-actions { flex-wrap: wrap; }
+    .push-notification-prompt-actions button:disabled { opacity: .65; cursor: wait; }
+    body:has(.pwa-ios-dialog:not([hidden])) .push-notification-prompt { display: none; }
+    @media (max-width: 900px) {
+        body:has(.pk-tabbar) .push-notification-prompt {
+            bottom: calc(90px + env(safe-area-inset-bottom));
+            max-height: calc(100dvh - 190px - env(safe-area-inset-bottom));
+            overflow-y: auto;
+        }
+    }
 
     @media (max-width: 480px) {
         .push-notification-prompt {
@@ -46,6 +57,7 @@
     <p class="push-notification-prompt-text">
         Activez les notifications pour vos messages, propositions et nouvelles demandes.
     </p>
+    <p data-push-feedback role="status" aria-live="polite" hidden></p>
     <div class="push-notification-prompt-actions">
         <button type="button" class="push-notification-accept" data-push-enable>Activer</button>
         <button type="button" class="push-notification-dismiss" data-push-dismiss>Plus tard</button>
@@ -67,6 +79,14 @@
     };
     const prompt = document.getElementById('pushNotificationPrompt');
     const dismissStorageKey = 'prokejem_push_prompt_dismissed_until';
+    let promptTimer;
+    let activating = false;
+    let activationFeedback = false;
+    const storage = {
+        get: () => { try { return Number(localStorage.getItem(dismissStorageKey) || 0); } catch { return 0; } },
+        dismiss: () => { try { localStorage.setItem(dismissStorageKey, String(Date.now() + 7 * 86400000)); } catch {} },
+        clear: () => { try { localStorage.removeItem(dismissStorageKey); } catch {} },
+    };
 
     const supportsPush = 'serviceWorker' in navigator
         && 'PushManager' in window
@@ -115,6 +135,7 @@
     };
 
     const setState = (state, message) => {
+        window.clearTimeout(promptTimer);
         controls().forEach((root) => {
             const status = root.querySelector('[data-push-status]');
             const enable = root.querySelector('[data-push-enable]');
@@ -130,14 +151,22 @@
             if (test) test.hidden = state !== 'active';
         });
 
-        if (prompt) prompt.hidden = true;
+        if (prompt) {
+            prompt.hidden = !(activationFeedback && ['loading', 'error'].includes(state));
+            const feedback = prompt.querySelector('[data-push-feedback]');
+            feedback.textContent = message;
+            feedback.hidden = prompt.hidden;
+            const enable = prompt.querySelector('[data-push-enable]');
+            enable.disabled = state === 'loading' || (supportsPush && Notification.permission === 'denied');
+            enable.textContent = state === 'loading' ? 'Activation…' : state === 'error' ? 'Réessayer' : 'Activer';
+        }
     };
 
     const maybeShowPrompt = () => {
         if (!prompt || Notification.permission === 'denied') return;
-        const dismissedUntil = Number(localStorage.getItem(dismissStorageKey) || 0);
+        const dismissedUntil = storage.get();
         if (dismissedUntil > Date.now()) return;
-        window.setTimeout(() => { prompt.hidden = false; }, 1200);
+        promptTimer = window.setTimeout(() => { prompt.hidden = false; }, 1200);
     };
 
     const registration = async () => {
@@ -147,6 +176,9 @@
     };
 
     const activate = async () => {
+        if (activating || !supportsPush) return;
+        activating = true;
+        activationFeedback = Boolean(prompt && !prompt.hidden);
         setState('loading', 'Activation en cours…');
 
         try {
@@ -168,7 +200,7 @@
             }
 
             await request(endpoints.store, 'POST', subscriptionPayload(subscription));
-            localStorage.removeItem(dismissStorageKey);
+            storage.clear();
             setState('active', 'Activées sur cet appareil.');
             window.prokejemUsage?.track('push_enabled');
 
@@ -178,9 +210,11 @@
                 badge: '/pwa/icon-192.png',
                 tag: 'prokejem-push-enabled',
                 data: { url: endpoints.settings },
-            });
+            }).catch(() => {}); // Une confirmation locale facultative ne doit pas invalider l’abonnement.
         } catch (error) {
             setState('error', error.message || 'Impossible d’activer les notifications.');
+        } finally {
+            activating = false;
         }
     };
 
@@ -220,7 +254,9 @@
         if (test) { event.preventDefault(); sendTest(); }
         if (dismiss) {
             event.preventDefault();
-            localStorage.setItem(dismissStorageKey, String(Date.now() + 7 * 24 * 60 * 60 * 1000));
+            window.clearTimeout(promptTimer);
+            activationFeedback = false;
+            storage.dismiss();
             if (prompt) prompt.hidden = true;
         }
     });
