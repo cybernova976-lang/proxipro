@@ -22,6 +22,31 @@ class ServiceProviderController extends Controller
     public function __construct(private ProviderSubscriptionService $providerSubscriptionService) {}
 
     /**
+     * Point d'entrée unique du parcours particulier vers le profil prestataire.
+     */
+    public function start()
+    {
+        $user = Auth::user();
+
+        if ($user->is_service_provider) {
+            return redirect()->route('service-provider.mes-services');
+        }
+
+        if (! $user->hasCompleteVerificationProfile()) {
+            return redirect()->route('profile.edit')
+                ->with('error', 'Complétez les informations obligatoires pour activer votre profil prestataire.');
+        }
+
+        if (! $user->hasVerifiedProfileBadge()) {
+            return redirect()->route('verification.index')
+                ->with('error', 'Faites vérifier votre identité pour activer votre profil prestataire.');
+        }
+
+        return redirect()->route('profile.show')
+            ->with('open_provider_onboarding', true);
+    }
+
+    /**
      * Liste des catégories avec sous-catégories (source unique : config/categories.php)
      */
     private function getServiceCategories(): array

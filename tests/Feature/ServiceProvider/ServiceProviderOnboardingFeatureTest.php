@@ -14,6 +14,71 @@ class ServiceProviderOnboardingFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_particular_user_has_a_single_entry_point_to_activate_provider_profile(): void
+    {
+        $user = User::factory()->completeForVerification()->create([
+            'user_type' => 'particulier',
+            'account_type' => 'particulier',
+            'is_service_provider' => false,
+            'identity_verified' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('profile.show'))
+            ->assertOk()
+            ->assertSee('Activer mon profil prestataire')
+            ->assertSee(route('service-provider.start'), false);
+
+        $this->get(route('service-provider.start'))
+            ->assertRedirect(route('profile.show'))
+            ->assertSessionHas('open_provider_onboarding', true);
+
+        $this->get(route('profile.show'))
+            ->assertOk()
+            ->assertSee('openProviderOnboarding', false)
+            ->assertSee('becomeProviderModal', false);
+    }
+
+    public function test_provider_activation_entry_point_guides_incomplete_and_unverified_users(): void
+    {
+        $incomplete = User::factory()->create([
+            'user_type' => 'particulier',
+            'account_type' => 'particulier',
+            'is_service_provider' => false,
+        ]);
+
+        $this->actingAs($incomplete)
+            ->get(route('service-provider.start'))
+            ->assertRedirect(route('profile.edit'))
+            ->assertSessionHas('error');
+
+        $unverified = User::factory()->completeForVerification()->create([
+            'user_type' => 'particulier',
+            'account_type' => 'particulier',
+            'is_service_provider' => false,
+            'identity_verified' => false,
+            'is_verified' => false,
+        ]);
+
+        $this->actingAs($unverified)
+            ->get(route('service-provider.start'))
+            ->assertRedirect(route('verification.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_active_provider_entry_point_opens_service_management(): void
+    {
+        $provider = User::factory()->create([
+            'user_type' => 'particulier',
+            'account_type' => 'particulier',
+            'is_service_provider' => true,
+        ]);
+
+        $this->actingAs($provider)
+            ->get(route('service-provider.start'))
+            ->assertRedirect(route('service-provider.mes-services'));
+    }
+
     public function test_provider_onboarding_updates_profile_services_without_creating_an_ad(): void
     {
         Storage::fake('public');
@@ -139,6 +204,8 @@ class ServiceProviderOnboardingFeatureTest extends TestCase
         $this->get(route('profile.show'))
             ->assertOk()
             ->assertSee('Vérifier mon profil')
+            ->assertSee('Activer mon profil prestataire')
+            ->assertSee(route('service-provider.start'), false)
             ->assertDontSee('data-bs-target="#becomeProviderModal"', false);
 
         $response = $this->postJson(route('service-provider.register'), [

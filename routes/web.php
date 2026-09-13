@@ -264,6 +264,7 @@ Route::middleware(['auth'])->group(function () {
 
 // Routes pour devenir prestataire (Particulier → Particulier Prestataire)
 Route::middleware(['auth'])->prefix('service-provider')->name('service-provider.')->group(function () {
+    Route::get('/start', [ServiceProviderController::class, 'start'])->name('start');
     Route::get('/form', [ServiceProviderController::class, 'showForm'])->name('form');
     Route::get('/categories', [ServiceProviderController::class, 'getCategories'])->name('categories');
     Route::get('/my-services', [ServiceProviderController::class, 'getMyServices'])->name('my-services');

@@ -6943,6 +6943,9 @@
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('home') }}"><i class="fas fa-th-large text-secondary"></i>Tableau de bord</a></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('ads.index') }}"><i class="fas fa-bullhorn" style="color: #6366f1;"></i>Annonces</a></li>
                                 @if(!Auth::user()->isProfessionnel() && !Auth::user()->isServiceProvider())
+                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('service-provider.start') }}"><i class="fas fa-user-plus" style="color: #059669;"></i>Activer mon profil prestataire</a></li>
+                                @endif
+                                @if(!Auth::user()->isProfessionnel() && !Auth::user()->isServiceProvider())
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('demands.tracking') }}"><i class="fas fa-route" style="color: #2563eb;"></i>Suivi de mes demandes</a></li>
                                 @endif
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('messages.index') }}"><i class="fas fa-envelope" style="color: var(--accent);"></i>Messages @if($unreadCount > 0)<span class="badge bg-danger ms-auto" style="font-size: 0.65rem;">{{ $unreadCount }}</span>@endif</a></li>
@@ -10237,6 +10240,7 @@
     @auth
       @if(!request()->routeIs('demand.*', 'ads.create', 'ads.edit'))
         @include('partials.provider-modal')
+        @include('partials.provider-onboarding-autostart')
         @include('partials.category-selection-modal')
         @if(Auth::user()->isOAuthUser() && !Auth::user()->profile_completed && !Auth::user()->hasCompletedProOnboarding() && !Auth::user()->hasActiveProSubscription())
             @include('partials.provider-oauth-modal')

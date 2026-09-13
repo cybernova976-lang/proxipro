@@ -97,6 +97,9 @@
                         </li>
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('profile.show') }}"><i class="fas fa-user text-primary"></i>Mon Profil</a></li>
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('home') }}"><i class="fas fa-th-large text-secondary"></i>Tableau de bord</a></li>
+                        @if(!Auth::user()->isProfessionnel() && !Auth::user()->isServiceProvider())
+                        <li><a class="dropdown-item dropdown-item-modern" href="{{ route('service-provider.start') }}"><i class="fas fa-user-plus" style="color: #059669;"></i>Activer mon profil prestataire</a></li>
+                        @endif
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('messages.index') }}"><i class="fas fa-envelope text-info"></i>Messages @if($unreadMessages > 0)<span class="badge bg-danger ms-auto" style="font-size: 0.65rem;">{{ $unreadMessages }}</span>@endif</a></li>
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('points.dashboard') }}"><i class="fas fa-coins text-warning"></i>Mes Points <span class="badge bg-success ms-auto">{{ Auth::user()->available_points ?? 0 }}</span></a></li>
                         <li><hr class="dropdown-divider my-2"></li>
@@ -575,6 +578,7 @@
 {{-- Include Provider Modals --}}
 @auth
     @include('partials.provider-modal')
+    @include('partials.provider-onboarding-autostart')
     @if(Auth::user()->isOAuthUser() && !Auth::user()->profile_completed && !Auth::user()->hasCompletedProOnboarding() && !Auth::user()->hasActiveProSubscription())
         @include('partials.provider-oauth-modal')
     @endif

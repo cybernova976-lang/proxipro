@@ -1059,6 +1059,21 @@
 }
 
 /* Responsive */
+@media (max-width: 992px) {
+    .provider-steps {
+        justify-content: space-between;
+        gap: 3px;
+    }
+
+    .step-label {
+        display: none;
+    }
+
+    .step-connector {
+        width: clamp(10px, 4vw, 24px);
+    }
+}
+
 @media (max-width: 768px) {
     .provider-avatar-picker {
         grid-template-columns: 48px minmax(0, 1fr);
@@ -1071,18 +1086,6 @@
 
     .categories-grid {
         grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .provider-steps {
-        gap: 4px;
-    }
-    
-    .step-label {
-        display: none;
-    }
-    
-    .step-connector {
-        width: 20px;
     }
     
     .provider-modal-body {

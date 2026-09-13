@@ -24,25 +24,11 @@
         ->unique()
         ->values();
     $providerAction = null;
-    if ($isParticularAccount && !$user->is_service_provider && !$profileCompleteForVerification) {
+    if ($isParticularAccount && !$user->is_service_provider) {
         $providerAction = [
-            'href' => route('profile.edit'),
-            'icon' => 'fas fa-user-edit',
-            'label' => 'Compléter mon profil',
-            'class' => 'btn-warning',
-        ];
-    } elseif ($isParticularAccount && !$user->is_service_provider && !$profileVerified) {
-        $providerAction = [
-            'href' => route('verification.index'),
-            'icon' => 'fas fa-shield-alt',
-            'label' => 'Vérifier mon profil',
-            'class' => 'btn-outline-success',
-        ];
-    } elseif ($isParticularAccount && !$user->is_service_provider) {
-        $providerAction = [
-            'target' => '#becomeProviderModal',
+            'href' => route('service-provider.start'),
             'icon' => 'fas fa-user-plus',
-            'label' => 'Devenir prestataire',
+            'label' => 'Activer mon profil prestataire',
             'class' => 'btn-success',
         ];
     } elseif ($user->isParticulierPrestataire()) {
