@@ -1,5 +1,5 @@
 {{--
-    Zone 3 · progression du profil — une seule action suivante.
+    Rappel secondaire du profil — une seule action suivante, apres le flux.
 
     La ligne disparait entierement quand il n'y a plus rien a faire.
     Priorite : la verification d'identite d'abord (c'est elle qui produit
@@ -59,7 +59,8 @@
 @endphp
 
 @if($pkNext)
-    <div class="pk-card pk-progress">
+    <details class="pk-progress" @if($pkNext['tone'] === 'warn') open @endif>
+        <summary>
         <span class="pk-progress__ico"
               @if($pkNext['tone'] === 'warn') style="background: var(--pk-warn-bg); color: var(--pk-warn);"
               @elseif($pkNext['tone'] === 'info') style="background: var(--pk-50); color: var(--pk-700);"
@@ -67,22 +68,19 @@
             <i class="{{ $pkNext['icon'] }}"></i>
         </span>
 
-        <div class="pk-progress__txt">
-            <b>{{ $pkNext['title'] }}</b>
+        <b>{{ $pkNext['title'] }}</b>
+        <span class="pk-progress__expand">Détails <i class="fas fa-chevron-down" aria-hidden="true"></i></span>
+        </summary>
+        <div class="pk-progress__detail">
             <p>{{ $pkNext['desc'] }}</p>
             @if(($pkRole ?? 'client') === 'provider' && $pkCompletion > 0 && $pkCompletion < 100)
                 <div class="pk-bar"><i style="width: {{ $pkCompletion }}%"></i></div>
             @endif
-        </div>
-
-        @if(($pkRole ?? 'client') === 'provider' && $pkCompletion > 0 && $pkCompletion < 100)
-            <span class="pk-progress__pct">{{ $pkCompletion }} %</span>
-        @endif
-
         @if($pkNext['cta'])
             <a href="{{ $pkNext['url'] }}" class="pk-btn-soft">
                 {{ $pkNext['cta'] }} <i class="fas fa-arrow-right"></i>
             </a>
         @endif
-    </div>
+        </div>
+    </details>
 @endif

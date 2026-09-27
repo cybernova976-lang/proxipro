@@ -106,6 +106,16 @@
 .pk-main { display: grid; gap: 20px; min-width: 0; }
 .pk-main > * { min-width: 0; }
 
+.pk-mode { display: flex; gap: 4px; padding: 4px; width: fit-content; max-width: 100%; border-radius: 12px; background: #eaf0f8; }
+.pk-mode a { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 8px 14px; border-radius: 9px; color: var(--pk-ink-2); font-size: .8rem; font-weight: 700; }
+.pk-mode a[aria-current] { background: #fff; color: var(--pk-700); box-shadow: var(--pk-sh-1); }
+.pk-mode a:hover { color: var(--pk-700); }
+@media (max-width: 640px) {
+  .pk-mode { width: 100%; }
+  .pk-mode a { flex: 1; min-width: 0; padding: 8px; font-size: .73rem; line-height: 1.35; text-align: center; }
+  .pk-mode a i { display: none; }
+}
+
 .pk-rail { display: none; }
 @media (min-width: 1180px) {
   .pk-rail { display: grid; gap: 14px; position: sticky; top: 84px; }
@@ -304,6 +314,15 @@
 .pk-state .pk-btn-outline-light:hover { background: #fff; color: var(--pk-800); }
 
 .pk-state__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.pk-state__secondary { display: inline-flex; align-items: center; gap: 6px; padding: 10px 0; color: var(--pk-700); font-size: .82rem; font-weight: 700; }
+.pk-state--welcome { padding: 22px; }
+.pk-state--welcome h1 { max-width: none; }
+.pk-state--welcome .pk-intent { margin-top: 16px; padding: 0; border: 0; box-shadow: none; background: transparent; }
+.pk-state--welcome .pk-intent__av { display: none; }
+.pk-state--welcome .pk-quickcats { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 12px; gap: 7px; }
+.pk-state--welcome .pk-quickcat { flex-direction: row; align-items: center; padding: 10px; gap: 7px; border-radius: 9px; }
+.pk-state--welcome .pk-quickcat b { margin-top: 0; font-size: .74rem; }
+.pk-state--welcome .pk-quickcat i { font-size: .9rem; }
 
 /* La demande active est l'information prioritaire du client : l'accent bleu
    et le statut mesuré la distinguent des conseils de profil qui la suivent. */
@@ -393,15 +412,26 @@
   .pk-state__stats span { font-size: .66rem; }
   .pk-state__actions .pk-btn-white,
   .pk-state__actions .pk-btn-outline-light { flex: 1 1 100%; }
+  .pk-state__actions { gap: 4px; margin-top: 14px; }
+  .pk-state--welcome .pk-quickcats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pk-state--welcome p { font-size: .85rem; }
+  .pk-state--welcome .pk-intent .pk-btn { min-width: 44px; min-height: 44px; }
 }
 
 /* ==========================================================================
    Zone 3 · progression du profil — une seule action suivante
    ========================================================================== */
 
-.pk-progress { padding: 17px 19px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+.pk-progress { border-top: 1px solid var(--pk-rule); border-bottom: 1px solid var(--pk-rule); }
+.pk-progress summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; min-height: 58px; padding: 10px 4px; }
+.pk-progress summary::-webkit-details-marker { display: none; }
+.pk-progress summary b { flex: 1; min-width: 0; font-size: .86rem; line-height: 1.4; }
+.pk-progress__expand { color: var(--pk-ink-2); font-size: .74rem; white-space: nowrap; }
+.pk-progress[open] .pk-progress__expand i { transform: rotate(180deg); }
+.pk-progress__detail { padding: 0 4px 14px 48px; }
+.pk-progress__detail p { margin: 0 0 10px; font-size: .82rem; color: var(--pk-ink-2); }
 .pk-progress__ico {
-  width: 44px; height: 44px; border-radius: 12px; flex: none;
+  width: 34px; height: 34px; border-radius: 10px; flex: none;
   background: var(--pk-ok-bg); color: var(--pk-ok);
   display: grid; place-items: center; font-size: 1.1rem;
 }
@@ -420,7 +450,7 @@
   .pk-progress__ico { width: 36px; height: 36px; border-radius: 10px; font-size: 1rem; }
   .pk-progress__txt { flex: 1 1 100%; order: 3; }
   .pk-progress__pct { order: 2; margin-left: auto; }
-  .pk-progress .pk-btn-soft { order: 4; width: 100%; }
+  .pk-progress .pk-btn-soft { width: auto; }
 }
 
 /* ==========================================================================
@@ -692,19 +722,19 @@
 .pk-pros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
 .pk-pro {
   background: var(--pk-surface); border: 1px solid var(--pk-rule);
-  border-radius: var(--pk-r-lg); overflow: hidden; min-width: 0; height: 250px;
-  display: grid; grid-template-rows: 195px 55px;
+  border-radius: var(--pk-r-lg); overflow: hidden; min-width: 0;
+  display: grid; grid-template-rows: minmax(164px, auto) 55px;
   box-shadow: 0 1px 2px rgba(23, 32, 51, .06), 0 12px 28px -24px rgba(23, 32, 51, .46);
   transition: border-color .15s, transform .12s, box-shadow .15s;
 }
 .pk-pro:hover { border-color: var(--pk-200); transform: translateY(-2px); box-shadow: var(--pk-sh-2); }
 .pk-pro__identity {
   display: grid; grid-template-columns: clamp(124px, 30%, 140px) minmax(0, 1fr);
-  min-width: 0; height: 195px; min-height: 0; overflow: hidden; color: inherit;
+  min-width: 0; min-height: 164px; overflow: hidden; color: inherit;
 }
 .pk-pro__visual {
   position: relative; display: grid; place-items: center; overflow: hidden;
-  width: 100%; height: 195px; min-height: 0; border-radius: var(--pk-r-lg);
+  width: 100%; height: 100%; min-height: 164px; border-radius: var(--pk-r-lg);
   background: linear-gradient(145deg, var(--pk-100), var(--pk-200));
   border-right: 1px solid var(--pk-rule);
 }
@@ -730,8 +760,8 @@
 }
 .pk-pro__headline { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; }
 .pk-pro__headline b {
-  min-width: 0; overflow: hidden; padding-right: 25px; color: var(--pk-ink); font-size: .96rem; font-weight: 800;
-  letter-spacing: -.015em; text-overflow: ellipsis; white-space: nowrap;
+  min-width: 0; padding-right: 25px; color: var(--pk-ink); font-size: .96rem; font-weight: 800;
+  letter-spacing: -.015em; white-space: normal; overflow-wrap: anywhere; line-height: 1.3;
 }
 .pk-pro__jobline { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; }
 .pk-pro__price { flex: none; color: var(--pk-700); font-size: .82rem; font-weight: 800; white-space: nowrap; }
@@ -775,9 +805,9 @@
     scrollbar-width: none;
   }
   .pk-pros::-webkit-scrollbar { display: none; }
-  .pk-pro { flex: 0 0 min(88vw, 365px); height: 248px; grid-template-rows: 193px 55px; scroll-snap-align: start; }
-  .pk-pro__identity { grid-template-columns: 120px minmax(0, 1fr); height: 193px; }
-  .pk-pro__visual { height: 193px; }
+  .pk-pro { flex: 0 0 min(88vw, 365px); grid-template-rows: minmax(164px, auto) 55px; scroll-snap-align: start; }
+  .pk-pro__identity { grid-template-columns: 120px minmax(0, 1fr); }
+  .pk-pro__visual { height: 100%; }
   .pk-pro__body { padding: 14px 12px 12px; gap: 7px; }
   .pk-pro__verified { top: 12px; right: 12px; }
   .pk-pro__headline b { font-size: .91rem; }
@@ -785,11 +815,16 @@
   .pk-pro__action { padding-inline: 7px; font-size: .69rem; }
 }
 
+.pk-selection-note { margin: 8px 0 0; font-size: .7rem; color: var(--pk-ink-2); line-height: 1.5; }
+.pk-provider-empty { padding: 14px 0; border-bottom: 1px solid var(--pk-rule); }
+.pk-provider-empty p { margin: 0 0 7px; color: var(--pk-ink-2); font-size: .85rem; }
+.pk-provider-empty a { color: var(--pk-700); font-size: .82rem; font-weight: 700; }
+
 /* ==========================================================================
    Zone 6 · reassurance
    ========================================================================== */
 
-.pk-trust { padding: 21px 23px; display: grid; gap: 16px; }
+.pk-trust { padding: 20px 0 0; display: grid; gap: 16px; border: 0; border-top: 1px solid var(--pk-rule); border-radius: 0; box-shadow: none; background: transparent; }
 .pk-trust__head { display: flex; align-items: center; gap: 11px; }
 .pk-trust__head .ico {
   width: 38px; height: 38px; border-radius: 11px;

@@ -1,16 +1,17 @@
 {{--
     Zone 2 · carte d'etat — la situation de l'utilisateur avant l'inventaire.
 
-    Trois cas, determines par les donnees et jamais par un onglet clique :
+    Selon le mode choisi et la situation reelle :
       · prestataire                      → volume d'opportunites et visibilite
       · client avec une demande en cours → ou en est cette demande
+      · client avec une mission en cours → suivi de la commande
       · client sans demande              → invitation a publier + acces rapides
 --}}
 @php
     $pkFirstName = trim(Str::before(trim(Auth::user()->name ?? 'Utilisateur'), ' ')) ?: 'Utilisateur';
     $pkOpenRequests = collect($priorityProviderRequests ?? []);
     $pkMyRequest = $activeClientRequest ?? null;
-    $pkProposals = (int) ($pkMyRequest->service_proposals_count ?? 0);
+    $pkProposals = (int) ($pkMyRequest->pending_proposals_count ?? $pkMyRequest->service_proposals_count ?? 0);
     $pkNeedsAttention = (bool) ($activeClientRequestNeedsAttention ?? false);
 @endphp
 
@@ -28,7 +29,7 @@
             <p>
                 @if($pkOpenRequests->count() > 0)
                     <strong>{{ $pkOpenRequests->count() }}</strong> n’{{ $pkOpenRequests->count() > 1 ? 'ont' : 'a' }}
-                    encore reçu aucune réponse. Répondre en premier augmente nettement vos chances d’être choisi.
+                    encore reçu aucune réponse. Consultez leur besoin et proposez votre intervention.
                 @else
                     Consultez le flux ci-dessous et proposez vos services aux clients qui vous correspondent.
                 @endif
@@ -67,6 +68,25 @@
         </div>
     </section>
 
+@elseif(($pkActiveOrder ?? null) && (! $pkMyRequest || in_array($pkActiveOrder->status, ['awaiting_payment', 'disputed'], true)))
+
+    <section class="pk-state pk-state--active-request" aria-labelledby="pkStateTitle">
+        <div class="pk-state__request-head">
+            <span class="pk-state__eyebrow"><i class="fas fa-briefcase" aria-hidden="true"></i> Votre mission</span>
+            <span class="pk-state__status">{{ $pkActiveOrder->status_label }}</span>
+        </div>
+        <h1 id="pkStateTitle">{{ $pkActiveOrder->ad?->title ?: 'Votre prestation en cours' }}</h1>
+        <p>{{ match ($pkActiveOrder->status) {
+            'awaiting_payment' => 'Votre proposition est acceptée. Consultez la commande pour préparer le paiement sécurisé.',
+            'disputed' => 'Un litige est en cours. Retrouvez son suivi et les échanges depuis votre commande.',
+            default => 'Retrouvez les étapes de votre mission et validez sa réalisation une fois la prestation terminée.',
+        } }}</p>
+        <div class="pk-state__actions">
+            <a href="{{ route('service-orders.index') }}" class="pk-btn-white">Voir ma commande <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+            <a href="{{ route('demands.tracking') }}" class="pk-state__secondary">Toutes les étapes</a>
+        </div>
+    </section>
+
 @elseif($pkMyRequest)
 
     {{-- ============ Client avec une demande en cours ============ --}}
@@ -80,19 +100,15 @@
                     : ($pkNeedsAttention ? 'Toujours aucune réponse' : 'Demande publiée') }}
             </span>
         </div>
-        <h1 id="pkStateTitle">{{ Str::limit($pkMyRequest->title, 72) }}</h1>
+        <h1 id="pkStateTitle">{{ $pkMyRequest->title }}</h1>
         <p>
             @if($pkProposals > 0)
-                <strong>{{ $pkProposals }} prestataire{{ $pkProposals > 1 ? 's' : '' }}
-                vous {{ $pkProposals > 1 ? 'ont' : 'a' }} répondu.</strong>
-                Comparez les profils et les prix, puis choisissez celui qui vous convient.
-                Le paiement n’est débloqué qu’après votre validation.
+                <strong>{{ $pkProposals }} proposition{{ $pkProposals > 1 ? 's' : '' }} à examiner.</strong>
+                Comparez les profils, les prix et les délais.
             @elseif($pkNeedsAttention)
-                <strong>Votre demande est visible mais n’a pas encore reçu de proposition.</strong>
-                Ajoutez une précision, une photo ou un créneau plus souple pour aider les prestataires à se décider.
+                Ajoutez une précision, une photo ou un créneau plus souple pour faciliter les réponses.
             @else
-                Votre demande est publiée. Les prestataires de votre zone la reçoivent :
-                vous serez prévenu dès la première réponse.
+                Votre demande est visible. Retrouvez son avancement et les propositions reçues.
             @endif
         </p>
         <div class="pk-state__actions">
@@ -100,12 +116,13 @@
                 ? route('ads.edit', $pkMyRequest)
                 : ($pkProposals > 0 ? route('proposals.compare', $pkMyRequest) : route('demands.tracking').'#request-'.$pkMyRequest->id) }}" class="pk-btn-white">
                 {{ $pkProposals > 0
-                    ? 'Voir les ' . $pkProposals . ' réponse' . ($pkProposals > 1 ? 's' : '')
+                    ? 'Comparer les propositions'
                     : ($pkNeedsAttention ? 'Améliorer ma demande' : 'Suivre ma demande') }}
                 <i class="fas fa-arrow-right"></i>
             </a>
-            <a href="{{ route('demands.tracking').'#request-'.$pkMyRequest->id }}" class="pk-btn-outline-light">
-                <i class="fas fa-route"></i> Toutes les étapes
+            <a href="{{ route('demands.tracking') }}" class="pk-state__secondary">
+                <i class="fas fa-route"></i>
+                {{ ($pkActiveRequestCount ?? 1) > 1 ? 'Mes '.$pkActiveRequestCount.' demandes en cours' : 'Toutes les étapes' }}
             </a>
         </div>
     </section>
@@ -113,13 +130,11 @@
 @else
 
     {{-- ============ Client sans demande ============ --}}
-    <section class="pk-state" aria-labelledby="pkStateTitle">
-        <span class="pk-state__eyebrow"><i class="fas fa-hand-sparkles"></i> Bienvenue {{ $pkFirstName }}</span>
-        <h1 id="pkStateTitle">De quel service avez-vous besoin ?</h1>
-        <p>
-            Décrivez votre besoin en quelques minutes. C’est gratuit, et les prestataires
-            disponibles autour de vous vous répondent directement.
-        </p>
+    <section class="pk-state pk-state--welcome" aria-labelledby="pkStateTitle">
+        <span class="pk-state__eyebrow">Bonjour {{ $pkFirstName }}</span>
+        <h1 id="pkStateTitle">De quoi avez-vous besoin&nbsp;?</h1>
+        <p>Décrivez votre besoin, puis comparez les propositions. La publication est gratuite.</p>
+        @include('feed.partials.intent-bar')
 
         @if(! empty($pkQuickCategories))
             <div class="pk-quickcats">
@@ -127,11 +142,6 @@
                     <button type="button" class="pk-quickcat" data-pk-category="{{ $pkCatName }}">
                         <i class="{{ $pkCatData['icon'] ?? 'fas fa-tools' }}" aria-hidden="true"></i>
                         <b>{{ Str::limit($pkCatName, 26) }}</b>
-                        @if((int) ($pkCatData['total'] ?? 0) > 0)
-                            <span>{{ (int) $pkCatData['total'] }} annonce{{ (int) $pkCatData['total'] > 1 ? 's' : '' }}</span>
-                        @else
-                            <span>Publier une demande</span>
-                        @endif
                     </button>
                 @endforeach
             </div>

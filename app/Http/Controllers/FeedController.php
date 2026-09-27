@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ad;
+use App\Models\ServiceOrder;
+use App\Models\ServiceProposal;
 use App\Models\User;
 use App\Services\AdLifecycleService;
 use App\Services\FeedRankingService;
@@ -25,6 +27,17 @@ class FeedController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        $pkCanProvide = $user && ($user->isProfessionnel() || $user->isServiceProvider());
+        $modeKey = 'feed_mode.'.($user?->id ?? 'guest');
+        $requestedMode = $request->query('mode');
+        $validMode = in_array($requestedMode, ['client', 'provider'], true)
+            && ($requestedMode === 'client' || $pkCanProvide);
+        if ($validMode && $request->hasSession()) {
+            $request->session()->put($modeKey, $requestedMode);
+        }
+        $pkRole = $pkCanProvide
+            ? ($validMode ? $requestedMode : ($request->hasSession() ? $request->session()->get($modeKey, 'provider') : 'provider'))
+            : 'client';
 
         // ===== GÉOLOCALISATION AUTOMATIQUE =====
         $geoContext = $this->resolveFeedGeoContext($request, $user);
@@ -48,7 +61,7 @@ class FeedController extends Controller
         // Appliquer le filtre de type si présent
         $filterType = $request->get('type', 'all'); // all, offres, demandes
         if ($filterType === 'all' && ! $request->has('type')) {
-            if ($user && ($user->user_type === 'professionnel' || $user->is_service_provider)) {
+            if ($pkRole === 'provider') {
                 $filterType = 'demandes';
             }
         }
@@ -255,16 +268,28 @@ class FeedController extends Controller
             geoCity: $useNearbyScope && ! $geoFallbackUsed ? $geoCity : null,
             geoCountry: $useNearbyScope && ! $geoFallbackUsed ? $geoCountry : null
         );
-        $homeProfessionalProfiles = $this->buildHighlightedProfessionalProfiles($user, 18);
-
-        $activeClientRequest = $user?->exists
+        $clientRequestsQuery = $user?->exists
             ? $user->ads()
                 ->marketplaceActive()
                 ->where('service_type', 'demande')
-                ->withCount('serviceProposals')
-                ->latest('created_at')
-                ->first()
+                ->whereDoesntHave('serviceOrders', fn ($orders) => $orders->whereIn('status', [ServiceOrder::STATUS_AWAITING_PAYMENT, ServiceOrder::STATUS_FUNDED, ServiceOrder::STATUS_COMPLETED, ServiceOrder::STATUS_DISPUTED]))
+                ->withCount([
+                    'serviceProposals',
+                    'serviceProposals as pending_proposals_count' => fn ($proposals) => $proposals->where('status', ServiceProposal::STATUS_PENDING),
+                ])
             : null;
+        $pkActiveRequestCount = $clientRequestsQuery ? (clone $clientRequestsQuery)->count() : 0;
+        $activeClientRequest = $clientRequestsQuery
+            ? $clientRequestsQuery
+                ->orderByRaw('CASE WHEN (SELECT COUNT(*) FROM service_proposals WHERE service_proposals.ad_id = ads.id AND status = ?) > 0 THEN 0 WHEN ads.created_at <= ? AND NOT EXISTS (SELECT 1 FROM service_proposals WHERE service_proposals.ad_id = ads.id) THEN 1 ELSE 2 END', [ServiceProposal::STATUS_PENDING, now()->subHours(AdLifecycleService::FIRST_RESPONSE_ATTENTION_HOURS)])
+                ->orderByDesc('pending_proposals_count')
+                ->latest('created_at')->first()
+            : null;
+
+        $pkProviderCategory = $pkRole === 'client' ? $activeClientRequest?->category : null;
+        $pkProviderCity = $pkRole === 'client' ? ($activeClientRequest?->city ?: $activeClientRequest?->location ?: $geoCity) : null;
+        $pkProviderCountry = $activeClientRequest?->country ?: $geoCountry;
+        $homeProfessionalProfiles = $this->buildRelevantProfessionalProfiles($user, $pkProviderCategory, $pkProviderCity, $pkProviderCountry);
 
         $activeClientRequestNeedsAttention = $activeClientRequest
             ? $this->adLifecycle->needsFirstResponseAttention(
@@ -272,6 +297,13 @@ class FeedController extends Controller
                 (int) ($activeClientRequest->service_proposals_count ?? 0)
             )
             : false;
+        $pkActiveOrder = $pkRole === 'client' && $user?->exists
+            ? ServiceOrder::where('buyer_id', $user->id)
+                ->whereIn('status', [ServiceOrder::STATUS_AWAITING_PAYMENT, ServiceOrder::STATUS_FUNDED, ServiceOrder::STATUS_DISPUTED])
+                ->with('ad')
+                ->orderByRaw('CASE WHEN status = ? THEN 0 WHEN status = ? THEN 1 ELSE 2 END', [ServiceOrder::STATUS_DISPUTED, ServiceOrder::STATUS_AWAITING_PAYMENT])
+                ->latest('updated_at')->first()
+            : null;
 
         $priorityProviderRequests = $this->buildPriorityProviderRequests(
             user: $user,
@@ -375,10 +407,7 @@ class FeedController extends Controller
         // n'existe pas, l'element correspondant n'est simplement pas rendu.
         // ======================================================================
 
-        // --- role : deduit des donnees, jamais d'un onglet clique ---
-        $pkRole = ($user && ($user->isProfessionnel() || $user->isServiceProvider()))
-            ? 'provider'
-            : 'client';
+        // Le mode de consultation ne change jamais les droits ni le type du compte.
 
         // --- verification d'identite (zone 3) ---
         $pkVerification = $user?->exists
@@ -403,19 +432,23 @@ class FeedController extends Controller
         // --- zone 4 : le flux, six annonces au maximum ---
         if ($pkRole === 'provider') {
             $pkFeedTitle = 'Demandes qui correspondent à votre métier';
-            $pkFeedAds = collect($priorityProviderRequests)
-                ->concat($homePersonalRequests)
-                ->unique('id')
-                ->take(6)
-                ->values();
+            $matchingQuery = $this->matchingProviderRequestsQuery($user);
+            if ($geoEnabled) {
+                $this->applyAdGeoScope($matchingQuery, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null, $userRadius, $geoCity, $geoCountry);
+            }
+            $pkMatchingCount = (clone $matchingQuery)->count();
+            $pkFeedAds = $matchingQuery->with('user')->withCount('serviceProposals')
+                ->orderByRaw('CASE WHEN NOT EXISTS (SELECT 1 FROM service_proposals WHERE service_proposals.ad_id = ads.id) THEN 0 ELSE 1 END')
+                ->orderByDesc('is_urgent')->latest('created_at')->take(6)->get();
+            $priorityProviderRequests = $pkFeedAds->filter(fn ($ad) => $this->adLifecycle->needsFirstResponseAttention($ad))->values();
         } else {
-            $pkFeedTitle = $geoCity ? 'Services disponibles près de vous' : 'Services proposés récemment';
+            $pkMatchingCount = 0;
+            $pkFeedTitle = $useNearbyScope && ! $geoFallbackUsed ? 'Services disponibles près de vous' : 'Services proposés récemment';
             $pkFeedAds = collect($homeProfessionalOffers)
                 ->take(6)
                 ->values();
         }
 
-        $pkMatchingCount = $pkRole === 'provider' ? $pkFeedAds->count() : 0;
         $pkBrowseUrl = route('ads.index', [
             'type' => $pkRole === 'provider' ? 'demandes' : 'offres',
         ]);
@@ -433,7 +466,7 @@ class FeedController extends Controller
         // --- zone 2 : les six categories les plus actives ---
         $pkQuickCategories = collect($missionCategories)
             ->sortByDesc(fn ($category) => (int) ($category['total'] ?? 0))
-            ->take(6)
+            ->take(4)
             ->all();
 
         // --- index de recherche du champ d'intention (categories + sous-categories) ---
@@ -561,6 +594,12 @@ class FeedController extends Controller
             'adsMapData',
             // page d'accueil
             'pkRole',
+            'pkCanProvide',
+            'pkActiveRequestCount',
+            'pkActiveOrder',
+            'pkProviderCategory',
+            'pkProviderCity',
+            'pkProviderCountry',
             'pkFeedTitle',
             'pkBrowseUrl',
             'pkFeedAds',
@@ -1055,6 +1094,7 @@ class FeedController extends Controller
             ...((array) ($user->service_subcategories ?? [])),
             ...((array) ($user->pro_service_categories ?? [])),
             $user->service_category,
+            $user->profession,
         ]);
 
         $serviceCategories = $user->exists
@@ -1071,6 +1111,53 @@ class FeedController extends Controller
             ->unique()
             ->values()
             ->all();
+    }
+
+    private function matchingProviderRequestsQuery($user)
+    {
+        $query = Ad::marketplaceActive()->where('service_type', 'demande')
+            ->where('user_id', '!=', $user->id)
+            ->whereIn('category', $this->viewerServiceCategories($user))
+            ->whereDoesntHave('serviceProposals', fn ($proposals) => $proposals->where('status', ServiceProposal::STATUS_ACCEPTED))
+            ->whereDoesntHave('serviceProposals', fn ($proposals) => $proposals->where('provider_id', $user->id)->where('status', ServiceProposal::STATUS_PENDING))
+            ->whereDoesntHave('serviceOrders', fn ($orders) => $orders->whereIn('status', [
+                ServiceOrder::STATUS_AWAITING_PAYMENT, ServiceOrder::STATUS_FUNDED,
+                ServiceOrder::STATUS_COMPLETED, ServiceOrder::STATUS_DISPUTED,
+            ]));
+        $this->applyHomeShowcaseVisibility($query, $user);
+
+        return $query;
+    }
+
+    /** Une sélection de profils publics, sans priorité liée à l'abonnement. */
+    private function buildRelevantProfessionalProfiles($currentUser, ?string $category, ?string $city, ?string $country)
+    {
+        $query = User::query()->where('is_active', true)->where('profile_public', true)
+            ->where(fn ($providers) => $providers->where('user_type', 'professionnel')->orWhere('account_type', 'professionnel')->orWhere('is_service_provider', true))
+            ->when($currentUser, fn ($providers) => $providers->where('id', '!=', $currentUser->id))
+            ->with(['services' => fn ($services) => $services->where('is_active', true)->limit(2)])
+            ->withCount(['verifiedReviewsReceived as verified_reviews_count'])
+            ->withAvg('verifiedReviewsReceived as verified_reviews_avg', 'rating');
+
+        if ($category) {
+            $query->where(function ($providers) use ($category) {
+                $providers->where('profession', $category)->orWhere('service_category', $category)
+                    ->orWhereJsonContains('pro_service_categories', $category)
+                    ->orWhereJsonContains('service_subcategories', $category)
+                    ->orWhereHas('services', fn ($services) => $services->where('is_active', true)
+                        ->where(fn ($trade) => $trade->where('subcategory', $category)->orWhere('main_category', $category)))
+                    ->orWhereHas('ads', fn ($ads) => $ads->marketplaceActive()->where('service_type', 'offre')->where('category', $category));
+            });
+        }
+        if ($country) {
+            $query->whereRaw('LOWER(TRIM(country)) = ?', [mb_strtolower(trim($country))]);
+        }
+        if ($city) {
+            $query->whereRaw('LOWER(TRIM(city)) = ?', [mb_strtolower(trim($city))]);
+        }
+
+        return $query->orderByDesc('verified_reviews_count')->orderByDesc('verified_reviews_avg')
+            ->orderBy('name')->orderBy('id')->take(4)->get();
     }
 
     private function buildHighlightedProfessionalProfiles($currentUser, int $limit = 6)

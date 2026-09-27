@@ -6945,9 +6945,7 @@
                                 @if(!Auth::user()->isProfessionnel() && !Auth::user()->isServiceProvider())
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('service-provider.start') }}"><i class="fas fa-user-plus" style="color: #059669;"></i>Activer mon profil prestataire</a></li>
                                 @endif
-                                @if(!Auth::user()->isProfessionnel() && !Auth::user()->isServiceProvider())
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('demands.tracking') }}"><i class="fas fa-route" style="color: #2563eb;"></i>Suivi de mes demandes</a></li>
-                                @endif
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('messages.index') }}"><i class="fas fa-envelope" style="color: var(--accent);"></i>Messages @if($unreadCount > 0)<span class="badge bg-danger ms-auto" style="font-size: 0.65rem;">{{ $unreadCount }}</span>@endif</a></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('points.dashboard') }}"><i class="fas fa-coins text-warning"></i>Mes Points <span class="badge bg-success ms-auto">{{ Auth::user()->available_points ?? 0 }}</span></a></li>
                                 <li><hr class="dropdown-divider my-2"></li>

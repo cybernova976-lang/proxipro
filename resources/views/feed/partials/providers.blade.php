@@ -9,18 +9,32 @@
     $pkProviders = collect($homeProfessionalProfiles ?? [])->take(4);
 @endphp
 
-@if($pkProviders->isNotEmpty())
+@php
+    $pkProviderCategory = $pkProviderCategory ?? null;
+    $pkProviderCity = $pkProviderCity ?? null;
+    $pkProviderCountry = $pkProviderCountry ?? null;
+    $pkDirectoryUrl = route('feed.professionals', array_filter([
+        'subcategory' => $pkProviderCategory, 'city' => $pkProviderCity, 'country' => $pkProviderCountry,
+    ]));
+@endphp
 <section id="pkProviderList" aria-labelledby="pkProsTitle">
     <div class="pk-sechead">
         <div>
-            <h2 id="pkProsTitle">Prestataires recommandés</h2>
-            <p class="pk-sechead__sub">Compétences, tarifs et avis utiles pour faire votre choix</p>
+            <h2 id="pkProsTitle">{{ $pkProviderCategory ? 'Prestataires pour votre demande' : ($pkProviderCity ? 'Prestataires dans votre ville' : 'Prestataires à découvrir') }}</h2>
+            <p class="pk-sechead__sub">
+                @if($pkProviderCategory || $pkProviderCity)
+                    {{ implode(' · ', array_filter([$pkProviderCategory, $pkProviderCity, $pkProviderCountry])) }}
+                @else
+                    Profils publics · avis issus des prestations réalisées
+                @endif
+            </p>
         </div>
-        <a href="{{ route('feed.professionals') }}" class="pk-sechead__more">
+        <a href="{{ $pkDirectoryUrl }}" class="pk-sechead__more">
             Voir les profils <i class="fas fa-arrow-right"></i>
         </a>
     </div>
 
+    @if($pkProviders->isNotEmpty())
     <div class="pk-pros">
         @foreach($pkProviders as $pkPro)
             @php
@@ -69,7 +83,7 @@
                             </span>
                         @endif
                         <span class="pk-pro__headline">
-                            <b>{{ Str::limit($pkPro->name, 26) }}</b>
+                            <b>{{ $pkPro->name }}</b>
                         </span>
                         <span class="pk-pro__jobline">
                             <span class="pk-pro__job">{{ Str::limit($pkJob, 38) }}</span>
@@ -105,5 +119,11 @@
             </article>
         @endforeach
     </div>
+    <p class="pk-selection-note">Sélection selon les critères affichés et les avis vérifiés, sans priorité liée à l’abonnement.</p>
+    @else
+        <div class="pk-provider-empty">
+            <p>Aucun profil public ne correspond encore à ces critères.</p>
+            <a href="{{ route('feed.professionals') }}">Explorer d’autres métiers ou villes <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+        </div>
+    @endif
 </section>
-@endif

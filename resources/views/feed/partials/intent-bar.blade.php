@@ -34,12 +34,12 @@
                    aria-expanded="false"
                    aria-controls="pkSuggest"
                    aria-autocomplete="list"
-                   placeholder="{{ $pkIsProvider ? 'Rechercher une demande compatible' : 'De quoi avez-vous besoin ? Ex. fuite d\'eau' }}">
+                   placeholder="{{ $pkIsProvider ? 'Métier ou service…' : 'Ex. plomberie, ménage…' }}">
             <div class="pk-suggest" id="pkSuggest" role="listbox" hidden></div>
         </div>
     </form>
 
-    <a href="{{ $pkIsProvider ? '#pkFeedList' : $pkPublishUrl }}" class="pk-btn">
+    <a href="{{ $pkIsProvider ? '#pkFeedList' : $pkPublishUrl }}" class="pk-btn" aria-label="{{ $pkIsProvider ? 'Voir les demandes compatibles' : 'Publier une demande' }}">
         <i class="fas {{ $pkIsProvider ? 'fa-bullseye' : 'fa-plus' }}"></i>
         <span>{{ $pkIsProvider ? 'Voir les demandes' : 'Publier une demande' }}</span>
     </a>

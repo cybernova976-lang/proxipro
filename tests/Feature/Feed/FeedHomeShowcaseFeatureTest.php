@@ -90,7 +90,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             ->assertSee('Services proposés récemment')
             ->assertSee('Dépannage plomberie disponible')
             ->assertDontSee('Demande urgente prioritaire')
-            ->assertSee('Prestataires recommandés')
+            ->assertSee('Prestataires à découvrir')
             ->assertSee('Artisan recommandé')
             ->assertSee('35 €/h')
             ->assertSee('Dépannage rapide')
@@ -113,8 +113,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString('linear-gradient(135deg, #f8fbff', $css);
         $this->assertStringContainsString('.pk-pro__visual', $css);
         $this->assertStringContainsString('grid-template-columns: repeat(2, minmax(0, 1fr))', $css);
-        $this->assertStringContainsString('height: 250px', $css);
-        $this->assertStringContainsString('grid-template-rows: 195px 55px', $css);
+        $this->assertStringContainsString('grid-template-rows: minmax(164px, auto) 55px', $css);
         $this->assertStringContainsString('.pk-pro__actions', $css);
         $this->assertStringContainsString('.pk-pro__action--request', $css);
         $this->assertStringContainsString('border-radius: var(--pk-r-lg)', $css);
@@ -163,7 +162,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
 
         $html = $response->getContent();
         foreach ([
-            'Rechercher une demande compatible',
+            'Métier ou service…',
             'Voir les demandes',
             'Demandes qui correspondent à votre métier',
             'Fuite sous évier à réparer',

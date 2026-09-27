@@ -121,9 +121,9 @@ class NewFeedMockupFeatureTest extends TestCase
             ->assertSee('pk-state__status', false)
             ->assertSee('Votre demande en cours')
             ->assertSee('Réparer la porte du garage')
-            ->assertSee('1 prestataire')
-            ->assertSee('vous a répondu')
-            ->assertSee('Voir les 1 réponse')
+            ->assertSee('1 proposition')
+            ->assertSee('à examiner')
+            ->assertSee('Comparer les propositions')
             ->assertSee(route('proposals.compare', $requestAd), false);
 
         $html = $response->getContent();
@@ -176,7 +176,7 @@ class NewFeedMockupFeatureTest extends TestCase
             ->assertSee('Améliorer ma demande')
             ->assertSee(route('ads.edit', $requestAd), false)
             ->assertSee('Toutes les étapes')
-            ->assertSee(route('demands.tracking').'#request-'.$requestAd->id, false);
+            ->assertSee(route('demands.tracking'), false);
     }
 
     public function test_new_feed_favorite_action_persists_and_removes_the_saved_ad(): void

@@ -5,7 +5,7 @@
 @php
     $pkIsProvider = ($pkRole ?? 'client') === 'provider';
     $pkMyRequest = $activeClientRequest ?? null;
-    $pkProposals = (int) ($pkMyRequest->service_proposals_count ?? 0);
+    $pkProposals = (int) ($pkMyRequest->pending_proposals_count ?? $pkMyRequest->service_proposals_count ?? 0);
     $pkNeedsAttention = (bool) ($activeClientRequestNeedsAttention ?? false);
     $pkOpenRequests = collect($priorityProviderRequests ?? []);
 @endphp
@@ -23,6 +23,10 @@
             <h2>Développez votre visibilité</h2>
             <p>Un profil complet et vérifié apparaît plus souvent dans les résultats de recherche.</p>
             <a href="{{ route('pro.dashboard') }}" class="pk-btn-soft">Mon espace Pro <i class="fas fa-arrow-right"></i></a>
+        @elseif(($pkActiveOrder ?? null) && (! $pkMyRequest || in_array($pkActiveOrder->status, ['awaiting_payment', 'disputed'], true)))
+            <h2>Suivez votre commande</h2>
+            <p>Retrouvez le paiement sécurisé, les échanges et la validation de la prestation.</p>
+            <a href="{{ route('service-orders.index') }}" class="pk-btn-soft">Mes commandes <i class="fas fa-arrow-right"></i></a>
         @elseif($pkMyRequest && $pkProposals > 0)
             <h2>{{ $pkProposals }} réponse{{ $pkProposals > 1 ? 's' : '' }} vous {{ $pkProposals > 1 ? 'attendent' : 'attend' }}</h2>
             <p>Comparez les profils, les prix et les délais avant de choisir votre prestataire.</p>
@@ -31,6 +35,10 @@
             <h2>Votre demande peut être précisée</h2>
             <p>Elle est toujours sans réponse. Un détail, une photo ou un créneau plus souple peut faciliter la première proposition.</p>
             <a href="{{ route('ads.edit', $pkMyRequest) }}" class="pk-btn-soft">Améliorer la demande <i class="fas fa-arrow-right"></i></a>
+        @elseif($pkMyRequest)
+            <h2>Votre demande est publiée</h2>
+            <p>Retrouvez ses étapes et les propositions reçues depuis votre suivi.</p>
+            <a href="{{ route('demands.tracking') }}" class="pk-btn-soft">Suivre ma demande <i class="fas fa-arrow-right"></i></a>
         @else
             <h2>Publiez en quelques minutes</h2>
             <p>Un parcours guidé vous pose uniquement les questions utiles : service, lieu, créneau, budget. Vous pouvez y ajouter des photos.</p>
@@ -71,7 +79,7 @@
                 </div>
                 <p>
                     Votre profil a été consulté {{ $pkProfileViews }} fois ce mois-ci.
-                    Les comptes Pro apparaissent en tête des résultats et sont contactés en priorité.
+                    Découvrez les outils disponibles pour développer votre activité.
                 </p>
             @else
                 {{-- Pas encore de vue ce mois-ci : on montre l'autre chiffre vrai. --}}
@@ -81,7 +89,7 @@
                 <p>
                     {{ $pkMatchingCount }} demande{{ $pkMatchingCount > 1 ? 's' : '' }}
                     correspond{{ $pkMatchingCount > 1 ? 'ent' : '' }} à votre métier en ce moment.
-                    Les comptes Pro apparaissent en tête des résultats et sont contactés en priorité.
+                    Découvrez les outils disponibles pour développer votre activité.
                 </p>
             @endif
             <a href="{{ route('pro.subscription') }}" class="pk-btn-white">

@@ -2,11 +2,9 @@
     Barre d'onglets mobile — « Publier » au centre, surelevee.
 
     Incluse par layouts/app.blade.php, donc presente sur toutes les pages du
-    gabarit commun. Elle doit rester autonome : aucune variable ne lui est
-    transmise par la page qui l'affiche.
+    gabarit commun. Hors du feed, elle reprend le mode memorise en session.
 
-    · le role est deduit de l'utilisateur connecte, jamais d'un onglet clique,
-      comme le fait FeedController ;
+    · le mode client/prestataire suit le feed sans modifier les droits du compte ;
     · l'onglet actif est deduit de la route courante ;
     · rien ne s'affiche pour un visiteur non connecte : quatre des cinq liens
       mènent a des pages qui exigent une session.
@@ -16,8 +14,9 @@
 @auth
     @php
         $pkTabUser = auth()->user();
-        $pkTabRole = ($pkTabUser->isProfessionnel() || $pkTabUser->isServiceProvider())
-            ? 'provider'
+        $pkTabCanProvide = $pkTabUser->isProfessionnel() || $pkTabUser->isServiceProvider();
+        $pkTabRole = $pkTabCanProvide
+            ? ($pkRole ?? (request()->hasSession() ? session('feed_mode.'.$pkTabUser->id, 'provider') : 'provider'))
             : 'client';
 
         $pkPublishUrl = $pkTabRole === 'provider'

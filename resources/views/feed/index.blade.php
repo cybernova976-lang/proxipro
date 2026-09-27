@@ -6,14 +6,10 @@
     « ou en suis-je et que dois-je faire maintenant ? », pas a
     « qu'y a-t-il sur ce site ? ».
 
-    Six zones, dans cet ordre :
-      1. intention      — un champ, un bouton, aucun filtre
-      2. carte d'etat   — la situation reelle de l'utilisateur
-      3. progression    — une seule action suivante
-      4. le flux        — six annonces, un seul modele de carte
-      5. prestataires   — quatre profils
-      6. conseils       — trois reperes adaptes au role
-      7. reassurance    — le paiement protege en trois etapes
+    Hierarchie : mode de consultation, situation et action suivante,
+    intention, profils pertinents (client), six annonces, rappel de profil,
+    conseils et reassurance. L'accueil sans demande integre son propre champ
+    de publication pour ne pas dupliquer cette entree.
 
     La recherche, les filtres et la carte geographique vivent sur /annonces.
     La publication passe uniquement par /demande et /ads/create.
@@ -38,14 +34,23 @@
 
         <div class="pk-main">
 
-            {{-- Zone 1 · intention --}}
-            @include('feed.partials.intent-bar')
+            @if($pkCanProvide)
+                <nav class="pk-mode" aria-label="Utilisation de l’accueil">
+                    <a href="{{ route('feed', ['mode' => 'client']) }}" @if($pkRole === 'client') aria-current="page" @endif>
+                        <i class="fas fa-search" aria-hidden="true"></i> Je cherche un service
+                    </a>
+                    <a href="{{ route('feed', ['mode' => 'provider']) }}" @if($pkRole === 'provider') aria-current="page" @endif>
+                        <i class="fas fa-briefcase" aria-hidden="true"></i> Mon activité prestataire
+                    </a>
+                </nav>
+            @endif
 
             {{-- Zone 2 · carte d'etat --}}
             @include('feed.partials.state-card')
 
-            {{-- Zone 3 · une seule action suivante --}}
-            @include('feed.partials.profile-progress')
+            @if($pkRole === 'provider' || $activeClientRequest || $pkActiveOrder)
+                @include('feed.partials.intent-bar')
+            @endif
 
             {{-- Pour un client, les prestataires passent avant le catalogue. --}}
             @if($pkRole === 'client')
@@ -61,8 +66,13 @@
                             <span class="pk-live" aria-hidden="true"></span>
                             <span>
                                 @if($geoCity)
-                                    {{ $geoCity }} et alentours
-                                    @if($geoFallbackUsed ?? false) · aucune annonce dans votre zone, voici les plus proches @endif
+                                    @if($pkRole === 'provider')
+                                        {{ $geoCity }} et alentours · sélection selon vos métiers
+                                    @elseif($useNearbyScope && ! $geoFallbackUsed)
+                                        {{ $geoCity }} et alentours
+                                    @else
+                                        Toutes les zones · explorez les services disponibles
+                                    @endif
                                 @else
                                     Une sélection récente, mise à jour en continu
                                 @endif
@@ -105,6 +115,9 @@
                     </a>
                 @endif
             </section>
+
+            {{-- Le profil accompagne le parcours, sans repousser les opportunités. --}}
+            @include('feed.partials.profile-progress')
 
             {{-- Zone 6 · conseils pratiques, en fin de parcours --}}
             @include('feed.partials.guides')
