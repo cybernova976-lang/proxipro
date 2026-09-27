@@ -443,6 +443,15 @@
 }
 .pk-sechead__more:hover { color: var(--pk-800); }
 
+/* Donner toute la largeur au titre et au sous-titre sur téléphone. */
+@media (max-width: 640px) {
+  .pk-sechead { flex-direction: column; align-items: stretch; gap: 8px; margin-bottom: 12px; }
+  .pk-sechead > div { min-width: 0; }
+  .pk-sechead h2 { font-size: 1.05rem; line-height: 1.3; text-wrap: balance; }
+  .pk-sechead__sub { font-size: .8rem; line-height: 1.5; }
+  .pk-sechead__more { align-self: flex-end; margin-left: 0; font-size: .8rem; min-height: 32px; }
+}
+
 /* ==========================================================================
    Zone 4 · le flux — carte d'annonce (modele unique)
    ========================================================================== */

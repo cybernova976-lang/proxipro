@@ -491,6 +491,7 @@
             border-radius: 8px; display: inline-flex; align-items: center;
             justify-content: center; padding: 2px; overflow: hidden;
         }
+        .hero-title-line { display: block; text-wrap: balance; }
         .footer-brand-icon .prokejem-brand-mark {
             width: 100%; height: 100%; object-fit: contain; display: block;
         }
@@ -553,9 +554,10 @@
             .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
             .hero-title {
                 max-width: 100%;
-                font-size: clamp(1.7rem, 8.4vw, 2rem);
+                font-size: clamp(1.35rem, 6.2vw, 1.8rem);
+                line-height: 1.22;
                 letter-spacing: -0.6px;
-                overflow-wrap: anywhere;
+                overflow-wrap: normal;
             }
             .hero-title .accent { white-space: normal; }
             .hero-desc { max-width: 100%; font-size: 1rem; overflow-wrap: anywhere; }
@@ -657,9 +659,9 @@
                         Services de proximité, simplement
                     </div>
                     <h1 class="hero-title">
-                        Décrivez votre besoin.<br>
-                        <span class="accent">Comparez les propositions.</span><br>
-                        Choisissez sereinement.
+                        <span class="hero-title-line">Décrivez votre besoin.</span>
+                        <span class="hero-title-line accent">Comparez les propositions.</span>
+                        <span class="hero-title-line">Choisissez sereinement.</span>
                     </h1>
                     <p class="hero-desc">
                         Bricolage, ménage, cours, déménagement… trouvez des prestataires

@@ -62,7 +62,9 @@
     .directory-field:first-child, .directory-category, .directory-search > .directory-button { grid-column: 1 / -1; }
     .directory-search > .directory-button { order: 2; }
     .directory-help { font-size: .72rem; }
-    .directory-results { align-items: start; }
+    .directory-results { flex-direction: column; align-items: stretch; gap: 8px; }
+    .directory-results > div { min-width: 0; }
+    .directory-results > a { align-self: flex-end; min-height: 32px; }
     .directory-card-body { grid-template-columns: 100px minmax(0, 1fr); gap: 12px; padding: 12px; }
     .directory-portrait { width: 100px; height: 130px; border-radius: 12px; }
     .directory-identity h3 { font-size: .94rem; }

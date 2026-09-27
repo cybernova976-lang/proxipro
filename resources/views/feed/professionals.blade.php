@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Annuaire des prestataires — Prokejem')
 @push('styles')
-<link rel="stylesheet" href="{{ asset('css/provider-directory.css') }}?v=20260906">
+<link rel="stylesheet" href="{{ asset('css/provider-directory.css') }}?v={{ @filemtime(public_path('css/provider-directory.css')) ?: 1 }}">
 @endpush
 @section('content')
 <div class="container provider-directory">

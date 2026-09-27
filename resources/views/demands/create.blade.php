@@ -60,6 +60,9 @@ body { background: #f0f2f5; }
     border-radius: 12px; background: #f8fbff; color: #475569; font-size: .84rem;
 }
 .demand-draft-status { display: inline-flex; align-items: center; gap: 8px; }
+.demand-draft-bar[hidden] { display: none; }
+.demand-draft-status { min-width: 0; line-height: 1.45; }
+.demand-draft-status i { flex-shrink: 0; }
 .demand-draft-status i { color: #3b82f6; }
 .demand-draft-reset { border: 0; background: transparent; color: #2563eb; font-weight: 700; cursor: pointer; }
 
@@ -237,8 +240,9 @@ body { background: #f0f2f5; }
 .demand-btn-submit {
     background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff;
     box-shadow: 0 4px 14px rgba(34,197,94,0.3);
+    text-decoration: none;
 }
-.demand-btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(34,197,94,0.4); }
+.demand-btn-submit:hover { color: #fff; text-decoration: none; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(34,197,94,0.4); }
 .demand-btn-submit-content {
     display: inline-flex;
     align-items: center;
@@ -249,7 +253,9 @@ body { background: #f0f2f5; }
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    white-space: nowrap;
+    flex-wrap: wrap;
+    justify-content: center;
+    white-space: normal;
 }
 
 /* Error */
@@ -278,8 +284,13 @@ body { background: #f0f2f5; }
     .demand-container { padding: 14px 12px 56px; }
     .demand-hero { padding: 24px 12px 20px; margin-bottom: 16px; }
     .demand-hero-icon { width: 64px; height: 64px; margin-bottom: 14px; font-size: 1.6rem; }
-    .demand-hero h1 { font-size: 1.55rem; }
-    .demand-hero p { font-size: .94rem; }
+    .demand-hero h1 { font-size: clamp(1.25rem, 5.4vw, 1.55rem); line-height: 1.25; text-wrap: balance; }
+    .demand-hero p { font-size: .875rem; line-height: 1.55; text-wrap: pretty; }
+    .demand-step-heading h2 { font-size: clamp(1.1rem, 4.5vw, 1.25rem); line-height: 1.3; text-wrap: balance; }
+    .demand-step-heading p { font-size: .875rem; line-height: 1.5; }
+    .demand-draft-bar { flex-wrap: wrap; gap: 6px; }
+    .demand-draft-status { flex: 1 1 220px; font-size: .8rem; }
+    .demand-draft-reset { margin-left: auto; min-height: 36px; font-size: .8rem; }
     .demand-card-body { padding: 24px 18px; }
     .demand-steps { width: 100%; max-width: 340px; margin-left: auto; margin-right: auto; justify-content: stretch; }
     .demand-step { flex: 0 0 auto; }
@@ -300,7 +311,7 @@ body { background: #f0f2f5; }
         padding: 16px 20px;
     }
     .demand-btn-submit-content {
-        flex-direction: column;
+        flex-direction: row;
         gap: 6px;
     }
     .demand-btn-submit-text {
@@ -389,7 +400,7 @@ body { background: #f0f2f5; }
                 <div class="demand-section active" id="demandStep1">
                     <div class="demand-step-heading">
                         <small>Étape 1 sur 5</small>
-                        <h2>Quel service recherchez-vous ?</h2>
+                        <h2>Quel service recherchez-vous&nbsp;?</h2>
                         <p>Choisissez l’activité la plus proche de votre besoin.</p>
                     </div>
                     <div class="demand-search">
@@ -630,7 +641,6 @@ body { background: #f0f2f5; }
                         <i class="fas fa-sign-in-alt"></i>
                         <span class="demand-btn-submit-text">
                             <span>Continuer</span>
-                            <span>Connexion ou inscription</span>
                         </span>
                     </span>
                 </a>
