@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\PaymentReconciliationController;
 use App\Http\Controllers\Admin\UsageDashboardController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BoostController;
+use App\Http\Controllers\ClientActivityController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
@@ -158,6 +159,8 @@ Route::middleware('auth')->group(function () {
 // Routes pour les annonces
 Route::middleware(['auth'])->group(function () {
     Route::get('/mes-demandes', DemandTrackingController::class)->name('demands.tracking');
+    Route::get('/mes-demandes-et-missions', [ClientActivityController::class, 'index'])->name('client-activity.index');
+    Route::get('/feed/client-activity', [ClientActivityController::class, 'refresh'])->name('client-activity.refresh');
     Route::get('/ads/my-ads', [AdController::class, 'myAds'])->name('ads.myads');
     Route::patch('/ads/{ad}/archive', [AdController::class, 'archive'])->name('ads.archive');
     Route::post('/ads/{ad}/republish', [AdController::class, 'republish'])->name('ads.republish');

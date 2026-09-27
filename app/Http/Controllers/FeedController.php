@@ -7,6 +7,7 @@ use App\Models\ServiceOrder;
 use App\Models\ServiceProposal;
 use App\Models\User;
 use App\Services\AdLifecycleService;
+use App\Services\ClientActivityService;
 use App\Services\FeedRankingService;
 use App\Support\MarketplaceCategoryRegistry;
 use App\Support\MarketplaceGuideCatalog;
@@ -21,7 +22,8 @@ class FeedController extends Controller
 
     public function __construct(
         private FeedRankingService $feedRankingService,
-        private AdLifecycleService $adLifecycle
+        private AdLifecycleService $adLifecycle,
+        private ClientActivityService $clientActivity
     ) {}
 
     public function index(Request $request)
@@ -268,23 +270,10 @@ class FeedController extends Controller
             geoCity: $useNearbyScope && ! $geoFallbackUsed ? $geoCity : null,
             geoCountry: $useNearbyScope && ! $geoFallbackUsed ? $geoCountry : null
         );
-        $clientRequestsQuery = $user?->exists
-            ? $user->ads()
-                ->marketplaceActive()
-                ->where('service_type', 'demande')
-                ->whereDoesntHave('serviceOrders', fn ($orders) => $orders->whereIn('status', [ServiceOrder::STATUS_AWAITING_PAYMENT, ServiceOrder::STATUS_FUNDED, ServiceOrder::STATUS_COMPLETED, ServiceOrder::STATUS_DISPUTED]))
-                ->withCount([
-                    'serviceProposals',
-                    'serviceProposals as pending_proposals_count' => fn ($proposals) => $proposals->where('status', ServiceProposal::STATUS_PENDING),
-                ])
-            : null;
-        $pkActiveRequestCount = $clientRequestsQuery ? (clone $clientRequestsQuery)->count() : 0;
-        $activeClientRequest = $clientRequestsQuery
-            ? $clientRequestsQuery
-                ->orderByRaw('CASE WHEN (SELECT COUNT(*) FROM service_proposals WHERE service_proposals.ad_id = ads.id AND status = ?) > 0 THEN 0 WHEN ads.created_at <= ? AND NOT EXISTS (SELECT 1 FROM service_proposals WHERE service_proposals.ad_id = ads.id) THEN 1 ELSE 2 END', [ServiceProposal::STATUS_PENDING, now()->subHours(AdLifecycleService::FIRST_RESPONSE_ATTENTION_HOURS)])
-                ->orderByDesc('pending_proposals_count')
-                ->latest('created_at')->first()
-            : null;
+        $pkClientActivity = $pkRole === 'client' && $user?->exists ? $this->clientActivity->summary($user) : null;
+        $pkActiveRequestCount = $pkClientActivity['request_count'] ?? 0;
+        $activeClientRequest = $pkClientActivity['first_request'] ?? null;
+        $pkActiveOrder = $pkClientActivity['first_order'] ?? null;
 
         $pkProviderCategory = $pkRole === 'client' ? $activeClientRequest?->category : null;
         $pkProviderCity = $pkRole === 'client' ? ($activeClientRequest?->city ?: $activeClientRequest?->location ?: $geoCity) : null;
@@ -297,14 +286,6 @@ class FeedController extends Controller
                 (int) ($activeClientRequest->service_proposals_count ?? 0)
             )
             : false;
-        $pkActiveOrder = $pkRole === 'client' && $user?->exists
-            ? ServiceOrder::where('buyer_id', $user->id)
-                ->whereIn('status', [ServiceOrder::STATUS_AWAITING_PAYMENT, ServiceOrder::STATUS_FUNDED, ServiceOrder::STATUS_DISPUTED])
-                ->with('ad')
-                ->orderByRaw('CASE WHEN status = ? THEN 0 WHEN status = ? THEN 1 ELSE 2 END', [ServiceOrder::STATUS_DISPUTED, ServiceOrder::STATUS_AWAITING_PAYMENT])
-                ->latest('updated_at')->first()
-            : null;
-
         $priorityProviderRequests = $this->buildPriorityProviderRequests(
             user: $user,
             userLat: $useNearbyScope && ! $geoFallbackUsed && $userLat !== null ? (float) $userLat : null,
@@ -597,6 +578,7 @@ class FeedController extends Controller
             'pkCanProvide',
             'pkActiveRequestCount',
             'pkActiveOrder',
+            'pkClientActivity',
             'pkProviderCategory',
             'pkProviderCity',
             'pkProviderCountry',

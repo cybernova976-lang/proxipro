@@ -6,14 +6,26 @@ use App\Models\Ad;
 use App\Models\ServiceOrder;
 use App\Models\ServiceProposal;
 use App\Services\AdLifecycleService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DemandTrackingController extends Controller
 {
     public function __construct(private AdLifecycleService $adLifecycle) {}
 
-    public function __invoke()
+    public function __invoke(Request $request)
     {
+        $page = null;
+        // Le lien du feed doit atteindre la carte, meme au-dela de la page 1.
+        if ($request->filled('demande') && ! $request->has('page')) {
+            $focused = Ad::where('user_id', Auth::id())->where('service_type', 'demande')->find($request->integer('demande'));
+            if ($focused) {
+                $preceding = Ad::where('user_id', Auth::id())->where('service_type', 'demande')
+                    ->where(fn ($query) => $query->where('created_at', '>', $focused->created_at)
+                        ->orWhere(fn ($tie) => $tie->where('created_at', $focused->created_at)->where('id', '>', $focused->id)))->count();
+                $page = intdiv($preceding, 10) + 1;
+            }
+        }
         $demands = Ad::query()
             ->where('user_id', Auth::id())
             ->where('service_type', 'demande')
@@ -25,8 +37,8 @@ class DemandTrackingController extends Controller
                     ->with('seller')
                     ->latest(),
             ])
-            ->latest()
-            ->paginate(10);
+            ->latest()->orderByDesc('id')
+            ->paginate(10, ['*'], 'page', $page)->withQueryString();
 
         $trackingItems = $demands->getCollection()
             ->map(fn (Ad $demand) => $this->trackingItem($demand));

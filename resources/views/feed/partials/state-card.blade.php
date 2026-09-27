@@ -68,64 +68,10 @@
         </div>
     </section>
 
-@elseif(($pkActiveOrder ?? null) && (! $pkMyRequest || in_array($pkActiveOrder->status, ['awaiting_payment', 'disputed'], true)))
-
-    <section class="pk-state pk-state--active-request" aria-labelledby="pkStateTitle">
-        <div class="pk-state__request-head">
-            <span class="pk-state__eyebrow"><i class="fas fa-briefcase" aria-hidden="true"></i> Votre mission</span>
-            <span class="pk-state__status">{{ $pkActiveOrder->status_label }}</span>
-        </div>
-        <h1 id="pkStateTitle">{{ $pkActiveOrder->ad?->title ?: 'Votre prestation en cours' }}</h1>
-        <p>{{ match ($pkActiveOrder->status) {
-            'awaiting_payment' => 'Votre proposition est acceptée. Consultez la commande pour préparer le paiement sécurisé.',
-            'disputed' => 'Un litige est en cours. Retrouvez son suivi et les échanges depuis votre commande.',
-            default => 'Retrouvez les étapes de votre mission et validez sa réalisation une fois la prestation terminée.',
-        } }}</p>
-        <div class="pk-state__actions">
-            <a href="{{ route('service-orders.index') }}" class="pk-btn-white">Voir ma commande <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
-            <a href="{{ route('demands.tracking') }}" class="pk-state__secondary">Toutes les étapes</a>
-        </div>
-    </section>
-
-@elseif($pkMyRequest)
-
-    {{-- ============ Client avec une demande en cours ============ --}}
-    <section class="pk-state pk-state--active-request" aria-labelledby="pkStateTitle">
-        <div class="pk-state__request-head">
-            <span class="pk-state__eyebrow"><i class="far fa-clock"></i> Votre demande en cours</span>
-            <span class="pk-state__status{{ $pkProposals > 0 ? ' pk-state__status--answered' : ($pkNeedsAttention ? ' pk-state__status--attention' : '') }}">
-                <span class="pk-state__status-dot" aria-hidden="true"></span>
-                {{ $pkProposals > 0
-                    ? $pkProposals . ' réponse' . ($pkProposals > 1 ? 's' : '') . ' reçue' . ($pkProposals > 1 ? 's' : '')
-                    : ($pkNeedsAttention ? 'Toujours aucune réponse' : 'Demande publiée') }}
-            </span>
-        </div>
-        <h1 id="pkStateTitle">{{ $pkMyRequest->title }}</h1>
-        <p>
-            @if($pkProposals > 0)
-                <strong>{{ $pkProposals }} proposition{{ $pkProposals > 1 ? 's' : '' }} à examiner.</strong>
-                Comparez les profils, les prix et les délais.
-            @elseif($pkNeedsAttention)
-                Ajoutez une précision, une photo ou un créneau plus souple pour faciliter les réponses.
-            @else
-                Votre demande est visible. Retrouvez son avancement et les propositions reçues.
-            @endif
-        </p>
-        <div class="pk-state__actions">
-            <a href="{{ $pkNeedsAttention
-                ? route('ads.edit', $pkMyRequest)
-                : ($pkProposals > 0 ? route('proposals.compare', $pkMyRequest) : route('demands.tracking').'#request-'.$pkMyRequest->id) }}" class="pk-btn-white">
-                {{ $pkProposals > 0
-                    ? 'Comparer les propositions'
-                    : ($pkNeedsAttention ? 'Améliorer ma demande' : 'Suivre ma demande') }}
-                <i class="fas fa-arrow-right"></i>
-            </a>
-            <a href="{{ route('demands.tracking') }}" class="pk-state__secondary">
-                <i class="fas fa-route"></i>
-                {{ ($pkActiveRequestCount ?? 1) > 1 ? 'Mes '.$pkActiveRequestCount.' demandes en cours' : 'Toutes les étapes' }}
-            </a>
-        </div>
-    </section>
+@elseif(($pkClientActivity['total'] ?? 0) > 0)
+    <div id="pkClientActivity" data-refresh-url="{{ route('client-activity.refresh') }}" data-revision="{{ $pkClientActivity['revision'] }}">
+        @include('feed.partials.client-activity')
+    </div>
 
 @else
 

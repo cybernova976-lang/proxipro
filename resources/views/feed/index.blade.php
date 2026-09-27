@@ -155,4 +155,7 @@
 
 @push('scripts')
 <script src="{{ asset('js/feed.js') }}?v={{ @filemtime(public_path('js/feed.js')) ?: 1 }}" defer></script>
+@if($pkRole === 'client')
+<script src="{{ asset('js/feed-client-activity.js') }}?v={{ @filemtime(public_path('js/feed-client-activity.js')) ?: 1 }}" defer></script>
+@endif
 @endpush

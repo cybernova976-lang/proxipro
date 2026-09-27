@@ -8,7 +8,7 @@
     .service-orders-title { font-size: 1.9rem; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
     .service-orders-subtitle { color: #64748b; margin-bottom: 28px; }
     .service-orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
-    .service-order-card { background: white; border: 1px solid #e2e8f0; border-radius: 18px; padding: 20px; box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05); }
+    .service-order-card { background: white; border: 1px solid #e2e8f0; border-radius: 18px; padding: 20px; box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05); scroll-margin-top: 100px; }
     .service-order-top { display:flex; justify-content:space-between; gap:12px; margin-bottom:12px; }
     .service-order-number { font-size: 0.78rem; font-weight: 800; color: #0f766e; letter-spacing: 0.04em; text-transform: uppercase; }
     .service-order-title { margin: 4px 0 0; font-size: 1rem; font-weight: 800; color: #0f172a; }
