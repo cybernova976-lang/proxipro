@@ -2,12 +2,17 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+// Ces signaux éphémères ne constituent pas un historique de connexions.
+Schedule::call(fn () => DB::table('user_presence_leases')->where('expires_at', '<', now()->subDay())->delete())
+    ->name('presence:prune')->hourly()->withoutOverlapping();
 
 Artisan::command('mail:test {to?}', function () {
     $to = $this->argument('to') ?: config('mail.from.address');

@@ -1171,5 +1171,6 @@
     @include('partials.usage-analytics')
     @include('partials.push-notifications')
     @include('partials.pwa-install')
+    @include('partials.user-presence')
 </body>
 </html>

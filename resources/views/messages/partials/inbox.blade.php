@@ -21,6 +21,7 @@
                 @include('messages.partials.avatar', ['person' => $other])
                 <div class="msg-conversation-copy">
                     <div class="msg-conversation-top"><strong>{{ $other?->name ?? 'Compte indisponible' }}</strong><time>{{ $conv->lastMessage?->created_at->isToday() ? $conv->lastMessage->created_at->format('H:i') : $conv->lastMessage?->created_at->format('d/m') }}</time></div>
+                    @include('messages.partials.presence', ['presenceConversation' => $conv])
                     @if($conv->subject)<span class="msg-subject">{{ $conv->subject }}</span>@endif
                     <div class="msg-preview"><span>{{ $conv->lastMessage?->sender_id == auth()->id() ? 'Vous : ' : '' }}{{ $conv->lastMessage?->content ?? 'Aucun message' }}</span>@if($conv->unread_count)<b aria-label="{{ $conv->unread_count }} messages non lus">{{ $conv->unread_count }}</b>@endif</div>
                     @if($conv->is_blocked)<small>Conversation bloquée</small>@endif

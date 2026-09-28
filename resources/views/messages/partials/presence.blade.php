@@ -1,0 +1,2 @@
+@php($status = $presences[$presenceConversation->id] ?? ['state' => 'unknown', 'label' => 'Présence indisponible', 'valid_for_seconds' => 0])
+<span class="msg-presence" data-presence-conversation="{{ $presenceConversation->id }}" data-state="{{ $status['state'] }}" data-valid-for="{{ $status['valid_for_seconds'] }}" title="Présence liée à un onglet Prokejem visible ; cela ne garantit pas que votre message est lu."><i aria-hidden="true"></i><span>{{ $status['label'] }}</span></span>

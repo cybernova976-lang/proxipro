@@ -7,6 +7,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Notifications\NewMessageNotification;
+use App\Services\UserPresence;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -60,8 +61,9 @@ class MessageController extends Controller
 
         $conversations = $this->inbox($request);
         $recipients = User::where('id', '!=', $user->id)->where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $presences = app(UserPresence::class)->forConversations($conversations->getCollection(), $user->id);
 
-        return response()->view('messages.index', compact('conversations', 'recipients'))->header('Cache-Control', 'private, no-store');
+        return response()->view('messages.index', compact('conversations', 'recipients', 'presences'))->header('Cache-Control', 'private, no-store');
     }
 
     // Voir une conversation
@@ -85,8 +87,9 @@ class MessageController extends Controller
 
         // Récupérer toutes les conversations pour la sidebar
         $conversations = $this->inbox($request);
+        $presences = app(UserPresence::class)->forConversations($conversations->getCollection()->concat([$conversation])->unique('id'), $user->id);
 
-        return response()->view('messages.show', compact('conversation', 'messages', 'conversations', 'hasOlder'))->header('Cache-Control', 'private, no-store');
+        return response()->view('messages.show', compact('conversation', 'messages', 'conversations', 'hasOlder', 'presences'))->header('Cache-Control', 'private, no-store');
     }
 
     // Envoyer un message
@@ -339,6 +342,7 @@ class MessageController extends Controller
             'visible_ids' => $visible->pluck('id'),
             'is_blocked' => $conversation->is_blocked,
             'blocked_by' => $conversation->blocked_by,
+            'presence' => app(UserPresence::class)->forConversations(collect([$conversation]), $user->id)[$conversation->id],
         ])->header('Cache-Control', 'private, no-store');
     }
 

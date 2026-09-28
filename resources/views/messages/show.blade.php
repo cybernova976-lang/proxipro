@@ -13,7 +13,7 @@
             <header class="msg-chat-header">
                 <a href="{{ route('messages.index') }}" class="msg-icon-button msg-back" aria-label="Retour aux conversations"><i class="fas fa-arrow-left" aria-hidden="true"></i></a>
                 @include('messages.partials.avatar', ['person' => $other])
-                <div class="msg-chat-person"><h1>{{ $other?->name ?? 'Compte indisponible' }}</h1><span>{{ $conversation->subject ?: 'Discussion privée sur Prokejem' }}</span></div>
+                <div class="msg-chat-person"><h1>{{ $other?->name ?? 'Compte indisponible' }}</h1><div class="msg-person-details">@include('messages.partials.presence', ['presenceConversation' => $conversation])<span class="msg-chat-subject">{{ $conversation->subject ?: 'Discussion privée sur Prokejem' }}</span></div></div>
                 <div class="dropdown"><button class="msg-icon-button" type="button" data-bs-toggle="dropdown" aria-label="Options de la conversation" aria-expanded="false"><i class="fas fa-ellipsis-v" aria-hidden="true"></i></button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         @if($other)<li><a class="dropdown-item" href="{{ route('profile.public', $other) }}">Voir le profil</a></li>@endif

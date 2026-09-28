@@ -1115,5 +1115,6 @@
         });
     })();
     </script>
+    @include('partials.user-presence')
 </body>
 </html>

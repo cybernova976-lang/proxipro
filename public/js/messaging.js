@@ -170,6 +170,7 @@
     visible.forEach(id => url.searchParams.append('visible_ids[]', id));
     try {
       const data = await request(url);
+      if (data.presence) window.dispatchEvent(new CustomEvent('pk:presence', {detail: {[root.dataset.conversation]: data.presence}}));
       const nearBottom = thread.scrollHeight - thread.scrollTop - thread.clientHeight < 100;
       let added = false;
       data.messages.forEach(message => { added = render(message) || added; lastId = Math.max(lastId, message.id); });

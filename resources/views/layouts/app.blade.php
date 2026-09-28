@@ -10252,6 +10252,7 @@
     @include('partials.usage-analytics')
     @include('partials.push-notifications')
     @include('partials.pwa-install')
+    @include('partials.user-presence')
 
     {{-- Barre d'onglets mobile — sur toutes les pages du gabarit. Le partial
          se tait de lui-meme pour un visiteur non connecte. --}}

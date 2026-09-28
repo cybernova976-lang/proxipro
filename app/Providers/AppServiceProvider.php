@@ -9,6 +9,7 @@ use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -34,6 +35,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(\Illuminate\Auth\Events\Logout::class, function ($event) {
+            if ($event->user && request()->hasSession()) {
+                app(\App\Services\UserPresence::class)->forgetSession($event->user->id, request()->session()->getId());
+            }
+        });
         $this->applyDynamicMailSettings();
         // Résolution au moment du rendu : les commandes Artisan et les migrations
         // ne doivent pas dépendre de la disponibilité de la table settings.
