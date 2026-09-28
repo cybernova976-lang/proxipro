@@ -32,5 +32,5 @@
         @endforelse
         @if($conversations->hasPages())<div class="msg-pagination">{{ $conversations->links('pagination::bootstrap-5') }}</div>@endif
     </div>
-    @if(!isset($conversation))<div class="msg-inbox-footer"><button class="msg-primary" type="button" data-bs-toggle="modal" data-bs-target="#newConversationModal">Nouvelle discussion</button></div>@endif
+    @if(!isset($conversation) && $recipients->isNotEmpty())<div class="msg-inbox-footer"><button class="msg-primary" type="button" data-bs-toggle="modal" data-bs-target="#newConversationModal"><i class="fas fa-pen" aria-hidden="true"></i>Écrire à un contact</button></div>@endif
 </aside>

@@ -45,6 +45,15 @@ class MessageController extends Controller
         return $message->only(['id', 'conversation_id', 'sender_id', 'content', 'is_read', 'created_at', 'read_at', 'edited_at']);
     }
 
+    private function contactRecipients(int $userId)
+    {
+        // Ne jamais transformer la messagerie en annuaire de tous les membres.
+        $contacts = Conversation::where('user1_id', $userId)->where('is_blocked', false)->whereHas('messages')->select('user2_id')
+            ->union(Conversation::where('user2_id', $userId)->where('is_blocked', false)->whereHas('messages')->select('user1_id'));
+
+        return User::whereIn('id', $contacts)->where('id', '!=', $userId)->where('is_active', true);
+    }
+
     private function notifyRecipient(Message $message, Conversation $conversation, User $sender): void
     {
         $recipientId = $conversation->user1_id == $sender->id ? $conversation->user2_id : $conversation->user1_id;
@@ -60,7 +69,7 @@ class MessageController extends Controller
         $user = Auth::user();
 
         $conversations = $this->inbox($request);
-        $recipients = User::where('id', '!=', $user->id)->where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $recipients = $this->contactRecipients($user->id)->orderBy('name')->get(['id', 'name']);
         $presences = app(UserPresence::class)->forConversations($conversations->getCollection(), $user->id);
 
         return response()->view('messages.index', compact('conversations', 'recipients', 'presences'))->header('Cache-Control', 'private, no-store');
@@ -153,6 +162,7 @@ class MessageController extends Controller
             'recipient_id' => 'required|exists:users,id',
             'ad_id' => 'nullable|exists:ads,id',
             'message' => 'required|string|max:3000',
+            'existing_contact' => 'nullable|boolean',
         ]);
 
         $currentUser = Auth::user();
@@ -162,6 +172,9 @@ class MessageController extends Controller
             throw \Illuminate\Validation\ValidationException::withMessages(['message' => 'Écrivez un message avant de l’envoyer.']);
         }
         abort_unless($otherUser->is_active, 403);
+        if ($request->boolean('existing_contact')) {
+            abort_unless($this->contactRecipients($currentUser->id)->whereKey($otherUser->id)->exists(), 403, 'Ce destinataire ne fait pas partie de vos échanges.');
+        }
 
         // Empêcher de démarrer une conversation avec soi-même
         if ($currentUser->id == $otherUser->id) {
@@ -213,8 +226,7 @@ class MessageController extends Controller
             DB::commit();
             $this->notifyRecipient($message, $conversation, $currentUser);
 
-            return redirect()->route('messages.show', $conversation->id)
-                ->with('success', 'Message envoyé avec succès !');
+            return redirect()->route('messages.show', $conversation->id);
 
         } catch (\Exception $e) {
             DB::rollBack();

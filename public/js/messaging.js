@@ -27,10 +27,9 @@
   let pinned = true;
   let lastId = Math.max(0, ...Array.from(thread.querySelectorAll('[data-message-id]'), el => Number(el.dataset.messageId)));
   let blocked = input.disabled;
-  function notice(text, success) {
+  function notice(text) {
     feedback.textContent = text;
     feedback.hidden = !text;
-    feedback.classList.toggle('is-success', !!success);
   }
   function resize() {
     input.style.height = 'auto';
@@ -155,7 +154,8 @@
       render(data.message); dates(); bottom();
       input.value = ''; attempt = null; resize();
       try { sessionStorage.removeItem(draftKey); } catch (_) {}
-      notice('Message envoyé.', true);
+      // Le statut « Envoyé / Lu » dans la bulle suffit après la confirmation.
+      notice('');
       // Ne pas avancer le curseur ici : un message reçu pendant l’envoi pourrait être sauté.
     } catch (error) {
       notice(error.name === 'AbortError' ? 'La confirmation prend trop de temps. Vérifiez les derniers messages, puis réessayez si nécessaire : une nouvelle tentative identique ne crée pas de doublon.' : error.message || 'Envoi non confirmé. Votre texte est conservé.');
