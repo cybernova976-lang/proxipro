@@ -6988,12 +6988,12 @@
 
         {{-- Sidebar de navigation --}}
         @auth
-            @if(!request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*'))
+            @if(!request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*'))
                 @include('partials.sidebar')
             @endif
         @endauth
 
-        <main class="@auth @if(!request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*')) main-content-with-sidebar @endif @endauth">
+        <main class="@auth @if(!request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*')) main-content-with-sidebar @endif @endauth">
             @if(session('info'))
                 <div class="pk-flash-info" role="status">
                     <i class="fas fa-circle-info"></i>

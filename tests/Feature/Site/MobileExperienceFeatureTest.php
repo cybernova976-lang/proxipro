@@ -78,15 +78,13 @@ class MobileExperienceFeatureTest extends TestCase
 
     public function test_mobile_messaging_uses_dynamic_viewport_and_safe_input_spacing(): void
     {
-        $indexView = file_get_contents(resource_path('views/messages/index.blade.php'));
-        $conversationView = file_get_contents(resource_path('views/messages/show.blade.php'));
+        $messagingStyles = file_get_contents(public_path('css/messaging.css'));
         $pwaInstall = file_get_contents(resource_path('views/partials/pwa-install.blade.php'));
 
-        $this->assertStringContainsString('height: calc(100dvh - 68px);', $indexView);
-        $this->assertStringContainsString('height: calc(100dvh - 68px);', $conversationView);
-        $this->assertStringContainsString('env(safe-area-inset-bottom)', $conversationView);
-        $this->assertStringContainsString('.message-input-wrapper', $conversationView);
-        $this->assertStringContainsString('min-width: 0;', $conversationView);
+        $this->assertStringContainsString('height: calc(100dvh - 68px);', $messagingStyles);
+        $this->assertStringContainsString('env(safe-area-inset-bottom)', $messagingStyles);
+        $this->assertStringContainsString('.msg-compose-form', $messagingStyles);
+        $this->assertStringContainsString('min-width:0', $messagingStyles);
         $this->actingAs(User::factory()->create())
             ->get(route('messages.index'))
             ->assertOk()

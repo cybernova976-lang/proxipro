@@ -20,21 +20,52 @@ class MessageController extends Controller
     }
 
     // Liste des conversations
-    public function index()
+    private function inbox(Request $request)
+    {
+        $request->validate(['q' => 'nullable|string|max:100', 'filter' => 'nullable|in:all,unread']);
+
+        return Conversation::forParticipant($request->user()->id)
+            ->with(['user1:id,name,avatar', 'user2:id,name,avatar', 'lastMessage'])
+            ->withCount(['messages as unread_messages_count' => fn ($q) => $q
+                ->where('sender_id', '!=', $request->user()->id)->where('is_read', false)])
+            ->when($request->filled('q'), function ($q) use ($request) {
+                $term = '%'.mb_strtolower(trim((string) $request->input('q'))).'%';
+                $q->where(fn ($search) => $search->whereRaw('LOWER(subject) LIKE ?', [$term])
+                    ->orWhereHas('user1', fn ($u) => $u->where('id', '!=', $request->user()->id)->whereRaw('LOWER(name) LIKE ?', [$term]))
+                    ->orWhereHas('user2', fn ($u) => $u->where('id', '!=', $request->user()->id)->whereRaw('LOWER(name) LIKE ?', [$term])));
+            })
+            ->when($request->input('filter') === 'unread', fn ($q) => $q->whereHas('messages', fn ($m) => $m
+                ->where('sender_id', '!=', $request->user()->id)->where('is_read', false)))
+            ->orderByDesc('last_message_at')->orderByDesc('id')->paginate(20)->withQueryString();
+    }
+
+    private function payload(Message $message): array
+    {
+        return $message->only(['id', 'conversation_id', 'sender_id', 'content', 'is_read', 'created_at', 'read_at', 'edited_at']);
+    }
+
+    private function notifyRecipient(Message $message, Conversation $conversation, User $sender): void
+    {
+        $recipientId = $conversation->user1_id == $sender->id ? $conversation->user2_id : $conversation->user1_id;
+        try {
+            User::find($recipientId)?->notify(new NewMessageNotification($message, $conversation, $sender));
+        } catch (\Throwable $error) {
+            Log::error('Notification de message non distribuée', ['message_id' => $message->id, 'exception' => $error]);
+        }
+    }
+
+    public function index(Request $request)
     {
         $user = Auth::user();
 
-        $conversations = Conversation::with(['user1', 'user2', 'lastMessage.sender'])
-            ->where('user1_id', $user->id)
-            ->orWhere('user2_id', $user->id)
-            ->orderBy('last_message_at', 'desc')
-            ->paginate(20);
+        $conversations = $this->inbox($request);
+        $recipients = User::where('id', '!=', $user->id)->where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
-        return view('messages.index', compact('conversations'));
+        return response()->view('messages.index', compact('conversations', 'recipients'))->header('Cache-Control', 'private, no-store');
     }
 
     // Voir une conversation
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $user = Auth::user();
         $conversation = Conversation::with(['user1', 'user2'])->findOrFail($id);
@@ -48,19 +79,14 @@ class MessageController extends Controller
         $conversation->markAsRead();
 
         // Récupérer les messages
-        $messages = Message::with('sender')
-            ->where('conversation_id', $id)
-            ->orderBy('created_at', 'asc')
-            ->paginate(50);
+        $messages = Message::where('conversation_id', $id)->orderByDesc('id')->limit(51)->get();
+        $hasOlder = $messages->count() > 50;
+        $messages = $messages->take(50)->reverse()->values();
 
         // Récupérer toutes les conversations pour la sidebar
-        $conversations = Conversation::with(['user1', 'user2', 'lastMessage.sender'])
-            ->where('user1_id', $user->id)
-            ->orWhere('user2_id', $user->id)
-            ->orderBy('last_message_at', 'desc')
-            ->get();
+        $conversations = $this->inbox($request);
 
-        return view('messages.show', compact('conversation', 'messages', 'conversations'));
+        return response()->view('messages.show', compact('conversation', 'messages', 'conversations', 'hasOlder'))->header('Cache-Control', 'private, no-store');
     }
 
     // Envoyer un message
@@ -69,7 +95,13 @@ class MessageController extends Controller
         $request->validate([
             'conversation_id' => 'required|exists:conversations,id',
             'content' => 'required|string|max:3000',
+            'client_token' => 'nullable|uuid',
         ]);
+
+        $content = trim($request->content);
+        if ($content === '') {
+            throw \Illuminate\Validation\ValidationException::withMessages(['content' => 'Écrivez un message avant de l’envoyer.']);
+        }
 
         $user = Auth::user();
         $conversation = Conversation::findOrFail($request->conversation_id);
@@ -84,23 +116,30 @@ class MessageController extends Controller
             return response()->json(['error' => 'Cette conversation est bloquée'], 403);
         }
 
-        // Créer le message
-        $message = Message::create([
-            'conversation_id' => $conversation->id,
-            'sender_id' => $user->id,
-            'content' => $request->content,
-        ]);
+        $created = false;
+        $message = DB::transaction(function () use ($request, $conversation, $user, $content, &$created) {
+            $locked = Conversation::whereKey($conversation->id)->lockForUpdate()->firstOrFail();
+            if ($request->filled('client_token')) {
+                $existing = Message::where('sender_id', $user->id)->where('client_token', $request->client_token)->first();
+                if ($existing) {
+                    abort_unless($existing->conversation_id == $conversation->id, 409);
 
-        // Notifier le destinataire par email et notification interne
-        $recipientId = $conversation->user1_id === $user->id ? $conversation->user2_id : $conversation->user1_id;
-        $recipient = User::find($recipientId);
-        if ($recipient) {
-            $recipient->notify(new NewMessageNotification($message, $conversation, $user));
+                    return $existing;
+                }
+            }
+            abort_unless($locked->canSendMessage($user->id), 403, 'Cette conversation est bloquée.');
+            abort_unless($locked->other_user?->is_active, 403, 'Ce destinataire n’est plus disponible.');
+            $created = true;
+
+            return Message::create(['conversation_id' => $locked->id, 'sender_id' => $user->id, 'content' => $content, 'client_token' => $request->client_token]);
+        });
+        if ($created) {
+            $this->notifyRecipient($message, $conversation, $user);
         }
 
         return response()->json([
             'success' => true,
-            'message' => $message->load('sender'),
+            'message' => $this->payload($message),
         ]);
     }
 
@@ -115,6 +154,11 @@ class MessageController extends Controller
 
         $currentUser = Auth::user();
         $otherUser = User::findOrFail($request->recipient_id);
+        $content = trim($request->message);
+        if ($content === '') {
+            throw \Illuminate\Validation\ValidationException::withMessages(['message' => 'Écrivez un message avant de l’envoyer.']);
+        }
+        abort_unless($otherUser->is_active, 403);
 
         // Empêcher de démarrer une conversation avec soi-même
         if ($currentUser->id == $otherUser->id) {
@@ -124,6 +168,7 @@ class MessageController extends Controller
         // Vérifier la restriction de réponse si liée à une annonce
         if ($request->ad_id) {
             $ad = Ad::find($request->ad_id);
+            abort_unless($ad && in_array($ad->user_id, [$currentUser->id, $otherUser->id]), 422);
             if ($ad && $ad->user_id !== $currentUser->id) {
                 $restriction = $ad->reply_restriction ?? 'everyone';
 
@@ -151,24 +196,28 @@ class MessageController extends Controller
                 $otherUser->id,
                 $request->ad_id ? 'Annonce #'.$request->ad_id : null
             );
+            $conversation = Conversation::whereKey($conversation->id)->lockForUpdate()->firstOrFail();
+            abort_unless($conversation->canSendMessage($currentUser->id), 403, 'Cette conversation est bloquée.');
 
             // Envoyer le premier message
             $message = Message::create([
                 'conversation_id' => $conversation->id,
                 'sender_id' => $currentUser->id,
-                'content' => $request->message,
+                'content' => $content,
             ]);
 
             // Notifier le destinataire par email et notification interne
-            $otherUser->notify(new NewMessageNotification($message, $conversation, $currentUser));
-
             DB::commit();
+            $this->notifyRecipient($message, $conversation, $currentUser);
 
             return redirect()->route('messages.show', $conversation->id)
                 ->with('success', 'Message envoyé avec succès !');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                throw $e;
+            }
             Log::error('Echec de creation d une conversation', [
                 'user_id' => $currentUser->id,
                 'recipient_id' => $otherUser->id,
@@ -189,10 +238,11 @@ class MessageController extends Controller
             abort(403);
         }
 
-        $conversation->update([
-            'is_blocked' => true,
-            'blocked_by' => $user->id,
-        ]);
+        DB::transaction(function () use ($conversation, $user) {
+            $locked = Conversation::whereKey($conversation->id)->lockForUpdate()->firstOrFail();
+            abort_if($locked->is_blocked && $locked->blocked_by != $user->id, 403);
+            $locked->update(['is_blocked' => true, 'blocked_by' => $user->id]);
+        });
 
         return response()->json(['success' => true]);
     }
@@ -207,10 +257,11 @@ class MessageController extends Controller
             abort(403);
         }
 
-        $conversation->update([
-            'is_blocked' => false,
-            'blocked_by' => null,
-        ]);
+        DB::transaction(function () use ($conversation, $user) {
+            $locked = Conversation::whereKey($conversation->id)->lockForUpdate()->firstOrFail();
+            abort_unless($locked->blocked_by == $user->id, 403);
+            $locked->update(['is_blocked' => false, 'blocked_by' => null]);
+        });
 
         return response()->json(['success' => true]);
     }
@@ -243,7 +294,7 @@ class MessageController extends Controller
             $conversation->markAsRead();
         }
 
-        return response()->json(['success' => true]);
+        return request()->expectsJson() ? response()->json(['success' => true]) : back()->with('success', 'Tous vos messages sont marqués comme lus.');
     }
 
     // Poll for new messages (real-time like)
@@ -257,12 +308,20 @@ class MessageController extends Controller
             return response()->json(['error' => 'Accès non autorisé'], 403);
         }
 
-        $lastId = $request->input('last_id', 0);
+        $request->validate(['last_id' => 'nullable|integer|min:0', 'before_id' => 'nullable|integer|min:1', 'visible_ids' => 'nullable|array|max:200', 'visible_ids.*' => 'integer|min:1']);
+        $conversation->markAsRead($user->id);
+        if ($request->filled('before_id')) {
+            $older = Message::where('conversation_id', $id)->where('id', '<', $request->integer('before_id'))->orderByDesc('id')->limit(51)->get();
+
+            return response()->json(['success' => true, 'messages' => $older->take(50)->reverse()->values()->map(fn ($m) => $this->payload($m)), 'has_more' => $older->count() > 50])->header('Cache-Control', 'private, no-store');
+        }
+        $lastId = $request->integer('last_id');
 
         // Récupérer les nouveaux messages
         $messages = Message::where('conversation_id', $id)
             ->where('id', '>', $lastId)
-            ->orderBy('created_at', 'asc')
+            ->orderBy('id')
+            ->limit(50)
             ->get();
 
         // Marquer les messages de l'autre utilisateur comme lus
@@ -271,10 +330,16 @@ class MessageController extends Controller
             ->where('is_read', false)
             ->update(['is_read' => true, 'read_at' => now()]);
 
+        $visible = Message::where('conversation_id', $id)->whereIn('id', $request->input('visible_ids', []))->orderBy('id')->get();
+
         return response()->json([
             'success' => true,
-            'messages' => $messages,
-        ]);
+            'messages' => $messages->map(fn ($m) => $this->payload($m)),
+            'visible_messages' => $visible->map(fn ($m) => $this->payload($m)),
+            'visible_ids' => $visible->pluck('id'),
+            'is_blocked' => $conversation->is_blocked,
+            'blocked_by' => $conversation->blocked_by,
+        ])->header('Cache-Control', 'private, no-store');
     }
 
     // Modifier un message (<= 5 minutes)
@@ -295,13 +360,20 @@ class MessageController extends Controller
             return response()->json(['error' => 'Délai dépassé'], 403);
         }
 
+        abort_unless($message->conversation->canSendMessage($user->id), 403, 'Cette conversation est bloquée.');
+        $content = trim($request->content);
+        if ($content === '') {
+            throw \Illuminate\Validation\ValidationException::withMessages(['content' => 'Le message ne peut pas être vide.']);
+        }
+
         $message->update([
-            'content' => $request->content,
+            'content' => $content,
+            'edited_at' => now(),
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => $message,
+            'message' => $this->payload($message),
         ]);
     }
 

@@ -14,7 +14,7 @@ class Conversation extends Model
 
     protected $casts = [
         'is_blocked' => 'boolean',
-        'last_message_at' => 'datetime'
+        'last_message_at' => 'datetime',
     ];
 
     // Relations
@@ -42,18 +42,23 @@ class Conversation extends Model
     public function getOtherUserAttribute()
     {
         $currentUserId = auth()->id();
-        
+
         if ($this->user1_id == $currentUserId) {
             return $this->user2;
         }
-        
+
         return $this->user1;
     }
 
     public function getUnreadCountAttribute()
     {
-        if (!auth()->check()) return 0;
-        
+        if (array_key_exists('unread_messages_count', $this->attributes)) {
+            return (int) $this->attributes['unread_messages_count'];
+        }
+        if (! auth()->check()) {
+            return 0;
+        }
+
         return $this->messages()
             ->where('sender_id', '!=', auth()->id())
             ->where('is_read', false)
@@ -64,36 +69,38 @@ class Conversation extends Model
     public function markAsRead($userId = null)
     {
         $userId = $userId ?? auth()->id();
-        
+
         $this->messages()
             ->where('sender_id', '!=', $userId)
             ->where('is_read', false)
             ->update([
                 'is_read' => true,
-                'read_at' => now()
+                'read_at' => now(),
             ]);
     }
 
     public function canSendMessage($userId)
     {
-        if ($this->is_blocked) {
-            return $this->blocked_by != $userId;
-        }
-        
-        return true;
+        return in_array((int) $userId, [(int) $this->user1_id, (int) $this->user2_id], true) && ! $this->is_blocked;
+    }
+
+    public function scopeForParticipant($query, $userId)
+    {
+        return $query->where(fn ($participants) => $participants
+            ->where('user1_id', $userId)->orWhere('user2_id', $userId));
     }
 
     public static function getOrCreate($user1Id, $user2Id, $subject = null)
     {
-        $conversation = self::where(function($query) use ($user1Id, $user2Id) {
+        $conversation = self::where(function ($query) use ($user1Id, $user2Id) {
             $query->where('user1_id', $user1Id)
-                  ->where('user2_id', $user2Id);
-        })->orWhere(function($query) use ($user1Id, $user2Id) {
+                ->where('user2_id', $user2Id);
+        })->orWhere(function ($query) use ($user1Id, $user2Id) {
             $query->where('user1_id', $user2Id)
-                  ->where('user2_id', $user1Id);
+                ->where('user2_id', $user1Id);
         })->first();
 
-        if (!$conversation) {
+        if (! $conversation) {
             $conversation = self::create([
                 'user1_id' => min($user1Id, $user2Id),
                 'user2_id' => max($user1Id, $user2Id),
