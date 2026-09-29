@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PointTransaction;
+use App\Models\Transaction;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Transaction;
-use App\Models\PointTransaction;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class HomeController extends Controller
 {
@@ -21,56 +21,9 @@ class HomeController extends Controller
     /**
      * Show the application dashboard.
      */
-    public function index()
+    public function index(Request $request, \App\Services\ActivityDashboardService $dashboard)
     {
-        $user = Auth::user();
-        $ads = $user->ads()->latest()->get();
-        
-        // Fetch financial transactions (Stripe payments, subscriptions, etc.)
-        $transactions = Transaction::where('user_id', $user->id)
-            ->latest()
-            ->take(20)
-            ->get();
-        
-        // Fetch point transactions
-        $pointTransactions = PointTransaction::where('user_id', $user->id)
-            ->latest()
-            ->take(20)
-            ->get();
-        
-        // Active boosts and urgent publications
-        $activeBoostedAds = $user->ads()
-            ->where('status', 'active')
-            ->where('is_boosted', true)
-            ->where('boost_end', '>', now())
-            ->orderBy('boost_end', 'asc')
-            ->get();
-        
-        $activeUrgentAds = $user->ads()
-            ->where('status', 'active')
-            ->where('is_urgent', true)
-            ->where(function($q) {
-                $q->whereNull('urgent_until')
-                  ->orWhere('urgent_until', '>', now());
-            })
-            ->orderBy('urgent_until', 'asc')
-            ->get();
-        
-        // Pro subscription info
-        $proSubscription = null;
-        if ($user->plan && $user->plan !== 'free') {
-            $proSubscription = [
-                'plan' => $user->plan,
-                'started_at' => $user->subscription_start ?? $user->created_at,
-                'ends_at' => $user->subscription_end,
-                'is_active' => !$user->subscription_end || $user->subscription_end->isFuture(),
-            ];
-        }
-        
-        return view('home', compact(
-            'ads', 'transactions', 'pointTransactions',
-            'activeBoostedAds', 'activeUrgentAds', 'proSubscription'
-        ));
+        return response()->view('home', $dashboard->data($request->user(), $request))->header('Cache-Control', 'private, no-store');
     }
 
     /**
@@ -79,15 +32,15 @@ class HomeController extends Controller
     public function exportTransactionsPdf()
     {
         $user = Auth::user();
-        
+
         $transactions = Transaction::where('user_id', $user->id)
             ->latest()
             ->get();
-        
+
         $pointTransactions = PointTransaction::where('user_id', $user->id)
             ->latest()
             ->get();
-        
+
         $pdf = Pdf::loadView('pdf.transactions', [
             'user' => $user,
             'transactions' => $transactions,
@@ -95,6 +48,6 @@ class HomeController extends Controller
             'generatedAt' => now(),
         ]);
 
-        return $pdf->download('Prokejem_Historique_Transactions_' . date('Y-m-d') . '.pdf');
+        return $pdf->download('Prokejem_Historique_Transactions_'.date('Y-m-d').'.pdf');
     }
 }

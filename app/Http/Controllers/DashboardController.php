@@ -17,52 +17,14 @@ class DashboardController extends Controller
     /**
      * Section: Tableau de bord (overview)
      */
-    public function overview()
+    public function overview(\Illuminate\Http\Request $request, \App\Services\ActivityDashboardService $dashboard)
     {
-        $user = Auth::user();
-        $ads = $user->ads()->latest()->get();
+        return response()->view('dashboard.partials.overview', $dashboard->data($request->user(), $request))->header('Cache-Control', 'private, no-store');
+    }
 
-        $transactions = Transaction::where('user_id', $user->id)
-            ->latest()
-            ->take(20)
-            ->get();
-
-        $pointTransactions = PointTransaction::where('user_id', $user->id)
-            ->latest()
-            ->take(20)
-            ->get();
-
-        $activeBoostedAds = $user->ads()
-            ->where('status', 'active')
-            ->where('is_boosted', true)
-            ->where('boost_end', '>', now())
-            ->orderBy('boost_end', 'asc')
-            ->get();
-
-        $activeUrgentAds = $user->ads()
-            ->where('status', 'active')
-            ->where('is_urgent', true)
-            ->where(function ($q) {
-                $q->whereNull('urgent_until')
-                    ->orWhere('urgent_until', '>', now());
-            })
-            ->orderBy('urgent_until', 'asc')
-            ->get();
-
-        $proSubscription = null;
-        if ($user->plan && $user->plan !== 'free') {
-            $proSubscription = [
-                'plan' => $user->plan,
-                'started_at' => $user->subscription_start ?? $user->created_at,
-                'ends_at' => $user->subscription_end,
-                'is_active' => ! $user->subscription_end || $user->subscription_end->isFuture(),
-            ];
-        }
-
-        return view('dashboard.partials.overview', compact(
-            'ads', 'transactions', 'pointTransactions',
-            'activeBoostedAds', 'activeUrgentAds', 'proSubscription'
-        ));
+    public function account(\App\Services\ActivityDashboardService $dashboard)
+    {
+        return response()->view('dashboard.partials.account', $dashboard->account(Auth::user()))->header('Cache-Control', 'private, no-store');
     }
 
     /**

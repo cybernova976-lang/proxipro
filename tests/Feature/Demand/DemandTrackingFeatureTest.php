@@ -60,31 +60,32 @@ class DemandTrackingFeatureTest extends TestCase
         ]);
 
         $response = $this->actingAs($client)
-            ->get(route('demands.tracking'))
+            ->get(route('home'))
             ->assertOk();
 
-        $items = $response->viewData('demands')->getCollection()->keyBy(fn ($item) => $item['demand']->id);
-        $this->assertSame('published', $items[$fresh->id]['key']);
-        $this->assertSame('attention', $items[$old->id]['key']);
-        $this->assertSame('proposals', $items[$answered->id]['key']);
-        $this->assertSame('funded', $items[$funded->id]['key']);
+        $items = $response->viewData('activityItems')->getCollection()->keyBy('key');
+        $this->assertSame('waiting', $items['request-'.$fresh->id]['stage']);
+        $this->assertSame('waiting', $items['request-'.$old->id]['stage']);
+        $this->assertSame('action', $items['request-'.$answered->id]['stage']);
+        $this->assertSame('ongoing', $items['order-'.$order->id]['stage']);
+        $this->assertFalse($items->has('request-'.$funded->id), 'La demande attribuée ne doit pas dupliquer sa commande.');
 
         $response
-            ->assertSee('Suivi de mes demandes')
-            ->assertSee('Recherche de prestataires en cours')
-            ->assertSee('Toujours aucune proposition')
-            ->assertSee('1 proposition à comparer')
-            ->assertSee('Mission en cours · fonds protégés')
+            ->assertSee('Mon suivi')
+            ->assertSee('En attente de propositions')
+            ->assertDontSee('Toujours aucune proposition')
+            ->assertSee('1 proposition à examiner')
+            ->assertSee('Mission en cours')
             ->assertSee(route('ads.edit', $old), false)
             ->assertSee(route('proposals.compare', $answered), false)
             ->assertSee(route('service-orders.index').'#order-'.$order->id, false)
             ->assertDontSee('Demande privée d’un autre client')
             ->assertDontSee('Offre du client à exclure');
 
-        $this->assertSame(4, $response->viewData('summary')['total']);
-        $this->assertSame(2, $response->viewData('summary')['awaiting']);
-        $this->assertSame(1, $response->viewData('summary')['responses']);
-        $this->assertSame(1, $response->viewData('summary')['active']);
+        $this->assertSame(4, $response->viewData('activityItems')->total());
+        $this->assertSame(2, $response->viewData('activityCounts')['waiting']);
+        $this->assertSame(1, $response->viewData('activityCounts')['action']);
+        $this->assertSame(1, $response->viewData('activityCounts')['ongoing']);
     }
 
     public function test_completed_demand_reaches_the_last_step_and_navigation_links_to_tracking(): void
@@ -101,17 +102,22 @@ class DemandTrackingFeatureTest extends TestCase
         $order = $this->order($demand, $client, $provider, ServiceOrder::STATUS_COMPLETED, ServiceOrder::PAYMENT_RELEASED);
 
         $response = $this->actingAs($client)
-            ->get(route('demands.tracking'))
+            ->get(route('home', ['etat' => 'closed']))
             ->assertOk();
 
-        $this->assertSame('completed', $response->viewData('demands')->first()['key']);
-        $this->assertSame(5, $response->viewData('demands')->first()['step']);
+        $this->assertSame('order-'.$order->id, $response->viewData('activityItems')->first()['key']);
+        $this->assertSame('closed', $response->viewData('activityItems')->first()['stage']);
+        $this->assertSame(1, $response->viewData('activityCounts')['closed']);
 
         $response
             ->assertSee('Mission terminée')
-            ->assertSee('aria-current="step"', false)
+            ->assertSee('Historique')
+            ->assertSee('aria-current="page"', false)
             ->assertSee(route('service-orders.index').'#order-'.$order->id, false)
             ->assertSee('Suivi', false);
+
+        $this->get(route('demands.tracking', ['etat' => 'closed']))
+            ->assertRedirect(route('home', ['etat' => 'closed']));
 
     }
 

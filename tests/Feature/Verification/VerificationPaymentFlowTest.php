@@ -163,8 +163,8 @@ class VerificationPaymentFlowTest extends TestCase
         $this->actingAs($owner)
             ->get(route('profile.show'))
             ->assertOk()
-            ->assertSee('Devenir prestataire')
-            ->assertSeeInOrder(['Devenir prestataire', 'Modifier mon profil']);
+            ->assertSee('Activer mon profil prestataire')
+            ->assertSeeInOrder(['Activer mon profil prestataire', 'Modifier mon profil']);
     }
 
     public function test_mobile_camera_fields_are_accepted_for_identity_verification(): void

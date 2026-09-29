@@ -473,7 +473,8 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             'is_service_provider' => false,
         ]);
 
-        $clientHtml = $this->actingAs($client)->get(route('demands.tracking'))->assertOk()->getContent();
+        $this->actingAs($client)->get(route('demands.tracking'))->assertRedirect(route('home'));
+        $clientHtml = $this->get(route('home'))->assertOk()->getContent();
 
         preg_match('#<nav class="pk-tabbar".*?</nav>#s', $clientHtml, $clientNav);
         $this->assertNotEmpty($clientNav, 'La barre est absente de la page de suivi.');

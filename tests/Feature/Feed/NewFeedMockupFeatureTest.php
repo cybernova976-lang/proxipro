@@ -81,7 +81,7 @@ class NewFeedMockupFeatureTest extends TestCase
             ->assertSee(asset('js/feed.js'), false);
     }
 
-    public function test_client_view_starts_with_the_active_request_and_its_real_proposal_count(): void
+    public function test_client_discovery_is_followed_by_a_compact_action_with_its_real_proposal_count(): void
     {
         $client = User::factory()->create([
             'user_type' => 'particulier',
@@ -116,34 +116,33 @@ class NewFeedMockupFeatureTest extends TestCase
             ->actingAs($client)
             ->get(route('feed'))
             ->assertOk()
-            ->assertSee('pk-state--active-request', false)
-            ->assertSee('pk-state__request-head', false)
-            ->assertSee('pk-state__status', false)
-            ->assertSee('Votre demande en cours')
+            ->assertSee('pk-resume', false)
+            ->assertSee('Votre prochaine action')
             ->assertSee('Réparer la porte du garage')
             ->assertSee('1 proposition')
             ->assertSee('à examiner')
-            ->assertSee('Comparer les propositions')
+            ->assertSee('Comparer')
             ->assertSee(route('proposals.compare', $requestAd), false);
 
         $html = $response->getContent();
-        preg_match('/<section\b[^>]*pk-state--active-request[^>]*>(.*?)<\/section>/s', $html, $stateCard);
+        preg_match('/<section\b[^>]*pk-resume[^>]*>(.*?)<\/section>/s', $html, $stateCard);
 
-        $this->assertNotEmpty($stateCard, 'La demande en cours doit posseder son propre traitement visuel.');
-        $this->assertStringContainsString('pk-state__request-head', $stateCard[1]);
-        $this->assertStringContainsString('pk-state__status', $stateCard[1]);
+        $this->assertNotEmpty($stateCard, 'La proposition à examiner doit posséder un rappel compact.');
+        $this->assertStringContainsString('pk-resume__copy', $stateCard[1]);
+        $this->assertStringContainsString('pk-resume__label', $stateCard[1]);
+        $this->assertGreaterThan(strpos($html, 'id="pkIntentForm"'), strpos($html, 'class="pk-resume"'));
 
         $css = file_get_contents(public_path('css/feed.css'));
-        preg_match('/\.pk-state--active-request\s*\{([^}]*)\}/s', $css, $activeRequestRule);
-        $this->assertNotEmpty($activeRequestRule, 'Le modificateur de la demande en cours ne possede aucune regle CSS.');
+        preg_match('/\.pk-resume\s*\{([^}]*)\}/s', $css, $activeRequestRule);
+        $this->assertNotEmpty($activeRequestRule, 'Le rappel de prochaine action ne possède aucune règle CSS.');
         $this->assertMatchesRegularExpression(
             '/(?:background|border|box-shadow)\s*:/',
             $activeRequestRule[1],
-            'La demande en cours doit se distinguer visuellement des autres blocs du feed.'
+            'Le rappel doit se distinguer visuellement des autres blocs du feed.'
         );
     }
 
-    public function test_client_with_an_unanswered_request_gets_a_concrete_recovery_action(): void
+    public function test_an_unanswered_request_stays_accessible_without_an_unsupported_recovery_warning(): void
     {
         $client = User::factory()->create([
             'user_type' => 'particulier',
@@ -172,11 +171,14 @@ class NewFeedMockupFeatureTest extends TestCase
             ->actingAs($client)
             ->get(route('feed'))
             ->assertOk()
-            ->assertSee('Toujours aucune réponse')
-            ->assertSee('Améliorer ma demande')
-            ->assertSee(route('ads.edit', $requestAd), false)
-            ->assertSee('Toutes les étapes')
-            ->assertSee(route('demands.tracking'), false);
+            ->assertDontSee('Toujours aucune réponse')
+            ->assertDontSee('Améliorer ma demande')
+            ->assertSee('1 demande ou mission en cours')
+            ->assertSee('Voir mon suivi')
+            ->assertSee(route('home'), false)
+            ->assertDontSee('data-activity-key="request-'.$requestAd->id.'"', false);
+        $this->get(route('home'))->assertOk()->assertSee('En attente de propositions')
+            ->assertSee('Réparer une fuite restée sans réponse')->assertSee(route('ads.edit', $requestAd), false);
     }
 
     public function test_new_feed_favorite_action_persists_and_removes_the_saved_ad(): void

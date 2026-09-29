@@ -6731,15 +6731,15 @@
                             <i class="fas fa-home"></i><span>Accueil</span>
                         </a>
                         <a href="{{ route('home') }}" class="header-nav-btn {{ request()->routeIs('home') ? 'active' : '' }}">
-                            <i class="fas fa-th-large"></i><span>Tableau de bord</span>
+                            <i class="fas fa-clipboard-list"></i><span>Mon suivi</span>
                         </a>
                         <a href="{{ route('demand.create') }}" class="header-nav-btn header-nav-btn-primary">
                             <i class="fas fa-plus-circle"></i><span>Demander un service</span>
                         </a>
-                        <a href="{{ route('contact.index') }}" class="header-nav-btn">
+                        <a href="{{ route('contact.index') }}" class="header-nav-btn header-nav-secondary">
                             <i class="fas fa-headset"></i><span>Contact</span>
                         </a>
-                        <button type="button" class="header-nav-btn" data-site-share-trigger>
+                        <button type="button" class="header-nav-btn header-nav-secondary" data-site-share-trigger>
                             <i class="fas fa-share-nodes"></i><span>Partager</span>
                         </button>
                     </nav>
@@ -6940,7 +6940,7 @@
                                     </div>
                                 </li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('profile.show') }}"><i class="fas fa-user" style="color: var(--primary);"></i>Mon Profil</a></li>
-                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('home') }}"><i class="fas fa-th-large text-secondary"></i>Tableau de bord</a></li>
+                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('home') }}"><i class="fas fa-clipboard-list text-secondary"></i>Mon suivi</a></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('ads.index') }}"><i class="fas fa-bullhorn" style="color: #6366f1;"></i>Annonces</a></li>
                                 @if(!Auth::user()->isProfessionnel() && !Auth::user()->isServiceProvider())
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('service-provider.start') }}"><i class="fas fa-user-plus" style="color: #059669;"></i>Activer mon profil prestataire</a></li>
@@ -10257,5 +10257,11 @@
     {{-- Barre d'onglets mobile — sur toutes les pages du gabarit. Le partial
          se tait de lui-meme pour un visiteur non connecte. --}}
     @include('feed.partials.mobile-tabbar')
+    <style>
+        .header-nav-center .header-nav-btn { white-space: nowrap; }
+        @media (min-width: 992px) and (max-width: 1199.98px) {
+            .header-nav-center .header-nav-secondary { display: none; }
+        }
+    </style>
 </body>
 </html>

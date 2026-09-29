@@ -31,8 +31,8 @@ class FeedClientActivityFeatureTest extends TestCase
         $this->assertSame(1, $summary['order_count']);
         $this->assertSame('order-'.$order->id, $summary['primary']['key']);
         $this->assertCount(3, $summary['others']);
-        $response->assertSee('Vos demandes et missions en cours')->assertSee('Également en cours')
-            ->assertSee(route('client-activity.index'), false)
+        $response->assertSee('Votre prochaine action')->assertDontSee('Également en cours')
+            ->assertSee(route('home'), false)
             ->assertSee(route('service-orders.index').'#order-'.$order->id, false);
         $this->assertSame(1, substr_count($response->getContent(), 'data-activity-key="order-'.$order->id.'"'));
     }
@@ -72,7 +72,8 @@ class FeedClientActivityFeatureTest extends TestCase
         $summary = app(ClientActivityService::class)->summary($buyer);
         $this->assertSame(1, $summary['total']);
         $this->assertSame('order-'.$order->id, $summary['primary']['key']);
-        $this->actingAs($buyer)->get(route('client-activity.index'))->assertOk()
+        $this->actingAs($buyer)->get(route('client-activity.index'))->assertRedirect(route('home'));
+        $this->get(route('home'))->assertOk()
             ->assertSee('Prestation réservée')->assertSee('En attente du prestataire');
     }
 
@@ -83,12 +84,14 @@ class FeedClientActivityFeatureTest extends TestCase
             $this->ad($client, 'Demande personnelle '.$number);
         }
         $this->ad(User::factory()->create(), 'Titre privé du voisin');
-        $page = $this->actingAs($client)->get(route('client-activity.index'))->assertOk()->assertDontSee('Titre privé du voisin');
-        $this->assertSame(12, $page->viewData('total'));
-        $this->assertCount(10, $page->viewData('requests'));
-        $page2 = $this->get(route('client-activity.index', ['demandes_page' => 2]))->assertOk();
-        $this->assertCount(2, $page2->viewData('requests'));
-        $this->assertSame(2, $page2->viewData('requests')->currentPage());
+        $this->actingAs($client)->get(route('client-activity.index'))->assertRedirect(route('home'));
+        $page = $this->get(route('home'))->assertOk()->assertDontSee('Titre privé du voisin');
+        $this->assertSame(12, $page->viewData('activityItems')->total());
+        $this->assertSame(12, $page->viewData('activityCounts')['waiting']);
+        $this->assertCount(10, $page->viewData('activityItems'));
+        $page2 = $this->get(route('home', ['page' => 2]))->assertOk()->assertDontSee('Titre privé du voisin');
+        $this->assertCount(2, $page2->viewData('activityItems'));
+        $this->assertSame(2, $page2->viewData('activityItems')->currentPage());
     }
 
     public function test_a_refunded_mission_does_not_resurface_as_a_new_unanswered_request(): void
@@ -111,7 +114,7 @@ class FeedClientActivityFeatureTest extends TestCase
         $ad->update(['status' => 'archived']);
         $response = $this->getJson(route('client-activity.refresh', ['revision' => $summary['revision']]))
             ->assertOk()->assertJson(['changed' => true]);
-        $this->assertStringContainsString('Aucune demande ni mission en cours', $response->json('html'));
+        $this->assertSame('', trim($response->json('html')));
         $this->assertStringNotContainsString('Demande confidentielle du voisin', $response->json('html'));
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
     }
@@ -123,11 +126,16 @@ class FeedClientActivityFeatureTest extends TestCase
         foreach (range(1, 12) as $number) {
             $this->ad($client, 'Demande plus récente '.$number);
         }
-        $focused = $this->actingAs($client)->get(route('demands.tracking', ['demande' => $older->id]))
+        $this->actingAs($client)->get(route('demands.tracking', ['demande' => $older->id]))
+            ->assertRedirect(route('home', ['demande' => $older->id]));
+        $focused = $this->get(route('home', ['demande' => $older->id]))
             ->assertOk()->assertSee('id="request-'.$older->id.'"', false);
-        $this->assertSame(2, $focused->viewData('demands')->currentPage());
+        $this->assertSame(1, $focused->viewData('activityItems')->currentPage());
+        $this->assertSame('request-'.$older->id, $focused->viewData('activityItems')->first()['key']);
+        $this->assertSame('waiting', $focused->viewData('activityFilter'));
         $other = $this->ad(User::factory()->create(), 'Privée');
-        $this->get(route('demands.tracking', ['demande' => $other->id]))->assertOk()->assertDontSee('Privée');
+        $this->get(route('home', ['demande' => $other->id]))->assertOk()->assertDontSee('Privée')
+            ->assertViewHas('activityFilter', 'active');
     }
 
     private function ad(User $user, string $title, array $attributes = []): Ad

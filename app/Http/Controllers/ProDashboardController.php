@@ -170,7 +170,7 @@ class ProDashboardController extends Controller
             'unpaid_invoices' => $user->proInvoices()->where('status', 'sent')->count(),
             'total_revenue' => $user->proInvoices()->where('status', 'paid')->sum('total'),
             'monthly_revenue' => $user->proInvoices()->where('status', 'paid')
-                ->whereMonth('paid_at', now()->month)->sum('total'),
+                ->whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()])->sum('total'),
             'total_documents' => $user->proDocuments()->count(),
             'reviews_count' => $user->reviewsReceived()->count(),
             'average_rating' => round($user->reviewsReceived()->avg('rating') ?? 0, 1),
@@ -277,7 +277,7 @@ class ProDashboardController extends Controller
 
     private function providerServiceCategories(User $user)
     {
-        $storedCategories = collect([$user->service_category])
+        $storedCategories = collect([$user->service_category, $user->profession])
             ->merge((array) $user->service_subcategories)
             ->merge((array) $user->pro_service_categories)
             ->flatMap(function ($value) {
@@ -309,7 +309,23 @@ class ProDashboardController extends Controller
                 $query->whereIn('category', $providerCategories)
                     ->orWhereIn('main_category', $providerCategories);
             })
-            ->whereDoesntHave('serviceProposals', fn ($query) => $query->where('provider_id', $user->id));
+            ->where(function ($query) use ($providerCategories) {
+                $query->where('visibility', 'public')->orWhereNull('visibility')
+                    ->orWhere(function ($targeted) use ($providerCategories) {
+                        $targeted->where('visibility', 'pro_targeted')->where(function ($targets) use ($providerCategories) {
+                            $targets->whereNull('target_categories')->orWhereJsonLength('target_categories', 0);
+                            foreach ($providerCategories as $category) {
+                                $targets->orWhereJsonContains('target_categories', $category);
+                            }
+                        });
+                    });
+            })
+            ->whereDoesntHave('serviceProposals', fn ($query) => $query->where('provider_id', $user->id))
+            ->whereDoesntHave('serviceProposals', fn ($query) => $query->where('status', ServiceProposal::STATUS_ACCEPTED))
+            ->whereDoesntHave('serviceOrders', fn ($query) => $query->whereIn('status', [
+                ServiceOrder::STATUS_AWAITING_PAYMENT, ServiceOrder::STATUS_FUNDED,
+                ServiceOrder::STATUS_COMPLETED, ServiceOrder::STATUS_DISPUTED,
+            ]));
     }
 
     // =========================================

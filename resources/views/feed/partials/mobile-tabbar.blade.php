@@ -32,10 +32,10 @@
                 'class'  => '',
             ],
             [
-                'url'    => $pkTabRole === 'client' ? route('demands.tracking') : route('ads.index'),
+                'url'    => $pkTabRole === 'client' ? route('home') : route('ads.index'),
                 'icon'   => 'fas fa-clipboard-list',
                 'label'  => $pkTabRole === 'client' ? 'Suivi' : 'Annonces',
-                'active' => ($pkTabRole === 'client' && request()->routeIs('demands.tracking', 'client-activity.index'))
+                'active' => ($pkTabRole === 'client' && request()->routeIs('home', 'demands.tracking', 'client-activity.index'))
                     || ($pkTabRole === 'provider' && (request()->routeIs('ads.index') || request()->routeIs('ads.show'))),
                 'class'  => '',
             ],

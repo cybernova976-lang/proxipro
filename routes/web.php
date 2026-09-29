@@ -189,6 +189,7 @@ Route::get('/home/export-transactions-pdf', [App\Http\Controllers\HomeController
 // Dashboard AJAX sections (SPA navigation)
 Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('/overview', [DashboardController::class, 'overview'])->name('overview');
+    Route::get('/account', [DashboardController::class, 'account'])->name('account');
     Route::get('/profile', [DashboardController::class, 'profile'])->name('profile');
     Route::get('/profile-edit', [DashboardController::class, 'profileEdit'])->name('profile-edit');
     Route::get('/settings', [DashboardController::class, 'settings'])->name('settings');

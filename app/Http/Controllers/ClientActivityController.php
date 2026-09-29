@@ -9,14 +9,7 @@ class ClientActivityController extends Controller
 {
     public function index(Request $request, ClientActivityService $activity)
     {
-        $requests = $activity->requestsQuery($request->user())->paginate(10, ['*'], 'demandes_page')->withQueryString();
-        $orders = $activity->ordersQuery($request->user())->paginate(10, ['*'], 'missions_page')->withQueryString();
-        $requests->through(fn ($ad) => $activity->requestItem($ad));
-        $orders->through(fn ($order) => $activity->orderItem($order));
-
-        return response()->view('demands.activity', [
-            'requests' => $requests, 'orders' => $orders, 'total' => $requests->total() + $orders->total(), 'pkRole' => 'client',
-        ])->header('Cache-Control', 'private, no-store');
+        return redirect()->route('home', $request->only(['demande', 'etat', 'page']));
     }
 
     public function refresh(Request $request, ClientActivityService $activity)

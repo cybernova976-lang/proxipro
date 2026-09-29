@@ -13,7 +13,7 @@
                 <div class="menu-icon">
                     <i class="fas fa-th-large"></i>
                 </div>
-                <span class="menu-text">Tableau de bord</span>
+                <span class="menu-text">Mon suivi</span>
             </a>
 
             <a href="#" class="menu-item" data-dashboard-section="profile" onclick="dashboardNav('profile'); return false;">
@@ -36,18 +36,18 @@
                 @endif
             </a>
 
-            <a href="#" class="menu-item menu-item-highlight" data-dashboard-section="create-ad" onclick="dashboardNav('create-ad'); return false;">
+            <a href="{{ route('demand.create') }}" class="menu-item menu-item-highlight">
                 <div class="menu-icon highlight">
                     <i class="fas fa-plus-circle"></i>
                 </div>
-                <span class="menu-text">Publier une Offre</span>
+                <span class="menu-text">Publier un besoin</span>
             </a>
         </div>
 
         <div class="menu-section">
             <span class="menu-label">Communication</span>
             
-            <a href="#" class="menu-item" data-dashboard-section="messages" onclick="dashboardNav('messages'); return false;">
+            <a href="{{ route('messages.index') }}" class="menu-item">
                 <div class="menu-icon">
                     <i class="fas fa-envelope"></i>
                 </div>
@@ -70,6 +70,12 @@
 
         <div class="menu-section">
             <span class="menu-label">Mon compte</span>
+            <a href="{{ route('home') }}#account" class="menu-item" data-dashboard-section="account" onclick="dashboardNav('account'); return false;">
+                <div class="menu-icon"><i class="fas fa-user-cog"></i></div><span class="menu-text">Compte et achats</span>
+            </a>
+            @if(Auth::user()->isProfessionnel() || Auth::user()->isServiceProvider())
+                <a href="{{ route('pro.opportunities') }}" class="menu-item"><div class="menu-icon"><i class="fas fa-briefcase"></i></div><span class="menu-text">Activité prestataire</span></a>
+            @endif
             
             <a href="#" class="menu-item" data-dashboard-section="points" onclick="dashboardNav('points'); return false;">
                 <div class="menu-icon">
@@ -563,9 +569,9 @@ window.addEventListener('resize', function() {
 // ===== DASHBOARD SPA NAVIGATION =====
 var currentSection = 'overview';
 var isNavigating = false;
-var dashboardSections = ['overview', 'profile', 'profile-edit', 'settings', 'points', 'my-ads', 'messages', 'transactions', 'create-ad'];
+var dashboardSections = ['overview', 'account', 'profile', 'profile-edit', 'settings', 'points', 'my-ads', 'messages', 'transactions', 'create-ad'];
 
-function dashboardNav(section) {
+function dashboardNav(section, restoreHistory) {
     if (!section || !dashboardSections.includes(section)) return;
     // Prevent double-clicks while a fetch is in progress
     if (isNavigating) return;
@@ -593,8 +599,8 @@ function dashboardNav(section) {
     }
 
     // Update URL without reload
-    var newUrl = '/home#' + section;
-    history.pushState({ section: section }, '', newUrl);
+    var newUrl = '/home' + (section === 'overview' ? window.location.search : '') + '#' + section;
+    if (!restoreHistory) history.pushState({ section: section }, '', newUrl);
 
     isNavigating = true;
 
@@ -614,7 +620,7 @@ function dashboardNav(section) {
     contentArea.appendChild(loader);
 
     // Fetch content
-    fetch('/dashboard/' + encodeURIComponent(section), {
+    fetch('/dashboard/' + encodeURIComponent(section) + (section === 'overview' ? window.location.search : ''), {
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'Accept': 'text/html'
@@ -665,15 +671,10 @@ function dashboardNav(section) {
 
 // Handle browser back/forward
 window.addEventListener('popstate', function(event) {
-    if (event.state && event.state.section) {
-        isNavigating = false; // Reset lock for back/forward
-        dashboardNav(event.state.section);
-    } else {
-        var hash = window.location.hash.replace('#', '');
-        if (hash && hash !== currentSection) {
-            isNavigating = false;
-            dashboardNav(hash);
-        }
+    var section = (event.state && event.state.section) || window.location.hash.replace('#', '') || 'overview';
+    if (dashboardSections.includes(section)) {
+        isNavigating = false;
+        dashboardNav(section, true);
     }
 });
 
@@ -683,7 +684,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var hash = window.location.hash.replace('#', '');
     if (dashboardSections.includes(hash) && hash !== 'overview') {
-        dashboardNav(hash);
+        dashboardNav(hash, true);
     }
 });
 </script>

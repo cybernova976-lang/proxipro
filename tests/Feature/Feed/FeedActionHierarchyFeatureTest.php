@@ -19,7 +19,8 @@ class FeedActionHierarchyFeatureTest extends TestCase
         $this->actingAs($provider)->get(route('feed', ['mode' => 'client']))->assertOk()
             ->assertViewHas('pkRole', 'client')->assertSee('Je cherche un service');
         $this->get(route('feed'))->assertOk()->assertViewHas('pkRole', 'client');
-        $this->get(route('demands.tracking'))->assertOk()->assertSee('Suivi');
+        $this->get(route('demands.tracking'))->assertRedirect(route('home'));
+        $this->get(route('home'))->assertOk()->assertSee('Mon suivi');
         $this->assertTrue($provider->fresh()->is_service_provider);
         $this->get(route('feed', ['mode' => 'provider']))->assertOk()->assertViewHas('pkRole', 'provider');
         $this->get(route('feed'))->assertViewHas('pkRole', 'provider');
@@ -36,13 +37,15 @@ class FeedActionHierarchyFeatureTest extends TestCase
         $client = User::factory()->create();
         $provider = $this->provider();
         $older = $this->demand($client, 'Réparation avec proposition', ['created_at' => now()->subDay()]);
-        $this->demand($client, 'Nouvelle demande', ['created_at' => now()]);
+        $newer = $this->demand($client, 'Nouvelle demande', ['created_at' => now()]);
         ServiceProposal::create(['ad_id' => $older->id, 'provider_id' => $provider->id, 'amount' => 80,
             'message' => 'Disponible demain', 'status' => ServiceProposal::STATUS_PENDING]);
         $this->actingAs($client)->get(route('feed'))->assertOk()
             ->assertViewHas('activeClientRequest', fn ($ad) => $ad->id === $older->id)
             ->assertViewHas('pkActiveRequestCount', 2)
-            ->assertSee('Comparer les propositions')->assertSee('Mes 2 demandes en cours');
+            ->assertSee('Comparer')->assertSee('Mon suivi')
+            ->assertSee('data-activity-key="request-'.$older->id.'"', false)
+            ->assertDontSee('data-activity-key="request-'.$newer->id.'"', false);
     }
 
     public function test_withdrawn_proposals_are_not_presented_as_actions_to_compare(): void
@@ -53,7 +56,8 @@ class FeedActionHierarchyFeatureTest extends TestCase
             'message' => 'Proposition retirée', 'status' => ServiceProposal::STATUS_WITHDRAWN]);
         $response = $this->actingAs($client)->get(route('feed'))->assertOk();
         $this->assertSame(0, (int) $response->viewData('activeClientRequest')->pending_proposals_count);
-        $response->assertDontSee('Comparer les propositions')->assertSee('Suivre ma demande');
+        $response->assertDontSee('Comparer les propositions')->assertSee('Voir mon suivi')
+            ->assertDontSee('data-activity-key="request-'.$ad->id.'"', false);
     }
 
     public function test_compatible_count_covers_all_results_but_only_six_cards_are_rendered(): void
@@ -117,7 +121,7 @@ class FeedActionHierarchyFeatureTest extends TestCase
         $response->assertSee('Aucun profil public ne correspond encore à ces critères');
     }
 
-    public function test_a_funded_mission_remains_visible_instead_of_showing_a_new_user_welcome(): void
+    public function test_a_funded_mission_has_a_compact_summary_and_remains_accessible_in_tracking(): void
     {
         $client = User::factory()->create();
         $provider = $this->provider();
@@ -126,8 +130,11 @@ class FeedActionHierarchyFeatureTest extends TestCase
             'order_number' => 'CMD-FEED-QA', 'amount' => 80, 'commission_amount' => 8, 'seller_amount' => 72,
             'status' => ServiceOrder::STATUS_FUNDED, 'payment_status' => ServiceOrder::PAYMENT_PAID]);
         $this->actingAs($client)->get(route('feed'))->assertOk()
-            ->assertViewHas('pkActiveRequestCount', 0)->assertSee('Mission déjà financée')
-            ->assertSee('Voir ma commande')->assertDontSee('pk-state--welcome', false);
+            ->assertViewHas('pkActiveRequestCount', 0)->assertDontSee('Mission déjà financée')
+            ->assertSee('1 demande ou mission en cours')->assertSee('Voir mon suivi')
+            ->assertSee(route('home'), false);
+        $this->get(route('home'))->assertOk()->assertSee('Mission déjà financée')
+            ->assertSee('Voir ma commande')->assertViewHas('activityCounts', fn ($counts) => $counts['ongoing'] === 1);
     }
 
     private function provider(array $attributes = []): User

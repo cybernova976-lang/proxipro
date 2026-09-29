@@ -1,22 +1,4 @@
-{{--
-    ==========================================================================
-    PROKEJEM — Page d'accueil (feed)
-    ==========================================================================
-    Le feed est un poste de pilotage, pas un catalogue : il repond a
-    « ou en suis-je et que dois-je faire maintenant ? », pas a
-    « qu'y a-t-il sur ce site ? ».
-
-    Hierarchie : mode de consultation, situation et action suivante,
-    intention, profils pertinents (client), six annonces, rappel de profil,
-    conseils et reassurance. L'accueil sans demande integre son propre champ
-    de publication pour ne pas dupliquer cette entree.
-
-    La recherche, les filtres et la carte geographique vivent sur /annonces.
-    La publication passe uniquement par /demande et /ads/create.
-
-    Toutes les donnees sont preparees par FeedController@index : cette vue
-    ne declenche aucune requete.
---}}
+{{-- Accueil : exprimer un besoin, découvrir des services, reprendre une action utile. Le suivi complet vit dans Mon suivi. --}}
 @extends('layouts.app')
 
 @section('title', 'Accueil - Prokejem')
@@ -48,9 +30,6 @@
             {{-- Zone 2 · carte d'etat --}}
             @include('feed.partials.state-card')
 
-            @if($pkRole === 'provider' || $activeClientRequest || $pkActiveOrder)
-                @include('feed.partials.intent-bar')
-            @endif
 
             {{-- Pour un client, les prestataires passent avant le catalogue. --}}
             @if($pkRole === 'client')

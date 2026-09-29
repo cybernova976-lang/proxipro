@@ -34,6 +34,41 @@
     </div>
 </div>
 
+{{-- Opportunity pipeline --}}
+<div class="pro-card mb-4" style="border-color: #bfdbfe; background: linear-gradient(135deg, #eff6ff, #ffffff 68%);">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+        <div>
+            <div class="text-primary text-uppercase fw-bold mb-1" style="font-size: .68rem; letter-spacing: .08em;">Prospection</div>
+            <h2 class="h5 fw-bold mb-1">Vos opportunités et missions</h2>
+            <p class="text-muted mb-0" style="font-size: .78rem;">Examinez les nouvelles demandes et retrouvez vos propositions et missions en cours.</p>
+        </div>
+        <a href="{{ route('pro.opportunities') }}" class="btn btn-pro-primary pro-mobile-full">
+            Ouvrir mes opportunités <i class="fas fa-arrow-right ms-1"></i>
+        </a>
+    </div>
+    <div class="row g-2 mt-2">
+        <div class="col-4">
+            <div class="p-3 rounded-3 bg-white border h-100">
+                <div class="fs-4 fw-bold text-primary">{{ $stats['new_opportunities'] }}</div>
+                <div class="text-muted" style="font-size: .72rem;">À examiner</div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="p-3 rounded-3 bg-white border h-100">
+                <div class="fs-4 fw-bold text-warning">{{ $stats['pending_proposals'] }}</div>
+                <div class="text-muted" style="font-size: .72rem;">Propositions</div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="p-3 rounded-3 bg-white border h-100">
+                <div class="fs-4 fw-bold text-success">{{ $stats['active_missions'] }}</div>
+                <div class="text-muted" style="font-size: .72rem;">Missions actives</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="h6 fw-bold text-muted mb-3">Votre activité en chiffres</h2>
 {{-- Stats Grid --}}
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
@@ -60,7 +95,7 @@
                 <i class="fas fa-euro-sign"></i>
             </div>
             <div class="pro-stat-value">{{ number_format($stats['total_revenue'], 0, ',', ' ') }}€</div>
-            <div class="pro-stat-label">Chiffre d'affaires</div>
+            <div class="pro-stat-label">Factures encaissées</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
@@ -79,7 +114,7 @@
     <div class="col-6 col-lg-3">
         <div class="pro-card text-center py-3">
             <div class="text-primary fw-bold fs-4">{{ $stats['monthly_revenue'] }}€</div>
-            <div class="text-muted" style="font-size: 0.78rem;">Revenus ce mois</div>
+            <div class="text-muted" style="font-size: 0.78rem;">Factures encaissées ce mois</div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
@@ -98,40 +133,6 @@
         <div class="pro-card text-center py-3">
             <div class="text-success fw-bold fs-4">{{ $stats['active_ads'] }}</div>
             <div class="text-muted" style="font-size: 0.78rem;">Annonces actives</div>
-        </div>
-    </div>
-</div>
-
-{{-- Opportunity pipeline --}}
-<div class="pro-card mb-4" style="border-color: #bfdbfe; background: linear-gradient(135deg, #eff6ff, #ffffff 68%);">
-    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
-        <div>
-            <div class="text-primary text-uppercase fw-bold mb-1" style="font-size: .68rem; letter-spacing: .08em;">Prospection</div>
-            <h2 class="h5 fw-bold mb-1">Votre pipeline de missions</h2>
-            <p class="text-muted mb-0" style="font-size: .78rem;">Repérez la prochaine demande utile et suivez chaque proposition jusqu’au paiement.</p>
-        </div>
-        <a href="{{ route('pro.opportunities') }}" class="btn btn-pro-primary pro-mobile-full">
-            Ouvrir mes opportunités <i class="fas fa-arrow-right ms-1"></i>
-        </a>
-    </div>
-    <div class="row g-2 mt-2">
-        <div class="col-4">
-            <div class="p-3 rounded-3 bg-white border h-100">
-                <div class="fs-4 fw-bold text-primary">{{ $stats['new_opportunities'] }}</div>
-                <div class="text-muted" style="font-size: .72rem;">À examiner</div>
-            </div>
-        </div>
-        <div class="col-4">
-            <div class="p-3 rounded-3 bg-white border h-100">
-                <div class="fs-4 fw-bold text-warning">{{ $stats['pending_proposals'] }}</div>
-                <div class="text-muted" style="font-size: .72rem;">Propositions</div>
-            </div>
-        </div>
-        <div class="col-4">
-            <div class="p-3 rounded-3 bg-white border h-100">
-                <div class="fs-4 fw-bold text-success">{{ $stats['active_missions'] }}</div>
-                <div class="text-muted" style="font-size: .72rem;">Missions actives</div>
-            </div>
         </div>
     </div>
 </div>
@@ -253,7 +254,7 @@
 </div>
 
 {{-- Subscription status --}}
-@if(!$subscription)
+@if(!$subscription && \App\Support\PlatformFeatures::proSubscriptionsEnabled())
 <div class="pro-card mt-3" style="background: linear-gradient(135deg, rgba(249,115,22,0.05), rgba(239,68,68,0.05)); border-color: #fed7aa;">
     <div class="d-flex align-items-center gap-3 flex-wrap">
         <div style="font-size: 2.5rem;">🚀</div>
