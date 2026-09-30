@@ -2303,8 +2303,10 @@ class FeedController extends Controller
         $search = trim($request->string('q')->toString());
         $city = trim($request->string('city')->toString());
         $country = trim($request->string('country')->toString());
+        // La requête des profils sélectionne users.* et des agrégats d'avis. DISTINCT
+        // sur une colonne JSON de users échoue sous PostgreSQL : ne projeter que le pays.
         $directoryCountries = (clone $query)->whereNotNull('country')->where('country', '!=', '')
-            ->distinct()->orderBy('country')->pluck('country');
+            ->select('users.country')->distinct()->orderBy('country')->pluck('country');
 
         if ($search !== '') {
             // Échapper les jokers pour rechercher le texte effectivement saisi.

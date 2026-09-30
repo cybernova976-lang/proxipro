@@ -6683,6 +6683,30 @@
         }
     }
 </style>
+<style>
+    /* Dimensions disponibles avant le rendu du header, même pendant le chargement de la page. */
+    .header-user-avatar-frame {
+        display: inline-flex;
+        width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+        overflow: hidden;
+        border-radius: 50%;
+    }
+    .header-user-avatar-frame > img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .dropdown-user-avatar {
+        display: block;
+        width: 44px;
+        height: 44px;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+</style>
 </head>
 <body class="device-{{ $deviceType ?? 'desktop' }}{{ ($isMobile ?? false) ? ' is-mobile' : '' }}{{ ($isTablet ?? false) ? ' is-tablet' : '' }}{{ request()->routeIs('feed.mockup', 'feed.mockup.preview') ? ' feed-mockup-route' : '' }}">
     {{-- Variables JS pour détection appareil côté client --}}
@@ -6912,7 +6936,7 @@
                             <button class="user-menu-btn d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 @if(Auth::user()->avatar)
                                     <span class="header-user-avatar-frame">
-                                        <img src="{{ storage_url(Auth::user()->avatar) }}" alt="Photo de profil de {{ Auth::user()->name }}" class="header-user-avatar">
+                                        <img src="{{ storage_url(Auth::user()->avatar) }}" alt="Photo de profil de {{ Auth::user()->name }}" class="header-user-avatar" width="38" height="38">
                                     </span>
                                 @else
                                     <div class="user-avatar-placeholder" style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #9333ea); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 700; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -6929,7 +6953,7 @@
                                 <li class="px-3 py-2 border-bottom">
                                     <div class="d-flex align-items-center">
                                         @if(Auth::user()->avatar)
-                                            <img src="{{ storage_url(Auth::user()->avatar) }}" alt="Photo de profil de {{ Auth::user()->name }}" class="dropdown-user-avatar me-3">
+                                            <img src="{{ storage_url(Auth::user()->avatar) }}" alt="Photo de profil de {{ Auth::user()->name }}" class="dropdown-user-avatar me-3" width="44" height="44">
                                         @else
                                             <div class="user-avatar-placeholder me-3" style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #9333ea); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; border: 2px solid #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</div>
                                         @endif
