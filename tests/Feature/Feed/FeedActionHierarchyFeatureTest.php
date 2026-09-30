@@ -118,6 +118,8 @@ class FeedActionHierarchyFeatureTest extends TestCase
         $html = $response->getContent();
         $this->assertSame(1, substr_count($html, 'id="pkIntentForm"'));
         $this->assertGreaterThan(strpos($html, 'id="pkFeedList"'), strpos($html, '<details class="pk-progress"'));
+        $this->assertGreaterThan(strpos($html, 'id="pkFeedList"'), strpos($html, 'id="pkProviderList"'),
+            'Une recherche de prestataire sans résultat ne doit pas repousser les services disponibles.');
         $response->assertSee('Aucun profil public ne correspond encore à ces critères');
     }
 

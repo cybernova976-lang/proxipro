@@ -32,7 +32,7 @@
 
 
             {{-- Pour un client, les prestataires passent avant le catalogue. --}}
-            @if($pkRole === 'client')
+            @if($pkRole === 'client' && collect($homeProfessionalProfiles ?? [])->isNotEmpty())
                 @include('feed.partials.providers')
             @endif
 
@@ -42,7 +42,6 @@
                     <div>
                         <h2 id="pkFeedTitle">{{ $pkFeedTitle }}</h2>
                         <p class="pk-sechead__sub">
-                            <span class="pk-live" aria-hidden="true"></span>
                             <span>
                                 @if($geoCity)
                                     @if($pkRole === 'provider')
@@ -53,7 +52,7 @@
                                         Toutes les zones · explorez les services disponibles
                                     @endif
                                 @else
-                                    Une sélection récente, mise à jour en continu
+                                    Découvrez les services et échangez avec les prestataires
                                 @endif
                             </span>
                         </p>
@@ -94,6 +93,11 @@
                     </a>
                 @endif
             </section>
+
+            {{-- Une recherche sans résultat ne repousse pas les services consultables. --}}
+            @if($pkRole === 'client' && collect($homeProfessionalProfiles ?? [])->isEmpty())
+                @include('feed.partials.providers')
+            @endif
 
             {{-- Le profil accompagne le parcours, sans repousser les opportunités. --}}
             @include('feed.partials.profile-progress')

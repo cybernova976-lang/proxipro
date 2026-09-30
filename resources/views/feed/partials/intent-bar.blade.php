@@ -1,6 +1,5 @@
 {{-- Zone 1 · barre d'intention — unique porte d'entree vers la publication --}}
 @php
-    $pkUser = Auth::user();
     $pkIsProvider = ($pkRole ?? 'client') === 'provider';
     $pkPublishUrl = route('demand.create');
     $pkIntentUrl = $pkIsProvider
@@ -8,17 +7,7 @@
         : $pkPublishUrl;
 @endphp
 
-<div class="pk-card pk-intent">
-    @auth
-        <span class="pk-intent__av">
-            @if($pkUser->avatar)
-                <img src="{{ storage_url($pkUser->avatar) }}" alt="">
-            @else
-                {{ Str::upper(Str::substr($pkUser->name ?? 'U', 0, 1)) }}
-            @endif
-        </span>
-    @endauth
-
+<div class="pk-intent">
     <form class="pk-intent__form" id="pkIntentForm" action="{{ $pkIntentUrl }}" method="GET" role="search">
         <div class="pk-intent__wrap">
             <i class="fas fa-search pk-intent__icon" aria-hidden="true"></i>
@@ -34,13 +23,14 @@
                    aria-expanded="false"
                    aria-controls="pkSuggest"
                    aria-autocomplete="list"
-                   placeholder="{{ $pkIsProvider ? 'Métier ou service…' : 'Ex. plomberie, ménage…' }}">
+                   placeholder="{{ $pkIsProvider ? 'Métier ou service…' : 'Ex. plomberie…' }}">
             <div class="pk-suggest" id="pkSuggest" role="listbox" hidden></div>
         </div>
     </form>
 
-    <a href="{{ $pkIsProvider ? '#pkFeedList' : $pkPublishUrl }}" class="pk-btn" aria-label="{{ $pkIsProvider ? 'Voir les demandes compatibles' : 'Publier une demande' }}">
+    <button type="submit" form="pkIntentForm" class="pk-btn" aria-label="{{ $pkIsProvider ? 'Voir les demandes compatibles' : 'Publier une demande' }}">
         <i class="fas {{ $pkIsProvider ? 'fa-bullseye' : 'fa-plus' }}"></i>
-        <span>{{ $pkIsProvider ? 'Voir les demandes' : 'Publier une demande' }}</span>
-    </a>
+        <span class="pk-intent__submit-full">{{ $pkIsProvider ? 'Voir les demandes' : 'Publier une demande' }}</span>
+        <span class="pk-intent__submit-short" aria-hidden="true">{{ $pkIsProvider ? 'Chercher' : 'Publier' }}</span>
+    </button>
 </div>

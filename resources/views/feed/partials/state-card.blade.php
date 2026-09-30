@@ -9,14 +9,17 @@
     </section>
 @else
     <section class="pk-discover" aria-labelledby="pkStateTitle">
-        <span class="pk-discover__eyebrow">Bonjour {{ $pkFirstName }}</span>
-        <h1 id="pkStateTitle">De quoi avez-vous besoin&nbsp;?</h1>
+        <span class="pk-discover__eyebrow"><span class="pk-discover__hello" aria-hidden="true"><i class="far fa-sun"></i></span> Bonjour {{ $pkFirstName }}</span>
+        <h1 id="pkStateTitle">De quoi <span class="pk-discover__keep">avez-vous</span> besoin&nbsp;?</h1>
         <p>Trouvez un prestataire près de chez vous ou décrivez votre besoin gratuitement.</p>
         @include('feed.partials.intent-bar')
         @if(!empty($pkQuickCategories))
             <div class="pk-quickcats">
                 @foreach($pkQuickCategories as $pkCatName => $pkCatData)
-                    <button type="button" class="pk-quickcat" data-pk-category="{{ $pkCatName }}"><i class="{{ $pkCatData['icon'] ?? 'fas fa-tools' }}" aria-hidden="true"></i><b>{{ Str::limit($pkCatName, 26) }}</b></button>
+                    <button type="button" class="pk-quickcat" data-pk-category="{{ $pkCatName }}">
+                        <span class="pk-quickcat__icon" aria-hidden="true"><i class="{{ $pkCatData['icon'] ?? 'fas fa-tools' }}"></i></span>
+                        <b>{{ $pkCatName }}</b>
+                    </button>
                 @endforeach
             </div>
         @endif

@@ -87,7 +87,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
                 return $ads->count() === 1 && $ads->first()?->is($serviceOffer);
             })
             ->assertSee('id="pkFeedList"', false)
-            ->assertSee('Services proposés récemment')
+            ->assertSee('Services à découvrir')
             ->assertSee('Dépannage plomberie disponible')
             ->assertDontSee('Demande urgente prioritaire')
             ->assertSee('Prestataires à découvrir')

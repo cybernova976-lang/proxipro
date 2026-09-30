@@ -86,6 +86,9 @@
 
     $pkIsSaved = $pkSaved->contains((int) $ad->id);
     $pkUrl = route('ads.show', $ad);
+    $pkCategoryLabel = $ad->category ?: ($ad->main_category ?: 'Service');
+    $pkCategoryIcon = collect($pkSearchIndex ?? [])->firstWhere('label', $pkCategoryLabel)['icon']
+        ?? ($pkIsDemande ? 'fas fa-hand-holding-heart' : 'fas fa-briefcase');
 @endphp
 
 <article class="pk-ad{{ $pkThumb ? '' : ' pk-ad--nothumb' }}{{ $pkIsUrgent ? ' is-urgent' : '' }}">
@@ -148,7 +151,7 @@
 
         <div class="pk-ad__body">
             <div class="pk-ad__top">
-                <span class="pk-ad__cat">{{ Str::limit($ad->category ?: ($ad->main_category ?: 'Service'), 28) }}</span>
+                <span class="pk-ad__cat"><i class="{{ $pkCategoryIcon }}" aria-hidden="true"></i> {{ $pkCategoryLabel }}</span>
                 @if($pkIsUrgent)
                     <span class="pk-tag pk-tag--urgent"><i class="fas fa-bolt"></i> Urgent</span>
                 @elseif($pkIsFresh)

@@ -18,6 +18,7 @@
     ]));
 @endphp
 <section id="pkProviderList" aria-labelledby="pkProsTitle">
+    @if($pkProviders->isNotEmpty())
     <div class="pk-sechead">
         <div>
             <h2 id="pkProsTitle">{{ $pkProviderCategory ? 'Prestataires pour votre demande' : ($pkProviderCity ? 'Prestataires dans votre ville' : 'Prestataires à découvrir') }}</h2>
@@ -34,7 +35,6 @@
         </a>
     </div>
 
-    @if($pkProviders->isNotEmpty())
     <div class="pk-pros">
         @foreach($pkProviders as $pkPro)
             @php
@@ -122,8 +122,15 @@
     <p class="pk-selection-note">Sélection selon les critères affichés et les avis vérifiés, sans priorité liée à l’abonnement.</p>
     @else
         <div class="pk-provider-empty">
-            <p>Aucun profil public ne correspond encore à ces critères.</p>
-            <a href="{{ route('feed.professionals') }}">Explorer d’autres métiers ou villes <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+            <span class="pk-provider-empty__icon" aria-hidden="true"><i class="far fa-compass"></i></span>
+            <div class="pk-provider-empty__copy">
+                <h2 id="pkProsTitle">Un prestataire pour votre projet</h2>
+                <p>Aucun profil public ne correspond encore à ces critères.</p>
+                @if($pkProviderCategory || $pkProviderCity)
+                    <span class="pk-provider-empty__criteria">{{ implode(' · ', array_filter([$pkProviderCategory, $pkProviderCity, $pkProviderCountry])) }}</span>
+                @endif
+            </div>
+            <a href="{{ route('feed.professionals') }}">Élargir ma recherche <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
         </div>
     @endif
 </section>

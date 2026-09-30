@@ -424,7 +424,7 @@ class FeedController extends Controller
             $priorityProviderRequests = $pkFeedAds->filter(fn ($ad) => $this->adLifecycle->needsFirstResponseAttention($ad))->values();
         } else {
             $pkMatchingCount = 0;
-            $pkFeedTitle = $useNearbyScope && ! $geoFallbackUsed ? 'Services disponibles près de vous' : 'Services proposés récemment';
+            $pkFeedTitle = $useNearbyScope && ! $geoFallbackUsed ? 'Services disponibles près de vous' : 'Services à découvrir';
             $pkFeedAds = collect($homeProfessionalOffers)
                 ->take(6)
                 ->values();
