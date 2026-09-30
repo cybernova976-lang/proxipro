@@ -13,27 +13,32 @@
     $pkProviderCategory = $pkProviderCategory ?? null;
     $pkProviderCity = $pkProviderCity ?? null;
     $pkProviderCountry = $pkProviderCountry ?? null;
+    $pkDiscovery = $pkProviderDiscovery ?? ['expanded' => false, 'requested_location' => ''];
     $pkDirectoryUrl = route('feed.professionals', array_filter([
         'subcategory' => $pkProviderCategory, 'city' => $pkProviderCity, 'country' => $pkProviderCountry,
     ]));
 @endphp
-<section id="pkProviderList" aria-labelledby="pkProsTitle">
+<section id="pkProviderList" class="pk-provider-discovery" aria-labelledby="pkProsTitle">
     @if($pkProviders->isNotEmpty())
     <div class="pk-sechead">
         <div>
-            <h2 id="pkProsTitle">{{ $pkProviderCategory ? 'Prestataires pour votre demande' : ($pkProviderCity ? 'Prestataires dans votre ville' : 'Prestataires à découvrir') }}</h2>
+            <span class="pk-provider-eyebrow">Des personnes, des savoir-faire</span>
+            <h2 id="pkProsTitle">{{ $pkProviderCity ? 'Prestataires à '.$pkProviderCity : 'Prestataires à découvrir' }}</h2>
             <p class="pk-sechead__sub">
-                @if($pkProviderCategory || $pkProviderCity)
-                    {{ implode(' · ', array_filter([$pkProviderCategory, $pkProviderCity, $pkProviderCountry])) }}
-                @else
-                    Profils publics · avis issus des prestations réalisées
-                @endif
+                {{ $pkProviderCountry ? $pkProviderCountry.' · ' : '' }}Consultez les profils et échangez avant de choisir.
             </p>
         </div>
         <a href="{{ $pkDirectoryUrl }}" class="pk-sechead__more">
-            Voir les profils <i class="fas fa-arrow-right"></i>
+            Voir tous les prestataires <i class="fas fa-arrow-right" aria-hidden="true"></i>
         </a>
     </div>
+
+    @if($pkDiscovery['expanded'])
+        <p class="pk-provider-location-note"><i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+            <span>Pas encore de profil public à {{ $pkDiscovery['requested_location'] }}.
+            Voici des prestataires basés ailleurs : vérifiez leur zone d’intervention avant de les contacter.</span>
+        </p>
+    @endif
 
     <div class="pk-pros">
         @foreach($pkProviders as $pkPro)
@@ -65,28 +70,28 @@
                     ->take(2);
                 $pkIsVerified = $pkPro->hasVerifiedProfileBadge();
             @endphp
-            <article class="pk-pro">
+            <article class="pk-pro" data-provider-id="{{ $pkPro->id }}">
                 <a href="{{ route('profile.public', $pkPro->id) }}"
                    class="pk-pro__identity"
                    aria-label="Voir le profil de {{ $pkPro->name }}">
                     <span class="pk-pro__visual">
                         @if($pkPro->avatar)
-                            <img src="{{ storage_url($pkPro->avatar) }}" alt="Photo de {{ $pkPro->name }}" loading="lazy">
+                            <img src="{{ storage_url($pkPro->avatar) }}" alt="Photo de {{ $pkPro->name }}" width="80" height="80" loading="lazy">
                         @else
                             <span class="pk-pro__fallback" aria-hidden="true">{{ Str::upper(Str::substr($pkPro->name, 0, 1)) }}</span>
                         @endif
-                    </span>
-                    <span class="pk-pro__body">
                         @if($pkIsVerified)
                             <span class="pk-pro__verified" title="Identité vérifiée" aria-label="Identité vérifiée">
                                 <i class="fas fa-check" aria-hidden="true"></i>
                             </span>
                         @endif
+                    </span>
+                    <span class="pk-pro__body">
                         <span class="pk-pro__headline">
                             <b>{{ $pkPro->name }}</b>
                         </span>
                         <span class="pk-pro__jobline">
-                            <span class="pk-pro__job">{{ Str::limit($pkJob, 38) }}</span>
+                            <span class="pk-pro__job">{{ $pkJob }}</span>
                             @if($pkHourlyRate)<strong class="pk-pro__price">{{ $pkHourlyRate }} €/h</strong>@endif
                         </span>
                         @if($pkReviews > 0 && $pkRatingRaw)
@@ -96,9 +101,9 @@
                                 <span>({{ $pkReviews }} avis)</span>
                             </span>
                         @endif
-                        @if($pkCity)
-                            <span class="pk-pro__meta"><i class="fas fa-map-marker-alt" aria-hidden="true"></i> {{ Str::limit($pkCity, 26) }}</span>
-                        @endif
+                        <span class="pk-pro__meta"><i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                            {{ implode(' · ', array_filter([$pkCity, $pkPro->country])) ?: 'Localisation non renseignée' }}
+                        </span>
                         @if($pkSpecialties->isNotEmpty())
                             <span class="pk-pro__tags">
                                 @foreach($pkSpecialties as $pkSpecialty)
@@ -112,14 +117,14 @@
                     <a href="{{ route('profile.public', $pkPro->id) }}" class="pk-pro__action pk-pro__action--profile">
                         Voir le profil
                     </a>
-                    <a href="{{ route('profile.public', ['id' => $pkPro->id, 'contact' => 1]) }}#profile-contact" class="pk-pro__action pk-pro__action--request">
-                        Décrire mon besoin
-                    </a>
                 </div>
             </article>
         @endforeach
     </div>
-    <p class="pk-selection-note">Sélection selon les critères affichés et les avis vérifiés, sans priorité liée à l’abonnement.</p>
+    <div class="pk-provider-bottom">
+        <p class="pk-selection-note">Métiers variés · sélection renouvelée chaque jour, sans priorité liée à l’abonnement.</p>
+        <a href="{{ route('feed.professionals') }}">Changer de zone ou de métier <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+    </div>
     @else
         <div class="pk-provider-empty">
             <span class="pk-provider-empty__icon" aria-hidden="true"><i class="far fa-compass"></i></span>

@@ -863,7 +863,47 @@
   .pk-pro__action { padding-inline: 7px; font-size: .69rem; }
 }
 
+/* Discovery cards: four people, not four large advertisements. */
+.pk-provider-eyebrow { display: block; margin-bottom: 5px; color: #287764; font-size: .72rem; font-weight: 700; }
+.pk-provider-discovery .pk-pros { grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: stretch; }
+.pk-provider-discovery .pk-pro { display: flex; flex-direction: column; }
+.pk-provider-discovery .pk-pro__identity { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.pk-provider-discovery .pk-pro__visual { width: 80px; height: 80px; min-height: 80px; border: 0; border-radius: 20px; margin: 16px 16px 0; overflow: visible; }
+.pk-provider-discovery .pk-pro__visual img { object-fit: cover; width: 80px; height: 80px; }
+.pk-provider-discovery .pk-pro__verified { top: auto; bottom: -3px; right: -3px; box-shadow: 0 0 0 3px #fff; }
+.pk-provider-discovery .pk-pro__body { flex: 1; padding: 14px 16px; gap: 8px; overflow: visible; }
+.pk-provider-discovery .pk-pro__headline b { padding-right: 0; font-size: .92rem; }
+.pk-provider-discovery .pk-pro__jobline { flex-direction: column; gap: 5px; }
+.pk-provider-discovery .pk-pro__job { white-space: normal; overflow: visible; font-size: .8rem; overflow-wrap: anywhere; }
+.pk-provider-discovery .pk-pro__meta { align-items: flex-start; line-height: 1.5; overflow-wrap: anywhere; color: var(--pk-ink-2); }
+.pk-provider-discovery .pk-pro__meta i { margin-top: 4px; flex: none; }
+.pk-provider-discovery .pk-pro__tags { margin-top: 2px; }
+.pk-provider-discovery .pk-pro__tag { white-space: normal; }
+.pk-provider-discovery .pk-pro__actions { display: block; padding: 0 12px 12px; border: 0; }
+.pk-provider-discovery .pk-pro__action--profile { height: auto; min-height: 44px; padding: 10px; background: #edf3ff; border-color: #d9e5fb; color: var(--pk-700); font-size: .8rem; }
+.pk-provider-location-note { display: flex; gap: 9px; padding: 12px 14px; border-radius: 12px; background: #edf2f8; color: #425b79; font-size: .8rem; line-height: 1.6; margin: 12px 0; }
+.pk-provider-location-note > i { margin-top: 5px; flex: none; }
+.pk-provider-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0 16px; margin-top: 10px; }
+.pk-provider-bottom > a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--pk-700); font-size: .76rem; font-weight: 600; }
 .pk-selection-note { margin: 8px 0 0; font-size: .7rem; color: var(--pk-ink-2); line-height: 1.5; }
+.pk-discover__alternative { display: flex; align-items: center; flex-wrap: wrap; gap: 0 12px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #d6e2f4; font-size: .8rem; color: #4a607e; }
+.pk-discover__alternative > a { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; font-weight: 700; color: var(--pk-700); }
+@media (min-width: 641px) and (max-width: 1100px) {
+  .pk-provider-discovery .pk-pros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pk-provider-discovery .pk-pro__identity { display: grid; grid-template-columns: 80px minmax(0, 1fr); align-items: start; padding: 16px; gap: 16px; }
+  .pk-provider-discovery .pk-pro__visual { margin: 0; }
+  .pk-provider-discovery .pk-pro__body { padding: 0; }
+}
+@media (max-width: 640px) {
+  .pk-provider-discovery .pk-pros { margin-inline: 0; padding: 0 2px 10px; gap: 12px; }
+  .pk-provider-discovery .pk-pro { flex: 0 0 80%; scroll-snap-align: start; }
+  .pk-provider-discovery .pk-pro:only-child { flex-basis: 100%; }
+  .pk-provider-discovery .pk-pro__identity { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: start; padding: 16px; gap: 14px; }
+  .pk-provider-discovery .pk-pro__visual { width: 72px; height: 72px; min-height: 72px; margin: 0; }
+  .pk-provider-discovery .pk-pro__visual img { width: 72px; height: 72px; }
+  .pk-provider-discovery .pk-pro__body { padding: 0; }
+  .pk-provider-discovery .pk-pro__jobline { flex-direction: column; }
+}
 .pk-provider-empty { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 18px 0; border-block: 1px solid var(--pk-rule); }
 .pk-provider-empty__icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: #e8eef9; color: var(--pk-700); font-size: 1.2rem; }
 .pk-provider-empty h2 { margin: 0 0 4px; font-size: .95rem; font-weight: 700; line-height: 1.35; }

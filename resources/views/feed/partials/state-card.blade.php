@@ -23,6 +23,10 @@
                 @endforeach
             </div>
         @endif
+        <div class="pk-discover__alternative">
+            <span>Vous préférez recevoir des propositions ?</span>
+            <a href="{{ route('demand.create') }}"><i class="fas fa-plus" aria-hidden="true"></i> Publier une demande</a>
+        </div>
     </section>
     <div id="pkClientActivity" data-refresh-url="{{ route('client-activity.refresh') }}" data-revision="{{ $pkClientActivity['revision'] }}">
         @include('feed.partials.client-activity')

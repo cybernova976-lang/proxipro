@@ -129,6 +129,7 @@
         'demandUrl' => route('demand.create'),
         'offerUrl' => route('ads.create'),
         'requestsUrl' => route('ads.index', ['type' => 'demandes']),
+        'professionalsUrl' => route('feed.professionals', array_filter(['city' => $geoCity, 'country' => $geoCountry])),
         'saveUrl' => url('/ads/:id/toggle-save'),
         'categories' => $pkSearchIndex,
     ];

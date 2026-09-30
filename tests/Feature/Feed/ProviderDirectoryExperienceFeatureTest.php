@@ -80,12 +80,13 @@ class ProviderDirectoryExperienceFeatureTest extends TestCase
         $this->assertDatabaseCount('conversations', 0);
     }
 
-    public function test_feed_card_uses_the_same_contact_link_without_a_hidden_message_form(): void
+    public function test_feed_card_opens_the_profile_without_a_hidden_message_form(): void
     {
         $provider = $this->provider();
         $this->actingAs(User::factory()->create());
         $html = view('feed.partials.providers', ['homeProfessionalProfiles' => collect([$provider])])->render();
-        $this->assertStringContainsString(route('profile.public', ['id' => $provider->id, 'contact' => 1]).'#profile-contact', $html);
+        $this->assertStringContainsString('href="'.route('profile.public', $provider->id).'"', $html);
+        $this->assertStringNotContainsString('contact=1', $html);
         $this->assertStringNotContainsString('<form', $html);
         $this->assertDatabaseCount('messages', 0);
     }

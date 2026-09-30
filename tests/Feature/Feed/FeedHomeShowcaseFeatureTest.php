@@ -99,8 +99,9 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             ->assertSee('pk-pro__verified', false)
             ->assertSee('Voir le profil')
             ->assertSee('pk-pro__actions', false)
-            ->assertSee('Décrire mon besoin')
-            ->assertSee(route('profile.public', ['id' => $provider->id, 'contact' => 1]).'#profile-contact', false)
+            ->assertSee('Trouver un prestataire')
+            ->assertSee('Publier une demande')
+            ->assertSee(route('profile.public', $provider->id), false)
             ->assertDontSee('Bonjour, je souhaite demander vos services')
             ->assertDontSee('service en ligne')
             ->assertDontSee('Profil vérifié')
@@ -115,7 +116,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString('grid-template-columns: repeat(2, minmax(0, 1fr))', $css);
         $this->assertStringContainsString('grid-template-rows: minmax(164px, auto) 55px', $css);
         $this->assertStringContainsString('.pk-pro__actions', $css);
-        $this->assertStringContainsString('.pk-pro__action--request', $css);
+        $this->assertStringContainsString('.pk-provider-discovery .pk-pro__action--profile', $css);
         $this->assertStringContainsString('border-radius: var(--pk-r-lg)', $css);
         $this->assertStringContainsString('border-radius: inherit; object-fit: cover', $css);
         $this->assertStringContainsString('.pk-pro__verified', $css);

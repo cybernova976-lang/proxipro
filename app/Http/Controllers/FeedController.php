@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\AdLifecycleService;
 use App\Services\ClientActivityService;
 use App\Services\FeedRankingService;
+use App\Services\HomeProviderDiscoveryService;
 use App\Support\MarketplaceCategoryRegistry;
 use App\Support\MarketplaceGuideCatalog;
 use Illuminate\Http\Request;
@@ -275,10 +276,14 @@ class FeedController extends Controller
         $activeClientRequest = $pkClientActivity['first_request'] ?? null;
         $pkActiveOrder = $pkClientActivity['first_order'] ?? null;
 
-        $pkProviderCategory = $pkRole === 'client' ? $activeClientRequest?->category : null;
-        $pkProviderCity = $pkRole === 'client' ? ($activeClientRequest?->city ?: $activeClientRequest?->location ?: $geoCity) : null;
-        $pkProviderCountry = $activeClientRequest?->country ?: $geoCountry;
-        $homeProfessionalProfiles = $this->buildRelevantProfessionalProfiles($user, $pkProviderCategory, $pkProviderCity, $pkProviderCountry);
+        $pkProviderCategory = null;
+        $pkProviderDiscovery = $pkRole === 'client'
+            ? app(HomeProviderDiscoveryService::class)->discover($user, $geoCity, $geoCountry)
+            : ['profiles' => collect(), 'scope' => 'empty', 'city' => null, 'country' => null,
+                'expanded' => false, 'requested_location' => ''];
+        $pkProviderCity = $pkProviderDiscovery['city'];
+        $pkProviderCountry = $pkProviderDiscovery['country'];
+        $homeProfessionalProfiles = $pkProviderDiscovery['profiles'];
 
         $activeClientRequestNeedsAttention = $activeClientRequest
             ? $this->adLifecycle->needsFirstResponseAttention(
@@ -582,6 +587,7 @@ class FeedController extends Controller
             'pkProviderCategory',
             'pkProviderCity',
             'pkProviderCountry',
+            'pkProviderDiscovery',
             'pkFeedTitle',
             'pkBrowseUrl',
             'pkFeedAds',
@@ -1109,37 +1115,6 @@ class FeedController extends Controller
         $this->applyHomeShowcaseVisibility($query, $user);
 
         return $query;
-    }
-
-    /** Une sélection de profils publics, sans priorité liée à l'abonnement. */
-    private function buildRelevantProfessionalProfiles($currentUser, ?string $category, ?string $city, ?string $country)
-    {
-        $query = User::query()->where('is_active', true)->where('profile_public', true)
-            ->where(fn ($providers) => $providers->where('user_type', 'professionnel')->orWhere('account_type', 'professionnel')->orWhere('is_service_provider', true))
-            ->when($currentUser, fn ($providers) => $providers->where('id', '!=', $currentUser->id))
-            ->with(['services' => fn ($services) => $services->where('is_active', true)->limit(2)])
-            ->withCount(['verifiedReviewsReceived as verified_reviews_count'])
-            ->withAvg('verifiedReviewsReceived as verified_reviews_avg', 'rating');
-
-        if ($category) {
-            $query->where(function ($providers) use ($category) {
-                $providers->where('profession', $category)->orWhere('service_category', $category)
-                    ->orWhereJsonContains('pro_service_categories', $category)
-                    ->orWhereJsonContains('service_subcategories', $category)
-                    ->orWhereHas('services', fn ($services) => $services->where('is_active', true)
-                        ->where(fn ($trade) => $trade->where('subcategory', $category)->orWhere('main_category', $category)))
-                    ->orWhereHas('ads', fn ($ads) => $ads->marketplaceActive()->where('service_type', 'offre')->where('category', $category));
-            });
-        }
-        if ($country) {
-            $query->whereRaw('LOWER(TRIM(country)) = ?', [mb_strtolower(trim($country))]);
-        }
-        if ($city) {
-            $query->whereRaw('LOWER(TRIM(city)) = ?', [mb_strtolower(trim($city))]);
-        }
-
-        return $query->orderByDesc('verified_reviews_count')->orderByDesc('verified_reviews_avg')
-            ->orderBy('name')->orderBy('id')->take(4)->get();
     }
 
     private function buildHighlightedProfessionalProfiles($currentUser, int $limit = 6)
@@ -2282,7 +2257,7 @@ class FeedController extends Controller
             ->where('profile_public', true)
             ->where(function ($query) {
                 $query->where('user_type', 'professionnel')
-                    ->orWhere(fn ($query) => $query->where('user_type', 'particulier')->where('is_service_provider', true));
+                    ->orWhere('account_type', 'professionnel')->orWhere('is_service_provider', true);
             })
             ->with(['services' => fn ($query) => $query->where('is_active', true)->orderBy('subcategory')])
             ->withCount(['verifiedReviewsReceived as reviews_count'])

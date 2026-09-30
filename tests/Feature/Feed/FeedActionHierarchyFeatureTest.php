@@ -77,7 +77,7 @@ class FeedActionHierarchyFeatureTest extends TestCase
         $this->assertFalse($ads->contains('id', $wrongCity->id));
     }
 
-    public function test_profiles_match_the_request_and_exclude_private_inactive_and_unrelated_accounts(): void
+    public function test_discovery_varies_trades_without_exposing_private_inactive_or_client_accounts(): void
     {
         $client = User::factory()->create(['city' => 'Mamoudzou', 'country' => 'Mayotte']);
         $this->demand($client, 'Besoin local', ['city' => 'Mamoudzou', 'country' => 'Mayotte']);
@@ -85,14 +85,14 @@ class FeedActionHierarchyFeatureTest extends TestCase
         $paid = $this->provider(['name' => 'Zacharie Profil Pro', 'plan' => 'pro', 'city' => 'Mamoudzou', 'country' => 'Mayotte']);
         $this->provider(['name' => 'Profil privé', 'profile_public' => false, 'city' => 'Mamoudzou', 'country' => 'Mayotte']);
         $this->provider(['name' => 'Profil inactif', 'is_active' => false, 'city' => 'Mamoudzou', 'country' => 'Mayotte']);
-        $this->provider(['name' => 'Mauvais métier', 'profession' => 'Baby-sitter', 'service_category' => 'Baby-sitter', 'city' => 'Mamoudzou', 'country' => 'Mayotte']);
+        $sitter = $this->provider(['name' => 'Autre métier local', 'profession' => 'Baby-sitter', 'service_category' => 'Baby-sitter', 'city' => 'Mamoudzou', 'country' => 'Mayotte']);
         $this->provider(['name' => 'Autre ville', 'city' => 'Paris', 'country' => 'France']);
         User::factory()->create(['name' => 'Client avec ancien onboarding', 'user_type' => 'particulier',
             'account_type' => 'particulier', 'is_service_provider' => false, 'pro_onboarding_completed' => true,
             'profession' => 'Plombier', 'city' => 'Mamoudzou', 'country' => 'Mayotte']);
         $this->actingAs($client)->get(route('feed'))->assertOk()
-            ->assertViewHas('homeProfessionalProfiles', fn ($profiles) => $profiles->pluck('id')->all() === [$free->id, $paid->id])
-            ->assertSee('Prestataires pour votre demande')->assertSee('sans priorité liée à l’abonnement');
+            ->assertViewHas('homeProfessionalProfiles', fn ($profiles) => $profiles->pluck('id')->sort()->values()->all() === collect([$free->id, $paid->id, $sitter->id])->sort()->values()->all())
+            ->assertSee('Prestataires à Mamoudzou')->assertSee('sans priorité liée à l’abonnement');
     }
 
     public function test_provider_opportunities_exclude_own_pending_proposals_and_already_funded_missions(): void

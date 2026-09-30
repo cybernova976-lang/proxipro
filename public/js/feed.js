@@ -2,7 +2,7 @@
    PROKEJEM — Page d'accueil feed
    --------------------------------------------------------------------------
    Trois comportements seulement :
-     1. le champ d'intention (suggestions de categories + envoi vers /demande)
+     1. le champ de recherche (profils pour le client, demandes pour le prestataire)
      2. l'enregistrement d'une annonce en favori
      3. une notification legere partagee par les deux
 
@@ -19,7 +19,7 @@
   try {
     config = JSON.parse(document.getElementById('pkFeedConfig').textContent);
   } catch (e) {
-    config = { categories: [], demandUrl: '/demande', offerUrl: '/ads/create', requestsUrl: '/ads?type=demandes', saveUrl: '/ads/:id/toggle-save', role: 'client' };
+    config = { categories: [], professionalsUrl: '/feed/professionals', requestsUrl: '/ads?type=demandes', saveUrl: '/ads/:id/toggle-save', role: 'client' };
   }
 
   var csrf = document.querySelector('meta[name="csrf-token"]');
@@ -56,18 +56,18 @@
       .trim();
   }
 
-  // Un client est guide vers la publication. Un prestataire utilise le meme
-  // champ pour filtrer les demandes existantes, jamais pour publier par erreur.
-  function publishUrl(category, subcategory) {
+  // La recherche n'oblige pas a publier. Les deux roles gardent leur destination.
+  function searchUrl(category, subcategory, term) {
     var provider = config.role === 'provider';
-    var base = provider ? config.requestsUrl : config.demandUrl;
+    var base = provider ? config.requestsUrl : config.professionalsUrl;
     var params = [];
     if (provider) {
-      var requestSearch = subcategory || category;
+      var requestSearch = subcategory || category || term;
       if (requestSearch) params.push('search=' + encodeURIComponent(requestSearch));
     } else {
       if (category) params.push('category=' + encodeURIComponent(category));
       if (subcategory) params.push('subcategory=' + encodeURIComponent(subcategory));
+      if (term) params.push('q=' + encodeURIComponent(term));
     }
     return params.length ? base + (base.indexOf('?') === -1 ? '?' : '&') + params.join('&') : base;
   }
@@ -141,14 +141,14 @@
       } else if (event.key === 'Enter' && cursor >= 0) {
         event.preventDefault();
         var chosen = matches[cursor];
-        window.location.href = publishUrl(chosen.parent, chosen.sub);
+        window.location.href = searchUrl(chosen.parent, chosen.sub);
       }
     });
 
     panel.addEventListener('click', function (event) {
       var button = event.target.closest('button');
       if (!button) return;
-      window.location.href = publishUrl(button.dataset.category, button.dataset.subcategory);
+      window.location.href = searchUrl(button.dataset.category, button.dataset.subcategory);
     });
 
     document.addEventListener('click', function (event) {
@@ -156,11 +156,11 @@
     });
 
     // Soumission au clavier sans suggestion selectionnee : on tente la
-    // meilleure correspondance, sinon on ouvre le formulaire vierge.
+    // meilleure correspondance, sinon on conserve le texte saisi dans l'annuaire.
     form.addEventListener('submit', function (event) {
       event.preventDefault();
       var best = search(field.value)[0];
-      window.location.href = best ? publishUrl(best.parent, best.sub) : publishUrl();
+      window.location.href = best ? searchUrl(best.parent, best.sub) : searchUrl(null, null, field.value.trim());
     });
   }
 
@@ -169,7 +169,7 @@
   var quick = root.querySelectorAll('[data-pk-category]');
   for (var q = 0; q < quick.length; q++) {
     quick[q].addEventListener('click', function () {
-      window.location.href = publishUrl(this.dataset.pkCategory);
+      window.location.href = searchUrl(this.dataset.pkCategory);
     });
   }
 

@@ -1,14 +1,19 @@
-{{-- Zone 1 · barre d'intention — unique porte d'entree vers la publication --}}
+{{-- Deux parcours distincts : choisir une personne ou publier pour recevoir des propositions. --}}
 @php
     $pkIsProvider = ($pkRole ?? 'client') === 'provider';
-    $pkPublishUrl = route('demand.create');
     $pkIntentUrl = $pkIsProvider
         ? route('ads.index', ['type' => 'demandes'])
-        : $pkPublishUrl;
+        : route('feed.professionals');
 @endphp
 
 <div class="pk-intent">
     <form class="pk-intent__form" id="pkIntentForm" action="{{ $pkIntentUrl }}" method="GET" role="search">
+        @if($pkIsProvider)
+            <input type="hidden" name="type" value="demandes">
+        @else
+            @if($geoCity)<input type="hidden" name="city" value="{{ $geoCity }}">@endif
+            @if($geoCountry)<input type="hidden" name="country" value="{{ $geoCountry }}">@endif
+        @endif
         <div class="pk-intent__wrap">
             <i class="fas fa-search pk-intent__icon" aria-hidden="true"></i>
             <label class="pk-sr" for="pkIntentField">
@@ -17,7 +22,8 @@
             <input type="text"
                    class="pk-intent__field"
                    id="pkIntentField"
-                   name="q"
+                   name="{{ $pkIsProvider ? 'search' : 'q' }}"
+                   maxlength="100"
                    autocomplete="off"
                    role="combobox"
                    aria-expanded="false"
@@ -28,9 +34,9 @@
         </div>
     </form>
 
-    <button type="submit" form="pkIntentForm" class="pk-btn" aria-label="{{ $pkIsProvider ? 'Voir les demandes compatibles' : 'Publier une demande' }}">
-        <i class="fas {{ $pkIsProvider ? 'fa-bullseye' : 'fa-plus' }}"></i>
-        <span class="pk-intent__submit-full">{{ $pkIsProvider ? 'Voir les demandes' : 'Publier une demande' }}</span>
-        <span class="pk-intent__submit-short" aria-hidden="true">{{ $pkIsProvider ? 'Chercher' : 'Publier' }}</span>
+    <button type="submit" form="pkIntentForm" class="pk-btn" aria-label="{{ $pkIsProvider ? 'Voir les demandes compatibles' : 'Trouver un prestataire' }}">
+        <i class="fas {{ $pkIsProvider ? 'fa-bullseye' : 'fa-search' }}" aria-hidden="true"></i>
+        <span class="pk-intent__submit-full">{{ $pkIsProvider ? 'Voir les demandes' : 'Trouver un prestataire' }}</span>
+        <span class="pk-intent__submit-short" aria-hidden="true">Chercher</span>
     </button>
 </div>
