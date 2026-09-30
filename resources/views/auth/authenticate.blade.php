@@ -427,10 +427,7 @@
                     </div>
                     
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                            <label class="form-check-label" for="remember">Se souvenir de moi</label>
-                        </div>
+                        <p class="small text-muted mb-0">Déconnexion après 1 heure d’inactivité.</p>
                         @if (Route::has('password.request'))
                             <a href="{{ route('password.request') }}" class="auth-link small">Mot de passe oublié ?</a>
                         @endif

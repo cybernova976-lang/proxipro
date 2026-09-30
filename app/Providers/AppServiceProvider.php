@@ -35,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Event::listen(\Illuminate\Auth\Events\Logout::class, function ($event) {
+        Event::listen([\Illuminate\Auth\Events\Logout::class, \Illuminate\Auth\Events\CurrentDeviceLogout::class], function ($event) {
             if ($event->user && request()->hasSession()) {
                 app(\App\Services\UserPresence::class)->forgetSession($event->user->id, request()->session()->getId());
             }

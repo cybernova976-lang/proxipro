@@ -1157,5 +1157,6 @@
     @include('partials.usage-analytics')
     @include('partials.push-notifications')
     @include('partials.pwa-install')
+    @include('partials.session-inactivity')
 </body>
 </html>

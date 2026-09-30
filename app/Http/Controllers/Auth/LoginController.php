@@ -80,6 +80,12 @@ class LoginController extends Controller
         ]);
     }
 
+    protected function attemptLogin(Request $request)
+    {
+        // Persistent login must not undo the one-hour inactivity policy.
+        return $this->guard()->attempt($this->credentials($request), false);
+    }
+
     /**
      * Limite de tentatives anti brute-force.
      */

@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\RedirectToCanonicalHost::class,
             \App\Http\Middleware\DetectDevice::class,
             \App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\EnforceSessionInactivity::class,
         ]);
 
         $middleware->alias([

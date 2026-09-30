@@ -11,6 +11,9 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Ces signaux éphémères ne constituent pas un historique de connexions.
+Schedule::call(fn () => DB::table('session_user_activity')->where('last_interaction_at', '<', now()->subDays(3)->timestamp)->delete())
+    ->name('session-activity:prune')->daily()->withoutOverlapping();
+
 Schedule::call(fn () => DB::table('user_presence_leases')->where('expires_at', '<', now()->subDay())->delete())
     ->name('presence:prune')->hourly()->withoutOverlapping();
 

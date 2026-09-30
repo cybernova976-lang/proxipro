@@ -86,6 +86,8 @@ Route::get('login', function () {
 })->name('login');
 Route::post('login', [App\Http\Controllers\Auth\LoginController::class, 'login'])->name('login.attempt');
 Route::post('logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
+Route::match(['get', 'post'], '/auth/session-activity', \App\Http\Controllers\SessionActivityController::class)
+    ->middleware(['auth', 'throttle:30,1'])->name('auth.session-activity');
 
 // Registration Routes...
 Route::get('register', function () {

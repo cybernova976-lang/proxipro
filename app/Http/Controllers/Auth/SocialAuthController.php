@@ -106,7 +106,7 @@ class SocialAuthController extends Controller
                 $user->is_active = true;
                 $user->save();
 
-                Auth::login($user, true);
+                Auth::login($user, false);
                 session()->flash('show_provider_welcome', true);
 
                 return redirect()->to(\App\Support\DemandPublicationContinuation::destination(request()))->with('success', 'Votre compte a été réactivé et connecté via '.ucfirst($provider).' !');
@@ -130,7 +130,7 @@ class SocialAuthController extends Controller
                     }
                 }
 
-                Auth::login($user, true);
+                Auth::login($user, false);
 
                 return redirect()->to(\App\Support\DemandPublicationContinuation::destination(request()))->with('success', 'Connexion réussie via '.ucfirst($provider).' !');
             }
@@ -172,7 +172,7 @@ class SocialAuthController extends Controller
             session()->flash('show_provider_welcome', true);
 
             // Connecter l'utilisateur
-            Auth::login($user, true);
+            Auth::login($user, false);
 
             return redirect()->to(\App\Support\DemandPublicationContinuation::destination(request()))->with('success', 'Bienvenue ! Votre compte a été créé via '.ucfirst($provider).'.');
 

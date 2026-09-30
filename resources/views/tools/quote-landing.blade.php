@@ -420,5 +420,6 @@
             }
         });
     </script>
+    @include('partials.session-inactivity')
 </body>
 </html>
