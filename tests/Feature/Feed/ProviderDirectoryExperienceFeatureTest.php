@@ -69,6 +69,22 @@ class ProviderDirectoryExperienceFeatureTest extends TestCase
         $this->get(route('feed.professionals'))->assertOk()->assertSee('987')->assertSee('Identité vérifiée');
     }
 
+    public function test_compact_search_keeps_category_and_specialty_filters_available(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $provider = $this->provider();
+        UserService::create(['user_id' => $provider->id, 'main_category' => 'Bricolage & Travaux', 'subcategory' => 'Plombier', 'is_active' => true]);
+
+        $this->get(route('feed.professionals', ['category' => 'Bricolage & Travaux', 'subcategory' => 'Plombier']))
+            ->assertOk()
+            ->assertSee('directory-filter-fields', false)
+            ->assertSee('has-specialty', false)
+            ->assertSee('id="proCategoryFilter" name="category"', false)
+            ->assertSee('name="subcategory" id="directorySpecialty"', false)
+            ->assertSee('<button class="directory-button directory-button-primary" type="submit">Rechercher</button>', false)
+            ->assertSee('1 profil trouvé');
+    }
+
     public function test_contact_action_keeps_the_recipient_but_never_sends_a_message_automatically(): void
     {
         $provider = $this->provider();

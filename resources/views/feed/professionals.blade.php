@@ -12,39 +12,41 @@
         <p>Comparez les services, les réalisations et les avis. Puis échangez avec le prestataire de votre choix.</p>
     </header>
     <form class="directory-search" method="GET" action="{{ route('feed.professionals') }}" role="search" aria-label="Rechercher un prestataire">
-        <div class="directory-field">
-            <label for="directorySearch">Métier ou nom</label>
-            <input id="directorySearch" name="q" value="{{ $search }}" maxlength="100" placeholder="Ex. plombier" type="search">
-        </div>
-        <div class="directory-field">
-            <label for="directoryCity">Ville déclarée</label>
-            <input id="directoryCity" name="city" value="{{ $city }}" maxlength="120" placeholder="Ex. Mamoudzou" aria-describedby="directoryLocationHelp">
-        </div>
-        <div class="directory-field">
-            <label for="directoryCountry">Pays / territoire</label>
-            <select id="directoryCountry" name="country">
-                <option value="">Tous</option>
-                @foreach($directoryCountries->merge([$country])->filter()->unique()->sort() as $choice)
-                    <option value="{{ $choice }}" @selected($country === $choice)>{{ $choice }}</option>
-                @endforeach
-            </select>
+        <div class="directory-filter-fields{{ $subcategory ? ' has-specialty' : '' }}">
+            <div class="directory-field">
+                <label for="directorySearch">Métier ou nom</label>
+                <input id="directorySearch" name="q" value="{{ $search }}" maxlength="100" placeholder="Ex. plombier" type="search">
+            </div>
+            <div class="directory-field">
+                <label for="directoryCity">Ville déclarée</label>
+                <input id="directoryCity" name="city" value="{{ $city }}" maxlength="120" placeholder="Ex. Mamoudzou" aria-describedby="directoryLocationHelp">
+            </div>
+            <div class="directory-field">
+                <label for="directoryCountry">Pays / territoire</label>
+                <select id="directoryCountry" name="country">
+                    <option value="">Tous</option>
+                    @foreach($directoryCountries->merge([$country])->filter()->unique()->sort() as $choice)
+                        <option value="{{ $choice }}" @selected($country === $choice)>{{ $choice }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="directory-field directory-category">
+                <label for="proCategoryFilter">Catégorie de service</label>
+                <select id="proCategoryFilter" name="category">
+                    <option value="">Toutes les catégories</option>
+                    @foreach($categories as $catName => $catData)
+                        <option value="{{ $catName }}" @selected($category === $catName)>{{ $catName }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @if($subcategory)
+                <div class="directory-field directory-specialty">
+                    <label for="directorySpecialty">Spécialité</label>
+                    <select name="subcategory" id="directorySpecialty"><option value="{{ $subcategory }}">{{ $subcategory }}</option><option value="">Toutes les spécialités</option></select>
+                </div>
+            @endif
         </div>
         <button class="directory-button directory-button-primary" type="submit">Rechercher</button>
-        <div class="directory-field directory-category">
-            <label for="proCategoryFilter">Catégorie de service</label>
-            <select id="proCategoryFilter" name="category">
-                <option value="">Toutes les catégories</option>
-                @foreach($categories as $catName => $catData)
-                    <option value="{{ $catName }}" @selected($category === $catName)>{{ $catName }}</option>
-                @endforeach
-            </select>
-        </div>
-        @if($subcategory)
-            <div class="directory-field directory-category">
-                <label for="directorySpecialty">Spécialité</label>
-                <select name="subcategory" id="directorySpecialty"><option value="{{ $subcategory }}">{{ $subcategory }}</option><option value="">Toutes les spécialités</option></select>
-            </div>
-        @endif
         <p id="directoryLocationHelp" class="directory-help">Le lieu correspond à la ville renseignée sur le profil. La disponibilité et le déplacement sont à confirmer avec le prestataire.</p>
     </form>
     <div class="directory-results">
