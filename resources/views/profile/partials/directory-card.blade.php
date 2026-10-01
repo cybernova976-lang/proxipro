@@ -7,7 +7,7 @@
     <div class="directory-card-body">
         <a class="directory-portrait" href="{{ route('profile.public', $pro) }}" aria-label="Voir le profil de {{ $pro->name }}">
             @if($pro->avatar)
-                <img src="{{ storage_url($pro->avatar) }}" alt="Photo de {{ $pro->name }}" loading="lazy" width="136" height="160">
+                <img src="{{ storage_url($pro->avatar) }}" alt="Photo de {{ $pro->name }}" loading="lazy" width="84" height="84">
             @else
                 <span aria-hidden="true">{{ mb_strtoupper(mb_substr($pro->name, 0, 1)) }}</span>
             @endif

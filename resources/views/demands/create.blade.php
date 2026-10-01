@@ -98,6 +98,7 @@ body { background: #f0f2f5; }
 .demand-cat-btn .cat-emoji { font-size: 2.2rem; }
 .demand-cat-btn .cat-label { font-size: 0.88rem; font-weight: 600; color: #374151; line-height: 1.3; }
 .demand-cat-btn.selected .cat-label { color: #3b82f6; }
+.demand-sub-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb; scroll-margin-top: 110px; }
 
 /* Search */
 .demand-search {
@@ -273,13 +274,6 @@ body { background: #f0f2f5; }
     border-color: #dc2626;
 }
 
-/* Back to category link */
-.demand-back-link {
-    display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem;
-    color: #6b7280; cursor: pointer; margin-bottom: 14px; background: none; border: none; padding: 0;
-}
-.demand-back-link:hover { color: #3b82f6; }
-
 @media (max-width: 768px) {
     .demand-container { padding: 14px 12px 56px; }
     .demand-hero { padding: 24px 12px 20px; margin-bottom: 16px; }
@@ -410,18 +404,15 @@ body { background: #f0f2f5; }
 
                     <div id="demandCatGrid" class="demand-cat-grid">
                         @foreach($categoriesData as $catName => $catData)
-                        <button type="button" class="demand-cat-btn" data-cat="{{ $catName }}" onclick="selectDemandCategory('{{ addslashes($catName) }}')">
+                        <button type="button" class="demand-cat-btn" data-cat="{{ $catName }}" aria-pressed="false" onclick="selectDemandCategory('{{ addslashes($catName) }}', null, true)">
                             <span class="cat-emoji">{{ $catData['icon'] }}</span>
                             <span class="cat-label">{{ $catName }}</span>
                         </button>
                         @endforeach
                     </div>
 
-                    <!-- Subcategories (hidden by default) -->
-                    <div id="demandSubSection" style="display:none;">
-                        <button type="button" class="demand-back-link" onclick="resetDemandCategory()">
-                            <i class="fas fa-chevron-left"></i> Toutes les catégories
-                        </button>
+                    <!-- The category list remains available while a service is being chosen. -->
+                    <div id="demandSubSection" class="demand-sub-section" style="display:none;">
                         <p style="font-size:0.88rem; color:#6b7280; margin-bottom:12px;">
                             Choisissez le service dont vous avez besoin dans <strong id="demandSelectedCatName" style="color:#3b82f6;"></strong> :
                         </p>
@@ -821,16 +812,25 @@ function validateStep1() {
 }
 
 // ─── Step 1: Categories ───
-function selectDemandCategory(catName, subcategoryToSelect = null) {
+function selectDemandCategory(catName, subcategoryToSelect = null, scrollToServices = false) {
     if (!categoriesData[catName]) return;
     document.getElementById('demandCatGrid').classList.remove('demand-step-invalid');
     selectedCat = catName;
     selectedSub = null;
 
-    document.getElementById('demandCatGrid').style.display = 'none';
-    document.getElementById('demandCatSearch').parentElement.style.display = 'none';
+    const categorySearch = document.getElementById('demandCatSearch');
+    categorySearch.value = '';
+    filterDemandCategories('');
+    document.querySelectorAll('.demand-cat-btn').forEach(button => {
+        const isSelected = button.dataset.cat === catName;
+        button.classList.toggle('selected', isSelected);
+        button.setAttribute('aria-pressed', String(isSelected));
+    });
     document.getElementById('demandSubSection').style.display = 'block';
     document.getElementById('demandSelectedCatName').textContent = catName;
+    document.getElementById('h_main_category').value = '';
+    document.getElementById('h_category').value = '';
+    renderDemandIntake();
 
     const subList = document.getElementById('demandSubList');
     subList.innerHTML = '';
@@ -863,20 +863,10 @@ function selectDemandCategory(catName, subcategoryToSelect = null) {
     }
 
     updateNextBtn();
-}
-
-function resetDemandCategory() {
-    selectedCat = null;
-    selectedSub = null;
-    document.getElementById('demandCatGrid').style.display = 'grid';
-    document.getElementById('demandCatSearch').parentElement.style.display = 'block';
-    document.getElementById('demandSubSection').style.display = 'none';
-    document.getElementById('h_main_category').value = '';
-    document.getElementById('h_category').value = '';
-    document.getElementById('demandIntakeCard').hidden = true;
-    document.getElementById('demandIntakeFields').innerHTML = '';
-    updateNextBtn();
-    scheduleDraftSave();
+    if (scrollToServices) {
+        document.getElementById('demandSubSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        scheduleDraftSave();
+    }
 }
 
 function filterDemandCategories(query) {
