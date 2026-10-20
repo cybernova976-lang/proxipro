@@ -20,16 +20,6 @@ class HomePageController extends Controller
         $serviceCategories = \App\Support\MarketplaceCategoryRegistry::enabledServices();
 
         try {
-            $stats = Cache::remember('homepage.stats', now()->addMinutes(5), fn () => [
-                'totalAds' => Ad::inEnabledCategories()->where('status', 'active')->count(),
-                'totalPros' => User::where('is_active', true)
-                    ->where(fn ($query) => $query
-                        ->where('user_type', 'professionnel')
-                        ->orWhere('is_service_provider', true))
-                    ->count(),
-                'totalUsers' => User::where('is_active', true)->count(),
-            ]);
-
             // Une seule requête agrégée remplace une requête par sous-catégorie.
             $countsByCategory = Cache::remember('homepage.category_counts', now()->addMinutes(5), fn () => Ad::query()
                 ->inEnabledCategories()
@@ -44,11 +34,12 @@ class HomePageController extends Controller
                 ->where('status', 'active')
                 ->with('user:id,name,avatar,identity_verified')
                 ->latest()
-                ->take(6)
+                ->take(3)
                 ->get();
 
             $featuredPros = User::query()
                 ->where('is_active', true)
+                ->where('profile_public', true)
                 ->where(fn ($query) => $query
                     ->where('user_type', 'professionnel')
                     ->orWhere('is_service_provider', true))
@@ -81,7 +72,6 @@ class HomePageController extends Controller
                 ->get();
         } catch (\Throwable $exception) {
             report($exception);
-            $stats = ['totalAds' => 0, 'totalPros' => 0, 'totalUsers' => 0];
             $countsByCategory = collect();
             $latestAds = collect();
             $featuredPros = collect();
@@ -105,7 +95,6 @@ class HomePageController extends Controller
         })->all();
 
         return view('pages.home', [
-            ...$stats,
             'latestAds' => $latestAds,
             'featuredPros' => $featuredPros,
             'verifiedReviews' => $verifiedReviews,

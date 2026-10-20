@@ -147,23 +147,22 @@
         
         /* ===== HERO ===== */
         .hero {
-            position: relative; padding: 70px 0 90px;
-            background: url('https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1920&q=80') center center / cover no-repeat;
+            position: relative; padding: 64px 0;
+            background: linear-gradient(125deg, #0f172a 0%, #23215c 65%, #243b63 100%);
             overflow: hidden;
         }
         .hero::before {
             content: ''; position: absolute; inset: 0;
-            background: linear-gradient(160deg, rgba(15,23,42,0.88) 0%, rgba(30,27,75,0.82) 40%, rgba(49,46,129,0.75) 70%, rgba(55,48,163,0.70) 100%);
+            background: radial-gradient(ellipse at top right, rgba(94,234,212,0.12), transparent 60%);
             z-index: 1;
         }
         .hero::after {
             content: ''; position: absolute; bottom: -150px; left: -100px;
             width: 500px; height: 500px;
             background: radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 65%);
-            border-radius: 50%; animation: heroFloat 15s ease-in-out infinite reverse;
+            border-radius: 50%;
             z-index: 1;
         }
-        @keyframes heroFloat { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-30px)} }
         
         .hero-grid { position: relative; z-index: 2; }
         .hero-label {
@@ -175,25 +174,27 @@
         }
         .hero-label-dot {
             width: 8px; height: 8px; background: #34d399;
-            border-radius: 50%; animation: blink 2s ease-in-out infinite;
+            border-radius: 50%;
         }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
         
         .hero-title {
-            font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 900;
-            line-height: 1.08; color: white; margin-bottom: 24px; letter-spacing: -1px;
+            font-size: clamp(2.2rem, 4.2vw, 3.3rem); font-weight: 800;
+            line-height: 1.13; color: white; margin-bottom: 24px; letter-spacing: -1px;
         }
         .hero-title .accent {
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            background: linear-gradient(135deg, #a5b4fc, #99f6e4);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
         .hero-desc {
-            font-size: 1.1rem; color: rgba(255,255,255,0.6);
-            max-width: 500px; line-height: 1.7; margin-bottom: 40px;
+            font-size: 1.05rem; color: #cbd5e1;
+            max-width: 500px; line-height: 1.7; margin-bottom: 24px;
         }
+        .hero-provider-link { color: #e0e7ff; font-size: .9rem; font-weight: 600; text-underline-offset: 5px; }
+        .hero-provider-link:hover { color: white; }
+        .hero-title-line { display: block; }
         
         /* Trust badges in hero */
-        .hero-trust { display: flex; gap: 28px; margin-top: 48px; }
+        .hero-trust { display: flex; justify-content: center; gap: 32px; margin-top: 32px; flex-wrap: wrap; }
         .hero-trust-item {
             display: flex; align-items: center; gap: 10px;
             color: rgba(255,255,255,0.6); font-size: 0.85rem; font-weight: 500;
@@ -207,7 +208,7 @@
         
         /* Search Card */
         .search-card {
-            background: white; padding: 32px; border-radius: 24px;
+            background: white; padding: 32px; border-radius: 24px; max-width: 500px; margin-left: auto;
             box-shadow: 0 35px 60px -15px rgba(0,0,0,0.2);
         }
         .search-card-title {
@@ -259,26 +260,10 @@
             background: var(--primary-light); border-color: var(--primary); color: var(--primary);
         }
         
-        /* ===== TRUST BAR ===== */
-        .trust-bar { background: white; border-bottom: 1px solid var(--gray-200); padding: 20px 0; }
-        .trust-bar-inner {
-            display: flex; justify-content: center; align-items: center;
-            gap: 48px; flex-wrap: wrap;
-        }
-        .trust-stat { text-align: center; }
-        .trust-stat-number {
-            font-size: 1.8rem; font-weight: 900; color: var(--gray-900); line-height: 1;
-        }
-        .trust-stat-label {
-            font-size: 0.78rem; font-weight: 600; color: var(--gray-400);
-            text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;
-        }
-        .trust-divider { width: 1px; height: 40px; background: var(--gray-200); }
-        
         /* ===== SECTIONS ===== */
-        .section { padding: 80px 0; }
+        .section { padding: 56px 0; }
         .section-bg { background: white; }
-        .section-head { text-align: center; margin-bottom: 48px; }
+        .section-head { text-align: center; margin-bottom: 32px; }
         .section-pill {
             display: inline-block; background: var(--primary-light); color: var(--primary);
             font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
@@ -291,24 +276,6 @@
         .section-desc {
             color: var(--gray-500); font-size: 1.05rem; max-width: 560px; margin: 0 auto;
         }
-        
-        /* ===== VALUE PROPS ===== */
-        .value-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
-        .value-card {
-            text-align: center; padding: 32px 20px; background: white;
-            border: 1px solid var(--gray-200); border-radius: 20px; transition: all 0.3s;
-        }
-        .value-card:hover {
-            transform: translateY(-4px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
-            border-color: transparent;
-        }
-        .value-icon {
-            width: 64px; height: 64px; border-radius: 18px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 24px; margin: 0 auto 18px;
-        }
-        .value-card h4 { font-weight: 700; font-size: 1rem; color: var(--gray-900); margin-bottom: 8px; }
-        .value-card p { font-size: 0.9rem; color: var(--gray-500); line-height: 1.6; margin: 0; }
         
         /* ===== CATEGORIES ===== */
         .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
@@ -497,6 +464,7 @@
         }
         .footer-brand p { font-size: 0.9rem; line-height: 1.7; margin-bottom: 20px; }
         .footer-brand > [data-site-share-trigger] { margin-bottom: 18px; }
+        .footer .pwa-install-button { position: static; margin: 0 0 18px; box-shadow: none; }
         .footer-social { display: flex; gap: 10px; }
         .footer-social a {
             width: 38px; height: 38px; border-radius: 10px;
@@ -520,7 +488,7 @@
         
         /* ===== RESPONSIVE ===== */
         @media (max-width: 991px) {
-            .value-grid { grid-template-columns: repeat(2, 1fr); }
+            .search-card { max-width: none; }
             .cat-grid { grid-template-columns: repeat(2, 1fr); }
             .testimonials-grid { grid-template-columns: 1fr; }
             .dual-cta { grid-template-columns: 1fr; }
@@ -545,16 +513,14 @@
                 --bs-gutter-x: 0;
             }
             .hero .row > * { width: 100%; max-width: 100%; min-width: 0; padding-left: 0; padding-right: 0; }
-            .value-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
-            .value-card { padding: 24px 16px; }
             .cat-grid { grid-template-columns: 1fr; }
             .steps-grid { grid-template-columns: 1fr; gap: 16px; }
-            .trust-bar-inner { gap: 24px; }
+            .section { padding: 40px 0; }
             .footer-grid { grid-template-columns: 1fr; gap: 32px; }
             .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
             .hero-title {
                 max-width: 100%;
-                font-size: clamp(1.35rem, 6.2vw, 1.8rem);
+                font-size: clamp(1.85rem, 7.5vw, 2.5rem);
                 line-height: 1.22;
                 letter-spacing: -0.6px;
                 overflow-wrap: normal;
@@ -562,6 +528,10 @@
             .hero-title .accent { white-space: normal; }
             .hero-desc { max-width: 100%; font-size: 1rem; overflow-wrap: anywhere; }
             .hero-trust-item { min-width: 0; }
+            .hero .mb-5 { margin-bottom: 24px !important; }
+            .hero-trust { justify-content: flex-start; }
+            .hero-trust-item { flex: 1 1 150px; }
+            .hero-trust-icon { flex-shrink: 0; }
             .search-card { width: 100%; max-width: 100%; min-width: 0; padding: 24px; }
             .search-card form,
             .search-field,
@@ -582,12 +552,13 @@
             bottom: calc(84px + env(safe-area-inset-bottom)) !important;
         }
         
-        /* ===== ANIMATIONS ===== */
-        .reveal {
-            opacity: 0; transform: translateY(24px);
-            transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        /* Keep content readable without JavaScript and respect reduced motion. */
+        :where(a, button, select, input):focus-visible {
+            outline: 3px solid #818cf8; outline-offset: 4px;
         }
-        .reveal.visible { opacity: 1; transform: translateY(0); }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+        }
     </style>
 </head>
 <body>
@@ -659,37 +630,16 @@
                         Services de proximité, simplement
                     </div>
                     <h1 class="hero-title">
-                        <span class="hero-title-line">Décrivez votre besoin.</span>
-                        <span class="hero-title-line accent">Comparez les propositions.</span>
-                        <span class="hero-title-line">Choisissez sereinement.</span>
+                        <span class="hero-title-line">Un besoin ?</span>
+                        <span class="hero-title-line accent">Trouvez le bon service.</span>
                     </h1>
                     <p class="hero-desc">
-                        Bricolage, ménage, cours, déménagement… trouvez des prestataires
-                        disponibles près de chez vous et échangez directement avec eux.
+                        Bricolage, ménage, cours… explorez les services dans votre ville
+                        ou publiez votre demande pour recevoir des propositions.
                     </p>
-                    <div class="hero-trust">
-                        <div class="hero-trust-item">
-                            <div class="hero-trust-icon"><i class="fas fa-shield-alt"></i></div>
-                            <div>
-                                <div style="color:rgba(255,255,255,0.85);font-weight:700;font-size:0.88rem;">Badge d'identité</div>
-                                <div style="font-size:0.75rem;">Visible après contrôle</div>
-                            </div>
-                        </div>
-                        <div class="hero-trust-item">
-                            <div class="hero-trust-icon"><i class="fas fa-lock"></i></div>
-                            <div>
-                                <div style="color:rgba(255,255,255,0.85);font-weight:700;font-size:0.88rem;">Paiement sécurisé</div>
-                                <div style="font-size:0.75rem;">Via Stripe</div>
-                            </div>
-                        </div>
-                        <div class="hero-trust-item">
-                            <div class="hero-trust-icon"><i class="fas fa-star"></i></div>
-                            <div>
-                                <div style="color:rgba(255,255,255,0.85);font-weight:700;font-size:0.88rem;">Avis liés aux missions</div>
-                                <div style="font-size:0.75rem;">Après une commande terminée</div>
-                            </div>
-                        </div>
-                    </div>
+                    <a href="{{ route('register') }}" class="hero-provider-link">
+                        Proposer mes services <i class="fas fa-arrow-right ms-1" aria-hidden="true"></i>
+                    </a>
                 </div>
                 <div class="col-lg-6">
                     <div class="search-card">
@@ -700,7 +650,7 @@
                         <form action="{{ route('ads.index') }}" method="GET">
                             <div class="search-field">
                                 <i class="fas fa-th-large"></i>
-                                <select name="category">
+                                <select name="category" aria-label="Service recherché">
                                     <option value="">Choisissez un service</option>
                                     @foreach($categoriesWithSubs as $catName => $catData)
                                         <option value="{{ $catName }}">{{ $catName }}</option>
@@ -721,7 +671,7 @@
                             </a>
                         </div>
                         <div class="popular-searches">
-                            <span>Populaire :</span>
+                            <span>À explorer :</span>
                             <a href="{{ route('ads.index', ['category' => 'Bricolage & Travaux']) }}" class="popular-tag">Bricolage</a>
                             <a href="{{ route('ads.index', ['category' => 'Nettoyage & Entretien']) }}" class="popular-tag">Ménage</a>
                             <a href="{{ route('ads.index', ['category' => 'Transport & Déménagement']) }}" class="popular-tag">Déménagement</a>
@@ -732,75 +682,31 @@
                 </div>
             </div>
         </div>
+            <div class="container hero-grid">
+                <div class="hero-trust">
+                    <div class="hero-trust-item">
+                        <div class="hero-trust-icon"><i class="fas fa-shield-alt" aria-hidden="true"></i></div>
+                        <div><strong class="d-block text-white">Badge d'identité</strong><small>Visible après contrôle</small></div>
+                    </div>
+                    <div class="hero-trust-item">
+                        <div class="hero-trust-icon"><i class="fas fa-lock" aria-hidden="true"></i></div>
+                        <div><strong class="d-block text-white">Paiement sécurisé</strong><small>Via Stripe</small></div>
+                    </div>
+                    <div class="hero-trust-item">
+                        <div class="hero-trust-icon"><i class="fas fa-star" aria-hidden="true"></i></div>
+                        <div><strong class="d-block text-white">Avis liés aux missions</strong><small>Après une commande terminée</small></div>
+                    </div>
+                </div>
+            </div>
     </header>
-
-    <!-- ===== TRUST BAR ===== -->
-    <div class="trust-bar">
-        <div class="container">
-            <div class="trust-bar-inner">
-                <div class="trust-stat">
-                    <div class="trust-stat-number" data-count="{{ $totalPros }}">0</div>
-                    <div class="trust-stat-label">Professionnels inscrits</div>
-                </div>
-                <div class="trust-divider"></div>
-                <div class="trust-stat">
-                    <div class="trust-stat-number" data-count="{{ $totalAds }}">0</div>
-                    <div class="trust-stat-label">Annonces actives</div>
-                </div>
-                <div class="trust-divider"></div>
-                <div class="trust-stat">
-                    <div class="trust-stat-number" data-count="{{ count($categoriesWithSubs) }}">0</div>
-                    <div class="trust-stat-label">Catégories de services</div>
-                </div>
-                <div class="trust-divider"></div>
-                <div class="trust-stat">
-                    <div class="trust-stat-number" data-count="{{ $totalUsers }}">0</div>
-                    <div class="trust-stat-label">Membres actifs</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== VALUE PROPOSITIONS ===== -->
-    <section class="section">
-        <div class="container">
-            <div class="section-head reveal">
-                <span class="section-pill">Pourquoi nous choisir</span>
-                <h2 class="section-title">Une plateforme pensée pour vous</h2>
-                <p class="section-desc">Nous simplifions la mise en relation entre particuliers et professionnels de confiance.</p>
-            </div>
-            <div class="value-grid">
-                <div class="value-card reveal">
-                    <div class="value-icon" style="background:#eef2ff;color:#4f46e5;"><i class="fas fa-user-check"></i></div>
-                    <h4>Profils vérifiés</h4>
-                    <p>Repérez les prestataires dont l'identité a été contrôlée et consultez leurs informations avant de choisir.</p>
-                </div>
-                <div class="value-card reveal">
-                    <div class="value-icon" style="background:#ecfdf5;color:#10b981;"><i class="fas fa-bolt"></i></div>
-                    <h4>Réponse rapide</h4>
-                    <p>Centralisez les propositions et vos échanges dans la messagerie intégrée à la plateforme.</p>
-                </div>
-                <div class="value-card reveal">
-                    <div class="value-icon" style="background:#fef3c7;color:#f59e0b;"><i class="fas fa-shield-alt"></i></div>
-                    <h4>Paiement sécurisé</h4>
-                    <p>Vos transactions sont protégées par Stripe. Payez en ligne en toute sérénité.</p>
-                </div>
-                <div class="value-card reveal">
-                    <div class="value-icon" style="background:#fce7f3;color:#ec4899;"><i class="fas fa-headset"></i></div>
-                    <h4>Parcours clair</h4>
-                    <p>Suivez chaque proposition, commande et paiement depuis votre espace personnel.</p>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <!-- ===== CATEGORIES ===== -->
     <section class="section section-bg">
         <div class="container">
             <div class="section-head reveal">
                 <span class="section-pill">Services</span>
-                <h2 class="section-title">Explorez nos catégories</h2>
-                <p class="section-desc">Trouvez rapidement le professionnel dont vous avez besoin</p>
+                <h2 class="section-title">Quel service vous rendrait la vie plus simple ?</h2>
+                <p class="section-desc">Choisissez une catégorie pour explorer les annonces.</p>
             </div>
             <div class="cat-grid">
                 @php $shown = 0; @endphp
@@ -810,7 +716,7 @@
                         <div class="cat-icon" style="background:{{ $catData['color'] }};"><i class="{{ $catData['icon'] }}"></i></div>
                         <div class="cat-info">
                             <h5>{{ $catName }}</h5>
-                            <span>Trouver un pro</span>
+                            <span>Explorer les annonces <i class="fas fa-arrow-right ms-1" aria-hidden="true"></i></span>
                         </div>
                     </a>
                     @php $shown++; @endphp
@@ -819,53 +725,11 @@
             </div>
             <div class="text-center">
                 <a href="{{ route('ads.index') }}" class="btn-see-all">
-                    Voir les {{ count($categoriesWithSubs) }} catégories <i class="fas fa-arrow-right"></i>
+                    Explorer tous les services <i class="fas fa-arrow-right"></i>
                 </a>
             </div>
         </div>
     </section>
-
-    <!-- ===== LATEST ADS ===== -->
-    @if($latestAds->isNotEmpty())
-    <section class="section">
-        <div class="container">
-            <div class="section-head reveal">
-                <span class="section-pill">Nouveautés</span>
-                <h2 class="section-title">Les dernières annonces publiées</h2>
-                <p class="section-desc">Découvrez les besoins et services actuellement disponibles sur la plateforme.</p>
-            </div>
-            <div class="row g-4">
-                @foreach($latestAds as $ad)
-                <div class="col-md-6 col-lg-4">
-                    <a href="{{ route('ads.show', $ad) }}" class="ad-card reveal">
-                        <div class="ad-card-img">
-                            @if(!empty($ad->photos[0]))
-                                <img src="{{ storage_url($ad->photos[0]) }}" alt="{{ $ad->title }}" loading="lazy">
-                            @else
-                                <i class="fas fa-{{ $ad->service_type === 'demande' ? 'clipboard-list' : 'briefcase' }}"></i>
-                            @endif
-                            <span class="ad-card-badge">{{ $ad->service_type === 'demande' ? 'Demande' : 'Offre' }}</span>
-                        </div>
-                        <div class="ad-card-body">
-                            <h4>{{ Str::limit($ad->title, 65) }}</h4>
-                            <div class="ad-card-location">
-                                <i class="fas fa-map-marker-alt me-1"></i>{{ $ad->city ?: ($ad->location ?: 'Localisation à préciser') }}
-                            </div>
-                            <div class="ad-card-bottom">
-                                <span class="ad-card-price">{{ $ad->formatted_price }}</span>
-                                <span class="ad-card-time">{{ $ad->created_at->diffForHumans() }}</span>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-                @endforeach
-            </div>
-            <div class="text-center">
-                <a href="{{ route('ads.index') }}" class="btn-see-all">Voir toutes les annonces <i class="fas fa-arrow-right"></i></a>
-            </div>
-        </div>
-    </section>
-    @endif
 
     <!-- ===== FEATURED PROFESSIONALS ===== -->
     @if($featuredPros->count() > 0)
@@ -873,8 +737,8 @@
         <div class="container">
             <div class="section-head reveal">
                 <span class="section-pill">Prestataires</span>
-                <h2 class="section-title">Nos professionnels en vedette</h2>
-                <p class="section-desc">Des profils actifs, classés selon leurs vérifications, avis de mission et annonces publiées.</p>
+                <h2 class="section-title">Des prestataires à découvrir</h2>
+                <p class="section-desc">Découvrez leur métier et leur localisation, puis consultez leur profil.</p>
             </div>
             <div class="row g-4">
                 @foreach($featuredPros as $pro)
@@ -882,7 +746,7 @@
                     <a href="{{ route('profile.public', $pro->id) }}" class="ad-card reveal" style="text-decoration:none;">
                         <div style="padding:24px 20px; text-align:center;">
                             @if($pro->avatar)
-                                <img src="{{ storage_url($pro->avatar) }}" alt="{{ $pro->name }}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--primary-light);margin-bottom:12px;">
+                                <img src="{{ storage_url($pro->avatar) }}" alt="{{ $pro->name }}" width="72" height="72" loading="lazy" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--primary-light);margin-bottom:12px;">
                             @else
                                 <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.5rem;font-weight:700;margin:0 auto 12px;">{{ strtoupper(substr($pro->name, 0, 1)) }}</div>
                             @endif
@@ -905,17 +769,20 @@
                             @if($pro->bio)
                                 <p style="font-size:0.82rem;color:var(--gray-500);margin-top:8px;line-height:1.4;">{{ Str::limit($pro->bio, 80) }}</p>
                             @endif
+                            <span class="d-inline-block mt-3 fw-semibold" style="font-size:.85rem;color:var(--primary);">Voir le profil <i class="fas fa-arrow-right ms-1" aria-hidden="true"></i></span>
                         </div>
                     </a>
                 </div>
                 @endforeach
             </div>
             <div class="text-center" style="margin-top:24px;">
-                <a href="{{ route('demand.create') }}" class="btn-see-all">Trouver un professionnel <i class="fas fa-arrow-right"></i></a>
+                <a href="{{ route('demand.create') }}" class="btn-see-all">Décrire mon besoin <i class="fas fa-arrow-right"></i></a>
             </div>
         </div>
     </section>
     @endif
+
+    @include('pages.partials.home-latest-ads')
 
     <!-- ===== HOW IT WORKS ===== -->
     <section class="section section-bg">
@@ -929,7 +796,7 @@
                 <div class="step-card reveal">
                     <div class="step-num">1</div>
                     <h4>Décrivez votre besoin</h4>
-                    <p>Recherchez parmi nos {{ count($categoriesWithSubs) }} catégories ou publiez directement votre demande avec tous les détails.</p>
+                    <p>Précisez le service recherché, votre ville et les détails utiles dans votre demande.</p>
                 </div>
                 <div class="step-card reveal">
                     <div class="step-num">2</div>
@@ -986,18 +853,18 @@
                 <div class="cta-card cta-client reveal">
                     <div class="cta-card-icon"><i class="fas fa-search"></i></div>
                     <h3>Vous cherchez un prestataire ?</h3>
-                    <p>Décrivez votre besoin en 2 minutes et trouvez les professionnels disponibles près de chez vous.</p>
+                    <p>Expliquez votre projet et recevez les propositions des prestataires intéressés.</p>
                     <a href="{{ route('demand.create') }}" class="btn-cta-white">
-                        Trouver un professionnel <i class="fas fa-arrow-right"></i>
+                        Publier ma demande <i class="fas fa-arrow-right"></i>
                     </a>
                 </div>
                 <div class="cta-card cta-pro reveal">
                     <div class="cta-card-icon"><i class="fas fa-briefcase"></i></div>
-                    <h3>Vous êtes professionnel ?</h3>
-                    <p>Rejoignez notre réseau de prestataires et développez votre activité en trouvant de nouveaux clients chaque jour.</p>
+                    <h3>Vous proposez vos services ?</h3>
+                    <p>Présentez votre savoir-faire et vos réalisations pour permettre aux clients de vous découvrir.</p>
                     <div class="d-flex gap-3 flex-wrap">
-                        <a href="{{ route('register', ['account_type' => 'professionnel']) }}" class="btn-cta-white" style="color:var(--gray-900);">
-                            Devenir prestataire <i class="fas fa-arrow-right"></i>
+                        <a href="{{ route('register') }}" class="btn-cta-white" style="color:var(--gray-900);">
+                            Créer mon profil <i class="fas fa-arrow-right"></i>
                         </a>
                         <a href="{{ route('contact.index') }}" class="btn-cta-outline">En savoir plus</a>
                     </div>
@@ -1018,6 +885,7 @@
                     <button type="button" class="btn btn-outline-light rounded-3" data-site-share-trigger>
                         <i class="fas fa-share-nodes me-2"></i>Partager {{ config('app.name', 'Prokejem') }}
                     </button>
+                    @include('partials.pwa-install')
                     @if(collect(config('site.social', []))->filter()->isNotEmpty())
                     <div class="footer-social">
                         @foreach(config('site.social') as $network => $url)
@@ -1119,44 +987,10 @@
             }
         });
         
-        // Scroll reveal animations (staggered)
-        const revealObserver = new IntersectionObserver((entries) => {
-            entries.forEach((entry, i) => {
-                if (entry.isIntersecting) {
-                    setTimeout(() => entry.target.classList.add('visible'), i * 80);
-                    revealObserver.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
-        
-        // Animated counters
-        const counterObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (!entry.isIntersecting) return;
-                const el = entry.target;
-                const target = parseInt(el.dataset.count);
-                const suffix = el.dataset.suffix || '';
-                let current = 0;
-                const duration = 1500;
-                const step = target / (duration / 16);
-                const timer = setInterval(() => {
-                    current += step;
-                    if (current >= target) { current = target; clearInterval(timer); }
-                    let display = Math.floor(current);
-                    if (target >= 100 && !suffix) display = display.toLocaleString('fr-FR') + '+';
-                    else display = display + suffix;
-                    el.textContent = display;
-                }, 16);
-                counterObserver.unobserve(el);
-            });
-        }, { threshold: 0.5 });
-        document.querySelectorAll('[data-count]').forEach(el => counterObserver.observe(el));
     });
     </script>
     @include('partials.usage-analytics')
     @include('partials.push-notifications')
-    @include('partials.pwa-install')
     @include('partials.session-inactivity')
 </body>
 </html>
