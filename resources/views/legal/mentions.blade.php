@@ -9,6 +9,10 @@
         'entity_name' => \App\Support\PlatformFeatures::legalValue('legal_entity_name', 'entity_name'),
         'entity_form' => \App\Support\PlatformFeatures::legalValue('legal_entity_form', 'entity_form'),
         'registration_number' => \App\Support\PlatformFeatures::legalValue('legal_registration_number', 'registration_number'),
+        'siret' => \App\Support\PlatformFeatures::legalValue('legal_siret', 'siret'),
+        'share_capital' => \App\Support\PlatformFeatures::legalValue('legal_share_capital', 'share_capital'),
+        'registration_date' => \App\Support\PlatformFeatures::legalValue('legal_registration_date', 'registration_date'),
+        'ape_code' => \App\Support\PlatformFeatures::legalValue('legal_ape_code', 'ape_code'),
         'vat_number' => \App\Support\PlatformFeatures::legalValue('legal_vat_number', 'vat_number'),
         'address' => \App\Support\PlatformFeatures::legalValue('legal_address', 'address'),
         'publication_director' => \App\Support\PlatformFeatures::legalValue('legal_publication_director', 'publication_director'),
@@ -16,6 +20,11 @@
     $requiredLegalFields = collect([
         'Raison sociale' => $legal['entity_name'],
         'Adresse' => $legal['address'],
+        'SIREN' => $legal['registration_number'],
+        'Forme juridique' => $legal['entity_form'],
+        'Capital social' => $legal['share_capital'],
+        'Contact' => config('site.support_email'),
+        'Téléphone' => config('site.contact_phone'),
         'Directeur de publication' => $legal['publication_director'],
         'Hébergeur' => config('legal.host_name'),
         'Adresse de l’hébergeur' => config('legal.host_address'),
@@ -36,15 +45,21 @@
                 <dl class="row">
                     <dt class="col-sm-4">Raison sociale</dt><dd class="col-sm-8">{{ $legal['entity_name'] ?: 'À renseigner' }}</dd>
                     @if($legal['entity_form'])<dt class="col-sm-4">Forme juridique</dt><dd class="col-sm-8">{{ $legal['entity_form'] }}</dd>@endif
-                    @if($legal['registration_number'])<dt class="col-sm-4">Immatriculation</dt><dd class="col-sm-8">{{ $legal['registration_number'] }}</dd>@endif
+                    @if($legal['share_capital'])<dt class="col-sm-4">Capital social</dt><dd class="col-sm-8">{{ $legal['share_capital'] }}</dd>@endif
+                    @if($legal['registration_number'])<dt class="col-sm-4">SIREN</dt><dd class="col-sm-8">{{ $legal['registration_number'] }}</dd>@endif
+                    @if($legal['siret'])<dt class="col-sm-4">SIRET du siège</dt><dd class="col-sm-8">{{ $legal['siret'] }}</dd>@endif
+                    @if($legal['registration_date'])<dt class="col-sm-4">Immatriculation au RNE</dt><dd class="col-sm-8">{{ $legal['registration_date'] }}</dd>@endif
+                    @if($legal['ape_code'])<dt class="col-sm-4">Code APE</dt><dd class="col-sm-8">{{ $legal['ape_code'] }}</dd>@endif
                     @if($legal['vat_number'])<dt class="col-sm-4">TVA</dt><dd class="col-sm-8">{{ $legal['vat_number'] }}</dd>@endif
                     <dt class="col-sm-4">Adresse</dt><dd class="col-sm-8">{{ $legal['address'] ?: 'À renseigner' }}</dd>
                     <dt class="col-sm-4">Contact</dt><dd class="col-sm-8">@if(config('site.support_email'))<a href="mailto:{{ config('site.support_email') }}">{{ config('site.support_email') }}</a>@else À renseigner @endif</dd>
                     <dt class="col-sm-4">Publication</dt><dd class="col-sm-8">{{ $legal['publication_director'] ?: 'À renseigner' }}</dd>
+                    @if(config('site.contact_phone'))<dt class="col-sm-4">Téléphone</dt><dd class="col-sm-8">{{ config('site.contact_phone') }}</dd>@endif
                 </dl>
 
                 <h4 class="mt-4">2. Hébergement</h4>
                 <p><strong>{{ config('legal.host_name') ?: 'Hébergeur à renseigner' }}</strong><br>{{ config('legal.host_address') ?: 'Adresse à renseigner' }}</p>
+                @if(config('legal.host_phone'))<p>Téléphone de l’hébergeur : {{ config('legal.host_phone') }}</p>@endif
 
                 <h4 class="mt-4">3. Rôle de la plateforme</h4>
                 <p>{{ config('app.name', 'Prokejem') }} fournit un service de mise en relation. Les utilisateurs restent responsables de leurs annonces, propositions, échanges, obligations professionnelles et de la bonne exécution des prestations conclues entre eux.</p>

@@ -122,6 +122,11 @@ class PlatformFeatures
         $value = Setting::get($settingKey, config('legal.'.$configKey));
         $value = is_string($value) ? trim($value) : null;
 
+        // Un ancien formulaire vide ne doit pas masquer l'identité configurée.
+        if (blank($value)) {
+            $value = trim((string) config('legal.'.$configKey));
+        }
+
         return $value !== '' ? $value : null;
     }
 

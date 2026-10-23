@@ -249,6 +249,16 @@
                 </div>
                 @endif
                 
+                @if(config('site.contact_phone'))
+                <div class="contact-info-item">
+                    <div class="contact-info-icon"><i class="fas fa-phone" aria-hidden="true"></i></div>
+                    <div class="contact-info-content">
+                        <h5>Téléphone</h5>
+                        <p><a href="tel:{{ preg_replace('/\\s+/', '', config('site.contact_phone')) }}">{{ config('site.contact_phone') }}</a></p>
+                    </div>
+                </div>
+                @endif
+
                 <div class="contact-info-item">
                     <div class="contact-info-icon">
                         <i class="fas fa-clock"></i>

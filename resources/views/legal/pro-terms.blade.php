@@ -4,6 +4,8 @@
 <div class="container py-5"><div class="row justify-content-center"><div class="col-lg-9"><div class="card border-0 shadow-sm"><div class="card-body p-4 p-md-5">
     <h1>Conditions de l’Espace PRO</h1>
     <p class="lead text-muted">Version {{ config('legal.pro_terms_version') }} — devis, factures, clients et outils professionnels.</p>
+    @include('legal.partials.operator')
+    <p class="small text-muted">Identité de l’exploitant mise à jour le {{ config('legal.last_updated') }}.</p>
 
     <h4 class="mt-4">1. Accès</h4>
     <p>Le CRM peut être proposé aux prestataires autorisés. L’émission officielle de devis et factures est réservée à un compte professionnel dont le profil est complet, vérifié, immatriculé et ayant accepté la version en vigueur. Avant cela, les documents restent des brouillons non contractuels. La souscription d’une offre commerciale ne transforme jamais un particulier en professionnel et ne remplace aucun justificatif d’immatriculation.</p>

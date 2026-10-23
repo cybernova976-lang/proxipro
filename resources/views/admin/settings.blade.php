@@ -183,7 +183,7 @@
                             <input class="form-control" name="legal_entity_form" value="{{ old('legal_entity_form', $legalSettings['legal_entity_form']) }}" placeholder="EI, SASU, SARL…">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Immatriculation</label>
+                            <label class="form-label">SIREN / immatriculation</label>
                             <input class="form-control" name="legal_registration_number" value="{{ old('legal_registration_number', $legalSettings['legal_registration_number']) }}" placeholder="SIREN/SIRET ou registre local">
                         </div>
                         <div class="col-md-4">
@@ -202,6 +202,12 @@
                             <label class="form-label">Adresse légale</label>
                             <textarea class="form-control" name="legal_address" rows="2">{{ old('legal_address', $legalSettings['legal_address']) }}</textarea>
                         </div>
+                        @foreach(['legal_siret' => 'SIRET du siège', 'legal_share_capital' => 'Capital social (avec devise)', 'legal_registration_date' => 'Immatriculation au RNE (JJ/MM/AAAA)', 'legal_ape_code' => 'Code APE et activité'] as $field => $label)
+                            <div class="col-md-6">
+                                <label class="form-label" for="{{ $field }}">{{ $label }}</label>
+                                <input class="form-control" id="{{ $field }}" name="{{ $field }}" value="{{ old($field, $legalSettings[$field]) }}">
+                            </div>
+                        @endforeach
                         <div class="col-12">
                             <label class="d-flex gap-2 align-items-start border rounded-3 p-3" for="stripeBillingPortalConfigured">
                                 <input class="form-check-input mt-1" type="checkbox" name="stripe_billing_portal_configured" value="1" id="stripeBillingPortalConfigured" {{ ($legalSettings['stripe_billing_portal_configured'] ?? '0') === '1' ? 'checked' : '' }}>

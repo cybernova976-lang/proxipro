@@ -9,6 +9,7 @@
 <div class="card border-0 shadow-sm"><div class="card-body p-4 p-md-5">
     <h1>Conditions générales d’utilisation</h1>
     <p class="lead text-muted">Ces conditions encadrent l’accès à la marketplace, la publication, la mise en relation et les outils associés.</p>
+    @include('legal.partials.operator')
 
     <h4 class="mt-4">1. Champ d’application et acceptation</h4>
     <p>En créant un compte ou en utilisant une fonctionnalité réservée, l’utilisateur accepte les présentes conditions, les <a href="{{ route('legal.platform-rules') }}">règles de la marketplace</a> et la <a href="{{ route('legal.privacy') }}">politique de confidentialité</a>. Il doit disposer de la capacité juridique requise et fournir des informations exactes, actuelles et non trompeuses.</p>
@@ -52,7 +53,7 @@
     <h4 class="mt-4">14. Évolution, droit applicable et litiges</h4>
     <p>Les changements importants sont communiqués dans un délai raisonnable. Les droits impératifs du pays de résidence du consommateur demeurent applicables. Les parties recherchent d’abord une solution amiable avec le support ; les voies de médiation et juridictions légalement compétentes restent accessibles.</p>
 
-    <p class="mt-5 text-muted small">Version du {{ config('legal.last_updated') ?: '17/07/2026' }}. Ce document devra être validé par un conseil juridique lorsque l’identité et le pays d’établissement de l’éditeur seront finalisés.</p>
+    <p class="mt-5 text-muted small">Dernière mise à jour de l’identité de l’exploitant : {{ config('legal.last_updated') }}.</p>
 </div></div>
 </div></div></div>
 @endsection
