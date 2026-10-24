@@ -29,9 +29,9 @@ class HomePageController extends Controller
                 ->pluck('aggregate', 'category')
             );
 
-            $latestAds = Ad::query()
-                ->inEnabledCategories()
-                ->where('status', 'active')
+            $latestAds = Ad::marketplaceActive()
+                ->where('visibility', 'public')
+                ->whereHas('user', fn ($query) => $query->where('is_active', true))
                 ->with('user:id,name,avatar,identity_verified')
                 ->latest()
                 ->take(3)
@@ -45,7 +45,7 @@ class HomePageController extends Controller
                     ->orWhere('is_service_provider', true))
                 ->whereNotNull('profession')
                 ->withCount([
-                    'ads as active_ads_count' => fn ($query) => $query->inEnabledCategories()->where('status', 'active'),
+                    'ads as active_ads_count' => fn ($query) => $query->marketplaceActive()->where('visibility', 'public'),
                     'verifiedReviewsReceived as verified_reviews_count',
                 ])
                 ->withAvg('verifiedReviewsReceived as verified_reviews_avg', 'rating')

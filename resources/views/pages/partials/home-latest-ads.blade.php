@@ -1,5 +1,5 @@
 @if($latestAds->isNotEmpty())
-<section class="section">
+<section class="section home-latest-ads">
     <div class="container">
         <div class="section-head reveal">
             <span class="section-pill">Annonces</span>
@@ -10,7 +10,7 @@
             @foreach($latestAds as $ad)
             <div class="col-md-6 col-lg-4">
                 <a href="{{ route('ads.show', $ad) }}" class="ad-card reveal">
-                    <div class="ad-card-img">
+                    <div class="ad-card-img {{ empty($ad->photos[0]) ? 'home-ad-without-photo' : '' }}">
                         @if(!empty($ad->photos[0]))
                             <img src="{{ storage_url($ad->photos[0]) }}" alt="{{ $ad->title }}" loading="lazy">
                         @else
