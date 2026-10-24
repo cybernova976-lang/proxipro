@@ -2,6 +2,10 @@
 @section('title', 'Statut du compte - Espace Pro')
 
 @section('content')
+@php
+    $currentStatus = $user->isEntreprise() ? 'entreprise' : ($user->isAutoEntrepreneur() ? 'auto-entrepreneur' : 'particulier');
+    $selectedStatus = old('pro_status', $currentStatus);
+@endphp
 <div class="pro-content-header">
     <div>
         <nav aria-label="breadcrumb">
@@ -19,19 +23,19 @@
 <div class="pro-card mb-4">
     <div class="d-flex align-items-center gap-3 mb-3">
         <div style="width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem;
-            @if($user->pro_status === 'entreprise') background: rgba(59,130,246,0.1); color: #3b82f6;
-            @elseif($user->pro_status === 'auto-entrepreneur') background: rgba(168,85,247,0.1); color: #a855f7;
+            @if($currentStatus === 'entreprise') background: rgba(59,130,246,0.1); color: #3b82f6;
+            @elseif($currentStatus === 'auto-entrepreneur') background: rgba(168,85,247,0.1); color: #a855f7;
             @else background: rgba(16,185,129,0.1); color: #10b981; @endif">
-            @if($user->pro_status === 'entreprise') <i class="fas fa-building"></i>
-            @elseif($user->pro_status === 'auto-entrepreneur') <i class="fas fa-user-tie"></i>
+            @if($currentStatus === 'entreprise') <i class="fas fa-building"></i>
+            @elseif($currentStatus === 'auto-entrepreneur') <i class="fas fa-user-tie"></i>
             @else <i class="fas fa-user"></i> @endif
         </div>
         <div>
             <h5 class="fw-bold mb-1">Statut actuel : {{ $user->getAccountTypeLabel() }}</h5>
             <p class="text-muted mb-0" style="font-size: 0.85rem;">
-                @if($user->pro_status === 'entreprise')
-                    Vous êtes inscrit en tant qu'entreprise. Vous avez accès à toutes les fonctionnalités professionnelles.
-                @elseif($user->pro_status === 'auto-entrepreneur')
+                @if($currentStatus === 'entreprise')
+                    Vous êtes inscrit en tant qu’entreprise. L’émission de devis et factures dépend des étapes de configuration de votre espace PRO.
+                @elseif($currentStatus === 'auto-entrepreneur')
                     Vous êtes inscrit en tant qu'auto-entrepreneur / micro-entrepreneur.
                 @else
                     Vous êtes inscrit en tant que particulier prestataire.
@@ -49,18 +53,18 @@
         {{-- Particulier --}}
         <div class="col-md-4">
             <label class="d-block h-100 cursor-pointer">
-                <input type="radio" name="pro_status" value="particulier" {{ $user->pro_status === 'particulier' ? 'checked' : '' }} class="d-none status-radio">
-                <div class="pro-card mb-0 h-100 status-card {{ $user->pro_status === 'particulier' ? 'active' : '' }}" style="cursor: pointer; transition: all 0.2s;">
+                <input type="radio" name="pro_status" value="particulier" {{ $selectedStatus === 'particulier' ? 'checked' : '' }} class="visually-hidden status-radio" aria-label="Particulier">
+                <div class="pro-card mb-0 h-100 status-card {{ $selectedStatus === 'particulier' ? 'active' : '' }}" style="cursor: pointer; transition: all 0.2s;">
                     <div class="text-center">
                         <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(16,185,129,0.1); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 12px;">
                             <i class="fas fa-user"></i>
                         </div>
                         <h6 class="fw-bold">Particulier</h6>
                         <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                            Proposez vos services en tant que particulier. Idéal pour les activités occasionnelles (cours, bricolage, etc.).
+                            Un compte particulier ne permet pas d’émettre des devis ou factures professionnels dans cet espace.
                         </p>
                         <div class="mt-2">
-                            <span class="pro-status pro-status-success" style="font-size: 0.72rem;">Pas de SIRET requis</span>
+                            <span class="pro-status pro-status-success" style="font-size: 0.72rem;">Pas d’émission PRO</span>
                         </div>
                     </div>
                 </div>
@@ -70,8 +74,8 @@
         {{-- Auto-entrepreneur --}}
         <div class="col-md-4">
             <label class="d-block h-100 cursor-pointer">
-                <input type="radio" name="pro_status" value="auto-entrepreneur" {{ $user->pro_status === 'auto-entrepreneur' ? 'checked' : '' }} class="d-none status-radio">
-                <div class="pro-card mb-0 h-100 status-card {{ $user->pro_status === 'auto-entrepreneur' ? 'active' : '' }}" style="cursor: pointer; transition: all 0.2s;">
+                <input type="radio" name="pro_status" value="auto-entrepreneur" {{ $selectedStatus === 'auto-entrepreneur' ? 'checked' : '' }} class="visually-hidden status-radio" aria-label="Auto-entrepreneur">
+                <div class="pro-card mb-0 h-100 status-card {{ $selectedStatus === 'auto-entrepreneur' ? 'active' : '' }}" style="cursor: pointer; transition: all 0.2s;">
                     <div class="text-center">
                         <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(168,85,247,0.1); color: #a855f7; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 12px;">
                             <i class="fas fa-user-tie"></i>
@@ -91,18 +95,18 @@
         {{-- Entreprise --}}
         <div class="col-md-4">
             <label class="d-block h-100 cursor-pointer">
-                <input type="radio" name="pro_status" value="entreprise" {{ $user->pro_status === 'entreprise' ? 'checked' : '' }} class="d-none status-radio">
-                <div class="pro-card mb-0 h-100 status-card {{ $user->pro_status === 'entreprise' ? 'active' : '' }}" style="cursor: pointer; transition: all 0.2s;">
+                <input type="radio" name="pro_status" value="entreprise" {{ $selectedStatus === 'entreprise' ? 'checked' : '' }} class="visually-hidden status-radio" aria-label="Entreprise">
+                <div class="pro-card mb-0 h-100 status-card {{ $selectedStatus === 'entreprise' ? 'active' : '' }}" style="cursor: pointer; transition: all 0.2s;">
                     <div class="text-center">
                         <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(59,130,246,0.1); color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 12px;">
                             <i class="fas fa-building"></i>
                         </div>
                         <h6 class="fw-bold">Entreprise</h6>
                         <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                            SARL, SAS, EURL, SA… Outils commerciaux avec identité d’émetteur, TVA et traçabilité des documents.
+                            SASU, SAS, SARL, EURL, SA… Renseignez les informations de votre propre société pour préparer vos documents.
                         </p>
                         <div class="mt-2">
-                            <span class="pro-status pro-status-primary" style="font-size: 0.72rem;">SIRET + KBIS</span>
+                            <span class="pro-status pro-status-primary" style="font-size: 0.72rem;">Entreprise immatriculée</span>
                         </div>
                     </div>
                 </div>
@@ -113,6 +117,7 @@
     {{-- Additional fields based on status --}}
     <div class="pro-card" id="statusFields">
         <h6 class="fw-bold mb-3">Informations complémentaires</h6>
+        <p class="small text-muted">Renseignez l’identité de l’entreprise qui émettra vos devis et factures. L’immatriculation de la plateforme PROKEJEM ne remplit pas automatiquement les informations des prestataires. Ne renseignez un numéro de TVA que s’il vous a été attribué.</p>
 
         <div class="row g-3">
             <div class="col-md-6">
@@ -157,6 +162,7 @@
 .status-card { border: 2px solid transparent; }
 .status-card.active { border-color: var(--pro-primary); box-shadow: 0 0 0 3px rgba(168,85,247,0.15); }
 .status-card:hover { border-color: rgba(168,85,247,0.3); transform: translateY(-2px); }
+.status-radio:focus-visible + .status-card { outline: 3px solid var(--pro-primary); outline-offset: 3px; }
 </style>
 
 <script>
