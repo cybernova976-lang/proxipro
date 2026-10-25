@@ -8,4 +8,4 @@ Disallow: /service-orders
 Disallow: /propositions
 Disallow: /api/
 
-Sitemap: /sitemap.xml
+Sitemap: https://www.prokejem.fr/sitemap.xml

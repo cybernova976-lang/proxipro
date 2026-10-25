@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Annonces - Prokejem')
+@section('meta_description', 'Découvrez les offres de services et les demandes publiées sur Prokejem : bricolage, ménage, jardinage, cours et autres services. Recherchez par métier et par ville.')
 
 @push('styles')
 <style>

@@ -1,6 +1,13 @@
 @extends('layouts.app')
 
 @section('title', $ad->title . ' - Prokejem')
+@section('meta_description', Str::limit(Str::squish(strip_tags(html_entity_decode($ad->description ?: $ad->title, ENT_QUOTES | ENT_HTML5, 'UTF-8'))), 160))
+
+@push('meta')
+    @if($ad->visibility !== 'public' || !$ad->user?->is_active || $ad->status !== 'active' || ($ad->expires_at && !$ad->expires_at->isFuture()))
+        <meta name="robots" content="noindex,nofollow">
+    @endif
+@endpush
 
 @push('styles')
 <style>

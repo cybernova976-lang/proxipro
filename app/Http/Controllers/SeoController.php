@@ -29,9 +29,9 @@ class SeoController extends Controller
         ]));
 
         try {
-            Ad::query()
-                ->inEnabledCategories()
-                ->where('status', 'active')
+            Ad::marketplaceActive()
+                ->where('visibility', 'public')
+                ->whereHas('user', fn ($query) => $query->where('is_active', true))
                 ->select(['id', 'updated_at'])
                 ->latest('updated_at')
                 ->limit(20000)

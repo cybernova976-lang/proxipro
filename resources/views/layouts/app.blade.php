@@ -11,13 +11,16 @@
 
     @php
         $defaultMetaDescription = 'Publiez un besoin, comparez les propositions et trouvez un prestataire près de chez vous.';
-        $pageTitle = trim($__env->yieldContent('title')) ?: config('app.name', 'Prokejem');
-        $pageDescription = trim($__env->yieldContent('meta_description')) ?: $defaultMetaDescription;
-        $openGraphTitle = trim($__env->yieldContent('og_title')) ?: $pageTitle;
-        $openGraphDescription = trim($__env->yieldContent('og_description')) ?: $pageDescription;
-        $openGraphType = trim($__env->yieldContent('og_type')) ?: 'website';
-        $openGraphUrl = trim($__env->yieldContent('og_url')) ?: url()->current();
-        $openGraphImage = trim($__env->yieldContent('og_image')) ?: asset('images/social-card.png');
+        // Inline Blade sections are already escaped; normalize them before the
+        // escaped attribute output below to avoid displaying literal entities.
+        $metaSection = static fn (string $name): string => html_entity_decode(trim($__env->yieldContent($name)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $pageTitle = $metaSection('title') ?: config('app.name', 'Prokejem');
+        $pageDescription = $metaSection('meta_description') ?: $defaultMetaDescription;
+        $openGraphTitle = $metaSection('og_title') ?: $pageTitle;
+        $openGraphDescription = $metaSection('og_description') ?: $pageDescription;
+        $openGraphType = $metaSection('og_type') ?: 'website';
+        $openGraphUrl = $metaSection('og_url') ?: url()->current();
+        $openGraphImage = $metaSection('og_image') ?: asset('images/social-card.png');
     @endphp
     <title>{{ $pageTitle }}</title>
 

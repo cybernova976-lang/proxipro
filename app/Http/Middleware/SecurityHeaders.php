@@ -17,6 +17,14 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=(self)');
 
+        // Authentication pages must remain crawlable so engines can read noindex.
+        // Use a response header as some account pages have a standalone layout.
+        if ($request->routeIs('login', 'register', 'password.*', 'verification.*', 'auth.*', 'social.*')) {
+            $response->headers->set('X-Robots-Tag', 'noindex, follow');
+        } elseif (in_array('auth', $request->route()?->gatherMiddleware() ?? [], true)) {
+            $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
+        }
+
         if ($request->isSecure() && app()->environment('production')) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
