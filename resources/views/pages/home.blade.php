@@ -560,7 +560,8 @@
             *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
         }
     </style>
-    <link rel="stylesheet" href="{{ asset('css/public-home.css') }}?v=20261024">
+    <link rel="preload" as="image" type="image/webp" href="{{ asset('images/home/services-proximite-1920.webp') }}" imagesrcset="{{ asset('images/home/services-proximite-960.webp') }} 960w, {{ asset('images/home/services-proximite-1920.webp') }} 1920w" imagesizes="100vw" fetchpriority="high">
+    <link rel="stylesheet" href="{{ asset('css/public-home.css') }}?v=20261025-photo1">
     <script defer src="{{ asset('js/public-home.js') }}?v=20261024"></script>
 </head>
 <body class="public-home">
@@ -628,9 +629,13 @@
     <!-- ===== HERO ===== -->
     <main id="home-main">
     <header class="hero" id="home-hero">
+        <picture class="home-hero-media" aria-hidden="true">
+            <img src="{{ asset('images/home/services-proximite-1920.webp') }}"
+                 srcset="{{ asset('images/home/services-proximite-960.webp') }} 960w, {{ asset('images/home/services-proximite-1920.webp') }} 1920w"
+                 sizes="100vw" width="1920" height="960" alt="" fetchpriority="high" decoding="async">
+        </picture>
         <div class="container hero-grid">
-            <div class="row align-items-center">
-                <div class="col-lg-6 mb-5 mb-lg-0">
+            <div class="home-hero-intro">
                     <div class="hero-label">
                         <span class="hero-label-dot"></span>
                         Services de proximité, simplement
@@ -648,24 +653,27 @@
                         <span>Publication gratuite · Vous gardez le choix</span>
                     </div>
                     <a href="#espace-prestataires" class="hero-provider-link">Je propose mes services <i class="fas fa-arrow-right ms-1" aria-hidden="true"></i></a>
-                </div>
-                <div class="col-lg-6">
-                    <div class="search-card">
+            </div>
+                    <div class="search-card home-discovery-card">
                         <div class="search-card-title">
                             <i class="fas fa-search"></i>
-                            Vous préférez explorer les services ?
+                            Rechercher un service
                         </div>
-                        <form action="{{ route('ads.index') }}" method="GET">
+                        <form action="{{ route('ads.index') }}" method="GET" class="home-discovery-fields">
                             <input type="hidden" name="service_type" value="offre">
+                            <div class="home-discovery-control">
                             <label class="home-field-label" for="home-service">Service recherché</label>
                             <div class="search-field">
                                 <i class="fas fa-search" aria-hidden="true"></i>
                                 <input id="home-service" name="q" type="search" placeholder="Plombier, ménage, cours…" maxlength="120">
                             </div>
+                            </div>
+                            <div class="home-discovery-control">
                             <label class="home-field-label" for="home-location">Ville ou code postal <span>(facultatif)</span></label>
                             <div class="search-field">
                                 <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
                                 <input id="home-location" type="text" name="location" placeholder="Ex. Mamoudzou" aria-label="Localisation" maxlength="120">
+                            </div>
                             </div>
                             <button type="submit" class="btn-hero-search">
                                 Voir les services <i class="fas fa-arrow-right" aria-hidden="true"></i>
@@ -673,8 +681,6 @@
                         </form>
                         <p class="home-search-note">Parcourez les offres sans créer de compte.</p>
                     </div>
-                </div>
-            </div>
         </div>
             <div class="container hero-grid">
                 <div class="hero-trust">

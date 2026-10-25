@@ -6,14 +6,18 @@
 .public-home .nav-links a { padding: 12px; font-size: .85rem; }
 .public-home .nav-burger { min-width: 44px; min-height: 44px; }
 .home-mobile-publish { display: none; }
-.public-home .hero { background: radial-gradient(ellipse at 100% 10%, #dcf4ee, transparent 58%), linear-gradient(110deg, #f5f3ff, #f8fafc 65%); padding: 58px 0 32px; border-bottom: 1px solid #e4e9f2; }
-.public-home .hero::before, .public-home .hero::after { display: none; }
+.public-home .hero { background: #f8fafc; padding: 40px 0 28px; border-bottom: 1px solid #e4e9f2; isolation: isolate; }
+.home-hero-media { display: block; position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.home-hero-media img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 40%; }
+.public-home .hero::before { display: block; background: linear-gradient(0deg, #f8fafc 0%, rgba(248,250,252,.95) 9%, rgba(248,250,252,0) 45%), linear-gradient(90deg, rgba(248,250,252,.99) 0%, rgba(248,250,252,.96) 30%, rgba(248,250,252,.83) 45%, rgba(248,250,252,.08) 73%); }
+.public-home .hero::after { display: none; }
+.home-hero-intro { position: relative; max-width: 600px; width: 53%; min-height: 424px; padding: 12px 0 28px; }
 .public-home .hero-label { color: #475569; background: white; border-color: #e2e8f0; margin-bottom: 20px; font-size: .8rem; }
 .public-home .hero-title { color: #0f172a; font-size: clamp(2rem, 4vw, 3.25rem); letter-spacing: -1.6px; max-width: 570px; }
 .public-home .hero-title .accent { background: none; -webkit-text-fill-color: #4f46e5; color: #4f46e5; }
 .public-home .hero-title-line { text-wrap: initial; }
 .public-home .hero-desc { color: #475569; max-width: 485px; }
-.home-hero-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin: 24px 0 12px; }
+.home-hero-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin: 20px 0 12px; }
 .home-hero-actions > span { color: #475569; font-size: .8rem; }
 .home-primary-action { display: inline-flex; min-height: 52px; justify-content: center; align-items: center; gap: 16px; padding: 15px 24px; border-radius: 12px; background: #4f46e5; color: white; font-weight: 700; text-decoration: none; box-shadow: 0 6px 16px #4f46e51c; }
 .home-primary-action:hover { background: #3730a3; color: white; }
@@ -21,13 +25,18 @@
 .public-home .hero-provider-link:hover { color: #312e81; }
 .public-home .search-card { border: 1px solid #e2e8f0; border-radius: 22px; box-shadow: 0 18px 48px #1e293b0a; padding: 28px; }
 .public-home .search-card-title { line-height: 1.5; font-size: 1rem; gap: 12px; }
+.public-home .home-discovery-card { width: 100%; max-width: none; margin: 0; padding: 24px 28px 18px; background: #fff; box-shadow: 0 12px 36px #1e293b0c; }
+.home-discovery-fields { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(160px, .7fr); gap: 16px; align-items: end; }
+.home-discovery-control { min-width: 0; }
+.home-discovery-card .search-field { margin-bottom: 0; }
+.public-home .home-discovery-card .btn-hero-search { min-height: 52px; white-space: nowrap; }
 .home-field-label { display: block; font-size: .85rem; font-weight: 650; margin-bottom: 8px; color: #334155; }
 .home-field-label span { color: #64748b; font-weight: 400; }
 .public-home .search-field input { font-size: 16px; border-width: 1px; min-height: 52px; background: #f8fafc; }
 .public-home .btn-hero-search { background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; min-height: 50px; }
 .public-home .btn-hero-search:hover { background: #e0e7ff; transform: none; box-shadow: none; }
-.home-search-note { font-size: .8rem; color: #64748b; text-align: center; margin: 14px 0 0; }
-.public-home .hero-trust { margin-top: 32px; gap: 28px; }
+.home-search-note { font-size: .8rem; color: #64748b; text-align: left; margin: 12px 0 0; }
+.public-home .hero-trust { margin-top: 24px; gap: 28px; }
 .public-home .hero-trust-item { color: #475569; }
 .public-home .hero-trust-item .text-white { color: #334155 !important; }
 .public-home .hero-trust-icon { background: #e6f4f0; color: #087f73; }
@@ -76,13 +85,21 @@
     .public-home .btn-nav-register, .public-home .btn-nav-login { padding: 10px 12px !important; }
 }
 @media (max-width: 991px) {
-    .public-home .hero { padding-top: 36px; }
+    .public-home .hero { padding-top: 240px; }
+    .home-hero-media { inset: 0 0 auto; height: 300px; }
+    .home-hero-media img { object-position: 78% 35%; }
+    .public-home .hero::before { background: linear-gradient(180deg, rgba(248,250,252,0) 0px, rgba(248,250,252,.05) 130px, #f8fafc 300px); }
+    .home-hero-intro { width: 100%; max-width: none; min-height: 0; padding: 0 0 28px; }
+    .home-discovery-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .home-discovery-fields .btn-hero-search { grid-column: 1 / -1; }
     .public-home .hero-title, .public-home .hero-desc { max-width: 100%; }
-    .public-home .hero-grid > .row { row-gap: 4px; }
     .home-mobile-publish { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 12px; color: #4338ca; background: #eef2ff; border-radius: 10px; text-decoration: none; font-size: .8rem; font-weight: 700; margin-left: auto; margin-right: 8px; }
     .home-provider-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 767px) {
+    .public-home .hero { padding-top: 180px; }
+    .home-hero-media { height: 240px; }
+    .public-home .hero::before { background: linear-gradient(180deg, rgba(248,250,252,0) 0px, rgba(248,250,252,.08) 100px, #f8fafc 240px); }
     .public-home .nav-inner { padding: 10px 0; gap: 4px; }
     .public-home .nav-brand-wordmark { max-width: 126px; height: auto !important; }
     .public-home .hero-title { font-size: clamp(2rem, 8vw, 2.8rem); letter-spacing: -1px; }
@@ -91,6 +108,7 @@
     .public-home .hero-desc { line-height: 1.65; margin-bottom: 16px; }
     .home-hero-actions { margin-top: 18px; }
     .public-home .search-card { padding: 20px; }
+    .home-discovery-fields { grid-template-columns: minmax(0, 1fr); gap: 16px; }
     .public-home .hero-trust { display: grid; gap: 14px; margin-top: 24px; }
     .public-home .hero-trust-item { font-size: .8rem; }
     .public-home .cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
