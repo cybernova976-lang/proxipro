@@ -560,7 +560,7 @@
             *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
         }
     </style>
-    <link rel="preload" as="image" type="image/webp" href="{{ asset('images/home/services-proximite-1920.webp') }}" imagesrcset="{{ asset('images/home/services-proximite-960.webp') }} 960w, {{ asset('images/home/services-proximite-1920.webp') }} 1920w" imagesizes="100vw" fetchpriority="high">
+    <link rel="preload" as="image" type="image/webp" href="{{ asset('images/home/services-proximite-artisan-homme-1920.webp') }}" imagesrcset="{{ asset('images/home/services-proximite-artisan-homme-960.webp') }} 960w, {{ asset('images/home/services-proximite-artisan-homme-1920.webp') }} 1920w" imagesizes="100vw" fetchpriority="high">
     <link rel="stylesheet" href="{{ asset('css/public-home.css') }}?v=20261025-photo1">
     <script defer src="{{ asset('js/public-home.js') }}?v=20261024"></script>
 </head>
@@ -630,8 +630,8 @@
     <main id="home-main">
     <header class="hero" id="home-hero">
         <picture class="home-hero-media" aria-hidden="true">
-            <img src="{{ asset('images/home/services-proximite-1920.webp') }}"
-                 srcset="{{ asset('images/home/services-proximite-960.webp') }} 960w, {{ asset('images/home/services-proximite-1920.webp') }} 1920w"
+            <img src="{{ asset('images/home/services-proximite-artisan-homme-1920.webp') }}"
+                 srcset="{{ asset('images/home/services-proximite-artisan-homme-960.webp') }} 960w, {{ asset('images/home/services-proximite-artisan-homme-1920.webp') }} 1920w"
                  sizes="100vw" width="1920" height="960" alt="" fetchpriority="high" decoding="async">
         </picture>
         <div class="container hero-grid">
