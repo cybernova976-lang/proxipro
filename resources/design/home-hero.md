@@ -5,13 +5,15 @@ Elle sert de décor à l’accueil et ne représente pas des membres de la plate
 
 Fichiers livrés :
 
-- `public/images/home/services-proximite-artisan-homme-1920.webp` : 1920 × 960 pixels.
-- `public/images/home/services-proximite-artisan-homme-960.webp` : 960 × 480 pixels.
+- `public/images/home/artisan-maison-1200.webp` : 1200 × 900 pixels.
+- `public/images/home/artisan-maison-640.webp` : 640 × 480 pixels.
 
 Les fichiers WebP sont des versions redimensionnées et encodées à partir du
 PNG généré, sans modification de la scène. La page choisit la résolution avec
 `srcset`. L’image est décorative (`alt` vide) et chargée prioritairement.
-Le dégradé de contraste et le cadrage mobile sont définis en CSS.
+La photo est affichée sans voile dans un cadre arrondi à côté du texte sur
+ordinateur, puis après le texte sur mobile. Le titre occupe deux lignes
+à partir de 992 pixels, avec retours naturels sur les petits écrans.
 
 ## Prompt initial
 
@@ -27,3 +29,14 @@ Les nouveaux noms de fichiers évitent le cache de l’ancienne illustration.
 ### Prompt de modification utilisé
 
 Use case: precise-object-edit. Asset type: photographic background for the public PROKEJEM homepage. Edit target: the supplied original panoramic home services image. Primary request: replace ONLY the woman craftsperson in navy work clothes with an adult MAN craftsperson with medium brown skin, short dark hair, natural facial features and simple navy work clothes. Keep his position, approximate silhouette, working gesture with the screwdriver, tool belt, focus on the shelf and friendly competent expression. Preserve the older Black male homeowner, his glasses, face, clothing and position. Preserve the wooden shelf, bracket, plant, tools, room, natural daylight and realistic photographic style. Preserve the same wide 2:1 framing and quiet pale empty wall on the LEFT 45 percent for website text. Keep the activity and both heads on the RIGHT half. Natural realistic anatomy and hands. Do not add people, text, logos, watermarks or interface. This remains a fictional AI-generated illustration, not a portrait of real marketplace members.
+
+## Nouvelle composition du 26 octobre 2026
+
+Nouvelle photographie générée avec ImageGen intégré, sans image de référence.
+Le visuel représente un artisan homme intervenant sur un meuble dans une
+maison, accompagné du propriétaire. Il s’agit toujours de personnages fictifs
+et d’une illustration, sans témoignage ni profil réel associé.
+
+### Prompt final utilisé
+
+Use case: photorealistic-natural. Asset type: original premium editorial photograph for the public homepage of PROKEJEM, a local home services marketplace. Create a landscape 4:3 photograph with rich natural detail, not a banner and not a website mockup. Scene: a welcoming contemporary lived-in home with warm off-white walls, pale oak furniture and daylight from a nearby window. Main subject: a professional adult MALE craftsperson around 35, medium brown skin, short dark hair, subtle beard, wearing a clean navy cotton work overshirt with rolled sleeves and practical work trousers. He is carefully fitting a handle to a low oak storage cabinet with a simple hand screwdriver, with a relaxed focused face and realistic hands. An older Black male homeowner in a light neutral shirt is standing a little behind him on the right, pleased and looking at the finished work. Candid believable everyday interaction, not posing at the camera. Eye-level medium-wide framing, artisan's head and upper body prominent in the central upper half and the cabinet/work visible in the lower third, both people comfortably inside the frame with margin around their heads. A discreet leafy houseplant, soft sunlight, tactile wood and natural skin texture. Warm, confident, friendly, polished editorial photography with realistic colors and crisp subjects. No giant empty wall, no artificial white gradient, no washed-out veil, no collage, no text, logos, ratings, badges, watermarks or interface. Fictional people generated for illustration only; not portraits of real marketplace members.

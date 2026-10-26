@@ -560,8 +560,8 @@
             *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
         }
     </style>
-    <link rel="preload" as="image" type="image/webp" href="{{ asset('images/home/services-proximite-artisan-homme-1920.webp') }}" imagesrcset="{{ asset('images/home/services-proximite-artisan-homme-960.webp') }} 960w, {{ asset('images/home/services-proximite-artisan-homme-1920.webp') }} 1920w" imagesizes="100vw" fetchpriority="high">
-    <link rel="stylesheet" href="{{ asset('css/public-home.css') }}?v=20261025-photo1">
+    <link rel="preload" as="image" type="image/webp" href="{{ asset('images/home/artisan-maison-1200.webp') }}" imagesrcset="{{ asset('images/home/artisan-maison-640.webp') }} 640w, {{ asset('images/home/artisan-maison-1200.webp') }} 1200w" imagesizes="(min-width: 1400px) 580px, (min-width: 992px) 44vw, (min-width: 620px) 580px, calc(100vw - 40px)" fetchpriority="high">
+    <link rel="stylesheet" href="{{ asset('css/public-home.css') }}?v=20261026-editorial1">
     <script defer src="{{ asset('js/public-home.js') }}?v=20261024"></script>
 </head>
 <body class="public-home">
@@ -629,11 +629,6 @@
     <!-- ===== HERO ===== -->
     <main id="home-main">
     <header class="hero" id="home-hero">
-        <picture class="home-hero-media" aria-hidden="true">
-            <img src="{{ asset('images/home/services-proximite-artisan-homme-1920.webp') }}"
-                 srcset="{{ asset('images/home/services-proximite-artisan-homme-960.webp') }} 960w, {{ asset('images/home/services-proximite-artisan-homme-1920.webp') }} 1920w"
-                 sizes="100vw" width="1920" height="960" alt="" fetchpriority="high" decoding="async">
-        </picture>
         <div class="container hero-grid">
             <div class="home-hero-intro">
                     <div class="hero-label">
@@ -645,15 +640,27 @@
                         <span class="hero-title-line accent">près de chez vous.</span>
                     </h1>
                     <p class="hero-desc">
-                        Un robinet à réparer, un jardin à entretenir, un coup de main au quotidien ?
-                        Décrivez votre besoin et échangez avec les prestataires intéressés.
+                        Un projet, une réparation, un coup de main ? Décrivez votre besoin
+                        et échangez avec les prestataires qui peuvent vous aider.
                     </p>
                     <div class="home-hero-actions">
                         <a href="{{ route('demand.create') }}" class="home-primary-action">Publier mon besoin <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
-                        <span>Publication gratuite · Vous gardez le choix</span>
+                        <a href="#espace-prestataires" class="hero-provider-link">Je propose mes services <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
                     </div>
-                    <a href="#espace-prestataires" class="hero-provider-link">Je propose mes services <i class="fas fa-arrow-right ms-1" aria-hidden="true"></i></a>
+                    <p class="home-hero-note"><i class="fas fa-check" aria-hidden="true"></i> Publication gratuite · Vous gardez le choix</p>
             </div>
+            <figure class="home-hero-story">
+                <picture class="home-hero-media" aria-hidden="true">
+                    <img src="{{ asset('images/home/artisan-maison-1200.webp') }}"
+                         srcset="{{ asset('images/home/artisan-maison-640.webp') }} 640w, {{ asset('images/home/artisan-maison-1200.webp') }} 1200w"
+                         sizes="(min-width: 1400px) 580px, (min-width: 992px) 44vw, (min-width: 620px) 580px, calc(100vw - 40px)"
+                         width="1200" height="900" alt="" fetchpriority="high" decoding="async">
+                </picture>
+                <figcaption class="home-hero-caption">
+                    <span class="home-hero-caption-icon" aria-hidden="true"><i class="fas fa-house"></i></span>
+                    <span><strong>Vos projets prennent vie.</strong><small>Le savoir-faire pour votre quotidien.</small></span>
+                </figcaption>
+            </figure>
                     <div class="search-card home-discovery-card">
                         <div class="search-card-title">
                             <i class="fas fa-search"></i>
@@ -682,7 +689,7 @@
                         <p class="home-search-note">Parcourez les offres sans créer de compte.</p>
                     </div>
         </div>
-            <div class="container hero-grid">
+            <div class="container home-hero-reassurance">
                 <div class="hero-trust">
                     <div class="hero-trust-item">
                         <div class="hero-trust-icon"><i class="fas fa-shield-alt" aria-hidden="true"></i></div>
