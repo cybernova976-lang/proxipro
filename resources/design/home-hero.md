@@ -5,15 +5,16 @@ Elle sert de décor à l’accueil et ne représente pas des membres de la plate
 
 Fichiers livrés :
 
-- `public/images/home/artisan-maison-1200.webp` : 1200 × 900 pixels.
-- `public/images/home/artisan-maison-640.webp` : 640 × 480 pixels.
+- `public/images/home/artisan-maison-panorama-1920.webp` : 1920 × 960 pixels.
+- `public/images/home/artisan-maison-panorama-960.webp` : 960 × 480 pixels.
 
 Les fichiers WebP sont des versions redimensionnées et encodées à partir du
 PNG généré, sans modification de la scène. La page choisit la résolution avec
 `srcset`. L’image est décorative (`alt` vide) et chargée prioritairement.
-La photo est affichée sans voile dans un cadre arrondi à côté du texte sur
-ordinateur, puis après le texte sur mobile. Le titre occupe deux lignes
-à partir de 992 pixels, avec retours naturels sur les petits écrans.
+La photo panoramique couvre toute la largeur et la hauteur du haut de page,
+en arrière-plan hors du flux. Un dégradé CSS protège le contraste du texte ;
+le formulaire reste blanc et opaque. Le titre conserve ses deux lignes et
+la recherche reste accessible dans le premier écran aux tailles mobiles testées.
 
 ## Prompt initial
 
@@ -37,6 +38,16 @@ Le visuel représente un artisan homme intervenant sur un meuble dans une
 maison, accompagné du propriétaire. Il s’agit toujours de personnages fictifs
 et d’une illustration, sans témoignage ni profil réel associé.
 
-### Prompt final utilisé
+### Prompt de la composition en carte
 
 Use case: photorealistic-natural. Asset type: original premium editorial photograph for the public homepage of PROKEJEM, a local home services marketplace. Create a landscape 4:3 photograph with rich natural detail, not a banner and not a website mockup. Scene: a welcoming contemporary lived-in home with warm off-white walls, pale oak furniture and daylight from a nearby window. Main subject: a professional adult MALE craftsperson around 35, medium brown skin, short dark hair, subtle beard, wearing a clean navy cotton work overshirt with rolled sleeves and practical work trousers. He is carefully fitting a handle to a low oak storage cabinet with a simple hand screwdriver, with a relaxed focused face and realistic hands. An older Black male homeowner in a light neutral shirt is standing a little behind him on the right, pleased and looking at the finished work. Candid believable everyday interaction, not posing at the camera. Eye-level medium-wide framing, artisan's head and upper body prominent in the central upper half and the cabinet/work visible in the lower third, both people comfortably inside the frame with margin around their heads. A discreet leafy houseplant, soft sunlight, tactile wood and natural skin texture. Warm, confident, friendly, polished editorial photography with realistic colors and crisp subjects. No giant empty wall, no artificial white gradient, no washed-out veil, no collage, no text, logos, ratings, badges, watermarks or interface. Fictional people generated for illustration only; not portraits of real marketplace members.
+
+## Panorama en arrière-plan du 26 octobre 2026
+
+Adaptation de l’illustration précédente avec ImageGen intégré, pour un fond
+panoramique continu et non une carte. Les anciens fichiers restent disponibles
+pour les pages déjà en cache. Les versions WebP ci-dessus sont les actifs courants.
+
+### Prompt final utilisé
+
+Use case: compositing. Asset type: panoramic full-width photographic website hero background. Edit the supplied fictional AI-generated home services photograph into a wide 2:1 landscape composition. Preserve the same adult male craftsperson with medium brown skin, short curly dark hair and navy overshirt fitting an oak cabinet handle with a screwdriver, and the same older Black male homeowner in a pale shirt. Preserve their natural expressions, believable working hands, oak cabinet, houseplants and warm daylight. Reframe the entire scene as a wider real interior, with the two men and the cabinet activity clustered in the RIGHT 48 percent of the image, comfortably inside the edges. Keep their heads and the work in the upper-to-middle right, with breathing room above both heads so the image can be cropped vertically for a website. Extend the home naturally across the LEFT HALF with a quiet softly lit warm off-white wall, subtle room detail and floor, low visual clutter for headline and a search form. This is a continuous full-bleed editorial photograph, no card frame or rounded corners. Rich realistic natural color and crisp subjects; do not add a white gradient, artificial blur or washed-out overlay to the actual pixels. No text, logos, watermarks, badges, ratings or interface. No additional people. The characters remain fictional illustrative people, not actual marketplace members.

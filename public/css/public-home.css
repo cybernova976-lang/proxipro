@@ -6,15 +6,16 @@
 .public-home .nav-links a { padding: 12px; font-size: .85rem; }
 .public-home .nav-burger { min-width: 44px; min-height: 44px; }
 .home-mobile-login { display: none; }
-.public-home .hero { background: linear-gradient(180deg, #f7f9fc, #f2f5fa); padding: 32px 0 24px; border-bottom: 1px solid #e4e9f2; isolation: isolate; }
-.public-home .hero::before, .public-home .hero::after { display: none; }
-.public-home .hero-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-areas: "intro photo" "search photo"; column-gap: 40px; row-gap: 22px; align-items: center; }
+.public-home .hero { background: #f8fafc; padding: 40px 0 26px; border-bottom: 1px solid #e4e9f2; isolation: isolate; }
+.public-home .hero::before { display: block; z-index: 1; pointer-events: none; background: linear-gradient(90deg, rgba(248,250,252,.97) 0%, rgba(248,250,252,.94) 33%, rgba(248,250,252,.8) 46%, rgba(248,250,252,.08) 67%, rgba(248,250,252,0) 100%), linear-gradient(0deg, #f8fafc 0%, rgba(248,250,252,.92) 5%, rgba(248,250,252,0) 24%); }
+.public-home .hero::after { display: none; }
+.public-home .hero-grid { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-areas: "intro ." "search ."; column-gap: 40px; row-gap: 22px; align-items: center; }
 .home-hero-intro { grid-area: intro; min-width: 0; }
 .public-home .hero-label { color: #526078; background: #fff; border-color: #e2e8f0; margin-bottom: 16px; font-size: .75rem; padding: 8px 14px; }
 .public-home .hero-title { color: #0f172a; font-size: clamp(2rem, 3.3vw, 2.9rem); line-height: 1.16; letter-spacing: -1.6px; max-width: none; margin-bottom: 18px; }
 .public-home .hero-title .accent { background: none; -webkit-text-fill-color: #4f46e5; color: #4f46e5; }
 .public-home .hero-title-line { text-wrap: initial; }
-.public-home .hero-desc { color: #526078; max-width: 560px; font-size: 1rem; line-height: 1.65; margin-bottom: 18px; }
+.public-home .hero-desc { color: #334155; max-width: 560px; font-size: 1rem; line-height: 1.65; margin-bottom: 18px; }
 .home-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .home-path { display: flex; align-items: center; gap: 10px; min-height: 70px; padding: 12px; color: #334155; background: #fff; border: 1px solid #dbe2ec; border-radius: 12px; text-decoration: none; }
 .home-path-client { background: #eef2ff; border-color: #c7d2fe; }
@@ -25,14 +26,9 @@
 .home-path small { font-size: .69rem; line-height: 1.5; color: #64748b; }
 .home-primary-action { display: inline-flex; min-height: 48px; justify-content: center; align-items: center; gap: 12px; padding: 13px 20px; border-radius: 11px; background: #4f46e5; color: white; font-weight: 700; text-decoration: none; }
 .home-primary-action:hover { background: #3730a3; color: white; }
-.home-hero-story { grid-area: photo; min-width: 0; position: relative; margin: 0; border-radius: 26px; overflow: hidden; background: #e6e0d6; box-shadow: 0 12px 30px #29334d12; }
-.home-hero-media { display: block; width: 100%; aspect-ratio: 4 / 3; pointer-events: none; }
-.home-hero-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.home-hero-caption { position: absolute; inset: auto 16px 16px; display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #fffffff5; border: 1px solid #fff; border-radius: 14px; }
-.home-hero-caption-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px; color: #087f73; background: #eaf7f2; }
-.home-hero-caption strong, .home-hero-caption small { display: block; line-height: 1.5; }
-.home-hero-caption strong { color: #1e293b; font-size: .85rem; }
-.home-hero-caption small { color: #64748b; font-size: .72rem; }
+.home-hero-background { position: absolute; inset: 0; z-index: 0; display: block; width: 100%; height: 100%; pointer-events: none; }
+.home-hero-background img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: right top; }
+.home-hero-reassurance { position: relative; z-index: 2; }
 .public-home .home-discovery-card { grid-area: search; width: 100%; max-width: none; min-width: 0; margin: 0; padding: 20px; border: 1px solid #e0e5f0; border-radius: 18px; background: #fff; box-shadow: 0 8px 24px #1e293b08; }
 .public-home .search-card-title { line-height: 1.5; font-size: 1rem; margin: 0 0 14px; }
 .home-discovery-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: end; }
@@ -124,10 +120,11 @@
 }
 @media (max-width: 991px) {
     .public-home .hero { padding-top: 26px; }
-    .public-home .hero-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "intro" "search" "photo"; gap: 20px; }
+    .public-home .hero-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "intro" "search"; gap: 20px; }
+    .public-home .hero::before { background: linear-gradient(90deg, rgba(248,250,252,.97) 0%, rgba(248,250,252,.92) 58%, rgba(248,250,252,.62) 100%), linear-gradient(0deg, #f8fafc 0%, rgba(248,250,252,0) 60%); }
+    .home-hero-background img { object-position: 82% top; }
     .public-home .hero-title { font-size: clamp(2rem, 5.1vw, 2.7rem); letter-spacing: -1.3px; }
-    .public-home .hero-desc { max-width: 100%; }
-    .home-hero-story { width: 100%; max-width: 580px; justify-self: center; }
+    .public-home .hero-desc { max-width: 100%; color: #1e293b; }
     .home-mobile-login { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px; color: #4338ca; text-decoration: none; font-size: .85rem; font-weight: 650; margin-left: auto; }
     .public-home .nav-inner { gap: 4px; }
     .home-provider-banner { grid-template-columns: minmax(0, 1fr); gap: 20px; }
@@ -149,10 +146,7 @@
     .home-discovery-fields { grid-template-columns: minmax(0, 1fr); gap: 10px; }
     .home-field-label { font-size: .77rem; }
     .home-location-note { font-size: .72rem; }
-    .home-hero-story { border-radius: 18px; }
-    .home-hero-media { aspect-ratio: auto; height: 170px; }
-    .home-hero-media img { object-position: center top; }
-    .home-hero-caption { display: none; }
+    .home-hero-background img { object-position: 76% top; }
     .public-home .hero-trust { display: grid; gap: 10px; justify-content: start; margin-top: 18px; }
     .public-home .hero-trust-item { font-size: .74rem; gap: 8px; }
     .home-platform-role { text-align: left; font-size: .74rem; }

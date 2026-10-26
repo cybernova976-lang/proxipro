@@ -560,8 +560,8 @@
             *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
         }
     </style>
-    <link rel="preload" as="image" type="image/webp" href="{{ asset('images/home/artisan-maison-1200.webp') }}" imagesrcset="{{ asset('images/home/artisan-maison-640.webp') }} 640w, {{ asset('images/home/artisan-maison-1200.webp') }} 1200w" imagesizes="(min-width: 1400px) 580px, (min-width: 992px) 44vw, (min-width: 620px) 580px, calc(100vw - 40px)" fetchpriority="high">
-    <link rel="stylesheet" href="{{ asset('css/public-home.css') }}?v=20261026-discovery2">
+    <link rel="preload" as="image" type="image/webp" href="{{ asset('images/home/artisan-maison-panorama-1920.webp') }}" imagesrcset="{{ asset('images/home/artisan-maison-panorama-960.webp') }} 960w, {{ asset('images/home/artisan-maison-panorama-1920.webp') }} 1920w" imagesizes="100vw" fetchpriority="high">
+    <link rel="stylesheet" href="{{ asset('css/public-home.css') }}?v=20261026-panorama1">
     <script defer src="{{ asset('js/public-home.js') }}?v=20261026"></script>
 </head>
 <body class="public-home">

@@ -7,8 +7,9 @@ L’identité, les images et les contenus de ces plateformes ne sont pas repris.
 ## Parcours
 
 Le titre conserve ses deux lignes. Deux choix courts donnent accès à la
-recherche ou à la création d’un profil prestataire. Sur téléphone, le formulaire
-précède l’illustration et son bouton reste dans le premier écran aux largeurs
+recherche ou à la création d’un profil prestataire. L’illustration panoramique
+est un arrière-plan hors du flux sur toute la largeur du haut de page. Sur
+téléphone, le bouton du formulaire reste dans le premier écran aux largeurs
 360, 375 et 390 pixels. Le lieu reste facultatif et aucune couverture locale
 universelle n’est annoncée. L’annuaire reste accessible sans compte.
 

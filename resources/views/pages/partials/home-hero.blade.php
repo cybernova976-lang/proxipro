@@ -1,4 +1,7 @@
 <header class="hero" id="home-hero">
+    <picture class="home-hero-media home-hero-background" aria-hidden="true">
+        <img src="{{ asset('images/home/artisan-maison-panorama-1920.webp') }}" srcset="{{ asset('images/home/artisan-maison-panorama-960.webp') }} 960w, {{ asset('images/home/artisan-maison-panorama-1920.webp') }} 1920w" sizes="100vw" width="1920" height="960" alt="" fetchpriority="high" decoding="async">
+    </picture>
     <div class="container hero-grid">
         <div class="home-hero-intro">
             <p class="hero-label"><span class="hero-label-dot"></span>Particuliers · Indépendants · Entreprises</p>
@@ -29,12 +32,6 @@
             <p class="home-search-note">Ou <a href="{{ route('demand.create') }}">Publier mon besoin <i class="fas fa-arrow-right" aria-hidden="true"></i></a> gratuitement.</p>
             <p class="home-location-note">Services et profils publics, consultables sans compte.</p>
         </div>
-        <figure class="home-hero-story">
-            <picture class="home-hero-media" aria-hidden="true">
-                <img src="{{ asset('images/home/artisan-maison-1200.webp') }}" srcset="{{ asset('images/home/artisan-maison-640.webp') }} 640w, {{ asset('images/home/artisan-maison-1200.webp') }} 1200w" sizes="(min-width: 1400px) 580px, (min-width: 992px) 44vw, (min-width: 620px) 580px, calc(100vw - 40px)" width="1200" height="900" alt="" fetchpriority="high" decoding="async">
-            </picture>
-            <figcaption class="home-hero-caption"><span class="home-hero-caption-icon" aria-hidden="true"><i class="fas fa-house"></i></span><span><strong>Vos projets prennent vie.</strong><small>Entreprises, indépendants et particuliers.</small></span></figcaption>
-        </figure>
     </div>
     <div class="container home-hero-reassurance">
         <div class="hero-trust">
