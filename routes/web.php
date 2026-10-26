@@ -45,6 +45,7 @@ use Illuminate\Support\Facades\Route;
 
 // Page d'accueil publique
 Route::get('/', [HomePageController::class, 'index'])->name('homepage');
+Route::get('/offres-prestataires', [\App\Http\Controllers\PublicProviderOffersController::class, 'index'])->name('public.provider-offers');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 Route::get('/conseils', [MarketplaceGuideController::class, 'index'])->name('guides.index');
 Route::get('/conseils/{slug}', [MarketplaceGuideController::class, 'show'])

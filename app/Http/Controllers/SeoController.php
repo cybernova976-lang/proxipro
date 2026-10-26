@@ -17,6 +17,7 @@ class SeoController extends Controller
             ['loc' => route('demand.create'), 'lastmod' => null, 'priority' => '0.8'],
             ['loc' => route('contact.index'), 'lastmod' => null, 'priority' => '0.5'],
             ['loc' => route('guides.index'), 'lastmod' => null, 'priority' => '0.7'],
+            ['loc' => route('public.provider-offers'), 'lastmod' => null, 'priority' => '0.6'],
             ['loc' => route('legal.terms'), 'lastmod' => null, 'priority' => '0.3'],
             ['loc' => route('legal.privacy'), 'lastmod' => null, 'priority' => '0.3'],
             ['loc' => route('legal.mentions'), 'lastmod' => null, 'priority' => '0.3'],

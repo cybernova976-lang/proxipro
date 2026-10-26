@@ -561,8 +561,8 @@
         }
     </style>
     <link rel="preload" as="image" type="image/webp" href="{{ asset('images/home/artisan-maison-1200.webp') }}" imagesrcset="{{ asset('images/home/artisan-maison-640.webp') }} 640w, {{ asset('images/home/artisan-maison-1200.webp') }} 1200w" imagesizes="(min-width: 1400px) 580px, (min-width: 992px) 44vw, (min-width: 620px) 580px, calc(100vw - 40px)" fetchpriority="high">
-    <link rel="stylesheet" href="{{ asset('css/public-home.css') }}?v=20261026-editorial1">
-    <script defer src="{{ asset('js/public-home.js') }}?v=20261024"></script>
+    <link rel="stylesheet" href="{{ asset('css/public-home.css') }}?v=20261026-discovery2">
+    <script defer src="{{ asset('js/public-home.js') }}?v=20261026"></script>
 </head>
 <body class="public-home">
     <a href="#home-main" class="home-skip-link">Aller au contenu</a>
@@ -576,24 +576,24 @@
                 <ul class="nav-links">
                     <li><a href="{{ url('/ads') }}">Annonces</a></li>
                     <li><a href="#comment-ca-marche">Comment ça marche</a></li>
-                    <li><a href="#espace-prestataires">Proposer mes services</a></li>
+                    <li><a href="{{ route('register', ['continue' => 'provider']) }}">Je propose mes services</a></li>
                     @auth
                         <li><a href="{{ route('feed') }}" class="btn-nav-login">Accueil</a></li>
                     @else
                         <li><a href="{{ route('login') }}" class="btn-nav-login"><i class="fas fa-sign-in-alt me-1"></i>Connexion</a></li>
                         @if (Route::has('register'))
-                            <li><a href="{{ route('demand.create') }}" class="btn-nav-register">Publier un besoin</a></li>
+                            <li><a href="{{ route('demand.create') }}" class="btn-nav-register">Publier mon besoin</a></li>
                         @endif
                     @endauth
                 </ul>
-                <a href="{{ route('demand.create') }}" class="home-mobile-publish">Publier un besoin</a>
+                <a href="{{ route('login') }}" class="home-mobile-login">Connexion</a>
                 <button type="button" class="nav-burger" id="navBurger" onclick="toggleMobileMenu()" aria-label="Ouvrir le menu" aria-controls="mobileMenu" aria-expanded="false">
                     <i class="fas fa-bars" id="burgerIcon"></i>
                 </button>
             </div>
             <div id="mobileMenu" aria-hidden="true" style="padding-bottom: 16px; display: none; opacity: 0; transition: opacity 0.25s ease;">
                 <div class="d-flex flex-column gap-2">
-                    <a href="#espace-prestataires" class="d-block py-2 text-decoration-none text-dark fw-semibold">Proposer mes services</a>
+                    <a href="{{ route('register', ['continue' => 'provider']) }}" class="d-block py-2 text-decoration-none text-dark fw-semibold">Je propose mes services</a>
                     <a href="#comment-ca-marche" class="d-block py-2 text-decoration-none text-dark fw-semibold">Comment ça marche</a>
                     <a href="{{ url('/ads') }}" class="d-block py-2 text-decoration-none text-dark fw-semibold">
                         <i class="fas fa-bullhorn me-2 text-muted"></i>Annonces
@@ -628,97 +628,23 @@
 
     <!-- ===== HERO ===== -->
     <main id="home-main">
-    <header class="hero" id="home-hero">
-        <div class="container hero-grid">
-            <div class="home-hero-intro">
-                    <div class="hero-label">
-                        <span class="hero-label-dot"></span>
-                        Services de proximité, simplement
-                    </div>
-                    <h1 class="hero-title">
-                        <span class="hero-title-line">Trouvez le bon prestataire,</span>
-                        <span class="hero-title-line accent">près de chez vous.</span>
-                    </h1>
-                    <p class="hero-desc">
-                        Un projet, une réparation, un coup de main ? Décrivez votre besoin
-                        et échangez avec les prestataires qui peuvent vous aider.
-                    </p>
-                    <div class="home-hero-actions">
-                        <a href="{{ route('demand.create') }}" class="home-primary-action">Publier mon besoin <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
-                        <a href="#espace-prestataires" class="hero-provider-link">Je propose mes services <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
-                    </div>
-                    <p class="home-hero-note"><i class="fas fa-check" aria-hidden="true"></i> Publication gratuite · Vous gardez le choix</p>
-            </div>
-            <figure class="home-hero-story">
-                <picture class="home-hero-media" aria-hidden="true">
-                    <img src="{{ asset('images/home/artisan-maison-1200.webp') }}"
-                         srcset="{{ asset('images/home/artisan-maison-640.webp') }} 640w, {{ asset('images/home/artisan-maison-1200.webp') }} 1200w"
-                         sizes="(min-width: 1400px) 580px, (min-width: 992px) 44vw, (min-width: 620px) 580px, calc(100vw - 40px)"
-                         width="1200" height="900" alt="" fetchpriority="high" decoding="async">
-                </picture>
-                <figcaption class="home-hero-caption">
-                    <span class="home-hero-caption-icon" aria-hidden="true"><i class="fas fa-house"></i></span>
-                    <span><strong>Vos projets prennent vie.</strong><small>Le savoir-faire pour votre quotidien.</small></span>
-                </figcaption>
-            </figure>
-                    <div class="search-card home-discovery-card">
-                        <div class="search-card-title">
-                            <i class="fas fa-search"></i>
-                            Rechercher un service
-                        </div>
-                        <form action="{{ route('ads.index') }}" method="GET" class="home-discovery-fields">
-                            <input type="hidden" name="service_type" value="offre">
-                            <div class="home-discovery-control">
-                            <label class="home-field-label" for="home-service">Service recherché</label>
-                            <div class="search-field">
-                                <i class="fas fa-search" aria-hidden="true"></i>
-                                <input id="home-service" name="q" type="search" placeholder="Plombier, ménage, cours…" maxlength="120">
-                            </div>
-                            </div>
-                            <div class="home-discovery-control">
-                            <label class="home-field-label" for="home-location">Ville ou code postal <span>(facultatif)</span></label>
-                            <div class="search-field">
-                                <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-                                <input id="home-location" type="text" name="location" placeholder="Ex. Mamoudzou" aria-label="Localisation" maxlength="120">
-                            </div>
-                            </div>
-                            <button type="submit" class="btn-hero-search">
-                                Voir les services <i class="fas fa-arrow-right" aria-hidden="true"></i>
-                            </button>
-                        </form>
-                        <p class="home-search-note">Parcourez les offres sans créer de compte.</p>
-                    </div>
-        </div>
-            <div class="container home-hero-reassurance">
-                <div class="hero-trust">
-                    <div class="hero-trust-item">
-                        <div class="hero-trust-icon"><i class="fas fa-shield-alt" aria-hidden="true"></i></div>
-                        <div><strong class="d-block text-white">Badge d'identité</strong><small>Visible après contrôle</small></div>
-                    </div>
-                    <div class="hero-trust-item">
-                        <div class="hero-trust-icon"><i class="fas fa-lock" aria-hidden="true"></i></div>
-                        <div><strong class="d-block text-white">Échanges directs</strong><small>Une messagerie dédiée</small></div>
-                    </div>
-                    <div class="hero-trust-item">
-                        <div class="hero-trust-icon"><i class="fas fa-star" aria-hidden="true"></i></div>
-                        <div><strong class="d-block text-white">Avis liés aux missions</strong><small>Après une commande terminée</small></div>
-                    </div>
-                </div>
-            </div>
-    </header>
+    @include('pages.partials.home-hero')
 
     <!-- ===== CATEGORIES ===== -->
     <section class="section section-bg home-categories" id="services">
         <div class="container">
             <div class="section-head reveal">
                 <span class="section-pill">Services</span>
-                <h2 class="section-title">Quel service vous rendrait la vie plus simple ?</h2>
+                <h2 class="section-title">Explorez les services</h2>
                 <p class="section-desc">Une catégorie, puis les services qui vous correspondent.</p>
             </div>
             <div class="cat-grid">
-                @php $shown = 0; @endphp
-                @foreach($categoriesWithSubs as $catName => $catData)
-                    @if($shown < 6)
+                @php
+                    $homeCategoryNames = ['Bricolage & Travaux', 'Nettoyage & Entretien', 'Jardinage & Extérieur', 'Transport & Déménagement', 'Informatique & Tech', 'Aide à domicile', 'Cours & Formation', 'Beauté & Bien-être'];
+                @endphp
+                @foreach($homeCategoryNames as $catName)
+                    @if(isset($categoriesWithSubs[$catName]))
+                    @php $catData = $categoriesWithSubs[$catName]; @endphp
                     <a href="{{ route('ads.index', ['category' => $catName, 'service_type' => 'offre']) }}" class="cat-card reveal">
                         <div class="cat-icon" style="background:{{ $catData['color'] }};"><i class="{{ $catData['icon'] }}"></i></div>
                         <div class="cat-info">
@@ -726,7 +652,6 @@
                             <span>Voir les services <i class="fas fa-arrow-right ms-1" aria-hidden="true"></i></span>
                         </div>
                     </a>
-                    @php $shown++; @endphp
                     @endif
                 @endforeach
             </div>
@@ -734,75 +659,23 @@
                 <a href="{{ route('ads.index', ['service_type' => 'offre']) }}" class="btn-see-all">
                     Explorer tous les services <i class="fas fa-arrow-right"></i>
                 </a>
+                <a href="{{ route('feed.professionals') }}" class="home-directory-link">Consulter l’annuaire <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
             </div>
         </div>
     </section>
-
-    <!-- ===== FEATURED PROFESSIONALS ===== -->
-    @if($featuredPros->count() > 0)
-    <section class="section home-providers" id="prestataires">
-        <div class="container">
-            <div class="section-head reveal">
-                <span class="section-pill">Prestataires</span>
-                <h2 class="section-title">Des prestataires à découvrir</h2>
-                <p class="section-desc">Un visage, un savoir-faire, une ville. Consultez les profils et trouvez à qui parler.</p>
-            </div>
-            <p class="home-swipe-hint">Faites défiler les profils <i class="fas fa-arrow-right" aria-hidden="true"></i></p>
-            <div class="home-provider-grid" aria-label="Prestataires à découvrir">
-                @foreach($featuredPros as $pro)
-                <div class="home-provider-item">
-                    <a href="{{ route('profile.public', $pro->id) }}" class="ad-card reveal" style="text-decoration:none;">
-                        <div style="padding:24px 20px; text-align:center;">
-                            @if($pro->avatar)
-                                <img src="{{ storage_url($pro->avatar) }}" alt="{{ $pro->name }}" width="72" height="72" loading="lazy" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--primary-light);margin-bottom:12px;">
-                            @else
-                                <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.5rem;font-weight:700;margin:0 auto 12px;">{{ strtoupper(substr($pro->name, 0, 1)) }}</div>
-                            @endif
-                            @if($pro->identity_verified)
-                                <span style="display:inline-flex;align-items:center;gap:4px;background:#ecfdf5;color:#047857;padding:3px 10px;border-radius:8px;font-size:0.72rem;font-weight:700;margin-bottom:8px;"><i class="fas fa-check-circle" style="font-size:0.65rem;"></i> Identité vérifiée</span>
-                            @endif
-                            <h4 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin-bottom:4px;">{{ $pro->name }}</h4>
-                            @if($pro->profession)
-                                <div style="font-size:0.85rem;color:var(--primary);font-weight:600;margin-bottom:6px;">{{ $pro->profession }}</div>
-                            @endif
-                            @if($pro->city || $pro->country)
-                                <div style="font-size:0.82rem;color:var(--gray-500);"><i class="fas fa-map-marker-alt me-1"></i>{{ $pro->city ?? '' }}{{ $pro->city && $pro->country ? ', ' : '' }}{{ $pro->country ?? '' }}</div>
-                            @endif
-                            @if($pro->verified_reviews_count > 0)
-                                <div style="font-size:0.82rem;color:#f59e0b;margin-top:7px;font-weight:700;">
-                                    <i class="fas fa-star"></i> {{ number_format((float) $pro->verified_reviews_avg, 1, ',', ' ') }}
-                                    <span style="color:var(--gray-400);font-weight:500;">({{ $pro->verified_reviews_count }} avis de mission)</span>
-                                </div>
-                            @endif
-                            @if($pro->bio)
-                                <p style="font-size:0.82rem;color:var(--gray-500);margin-top:8px;line-height:1.4;">{{ Str::limit($pro->bio, 80) }}</p>
-                            @endif
-                            <span class="d-inline-block mt-3 fw-semibold" style="font-size:.85rem;color:var(--primary);">Voir le profil <i class="fas fa-arrow-right ms-1" aria-hidden="true"></i></span>
-                        </div>
-                    </a>
-                </div>
-                @endforeach
-            </div>
-            <div class="text-center" style="margin-top:24px;">
-                <a href="{{ route('demand.create') }}" class="btn-see-all">Décrire mon besoin <i class="fas fa-arrow-right"></i></a>
-            </div>
-        </div>
-    </section>
-    @endif
-
-    @include('pages.partials.home-latest-ads')
 
     <!-- ===== HOW IT WORKS ===== -->
     <section class="section section-bg" id="comment-ca-marche">
         <div class="container">
-            <div class="section-head reveal">
-                <span class="section-pill">Simple & rapide</span>
+            <div class="section-head">
+                <span class="section-pill">À votre rythme</span>
                 <h2 class="section-title">Comment ça marche ?</h2>
-                <p class="section-desc">Votre prochain pas, selon ce que vous cherchez.</p>
             </div>
             @include('pages.partials.home-journeys')
         </div>
     </section>
+    @include('pages.partials.home-latest-ads')
+    @include('pages.partials.home-providers')
 
     <!-- ===== VERIFIED REVIEWS ===== -->
     @if($verifiedReviews->isNotEmpty())
@@ -838,35 +711,11 @@
     </section>
     @endif
 
-    <!-- ===== DUAL CTA ===== -->
-    <section class="section section-bg" id="espace-prestataires">
+    <section class="section home-provider-invite" id="espace-prestataires">
         <div class="container">
-            <div class="dual-cta">
-                <div class="cta-card cta-client reveal">
-                    <div class="cta-card-icon"><i class="fas fa-search"></i></div>
-                    <h3>Vous cherchez un prestataire ?</h3>
-                    <p>Expliquez votre projet et recevez les propositions des prestataires intéressés.</p>
-                    <a href="{{ route('demand.create') }}" class="btn-cta-white">
-                        Publier ma demande <i class="fas fa-arrow-right"></i>
-                    </a>
-                </div>
-                <div class="cta-card cta-pro reveal">
-                    <div class="cta-card-icon"><i class="fas fa-briefcase"></i></div>
-                    <h3>Votre savoir-faire mérite d’être découvert.</h3>
-                    <p>Présentez vos services et vos réalisations. Pour les professionnels, l’espace PRO réunit aussi clients, devis et factures.</p>
-                    <ul class="home-pro-benefits">
-                        <li><i class="fas fa-user-circle" aria-hidden="true"></i> Un profil pour présenter votre activité</li>
-                        <li><i class="fas fa-comments" aria-hidden="true"></i> Des échanges regroupés au même endroit</li>
-                        <li><i class="fas fa-file-invoice" aria-hidden="true"></i> Des outils de devis et factures pour les pros</li>
-                    </ul>
-                    <div class="d-flex gap-3 flex-wrap">
-                        <a href="{{ route('register') }}" class="btn-cta-white" style="color:var(--gray-900);">
-                            Créer mon profil prestataire <i class="fas fa-arrow-right"></i>
-                        </a>
-                        <a href="{{ route('legal.pro-terms') }}" class="home-pro-conditions">Conditions de l’espace PRO</a>
-                    </div>
-                    <small class="d-block mt-3">L’émission de documents professionnels nécessite un statut et une identité d’émetteur complétés, ainsi que l’acceptation des conditions PRO.</small>
-                </div>
+            <div class="home-provider-banner">
+                <div><span class="section-pill">Votre activité a sa place ici</span><h2>Faites découvrir votre savoir-faire.</h2><p>Présentez vos services et vos réalisations. Retrouvez vos échanges et, si vous êtes professionnel, vos outils de devis et factures.</p></div>
+                <div class="home-provider-banner-actions"><a href="{{ route('register', ['continue' => 'provider']) }}" class="home-primary-action">Créer mon profil prestataire <i class="fas fa-arrow-right" aria-hidden="true"></i></a><a href="{{ route('public.provider-offers') }}">Voir les offres prestataires</a></div>
             </div>
         </div>
     </section>
@@ -896,7 +745,7 @@
                 <div class="footer-col">
                     <h5>Plateforme</h5>
                     <ul>
-                        <li><a href="{{ route('demand.create') }}">Trouver un professionnel</a></li>
+                        <li><a href="{{ route('feed.professionals') }}">Consulter l’annuaire</a></li>
                         <li><a href="{{ route('guides.index') }}">Conseils pratiques</a></li>
                         <li><a href="{{ route('register') }}">Créer un compte</a></li>
                         <li><a href="{{ route('contact.index') }}">Nous contacter</a></li>
@@ -909,6 +758,7 @@
                         <li><a href="{{ route('legal.privacy') }}">Confidentialité</a></li>
                         <li><a href="{{ route('legal.cookies') }}">Cookies</a></li>
                         <li><a href="{{ route('legal.platform-rules') }}">Règles de la marketplace</a></li>
+                        <li><a href="{{ route('public.provider-offers') }}">Offres prestataires</a></li>
                         <li><a href="{{ route('legal.pro-terms') }}">Conditions Espace PRO</a></li>
                         <li><a href="{{ route('legal.mentions') }}">Mentions légales</a></li>
                     </ul>
@@ -935,8 +785,9 @@
             </div>
         </div>
     </footer>
-    <aside class="home-mobile-cta" id="home-mobile-cta" aria-label="Publier une demande" hidden>
-        <a href="{{ route('demand.create') }}" class="home-primary-action">Publier mon besoin <i class="fas fa-plus" aria-hidden="true"></i></a>
+    <aside class="home-mobile-cta" id="home-mobile-cta" aria-label="Choisir mon parcours" hidden>
+        <a href="#home-search" class="home-primary-action">Je cherche <i class="fas fa-search" aria-hidden="true"></i></a>
+        <a href="{{ route('register', ['continue' => 'provider']) }}" class="home-mobile-provider">Je propose <i class="fas fa-toolbox" aria-hidden="true"></i></a>
     </aside>
 
     @include('partials.site-share-modal')

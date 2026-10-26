@@ -52,6 +52,7 @@ class SearchIndexingTest extends TestCase
 
         $response = $this->get(route('sitemap'))->assertOk()
             ->assertSee(route('homepage'), false)
+            ->assertSee(route('public.provider-offers'), false)
             ->assertSee(route('ads.show', $visible), false)
             ->assertSee(route('profile.public', $provider->id), false)
             ->assertDontSee(route('profile.public', $privateProvider->id), false)

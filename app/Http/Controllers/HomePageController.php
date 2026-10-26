@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Ad;
 use App\Models\Review;
 use App\Models\ServiceOrder;
-use App\Models\User;
+use App\Support\PublicHomepageSelection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
@@ -29,31 +29,8 @@ class HomePageController extends Controller
                 ->pluck('aggregate', 'category')
             );
 
-            $latestAds = Ad::marketplaceActive()
-                ->where('visibility', 'public')
-                ->whereHas('user', fn ($query) => $query->where('is_active', true))
-                ->with('user:id,name,avatar,identity_verified')
-                ->latest()
-                ->take(3)
-                ->get();
-
-            $featuredPros = User::query()
-                ->where('is_active', true)
-                ->where('profile_public', true)
-                ->where(fn ($query) => $query
-                    ->where('user_type', 'professionnel')
-                    ->orWhere('is_service_provider', true))
-                ->whereNotNull('profession')
-                ->withCount([
-                    'ads as active_ads_count' => fn ($query) => $query->marketplaceActive()->where('visibility', 'public'),
-                    'verifiedReviewsReceived as verified_reviews_count',
-                ])
-                ->withAvg('verifiedReviewsReceived as verified_reviews_avg', 'rating')
-                ->orderByDesc('identity_verified')
-                ->orderByDesc('verified_reviews_count')
-                ->orderByDesc('active_ads_count')
-                ->take(6)
-                ->get();
+            $latestAds = PublicHomepageSelection::recentAds();
+            $featuredPros = PublicHomepageSelection::featuredProviders()->get();
 
             $verifiedReviews = Review::query()
                 ->whereNotNull('service_order_id')

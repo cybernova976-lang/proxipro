@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Ad;
+use App\Models\ProfessionalRealization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -29,13 +30,13 @@ class PublicHomepageTest extends TestCase
             ->assertDontSee('Réponse rapide')
             ->assertDontSee('de nouveaux clients chaque jour')
             ->assertDontSee('Des prestataires à découvrir')
-            ->assertDontSee('Les dernières annonces publiées');
+            ->assertDontSee('Besoins et services récents');
 
         $this->assertArrayNotHasKey('totalUsers', $response->viewData());
         $this->assertFalse(Cache::has('homepage.stats'));
     }
 
-    public function test_only_public_active_providers_are_shown_before_the_compact_ad_selection(): void
+    public function test_public_showcase_follows_the_explanation_with_recent_ads_and_complete_providers(): void
     {
         $attributes = [
             'user_type' => 'particulier',
@@ -44,6 +45,8 @@ class PublicHomepageTest extends TestCase
             'is_active' => true,
             'profession' => 'Plombier',
             'city' => 'Mamoudzou',
+            'avatar' => 'avatars/provider.jpg',
+            'bio' => 'Je présente mes services de plomberie, mes compétences et les interventions que je réalise.',
         ];
         $provider = User::factory()->create($attributes);
         User::factory()->create(array_merge($attributes, ['profile_public' => false]));
@@ -54,7 +57,7 @@ class PublicHomepageTest extends TestCase
             Ad::create([
                 'user_id' => $provider->id,
                 'title' => "Service test $number",
-                'description' => 'Présentation du service.',
+                'description' => 'Présentation détaillée du service de plomberie et des interventions proposées.',
                 'category' => 'Plombier',
                 'location' => 'Mamoudzou',
                 'service_type' => 'offre',
@@ -65,12 +68,12 @@ class PublicHomepageTest extends TestCase
 
         $this->get(route('homepage'))->assertOk()
             ->assertViewHas('featuredPros', fn ($profiles) => $profiles->modelKeys() === [$provider->id])
-            ->assertViewHas('latestAds', fn ($ads) => $ads->count() === 3)
+            ->assertViewHas('latestAds', fn ($ads) => $ads->count() === 2)
             ->assertSeeInOrder([
-                'Quel service vous rendrait la vie plus simple ?',
-                'Des prestataires à découvrir',
-                'Les dernières annonces publiées',
+                'Explorez les services',
                 'Comment ça marche ?',
+                'Besoins et services récents',
+                'Des prestataires à découvrir',
             ])
             ->assertSee(route('profile.public', $provider), false);
     }
@@ -96,12 +99,13 @@ class PublicHomepageTest extends TestCase
             ->assertSee('Je propose mes services')
             ->assertSee('home-client-panel')
             ->assertSee('home-provider-panel')
-            ->assertSee('aria-label="Publier une demande" hidden', false)
+            ->assertSee('aria-label="Choisir mon parcours" hidden', false)
             ->assertSee('Quelques réponses, tout simplement.')
+            ->assertSee('Combien coûte un profil prestataire ?')
+            ->assertSee('Y a-t-il des prestataires dans ma ville ?')
             ->assertSee('Les outils d’émission de devis et factures PRO sont réservés aux professionnels');
 
         $this->assertSame(1, substr_count($response->getContent(), '<h1 '));
-        $this->assertSame(5, substr_count($response->getContent(), '<details>'));
         $this->assertStringNotContainsString('id="home-provider-panel" hidden', $response->getContent());
     }
 
@@ -111,7 +115,7 @@ class PublicHomepageTest extends TestCase
         $attributes = [
             'user_id' => $owner->id,
             'title' => 'Annonce visible',
-            'description' => 'Présentation du service.',
+            'description' => 'Présentation détaillée du service et des interventions proposées.',
             'category' => 'Plombier',
             'location' => 'Mamoudzou',
             'service_type' => 'offre',
@@ -132,5 +136,208 @@ class PublicHomepageTest extends TestCase
             ->assertDontSee('Annonce privée')
             ->assertDontSee('Annonce suspendue')
             ->assertDontSee('Compte inactif');
+    }
+
+    public function test_recent_showcase_keeps_two_real_publications_without_hiding_dates_or_reclassifying_them(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+        $owner = User::factory()->create(['is_active' => true]);
+        $boundary = $this->createShowcaseAd($owner, ['created_at' => now()->subDays(30)]);
+        $old = $this->createShowcaseAd($owner, ['created_at' => now()->subDays(30)->subSecond()]);
+        $future = $this->createShowcaseAd($owner, ['created_at' => now()->addDay()]);
+        $offer = $this->createShowcaseAd($owner, ['created_at' => now()->subDay(), 'service_type' => 'offre']);
+        $request = $this->createShowcaseAd($owner, ['created_at' => now(), 'service_type' => 'demande']);
+
+        $response = $this->get(route('homepage'))->assertOk()
+            ->assertViewHas('latestAds', fn ($ads) => $ads->modelKeys() === [$request->id, $offer->id]);
+
+        $this->assertSame(['demande', 'offre'], $response->viewData('latestAds')->pluck('service_type')->all());
+        $this->assertSame('demande', $request->fresh()->service_type);
+        $this->assertSame('offre', $offer->fresh()->service_type);
+
+        $offer->update(['status' => 'inactive']);
+        $request->update(['status' => 'inactive']);
+        $this->get(route('homepage'))->assertOk()
+            ->assertViewHas('latestAds', fn ($ads) => $ads->modelKeys() === [$boundary->id]);
+
+        $this->assertDatabaseHas('ads', ['id' => $old->id, 'status' => 'active']);
+        $this->assertDatabaseHas('ads', ['id' => $future->id, 'status' => 'active']);
+    }
+
+    public function test_incomplete_or_unlocated_publications_are_not_used_to_fill_the_homepage(): void
+    {
+        $owner = User::factory()->create(['is_active' => true]);
+        $valid = $this->createShowcaseAd($owner);
+        foreach ([
+            ['title' => '   '],
+            ['description' => 'Trop court'],
+            ['city' => ' ', 'location' => '   '],
+            ['service_type' => 'incorrect'],
+        ] as $overrides) {
+            $this->createShowcaseAd($owner, $overrides);
+        }
+
+        $this->get(route('homepage'))->assertOk()
+            ->assertViewHas('latestAds', fn ($ads) => $ads->modelKeys() === [$valid->id]);
+    }
+
+    public function test_featured_profiles_require_a_real_presentation_and_public_work_but_do_not_judge_display_names(): void
+    {
+        $valid = $this->createShowcaseProvider(['name' => 'ATELIER CYBER NOVA']);
+        $this->createShowcaseAd($valid);
+        foreach ([
+            ['avatar' => null],
+            ['avatar' => '   '],
+            ['bio' => str_repeat('é', 39)],
+            ['profession' => '   '],
+            ['city' => ' '],
+            ['is_active' => false],
+            ['profile_public' => false],
+            ['is_service_provider' => false],
+        ] as $overrides) {
+            $provider = $this->createShowcaseProvider($overrides);
+            $this->createShowcaseAd($provider);
+        }
+
+        $withoutPublicWork = $this->createShowcaseProvider();
+        $onlyRequest = $this->createShowcaseProvider();
+        $this->createShowcaseAd($onlyRequest, ['service_type' => 'demande']);
+        foreach ([
+            ['visibility' => 'private'],
+            ['status' => 'inactive'],
+            ['expires_at' => now()->subDay()],
+        ] as $overrides) {
+            $provider = $this->createShowcaseProvider();
+            $this->createShowcaseAd($provider, $overrides);
+        }
+
+        $this->get(route('homepage'))->assertOk()
+            ->assertViewHas('featuredPros', fn ($profiles) => $profiles->modelKeys() === [$valid->id])
+            ->assertSee('ATELIER CYBER NOVA');
+
+        $this->assertTrue($withoutPublicWork->fresh()->profile_public);
+        $this->assertTrue($onlyRequest->fresh()->is_service_provider);
+        $this->assertSame('ATELIER CYBER NOVA', $valid->fresh()->name);
+    }
+
+    public function test_three_complete_profiles_with_realizations_can_be_featured_without_an_offer_or_an_invented_badge(): void
+    {
+        $providers = collect(range(1, 4))->map(function () {
+            $provider = $this->createShowcaseProvider([
+                'profession' => 'Réparateur de machines anciennes',
+                'bio' => str_repeat('é', 40),
+            ]);
+            ProfessionalRealization::create(['user_id' => $provider->id, 'photo_path' => 'realizations/work.jpg']);
+
+            return $provider;
+        });
+        $verified = $providers->last();
+        $verified->forceFill(['identity_verified' => true])->save();
+        $emptyWork = $this->createShowcaseProvider();
+        ProfessionalRealization::create(['user_id' => $emptyWork->id, 'photo_path' => '   ']);
+
+        $response = $this->get(route('homepage'))->assertOk()
+            ->assertViewHas('featuredPros', fn ($profiles) => $profiles->modelKeys() === [
+                $verified->id, $providers[0]->id, $providers[1]->id,
+            ]);
+
+        $this->assertFalse($response->viewData('featuredPros')[1]->identity_verified);
+        $this->assertSame(0, $response->viewData('featuredPros')[1]->verified_reviews_count);
+    }
+
+    public function test_a_complete_provider_with_an_older_active_offer_remains_discoverable_without_promoting_it_as_recent(): void
+    {
+        $provider = $this->createShowcaseProvider();
+        $oldOffer = $this->createShowcaseAd($provider, ['created_at' => now()->subMonths(3)]);
+
+        $this->get(route('homepage'))->assertOk()
+            ->assertViewHas('featuredPros', fn ($profiles) => $profiles->modelKeys() === [$provider->id])
+            ->assertViewHas('latestAds', fn ($ads) => $ads->isEmpty())
+            ->assertSee(route('profile.public', $provider), false)
+            ->assertDontSee('Besoins et services récents');
+
+        $this->assertSame('active', $oldOffer->fresh()->status);
+        $this->assertTrue($oldOffer->fresh()->created_at->lt(now()->subDays(30)));
+    }
+
+    public function test_explicit_title_type_conflicts_are_skipped_before_the_two_card_limit_without_rewriting_publications(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+        $owner = User::factory()->create(['is_active' => true]);
+        $offer = $this->createShowcaseAd($owner, [
+            'title' => 'Montage de meubles à domicile',
+            'created_at' => now()->subMinutes(4),
+        ]);
+        $request = $this->createShowcaseAd($owner, [
+            'title' => 'Cherche serrurier disponible',
+            'service_type' => 'demande',
+            'created_at' => now()->subMinutes(3),
+        ]);
+        $ambiguousRequest = $this->createShowcaseAd($owner, [
+            'title' => 'Serrurier disponible',
+            'service_type' => 'demande',
+            'created_at' => now()->subMinutes(2),
+        ]);
+        $proposedService = $this->createShowcaseAd($owner, [
+            'title' => 'JE PROPOSE MES SERVICES',
+            'service_type' => 'demande',
+            'created_at' => now()->subMinute(),
+        ]);
+        $ambiguousOffer = $this->createShowcaseAd($owner, [
+            'title' => 'RECHERCHE ÉLECTRICIEN DISPONIBLE',
+            'service_type' => 'offre',
+            'created_at' => now(),
+        ]);
+
+        $this->get(route('homepage'))->assertOk()
+            ->assertViewHas('latestAds', fn ($ads) => $ads->modelKeys() === [$request->id, $offer->id]);
+
+        $this->assertDatabaseHas('ads', ['id' => $ambiguousRequest->id, 'title' => 'Serrurier disponible', 'service_type' => 'demande', 'status' => 'active']);
+        $this->assertDatabaseHas('ads', ['id' => $proposedService->id, 'service_type' => 'demande', 'visibility' => 'public']);
+        $this->assertDatabaseHas('ads', ['id' => $ambiguousOffer->id, 'title' => 'RECHERCHE ÉLECTRICIEN DISPONIBLE', 'service_type' => 'offre']);
+    }
+
+    public function test_a_service_offer_can_address_a_need_when_its_title_explicitly_proposes_services(): void
+    {
+        $owner = User::factory()->create(['is_active' => true]);
+        $offer = $this->createShowcaseAd($owner, [
+            'title' => 'Besoin d’aide ? Je propose mes services',
+            'service_type' => 'offre',
+        ]);
+
+        $this->get(route('homepage'))->assertOk()
+            ->assertViewHas('latestAds', fn ($ads) => $ads->modelKeys() === [$offer->id]);
+    }
+
+    private function createShowcaseProvider(array $overrides = []): User
+    {
+        return User::factory()->create(array_merge([
+            'user_type' => 'particulier',
+            'is_service_provider' => true,
+            'profile_public' => true,
+            'is_active' => true,
+            'profession' => 'Plombier',
+            'city' => 'Mamoudzou',
+            'avatar' => 'avatars/provider.jpg',
+            'bio' => 'Je présente mes services de plomberie, mes compétences et les interventions que je réalise.',
+        ], $overrides));
+    }
+
+    private function createShowcaseAd(User $owner, array $overrides = []): Ad
+    {
+        $ad = new Ad;
+        $ad->forceFill(array_merge([
+            'user_id' => $owner->id,
+            'title' => 'Intervention de plomberie',
+            'description' => 'Présentation détaillée du service de plomberie et des interventions proposées.',
+            'category' => 'Plombier',
+            'location' => 'Mamoudzou',
+            'service_type' => 'offre',
+            'status' => 'active',
+            'visibility' => 'public',
+        ], $overrides));
+        $ad->save();
+
+        return $ad;
     }
 }
