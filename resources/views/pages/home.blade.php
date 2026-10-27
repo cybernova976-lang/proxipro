@@ -559,7 +559,7 @@
         }
     </style>
     <link rel="preload" as="image" type="image/webp" href="{{ asset('images/home/artisan-maison-panorama-1920.webp') }}" imagesrcset="{{ asset('images/home/artisan-maison-panorama-960.webp') }} 960w, {{ asset('images/home/artisan-maison-panorama-1920.webp') }} 1920w" imagesizes="100vw" fetchpriority="high">
-    <link rel="stylesheet" href="{{ asset('css/public-home.css') }}?v=20261027-consent-title1">
+    <link rel="stylesheet" href="{{ asset('css/public-home.css') }}?v=20261027-publications1">
     <script defer src="{{ asset('js/public-home.js') }}?v=20261026"></script>
 </head>
 <body class="public-home">
@@ -628,6 +628,8 @@
     <main id="home-main">
     @include('pages.partials.home-hero')
 
+    @include('pages.partials.home-latest-ads')
+
     <!-- ===== CATEGORIES ===== -->
     <section class="section section-bg home-categories" id="services">
         <div class="container">
@@ -672,7 +674,6 @@
             @include('pages.partials.home-journeys')
         </div>
     </section>
-    @include('pages.partials.home-latest-ads')
     @include('pages.partials.home-providers')
 
     <!-- ===== VERIFIED REVIEWS ===== -->

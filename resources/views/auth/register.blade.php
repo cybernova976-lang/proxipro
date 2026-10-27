@@ -20,6 +20,8 @@
                 <p class="text-sm text-gray-500 mt-1">Remplissez les informations ci-dessous</p>
             </div>
 
+            @include('auth.partials.publication-context')
+
             <!-- Social buttons -->
             <div class="space-y-2.5 mb-5">
                 <a href="{{ route('social.redirect', 'google') }}" class="flex items-center justify-center gap-3 w-full py-2.5 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">

@@ -15,6 +15,7 @@
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
             <h1 class="text-xl font-bold text-center mb-1">Connectez-vous</h1>
             <p class="text-sm text-gray-500 text-center mb-7">Accédez à votre espace personnel</p>
+            @include('auth.partials.publication-context')
 
             <!-- Boutons sociaux -->
             <div class="space-y-2.5 mb-6">

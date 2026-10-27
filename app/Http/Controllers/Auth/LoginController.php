@@ -145,6 +145,7 @@ class LoginController extends Controller
             if ($verificationEnabled && is_null($user->email_verified_at)) {
                 $resumeDemand = $request->session()->get(DemandPublicationContinuation::SESSION_KEY, false);
                 $resumeProvider = $request->session()->get(DemandPublicationContinuation::PROVIDER_SESSION_KEY, false);
+                $contactAd = $request->session()->get(DemandPublicationContinuation::AD_SESSION_KEY);
                 try {
                     $this->guard()->logout();
                     $request->session()->invalidate();
@@ -159,11 +160,14 @@ class LoginController extends Controller
                 $request->session()->forget([
                     DemandPublicationContinuation::SESSION_KEY,
                     DemandPublicationContinuation::PROVIDER_SESSION_KEY,
+                    DemandPublicationContinuation::AD_SESSION_KEY,
                 ]);
                 if ($resumeProvider) {
                     $request->session()->put(DemandPublicationContinuation::PROVIDER_SESSION_KEY, true);
                 } elseif ($resumeDemand) {
                     $request->session()->put(DemandPublicationContinuation::SESSION_KEY, true);
+                } elseif (is_int($contactAd)) {
+                    $request->session()->put(DemandPublicationContinuation::AD_SESSION_KEY, $contactAd);
                 }
                 $request->session()->put(EmailVerificationCodeController::PENDING_USER_SESSION_KEY, $user->id);
 

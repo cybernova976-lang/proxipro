@@ -14,21 +14,33 @@ use Illuminate\Support\Str;
  */
 final class PublicHomepageSelection
 {
-    public const RECENT_AD_DAYS = 30;
+    public const MAX_DEMAND_AGE_DAYS = 30;
 
-    public const MAX_RECENT_ADS = 2;
+    public const MAX_ADS_PER_TYPE = 2;
 
-    private const RECENT_AD_CANDIDATES = 40;
+    private const AD_CANDIDATES_PER_TYPE = 40;
 
     public const MAX_FEATURED_PROVIDERS = 3;
 
-    public static function recentAds(): Collection
+    public static function showcaseAds(): Collection
+    {
+        $publications = new Collection;
+        foreach (['offre', 'demande'] as $type) {
+            $publications = $publications->merge(self::adsForType($type));
+        }
+
+        return $publications->sortByDesc('created_at')->values();
+    }
+
+    private static function adsForType(string $type): Collection
     {
         $now = now();
         $query = Ad::marketplaceActive()
             ->where('visibility', 'public')
-            ->whereIn('service_type', ['offre', 'demande'])
-            ->whereBetween('created_at', [$now->copy()->subDays(self::RECENT_AD_DAYS), $now])
+            ->where('service_type', $type)
+            ->where('created_at', '<=', $now)
+            ->when($type === 'demande', fn (Builder $query) => $query
+                ->where('created_at', '>=', $now->copy()->subDays(self::MAX_DEMAND_AGE_DAYS)))
             ->whereHas('user', fn (Builder $query) => $query->where('is_active', true))
             ->where(fn (Builder $query) => $query
                 ->whereRaw("TRIM(COALESCE(city, '')) <> ''")
@@ -41,10 +53,10 @@ final class PublicHomepageSelection
             ->with('user:id,name,avatar,identity_verified')
             ->orderByDesc('created_at')
             ->orderByDesc('id')
-            ->limit(self::RECENT_AD_CANDIDATES)
+            ->limit(self::AD_CANDIDATES_PER_TYPE)
             ->get()
             ->reject(fn (Ad $ad) => self::hasExplicitTypeConflict($ad))
-            ->take(self::MAX_RECENT_ADS)
+            ->take(self::MAX_ADS_PER_TYPE)
             ->values();
     }
 

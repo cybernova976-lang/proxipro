@@ -29,7 +29,7 @@ class HomePageController extends Controller
                 ->pluck('aggregate', 'category')
             );
 
-            $latestAds = PublicHomepageSelection::recentAds();
+            $latestAds = PublicHomepageSelection::showcaseAds();
             $featuredPros = PublicHomepageSelection::featuredProviders()->get();
 
             $verifiedReviews = Review::query()

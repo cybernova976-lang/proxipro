@@ -36,7 +36,7 @@ class PublicHomepageTest extends TestCase
         $this->assertFalse(Cache::has('homepage.stats'));
     }
 
-    public function test_public_showcase_follows_the_explanation_with_recent_ads_and_complete_providers(): void
+    public function test_public_showcase_precedes_categories_with_member_ads_and_complete_providers(): void
     {
         $attributes = [
             'user_type' => 'particulier',
@@ -70,9 +70,9 @@ class PublicHomepageTest extends TestCase
             ->assertViewHas('featuredPros', fn ($profiles) => $profiles->modelKeys() === [$provider->id])
             ->assertViewHas('latestAds', fn ($ads) => $ads->count() === 2)
             ->assertSeeInOrder([
+                'Découvrez les annonces des membres',
                 'Explorez les services',
                 'Comment ça marche ?',
-                'Besoins et services récents',
                 'Des prestataires à découvrir',
             ])
             ->assertSee(route('profile.public', $provider), false);
@@ -138,20 +138,20 @@ class PublicHomepageTest extends TestCase
             ->assertDontSee('Compte inactif');
     }
 
-    public function test_recent_showcase_keeps_two_real_publications_without_hiding_dates_or_reclassifying_them(): void
+    public function test_showcase_keeps_recent_demands_and_active_offers_without_hiding_dates_or_reclassifying_them(): void
     {
         $this->travelTo(now()->startOfSecond());
         $owner = User::factory()->create(['is_active' => true]);
-        $boundary = $this->createShowcaseAd($owner, ['created_at' => now()->subDays(30)]);
-        $old = $this->createShowcaseAd($owner, ['created_at' => now()->subDays(30)->subSecond()]);
+        $boundary = $this->createShowcaseAd($owner, ['created_at' => now()->subDays(30), 'service_type' => 'demande']);
+        $old = $this->createShowcaseAd($owner, ['created_at' => now()->subDays(30)->subSecond(), 'service_type' => 'demande']);
         $future = $this->createShowcaseAd($owner, ['created_at' => now()->addDay()]);
         $offer = $this->createShowcaseAd($owner, ['created_at' => now()->subDay(), 'service_type' => 'offre']);
         $request = $this->createShowcaseAd($owner, ['created_at' => now(), 'service_type' => 'demande']);
 
         $response = $this->get(route('homepage'))->assertOk()
-            ->assertViewHas('latestAds', fn ($ads) => $ads->modelKeys() === [$request->id, $offer->id]);
+            ->assertViewHas('latestAds', fn ($ads) => $ads->modelKeys() === [$request->id, $offer->id, $boundary->id]);
 
-        $this->assertSame(['demande', 'offre'], $response->viewData('latestAds')->pluck('service_type')->all());
+        $this->assertSame(['demande', 'offre', 'demande'], $response->viewData('latestAds')->pluck('service_type')->all());
         $this->assertSame('demande', $request->fresh()->service_type);
         $this->assertSame('offre', $offer->fresh()->service_type);
 
@@ -252,7 +252,7 @@ class PublicHomepageTest extends TestCase
 
         $this->get(route('homepage'))->assertOk()
             ->assertViewHas('featuredPros', fn ($profiles) => $profiles->modelKeys() === [$provider->id])
-            ->assertViewHas('latestAds', fn ($ads) => $ads->isEmpty())
+            ->assertViewHas('latestAds', fn ($ads) => $ads->modelKeys() === [$oldOffer->id])
             ->assertSee(route('profile.public', $provider), false)
             ->assertDontSee('Besoins et services récents');
 
@@ -307,6 +307,34 @@ class PublicHomepageTest extends TestCase
 
         $this->get(route('homepage'))->assertOk()
             ->assertViewHas('latestAds', fn ($ads) => $ads->modelKeys() === [$offer->id]);
+    }
+
+    public function test_each_type_gets_two_places_even_when_many_offers_are_newer(): void
+    {
+        $owner = User::factory()->create(['name' => 'Atelier du quartier', 'is_active' => true]);
+        foreach (range(1, 6) as $index) {
+            $this->createShowcaseAd($owner, ['created_at' => now()->subMinutes($index)]);
+        }
+        foreach (range(1, 3) as $index) {
+            $this->createShowcaseAd($owner, [
+                'title' => 'Besoin d’aide pour une fuite', 'service_type' => 'demande',
+                'created_at' => now()->subDays($index), 'price_type' => 'fixed', 'price' => 150,
+            ]);
+        }
+
+        $response = $this->get(route('homepage'))->assertOk();
+        $publications = $response->viewData('latestAds');
+        $this->assertCount(4, $publications);
+        $this->assertCount(2, $publications->where('service_type', 'offre'));
+        $this->assertCount(2, $publications->where('service_type', 'demande'));
+        $response->assertSee('Présentation détaillée du service de plomberie')
+            ->assertSee('Mamoudzou')->assertSee('150 €')->assertSee('Atelier du quartier')
+            ->assertSee('Demande de service')->assertSee('Proposer mon aide')
+            ->assertDontSee('Exemple illustratif')->assertDontSee('Pour en savoir plus');
+        foreach ($publications as $ad) {
+            $response->assertSee(route('login', ['continue' => 'ad', 'ad' => $ad->id]));
+        }
+        $this->assertDatabaseCount('ads', 9);
     }
 
     private function createShowcaseProvider(array $overrides = []): User

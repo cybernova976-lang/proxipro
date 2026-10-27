@@ -356,7 +356,7 @@
             </div>
 
             <div class="col-lg-4 mb-4">
-                <div class="seller-card">
+                <div class="seller-card" id="ad-contact-author" style="scroll-margin-top:100px;">
                     <div class="seller-avatar"><i class="fas fa-user"></i></div>
                     <h4 class="seller-name">
                         <a href="{{ route('profile.public', $ad->user_id) }}" class="text-decoration-none text-dark">
@@ -506,7 +506,7 @@
                             @endif
                         @endif
                     @else
-                        <a href="{{ route('login') }}" class="btn btn-contact btn-contact-primary"><i class="fas fa-sign-in-alt me-2"></i>Connectez-vous</a>
+                        <a href="{{ route('login', ['continue' => 'ad', 'ad' => $ad->id]) }}" class="btn btn-contact btn-contact-primary"><i class="fas fa-sign-in-alt me-2" aria-hidden="true"></i>Connectez-vous pour contacter l’auteur</a>
                         <p class="text-center mt-2 small" style="color: #718096;"><i class="fas fa-gift me-1"></i>5 points offerts à l'inscription</p>
                         <a href="{{ route('profile.public', $ad->user_id) }}" class="btn btn-contact btn-contact-secondary"><i class="fas fa-user me-2"></i>Voir le profil</a>
                     @endauth

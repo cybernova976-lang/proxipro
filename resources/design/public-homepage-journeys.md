@@ -1,12 +1,12 @@
 # Accueil public : recherche et mise en relation
 
-Révision du 26 octobre 2026. Inspirations de parcours consultées :
+Révision du 27 octobre 2026. Inspirations de parcours consultées :
 [Yoojo](https://yoojo.fr/) et [AlloVoisins](https://www.allovoisins.com/).
 L’identité, les images et les contenus de ces plateformes ne sont pas repris.
 
 ## Parcours
 
-Le titre conserve ses deux lignes. Deux choix courts donnent accès à la
+Le titre tient sur une ligne sur ordinateur. Deux choix courts donnent accès à la
 recherche ou à la création d’un profil prestataire. L’illustration panoramique
 est un arrière-plan hors du flux sur toute la largeur du haut de page. Sur
 téléphone, le bouton du formulaire reste dans le premier écran aux largeurs
@@ -25,16 +25,30 @@ nom, avatar, texte, type, statut ou visibilité enregistrés par les membres.
 
 - Au maximum trois profils publics actifs, avec métier, ville, avatar ou logo,
   présentation d’au moins 40 caractères et offre publique active ou réalisation.
-- Au maximum deux annonces actives publiques, âgées de 30 jours au plus,
-  avec lieu, titre et description suffisamment renseignés.
+- Jusqu’à deux offres et deux demandes actives publiques, avec lieu, titre et
+  description suffisamment renseignés. Les offres restent admissibles tant
+  qu’elles sont actives ; les demandes doivent avoir été publiées dans les
+  30 derniers jours. La date réelle reste affichée, sans promesse de nouveauté.
 - Quelques contradictions explicites entre titre et type écartent une annonce
   de cette sélection. Ce filtre conservateur n’est pas une modération générale.
-  Il examine au plus 40 candidats puis retient deux annonces admissibles.
+  Il examine au plus 40 candidats par type puis retient deux annonces admissibles
+  de chaque type, pour éviter qu’un type ne prenne toutes les places.
 - Les aperçus des annonces utilisent des icônes neutres, sans présenter une
   photo générique comme une réalisation du membre. Les photos originales
   restent sur les annonces.
 - Les sections sans contenu admissible sont absentes. Aucun profil, avis,
   compteur ou signe d’activité n’est inventé pour les remplir.
+
+Les cartes apparaissent directement après le haut de page, avant les catégories.
+Elles montrent le contenu de la publication : type, catégorie, titre, extrait,
+lieu, prix ou budget et auteur. Les actions sont « Contacter » et « Proposer mon
+aide ». Aucun exemple inventé ni lien générique ne remplace les publications.
+
+Le contact passe par `login?continue=ad&ad=<identifiant>`. Seule une annonce
+publique active avec auteur actif peut être mémorisée. L’identifiant est conservé
+pendant inscription, connexion sociale et vérification de l’e-mail ; la
+destination est recalculée vers l’annonce et sa carte de contact. Aucun message
+n’est envoyé automatiquement et les règles existantes du contact sont conservées.
 
 Les critères sont dans `App\Support\PublicHomepageSelection` et couverts par
 les tests de l’accueil. Ils ne certifient ni la qualification ni la qualité du
