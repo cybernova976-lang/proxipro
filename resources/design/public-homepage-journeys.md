@@ -26,10 +26,10 @@ nom, avatar, texte, type, statut ou visibilité enregistrés par les membres.
 - Au maximum trois profils publics actifs, avec métier, ville, avatar ou logo,
   présentation d’au moins 40 caractères et offre publique active ou réalisation.
 - Jusqu’à deux offres et deux demandes actives publiques, avec lieu, titre et
-  description suffisamment renseignés. Les offres restent admissibles tant
-  qu’elles sont actives ; les demandes doivent avoir été publiées dans les
-  30 derniers jours. La date réelle reste affichée, sans promesse de nouveauté.
-- Quelques contradictions explicites entre titre et type écartent une annonce
+  description suffisamment renseignés. Les annonces restent admissibles tant
+  qu’elles sont actives et non expirées. Les plus récentes de chaque type sont
+  retenues ; la date réelle reste affichée, sans promesse de nouveauté.
+- Quelques contradictions explicites entre titre, description et type écartent une annonce
   de cette sélection. Ce filtre conservateur n’est pas une modération générale.
   Il examine au plus 40 candidats par type puis retient deux annonces admissibles
   de chaque type, pour éviter qu’un type ne prenne toutes les places.

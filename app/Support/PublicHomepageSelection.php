@@ -14,8 +14,6 @@ use Illuminate\Support\Str;
  */
 final class PublicHomepageSelection
 {
-    public const MAX_DEMAND_AGE_DAYS = 30;
-
     public const MAX_ADS_PER_TYPE = 2;
 
     private const AD_CANDIDATES_PER_TYPE = 40;
@@ -39,8 +37,6 @@ final class PublicHomepageSelection
             ->where('visibility', 'public')
             ->where('service_type', $type)
             ->where('created_at', '<=', $now)
-            ->when($type === 'demande', fn (Builder $query) => $query
-                ->where('created_at', '>=', $now->copy()->subDays(self::MAX_DEMAND_AGE_DAYS)))
             ->whereHas('user', fn (Builder $query) => $query->where('is_active', true))
             ->where(fn (Builder $query) => $query
                 ->whereRaw("TRIM(COALESCE(city, '')) <> ''")
@@ -106,7 +102,7 @@ final class PublicHomepageSelection
     }
 
     /**
-     * Keep a few explicit title/type contradictions off the homepage only.
+     * Keep explicit title or description/type contradictions off the homepage only.
      * This is not semantic moderation: it neither proves consistency nor
      * changes the declared type or the publication's visibility elsewhere.
      */
@@ -117,13 +113,17 @@ final class PublicHomepageSelection
         $requestLanguage = preg_match('/\b(?:cherche|recherche|besoin)\b/', $title) === 1;
         $availabilityLanguage = preg_match('/\bdisponibles?\b/', $title) === 1;
         $proposalLanguage = preg_match('/\b(?:mes|nos) services\b|\b(?:je|nous)(?: vous)? (?:propose|proposons)\b/', $title) === 1;
+        $description = Str::ascii(Str::lower(strip_tags($ad->description)));
+        $description = preg_replace('/\s+/', ' ', trim(str_replace(["'", '’'], ' ', $description)));
+        $descriptionStartsWithRequest = preg_match('/^(?:(?:bonjour|bonsoir)[ ,.!]*)?(?:(?:je|nous) (?:cherche|recherche|cherchons|recherchons)|(?:j ai|nous avons) (?:besoin|une fuite|un probleme|une panne|un souci))\b/', $description) === 1;
+        $descriptionStartsWithProposal = preg_match('/^(?:(?:bonjour|bonsoir)[ ,.!]*)?(?:(?:je|nous)(?: vous)? (?:propose|proposons) (?:mes|nos) services|(?:je|nous) (?:realise|realisons) (?:tous? )?(?:vos |les )?travaux|(?:j intervien[st]|nous intervenons) dans)\b/', $description) === 1;
 
         if ($ad->service_type === 'demande') {
-            return ($availabilityLanguage || $proposalLanguage) && ! $requestLanguage;
+            return (($availabilityLanguage || $proposalLanguage) && ! $requestLanguage) || $descriptionStartsWithProposal;
         }
 
         $startsWithRequest = preg_match('/^(?:(?:je|nous) )?(?:cherche|recherche|besoin)\b/', $title) === 1;
 
-        return $startsWithRequest && ! $proposalLanguage;
+        return ($startsWithRequest && ! $proposalLanguage) || $descriptionStartsWithRequest;
     }
 }

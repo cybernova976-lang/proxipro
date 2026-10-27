@@ -138,7 +138,7 @@ class PublicHomepageTest extends TestCase
             ->assertDontSee('Compte inactif');
     }
 
-    public function test_showcase_keeps_recent_demands_and_active_offers_without_hiding_dates_or_reclassifying_them(): void
+    public function test_showcase_keeps_active_publications_without_hiding_dates_or_reclassifying_them(): void
     {
         $this->travelTo(now()->startOfSecond());
         $owner = User::factory()->create(['is_active' => true]);
@@ -158,7 +158,7 @@ class PublicHomepageTest extends TestCase
         $offer->update(['status' => 'inactive']);
         $request->update(['status' => 'inactive']);
         $this->get(route('homepage'))->assertOk()
-            ->assertViewHas('latestAds', fn ($ads) => $ads->modelKeys() === [$boundary->id]);
+            ->assertViewHas('latestAds', fn ($ads) => $ads->modelKeys() === [$boundary->id, $old->id]);
 
         $this->assertDatabaseHas('ads', ['id' => $old->id, 'status' => 'active']);
         $this->assertDatabaseHas('ads', ['id' => $future->id, 'status' => 'active']);
@@ -307,6 +307,30 @@ class PublicHomepageTest extends TestCase
 
         $this->get(route('homepage'))->assertOk()
             ->assertViewHas('latestAds', fn ($ads) => $ads->modelKeys() === [$offer->id]);
+    }
+
+    public function test_explicit_description_type_conflicts_are_skipped_without_rewriting_member_data(): void
+    {
+        $owner = User::factory()->create(['is_active' => true]);
+        $actualOffer = $this->createShowcaseAd($owner, ['description' => 'Je réalise tous vos travaux d’ordre électrique.']);
+        $actualDemand = $this->createShowcaseAd($owner, [
+            'title' => 'Besoin de réparer mon éclairage', 'service_type' => 'demande',
+            'description' => 'L’éclairage de la cuisine ne fonctionne plus depuis hier.',
+            'created_at' => now()->subMonths(3),
+        ]);
+        $misclassifiedOffer = $this->createShowcaseAd($owner, [
+            'title' => 'Fuite sur le robinet de douche',
+            'description' => 'j’ai une fuite d’eau sur le robinet de douche',
+        ]);
+        $misclassifiedDemand = $this->createShowcaseAd($owner, [
+            'title' => 'RECHERCHE PEINTRE', 'service_type' => 'demande',
+            'description' => 'J’intervient dans tous ce qui est PEINTURE',
+        ]);
+
+        $this->get(route('homepage'))->assertOk()
+            ->assertViewHas('latestAds', fn ($ads) => $ads->modelKeys() === [$actualOffer->id, $actualDemand->id]);
+        $this->assertDatabaseHas('ads', ['id' => $misclassifiedOffer->id, 'service_type' => 'offre', 'visibility' => 'public']);
+        $this->assertDatabaseHas('ads', ['id' => $misclassifiedDemand->id, 'service_type' => 'demande', 'status' => 'active']);
     }
 
     public function test_each_type_gets_two_places_even_when_many_offers_are_newer(): void
