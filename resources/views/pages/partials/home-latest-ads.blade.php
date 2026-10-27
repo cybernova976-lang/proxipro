@@ -16,6 +16,7 @@
                 $publicationPhotos = array_values(array_filter(is_array($publicationPhotos) ? $publicationPhotos : [], fn ($photo) => is_string($photo) && trim($photo) !== ''));
             @endphp
             <article class="home-recent-card home-publication-{{ $ad->service_type }}" data-publication-id="{{ $ad->id }}" data-publication-type="{{ $ad->service_type }}">
+                <span class="home-publication-type"><i class="fas {{ $ad->service_type === 'demande' ? 'fa-clipboard-list' : 'fa-toolbox' }}" aria-hidden="true"></i> {{ $ad->service_type === 'demande' ? 'Demande de service' : 'Service proposé' }}</span>
                 <a href="{{ route('ads.show', $ad) }}" class="home-publication-media" aria-label="Consulter l’annonce : {{ $ad->title }}">
                     @if($publicationPhotos !== [])
                         <img src="{{ storage_url(trim($publicationPhotos[0])) }}" alt="Photo publiée pour : {{ $ad->title }}" width="640" height="360" loading="lazy" decoding="async" data-publication-image>
@@ -27,12 +28,13 @@
                         <span class="home-publication-photo-placeholder"><i class="far fa-image" aria-hidden="true"></i><span>Photo non fournie</span></span>
                     @endif
                 </a>
-                <div class="home-recent-meta"><span class="home-publication-type"><i class="fas {{ $ad->service_type === 'demande' ? 'fa-clipboard-list' : 'fa-toolbox' }}" aria-hidden="true"></i> {{ $ad->service_type === 'demande' ? 'Demande de service' : 'Service proposé' }}</span><time datetime="{{ $ad->created_at->toDateString() }}">{{ $ad->created_at->diffForHumans() }}</time></div>
-                <p class="home-publication-category">{{ $ad->category }}</p>
-                <h3><a href="{{ route('ads.show', $ad) }}">{{ Str::limit($ad->title, 100) }}</a></h3>
-                <p class="home-publication-excerpt">{{ Str::limit(trim(strip_tags($ad->description)), 180) }}</p>
-                <div class="home-publication-details"><span><i class="fas fa-map-marker-alt" aria-hidden="true"></i> {{ $ad->city ?: $ad->location }}</span><strong>{{ $ad->formatted_price }}</strong></div>
-                <div class="home-publication-footer"><span class="home-publication-author">{{ Str::limit($ad->user->name, 40) }}</span><a href="{{ route('login', ['continue' => 'ad', 'ad' => $ad->id]) }}" class="home-publication-contact" aria-label="Se connecter pour contacter l’auteur de : {{ $ad->title }}"><i class="far fa-comment-dots" aria-hidden="true"></i> {{ $ad->service_type === 'demande' ? 'Proposer mon aide' : 'Contacter' }}</a></div>
+                <div class="home-publication-body">
+                    <div class="home-recent-meta"><span class="home-publication-category">{{ $ad->category }}</span><time datetime="{{ $ad->created_at->toDateString() }}">{{ $ad->created_at->diffForHumans() }}</time></div>
+                    <h3><a href="{{ route('ads.show', $ad) }}">{{ Str::limit($ad->title, 100) }}</a></h3>
+                    <p class="home-publication-excerpt">{{ Str::limit(trim(strip_tags($ad->description)), 180) }}</p>
+                    <div class="home-publication-details"><span title="{{ $ad->city ?: $ad->location }}"><i class="fas fa-map-marker-alt" aria-hidden="true"></i> {{ $ad->city ?: $ad->location }}</span><strong>{{ $ad->formatted_price }}</strong></div>
+                    <div class="home-publication-footer"><span class="home-publication-author" title="{{ $ad->user->name }}">{{ $ad->user->name }}</span><a href="{{ route('login', ['continue' => 'ad', 'ad' => $ad->id]) }}" class="home-publication-contact" aria-label="Se connecter pour contacter l’auteur de : {{ $ad->title }}"><i class="far fa-comment-dots" aria-hidden="true"></i> {{ $ad->service_type === 'demande' ? 'Proposer mon aide' : 'Contacter' }}</a></div>
+                </div>
             </article>
             @endforeach
         </div>

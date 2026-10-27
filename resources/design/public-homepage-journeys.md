@@ -39,6 +39,11 @@ nom, avatar, texte, type, statut ou visibilité enregistrés par les membres.
   indisponible ». Aucune photo de remplacement n’est présentée comme un travail
   du membre. Sur téléphone, les images restent en vignettes pour conserver une
   présentation compacte.
+- Les cartes gardent une taille de colonne même si la sélection contient moins
+  de quatre annonces : quatre colonnes à partir de 1200 px, deux sur tablette,
+  une liste compacte sur téléphone. Sur ordinateur et tablette, le cadre photo
+  reste au format 3:2. Le type apparaît sur la photo, les textes sont hiérarchisés
+  et les noms longs sont tronqués visuellement, avec leur texte intégral conservé.
 - Les sections sans contenu admissible sont absentes. Aucun profil, avis,
   compteur ou signe d’activité n’est inventé pour les remplir.
 

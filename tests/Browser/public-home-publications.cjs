@@ -18,12 +18,13 @@ const {chromium} = require('playwright');
         const errors = [];
         page.on('pageerror', error => errors.push(error.message));
         const checks = [];
-        for (const width of [1906, 1440, 1024, 768, 390, 375, 360]) {
+        for (const width of [1906, 1440, 1200, 1024, 768, 600, 390, 375, 360]) {
             await page.setViewportSize({width, height: 900});
             const response = await page.goto(target, {waitUntil: 'domcontentloaded'});
             await page.evaluate(() => document.fonts.ready);
             await page.locator('[data-publication-image]').evaluateAll(images => images.forEach(image => { image.loading = 'eager'; }));
             await page.waitForFunction(() => [...document.querySelectorAll('[data-publication-image]')].every(image => image.complete));
+            await page.locator('[data-publication-image]').evaluateAll(images => Promise.all(images.map(image => image.decode().catch(() => {}))));
             const result = await page.evaluate(() => {
                 const section = document.querySelector('#publications');
                 const box = section?.getBoundingClientRect();
@@ -42,6 +43,10 @@ const {chromium} = require('playwright');
                         photoLoaded: Boolean(card.querySelector('[data-publication-image]')?.naturalWidth),
                         placeholderVisible: [...card.querySelectorAll('.home-publication-photo-placeholder')].some(el => !el.hidden),
                         left: card.getBoundingClientRect().left, right: card.getBoundingClientRect().right,
+                        top: card.getBoundingClientRect().top, width: card.getBoundingClientRect().width, height: card.getBoundingClientRect().height,
+                        mediaWidth: card.querySelector('.home-publication-media').getBoundingClientRect().width,
+                        mediaHeight: card.querySelector('.home-publication-media').getBoundingClientRect().height,
+                        contactHeight: card.querySelector('.home-publication-contact').getBoundingClientRect().height,
                     })),
                 };
             });
@@ -51,11 +56,17 @@ const {chromium} = require('playwright');
             assert.ok(result.sectionBottom <= result.categoriesTop);
             assert.ok(result.sectionTop < 900, 'Member publications must follow the hero immediately');
             if (width >= 992) assert.equal(result.titleLines, 1);
+            if (width >= 1200) assert.equal(new Set(result.cards.map(card => Math.round(card.top))).size, 1, 'The desktop showcase must fit on one row');
             for (const type of ['offre', 'demande']) assert.ok(result.cards.filter(card => card.type === type).length <= 2);
             for (const card of result.cards) {
                 assert.ok(card.title && card.description && card.details && card.author);
                 assert.ok(card.photoLoaded || card.placeholderVisible, 'An original photo or a visible neutral placeholder is required');
                 assert.ok(card.left >= -1 && card.right <= width + 1);
+                assert.ok(card.contactHeight >= 44, 'Contact buttons must remain easy to tap');
+                if (width >= 768) {
+                    assert.ok(card.width <= 420, 'Cards must not stretch into oversized panels');
+                    assert.ok(Math.abs(card.mediaWidth / card.mediaHeight - 1.5) < 0.02, 'Desktop and tablet photos must keep a 3:2 frame');
+                }
                 const contact = new URL(card.contact);
                 assert.equal(contact.origin, new URL(target).origin);
                 assert.equal(contact.pathname, '/login');
@@ -63,9 +74,27 @@ const {chromium} = require('playwright');
                 assert.equal(contact.searchParams.get('ad'), card.id);
             }
             await page.locator('#publications').screenshot({path: `tmp/publications-${prefix}-${width}.png`});
-            if (width === 375 || width === 1440) await page.screenshot({path: `tmp/publications-${prefix}-${width}-full.png`, fullPage: true});
+            if (width === 375 || width === 1440) {
+                await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; window.scrollTo(0, 0); });
+                await page.waitForFunction(() => window.scrollY === 0);
+                await page.screenshot({path: `tmp/publications-${prefix}-${width}-full.png`, fullPage: true});
+            }
             checks.push(result);
             console.log(`Passed ${width}px: ${result.cards.length} member publications, page height ${result.height}`);
+        }
+
+        const sparseChecks = [];
+        for (const width of [1440, 1024, 375]) {
+            await page.setViewportSize({width, height: 900});
+            await page.goto(target, {waitUntil: 'domcontentloaded'});
+            await page.evaluate(() => document.fonts.ready);
+            const originalWidth = await page.locator('#publications article').first().evaluate(card => card.getBoundingClientRect().width);
+            for (const count of [3, 2, 1]) {
+                await page.locator('#publications article').evaluateAll((cards, count) => cards.slice(count).forEach(card => card.remove()), count);
+                const cardWidths = await page.locator('#publications article').evaluateAll(cards => cards.map(card => card.getBoundingClientRect().width));
+                assert.ok(cardWidths.every(value => Math.abs(value - originalWidth) <= 1), 'A sparse selection must retain the same card proportions');
+                sparseChecks.push({width, count: cardWidths.length, cardWidths});
+            }
         }
 
         const withPhoto = checks.at(-1).cards.find(card => card.photoLoaded);
@@ -90,7 +119,7 @@ const {chromium} = require('playwright');
 
         const http = [];
         if (target.startsWith('https://')) {
-            for (const path of ['/', '/up', '/css/public-home.css?v=20261027-publication-photos1', '/js/public-home.js?v=20261027-publication-photos1']) {
+            for (const path of ['/', '/up', '/css/public-home.css?v=20261027-publication-cards1', '/js/public-home.js?v=20261027-publication-cards1']) {
                 const response = await context.request.get(new URL(path, target).href);
                 assert.equal(response.status(), 200);
                 if (path.startsWith('/css/') || path.startsWith('/js/')) assert.equal(createHash('sha256').update(await response.body()).digest('hex'), createHash('sha256').update(await readFile('public' + path.split('?')[0])).digest('hex'));
@@ -98,7 +127,7 @@ const {chromium} = require('playwright');
             }
         }
         assert.deepEqual(errors, []);
-        await writeFile(`tmp/publications-${prefix}-checks.json`, JSON.stringify({checks, selectedPublication: selected.id, registrationPreservesPublication: true, http, errors}, null, 2));
+        await writeFile(`tmp/publications-${prefix}-checks.json`, JSON.stringify({checks, sparseChecks, selectedPublication: selected.id, registrationPreservesPublication: true, http, errors}, null, 2));
         console.log(`Passed contact -> login -> registration for publication ${selected.id}`);
     } finally {
         await Promise.race([browser.close(), new Promise(resolve => setTimeout(resolve, 5000))]);
