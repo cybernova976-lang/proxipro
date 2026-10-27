@@ -22,6 +22,8 @@ const {chromium} = require('playwright');
             await page.setViewportSize({width, height: 900});
             const response = await page.goto(target, {waitUntil: 'domcontentloaded'});
             await page.evaluate(() => document.fonts.ready);
+            await page.locator('[data-publication-image]').evaluateAll(images => images.forEach(image => { image.loading = 'eager'; }));
+            await page.waitForFunction(() => [...document.querySelectorAll('[data-publication-image]')].every(image => image.complete));
             const result = await page.evaluate(() => {
                 const section = document.querySelector('#publications');
                 const box = section?.getBoundingClientRect();
@@ -36,6 +38,9 @@ const {chromium} = require('playwright');
                         title: card.querySelector('h3').textContent.trim(), description: card.querySelector('.home-publication-excerpt').textContent.trim(),
                         details: card.querySelector('.home-publication-details').textContent.trim(), author: card.querySelector('.home-publication-author').textContent.trim(),
                         contact: card.querySelector('.home-publication-contact').href,
+                        photo: card.querySelector('[data-publication-image]')?.src || null,
+                        photoLoaded: Boolean(card.querySelector('[data-publication-image]')?.naturalWidth),
+                        placeholderVisible: [...card.querySelectorAll('.home-publication-photo-placeholder')].some(el => !el.hidden),
                         left: card.getBoundingClientRect().left, right: card.getBoundingClientRect().right,
                     })),
                 };
@@ -49,6 +54,7 @@ const {chromium} = require('playwright');
             for (const type of ['offre', 'demande']) assert.ok(result.cards.filter(card => card.type === type).length <= 2);
             for (const card of result.cards) {
                 assert.ok(card.title && card.description && card.details && card.author);
+                assert.ok(card.photoLoaded || card.placeholderVisible, 'An original photo or a visible neutral placeholder is required');
                 assert.ok(card.left >= -1 && card.right <= width + 1);
                 const contact = new URL(card.contact);
                 assert.equal(contact.origin, new URL(target).origin);
@@ -62,6 +68,17 @@ const {chromium} = require('playwright');
             console.log(`Passed ${width}px: ${result.cards.length} member publications, page height ${result.height}`);
         }
 
+        const withPhoto = checks.at(-1).cards.find(card => card.photoLoaded);
+        assert.ok(withPhoto, 'The photo-enabled fixture or production selection must contain an original photo');
+        await page.route(withPhoto.photo, route => route.abort());
+        await page.reload({waitUntil: 'domcontentloaded'});
+        const brokenPhoto = page.locator(`[data-publication-id="${withPhoto.id}"] [data-publication-image]`);
+        await brokenPhoto.evaluate(image => { image.loading = 'eager'; });
+        await page.waitForFunction(id => document.querySelector(`[data-publication-id="${id}"] [data-publication-image]`)?.hidden, withPhoto.id);
+        assert.equal(await page.locator(`[data-publication-id="${withPhoto.id}"] [data-publication-image-fallback]`).isVisible(), true);
+        await page.unroute(withPhoto.photo);
+        await page.goto(target, {waitUntil: 'domcontentloaded'});
+
         const selected = checks.at(-1).cards[0];
         await page.locator(`[data-publication-id="${selected.id}"] .home-publication-contact`).click();
         await page.waitForURL(url => url.pathname === '/login' && url.searchParams.get('ad') === selected.id);
@@ -73,10 +90,10 @@ const {chromium} = require('playwright');
 
         const http = [];
         if (target.startsWith('https://')) {
-            for (const path of ['/', '/up', '/css/public-home.css?v=20261027-publications1']) {
+            for (const path of ['/', '/up', '/css/public-home.css?v=20261027-publication-photos1', '/js/public-home.js?v=20261027-publication-photos1']) {
                 const response = await context.request.get(new URL(path, target).href);
                 assert.equal(response.status(), 200);
-                if (path.startsWith('/css/')) assert.equal(createHash('sha256').update(await response.body()).digest('hex'), createHash('sha256').update(await readFile('public/css/public-home.css')).digest('hex'));
+                if (path.startsWith('/css/') || path.startsWith('/js/')) assert.equal(createHash('sha256').update(await response.body()).digest('hex'), createHash('sha256').update(await readFile('public' + path.split('?')[0])).digest('hex'));
                 http.push({path, status: response.status()});
             }
         }

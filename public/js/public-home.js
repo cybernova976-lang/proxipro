@@ -1,5 +1,18 @@
 (() => {
     'use strict';
+    document.querySelectorAll('[data-publication-image]').forEach(image => {
+        const showFallback = () => {
+            image.hidden = true;
+            const media = image.closest('.home-publication-media');
+            const fallback = media?.querySelector('[data-publication-image-fallback]');
+            if (fallback) fallback.hidden = false;
+            const count = media?.querySelector('.home-publication-photo-count');
+            if (count) count.hidden = true;
+        };
+        image.addEventListener('error', showFallback, {once: true});
+        if (image.complete && image.naturalWidth === 0) showFallback();
+    });
+
     const tabs = [...document.querySelectorAll('.home-journey-tabs [role="tab"]')];
     const tablist = document.querySelector('.home-journey-tabs');
     if (tablist && tabs.length) {

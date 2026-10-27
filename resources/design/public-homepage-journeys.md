@@ -33,9 +33,12 @@ nom, avatar, texte, type, statut ou visibilité enregistrés par les membres.
   de cette sélection. Ce filtre conservateur n’est pas une modération générale.
   Il examine au plus 40 candidats par type puis retient deux annonces admissibles
   de chaque type, pour éviter qu’un type ne prenne toutes les places.
-- Les aperçus des annonces utilisent des icônes neutres, sans présenter une
-  photo générique comme une réalisation du membre. Les photos originales
-  restent sur les annonces.
+- Les aperçus affichent la première photo fournie avec l’annonce et signalent
+  les galeries de plusieurs photos. Une annonce sans photo utilise un visuel
+  neutre « Photo non fournie » ; un échec de chargement affiche « Photo
+  indisponible ». Aucune photo de remplacement n’est présentée comme un travail
+  du membre. Sur téléphone, les images restent en vignettes pour conserver une
+  présentation compacte.
 - Les sections sans contenu admissible sont absentes. Aucun profil, avis,
   compteur ou signe d’activité n’est inventé pour les remplir.
 

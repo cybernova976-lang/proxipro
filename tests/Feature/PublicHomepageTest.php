@@ -361,6 +361,19 @@ class PublicHomepageTest extends TestCase
         $this->assertDatabaseCount('ads', 9);
     }
 
+    public function test_member_photos_are_used_and_missing_photos_have_an_explicit_placeholder(): void
+    {
+        $owner = User::factory()->create(['is_active' => true]);
+        $this->createShowcaseAd($owner, ['photos' => [null, ' ', 'ads/first-photo.jpg', 'ads/second-photo.jpg']]);
+        $this->createShowcaseAd($owner, ['photos' => []]);
+
+        $response = $this->get(route('homepage'))->assertOk()
+            ->assertSee('src="'.storage_url('ads/first-photo.jpg').'"', false)
+            ->assertDontSee('src="'.storage_url('ads/second-photo.jpg').'"', false)
+            ->assertSee('2 photos')->assertSee('Photo non fournie')->assertSee('Photo indisponible');
+        $this->assertSame(1, substr_count($response->getContent(), 'data-publication-image>'));
+    }
+
     private function createShowcaseProvider(array $overrides = []): User
     {
         return User::factory()->create(array_merge([
