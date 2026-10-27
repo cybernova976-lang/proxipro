@@ -35,6 +35,25 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        foreach (['password-email' => 3, 'password-update' => 5] as $name => $attempts) {
+            \Illuminate\Support\Facades\RateLimiter::for($name, function (\Illuminate\Http\Request $request) use ($name, $attempts) {
+                return \Illuminate\Cache\RateLimiting\Limit::perMinute($attempts)
+                    ->by($name.'|'.$request->ip())
+                    ->response(function (\Illuminate\Http\Request $request, array $headers) use ($name) {
+                        $seconds = max(1, (int) ($headers['Retry-After'] ?? 60));
+                        $message = "Trop de tentatives. Veuillez patienter {$seconds} secondes avant de réessayer.";
+                        if ($request->expectsJson()) {
+                            return response()->json(['message' => $message], 429, $headers);
+                        }
+                        $url = $name === 'password-email'
+                            ? route('password.request')
+                            : route('password.reset', ['token' => (string) $request->input('token'), 'email' => $request->input('email')]);
+                        return redirect()->to($url)->withInput($request->only('email'))
+                            ->withErrors(['email' => $message])->withHeaders($headers);
+                    });
+            });
+        }
+
         Event::listen([\Illuminate\Auth\Events\Logout::class, \Illuminate\Auth\Events\CurrentDeviceLogout::class], function ($event) {
             if ($event->user && request()->hasSession()) {
                 app(\App\Services\UserPresence::class)->forgetSession($event->user->id, request()->session()->getId());

@@ -26,4 +26,22 @@ class ResetPasswordController extends Controller
      * @var string
      */
     protected $redirectTo = '/feed';
+
+    protected function rules()
+    {
+        return [
+            'token' => ['required'],
+            'email' => ['required', 'email'],
+            'password' => ['required', \Illuminate\Validation\Rules\Password::defaults()],
+            'password_confirmation' => ['required', 'same:password'],
+        ];
+    }
+
+    protected function validationErrorMessages()
+    {
+        return [
+            'password_confirmation.required' => 'Veuillez confirmer votre nouveau mot de passe.',
+            'password_confirmation.same' => 'La confirmation doit être identique au nouveau mot de passe.',
+        ];
+    }
 }

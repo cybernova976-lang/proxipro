@@ -58,12 +58,14 @@
                                 <span class="input-group-text bg-white border-end-0" style="border-radius: 14px 0 0 14px;">
                                     <i class="fas fa-shield-alt text-muted"></i>
                                 </span>
-                                <input id="password-confirm" type="password" class="form-control border-start-0 border-end-0" name="password_confirmation" required autocomplete="new-password" placeholder="Confirmez votre mot de passe">
+                                <input id="password-confirm" type="password" class="form-control border-start-0 border-end-0 @error('password_confirmation') is-invalid @enderror" aria-describedby="password-confirm-error" @error('password_confirmation') aria-invalid="true" @enderror name="password_confirmation" required autocomplete="new-password" placeholder="Confirmez votre mot de passe">
                                 <button type="button" class="input-group-text bg-white toggle-password" data-target="password-confirm" style="border-radius: 0 14px 14px 0; cursor: pointer;">
                                     <i class="fas fa-eye text-muted"></i>
                                 </button>
                             </div>
                         </div>
+
+                        <div id="password-confirm-error" class="text-danger small" role="alert" @unless($errors->has('password_confirmation')) hidden @endunless>{{ $errors->first('password_confirmation') }}</div>
 
                         <button type="submit" class="btn btn-lg text-white fw-semibold" style="background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%); border: none; border-radius: 14px; padding: 0.95rem 1.2rem;">
                             <i class="fas fa-rotate-right me-2"></i>Réinitialiser mon mot de passe
@@ -77,6 +79,34 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const confirmation = document.getElementById('password-confirm');
+    const password = document.getElementById('password');
+    const feedback = document.getElementById('password-confirm-error');
+    function validateConfirmation() {
+        const message = !confirmation.value
+            ? 'Veuillez confirmer votre nouveau mot de passe.'
+            : (confirmation.value !== password.value ? 'La confirmation doit être identique au nouveau mot de passe.' : '');
+        confirmation.setCustomValidity(message);
+        confirmation.classList.toggle('is-invalid', Boolean(message));
+        confirmation.setAttribute('aria-invalid', String(Boolean(message)));
+        confirmation.closest('.input-group').style.outline = message ? '2px solid #dc3545' : '';
+        confirmation.closest('.input-group').style.borderRadius = '14px';
+        feedback.textContent = message;
+        feedback.hidden = !message;
+    }
+    confirmation.addEventListener('invalid', function () {
+        validateConfirmation();
+        confirmation.focus();
+    });
+    confirmation.addEventListener('input', validateConfirmation);
+    password.addEventListener('input', function () {
+        if (confirmation.value || confirmation.classList.contains('is-invalid')) validateConfirmation();
+    });
+    if (confirmation.classList.contains('is-invalid')) {
+        confirmation.closest('.input-group').style.outline = '2px solid #dc3545';
+        confirmation.focus();
+    }
+
     document.querySelectorAll('.toggle-password').forEach(function (button) {
         button.addEventListener('click', function () {
             const input = document.getElementById(this.dataset.target);

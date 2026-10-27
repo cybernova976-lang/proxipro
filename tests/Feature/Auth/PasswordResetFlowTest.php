@@ -79,4 +79,42 @@ class PasswordResetFlowTest extends TestCase
         $this->assertAuthenticatedAs($user);
         $this->assertTrue(Hash::check('nouveau-mot-de-passe-456', $user->fresh()->password));
     }
+    public function test_missing_or_different_confirmation_has_its_own_error(): void
+    {
+        $user = User::factory()->create();
+        $token = Password::broker()->createToken($user);
+        foreach (['', 'different-password'] as $confirmation) {
+            $this->post(route('password.update'), [
+                'token' => $token, 'email' => $user->email,
+                'password' => 'new-password-123', 'password_confirmation' => $confirmation,
+            ])->assertSessionHasErrors('password_confirmation');
+        }
+        $this->assertGuest();
+        $this->assertTrue(Password::broker()->tokenExists($user, $token));
+    }
+
+    public function test_email_limit_returns_to_form_with_wait_message(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create();
+        for ($i = 0; $i < 4; $i++) {
+            $response = $this->post(route('password.email'), ['email' => $user->email]);
+        }
+        $response->assertRedirect(route('password.request'))
+            ->assertSessionHasErrors('email')
+            ->assertHeader('Retry-After');
+        $this->get(route('password.request'))->assertOk()->assertSee('Trop de tentatives.');
+        Notification::assertSentToTimes($user, ResetPassword::class, 1);
+    }
+
+    public function test_other_auth_attempts_do_not_consume_password_reset_limit(): void
+    {
+        for ($i = 0; $i < 5; $i++) {
+            $this->post('/password/reset', []);
+        }
+        Notification::fake();
+        $user = User::factory()->create();
+        $this->post(route('password.email'), ['email' => $user->email])
+            ->assertSessionHas('status', __('passwords.sent'));
+    }
 }

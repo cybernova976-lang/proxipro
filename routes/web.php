@@ -105,11 +105,11 @@ Route::post('register', [App\Http\Controllers\Auth\RegisterController::class, 'r
 // Password Reset Routes...
 Route::get('password/reset', [App\Http\Controllers\Auth\ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
 Route::post('password/email', [App\Http\Controllers\Auth\ForgotPasswordController::class, 'sendResetLinkEmail'])
-    ->middleware('throttle:3,1')  // Max 3 password reset emails/minute
+    ->middleware('throttle:password-email')
     ->name('password.email');
 Route::get('password/reset/{token}', [App\Http\Controllers\Auth\ResetPasswordController::class, 'showResetForm'])->name('password.reset');
 Route::post('password/reset', [App\Http\Controllers\Auth\ResetPasswordController::class, 'reset'])
-    ->middleware('throttle:5,1')
+    ->middleware('throttle:password-update')
     ->name('password.update');
 
 // Password Confirmation Routes
