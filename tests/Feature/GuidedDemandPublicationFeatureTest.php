@@ -8,6 +8,7 @@ use App\Models\UserService;
 use App\Services\GeocodingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class GuidedDemandPublicationFeatureTest extends TestCase
@@ -39,6 +40,7 @@ class GuidedDemandPublicationFeatureTest extends TestCase
             ->assertSee('window.location.assign(guestDemandLoginUrl);', false)
             ->assertSee('markDemandFields', false)
             ->assertSee('id="publicationConfirmed"', false)
+            ->assertSee('<button type="submit" class="demand-btn demand-btn-submit" id="demandBtnSubmit"', false)
             ->assertSee('href="'.route('login', ['continue' => 'demand']).'"', false)
             ->assertSee('onclick="saveDemandDraft()"', false)
             ->assertSee('<span>Continuer</span>', false)
@@ -158,6 +160,45 @@ class GuidedDemandPublicationFeatureTest extends TestCase
             ->assertSessionHasErrors(['price', 'publication_confirmed']);
 
         $this->assertDatabaseCount('ads', 0);
+    }
+
+    #[DataProvider('unconfirmedPublicationValues')]
+    public function test_an_otherwise_valid_demand_cannot_be_published_without_confirmation(array $confirmation): void
+    {
+        $client = User::factory()->create();
+        $this->mock(GeocodingService::class)->shouldNotReceive('geocode');
+
+        $response = $this->actingAs($client)
+            ->from(route('demand.create'))
+            ->post(route('demand.store'), array_merge([
+                'main_category' => 'Bricolage & Travaux',
+                'category' => 'Plombier',
+                'country' => 'Mayotte',
+                'city' => 'Mamoudzou',
+                'desired_date' => today()->addDay()->toDateString(),
+                'time_window' => 'flexible',
+                'title' => 'Réparer une fuite sous mon évier',
+                'description' => 'Une fuite légère apparaît sous l’évier lorsque le robinet est ouvert.',
+                'price_type' => 'negotiable',
+                'service_details' => ['work_scope' => 'repair', 'site_type' => 'house'],
+            ], $confirmation));
+
+        $response->assertRedirect(route('demand.create'))
+            ->assertSessionHasErrors([
+                'publication_confirmed' => 'Confirmez les informations et acceptez la publication publique de votre demande pendant 30 jours.',
+            ]);
+        $this->assertSame(['publication_confirmed'], array_keys(session('errors')->getMessages()));
+        $this->assertDatabaseCount('ads', 0);
+    }
+
+    public static function unconfirmedPublicationValues(): array
+    {
+        return [
+            'absent' => [[]],
+            'unchecked' => [['publication_confirmed' => '0']],
+            'boolean false' => [['publication_confirmed' => false]],
+            'string false' => [['publication_confirmed' => 'false']],
+        ];
     }
 
     public function test_guided_publication_rejects_a_recent_duplicate_even_with_spacing_and_case_changes(): void

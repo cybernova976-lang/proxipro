@@ -191,7 +191,6 @@
         }
         .hero-provider-link { color: #e0e7ff; font-size: .9rem; font-weight: 600; text-underline-offset: 5px; }
         .hero-provider-link:hover { color: white; }
-        .hero-title-line { display: block; }
         
         /* Trust badges in hero */
         .hero-trust { display: flex; justify-content: center; gap: 32px; margin-top: 32px; flex-wrap: wrap; }
@@ -458,7 +457,6 @@
             border-radius: 8px; display: inline-flex; align-items: center;
             justify-content: center; padding: 2px; overflow: hidden;
         }
-        .hero-title-line { display: block; text-wrap: balance; }
         .footer-brand-icon .prokejem-brand-mark {
             width: 100%; height: 100%; object-fit: contain; display: block;
         }
@@ -561,7 +559,7 @@
         }
     </style>
     <link rel="preload" as="image" type="image/webp" href="{{ asset('images/home/artisan-maison-panorama-1920.webp') }}" imagesrcset="{{ asset('images/home/artisan-maison-panorama-960.webp') }} 960w, {{ asset('images/home/artisan-maison-panorama-1920.webp') }} 1920w" imagesizes="100vw" fetchpriority="high">
-    <link rel="stylesheet" href="{{ asset('css/public-home.css') }}?v=20261026-panorama1">
+    <link rel="stylesheet" href="{{ asset('css/public-home.css') }}?v=20261027-consent-title1">
     <script defer src="{{ asset('js/public-home.js') }}?v=20261026"></script>
 </head>
 <body class="public-home">

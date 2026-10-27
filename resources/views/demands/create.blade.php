@@ -603,11 +603,11 @@ body { background: #f0f2f5; }
                     </div>
 
                     <div class="demand-confirm">
-                        <input type="checkbox" name="publication_confirmed" id="publicationConfirmed" value="1" @checked(old('publication_confirmed')) required>
+                        <input type="checkbox" name="publication_confirmed" id="publicationConfirmed" value="1" aria-describedby="step5Error" @checked(old('publication_confirmed')) required>
                         <label for="publicationConfirmed">Je confirme que les informations de cette demande sont exactes et j’accepte sa publication publique pendant 30 jours.</label>
                     </div>
 
-                    <div class="demand-error" id="step5Error">
+                    <div class="demand-error" id="step5Error" role="alert">
                         <i class="fas fa-exclamation-circle"></i> <span></span>
                     </div>
                 </div>
@@ -622,30 +622,22 @@ body { background: #f0f2f5; }
                 <button type="button" class="demand-btn demand-btn-next" id="demandBtnNext" onclick="nextDemandStep()" disabled>
                     Continuer <i class="fas fa-arrow-right"></i>
                 </button>
-                @guest
-                <a href="{{ route('login', ['continue' => 'demand']) }}"
-                   class="demand-btn demand-btn-submit"
-                   id="demandBtnSubmit"
-                   style="display:none;"
-                   onclick="saveDemandDraft()">
+                <button type="submit" class="demand-btn demand-btn-submit" id="demandBtnSubmit" style="display:none;">
                     <span class="demand-btn-submit-content">
-                        <i class="fas fa-sign-in-alt"></i>
+                        @guest
+                        <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
                         <span class="demand-btn-submit-text">
                             <span>Continuer</span>
                         </span>
-                    </span>
-                </a>
-                @else
-                <button type="submit" class="demand-btn demand-btn-submit" id="demandBtnSubmit" style="display:none;">
-                    <span class="demand-btn-submit-content">
-                        <i class="fas fa-paper-plane"></i>
+                        @else
+                        <i class="fas fa-paper-plane" aria-hidden="true"></i>
                         <span class="demand-btn-submit-text">
                             <span>Publier</span>
                             <span>et trouver des pros</span>
                         </span>
+                        @endguest
                     </span>
                 </button>
-                @endguest
             </div>
         </div>
     </form>
@@ -1413,18 +1405,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     form.addEventListener('change', scheduleDraftSave);
     form.addEventListener('submit', event => {
+        if (!validateStep5()) {
+            event.preventDefault();
+            currentStep = totalDemandSteps;
+            updateStepUI();
+            return;
+        }
+
+        if (event.defaultPrevented) return;
+
         if (isGuestDemand) {
             event.preventDefault();
             saveDemandDraft();
             trackDemandEvent('demand_auth_redirect', totalDemandSteps);
             window.location.assign(guestDemandLoginUrl);
-            return;
-        }
-
-        if (!validateStep5()) {
-            event.preventDefault();
-            currentStep = totalDemandSteps;
-            updateStepUI();
             return;
         }
     });

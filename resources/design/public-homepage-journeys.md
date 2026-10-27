@@ -55,6 +55,13 @@ de retour arbitraire et aucune activation automatique de compte ne sont admises.
 ## Validation
 
 Les relevés de rendu et captures sont produits dans `tmp/` et ne sont pas
-déployés. Les contrôles couvrent largeur, deux lignes du titre, formulaire
+déployés. Les contrôles couvrent largeur, titre sur une ligne sur ordinateur
+avec retour naturel sur téléphone, formulaire
 avant l’image sur mobile, hauteur totale, menu, onglets au clavier, bandeau
 à deux choix, recherche avec lieu, tarifs publics et fichiers déployés.
+
+Le titre occupe la largeur du haut de page ; la photographie reste en fond avec
+un voile en haut pour préserver sa lisibilité. Les cartes de parcours et la
+recherche gardent une largeur compacte. La confirmation de publication est
+obligatoire avant le passage invité vers la connexion, puis à la publication
+authentifiée ; elle n’est pas mémorisée dans les brouillons.

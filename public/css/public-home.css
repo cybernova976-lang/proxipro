@@ -7,16 +7,15 @@
 .public-home .nav-burger { min-width: 44px; min-height: 44px; }
 .home-mobile-login { display: none; }
 .public-home .hero { background: #f8fafc; padding: 40px 0 26px; border-bottom: 1px solid #e4e9f2; isolation: isolate; }
-.public-home .hero::before { display: block; z-index: 1; pointer-events: none; background: linear-gradient(90deg, rgba(248,250,252,.97) 0%, rgba(248,250,252,.94) 33%, rgba(248,250,252,.8) 46%, rgba(248,250,252,.08) 67%, rgba(248,250,252,0) 100%), linear-gradient(0deg, #f8fafc 0%, rgba(248,250,252,.92) 5%, rgba(248,250,252,0) 24%); }
+.public-home .hero::before { display: block; z-index: 1; pointer-events: none; background: linear-gradient(180deg, rgba(248,250,252,.95) 0%, rgba(248,250,252,.8) 22%, rgba(248,250,252,0) 42%), linear-gradient(90deg, rgba(248,250,252,.97) 0%, rgba(248,250,252,.94) 33%, rgba(248,250,252,.8) 46%, rgba(248,250,252,.08) 67%, rgba(248,250,252,0) 100%), linear-gradient(0deg, #f8fafc 0%, rgba(248,250,252,.92) 5%, rgba(248,250,252,0) 24%); }
 .public-home .hero::after { display: none; }
-.public-home .hero-grid { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-areas: "intro ." "search ."; column-gap: 40px; row-gap: 22px; align-items: center; }
+.public-home .hero-grid { --home-hero-content-width: calc((100% - 40px) * .53488372); position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-areas: "intro intro" "search ."; column-gap: 40px; row-gap: 22px; align-items: center; }
 .home-hero-intro { grid-area: intro; min-width: 0; }
 .public-home .hero-label { color: #526078; background: #fff; border-color: #e2e8f0; margin-bottom: 16px; font-size: .75rem; padding: 8px 14px; }
 .public-home .hero-title { color: #0f172a; font-size: clamp(2rem, 3.3vw, 2.9rem); line-height: 1.16; letter-spacing: -1.6px; max-width: none; margin-bottom: 18px; }
 .public-home .hero-title .accent { background: none; -webkit-text-fill-color: #4f46e5; color: #4f46e5; }
-.public-home .hero-title-line { text-wrap: initial; }
 .public-home .hero-desc { color: #334155; max-width: 560px; font-size: 1rem; line-height: 1.65; margin-bottom: 18px; }
-.home-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.home-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; max-width: var(--home-hero-content-width); }
 .home-path { display: flex; align-items: center; gap: 10px; min-height: 70px; padding: 12px; color: #334155; background: #fff; border: 1px solid #dbe2ec; border-radius: 12px; text-decoration: none; }
 .home-path-client { background: #eef2ff; border-color: #c7d2fe; }
 .home-path:hover { border-color: #8d87e9; color: #4338ca; }
@@ -110,17 +109,17 @@
 .public-home .footer { padding-top: 40px; }
 .public-home .footer-grid { gap: 28px; padding-bottom: 28px; }
 .public-home .footer-col a { display: inline-block; min-height: 32px; }
-@media (min-width: 992px) { .public-home .hero-title-line { white-space: nowrap; } }
+@media (min-width: 992px) { .public-home .hero-title { white-space: nowrap; } }
 @media (max-width: 1199px) {
     .public-home .nav-links a { padding: 10px 8px; font-size: .8rem; }
     .public-home .btn-nav-register, .public-home .btn-nav-login { padding: 10px 12px !important; }
-    .public-home .hero-grid { column-gap: 24px; }
+    .public-home .hero-grid { --home-hero-content-width: calc((100% - 24px) * .53488372); column-gap: 24px; }
     .public-home .cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .home-provider-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 991px) {
     .public-home .hero { padding-top: 26px; }
-    .public-home .hero-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "intro" "search"; gap: 20px; }
+    .public-home .hero-grid { --home-hero-content-width: 100%; grid-template-columns: minmax(0, 1fr); grid-template-areas: "intro" "search"; gap: 20px; }
     .public-home .hero::before { background: linear-gradient(90deg, rgba(248,250,252,.97) 0%, rgba(248,250,252,.92) 58%, rgba(248,250,252,.62) 100%), linear-gradient(0deg, #f8fafc 0%, rgba(248,250,252,0) 60%); }
     .home-hero-background img { object-position: 82% top; }
     .public-home .hero-title { font-size: clamp(2rem, 5.1vw, 2.7rem); letter-spacing: -1.3px; }

@@ -122,9 +122,12 @@ class DemandController extends Controller
             'urgency' => 'nullable|in:normal,urgent,tres_urgent',
             'photos' => 'nullable|array|max:2',
             'photos.*' => 'image|mimes:jpeg,png,webp|max:5120',
-            'publication_confirmed' => 'accepted',
+            'publication_confirmed' => ['required', 'accepted'],
             ...ServiceDemandIntakeSchema::validationRules($request->input('main_category')),
-        ], [], ServiceDemandIntakeSchema::validationAttributes($request->input('main_category')));
+        ], [
+            'publication_confirmed.required' => 'Confirmez les informations et acceptez la publication publique de votre demande pendant 30 jours.',
+            'publication_confirmed.accepted' => 'Confirmez les informations et acceptez la publication publique de votre demande pendant 30 jours.',
+        ], ServiceDemandIntakeSchema::validationAttributes($request->input('main_category')));
 
         if (! in_array($request->category, $services[$request->main_category]['subcategories'] ?? [], true)) {
             return back()->withErrors([

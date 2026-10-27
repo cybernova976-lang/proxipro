@@ -6,8 +6,7 @@
         <div class="home-hero-intro">
             <p class="hero-label"><span class="hero-label-dot"></span>Particuliers · Indépendants · Entreprises</p>
             <h1 class="hero-title">
-                <span class="hero-title-line">Trouvez le bon prestataire,</span>
-                <span class="hero-title-line accent">près de chez vous.</span>
+                Trouvez le bon prestataire, <span class="accent">près de chez vous.</span>
             </h1>
             <p class="hero-desc">Bricolage, ménage, jardinage, cours, informatique… Trouvez de l’aide ou faites découvrir votre savoir-faire.</p>
             <nav class="home-paths" aria-label="Choisissez votre parcours">
