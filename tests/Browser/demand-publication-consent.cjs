@@ -64,6 +64,13 @@ const {chromium} = require('playwright');
                 assert.equal(await page.locator('#step5Error').isVisible(), true);
                 assert.match(await page.locator('#step5Error').innerText(), /Confirmez les informations/);
             }
+            const feedbackLayout = await page.locator('.demand-confirm').evaluate(container => {
+                const label = container.querySelector('label').getBoundingClientRect();
+                const feedback = container.querySelector('.pk-field-feedback').getBoundingClientRect();
+                return {labelBottom: label.bottom, labelLeft: label.left, feedbackTop: feedback.top, feedbackLeft: feedback.left};
+            });
+            assert.ok(feedbackLayout.feedbackTop >= feedbackLayout.labelBottom - 1, 'Feedback must sit below the consent text');
+            assert.ok(Math.abs(feedbackLayout.feedbackLeft - feedbackLayout.labelLeft) <= 1, 'Feedback must align with the consent text');
             await confirmation.scrollIntoViewIfNeeded();
             await page.screenshot({path: `tmp/consent-${prefix}-${width}-unchecked.png`});
             await confirmation.check();

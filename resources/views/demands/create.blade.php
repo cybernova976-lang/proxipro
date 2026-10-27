@@ -184,11 +184,12 @@ body { background: #f0f2f5; }
 .demand-intake-grid .demand-field { margin-bottom: 0; }
 .demand-intake-grid .demand-field label { font-size: .84rem; }
 .demand-confirm {
-    display: flex; align-items: flex-start; gap: 11px; padding: 14px 16px; margin-top: 16px;
+    display: grid; grid-template-columns: 18px minmax(0, 1fr); align-items: start; gap: 8px 11px; padding: 14px 16px; margin-top: 16px;
     border: 1px solid #cbd5e1; border-radius: 12px; background: #fff;
 }
 .demand-confirm input { width: 18px; height: 18px; margin-top: 2px; flex: 0 0 auto; }
 .demand-confirm label { margin: 0; color: #374151; font-size: .88rem; line-height: 1.45; cursor: pointer; }
+.demand-confirm .pk-field-feedback { grid-column: 2; margin-top: 0; }
 
 /* Urgency */
 .demand-urgency { display: flex; gap: 10px; }
