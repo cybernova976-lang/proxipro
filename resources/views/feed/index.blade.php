@@ -1,4 +1,4 @@
-{{-- Accueil : exprimer un besoin, découvrir des services, reprendre une action utile. Le suivi complet vit dans Mon suivi. --}}
+{{-- Accueil connecté : découverte au centre, espace personnel et aide dans le rail. --}}
 @extends('layouts.app')
 
 @section('title', 'Accueil - Prokejem')
@@ -14,7 +14,7 @@
 <div class="pk-feed" id="pkFeed">
     <div class="pk-body">
 
-        <div class="pk-main">
+        <div class="pk-welcome">
 
             @if($pkCanProvide)
                 <nav class="pk-mode" aria-label="Utilisation de l’accueil">
@@ -27,17 +27,18 @@
                 </nav>
             @endif
 
-            {{-- Zone 2 · carte d'etat --}}
             @include('feed.partials.state-card')
+        </div>
 
-
-            {{-- Pour un client, les prestataires passent avant le catalogue. --}}
-            @if($pkRole === 'client' && collect($homeProfessionalProfiles ?? [])->isNotEmpty())
-                @include('feed.partials.providers')
+        <div class="pk-main">
+            @if($pkRole === 'client')
+                <div id="pkClientActivity" data-refresh-url="{{ route('client-activity.refresh') }}" data-revision="{{ $pkClientActivity['revision'] }}">
+                    @include('feed.partials.client-activity')
+                </div>
             @endif
 
             {{-- Zone 4 · le flux adapte au role --}}
-            <section aria-labelledby="pkFeedTitle">
+            <section class="pk-listings" aria-labelledby="pkFeedTitle">
                 <div class="pk-sechead">
                     <div>
                         <h2 id="pkFeedTitle">{{ $pkFeedTitle }}</h2>
@@ -94,23 +95,9 @@
                 @endif
             </section>
 
-            {{-- Une recherche sans résultat ne repousse pas les services consultables. --}}
-            @if($pkRole === 'client' && collect($homeProfessionalProfiles ?? [])->isEmpty())
-                @include('feed.partials.providers')
-            @endif
-
-            {{-- Le profil accompagne le parcours, sans repousser les opportunités. --}}
-            @include('feed.partials.profile-progress')
-
-            {{-- Zone 6 · conseils pratiques, en fin de parcours --}}
-            @include('feed.partials.guides')
-
-            {{-- Zone 7 · reassurance adaptee au role --}}
-            @include('feed.partials.trust')
-
         </div>
 
-        {{-- Rail contextuel — a partir de 1180 px --}}
+        {{-- Après les annonces sur téléphone ; à leur droite sur ordinateur. --}}
         @include('feed.partials.rail')
 
     </div>

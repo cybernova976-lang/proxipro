@@ -12,7 +12,7 @@ class HomeProviderDiscoveryFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_old_request_does_not_hide_local_providers_and_profiles_precede_ads(): void
+    public function test_old_request_does_not_hide_local_providers_in_the_secondary_panel(): void
     {
         $client = User::factory()->create(['city' => 'Mamoudzou', 'country' => 'Mayotte']);
         Ad::create(['user_id' => $client->id, 'title' => 'Ancienne recherche de peintre',
@@ -23,7 +23,7 @@ class HomeProviderDiscoveryFeatureTest extends TestCase
         $response = $this->actingAs($client)->get(route('feed'))->assertOk()
             ->assertViewHas('homeProfessionalProfiles', fn ($profiles) => $profiles->modelKeys() === [$provider->id])
             ->assertViewHas('pkProviderCategory', null)->assertSee('Prestataires à Mamoudzou');
-        $this->assertLessThan(strpos($response->getContent(), 'id="pkFeedList"'),
+        $this->assertGreaterThan(strpos($response->getContent(), 'id="pkFeedList"'),
             strpos($response->getContent(), 'id="pkProviderList"'));
     }
 
@@ -98,7 +98,7 @@ class HomeProviderDiscoveryFeatureTest extends TestCase
         $viewer = User::factory()->create(['city' => 'Mamoudzou', 'country' => 'Mayotte']);
         $provider = $this->provider();
         $response = $this->actingAs($viewer)->get(route('feed'))->assertOk()
-            ->assertSee('Trouver un prestataire')->assertSee('Vous préférez recevoir des propositions ?');
+            ->assertSee('Trouver un prestataire')->assertSee('Publier une demande');
         $this->assertStringContainsString('action="'.route('feed.professionals').'"', $response->getContent());
         $this->get(route('feed.professionals', ['subcategory' => 'Plombier', 'city' => 'Mamoudzou', 'country' => 'Mayotte']))
             ->assertOk()->assertViewHas('professionals', fn ($profiles) => $profiles->contains($provider));

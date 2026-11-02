@@ -109,25 +109,12 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             ->assertDontSee('home-showcase-section', false)
             ->assertDontSee('adsFeedMap', false);
 
-        $css = file_get_contents(public_path('css/feed.css'));
+        $html = $response->getContent();
+        $this->assertGreaterThan(strpos($html, 'id="pkFeedList"'), strpos($html, 'id="pkProviderList"'),
+            'Les profils complètent les annonces, sans repousser le flux principal.');
+        $this->assertSame(1, substr_count($html, 'id="pkIntentForm"'));
+        $this->assertStringContainsString('Raccourcis personnels', $html);
 
-        $this->assertStringContainsString('linear-gradient(135deg, #f8fbff', $css);
-        $this->assertStringContainsString('.pk-pro__visual', $css);
-        $this->assertStringContainsString('grid-template-columns: repeat(2, minmax(0, 1fr))', $css);
-        $this->assertStringContainsString('grid-template-rows: minmax(164px, auto) 55px', $css);
-        $this->assertStringContainsString('.pk-pro__actions', $css);
-        $this->assertStringContainsString('.pk-provider-discovery .pk-pro__action--profile', $css);
-        $this->assertStringContainsString('border-radius: var(--pk-r-lg)', $css);
-        $this->assertStringContainsString('border-radius: inherit; object-fit: cover', $css);
-        $this->assertStringContainsString('.pk-pro__verified', $css);
-        $this->assertStringContainsString('.pk-replies--waiting', $css);
-        $this->assertStringContainsString('.pk-ad__media--3', $css);
-        $this->assertStringContainsString('height: 156px', $css);
-        $this->assertStringContainsString('.pk-ad__main', $css);
-        $this->assertStringContainsString('margin-top: auto; padding-top: 9px', $css);
-        $this->assertStringContainsString('height: clamp(164px, 48vw, 210px)', $css);
-        $this->assertStringContainsString('scroll-snap-type: x mandatory', $css);
-        $this->assertStringNotContainsString('linear-gradient(150deg, var(--pk-950), var(--pk-800))', $css);
     }
 
     public function test_provider_home_is_a_demand_inbox_without_competitor_profiles(): void
@@ -179,152 +166,47 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertStringContainsString("params.push('search='", $javascript);
     }
 
-    public function test_feed_ad_card_displays_at_most_three_photos_in_the_compact_layout(): void
+    public function test_card_keeps_one_main_photo_and_the_true_gallery_count(): void
     {
-        $requester = User::factory()->create([
-            'name' => 'Abdou OUSSENI Chebani Razamakotoravolani',
-            'user_type' => 'particulier',
-        ]);
-        $ad = Ad::create([
-            'title' => 'Besoin de plusieurs interventions',
-            'description' => 'Une description utile qui accompagne la galerie sans augmenter inutilement la hauteur de la carte.',
-            'category' => 'Bricolage',
-            'location' => 'Mamoudzou',
-            'service_type' => 'demande',
-            'status' => 'active',
-            'visibility' => 'public',
-            'photos' => [
-                'ads/feed-photo-1.webp',
-                'ads/feed-photo-2.webp',
-                'ads/feed-photo-3.webp',
-                'ads/feed-photo-4.webp',
-            ],
-            'user_id' => $requester->id,
-        ]);
-
-        $html = view('feed.partials.ad-card', [
-            'ad' => $ad,
-            'pkRole' => 'provider',
-            'pkSaved' => collect(),
-        ])->render();
-
-        $this->assertStringContainsString('pk-ad__media pk-ad__media--3', $html);
-        $this->assertStringContainsString('href="'.route('ads.show', $ad).'"', $html);
-        $this->assertSame(3, substr_count($html, 'data-pk-feed-photo'));
-        $this->assertStringContainsString(storage_url('ads/feed-photo-1.webp'), $html);
-        $this->assertStringContainsString(storage_url('ads/feed-photo-2.webp'), $html);
-        $this->assertStringContainsString(storage_url('ads/feed-photo-3.webp'), $html);
-        $this->assertStringNotContainsString(storage_url('ads/feed-photo-4.webp'), $html);
-        $this->assertStringContainsString('4 photos', $html);
-        $this->assertStringContainsString('pk-ad__desc', $html);
-        $this->assertStringContainsString('pk-ad__foot', $html);
-        $this->assertStringContainsString('pk-ad__main', $html);
-        $this->assertStringContainsString('pk-ad__authorbar', $html);
-        $this->assertStringContainsString('pk-ad__author-name', $html);
-        $this->assertStringContainsString('Abdou OUSSENI Chebani Razamakotoravolani', $html);
-        $this->assertStringContainsString('Proposer mes services', $html);
-
-        $authorbarPosition = strpos($html, 'pk-ad__authorbar');
-        $mediaPosition = strpos($html, 'pk-ad__media');
-        $bodyPosition = strpos($html, 'pk-ad__body');
-        $footerPosition = strpos($html, 'pk-ad__foot');
-
-        $this->assertNotFalse($authorbarPosition);
-        $this->assertNotFalse($mediaPosition);
-        $this->assertNotFalse($bodyPosition);
-        $this->assertNotFalse($footerPosition);
-        $this->assertLessThan($mediaPosition, $authorbarPosition, "L'identite de l'auteur doit preceder les photos.");
-        $this->assertLessThan($bodyPosition, $authorbarPosition, "L'identite de l'auteur doit ouvrir la carte.");
-        $this->assertLessThan($footerPosition, $authorbarPosition, "L'identite de l'auteur ne doit plus etre releguee au pied de carte.");
-
-        $footerHtml = substr($html, $footerPosition);
-        $this->assertStringNotContainsString('pk-ad__authorbar', $footerHtml);
-        $this->assertStringNotContainsString('pk-ad__author-name', $footerHtml);
-
-        $css = file_get_contents(public_path('css/feed.css'));
-        $this->assertStringContainsString('.pk-ad__media .pk-ad__photo:first-child { display: block; }', $css);
-        preg_match('/\.pk-ad__author \.nm\s*\{([^}]*)\}/s', $css, $authorNameRule);
-        $this->assertNotEmpty($authorNameRule, "La regle du nom de l'auteur est introuvable.");
-        $this->assertStringContainsString('overflow-wrap: anywhere', $authorNameRule[1]);
-        $this->assertStringNotContainsString('text-overflow: ellipsis', $authorNameRule[1]);
-        $this->assertStringNotContainsString('white-space: nowrap', $authorNameRule[1]);
-
-        preg_match('/\.pk-feed-list\s*\{([^}]*)\}/s', $css, $feedListRule);
-        $this->assertNotEmpty($feedListRule, 'La regle de la liste des annonces est introuvable.');
-        preg_match('/gap:\s*(\d+)px/', $feedListRule[1], $gap);
-        $this->assertNotEmpty($gap, 'La liste doit definir un espacement explicite entre les annonces.');
-        $this->assertGreaterThanOrEqual(16, (int) $gap[1], 'Les annonces sont encore trop collees les unes aux autres.');
+        $author = User::factory()->create(['name' => 'Abdou OUSSENI Chebani Razamakotoravolani']);
+        $viewer = User::factory()->create();
+        $this->actingAs($viewer);
+        foreach ([0, 1, 2, 4] as $count) {
+            $photos = $count ? array_map(fn ($i) => 'ads/feed-photo-'.$i.'.webp', range(1, $count)) : [];
+            $ad = Ad::create(['user_id' => $author->id, 'title' => 'Installation de sanitaires',
+                'description' => 'Pose et remplacement des équipements.', 'category' => 'Plombier',
+                'location' => 'Mamoudzou', 'service_type' => 'offre', 'status' => 'active',
+                'visibility' => 'public', 'photos' => $photos]);
+            $html = view('feed.partials.ad-card', ['ad' => $ad, 'pkRole' => 'client',
+                'pkSaved' => collect([$ad->id])])->render();
+            $this->assertSame($count ? 1 : 0, substr_count($html, 'data-pk-feed-photo'));
+            if ($count > 0) $this->assertStringContainsString(storage_url($photos[0]), $html);
+            if ($count > 1) $this->assertStringContainsString($count.' photos', $html);
+            $this->assertStringNotContainsString(storage_url('ads/feed-photo-2.webp'), $html);
+            $this->assertStringContainsString('Photo non fournie', $html);
+            $this->assertStringContainsString('Service proposé', $html);
+            $this->assertStringContainsString('aria-pressed="true"', $html);
+            $this->assertStringContainsString('href="'.route('ads.show', $ad).'"', $html);
+            $this->assertStringContainsString('href="'.route('profile.public', $author->id).'"', $html);
+            $this->assertStringContainsString('aria-label="Voir le profil de '.$author->name.'"', $html);
+            $this->assertGreaterThan(strpos($html, '<h3>'), strpos($html, 'pk-ad__authorbar'));
+            $this->assertGreaterThan(strpos($html, 'pk-ad__authorbar'), strpos($html, 'pk-ad__foot'));
+        }
     }
 
-    /**
-     * La maquette montre le compteur des la premiere photo (« 1 photo »),
-     * et deux apercus de largeur egale quand il y en a deux.
-     */
-    public function test_feed_ad_card_photo_layout_matches_the_mockup_for_one_and_two_photos(): void
+    public function test_request_card_keeps_its_type_and_response_action_in_both_modes(): void
     {
-        $requester = User::factory()->create(['user_type' => 'particulier']);
-
-        $makeAd = function (array $photos) use ($requester): Ad {
-            return Ad::create([
-                'title' => 'Cherche aide pour personne âgée',
-                'description' => 'Je recherche une personne sérieuse pour accompagner une personne âgée.',
-                'category' => 'Aide aux personnes âgées',
-                'location' => 'Mamoudzou',
-                'service_type' => 'demande',
-                'status' => 'active',
-                'visibility' => 'public',
-                'photos' => $photos,
-                'user_id' => $requester->id,
-            ]);
-        };
-
-        $render = fn (Ad $ad): string => view('feed.partials.ad-card', [
-            'ad' => $ad,
-            'pkRole' => 'provider',
-            'pkSaved' => collect(),
-        ])->render();
-
-        $one = $render($makeAd(['ads/feed-photo-1.webp']));
-        $this->assertStringContainsString('pk-ad__media pk-ad__media--1', $one);
-        $this->assertSame(1, substr_count($one, 'data-pk-feed-photo'));
-        $this->assertStringContainsString('1 photo', $one);
-        $this->assertStringNotContainsString('1 photos', $one);
-
-        $two = $render($makeAd(['ads/feed-photo-1.webp', 'ads/feed-photo-2.webp']));
-        $this->assertStringContainsString('pk-ad__media pk-ad__media--2', $two);
-        $this->assertSame(2, substr_count($two, 'data-pk-feed-photo'));
-        $this->assertStringContainsString('2 photos', $two);
-
-        // Sans photo, aucune galerie et aucun compteur.
-        $none = $render($makeAd([]));
-        $this->assertStringNotContainsString('pk-ad__media', $none);
-        $this->assertStringNotContainsString('pk-ad__photo-count', $none);
-        $this->assertStringContainsString('pk-ad--nothumb', $none);
+        $author = User::factory()->create();
+        $ad = Ad::create(['user_id' => $author->id, 'title' => 'Fuite sous évier', 'description' => 'Un raccord à réparer.',
+            'category' => 'Plombier', 'location' => 'Mamoudzou', 'service_type' => 'demande',
+            'status' => 'active', 'visibility' => 'public']);
+        foreach (['client' => 'Voir la demande', 'provider' => 'Proposer mes services'] as $role => $action) {
+            $html = view('feed.partials.ad-card', ['ad' => $ad, 'pkRole' => $role])->render();
+            $this->assertStringContainsString('Demande de service', $html);
+            $this->assertStringContainsString($action, $html);
+            $this->assertStringNotContainsString('Service proposé', $html);
+        }
     }
-
-    /** La grille compacte doit disparaitre proprement quand l'annonce n'a pas de photo. */
-    public function test_responsive_ad_grid_preserves_the_photoless_card(): void
-    {
-        $css = file_get_contents(public_path('css/feed.css'));
-
-        $this->assertMatchesRegularExpression(
-            '/\.pk-ad__main\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:/s',
-            $css
-        );
-        $this->assertMatchesRegularExpression(
-            '/\.pk-ad--nothumb \.pk-ad__main\s*\{\s*grid-template-columns:\s*minmax\(0,\s*1fr\);\s*\}/',
-            $css
-        );
-        $this->assertStringContainsString(
-            '.pk-ad--nothumb .pk-ad__main { grid-template-columns: minmax(0, 1fr); }',
-            $css
-        );
-        $this->assertStringContainsString(
-            '.pk-ad--nothumb .pk-ad__main {',
-            $css
-        );
-    }
-
     /**
      * La barre d'onglets est rendue hors de .pk-feed, et desormais sur toutes
      * les pages. Elle doit donc porter ses propres variables : un var()

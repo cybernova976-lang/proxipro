@@ -25,6 +25,17 @@
   var csrf = document.querySelector('meta[name="csrf-token"]');
   csrf = csrf ? csrf.getAttribute('content') : '';
 
+  // Une photo indisponible laisse le même cadre et un repère explicite.
+  root.querySelectorAll('[data-pk-feed-photo] img').forEach(function (img) {
+    function showPlaceholder() {
+      img.parentElement.hidden = true;
+      var count = img.closest('.pk-ad__media').querySelector('.pk-ad__photo-count');
+      if (count) count.hidden = true;
+    }
+    img.addEventListener('error', showPlaceholder, { once: true });
+    if (img.complete && !img.naturalWidth) showPlaceholder();
+  });
+
   /* ---------------------------------------------------------------- toast */
 
   var toast = document.getElementById('pkToast');
@@ -179,6 +190,7 @@
     var button = event.target.closest('[data-pk-save]');
     if (!button) return;
     event.preventDefault();
+    if (button.getAttribute('aria-busy') === 'true') return;
 
     var wasSaved = button.getAttribute('aria-pressed') === 'true';
     button.setAttribute('aria-busy', 'true');
