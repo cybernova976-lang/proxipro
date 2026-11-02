@@ -982,6 +982,25 @@ class FeedController extends Controller
             $this->applyAdGeoScope($query, $userLat, $userLng, $userRadius ?? 50, $geoCity, $geoCountry);
         }
 
+        // L'accueil réserve les offres aux mises en avant actives. Le repli
+        // ordinaire ne s'applique que si aucune offre éligible n'est visible
+        // dans ce périmètre, jamais pour compléter les places restantes.
+        if ($serviceType === 'offre') {
+            $promotedQuery = (clone $query)->where(function ($promotion) {
+                $promotion->where(fn ($boost) => $boost->boosted())
+                    ->orWhereHas('user.proSubscriptions', function ($subscription) {
+                        $subscription->currentlyActive()
+                            ->where(function ($started) {
+                                $started->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+                            });
+                    });
+            });
+
+            if ((clone $promotedQuery)->exists()) {
+                $query = $promotedQuery;
+            }
+        }
+
         $candidates = $query
             ->when($geoScoped && $userLat !== null && $userLng !== null, fn ($q) => $this->orderByGeoDistance($q, (float) $userLat, (float) $userLng))
             ->orderBy('is_pinned', 'desc')
