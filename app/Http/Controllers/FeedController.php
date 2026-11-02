@@ -982,9 +982,9 @@ class FeedController extends Controller
             $this->applyAdGeoScope($query, $userLat, $userLng, $userRadius ?? 50, $geoCity, $geoCountry);
         }
 
-        // L'accueil réserve les offres aux mises en avant actives. Le repli
-        // ordinaire ne s'applique que si aucune offre éligible n'est visible
-        // dans ce périmètre, jamais pour compléter les places restantes.
+        // Les mises en avant actives passent d'abord ; les autres offres
+        // complètent les places restantes dans le même périmètre visible.
+        $promoted = collect();
         if ($serviceType === 'offre') {
             $promotedQuery = (clone $query)->where(function ($promotion) {
                 $promotion->where(fn ($boost) => $boost->boosted())
@@ -996,9 +996,15 @@ class FeedController extends Controller
                     });
             });
 
-            if ((clone $promotedQuery)->exists()) {
-                $query = $promotedQuery;
+            $promoted = $this->feedRankingService->rank(
+                $promotedQuery->orderByDesc('created_at')->take(max(120, $limit * 8))->get(),
+                $currentUser,
+                $limit
+            );
+            if ($promoted->count() >= $limit) {
+                return $promoted;
             }
+            $query->whereNotIn('ads.id', $promoted->pluck('id'));
         }
 
         $candidates = $query
@@ -1008,7 +1014,9 @@ class FeedController extends Controller
             ->take(max(120, $limit * 8))
             ->get();
 
-        return $this->feedRankingService->rank($candidates, $currentUser, $limit);
+        return $promoted->concat($this->feedRankingService->rank(
+            $candidates, $currentUser, $limit - $promoted->count()
+        ))->values();
     }
 
     /**

@@ -11,7 +11,7 @@ class FeedPromotedOffersFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_boost_and_subscription_offers_exclude_ordinary_offers_without_padding(): void
+    public function test_boost_and_subscription_offers_come_first_and_ordinary_offers_fill_remaining_slots(): void
     {
         $viewer = User::factory()->create();
         $author = User::factory()->create();
@@ -20,9 +20,11 @@ class FeedPromotedOffersFeatureTest extends TestCase
         $subscriber = User::factory()->create();
         $this->subscribe($subscriber);
         $premium = $this->offer($subscriber);
+        for ($i = 0; $i < 5; $i++) $this->offer($author);
         $response = $this->actingAs($viewer)->get(route('feed'))->assertOk();
-        $this->assertEqualsCanonicalizing([$boost->id, $premium->id], $response->viewData('pkFeedAds')->pluck('id')->all());
-        $this->assertNotContains($ordinary->id, $response->viewData('pkFeedAds')->pluck('id')->all());
+        $this->assertEqualsCanonicalizing([$boost->id, $premium->id], $response->viewData('pkFeedAds')->take(2)->pluck('id')->all());
+        $this->assertCount(6, $response->viewData('pkFeedAds'));
+        $this->assertCount(6, $response->viewData('pkFeedAds')->unique('id'));
     }
 
     public function test_expired_or_inactive_promotions_do_not_prevent_ordinary_fallback(): void
@@ -53,7 +55,7 @@ class FeedPromotedOffersFeatureTest extends TestCase
         $ordinary = $this->offer($author);
         $boost = $this->offer($author, ['is_boosted' => true, 'boost_end' => now()->addMinute()]);
         $this->actingAs($viewer)->get(route('feed'))->assertOk()
-            ->assertViewHas('pkFeedAds', fn ($ads) => $ads->pluck('id')->all() === [$boost->id]);
+            ->assertViewHas('pkFeedAds', fn ($ads) => $ads->count() >= 2 && $ads->first()->id === $boost->id);
         $this->travel(2)->minutes();
         $this->get(route('feed'))->assertOk()->assertViewHas('pkFeedAds', fn ($ads) => $ads->count() === 2 && $ads->contains('id', $ordinary->id));
     }
@@ -80,7 +82,7 @@ class FeedPromotedOffersFeatureTest extends TestCase
         for ($i = 0; $i < 145; $i++) $this->offer($author);
         $boost = $this->offer($author, ['created_at' => now()->subYear(), 'is_boosted' => true, 'boost_end' => now()->addDay()]);
         $this->actingAs($viewer)->get(route('feed'))->assertOk()
-            ->assertViewHas('pkFeedAds', fn ($ads) => $ads->pluck('id')->all() === [$boost->id]);
+            ->assertViewHas('pkFeedAds', fn ($ads) => $ads->count() >= 2 && $ads->first()->id === $boost->id);
         for ($i = 0; $i < 7; $i++) $this->offer($author, ['is_boosted' => true, 'boost_end' => now()->addDay()]);
         $this->get(route('feed'))->assertOk()->assertViewHas('pkFeedAds', fn ($ads) => $ads->count() === 6 && $ads->every(fn ($ad) => $ad->isCurrentlyBoosted()));
     }
@@ -95,7 +97,7 @@ class FeedPromotedOffersFeatureTest extends TestCase
         $this->actingAs($viewer)->get(route('feed'))->assertOk()
             ->assertViewHas('pkFeedAds', fn ($ads) => $ads->pluck('id')->all() === [$request->id]);
         $this->get(route('feed', ['mode' => 'client']))->assertOk()
-            ->assertViewHas('pkFeedAds', fn ($ads) => $ads->pluck('id')->all() === [$boost->id]);
+            ->assertViewHas('pkFeedAds', fn ($ads) => $ads->count() >= 2 && $ads->first()->id === $boost->id);
     }
 
     private function offer(User $author, array $attributes = []): Ad
