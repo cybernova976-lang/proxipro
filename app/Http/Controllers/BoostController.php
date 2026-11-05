@@ -216,7 +216,7 @@ class BoostController extends Controller
                     'quantity' => 1,
                 ]],
                 'mode' => 'payment',
-                'success_url' => route('boost.success', ['ad' => $ad->id, 'package' => $request->package]).'?session_id={CHECKOUT_SESSION_ID}',
+                'success_url' => $this->checkoutReturnUrl('boost.success', ['ad' => $ad->id, 'package' => $request->package]),
                 'cancel_url' => route('boost.show', $ad),
                 'customer_email' => $user->email,
                 'metadata' => [
@@ -242,13 +242,13 @@ class BoostController extends Controller
      */
     public function success(Request $request)
     {
-        $ad = Ad::findOrFail($request->ad);
-        $packageKey = $request->package;
+        $ad = $this->adFromCheckoutReturn($request);
+        $packageKey = $request->query('package');
 
         if (Auth::id() !== $ad->user_id) {
             return redirect()->route('homepage')->with('error', 'Accès non autorisé.');
         }
-        if (! isset($this->boostPackages[$packageKey])) {
+        if (! is_string($packageKey) || ! isset($this->boostPackages[$packageKey])) {
             return redirect()->route('boost.show', $ad)->with('error', 'Pack de boost invalide.');
         }
 
@@ -418,7 +418,7 @@ class BoostController extends Controller
                     'quantity' => 1,
                 ]],
                 'mode' => 'payment',
-                'success_url' => route('ads.refresh.success', ['ad' => $ad->id]).'?session_id={CHECKOUT_SESSION_ID}',
+                'success_url' => $this->checkoutReturnUrl('ads.refresh.success', ['ad' => $ad->id]),
                 'cancel_url' => route('boost.show', $ad),
                 'customer_email' => $user->email,
                 'metadata' => [
@@ -443,7 +443,7 @@ class BoostController extends Controller
      */
     public function refreshAdSuccess(Request $request)
     {
-        $ad = Ad::findOrFail($request->ad);
+        $ad = $this->adFromCheckoutReturn($request);
 
         if (Auth::id() !== $ad->user_id) {
             return redirect()->route('homepage')->with('error', 'Accès non autorisé.');
@@ -567,7 +567,7 @@ class BoostController extends Controller
                     'quantity' => 1,
                 ]],
                 'mode' => 'payment',
-                'success_url' => route('boost.urgent.success', ['ad' => $ad->id]).'?session_id={CHECKOUT_SESSION_ID}',
+                'success_url' => $this->checkoutReturnUrl('boost.urgent.success', ['ad' => $ad->id]),
                 'cancel_url' => route('boost.after-creation', $ad),
                 'customer_email' => $user->email,
                 'metadata' => [
@@ -592,7 +592,7 @@ class BoostController extends Controller
      */
     public function urgentSuccess(Request $request)
     {
-        $ad = Ad::findOrFail($request->ad);
+        $ad = $this->adFromCheckoutReturn($request);
 
         if (Auth::id() !== $ad->user_id) {
             return redirect()->route('homepage')->with('error', 'Accès non autorisé.');
@@ -622,10 +622,33 @@ class BoostController extends Controller
         );
     }
 
+    private function checkoutReturnUrl(string $route, array $parameters): string
+    {
+        // Stripe replaces this literal placeholder after checkout.
+        return route($route).'?session_id={CHECKOUT_SESSION_ID}&'.http_build_query($parameters);
+    }
+
+    private function adFromCheckoutReturn(Request $request): Ad
+    {
+        // Earlier checkouts appended "?session_id=..." inside the final query value.
+        $lastKey = $request->routeIs('boost.success') ? 'package' : 'ad';
+        $value = $request->query($lastKey);
+        if (! $request->query->has('session_id') && is_string($value)
+            && preg_match('/^([^?]+)\?session_id=(cs_[A-Za-z0-9_]+)$/D', $value, $match)) {
+            $request->query->set($lastKey, $match[1]);
+            $request->query->set('session_id', $match[2]);
+        }
+
+        $adId = filter_var($request->query('ad'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        abort_if($adId === false, 404);
+
+        return Ad::findOrFail($adId);
+    }
+
     private function retrieveCheckoutSession(Request $request, Ad $ad)
     {
-        $sessionId = (string) $request->query('session_id', '');
-        if ($sessionId === '' || ! config('services.stripe.secret')) {
+        $sessionId = $request->query('session_id');
+        if (! is_string($sessionId) || $sessionId === '' || ! config('services.stripe.secret')) {
             return null;
         }
 
