@@ -464,6 +464,14 @@ class User extends Authenticatable
             return 'Auto-entrepreneur';
         }
 
+        if ($this->isParticulierPrestataire()) {
+            return 'Particulier prestataire';
+        }
+
+        if ($this->isProfessionnel() || $this->user_type === 'professionnel') {
+            return 'Professionnel';
+        }
+
         return 'Particulier';
     }
 

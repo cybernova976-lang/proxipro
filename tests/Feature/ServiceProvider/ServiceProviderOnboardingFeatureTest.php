@@ -29,11 +29,12 @@ class ServiceProviderOnboardingFeatureTest extends TestCase
             ->assertSee('Activer mon profil prestataire')
             ->assertSee(route('service-provider.start'), false);
 
-        $this->get(route('service-provider.start'))
-            ->assertRedirect(route('profile.show'))
-            ->assertSessionHas('open_provider_onboarding', true);
+        $activationUrl = route('profile.show', ['activer_prestataire' => 1]);
+        $this->get(route('service-provider.start'))->assertRedirect($activationUrl);
 
-        $this->get(route('profile.show'))
+        // Background session requests can run between the redirect and the profile page.
+        $this->get('/auth/session-activity')->assertOk();
+        $this->get($activationUrl)
             ->assertOk()
             ->assertSee('openProviderOnboarding', false)
             ->assertSee('becomeProviderModal', false);
@@ -64,6 +65,10 @@ class ServiceProviderOnboardingFeatureTest extends TestCase
             ->get(route('service-provider.start'))
             ->assertRedirect(route('verification.index'))
             ->assertSessionHas('error');
+
+        $this->get(route('profile.show', ['activer_prestataire' => 1]))
+            ->assertOk()
+            ->assertDontSee('openProviderOnboarding', false);
     }
 
     public function test_active_provider_entry_point_opens_service_management(): void
@@ -151,9 +156,31 @@ class ServiceProviderOnboardingFeatureTest extends TestCase
         $this->assertSame(1, UserService::where('user_id', $user->id)->count());
         $this->assertSame(0, Ad::where('user_id', $user->id)->count());
 
+        $this->post(route('logout'))->assertRedirect();
+        $this->assertGuest();
+        $this->post(route('login.attempt'), [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertRedirect(route('feed'));
+        $this->assertAuthenticatedAs($user);
+
         $this->get(route('profile.show'))
             ->assertOk()
-            ->assertSee('Particulier prestataire non professionnel');
+            ->assertSee('Particulier prestataire non professionnel')
+            ->assertSee('Gérer mes services')
+            ->assertDontSee('Activer mon profil prestataire');
+
+        $this->get(route('feed'))
+            ->assertOk()
+            ->assertViewHas('pkRole', 'provider')
+            ->assertSee('<span class="user-type-badge">Particulier prestataire</span>', false);
+
+        $this->get(route('service-provider.start'))
+            ->assertRedirect(route('service-provider.mes-services'));
+        $this->get(route('service-provider.mes-services'))
+            ->assertOk()
+            ->assertSee('Prestataire actif')
+            ->assertSee('Femme/Homme de ménage');
 
         $this->get(route('profile.public', $user))
             ->assertOk()

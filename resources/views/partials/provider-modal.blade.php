@@ -1664,6 +1664,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify(bodyData)
@@ -1679,6 +1680,9 @@
                     return;
                 }
                 showSuccessStep(data);
+            } else if (data.is_service_provider) {
+                showSuccessStep(data);
+                showError(data.message);
             } else {
                 showError(data.message || 'Une erreur est survenue.');
                 if (data.redirect) {
@@ -1717,6 +1721,12 @@
     };
     
     function showSuccessStep(result) {
+        // La confirmation peut arriver après la fermeture de la fenêtre.
+        if (!modal.classList.contains('show')) {
+            window.location.reload();
+            return;
+        }
+
         // Cacher toutes les étapes et indicateurs
         document.querySelectorAll('.provider-step-content').forEach(c => c.classList.remove('active'));
         document.getElementById('providerSteps').style.display = 'none';
@@ -1761,9 +1771,9 @@
                         <a href="{{ route('service-provider.mes-services') }}" class="btn btn-success" style="border-radius: 10px; padding: 0.625rem 1.25rem; background: linear-gradient(135deg, #10b981, #059669); border: none;">
                             <i class="fas fa-briefcase me-1"></i> Voir mes services
                         </a>
-                        <button type="button" class="btn btn-outline-secondary" onclick="providerCloseAndReload()" style="border-radius: 10px; padding: 0.625rem 1.25rem;">
+                        <a href="{{ route('feed') }}" class="btn btn-outline-secondary" style="border-radius: 10px; padding: 0.625rem 1.25rem;">
                             <i class="fas fa-home"></i> Retour au feed
-                        </button>
+                        </a>
                     </div>
                 </div>
             `;
@@ -1772,12 +1782,6 @@
             successDiv.classList.add('active');
         }
     }
-    
-    // Fermer et recharger
-    window.providerCloseAndReload = function() {
-        bootstrap.Modal.getInstance(modal).hide();
-        window.location.reload();
-    };
     
     // Aller à la vérification
     window.providerGoToVerification = function() {
@@ -1796,14 +1800,15 @@
     
     // Reset state when modal closes
     modal.addEventListener('hidden.bs.modal', function() {
+        if (document.getElementById('providerSuccessStep')) {
+            window.location.reload();
+            return;
+        }
+
         currentStep = 1;
         selectedCategories = {};
         selectedPlan = null;
         hideError();
-        
-        // Reset success step
-        const successDiv = document.getElementById('providerSuccessStep');
-        if (successDiv) successDiv.remove();
         
         // Restore step indicators
         document.getElementById('providerSteps').style.display = 'flex';

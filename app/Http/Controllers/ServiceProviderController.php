@@ -42,8 +42,7 @@ class ServiceProviderController extends Controller
                 ->with('error', 'Faites vérifier votre identité pour activer votre profil prestataire.');
         }
 
-        return redirect()->route('profile.show')
-            ->with('open_provider_onboarding', true);
+        return redirect()->route('profile.show', ['activer_prestataire' => 1]);
     }
 
     /**
@@ -263,7 +262,8 @@ class ServiceProviderController extends Controller
                 if (! $planConfig || empty($planConfig['enabled'])) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Cet abonnement n’est pas disponible pour le moment.',
+                        'is_service_provider' => true,
+                        'message' => 'Le profil prestataire est actif. L’abonnement choisi est indisponible.',
                     ], 422);
                 }
                 session([
@@ -294,9 +294,8 @@ class ServiceProviderController extends Controller
 
                     return response()->json([
                         'success' => false,
-                        'message' => $e instanceof \DomainException
-                            ? $e->getMessage()
-                            : 'Erreur lors de la création du paiement. Veuillez réessayer.',
+                        'is_service_provider' => true,
+                        'message' => 'Le profil prestataire est actif. Le paiement de l’abonnement n’a pas pu démarrer. Vous pourrez réessayer depuis votre espace PRO.',
                     ], $e instanceof \DomainException ? 422 : 500);
                 }
             }

@@ -6948,7 +6948,7 @@
                                 @endif
                                 <div class="d-none d-md-flex flex-column align-items-start">
                                     <span class="user-name-text">{{ Str::limit(Auth::user()->name, 15) }}</span>
-                                    <span class="user-type-badge">{{ ucfirst(Auth::user()->user_type ?? 'Utilisateur') }}</span>
+                                    <span class="user-type-badge">{{ Auth::user()->getAccountTypeLabel() }}</span>
                                 </div>
                                 <i class="fas fa-chevron-down dropdown-chevron"></i>
                             </button>

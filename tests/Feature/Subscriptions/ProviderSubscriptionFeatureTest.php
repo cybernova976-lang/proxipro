@@ -54,6 +54,31 @@ class ProviderSubscriptionFeatureTest extends TestCase
         $this->assertFalse(PlatformFeatures::proSubscriptionsEnabled());
     }
 
+    public function test_failed_subscription_checkout_reports_the_already_activated_provider_profile(): void
+    {
+        $this->configureReadyPlatform();
+        PlatformFeatures::setProSubscriptionsEnabled(true);
+        $this->mock(ProviderSubscriptionService::class)
+            ->shouldReceive('createCheckoutSession')->once()
+            ->andThrow(new \RuntimeException('Checkout unavailable'));
+        $user = User::factory()->completeForVerification()->create([
+            'identity_verified' => true,
+            'user_type' => 'particulier',
+            'account_type' => 'particulier',
+            'is_service_provider' => false,
+        ]);
+
+        $this->actingAs($user)->postJson(route('service-provider.register'), [
+            'services' => [['main_category' => 'Nettoyage & Entretien', 'subcategory' => 'Femme/Homme de ménage']],
+            'plan' => 'monthly',
+        ])->assertStatus(500)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('is_service_provider', true);
+
+        $this->assertTrue($user->fresh()->isParticulierPrestataire());
+        $this->assertFalse($user->fresh()->hasActiveProSubscription());
+    }
+
     public function test_stripe_subscription_sync_is_idempotent_and_does_not_change_legal_status(): void
     {
         $user = User::factory()->create([
