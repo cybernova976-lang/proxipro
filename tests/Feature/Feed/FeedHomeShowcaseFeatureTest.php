@@ -113,7 +113,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->assertGreaterThan(strpos($html, 'id="pkFeedList"'), strpos($html, 'id="pkProviderList"'),
             'Les profils complètent les annonces, sans repousser le flux principal.');
         $this->assertSame(1, substr_count($html, 'id="pkIntentForm"'));
-        $this->assertStringContainsString('Raccourcis personnels', $html);
+        $this->assertStringContainsString('aria-label="Mon espace particulier"', $html);
 
     }
 
@@ -273,10 +273,11 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             'Le feed inclut de nouveau la barre : elle s y afficherait en double.'
         );
 
-        // La preuve qui compte : la page reellement rendue, pas le gabarit.
+        // Le prestataire conserve la barre basse ; le particulier utilise
+        // les onglets communs, couverts par ClientSpaceNavigationFeatureTest.
         $user = User::factory()->create([
-            'user_type' => 'particulier',
-            'is_service_provider' => false,
+            'user_type' => 'professionnel',
+            'is_service_provider' => true,
         ]);
 
         $html = $this->actingAs($user)->get(route('feed'))->assertOk()->getContent();
@@ -359,19 +360,10 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->actingAs($client)->get(route('demands.tracking'))->assertRedirect(route('home'));
         $clientHtml = $this->get(route('home'))->assertOk()->getContent();
 
-        preg_match('#<nav class="pk-tabbar".*?</nav>#s', $clientHtml, $clientNav);
-        $this->assertNotEmpty($clientNav, 'La barre est absente de la page de suivi.');
-
-        preg_match_all('/<a\s[^>]*class="([^"]*)"[^>]*>.*?<span>([^<]+)<\/span>/s', $clientNav[0], $clientLinks, PREG_SET_ORDER);
-
-        $clientActifs = [];
-        foreach ($clientLinks as $link) {
-            if (str_contains($link[1], 'is-active')) {
-                $clientActifs[] = trim($link[2]);
-            }
-        }
-
-        $this->assertSame(['Suivi'], $clientActifs);
+        preg_match('#<nav class="pk-client-space__tabs".*?</nav>#s', $clientHtml, $clientNav);
+        $this->assertNotEmpty($clientNav, 'Les onglets sont absents de la page de suivi.');
+        $this->assertSame(1, substr_count($clientNav[0], 'aria-current="page"'));
+        $this->assertMatchesRegularExpression('/data-space-section="requests"\s+aria-current="page"/', $clientNav[0]);
 
         $provider = User::factory()->create([
             'user_type' => 'professionnel',

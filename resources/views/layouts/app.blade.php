@@ -21,6 +21,8 @@
         $openGraphType = $metaSection('og_type') ?: 'website';
         $openGraphUrl = $metaSection('og_url') ?: url()->current();
         $openGraphImage = $metaSection('og_image') ?: asset('images/social-card.png');
+        $pkClientSpaceTabs = \App\Support\ClientSpaceNavigation::forRequest(request(), auth()->user(), $pkRole ?? null);
+        $pkClientSpaceVisible = count($pkClientSpaceTabs) > 0;
     @endphp
     <title>{{ $pageTitle }}</title>
 
@@ -6710,8 +6712,11 @@
         border-radius: 50%;
     }
 </style>
+@if($pkClientSpaceVisible && !request()->routeIs('employment.index'))
+    <link rel="stylesheet" href="{{ asset('css/client-space.css') }}?v={{ filemtime(public_path('css/client-space.css')) }}">
+@endif
 </head>
-<body class="device-{{ $deviceType ?? 'desktop' }}{{ ($isMobile ?? false) ? ' is-mobile' : '' }}{{ ($isTablet ?? false) ? ' is-tablet' : '' }}{{ request()->routeIs('feed.mockup', 'feed.mockup.preview') ? ' feed-mockup-route' : '' }}">
+<body class="device-{{ $deviceType ?? 'desktop' }}{{ ($isMobile ?? false) ? ' is-mobile' : '' }}{{ ($isTablet ?? false) ? ' is-tablet' : '' }}{{ request()->routeIs('feed.mockup', 'feed.mockup.preview') ? ' feed-mockup-route' : '' }}{{ $pkClientSpaceVisible ? ' has-client-space' : '' }}">
     {{-- Variables JS pour détection appareil côté client --}}
     <script>
         window.__device = {
@@ -6754,14 +6759,16 @@
                     @endphp
                     <!-- Navigation principale desktop -->
                     <nav class="header-nav-center d-none d-lg-flex align-items-center gap-1" aria-label="Navigation principale">
+                        @unless($pkClientSpaceVisible)
                         <a href="{{ request()->routeIs('feed.mockup.preview') ? route('feed.mockup.preview') : (request()->routeIs('feed.mockup') ? route('feed.mockup') : route('feed')) }}" class="header-nav-btn {{ request()->routeIs('feed', 'feed.mockup', 'feed.mockup.preview') ? 'active' : '' }}">
                             <i class="fas fa-home"></i><span>Accueil</span>
                         </a>
                         <a href="{{ route('home') }}" class="header-nav-btn {{ request()->routeIs('home') ? 'active' : '' }}">
                             <i class="fas fa-clipboard-list"></i><span>Mon suivi</span>
                         </a>
+                        @endunless
                         <a href="{{ route('demand.create') }}" class="header-nav-btn header-nav-btn-primary">
-                            <i class="fas fa-plus-circle"></i><span>Demander un service</span>
+                            <i class="fas fa-plus-circle"></i><span>{{ $pkClientSpaceVisible ? 'Publier une demande' : 'Demander un service' }}</span>
                         </a>
                         <a href="{{ route('contact.index') }}" class="header-nav-btn header-nav-secondary">
                             <i class="fas fa-headset"></i><span>Contact</span>
@@ -7011,16 +7018,18 @@
             </div>
         </header>
 
-        {{-- Navigation secondaire supprimée --}}
+        @if($pkClientSpaceVisible)
+            @include('partials.client-space-navigation')
+        @endif
 
         {{-- Sidebar de navigation --}}
         @auth
-            @if(!request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*'))
+            @if(!$pkClientSpaceVisible && !request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*', 'employment.index') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*'))
                 @include('partials.sidebar')
             @endif
         @endauth
 
-        <main class="@auth @if(!request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*')) main-content-with-sidebar @endif @endauth">
+        <main class="@auth @if(!$pkClientSpaceVisible && !request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*', 'employment.index') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*')) main-content-with-sidebar @endif @endauth">
             @if(session('info'))
                 <div class="pk-flash-info" role="status">
                     <i class="fas fa-circle-info"></i>
@@ -10281,9 +10290,10 @@
     @include('partials.pwa-install')
     @include('partials.user-presence')
 
-    {{-- Barre d'onglets mobile — sur toutes les pages du gabarit. Le partial
-         se tait de lui-meme pour un visiteur non connecte. --}}
-    @include('feed.partials.mobile-tabbar')
+    {{-- Hors de l'espace particulier, la navigation mobile existante reste disponible. --}}
+    @unless($pkClientSpaceVisible)
+        @include('feed.partials.mobile-tabbar')
+    @endunless
     <style>
         .header-nav-center .header-nav-btn { white-space: nowrap; }
         @media (min-width: 992px) and (max-width: 1199.98px) {

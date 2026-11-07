@@ -16,10 +16,4 @@
             <i class="fas fa-chevron-right" aria-hidden="true"></i>
         </a>
     </div>
-    <nav class="pk-client-sections" aria-label="Explorer mon accueil">
-        <a href="#services"><i class="fas fa-th-large" aria-hidden="true"></i> Services</a>
-        <a href="#besoin"><i class="far fa-edit" aria-hidden="true"></i> Décrire mon besoin</a>
-        <a href="#emploi"><i class="fas fa-briefcase" aria-hidden="true"></i> Emploi</a>
-        <a href="{{ route('home') }}"><i class="fas fa-clipboard-list" aria-hidden="true"></i> Mon suivi</a>
-    </nav>
 </section>

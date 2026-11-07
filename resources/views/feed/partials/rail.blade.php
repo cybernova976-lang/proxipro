@@ -1,5 +1,6 @@
 @php($pkIsProvider = ($pkRole ?? 'client') === 'provider')
 <aside class="pk-rail" aria-label="Votre espace et vos repères">
+    @if($pkIsProvider)
     <section class="pk-rcard pk-personal" aria-labelledby="pkPersonalTitle">
         <h2 id="pkPersonalTitle">{{ $pkIsProvider ? 'Mon activité' : 'Mon espace' }}</h2>
         <nav class="pk-shortcuts" aria-label="Raccourcis personnels">
@@ -19,6 +20,7 @@
             @endif
         </nav>
     </section>
+    @endif
     @if(!$pkIsProvider)
         @include('feed.partials.providers')
     @else

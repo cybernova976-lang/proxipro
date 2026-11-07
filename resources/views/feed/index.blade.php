@@ -119,9 +119,6 @@
                 @endif
             </section>
 
-            @if($pkRole === 'client')
-                @include('feed.partials.employment-discovery')
-            @endif
 
         </div>
 

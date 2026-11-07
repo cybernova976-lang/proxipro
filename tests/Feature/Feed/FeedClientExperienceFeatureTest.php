@@ -24,7 +24,10 @@ class FeedClientExperienceFeatureTest extends TestCase
             $response->assertSee(e($url), false);
             $this->get($url)->assertOk()->assertViewHas('preCategory', $category)->assertViewHas('preSubcategory', $subcategory);
         }
-        $response->assertSee('https://candidat.francetravail.fr/rechercheoffre/emploi', false)
+        $response->assertSee(route('employment.index'), false)
+            ->assertDontSee('https://candidat.francetravail.fr/rechercheoffre/emploi', false);
+        $this->get(route('employment.index'))->assertOk()
+            ->assertSee('https://candidat.francetravail.fr/rechercheoffre/emploi', false)
             ->assertSee('La recherche et la candidature se poursuivent sur le site France Travail.')
             ->assertDontSee('notre partenaire');
     }

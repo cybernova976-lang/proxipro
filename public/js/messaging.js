@@ -255,10 +255,21 @@
   window.addEventListener('offline', () => { connection.textContent = 'Hors connexion — votre brouillon est conservé.'; connection.hidden = false; });
   // Le clavier mobile réduit visualViewport sans changer systématiquement 100dvh.
   function viewport() {
+    const clientSpace = document.body.classList.contains('has-client-space');
+    const app = document.getElementById('app');
     if (window.visualViewport && innerWidth < 768) {
-      const headerHeight = document.querySelector('header')?.getBoundingClientRect().height || 68;
-      root.style.height = Math.max(220, window.visualViewport.height - headerHeight) + 'px';
-    } else root.style.height = '';
+      if (clientSpace && app) {
+        // Le conteneur flex répartit la place entre le bandeau et la conversation.
+        app.style.height = window.visualViewport.height + 'px';
+        root.style.height = '';
+      } else {
+        const headerHeight = document.querySelector('header')?.getBoundingClientRect().height || 68;
+        root.style.height = Math.max(220, window.visualViewport.height - headerHeight) + 'px';
+      }
+    } else {
+      root.style.height = '';
+      if (clientSpace && app) app.style.height = '';
+    }
     if (pinned) requestAnimationFrame(bottom);
   }
   window.visualViewport?.addEventListener('resize', viewport);
