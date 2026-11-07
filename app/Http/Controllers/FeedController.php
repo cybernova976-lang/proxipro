@@ -8,6 +8,7 @@ use App\Models\ServiceProposal;
 use App\Models\User;
 use App\Services\AdLifecycleService;
 use App\Services\ClientActivityService;
+use App\Services\ClientFeedOffersService;
 use App\Services\FeedRankingService;
 use App\Services\HomeProviderDiscoveryService;
 use App\Support\MarketplaceCategoryRegistry;
@@ -415,7 +416,8 @@ class FeedController extends Controller
         : route('pro.profile.edit');
         $pkCompletion = max(0, min(100, (int) $proProfileCompletion));
 
-        // --- zone 4 : le flux, six annonces au maximum ---
+        // --- zone 4 : six annonces par page pour les clients ---
+        $pkFeedPagination = null;
         if ($pkRole === 'provider') {
             $pkFeedTitle = 'Demandes qui correspondent à votre métier';
             $matchingQuery = $this->matchingProviderRequestsQuery($user);
@@ -430,9 +432,23 @@ class FeedController extends Controller
         } else {
             $pkMatchingCount = 0;
             $pkFeedTitle = $useNearbyScope && ! $geoFallbackUsed ? 'Services disponibles près de vous' : 'Services à découvrir';
-            $pkFeedAds = collect($homeProfessionalOffers)
-                ->take(6)
-                ->values();
+            $clientOffers = Ad::marketplaceActive()->with('user')
+                ->where('service_type', 'offre')
+                ->where(fn ($domain) => $domain->whereNull('publication_domain')->orWhere('publication_domain', 'service'));
+            if ($user?->exists) {
+                $clientOffers->where('user_id', '!=', $user->id);
+            }
+            $this->applyHomeShowcaseVisibility($clientOffers, $user);
+            if ($useNearbyScope && ! $geoFallbackUsed) {
+                $this->applyAdGeoScope($clientOffers, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null, $userRadius, $geoCity, $geoCountry);
+            }
+            $pkFeedPagination = app(ClientFeedOffersService::class)->paginate($clientOffers, $user);
+            $pkFeedAds = $pkFeedPagination->getCollection();
+
+            // Demonstration records are restricted to the existing local-only preview.
+            if ($request->attributes->get('mockup_local_preview') && $pkFeedPagination->total() === 0) {
+                $pkFeedAds = collect($homeProfessionalOffers)->take(6)->values();
+            }
         }
 
         $pkBrowseUrl = route('ads.index', [
@@ -591,6 +607,7 @@ class FeedController extends Controller
             'pkFeedTitle',
             'pkBrowseUrl',
             'pkFeedAds',
+            'pkFeedPagination',
             'pkSavedAdIds',
             'pkQuickCategories',
             'pkSearchIndex',

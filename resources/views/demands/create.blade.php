@@ -183,6 +183,19 @@ body { background: #f0f2f5; }
 .demand-intake-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .demand-intake-grid .demand-field { margin-bottom: 0; }
 .demand-intake-grid .demand-field label { font-size: .84rem; }
+.demand-writing-help { margin-bottom: 22px; border: 1px solid #c7d2fe; border-radius: 14px; background: #f8f9ff; }
+.demand-writing-help[hidden], .demand-writing-preview[hidden] { display: none; }
+.demand-writing-help summary { padding: 15px; color: #3730a3; font-weight: 700; cursor: pointer; }
+.demand-writing-body { padding: 0 15px 15px; }
+.demand-writing-body > p { margin: 0 0 12px; color: #475569; font-size: .9rem; }
+.demand-writing-choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.demand-writing-choice { min-height: 44px; padding: 9px 13px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; color: #334155; text-align: left; font-size: .88rem; }
+.demand-writing-choice:hover, .demand-writing-choice[aria-pressed="true"] { border-color: #6366f1; background: #eef2ff; color: #3730a3; }
+.demand-writing-choice:focus-visible, .demand-writing-use:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 2px; }
+.demand-writing-preview { margin-top: 12px; padding: 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; }
+.demand-writing-preview p { margin: 0 0 12px; color: #334155; font-size: .9rem; line-height: 1.6; }
+.demand-writing-use { min-height: 44px; padding: 9px 14px; border: 0; border-radius: 9px; background: #4f46e5; color: #fff; font-weight: 600; }
+.demand-writing-status:not(:empty) { margin: 10px 0 0; font-size: .85rem; color: #3730a3; }
 .demand-confirm {
     display: grid; grid-template-columns: 18px minmax(0, 1fr); align-items: start; gap: 8px 11px; padding: 14px 16px; margin-top: 16px;
     border: 1px solid #cbd5e1; border-radius: 12px; background: #fff;
@@ -488,6 +501,19 @@ body { background: #f0f2f5; }
                         <p>Un titre clair et quelques détails suffisent. Les photos restent facultatives.</p>
                     </div>
 
+            <details class="demand-writing-help" id="demandWritingHelp" open hidden>
+                <summary>Besoin d’aide pour décrire ?</summary>
+                <div class="demand-writing-body">
+                    <p>Choisissez votre situation. Utilisez le texte proposé, puis adaptez-le à votre besoin.</p>
+                    <div class="demand-writing-choices" id="demandWritingChoices" role="group" aria-label="Exemples de besoins"></div>
+                    <div class="demand-writing-preview" id="demandWritingPreview" hidden>
+                        <p id="demandWritingText"></p>
+                        <button type="button" class="demand-writing-use" id="demandWritingUse">Utiliser ce texte</button>
+                    </div>
+                    <p class="demand-writing-status" id="demandWritingStatus" role="status" aria-live="polite"></p>
+                </div>
+            </details>
+
                     <div class="demand-intake-card" id="demandIntakeCard" hidden>
                         <div class="demand-intake-head">
                             <span class="demand-intake-icon"><i class="fas fa-wand-magic-sparkles"></i></span>
@@ -646,9 +672,11 @@ body { background: #f0f2f5; }
 @endsection
 
 @section('scripts')
+<script src="{{ asset('js/demand-writing-helper.js') }}?v=20261107"></script>
 <script>
 const categoriesData = @json($categoriesData);
 const intakeSchemas = @json($intakeSchemas);
+const demandWritingExamples = @json(config('demand_writing_examples', []));
 const oldServiceDetails = @json(old('service_details', []));
 const preCategory = @json($preCategory);
 const preSubcategory = @json($preSubcategory);
@@ -872,6 +900,7 @@ function filterDemandCategories(query) {
 }
 
 function renderDemandIntake(values = {}) {
+    renderDemandWritingHelp();
     const card = document.getElementById('demandIntakeCard');
     const container = document.getElementById('demandIntakeFields');
     const schema = intakeSchemas[selectedCat];
@@ -935,6 +964,57 @@ function renderDemandIntake(values = {}) {
     });
 
     card.hidden = false;
+}
+
+function renderDemandWritingHelp() {
+    const helper = window.ProkejemDemandWriting;
+    const panel = document.getElementById('demandWritingHelp');
+    const choices = document.getElementById('demandWritingChoices');
+    const preview = document.getElementById('demandWritingPreview');
+    const status = document.getElementById('demandWritingStatus');
+    panel.hidden = !selectedSub || !helper;
+    choices.replaceChildren();
+    preview.hidden = true;
+    status.textContent = '';
+    if (panel.hidden) return;
+
+    const title = document.getElementById('demandTitle');
+    const description = document.getElementById('demandDesc');
+    const use = document.getElementById('demandWritingUse');
+    helper.examplesFor(selectedSub, demandWritingExamples).forEach(example => {
+        const choice = document.createElement('button');
+        choice.type = 'button';
+        choice.className = 'demand-writing-choice';
+        choice.textContent = example.label;
+        choice.setAttribute('aria-pressed', 'false');
+        choice.addEventListener('click', () => {
+            choices.querySelectorAll('button').forEach(button => button.setAttribute('aria-pressed', String(button === choice)));
+            document.getElementById('demandWritingText').textContent = example.description;
+            use.textContent = description.value.trim() ? 'Ajouter à ma description' : 'Utiliser ce texte';
+            status.textContent = '';
+            preview.hidden = false;
+            use.onclick = () => {
+                const result = helper.applyExample(title.value, description.value, example, description.maxLength);
+                if (result.status !== 'added') {
+                    status.textContent = result.status === 'duplicate'
+                        ? 'Ce texte figure déjà dans votre description.'
+                        : 'Votre description est déjà longue. Raccourcissez-la avant d’ajouter cet exemple.';
+                    return;
+                }
+                title.value = result.title;
+                description.value = result.description;
+                title.dispatchEvent(new Event('input', {bubbles: true}));
+                description.dispatchEvent(new Event('input', {bubbles: true}));
+                updateDescriptionCount();
+                scheduleDraftSave();
+                status.textContent = 'Texte ajouté. Vous pouvez le modifier et ajouter vos précisions.';
+                preview.hidden = true;
+                description.focus({preventScroll: true});
+                description.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+            };
+        });
+        choices.appendChild(choice);
+    });
 }
 
 function currentServiceDetails() {

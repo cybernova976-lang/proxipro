@@ -11,7 +11,7 @@
 @endpush
 
 @section('content')
-<div class="pk-feed" id="pkFeed">
+<div class="pk-feed{{ $pkRole === 'client' ? ' pk-feed--client' : '' }}" id="pkFeed">
     <div class="pk-body">
 
         <div class="pk-welcome">
@@ -27,7 +27,11 @@
                 </nav>
             @endif
 
-            @include('feed.partials.state-card')
+            @if($pkRole === 'client')
+                @include('feed.partials.client-welcome')
+            @else
+                @include('feed.partials.state-card')
+            @endif
         </div>
 
         <div class="pk-main">
@@ -35,10 +39,11 @@
                 <div id="pkClientActivity" data-refresh-url="{{ route('client-activity.refresh') }}" data-revision="{{ $pkClientActivity['revision'] }}">
                     @include('feed.partials.client-activity')
                 </div>
+                @include('feed.partials.quick-needs')
             @endif
 
             {{-- Zone 4 · le flux adapte au role --}}
-            <section class="pk-listings" aria-labelledby="pkFeedTitle">
+            <section class="pk-listings" id="services" aria-labelledby="pkFeedTitle">
                 <div class="pk-sechead">
                     <div>
                         <h2 id="pkFeedTitle">{{ $pkFeedTitle }}</h2>
@@ -63,6 +68,9 @@
                     </a>
                 </div>
 
+                @if($pkRole === 'client' && $pkFeedAds->isNotEmpty())
+                    <p class="pk-feed-selection"><i class="fas fa-info-circle" aria-hidden="true"></i> Les offres Boost et Premium actives sont prioritaires. Les autres offres complètent la sélection.</p>
+                @endif
                 <div class="pk-feed-list" id="pkFeedList">
                     @forelse($pkFeedAds as $ad)
                         @include('feed.partials.ad-card', ['ad' => $ad, 'pkSaved' => $pkSavedAdIds])
@@ -84,6 +92,22 @@
                     @endforelse
                 </div>
 
+                @if($pkRole === 'client' && $pkFeedPagination?->hasPages())
+                    <nav class="pk-feed-pagination" aria-label="Pages des offres de services">
+                        @if($pkFeedPagination->previousPageUrl())
+                            <a href="{{ $pkFeedPagination->previousPageUrl() }}" rel="prev"><i class="fas fa-chevron-left" aria-hidden="true"></i> Précédent</a>
+                        @else
+                            <span></span>
+                        @endif
+                        <span>Page {{ $pkFeedPagination->currentPage() }} sur {{ $pkFeedPagination->lastPage() }}</span>
+                        @if($pkFeedPagination->nextPageUrl())
+                            <a href="{{ $pkFeedPagination->nextPageUrl() }}" rel="next">Suivant <i class="fas fa-chevron-right" aria-hidden="true"></i></a>
+                        @else
+                            <span></span>
+                        @endif
+                    </nav>
+                @endif
+
                 @if($pkFeedAds->isNotEmpty())
                     <a href="{{ $pkBrowseUrl }}" class="pk-seeall">
                         <i class="fas fa-clipboard-list"></i>
@@ -94,6 +118,10 @@
                     </a>
                 @endif
             </section>
+
+            @if($pkRole === 'client')
+                @include('feed.partials.employment-discovery')
+            @endif
 
         </div>
 

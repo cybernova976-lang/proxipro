@@ -99,7 +99,11 @@
             @elseif($pkIsFresh)
                 <span class="pk-tag pk-tag--new">Nouveau</span>
             @endif
-            @if($pkIsBoosted)<span class="pk-tag pk-tag--boost">Boosté</span>@endif
+            @if($pkIsBoosted)
+                <span class="pk-tag pk-tag--boost">Boosté</span>
+            @elseif($pkRole === 'client' && $ad->feed_is_promoted)
+                <span class="pk-tag pk-tag--boost">Premium</span>
+            @endif
         </div>
         <h3><a href="{{ $pkUrl }}">{{ $ad->title }}</a></h3>
         <div class="pk-ad__facts">

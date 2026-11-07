@@ -15,6 +15,25 @@ class GuidedDemandPublicationFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_writing_examples_are_optional_and_use_real_service_categories(): void
+    {
+        $categories = collect(config('categories.services'))->flatMap(fn ($category) => $category['subcategories'])->all();
+        foreach (config('demand_writing_examples') as $service => $examples) {
+            $this->assertContains($service, $categories);
+            foreach ($examples as [$label, $title, $description]) {
+                $this->assertNotEmpty($label);
+                $this->assertLessThanOrEqual(255, mb_strlen($title));
+                $this->assertLessThanOrEqual(2000, mb_strlen($description));
+            }
+        }
+
+        $this->get(route('demand.create', ['category' => 'Bricolage & Travaux', 'subcategory' => 'Plombier']))
+            ->assertOk()
+            ->assertSee('Besoin d’aide pour décrire ?')
+            ->assertSee('id="demandWritingUse"', false)
+            ->assertSee(asset('js/demand-writing-helper.js'), false);
+    }
+
     public function test_guided_form_exposes_five_short_steps_and_local_draft_controls(): void
     {
         $response = $this->get(route('demand.create'));
