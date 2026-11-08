@@ -383,6 +383,27 @@ class GuidedDemandSituationFeatureTest extends TestCase
         }
     }
 
+    public function test_published_screen_offers_the_urgent_option_with_its_real_effects_only(): void
+    {
+        $client = $this->mayotteClient();
+        $ad = $this->publishedDemand($client);
+
+        $response = $this->actingAs($client)->withSession(['demand_published' => true])->get(route('demand.matching', $ad))->assertOk()
+            ->assertSee('Besoin de réponses plus vite ?')
+            ->assertSee('votre demande passe avant les autres demandes du même métier dans l’accueil des prestataires')
+            ->assertSee('15 points ou 14,00 €')
+            ->assertSee(route('boost.after-creation', $ad), false)
+            ->assertDontSee('Notifications aux utilisateurs proches');
+
+        // Toujours un seul bouton plein : l'option Urgent est un lien en contour.
+        $published = $this->fragment($response, '//*[contains(concat(" ", normalize-space(@class), " "), " pk-published ")]');
+        $this->assertSame(1, $published['xpath']->query('.//*[contains(concat(" ", normalize-space(@class), " "), " pk-btn ")]', $published['node'])->length);
+
+        $ad->forceFill(['is_urgent' => true, 'urgent_until' => now()->addDays(3)])->save();
+        $this->actingAs($client)->withSession(['demand_published' => true])->get(route('demand.matching', $ad))->assertOk()
+            ->assertDontSee('Besoin de réponses plus vite ?');
+    }
+
     public function test_whatsapp_help_is_hidden_by_default_and_without_number_or_hours(): void
     {
         $url = route('demand.create', ['situation' => 'fuite-eau']);

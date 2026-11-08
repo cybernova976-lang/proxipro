@@ -305,6 +305,7 @@ Route::middleware(['auth'])->prefix('demande')->name('demand.')->group(function 
     Route::put('/brouillon', [\App\Http\Controllers\DemandController::class, 'saveDraft'])
         ->middleware('throttle:30,1')
         ->name('draft.save');
+    Route::delete('/brouillon', [\App\Http\Controllers\DemandController::class, 'destroyDraft'])->name('draft.destroy');
     Route::post('/', [\App\Http\Controllers\DemandController::class, 'store'])->name('store');
     Route::get('/{ad}/professionnels', [\App\Http\Controllers\DemandController::class, 'matching'])->name('matching');
     Route::get('/{ad}/matching-api', [\App\Http\Controllers\DemandController::class, 'matchingApi'])->name('matching.api');

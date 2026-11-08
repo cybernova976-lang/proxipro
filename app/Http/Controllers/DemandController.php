@@ -109,6 +109,14 @@ class DemandController extends Controller
         return response()->json(['saved' => true]);
     }
 
+    /** Abandonne le brouillon de demande du compte (carte « Reprendre ma demande » de l'accueil). */
+    public function destroyDraft(Request $request)
+    {
+        DemandDraft::where('user_id', $request->user()->id)->delete();
+
+        return redirect()->route('feed')->with('success', 'Votre brouillon de demande a été supprimé.');
+    }
+
     /**
      * Enregistre la demande et redirige vers la page de matching
      */

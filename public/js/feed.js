@@ -259,3 +259,13 @@
     }
   }
 })();
+
+/* Confirmation des actions destructives de l'accueil (ex. « Abandonner » un brouillon). */
+(function () {
+  'use strict';
+  document.querySelectorAll('form[data-pk-confirm]').forEach(function (form) {
+    form.addEventListener('submit', function (event) {
+      if (!window.confirm(form.getAttribute('data-pk-confirm'))) event.preventDefault();
+    });
+  });
+})();

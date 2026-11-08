@@ -451,9 +451,10 @@ body { background: #f0f2f5; }
         <a href="{{ route('feed') }}" class="matching-action-btn matching-action-feed">
             <i class="fas fa-home"></i> Retour au feed
         </a>
-        @if($ad && !$ad->is_boosted && $totalMatchCount > 0 && ! session('demand_published') && ! session('demand_duplicate'))
-        <a href="{{ route('ads.show', $ad->id) }}?boost=1" class="matching-action-btn matching-action-boost">
-            <i class="fas fa-rocket"></i> Booster ma demande
+        {{-- Une demande ne se booste pas (aucun effet) : seule l'option Urgent agit sur l'accueil des prestataires. --}}
+        @if($ad && $ad->service_type === 'demande' && ! ($ad->is_urgent && $ad->urgent_until?->isFuture()) && ! session('demand_published') && ! session('demand_duplicate'))
+        <a href="{{ route('boost.after-creation', $ad) }}" class="matching-action-btn matching-action-boost">
+            <i class="fas fa-bolt"></i> Option Urgent
         </a>
         @endif
     </div>

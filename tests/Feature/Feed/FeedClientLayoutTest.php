@@ -62,6 +62,27 @@ class FeedClientLayoutTest extends TestCase
         }
     }
 
+    public function test_an_incomplete_page_gets_a_honest_filler_card(): void
+    {
+        $client = $this->mayotteClient();
+        $provider = User::factory()->create(['user_type' => 'professionnel', 'is_service_provider' => true]);
+        foreach (range(1, 5) as $i) {
+            Ad::create(['user_id' => $provider->id, 'title' => "Offre {$i}", 'description' => 'Dépannage.',
+                'category' => 'Plombier', 'city' => 'Mamoudzou', 'country' => 'Mayotte', 'location' => 'Mamoudzou',
+                'service_type' => 'offre', 'status' => 'active', 'visibility' => 'public']);
+        }
+
+        $this->actingAs($client)->get(route('feed'))->assertOk()
+            ->assertSee('class="pk-feed-filler"', false)
+            ->assertSee('Vous ne trouvez pas votre service ?')
+            ->assertSee('les prestataires de Mayotte pourront vous faire une proposition');
+
+        Ad::create(['user_id' => $provider->id, 'title' => 'Offre 6', 'description' => 'Dépannage.',
+            'category' => 'Plombier', 'city' => 'Mamoudzou', 'country' => 'Mayotte', 'location' => 'Mamoudzou',
+            'service_type' => 'offre', 'status' => 'active', 'visibility' => 'public']);
+        $this->actingAs($client)->get(route('feed'))->assertOk()->assertDontSee('pk-feed-filler', false);
+    }
+
     /** Couleurs et points de rupture des styles client (CLAUDE.md §4). */
     public function test_client_styles_use_the_indigo_ramp_and_the_three_breakpoints(): void
     {

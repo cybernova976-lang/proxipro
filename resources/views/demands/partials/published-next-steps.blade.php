@@ -25,6 +25,7 @@
             <button type="button" class="pk-btn-outline" data-pk-share data-url="{{ $pkAdUrl }}" data-text="{{ $ad->title }}">Envoyer à un artisan que je connais</button>
             <button type="button" class="pk-btn-outline" data-push-enable data-pk-push-offer hidden>Activer les notifications pour recevoir les réponses</button>
         </div>
+        @include('demands.partials.urgent-offer', ['ad' => $ad])
     @endif
 </section>
 @push('scripts')

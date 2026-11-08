@@ -595,10 +595,8 @@
             <h3>🔥 Publication Urgente</h3>
             <div class="card-duration"><i class="fas fa-clock me-1"></i>7 jours</div>
             <ul class="card-features">
-                <li><i class="fas fa-check-circle"></i> Épinglée dans la section "Urgentes"</li>
-                <li><i class="fas fa-check-circle"></i> Visible en priorité sur la page d'accueil</li>
-                <li><i class="fas fa-check-circle"></i> Badge URGENT sur l'annonce</li>
-                <li><i class="fas fa-check-circle"></i> Notifications aux utilisateurs proches</li>
+                <li><i class="fas fa-check-circle"></i> Passe avant les autres demandes du même métier dans l’accueil des prestataires</li>
+                <li><i class="fas fa-check-circle"></i> Mention « Urgent · option payante » sur votre demande</li>
             </ul>
             <div class="card-price">
                 <span class="pts">15 pts</span>

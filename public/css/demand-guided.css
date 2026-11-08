@@ -255,3 +255,12 @@
   .pk-published *,
   .pk-request-switch * { transition: none !important; animation: none !important; }
 }
+
+/* Option Urgent proposée après la publication (demands/partials/urgent-offer). */
+.pk-urgent-offer { margin-top: 20px; padding: 18px 20px; border: 1px solid var(--pkg-200); border-radius: 14px; background: var(--pkg-50); color: var(--pkg-950); }
+.pk-urgent-offer h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 1rem; font-weight: 800; }
+.pk-urgent-offer h3 i { color: var(--pkg-violet); }
+.pk-urgent-offer p { margin: 0 0 6px; font-size: .9rem; line-height: 1.55; }
+.pk-urgent-offer ul { margin: 0 0 10px; padding-left: 20px; font-size: .9rem; line-height: 1.6; }
+.pk-urgent-offer__price { font-weight: 800; color: var(--pkg-800); }
+.pk-urgent-offer .pk-btn-outline { margin-top: 4px; }

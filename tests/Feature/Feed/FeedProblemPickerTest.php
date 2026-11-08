@@ -66,6 +66,33 @@ class FeedProblemPickerTest extends TestCase
         $this->assertSame(['Reprendre ma demande'], $this->filledButtons($html));
     }
 
+    public function test_draft_can_be_abandoned_from_the_feed(): void
+    {
+        $client = $this->client();
+        DemandDraft::create(['user_id' => $client->id, 'payload' => ['category' => 'Bricolage & Travaux'], 'current_step' => 2, 'last_activity_at' => now()]);
+
+        $this->actingAs($client)->get(route('feed'))->assertOk()
+            ->assertSee('Abandonner')
+            ->assertSee('action="'.route('demand.draft.destroy').'"', false);
+
+        $this->delete(route('demand.draft.destroy'))->assertRedirect(route('feed'));
+        $this->assertDatabaseMissing('demand_drafts', ['user_id' => $client->id]);
+
+        $this->get(route('feed'))->assertOk()
+            ->assertSee('Votre brouillon de demande a été supprimé.')
+            ->assertDontSee('Reprendre ma demande')
+            ->assertViewHas('pkPrimaryAction', fn ($action) => $action['state'] === 'publish');
+    }
+
+    public function test_a_member_cannot_delete_someone_else_s_draft(): void
+    {
+        $owner = $this->client();
+        DemandDraft::create(['user_id' => $owner->id, 'payload' => [], 'current_step' => 1, 'last_activity_at' => now()]);
+
+        $this->actingAs($this->client())->delete(route('demand.draft.destroy'))->assertRedirect(route('feed'));
+        $this->assertDatabaseHas('demand_drafts', ['user_id' => $owner->id]);
+    }
+
     public function test_header_publish_button_is_secondary_on_the_client_feed_only(): void
     {
         $client = $this->client();

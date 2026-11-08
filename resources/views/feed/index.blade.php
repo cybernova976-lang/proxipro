@@ -96,6 +96,9 @@
                             </a>
                         </div>
                     @endforelse
+                    @if($pkRole === 'client' && $pkFeedAds->count() >= 4 && $pkFeedAds->count() < 6)
+                        @include('feed.partials.feed-filler', ['pkFillerWide' => $pkFeedAds->count() === 4])
+                    @endif
                 </div>
                 @endif
 
