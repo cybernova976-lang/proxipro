@@ -71,7 +71,9 @@
                                 <div class="d-flex justify-content-center gap-2">
                                     <a href="{{ route('ads.show', $ad->id) }}" class="btn btn-sm btn-outline-secondary" title="Voir"><i class="fas fa-eye"></i></a>
                                     <a href="{{ route('ads.edit', $ad->id) }}" class="btn btn-sm btn-outline-primary" title="Modifier"><i class="fas fa-pen"></i></a>
+                                    @if($ad->service_type === 'offre')
                                     <a href="{{ route('boost.show', $ad->id) }}" class="btn btn-sm btn-outline-warning" title="Booster"><i class="fas fa-rocket"></i></a>
+                                    @endif
                                     <form action="{{ route('ads.destroy', $ad->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Supprimer cette annonce ?');">
                                         @csrf
                                         @method('DELETE')

@@ -9,6 +9,7 @@ use App\Support\AdPromotionCatalog;
 use App\Support\StripeSessionData;
 use DomainException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AdPromotionPaymentService
 {
@@ -100,19 +101,25 @@ class AdPromotionPaymentService
                     'is_boosted' => true,
                     'boost_end' => $startsAt->addDays($package['duration_days']),
                     'boost_type' => $packageKey,
+                    'boost_source' => null,
                 ])->save();
             } elseif ($type === 'refresh') {
-                $ad->forceFill([
-                    'updated_at' => now(),
-                    'is_boosted' => false,
-                    'boost_end' => null,
-                    'boost_type' => null,
-                ])->save();
+                // Remontée suspendue (AdPromotionCatalog::refreshAvailable) : un paiement
+                // engagé avant la suspension est enregistré ci-dessus, mais l'annonce
+                // n'est pas modifiée et un boost en cours n'est jamais annulé.
+                Log::warning('Remontée payée reçue alors que sa vente est suspendue : annonce et boost inchangés.', [
+                    'ad_id' => $ad->id,
+                    'user_id' => $userId,
+                    'stripe_session_id' => $sessionId,
+                    'transaction_id' => $transaction->id,
+                    'boost_end' => $ad->isCurrentlyBoosted() ? $ad->boost_end?->toIso8601String() : null,
+                ]);
             } else {
                 $config = AdPromotionCatalog::urgent();
                 $ad->forceFill([
                     'is_urgent' => true,
                     'urgent_until' => now()->addDays($config['duration_days']),
+                    'urgent_source' => null,
                     'sidebar_priority' => 1,
                 ])->save();
             }

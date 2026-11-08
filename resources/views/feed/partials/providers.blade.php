@@ -14,16 +14,22 @@
     $pkProviderCity = $pkProviderCity ?? null;
     $pkProviderCountry = $pkProviderCountry ?? null;
     $pkDiscovery = $pkProviderDiscovery ?? ['expanded' => false, 'requested_location' => ''];
+    $pkProviderTerritory = $pkDiscovery['territory'] ?? null;
     $pkDirectoryUrl = route('feed.professionals', array_filter([
         'subcategory' => $pkProviderCategory, 'city' => $pkProviderCity, 'country' => $pkProviderCountry,
     ]));
+    $pkProsHeading = match (true) {
+        (bool) $pkProviderCity => 'Prestataires à '.$pkProviderCity,
+        $pkProviderTerritory !== null => 'Prestataires '.$pkProviderTerritory->withPreposition(),
+        default => 'Prestataires à découvrir',
+    };
 @endphp
+@if($pkProviders->isNotEmpty())
 <section id="pkProviderList" class="pk-provider-discovery" aria-labelledby="pkProsTitle">
-    @if($pkProviders->isNotEmpty())
     <div class="pk-sechead">
         <div>
             <span class="pk-provider-eyebrow">Des personnes, des savoir-faire</span>
-            <h2 id="pkProsTitle">{{ $pkProviderCity ? 'Prestataires à '.$pkProviderCity : 'Prestataires à découvrir' }}</h2>
+            <h2 id="pkProsTitle">{{ $pkProsHeading }}</h2>
             <p class="pk-sechead__sub">
                 {{ $pkProviderCountry ? $pkProviderCountry.' · ' : '' }}Consultez les profils et échangez avant de choisir.
             </p>
@@ -33,7 +39,12 @@
         </a>
     </div>
 
-    @if($pkDiscovery['expanded'])
+    @if($pkDiscovery['expanded'] && ($pkDiscovery['scope'] ?? null) === 'territory')
+        <p class="pk-provider-location-note"><i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+            <span>Pas encore de profil public à {{ $pkDiscovery['requested_location'] }}.
+            Voici des prestataires basés ailleurs {{ $pkProviderTerritory?->withPreposition() }} : vérifiez leur zone d’intervention avant de les contacter.</span>
+        </p>
+    @elseif($pkDiscovery['expanded'])
         <p class="pk-provider-location-note"><i class="fas fa-map-marker-alt" aria-hidden="true"></i>
             <span>Pas encore de profil public à {{ $pkDiscovery['requested_location'] }}.
             Voici des prestataires basés ailleurs : vérifiez leur zone d’intervention avant de les contacter.</span>
@@ -125,17 +136,5 @@
         <p class="pk-selection-note">Métiers variés · sélection renouvelée chaque jour, sans priorité liée à l’abonnement.</p>
         <a href="{{ route('feed.professionals') }}">Changer de zone ou de métier <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
     </div>
-    @else
-        <div class="pk-provider-empty">
-            <span class="pk-provider-empty__icon" aria-hidden="true"><i class="far fa-compass"></i></span>
-            <div class="pk-provider-empty__copy">
-                <h2 id="pkProsTitle">Un prestataire pour votre projet</h2>
-                <p>Aucun profil public ne correspond encore à ces critères.</p>
-                @if($pkProviderCategory || $pkProviderCity)
-                    <span class="pk-provider-empty__criteria">{{ implode(' · ', array_filter([$pkProviderCategory, $pkProviderCity, $pkProviderCountry])) }}</span>
-                @endif
-            </div>
-            <a href="{{ route('feed.professionals') }}">Élargir ma recherche <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
-        </div>
-    @endif
 </section>
+@endif

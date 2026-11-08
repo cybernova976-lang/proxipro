@@ -10,6 +10,11 @@ use Illuminate\Http\Request;
 
 class IpGeolocationService
 {
+    /** Position par défaut (Mamoudzou) : ce n'est jamais une mesure. */
+    public const DEFAULT_LATITUDE = -12.8275;
+
+    public const DEFAULT_LONGITUDE = 45.1662;
+
     /**
      * Détecte la localisation de l'utilisateur par plusieurs méthodes :
      * 1. Données du profil utilisateur (ville/pays → géocodage)
@@ -172,8 +177,8 @@ class IpGeolocationService
     private function getDefaultLocation(): array
     {
         return [
-            'latitude' => -12.8275,
-            'longitude' => 45.1662,
+            'latitude' => self::DEFAULT_LATITUDE,
+            'longitude' => self::DEFAULT_LONGITUDE,
             'city' => 'Mamoudzou',
             'country' => 'Mayotte',
             'source' => 'default',
@@ -197,6 +202,12 @@ class IpGeolocationService
             }
             if (!$user->detected_country && isset($geoData['country'])) {
                 $updateData['detected_country'] = $geoData['country'];
+            }
+
+            // Une position par défaut n'est pas une détection : on la marque
+            // pour que TerritoryResolver ne la prenne pas pour le lieu du membre.
+            if (($geoData['source'] ?? null) === 'default') {
+                $updateData['geo_source'] = 'default';
             }
 
             $user->update($updateData);

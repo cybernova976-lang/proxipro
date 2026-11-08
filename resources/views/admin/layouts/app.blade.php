@@ -255,6 +255,11 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('admin.feed-health') }}" class="{{ request()->routeIs('admin.feed-health') ? 'active' : '' }}">
+                    <i class="fas fa-heart-pulse me-2"></i> Santé du feed
+                </a>
+            </li>
+            <li>
                 @php
                     $pendingEmailCount = \App\Models\ManagedEmail::where('status', 'pending')->count();
                 @endphp

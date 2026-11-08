@@ -1,0 +1,60 @@
+/* ==========================================================================
+   PROKEJEM — Liens légaux en pied de page
+   --------------------------------------------------------------------------
+   Chargée dans le head de layouts/app.blade.php et de layouts/auth.blade.php,
+   pour le partial partials/legal-footer-links.blade.php.
+
+   Feuille autonome : le pied de page est rendu hors de .pk-feed, il porte
+   donc ses propres couleurs (rampe indigo du site). Tout est préfixé pk- et
+   porté par .pk-legal-footer : rien ne fuit vers le reste des gabarits.
+
+   Barre d'onglets mobile : elle est fixée en bas de l'écran jusqu'à 900 px,
+   mais son partial rend après le contenu une cale de même hauteur
+   (.pk-tabbar-spacer, public/css/tabbar.css). Le pied de page est inclus
+   avant cette cale : il reste lisible au-dessus de la barre.
+   ========================================================================== */
+
+.pk-legal-footer {
+  clear: both;
+  margin: 0;
+  padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid #e0e7ff;
+  background: #fff;
+  color: #3730a3;
+  font-size: .8rem;
+  line-height: 1.5;
+}
+
+.pk-legal-footer__nav { max-width: 1180px; margin: 0 auto; }
+
+.pk-legal-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pk-legal-footer__links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #3730a3;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.pk-legal-footer__links a:hover { color: #312e81; }
+
+.pk-legal-footer__links a:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (min-width: 640px) {
+  .pk-legal-footer__links a { min-height: 32px; }
+}

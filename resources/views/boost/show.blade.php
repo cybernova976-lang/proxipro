@@ -514,59 +514,6 @@
         box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
     }
     
-    /* Refresh Section */
-    .refresh-section {
-        background: linear-gradient(135deg, #fef3c7, #fde68a);
-        border: 2px solid #f59e0b;
-        border-radius: 20px;
-        padding: 30px;
-        margin-bottom: 30px;
-        text-align: center;
-    }
-    
-    .refresh-section h3 { color: #92400e; font-weight: 700; margin-bottom: 12px; }
-    .refresh-section p { color: #a16207; margin-bottom: 16px; }
-    
-    .btn-refresh {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-        border: none;
-        padding: 12px 28px;
-        border-radius: 12px;
-        font-weight: 700;
-        transition: all 0.3s;
-    }
-    
-    .btn-refresh:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
-        color: white;
-    }
-    
-    .btn-refresh:disabled {
-        background: #cbd5e1;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-    }
-
-    .btn-refresh-stripe {
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        color: white;
-        border: none;
-        padding: 12px 28px;
-        border-radius: 12px;
-        font-weight: 700;
-        transition: all 0.3s;
-        margin-left: 10px;
-    }
-
-    .btn-refresh-stripe:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
-        color: white;
-    }
-
     .pro-discount-banner {
         background: linear-gradient(135deg, #fef3c7, #fde68a);
         border: 2px solid #f59e0b;
@@ -641,7 +588,7 @@
     <!-- Header -->
     <div class="boost-header">
         <h1><i class="fas fa-rocket me-2"></i>Boostez votre annonce</h1>
-        <p>Multipliez votre visibilité et apparaissez dans la section "Professionnels Premium"</p>
+        <p>Pendant la durée choisie, votre offre porte la mention « Sponsorisé » et passe avant les offres non sponsorisées sur l’accueil des clients.</p>
     </div>
     
     <!-- Ad Preview -->
@@ -773,7 +720,7 @@
                 @if($boostStatus['is_boosted'] && $boostStatus['boost_days_left'] <= 2)
                     Votre <strong>Boost</strong> expire dans {{ $boostStatus['boost_days_left'] }} jour{{ $boostStatus['boost_days_left'] > 1 ? 's' : '' }}.
                 @endif
-                Prolongez maintenant pour ne pas perdre votre positionnement premium !
+                Un boost peut être prolongé avant son échéance : le nouveau boost démarre à la fin du boost en cours.
             </p>
         </div>
     </div>
@@ -785,7 +732,7 @@
         <div class="smart-alert-content">
             <h4>Double visibilité active !</h4>
             <p>Votre annonce bénéficie du mode <strong>Urgent</strong> ({{ $boostStatus['is_permanent_urgent'] ? 'permanent' : $boostStatus['urgent_days_left'].'j' }}) ET d'un <strong>Boost</strong> ({{ $boostStatus['boost_days_left'] }}j).
-            Visibilité maximale jusqu'au {{ $boostStatus['best_visibility_end']->format('d/m/Y') }}.</p>
+            La dernière de ces options prend fin le {{ $boostStatus['best_visibility_end']->format('d/m/Y') }}.</p>
         </div>
     </div>
     @endif
@@ -794,7 +741,7 @@
     @if($isPro)
     <div class="pro-discount-banner">
         <i class="fas fa-crown"></i>
-        <span>Abonné Pro — Vous bénéficiez de <strong>-20%</strong> sur tous les boosts, rafraîchissements et publications urgentes !</span>
+        <span>Abonné Pro — Vous bénéficiez de <strong>-20%</strong> sur les boosts et l’option Urgent.</span>
     </div>
     @endif
 
@@ -812,36 +759,8 @@
         </a>
     </div>
     
-    <!-- Refresh Section (shown when boost expired) -->
-    @if(!$boostStatus['is_boosted'] && $ad->boost_end && $ad->boost_end->isPast())
-    <div class="refresh-section">
-        <h3><i class="fas fa-sync me-2"></i>Rafraîchir votre annonce</h3>
-        <p>Le boost précédent a expiré. Rafraîchissez pour remonter dans les résultats.</p>
-        <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap">
-            <form action="{{ route('ads.refresh', $ad) }}" method="POST" class="d-inline">
-                @csrf
-                <button type="submit" class="btn-refresh" {{ $userPoints < $refreshConfig['price_points'] ? 'disabled' : '' }}>
-                    <i class="fas fa-coins me-2"></i>
-                    @if($userPoints >= $refreshConfig['price_points'])
-                        @if($isPro)<span class="price-original">10 pts</span>@endif
-                        Rafraîchir pour {{ $refreshConfig['price_points'] }} points
-                    @else
-                        Points insuffisants ({{ $refreshConfig['price_points'] }} requis)
-                    @endif
-                </button>
-            </form>
-            <form action="{{ route('ads.refresh.stripe', $ad) }}" method="POST" class="d-inline">
-                @csrf
-                <button type="submit" class="btn-refresh-stripe">
-                    <i class="fas fa-credit-card me-2"></i>
-                    @if($isPro)<span class="price-original">3,00 €</span>@endif
-                    Rafraîchir pour {{ number_format($refreshConfig['price_euros'], 2, ',', ' ') }} €
-                </button>
-            </form>
-        </div>
-    </div>
-    @endif
-    
+    {{-- La remontée payante n'est plus proposée : AdPromotionCatalog::refreshAvailable(). --}}
+
     <!-- ========== PACKAGES GRID ========== -->
     <div class="packages-grid">
         @foreach($packages as $key => $package)
@@ -941,29 +860,30 @@
     
     <!-- Benefits Section -->
     <div class="benefits-section">
-        <h2><i class="fas fa-star me-2 text-warning"></i>Pourquoi booster votre annonce ?</h2>
+        <h2><i class="fas fa-circle-info me-2"></i>Ce que fait un boost</h2>
         <div class="benefits-grid">
             <div class="benefit-item">
-                <div class="benefit-icon" style="background: #dbeafe; color: #3b82f6;"><i class="fas fa-eye"></i></div>
-                <h4>Visibilité x10</h4>
-                <p>Apparaît dans la section "Professionnels Premium" vue par tous</p>
+                <div class="benefit-icon" style="background: #dbeafe; color: #3b82f6;"><i class="fas fa-tag"></i></div>
+                <h4>Mention « Sponsorisé »</h4>
+                <p>Votre offre est signalée comme sponsorisée, avec un lien « Pourquoi ? » vers les règles de classement.</p>
             </div>
             <div class="benefit-item">
-                <div class="benefit-icon" style="background: #fef3c7; color: #f59e0b;"><i class="fas fa-crown"></i></div>
-                <h4>Badge Premium</h4>
-                <p>Un badge distinctif qui inspire confiance</p>
+                <div class="benefit-icon" style="background: #f3e8ff; color: #8b5cf6;"><i class="fas fa-list-ol"></i></div>
+                <h4>Avant les offres non sponsorisées</h4>
+                <p>Sur l’accueil des clients de votre territoire, pendant toute la durée du boost.</p>
             </div>
             <div class="benefit-item">
-                <div class="benefit-icon" style="background: #dcfce7; color: #10b981;"><i class="fas fa-chart-line"></i></div>
-                <h4>Plus de contacts</h4>
-                <p>En moyenne 5x plus de demandes</p>
+                <div class="benefit-icon" style="background: #dcfce7; color: #10b981;"><i class="fas fa-scale-balanced"></i></div>
+                <h4>Pas de place fixe</h4>
+                <p>Les offres sponsorisées sont classées entre elles. Aucun nombre de contacts n’est promis.</p>
             </div>
             <div class="benefit-item">
-                <div class="benefit-icon" style="background: #f3e8ff; color: #8b5cf6;"><i class="fas fa-bolt"></i></div>
-                <h4>Résultats rapides</h4>
-                <p>Actif immédiatement après paiement</p>
+                <div class="benefit-icon" style="background: #dbeafe; color: #3b82f6;"><i class="fas fa-bolt"></i></div>
+                <h4>Actif dès le paiement</h4>
+                <p>Le boost démarre dès le paiement confirmé, ou à la fin du boost en cours.</p>
             </div>
         </div>
+        <p class="text-center mt-3 mb-0"><a href="{{ route('legal.platform-rules') }}#classement">Lire les règles de classement</a></p>
     </div>
     
     <!-- Back Button -->

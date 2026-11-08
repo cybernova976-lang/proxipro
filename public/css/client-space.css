@@ -50,6 +50,20 @@
 .pk-employment-card__link:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
 .pk-employment-card small { display: block; color: #64748b; line-height: 1.6; margin-top: 14px; }
 .pk-employment-page__back { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; min-height: 44px; color: #3157b0; font-size: .9rem; text-underline-offset: 3px; }
+/* Pages emploi publiques : suites possibles et autres territoires. */
+.pk-employment-next,
+.pk-employment-territories { max-width: 900px; margin-top: 24px; }
+.pk-employment-territories--main { margin: 0 0 24px; }
+.pk-employment-next__title,
+.pk-employment-territories__title { font-size: 1.05rem; font-weight: 750; margin: 0 0 12px; }
+.pk-employment-next__list { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }
+.pk-employment-next__list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 14px 18px; background: #fff; border: 1px solid #e0e7ff; border-radius: 12px; }
+.pk-employment-next__list span { color: #475569; }
+.pk-employment-next__list a,
+.pk-employment-territories a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: #4338ca; font-weight: 650; text-underline-offset: 3px; }
+.pk-employment-territories ul { display: flex; flex-wrap: wrap; gap: 8px 18px; list-style: none; margin: 0; padding: 0; }
+.pk-employment-next__list a:focus-visible,
+.pk-employment-territories a:focus-visible { outline: 3px solid #4f46e5; outline-offset: 2px; border-radius: 6px; }
 
 @media (min-width: 1400px) {
     .pk-client-space__inner { padding-inline: 24px; }

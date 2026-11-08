@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Support\MarketplaceCategoryRegistry;
+use App\Support\Territory;
+use App\Support\TerritoryResolver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -49,8 +51,10 @@ class Ad extends Model
         'is_boosted',
         'boost_end',
         'boost_type',
+        'boost_source',
         'is_urgent',
         'urgent_until',
+        'urgent_source',
         'sidebar_priority',
         'shares_count',
         'reply_restriction',
@@ -76,6 +80,8 @@ class Ad extends Model
         'photos' => 'array',
         'target_categories' => 'array',
         'ad_details' => 'array',
+        // Prestataires réellement prévenus à la publication ; NULL = non mesuré.
+        'notified_providers_count' => 'integer',
     ];
 
     public function scopeMarketplaceActive($query)
@@ -92,6 +98,62 @@ class Ad extends Model
     public function scopeInEnabledCategories($query)
     {
         return MarketplaceCategoryRegistry::applyEnabledScope($query);
+    }
+
+    /**
+     * Annonces rattachées au territoire, selon les règles de TerritoryResolver
+     * (code postal, pays d'outre-mer, commune connue, département).
+     */
+    public function scopeInTerritory($query, Territory $territory)
+    {
+        [$sql, $bindings] = app(TerritoryResolver::class)->sqlCondition($territory, self::territoryColumns($query));
+
+        return $query->whereRaw($sql, $bindings);
+    }
+
+    /** Offres déclarées « À distance » (ad_details.intervention_mode = remote) situées hors du territoire. */
+    public function scopeRemoteOutside($query, Territory $territory)
+    {
+        [$sql, $bindings] = app(TerritoryResolver::class)->sqlCondition($territory, self::territoryColumns($query));
+
+        return $query->where($query->getModel()->getTable().'.ad_details->intervention_mode', 'remote')
+            ->whereRaw('NOT '.$sql, $bindings);
+    }
+
+    /** Retire les annonces des comptes internes ou de test (config feed.hidden_author_ids). */
+    public function scopeExcludingHiddenAuthors($query)
+    {
+        $ids = self::hiddenAuthorIds();
+
+        return $ids === [] ? $query : $query->whereNotIn($query->getModel()->getTable().'.user_id', $ids);
+    }
+
+    /** @return list<int> */
+    public static function hiddenAuthorIds(): array
+    {
+        $ids = config('feed.hidden_author_ids', []);
+        $ids = is_array($ids) ? $ids : explode(',', (string) $ids);
+
+        return array_values(array_unique(array_filter(array_map('intval', $ids), fn (int $id) => $id > 0)));
+    }
+
+    public function isRemoteIntervention(): bool
+    {
+        $details = is_array($this->ad_details) ? $this->ad_details : [];
+
+        return ($details['intervention_mode'] ?? null) === 'remote';
+    }
+
+    private static function territoryColumns($query): array
+    {
+        $table = $query->getModel()->getTable();
+
+        return [
+            'postal' => $table.'.postal_code',
+            'country' => $table.'.country',
+            'city' => $table.'.city',
+            'location' => $table.'.location',
+        ];
     }
 
     public function getEffectivePriceTypeAttribute(): string

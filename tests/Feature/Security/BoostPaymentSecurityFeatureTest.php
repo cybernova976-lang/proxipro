@@ -52,9 +52,11 @@ class BoostPaymentSecurityFeatureTest extends TestCase
     public static function promotionCheckouts(): array
     {
         return [
-            'urgent' => ['ads.make-urgent.stripe', 'boost.urgent.success', 'AD_URGENT', []],
-            'refresh' => ['ads.refresh.stripe', 'ads.refresh.success', 'AD_REFRESH', []],
-            'boost' => ['boost.purchase.stripe', 'boost.success', 'AD_BOOST', ['package' => 'boost_3']],
+            'urgent' => ['ads.make-urgent.stripe', 'boost.urgent.success', 'AD_URGENT', [], 'demande'],
+            // La remontée n'ouvre plus de paiement (vente suspendue, lot 1) : le retour d'un
+            // paiement engagé avant la suspension est couvert par Tests\Feature\Ads\AdRefreshSuspendedTest.
+            // Le boost n'est vendu que pour une offre (BoostController::refuseUnlessOffer).
+            'boost' => ['boost.purchase.stripe', 'boost.success', 'AD_BOOST', ['package' => 'boost_3'], 'offre'],
         ];
     }
 
@@ -63,11 +65,12 @@ class BoostPaymentSecurityFeatureTest extends TestCase
         string $purchaseRoute,
         string $successRoute,
         string $transactionType,
-        array $options
+        array $options,
+        string $serviceType
     ): void {
         config(['services.stripe.secret' => 'sk_test_simulated']);
         $user = User::factory()->create(['user_type' => 'particulier', 'available_points' => 0]);
-        $ad = $this->ad($user, 'demande');
+        $ad = $this->ad($user, $serviceType);
         $this->actingAs($user);
 
         $sessionId = 'cs_test_promotion';

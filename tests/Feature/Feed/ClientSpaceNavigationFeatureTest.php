@@ -16,9 +16,10 @@ class ClientSpaceNavigationFeatureTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
 
+        // L'onglet Emploi reste l'onglet actif sur la page emploi d'un territoire.
         foreach (['feed' => 'discover', 'home' => 'requests', 'messages.index' => 'messages',
-            'saved-ads.index' => 'saved', 'employment.index' => 'employment'] as $route => $key) {
-            $response = $this->get(route($route))->assertOk();
+            'saved-ads.index' => 'saved', 'employment.territory' => 'employment'] as $route => $key) {
+            $response = $this->get(route($route, $route === 'employment.territory' ? ['territoire' => 'departement-75'] : []))->assertOk();
             $xpath = $this->xpath($response->getContent());
             $this->assertSame(5, $xpath->query('//nav[@aria-label="Mon espace particulier"]/a')->length, $route);
             $current = $xpath->query('//a[@data-space-section][@aria-current="page"]');
@@ -40,11 +41,25 @@ class ClientSpaceNavigationFeatureTest extends TestCase
         $this->assertTrue($provider->fresh()->is_service_provider);
     }
 
-    public function test_new_employment_section_requires_login_and_keeps_external_applications_separate(): void
+    // Lot 1 (D1) : la page emploi devient publique, reste « private » sans « no-store »,
+    // et /emploi mène un membre au territoire connu vers sa page.
+    public function test_employment_section_is_public_and_keeps_external_applications_separate(): void
     {
-        $this->get(route('employment.index'))->assertRedirect(route('login'));
-        $this->actingAs(User::factory()->create())->get(route('employment.index'))->assertOk()
-            ->assertHeader('Cache-Control', 'no-store, private')
+        $this->get(route('employment.index'))->assertOk()->assertHeader('Cache-Control', 'private');
+        $this->get(route('employment.territory', ['territoire' => 'departement-75']))->assertOk()
+            ->assertHeader('Cache-Control', 'private');
+        // Connecté, EnforceSessionInactivity impose « private, no-store » à toutes les
+        // pages (règle de session, hors de la page emploi) : on vérifie seulement « private ».
+        // Un membre sans lieu déclaré reçoit la liste des territoires ; un membre à Paris
+        // est conduit à la page de son département.
+        $this->actingAs(User::factory()->create())->get(route('employment.index'))->assertOk();
+        $this->actingAs(User::factory()->create(['country' => 'France', 'city' => 'Paris', 'postal_code' => '75002']))
+            ->get(route('employment.index'))
+            ->assertRedirect(route('employment.territory', ['territoire' => 'departement-75']));
+        $member = $this->get(route('employment.territory', ['territoire' => 'departement-75']))->assertOk();
+        $this->assertStringContainsString('private', (string) $member->headers->get('Cache-Control'));
+        $member->assertSee('data-space-section="employment"', false)
+            ->assertSee(e(route('employment.territory', ['territoire' => 'departement-75'])), false)
             ->assertSee('Site externe · France Travail')->assertSee('nouvel onglet')
             ->assertSee('La recherche et la candidature se poursuivent sur le site France Travail.')
             ->assertDontSee('notre partenaire')->assertDontSee('Commander');

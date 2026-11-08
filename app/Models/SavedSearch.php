@@ -20,6 +20,8 @@ class SavedSearch extends Model
         'latitude',
         'longitude',
         'radius_km',
+        // Alerte de territoire (« 976 », « 75 »…) ; NULL = alerte classique.
+        'territory_code',
         'filters',
         'is_active',
         'last_matched_at',

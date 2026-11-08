@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Ad;
 use App\Models\SavedSearch;
+use App\Notifications\Concerns\SendsWebPushNotifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -11,7 +12,7 @@ use Illuminate\Support\Str;
 
 class SavedSearchMatchNotification extends Notification
 {
-    use Queueable;
+    use Queueable, SendsWebPushNotifications;
 
     public function __construct(
         protected SavedSearch $savedSearch,
@@ -27,7 +28,9 @@ class SavedSearchMatchNotification extends Notification
             $channels[] = 'mail';
         }
 
-        return $channels;
+        // Notification sur l'appareil, seulement si le serveur est configuré
+        // et que le membre a enregistré au moins un appareil.
+        return array_merge($channels, $this->webPushChannelsFor($notifiable));
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -47,7 +50,7 @@ class SavedSearchMatchNotification extends Notification
         return [
             'type' => 'saved_search_match',
             'icon' => 'fas fa-bell',
-            'color' => '#f97316',
+            'color' => '#4f46e5',
             'title' => 'Nouvelle annonce pour votre alerte',
             'message' => '"' . $this->savedSearch->name . '" : ' . Str::limit($this->ad->title, 70),
             'action_url' => route('ads.show', $this->ad->id),

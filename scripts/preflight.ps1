@@ -75,9 +75,11 @@ if ($modifies) {
 }
 
 # --- 1. Syntaxe PHP de tous les fichiers modifies -----------------------------
-Invoke-Gate "Syntaxe PHP des fichiers suivis" {
+#     Fichiers suivis ET non suivis non ignores : railway up envoie le dossier
+#     de travail, un nouveau fichier pas encore commite part donc aussi en ligne.
+Invoke-Gate "Syntaxe PHP des fichiers suivis et non suivis" {
     $ko = 0
-    git ls-files '*.php' | ForEach-Object {
+    git ls-files --cached --others --exclude-standard '*.php' | Sort-Object -Unique | ForEach-Object {
         $sortie = php -l $_ 2>&1
         if ($LASTEXITCODE -ne 0) { Write-Host "  $sortie" -ForegroundColor Red; $ko++ }
     }
@@ -103,12 +105,30 @@ Invoke-Gate "Construction des assets (npm run build)" {
     npm run build
 }
 
-# --- 5. Tests cibles sur le feed ----------------------------------------------
-Invoke-Gate "Tests cibles - feed" {
-    php artisan test --filter=Feed --stop-on-failure
-} -NonBloquant
+# --- 5. Tests cibles : feed, demande guidee, territoire, transparence ---------
+#     BLOQUANT. Couvre le feed (tout tests/Feature/Feed), la publication guidee,
+#     le territoire, les mentions Sponsorise, le pied de page legal, les
+#     promesses commerciales, la remontee suspendue, les alertes, les
+#     notifications de demandes, les pages emploi et l'ecran /admin/feed-sante.
+$FiltreCible = 'Feed|GuidedDemand|Territory|Sponsored|LegalFooter|PromotionClaims|AdRefresh|SavedSearch|DemandNotification|Employment|FeedHealth'
+Invoke-Gate "Tests cibles - feed, demande guidee, territoire, transparence" {
+    php artisan test "--filter=$FiltreCible"
+}
 
-# --- 6. Suite complete ---------------------------------------------------------
+# --- 6. Tests JavaScript du navigateur (node --test) --------------------------
+#     BLOQUANT. Node 24 refuse un dossier en argument de --test : on passe un
+#     motif de fichiers. Les scripts Playwright de tests/Browser (*.cjs sans
+#     ".test.") visent un serveur lance et ne font pas partie de ce controle.
+Invoke-Gate "Tests JavaScript (node --test tests/Browser)" {
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+        Write-Host "  Node est introuvable dans le PATH." -ForegroundColor Red
+        $global:LASTEXITCODE = 1
+        return
+    }
+    node --test "tests/Browser/*.test.*"
+}
+
+# --- 7. Suite complete ---------------------------------------------------------
 #     Non bloquante : certains anciens tests ne correspondent plus a la
 #     nouvelle interface. A remettre en bloquant une fois la suite assainie.
 Invoke-Gate "Suite de tests complete" {

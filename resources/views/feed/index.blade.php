@@ -48,19 +48,13 @@
                     <div>
                         <h2 id="pkFeedTitle">{{ $pkFeedTitle }}</h2>
                         <p class="pk-sechead__sub">
-                            <span>
-                                @if($geoCity)
-                                    @if($pkRole === 'provider')
-                                        {{ $geoCity }} et alentours · sélection selon vos métiers
-                                    @elseif($useNearbyScope && ! $geoFallbackUsed)
-                                        {{ $geoCity }} et alentours
-                                    @else
-                                        Toutes les zones · explorez les services disponibles
-                                    @endif
-                                @else
-                                    Découvrez les services et échangez avec les prestataires
-                                @endif
-                            </span>
+                            @if($pkRole === 'client')
+                                @include('feed.partials.territory-scope')
+                            @elseif($geoCity)
+                                <span>{{ $geoCity }} et alentours · sélection selon vos métiers</span>
+                            @else
+                                <span>Découvrez les services et échangez avec les prestataires</span>
+                            @endif
                         </p>
                     </div>
                     <a href="{{ $pkBrowseUrl }}" class="pk-sechead__more">
@@ -69,8 +63,20 @@
                 </div>
 
                 @if($pkRole === 'client' && $pkFeedAds->isNotEmpty())
-                    <p class="pk-feed-selection"><i class="fas fa-info-circle" aria-hidden="true"></i> Les offres Boost et Premium actives sont prioritaires. Les autres offres complètent la sélection.</p>
+                    @include('feed.partials.ranking-disclosure')
                 @endif
+                @php
+                    $pkOfferTotal = $pkFeedPagination?->total() ?? $pkFeedAds->count();
+                @endphp
+                @if($pkRole === 'client' && $pkFeedAds->isEmpty() && $pkEmptyLocal)
+                    <div class="pk-feed-list" id="pkFeedList">@include('feed.partials.empty-local')</div>
+                @elseif($pkRole === 'client' && $pkFeedAds->isNotEmpty() && $pkOfferTotal <= 3)
+                    <ul class="pk-feed-rows" id="pkFeedList">
+                        @foreach($pkFeedAds as $ad)
+                            <li>@include('feed.partials.ad-row', ['ad' => $ad, 'pkSaved' => $pkSavedAdIds])</li>
+                        @endforeach
+                    </ul>
+                @else
                 <div class="pk-feed-list" id="pkFeedList">
                     @forelse($pkFeedAds as $ad)
                         @include('feed.partials.ad-card', ['ad' => $ad, 'pkSaved' => $pkSavedAdIds])
@@ -82,7 +88,7 @@
                                 @if($pkRole === 'provider')
                                     Précisez vos catégories d’intervention pour recevoir les demandes qui vous correspondent.
                                 @else
-                                    Soyez le premier : publiez votre demande, les prestataires de votre zone la recevront.
+                                    Décrivez votre besoin : les prestataires inscrits pourront vous faire une proposition.
                                 @endif
                             </p>
                             <a href="{{ $pkRole === 'provider' ? route('pro.onboarding') : route('demand.create') }}" class="pk-btn">
@@ -91,6 +97,7 @@
                         </div>
                     @endforelse
                 </div>
+                @endif
 
                 @if($pkRole === 'client' && $pkFeedPagination?->hasPages())
                     <nav class="pk-feed-pagination" aria-label="Pages des offres de services">

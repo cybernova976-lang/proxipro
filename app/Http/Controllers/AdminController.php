@@ -403,10 +403,12 @@ class AdminController extends Controller
             $boostEnd = $ad->boost_end->addDays($days);
         }
 
+        // Octroi gratuit : jamais présenté comme payé (AdDisclosure).
         $ad->update([
             'is_boosted' => true,
             'boost_end' => $boostEnd,
             'boost_type' => $validated['boost_type'],
+            'boost_source' => 'admin',
         ]);
 
         return back()->with('success', "Boost activé pour « {$ad->title} » jusqu'au {$boostEnd->format('d/m/Y à H:i')}.");
@@ -428,9 +430,11 @@ class AdminController extends Controller
             $urgentUntil = $ad->urgent_until->addDays($validated['duration_days']);
         }
 
+        // Octroi gratuit : jamais présenté comme payé (AdDisclosure).
         $ad->update([
             'is_urgent' => true,
             'urgent_until' => $urgentUntil,
+            'urgent_source' => 'admin',
             'sidebar_priority' => 1,
         ]);
 
@@ -447,6 +451,7 @@ class AdminController extends Controller
             'is_boosted' => false,
             'boost_end' => null,
             'boost_type' => null,
+            'boost_source' => null,
         ]);
 
         return back()->with('success', "Boost désactivé pour « {$ad->title} ».");
@@ -461,6 +466,7 @@ class AdminController extends Controller
         $ad->update([
             'is_urgent' => false,
             'urgent_until' => null,
+            'urgent_source' => null,
             'sidebar_priority' => 0,
         ]);
 

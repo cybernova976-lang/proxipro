@@ -23,6 +23,7 @@
     @endif
     @if(!$pkIsProvider)
         @include('feed.partials.providers')
+        @include('feed.partials.employment-card')
     @else
         <section class="pk-rcard pk-matching" aria-labelledby="pkMatchingTitle">
             <span class="pk-rcard__lab">Vos opportunités</span>

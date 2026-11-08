@@ -410,7 +410,7 @@
                                                             @method('PATCH')
                                                             <button type="submit" class="btn btn-outline-danger btn-sm" title="Archiver"><i class="fas fa-box-archive"></i></button>
                                                         </form>
-                                                    @elseif(!($ad->is_boosted && $ad->boost_end && $ad->boost_end->isFuture()) && !($ad->is_urgent && $ad->urgent_until && $ad->urgent_until->isFuture()))
+                                                    @elseif($ad->service_type === 'offre' && !($ad->is_boosted && $ad->boost_end && $ad->boost_end->isFuture()) && !($ad->is_urgent && $ad->urgent_until && $ad->urgent_until->isFuture()))
                                                         <a href="{{ route('boost.show', $ad) }}" class="btn btn-warning btn-sm" title="Booster" style="color: white;"><i class="fas fa-rocket"></i></a>
                                                     @endif
                                                 @endif

@@ -29,8 +29,13 @@ class SeoController extends Controller
             'priority' => '0.6',
         ]));
 
+        // Les comptes internes ou de test (config feed.hidden_author_ids) ne sont
+        // pas soumis aux moteurs de recherche : ni leurs annonces, ni leur profil.
+        $hiddenAuthorIds = Ad::hiddenAuthorIds();
+
         try {
             Ad::marketplaceActive()
+                ->excludingHiddenAuthors()
                 ->where('visibility', 'public')
                 ->whereHas('user', fn ($query) => $query->where('is_active', true))
                 ->select(['id', 'updated_at'])
@@ -48,6 +53,7 @@ class SeoController extends Controller
                 ->where(fn ($query) => $query
                     ->where('user_type', 'professionnel')
                     ->orWhere('is_service_provider', true))
+                ->when($hiddenAuthorIds !== [], fn ($query) => $query->whereNotIn('id', $hiddenAuthorIds))
                 ->select(['id', 'updated_at'])
                 ->latest('updated_at')
                 ->limit(20000)

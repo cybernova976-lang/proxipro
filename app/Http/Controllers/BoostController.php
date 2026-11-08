@@ -30,11 +30,15 @@ class BoostController extends Controller
         if (Auth::id() !== $ad->user_id) {
             abort(403, 'Vous ne pouvez pas booster cette annonce.');
         }
+        if ($refusal = $this->refuseUnlessOffer($ad)) {
+            return $refusal;
+        }
 
         $user = Auth::user();
         $userPoints = $user->available_points ?? 0;
         $isPro = $user->hasActiveProSubscription();
         $status = $ad->getBoostStatus();
+        $subscription = $this->sponsoringSubscription($ad);
 
         // Build smart recommendations for each package
         $smartPackages = [];
@@ -71,6 +75,18 @@ class BoostController extends Controller
                 $pkg['warning'] = "Vous avez déjà {$status['best_days_left']} jours de visibilité restants.";
             }
 
+            // Abonnement Premium actif : l'offre est déjà dans le groupe sponsorisé.
+            if ($subscription) {
+                if ($this->subscriptionCovers($subscription, $package['duration_days'])) {
+                    $pkg['is_useful'] = false;
+                    $pkg['warning'] = 'Inutile : votre abonnement Premium affiche déjà cette offre parmi les offres sponsorisées'
+                        .($subscription->ends_at ? ' jusqu’au '.$subscription->ends_at->format('d/m/Y') : '').'.';
+                } else {
+                    $pkg['warning'] = 'Votre abonnement place déjà cette offre parmi les offres sponsorisées jusqu’au '
+                        .$subscription->ends_at->format('d/m/Y').' : le boost ne change l’affichage qu’après cette date.';
+                }
+            }
+
             // Smart recommendation for packages that add value when urgent is expiring
             if ($status['is_urgent'] && $status['is_expiring_soon'] && $package['duration_days'] >= 7) {
                 $pkg['recommendation'] = "Idéal pour prolonger après l'expiration de votre Urgent !";
@@ -87,12 +103,7 @@ class BoostController extends Controller
             $recommendedKey = 'boost_7'; // Best value for new boost
         }
 
-        // Refresh config with Pro discount
-        $refreshConfig = [
-            'price_points' => $isPro ? 8 : 10,
-            'price_euros' => $isPro ? 2.40 : 3.00,
-        ];
-
+        // La remontée payante n'est plus proposée : aucun tarif n'est transmis à la vue.
         return view('boost.show', [
             'ad' => $ad,
             'packages' => $smartPackages,
@@ -103,7 +114,6 @@ class BoostController extends Controller
             'isAlreadyBoosted' => $status['is_boosted'],
             'boostTimeRemaining' => $status['is_boosted'] ? $ad->boost_end->diffForHumans() : null,
             'currentBoostType' => $ad->boost_type,
-            'refreshConfig' => $refreshConfig,
         ]);
     }
 
@@ -119,10 +129,16 @@ class BoostController extends Controller
         if (Auth::id() !== $ad->user_id) {
             return back()->with('error', 'Vous ne pouvez pas booster cette annonce.');
         }
+        if ($refusal = $this->refuseUnlessOffer($ad)) {
+            return $refusal;
+        }
 
         $user = Auth::user();
         $package = $this->boostPackages[$request->package];
         $pointsRequired = $package['price_points'];
+        if ($refusal = $this->refuseIfCoveredBySubscription($ad, $package)) {
+            return $refusal;
+        }
 
         // Pro discount: -20% on points
         if ($user->hasActiveProSubscription()) {
@@ -158,6 +174,7 @@ class BoostController extends Controller
             'is_boosted' => true,
             'boost_end' => $boostEnd,
             'boost_type' => $request->package,
+            'boost_source' => null,
         ]);
 
         // Build smart success message
@@ -182,9 +199,15 @@ class BoostController extends Controller
         if (Auth::id() !== $ad->user_id) {
             return back()->with('error', 'Vous ne pouvez pas booster cette annonce.');
         }
+        if ($refusal = $this->refuseUnlessOffer($ad)) {
+            return $refusal;
+        }
 
         $user = Auth::user();
         $package = $this->boostPackages[$request->package];
+        if ($refusal = $this->refuseIfCoveredBySubscription($ad, $package)) {
+            return $refusal;
+        }
 
         // Prevent double-boost: reject if current boost covers more than this package
         $status = $ad->getBoostStatus();
@@ -286,11 +309,60 @@ class BoostController extends Controller
             return redirect()->route('homepage');
         }
 
+        // Le boost n'a d'effet que sur les offres : aucun forfait n'est proposé pour une demande.
         return view('boost.after-creation', [
             'ad' => $ad,
-            'packages' => $this->boostPackages,
+            'packages' => $ad->service_type === 'offre' ? $this->boostPackages : [],
             'userPoints' => Auth::user()->available_points ?? 0,
         ]);
+    }
+
+    /**
+     * Le boost n'agit que sur le flux des clients, qui ne montre que des
+     * offres : il n'est pas vendu pour une demande.
+     */
+    private function refuseUnlessOffer(Ad $ad): ?\Illuminate\Http\RedirectResponse
+    {
+        if ($ad->service_type === 'offre') {
+            return null;
+        }
+
+        return redirect()->route('ads.show', $ad)->with('error', 'Le boost est réservé aux offres de services.');
+    }
+
+    /**
+     * Abonnement Premium en cours de l'auteur d'une offre (même condition que
+     * App\Services\ClientFeedOffersService) : toutes ses offres sont déjà
+     * dans le groupe sponsorisé.
+     */
+    private function sponsoringSubscription(Ad $ad): ?\App\Models\ProSubscription
+    {
+        if ($ad->service_type !== 'offre' || ! $ad->user) {
+            return null;
+        }
+
+        return $ad->user->proSubscriptions()->currentlyActive()
+            ->where(fn ($q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
+            ->orderByRaw('ends_at IS NULL DESC')
+            ->orderByDesc('ends_at')
+            ->first();
+    }
+
+    private function subscriptionCovers(\App\Models\ProSubscription $subscription, int $days): bool
+    {
+        return $subscription->ends_at === null || $subscription->ends_at->greaterThanOrEqualTo(now()->addDays($days));
+    }
+
+    /** Refuse un pack dont toute la durée est déjà couverte par l'abonnement Premium. */
+    private function refuseIfCoveredBySubscription(Ad $ad, array $package): ?\Illuminate\Http\RedirectResponse
+    {
+        $subscription = $this->sponsoringSubscription($ad);
+        if (! $subscription || ! $this->subscriptionCovers($subscription, (int) $package['duration_days'])) {
+            return null;
+        }
+
+        return back()->with('error', 'Inutile : votre abonnement Premium affiche déjà cette offre parmi les offres sponsorisées'
+            .($subscription->ends_at ? ' jusqu’au '.$subscription->ends_at->format('d/m/Y') : '').'.');
     }
 
     /**
@@ -353,93 +425,26 @@ class BoostController extends Controller
     }
 
     /**
-     * Refresh an ad (after boost expiration) - costs 10 points
+     * Remontée payante avec des points : suspendue. Aucun point n'est débité,
+     * l'annonce et son boost éventuel restent inchangés.
      */
     public function refreshAd(Ad $ad)
     {
-        // Vérifier que l'utilisateur est propriétaire
-        if (Auth::id() !== $ad->user_id) {
-            return back()->with('error', 'Vous ne pouvez pas rafraîchir cette annonce.');
-        }
-
-        $user = Auth::user();
-        $refreshCost = $user->hasActiveProSubscription() ? 8 : 10;
-
-        // Vérifier les points disponibles
-        if (($user->available_points ?? 0) < $refreshCost) {
-            return back()->with('error', 'Points insuffisants. Il vous faut '.$refreshCost.' points pour rafraîchir votre annonce. Vous avez '.($user->available_points ?? 0).' points.');
-        }
-
-        // Déduire les points
-        $user->spendPoints($refreshCost, 'refresh_ad', 'Rafraîchissement de l\'annonce: '.$ad->title);
-
-        // Mettre à jour l'annonce (remonter dans les résultats)
-        $ad->update([
-            'updated_at' => now(),
-            'is_boosted' => false,
-            'boost_end' => null,
-            'boost_type' => null,
-        ]);
-
-        return redirect()->route('ads.show', $ad)->with('success',
-            '✅ Votre annonce a été rafraîchie et remontera dans les résultats de recherche !'
-        );
+        return $this->refreshSuspended($ad);
     }
 
     /**
-     * Refresh an ad with Stripe payment (3€, or 2.40€ for Pro)
+     * Remontée payante par carte : suspendue. Aucune session Stripe n'est ouverte.
      */
     public function refreshAdStripe(Ad $ad)
     {
-        if (Auth::id() !== $ad->user_id) {
-            return back()->with('error', 'Vous ne pouvez pas rafraîchir cette annonce.');
-        }
-
-        $user = Auth::user();
-        $priceEuros = AdPromotionCatalog::discountedCents(
-            AdPromotionCatalog::refresh()['price_euros'],
-            $user->hasActiveProSubscription()
-        ) / 100;
-
-        \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
-
-        try {
-            $session = \Stripe\Checkout\Session::create([
-                'payment_method_types' => ['card'],
-                'line_items' => [[
-                    'price_data' => [
-                        'currency' => 'eur',
-                        'product_data' => [
-                            'name' => 'Rafraîchir l\'annonce - '.$ad->title,
-                            'description' => 'Remonter votre annonce dans les résultats de recherche',
-                        ],
-                        'unit_amount' => (int) ($priceEuros * 100),
-                    ],
-                    'quantity' => 1,
-                ]],
-                'mode' => 'payment',
-                'success_url' => $this->checkoutReturnUrl('ads.refresh.success', ['ad' => $ad->id]),
-                'cancel_url' => route('boost.show', $ad),
-                'customer_email' => $user->email,
-                'metadata' => [
-                    'ad_id' => $ad->id,
-                    'user_id' => $user->id,
-                    'type' => 'refresh',
-                    'expected_amount_cents' => (int) round($priceEuros * 100),
-                    'expected_currency' => 'eur',
-                ],
-            ]);
-
-            return redirect($session->url);
-        } catch (\Exception $e) {
-            Log::error('Unable to create refresh Stripe checkout.', ['ad_id' => $ad->id, 'error' => $e->getMessage()]);
-
-            return back()->with('error', 'Impossible d’ouvrir le paiement sécurisé. Veuillez réessayer.');
-        }
+        return $this->refreshSuspended($ad);
     }
 
     /**
-     * Handle successful refresh Stripe payment
+     * Retour Stripe d'une remontée payée avant la suspension. Le paiement est
+     * enregistré une seule fois (AdPromotionPaymentService), sans modifier
+     * l'annonce ni son boost.
      */
     public function refreshAdSuccess(Request $request)
     {
@@ -451,22 +456,30 @@ class BoostController extends Controller
 
         $session = $this->retrieveCheckoutSession($request, $ad);
         if (! $session) {
-            return redirect()->route('boost.show', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. L’annonce n’a pas été rafraîchie.');
+            return redirect()->route('boost.show', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. L’annonce n’a pas été modifiée.');
         }
         try {
             $result = $this->promotionPayments->fulfill($session, Auth::id(), $ad->id, 'refresh');
         } catch (\Throwable $exception) {
             Log::warning('Refresh Stripe confirmation refused.', ['ad_id' => $ad->id, 'error' => $exception->getMessage()]);
 
-            return redirect()->route('boost.show', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. L’annonce n’a pas été rafraîchie.');
+            return redirect()->route('boost.show', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. L’annonce n’a pas été modifiée.');
         }
         if ($result['status'] !== 'processed') {
             return redirect()->route('ads.show', $ad)->with('success', 'Ce paiement avait déjà été confirmé.');
         }
 
-        return redirect()->route('ads.show', $ad)->with('success',
-            '✅ Paiement réussi ! Votre annonce a été rafraîchie et remontera dans les résultats !'
+        return redirect()->route('ads.show', $ad)->with('info',
+            'Paiement enregistré. '.AdPromotionCatalog::REFRESH_SUSPENDED_MESSAGE
+            .' Votre annonce et son boost éventuel n’ont pas été modifiés. Contactez le support pour toute question sur ce paiement.'
         );
+    }
+
+    private function refreshSuspended(Ad $ad)
+    {
+        $target = Auth::id() === $ad->user_id ? route('boost.show', $ad) : route('ads.show', $ad);
+
+        return redirect($target)->with('info', AdPromotionCatalog::REFRESH_SUSPENDED_MESSAGE);
     }
 
     /**
@@ -516,6 +529,7 @@ class BoostController extends Controller
         $ad->update([
             'is_urgent' => true,
             'urgent_until' => now()->addDays($config['duration_days']),
+            'urgent_source' => null,
             'sidebar_priority' => 1,
         ]);
 

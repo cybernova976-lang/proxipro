@@ -36,6 +36,13 @@
     if (img.complete && !img.naturalWidth) showPlaceholder();
   });
 
+  // Ligne de liste (1 à 3 offres) : une vignette indisponible laisse voir le pictogramme.
+  root.querySelectorAll('img[data-pk-row-photo]').forEach(function (img) {
+    function hidePhoto() { img.hidden = true; }
+    img.addEventListener('error', hidePhoto, { once: true });
+    if (img.complete && !img.naturalWidth) hidePhoto();
+  });
+
   /* ---------------------------------------------------------------- toast */
 
   var toast = document.getElementById('pkToast');

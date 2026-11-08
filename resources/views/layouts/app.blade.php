@@ -4098,6 +4098,8 @@
          autonome et legere : charger feed.css ici pour quatre couleurs
          melangerait les styles du feed au reste du site. --}}
     <link rel="stylesheet" href="{{ asset('css/tabbar.css') }}?v={{ @filemtime(public_path('css/tabbar.css')) ?: 1 }}">
+    {{-- Liens légaux du pied de page (partials/legal-footer-links). --}}
+    <link rel="stylesheet" href="{{ asset('css/legal-footer.css') }}?v={{ @filemtime(public_path('css/legal-footer.css')) ?: 1 }}">
 
     @stack('styles')
 <style>
@@ -6712,7 +6714,7 @@
         border-radius: 50%;
     }
 </style>
-@if($pkClientSpaceVisible && !request()->routeIs('employment.index'))
+@if($pkClientSpaceVisible && !request()->routeIs('employment.*'))
     <link rel="stylesheet" href="{{ asset('css/client-space.css') }}?v={{ filemtime(public_path('css/client-space.css')) }}">
 @endif
 </head>
@@ -6753,7 +6755,6 @@
                         @endauth
                     </div>
                     @auth
-                    @if(!request()->routeIs('feed.test'))
                     @php
                         $lostItemsCountHeader = \App\Models\LostItem::where('status', 'active')->count();
                     @endphp
@@ -7012,7 +7013,6 @@
                             <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
                         </div>
                     </div>
-                    @endif
                     @endauth
                 </div>
             </div>
@@ -7024,12 +7024,12 @@
 
         {{-- Sidebar de navigation --}}
         @auth
-            @if(!$pkClientSpaceVisible && !request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*', 'employment.index') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*'))
+            @if(!$pkClientSpaceVisible && !request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*', 'employment.*') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*'))
                 @include('partials.sidebar')
             @endif
         @endauth
 
-        <main class="@auth @if(!$pkClientSpaceVisible && !request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*', 'employment.index') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('feed.test') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*')) main-content-with-sidebar @endif @endauth">
+        <main class="@auth @if(!$pkClientSpaceVisible && !request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*', 'employment.*') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*')) main-content-with-sidebar @endif @endauth">
             @if(session('info'))
                 <div class="pk-flash-info" role="status">
                     <i class="fas fa-circle-info"></i>
@@ -7040,6 +7040,8 @@
                 </div>
             @endif
             @yield('content')
+            {{-- Dans main : le pied de page garde le décalage de la barre latérale. --}}
+            @include('partials.legal-footer-links')
         </main>
     </div>
 

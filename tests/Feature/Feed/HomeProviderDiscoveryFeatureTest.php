@@ -27,24 +27,31 @@ class HomeProviderDiscoveryFeatureTest extends TestCase
             strpos($response->getContent(), 'id="pkProviderList"'));
     }
 
-    public function test_discovery_explains_country_then_global_fallback_and_uses_matching_directory_links(): void
+    public function test_discovery_explains_territory_fallback_and_never_widens_beyond_a_known_territory(): void
     {
+        // Lot 1 (A8) : pour un territoire connu, plus d'élargissement « partout ».
         $client = User::factory()->create(['city' => 'Dzaoudzi', 'country' => 'Mayotte']);
         $localCountry = $this->provider();
         $elsewhere = $this->provider(['name' => 'Profil de Paris', 'city' => 'Paris', 'country' => 'France']);
         $this->actingAs($client)->get(route('feed'))->assertOk()
             ->assertViewHas('homeProfessionalProfiles', fn ($profiles) => $profiles->modelKeys() === [$localCountry->id])
-            ->assertViewHas('pkProviderDiscovery', fn ($result) => $result['scope'] === 'country' && $result['expanded'])
+            ->assertViewHas('pkProviderDiscovery', fn ($result) => $result['scope'] === 'territory' && $result['expanded'])
             ->assertSee('Pas encore de profil public à Dzaoudzi · Mayotte')
-            ->assertSee('prestataires basés ailleurs')
+            ->assertSee('prestataires basés ailleurs à Mayotte')
             ->assertSee(route('feed.professionals', ['country' => 'Mayotte']), false);
         $client->update(['city' => 'Cayenne', 'country' => 'Guyane']);
         $this->get(route('feed'))->assertOk()
+            ->assertViewHas('homeProfessionalProfiles', fn ($profiles) => $profiles->isEmpty())
+            ->assertViewHas('pkProviderDiscovery', fn ($result) => $result['scope'] === 'empty')
+            ->assertDontSee('id="pkProviderList"', false)
+            ->assertDontSee('Paris · France')->assertDontSee('Mamoudzou · Mayotte');
+        // Territoire inconnu (pays étranger) : l'élargissement reste possible, et il est annoncé.
+        $client->update(['city' => 'Bruxelles', 'country' => 'Belgique']);
+        $this->get(route('feed'))->assertOk()
             ->assertViewHas('homeProfessionalProfiles', fn ($profiles) => $profiles->count() === 2 && $profiles->contains($elsewhere))
             ->assertViewHas('pkProviderDiscovery', fn ($result) => $result['scope'] === 'all' && $result['expanded'])
-            ->assertSee('Pas encore de profil public à Cayenne · Guyane')
-            ->assertSee('Paris · France')->assertSee('Mamoudzou · Mayotte')
-            ->assertDontSee('Prestataires à Cayenne');
+            ->assertSee('Pas encore de profil public à Bruxelles · Belgique')
+            ->assertSee('Paris · France')->assertSee('Mamoudzou · Mayotte');
     }
 
     public function test_local_selection_is_not_padded_with_remote_profiles(): void

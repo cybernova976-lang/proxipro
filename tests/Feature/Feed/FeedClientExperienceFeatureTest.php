@@ -13,7 +13,9 @@ class FeedClientExperienceFeatureTest extends TestCase
 
     public function test_client_gets_guided_service_entries_and_separate_external_employment_search(): void
     {
-        $response = $this->actingAs(User::factory()->create())->get(route('feed'))->assertOk();
+        // Lecteur à Paris : la fabrique par défaut ne pose aucun lieu, donc aucun territoire.
+        $reader = User::factory()->create(['country' => 'France', 'city' => 'Paris', 'postal_code' => '75002']);
+        $response = $this->actingAs($reader)->get(route('feed'))->assertOk();
         foreach ([
             ['Bricolage & Travaux', 'Plombier'],
             ['Nettoyage & Entretien', 'Femme/Homme de ménage'],
@@ -24,10 +26,15 @@ class FeedClientExperienceFeatureTest extends TestCase
             $response->assertSee(e($url), false);
             $this->get($url)->assertOk()->assertViewHas('preCategory', $category)->assertViewHas('preSubcategory', $subcategory);
         }
-        $response->assertSee(route('employment.index'), false)
+        // Lot 1 (D1, D2) : la carte « Emploi » du rail renvoie à la recherche France Travail
+        // du territoire (Paris : 75D) et à la page emploi publique du territoire.
+        $territoryPage = route('employment.territory', ['territoire' => 'departement-75']);
+        $response->assertSee($territoryPage, false)
+            ->assertSee(e('https://candidat.francetravail.fr/offres/recherche?lieux=75D'), false)
             ->assertDontSee('https://candidat.francetravail.fr/rechercheoffre/emploi', false);
-        $this->get(route('employment.index'))->assertOk()
-            ->assertSee('https://candidat.francetravail.fr/rechercheoffre/emploi', false)
+        $this->get(route('employment.index'))->assertRedirect($territoryPage);
+        $this->get($territoryPage)->assertOk()
+            ->assertSee(e('https://candidat.francetravail.fr/offres/recherche?lieux=75D'), false)
             ->assertSee('La recherche et la candidature se poursuivent sur le site France Travail.')
             ->assertDontSee('notre partenaire');
     }

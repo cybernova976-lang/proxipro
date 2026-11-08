@@ -39,7 +39,10 @@
 
     // --- statuts ---
     $pkIsUrgent  = $ad->is_urgent && (! $ad->urgent_until || $ad->urgent_until->isFuture());
+    $pkUrgentLabel = \App\Support\AdDisclosure::urgentLabel($ad);
     $pkIsBoosted = $ad->is_boosted && $ad->boost_end && $ad->boost_end->isFuture();
+    // Côté client, un libellé unique pour toute mise en avant payante (boost ou Premium).
+    $pkIsSponsored = $pkRole === 'client' && \App\Support\AdDisclosure::isSponsored($ad);
     $pkIsFresh   = $ad->created_at && $ad->created_at->greaterThan(now()->subHours(24)) && ! $pkIsUrgent;
     $pkIsDemande = $ad->service_type === 'demande';
 
@@ -47,6 +50,7 @@
     $pkAuthor   = $ad->user;
     $pkName     = $pkAuthor?->name ?? 'Utilisateur';
     $pkVerified = (bool) ($pkAuthor?->hasVerifiedProfileBadge() ?? false);
+    $pkStatus   = \App\Support\AdDisclosure::advertiserStatus($pkAuthor);
 
     // --- creneau souhaite, uniquement s'il a ete renseigne ---
     $pkDetails = is_array($ad->ad_details ?? null) ? $ad->ad_details : [];
@@ -94,15 +98,16 @@
     <div class="pk-ad__body">
         <div class="pk-ad__top">
             <span class="pk-ad__cat">{{ $pkCategoryLabel }}</span>
-            @if($pkIsUrgent)
-                <span class="pk-tag pk-tag--urgent"><i class="fas fa-bolt" aria-hidden="true"></i> Urgent</span>
+            @if($pkUrgentLabel)
+                <span class="pk-tag pk-tag--urgent"><i class="fas fa-bolt" aria-hidden="true"></i> {{ $pkUrgentLabel }}</span>
             @elseif($pkIsFresh)
                 <span class="pk-tag pk-tag--new">Nouveau</span>
             @endif
-            @if($pkIsBoosted)
+            @if($pkIsSponsored)
+                <span class="pk-tag pk-tag--sponsored">{{ \App\Support\AdDisclosure::SPONSORED_LABEL }}<span class="pk-sr"> : {{ \App\Support\AdDisclosure::SPONSORED_SCREEN_READER }}</span></span>
+                <a class="pk-ad__why" href="{{ route('legal.platform-rules') }}#classement" aria-label="Pourquoi ? Règles de classement des offres sponsorisées">Pourquoi ?</a>
+            @elseif($pkRole !== 'client' && $pkIsBoosted)
                 <span class="pk-tag pk-tag--boost">Boosté</span>
-            @elseif($pkRole === 'client' && $ad->feed_is_promoted)
-                <span class="pk-tag pk-tag--boost">Premium</span>
             @endif
         </div>
         <h3><a href="{{ $pkUrl }}">{{ $ad->title }}</a></h3>
@@ -112,6 +117,9 @@
                 {{ $pkPlace ?: 'Lieu non précisé' }}
                 @if($pkDistance)
                     · {{ $pkDistance }} km
+                @endif
+                @if($ad->isRemoteIntervention())
+                    <span class="pk-tag pk-tag--remote"><i class="fas fa-laptop-house" aria-hidden="true"></i> À distance</span>
                 @endif
             </span>
             <strong class="pk-ad__price">{{ $ad->formatted_price }}</strong>
@@ -148,6 +156,9 @@
                     <span class="pk-verified" title="Identité vérifiée" aria-label="Identité vérifiée"><i class="fas fa-check" aria-hidden="true"></i></span>
                 @endif
             @if($pkAuthor)</a>@else</span>@endif
+            @if($pkStatus)
+                <span class="pk-ad__status">{{ $pkStatus }}</span>
+            @endif
             @if($ad->created_at)
                 <time class="pk-ad__age" datetime="{{ $ad->created_at->toIso8601String() }}">{{ $ad->created_at->diffForHumans() }}</time>
             @endif

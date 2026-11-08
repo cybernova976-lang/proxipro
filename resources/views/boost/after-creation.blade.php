@@ -609,6 +609,7 @@
         @endif
         
         <!-- Boost Packages -->
+        @if($ad->service_type === 'offre')
         @foreach($packages as $key => $package)
         <div class="option-card" 
              style="--card-color: {{ $package['color'] }}; --card-rgb: {{ implode(',', sscanf($package['color'], '#%02x%02x%02x')) }};"
@@ -640,8 +641,9 @@
             </div>
         </div>
         @endforeach
+        @endif
     </div>
-    
+
     <!-- Confirmation Panel (hidden by default, appears on card selection) -->
     <div class="confirm-panel" id="confirmPanel">
         <div class="confirm-panel-header">

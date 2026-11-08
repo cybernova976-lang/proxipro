@@ -173,7 +173,18 @@ class BecomeProviderController extends Controller
                 'max_active_ads' => $user->max_active_ads ?? 5,
             ];
 
-            if ($user->user_type !== 'professionnel' && $user->account_type !== 'professionnel') {
+            // Le statut choisi dans la modale (entreprise, auto-entrepreneur) est conservé :
+            // il fonde la mention « Particulier / Professionnel » affichée aux clients.
+            // Quotas identiques à ProDashboardController::updateAccountStatus.
+            if (in_array($request->business_type, ['entreprise', 'auto_entrepreneur'], true)) {
+                $updateData['account_type'] = 'professionnel';
+                $updateData['user_type'] = 'professionnel';
+                $updateData['business_type'] = $request->business_type;
+                $updateData['max_active_ads'] = $request->business_type === 'entreprise' ? 20 : 10;
+                if ($request->filled('company_name')) {
+                    $updateData['company_name'] = $request->company_name;
+                }
+            } elseif ($user->user_type !== 'professionnel' && $user->account_type !== 'professionnel') {
                 $updateData['account_type'] = 'particulier';
                 $updateData['user_type'] = 'particulier';
             }

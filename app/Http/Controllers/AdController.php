@@ -13,8 +13,11 @@ use App\Services\GeocodingService;
 use App\Services\SavedSearchService;
 use App\Support\MarketplaceCategoryRegistry;
 use App\Support\ServiceDemandIntakeSchema;
+use App\Support\TerritoryResolver;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -40,7 +43,8 @@ class AdController extends Controller
             $query = Ad::query()->where('user_id', Auth::id());
             $isMyAds = true;
         } else {
-            $query = Ad::marketplaceActive();
+            // Les annonces des comptes internes ou de test ne sont pas publiques.
+            $query = Ad::marketplaceActive()->excludingHiddenAuthors();
         }
 
         // Filtres de recherche
@@ -959,17 +963,26 @@ class AdController extends Controller
 
     /**
      * Notifier les professionnels dont le domaine correspond à la catégorie de l'annonce.
+     *
+     * Pour une demande, seuls les prestataires du même territoire sont prévenus
+     * (App\Support\TerritoryResolver) ; un prestataire dont le territoire est
+     * inconnu reste prévenu, et une demande au territoire inconnu garde
+     * l'ancien comportement. Le nombre réellement prévenu est enregistré dans
+     * ads.notified_providers_count.
      */
     public function notifyMatchingProfessionals(Ad $ad): void
     {
         $category = $ad->category;
         if (! $category) {
+            $this->recordNotifiedProviders($ad, 0);
+
             return;
         }
 
         $publisher = $ad->user;
         if (! $publisher) {
             Log::warning('Cannot notify professionals: ad #'.$ad->id.' has no associated user.');
+            $this->recordNotifiedProviders($ad, 0);
 
             return;
         }
@@ -1004,10 +1017,13 @@ class AdController extends Controller
         $allUserIds = $matchingUserIds->merge($proUsers)->unique();
 
         if ($allUserIds->isEmpty()) {
+            $this->recordNotifiedProviders($ad, 0);
+
             return;
         }
 
-        $professionals = User::whereIn('id', $allUserIds)->get();
+        $candidates = User::whereIn('id', $allUserIds)->get();
+        $professionals = $this->professionalsInDemandTerritory($ad, $candidates);
         $notifiedCount = 0;
 
         foreach ($professionals as $pro) {
@@ -1022,8 +1038,61 @@ class AdController extends Controller
             }
         }
 
+        $this->recordNotifiedProviders($ad, $notifiedCount);
+
         if ($notifiedCount > 0) {
-            Log::info('Notified '.$notifiedCount.'/'.$professionals->count().' professionals for ad #'.$ad->id.' (category: '.$category.')');
+            Log::info('Notified '.$notifiedCount.'/'.$professionals->count().' professionals for ad #'.$ad->id.' (category: '.$category.')', [
+                'candidates' => $candidates->count(),
+                'outside_territory' => $candidates->count() - $professionals->count(),
+            ]);
+        }
+    }
+
+    /**
+     * Demande : ne garde que les prestataires du territoire de la demande.
+     * Un prestataire au territoire inconnu reste prévenu ; une demande au
+     * territoire inconnu, ou une offre, ne filtre personne.
+     *
+     * @param  Collection<int, User>  $professionals
+     * @return Collection<int, User>
+     */
+    private function professionalsInDemandTerritory(Ad $ad, Collection $professionals): Collection
+    {
+        if ($ad->service_type !== 'demande' || $professionals->isEmpty()) {
+            return $professionals;
+        }
+
+        $territories = app(TerritoryResolver::class);
+        $demandTerritory = $territories->forAd($ad);
+        if ($demandTerritory === null) {
+            return $professionals;
+        }
+
+        return $professionals->filter(function (User $professional) use ($territories, $demandTerritory) {
+            $professionalTerritory = $territories->forUser($professional);
+
+            return $professionalTerritory === null || $professionalTerritory->is($demandTerritory);
+        })->values();
+    }
+
+    /**
+     * Enregistre le nombre de prestataires réellement prévenus, sans toucher
+     * updated_at ni déclencher les événements du modèle.
+     */
+    private function recordNotifiedProviders(Ad $ad, int $count): void
+    {
+        if (! $ad->exists) {
+            return;
+        }
+
+        try {
+            DB::table($ad->getTable())
+                ->where($ad->getKeyName(), $ad->getKey())
+                ->update(['notified_providers_count' => $count]);
+            $ad->setAttribute('notified_providers_count', $count);
+            $ad->syncOriginalAttribute('notified_providers_count');
+        } catch (\Throwable $exception) {
+            Log::warning('Could not store notified providers count for ad #'.$ad->id.': '.$exception->getMessage());
         }
     }
 }

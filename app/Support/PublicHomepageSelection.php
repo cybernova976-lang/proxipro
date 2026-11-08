@@ -34,6 +34,7 @@ final class PublicHomepageSelection
     {
         $now = now();
         $query = Ad::marketplaceActive()
+            ->excludingHiddenAuthors()
             ->where('visibility', 'public')
             ->where('service_type', $type)
             ->where('created_at', '<=', $now)
@@ -67,6 +68,12 @@ final class PublicHomepageSelection
 
         foreach (['profession', 'city', 'avatar'] as $column) {
             $query->whereRaw("TRIM(COALESCE(users.{$column}, '')) <> ''");
+        }
+
+        // Comptes internes ou de test : jamais mis en avant sur l'accueil public.
+        $hiddenIds = Ad::hiddenAuthorIds();
+        if ($hiddenIds !== []) {
+            $query->whereNotIn('users.id', $hiddenIds);
         }
 
         self::requireTextLength($query, 'users.bio', 40);

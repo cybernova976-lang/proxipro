@@ -33,7 +33,7 @@ class ClientSpaceNavigation
             ['key' => 'saved', 'label' => 'Favoris', 'icon' => 'far fa-bookmark', 'route' => 'saved-ads.index',
                 'matches' => ['saved-ads.index']],
             ['key' => 'employment', 'label' => 'Emploi', 'icon' => 'fas fa-briefcase', 'route' => 'employment.index',
-                'matches' => ['employment.index']],
+                'matches' => ['employment.index', 'employment.territory']],
         ];
 
         if (! collect($sections)->contains(fn ($section) => $request->routeIs(...$section['matches']))) {
@@ -42,8 +42,22 @@ class ClientSpaceNavigation
 
         return array_map(fn ($section) => [
             ...$section,
-            'url' => route($section['route'], $section['key'] === 'discover' ? ['mode' => 'client'] : []),
+            'url' => self::sectionUrl($section, $request, $user),
             'active' => $request->routeIs(...$section['matches']),
         ], $sections);
+    }
+
+    /** L'onglet Emploi mène directement à la page du territoire quand il est connu. */
+    private static function sectionUrl(array $section, Request $request, User $user): string
+    {
+        if ($section['key'] === 'employment') {
+            $territory = app(TerritoryResolver::class)->forUser($user, (array) ($request->attributes->get('user_geo') ?? []));
+
+            return $territory !== null
+                ? route('employment.territory', ['territoire' => $territory->slug])
+                : route('employment.index');
+        }
+
+        return route($section['route'], $section['key'] === 'discover' ? ['mode' => 'client'] : []);
     }
 }

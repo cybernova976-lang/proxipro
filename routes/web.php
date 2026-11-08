@@ -206,16 +206,21 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
 // Factures d'achat (points & abonnements)
 Route::get('/purchase/invoice', [PurchaseInvoiceController::class, 'download'])->middleware('auth')->name('purchase.invoice');
 
+// Pages emploi publiques : elles renvoient vers la recherche France Travail
+// du territoire. Hors du groupe « auth » pour être accessibles aux visiteurs.
+Route::get('/emploi', [\App\Http\Controllers\EmploymentController::class, 'index'])->name('employment.index');
+Route::get('/emploi/{territoire}', [\App\Http\Controllers\EmploymentController::class, 'show'])
+    ->where('territoire', '[a-z0-9-]+')
+    ->name('employment.territory');
+
 // Routes pour le feed (page d'accueil après connexion)
 Route::middleware(['auth', 'geo'])->group(function () {
     Route::get('/feed', [FeedController::class, 'index'])->name('feed');
-    Route::get('/emploi', \App\Http\Controllers\EmploymentController::class)->name('employment.index');
     // La maquette a ete fusionnee dans la page d'accueil : ces deux adresses
     // ne servent plus qu'a ne pas casser les liens deja partages.
     Route::get('/nouveau-feed', fn () => redirect()->route('feed'))->name('feed.mockup');
     Route::get('/feed-maquette', fn () => redirect()->route('feed'))
         ->name('feed.mockup.legacy');
-    Route::get('/feed-test', [FeedController::class, 'indexTest'])->name('feed.test');
 
     // AJAX endpoints for category filtering
     Route::get('/feed/filter-ads', [FeedController::class, 'filterAds'])->name('feed.filter-ads');
@@ -601,6 +606,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/export', [AdminController::class, 'exportData'])->name('admin.export');
     Route::get('/operations', OperationsQueueController::class)->name('admin.operations');
+    // Santé du flux par territoire, en lecture seule.
+    Route::get('/feed-sante', \App\Http\Controllers\Admin\FeedHealthController::class)->name('admin.feed-health');
     Route::get('/emails', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'index'])->name('admin.emails.index');
     Route::get('/emails/create', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'create'])->name('admin.emails.create');
     Route::post('/emails', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'store'])->name('admin.emails.store');

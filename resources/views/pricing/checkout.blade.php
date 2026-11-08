@@ -511,11 +511,6 @@
                             <td><span class="pts-tag green"><i class="fas fa-coins me-1"></i>30 pts</span></td>
                         </tr>
                         <tr>
-                            <td><i class="fas fa-sync text-info me-2"></i>Rafraîchir une annonce</td>
-                            <td>—</td>
-                            <td><span class="pts-tag orange"><i class="fas fa-coins me-1"></i>10 pts</span></td>
-                        </tr>
-                        <tr>
                             <td><i class="fas fa-user-check text-primary me-2"></i>Vérification de profil</td>
                             <td>{{ number_format(\App\Models\IdentityVerification::getVerificationPrice('profile_verification'), 2, ',', ' ') }} €</td>
                             <td><span class="pts-tag blue"><i class="fas fa-credit-card me-1"></i>Carte uniquement</span></td>

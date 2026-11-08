@@ -20,6 +20,7 @@ class CleanupExpiredBoosts extends Command
                 'is_boosted' => false,
                 'boost_end' => null,
                 'boost_type' => null,
+                'boost_source' => null,
             ]);
 
         // Désactiver les urgents expirés
@@ -29,6 +30,7 @@ class CleanupExpiredBoosts extends Command
             ->update([
                 'is_urgent' => false,
                 'urgent_until' => null,
+                'urgent_source' => null,
                 'sidebar_priority' => 0,
             ]);
 

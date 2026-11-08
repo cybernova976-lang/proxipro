@@ -18,6 +18,7 @@
 
     @vite('resources/css/app.css')
     <link rel="stylesheet" href="{{ asset('css/form-validation.css') }}?v=20260902">
+    <link rel="stylesheet" href="{{ asset('css/legal-footer.css') }}?v={{ @filemtime(public_path('css/legal-footer.css')) ?: 1 }}">
     <script defer src="{{ asset('js/form-validation.js') }}?v=20260902"></script>
     
     <style>
@@ -44,6 +45,7 @@
     <div class="min-h-screen flex">
         @yield('content')
     </div>
+    @include('partials.legal-footer-links')
     @include('partials.usage-analytics')
     @include('partials.push-notifications')
     @include('partials.pwa-install')

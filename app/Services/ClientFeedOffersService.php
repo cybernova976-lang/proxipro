@@ -25,18 +25,12 @@ class ClientFeedOffersService
         }
 
         $query->selectRaw(
-            'CASE WHEN (ads.is_boosted = ? AND ads.boost_end > ?) OR EXISTS ('.$subscription->toSql().') THEN 1 ELSE 0 END AS feed_is_promoted',
+            // Un boost accordé gratuitement par l'administration (boost_source = admin) n'est pas sponsorisé.
+            'CASE WHEN (ads.is_boosted = ? AND ads.boost_end > ? AND COALESCE(ads.boost_source, \'\') <> \'admin\') OR EXISTS ('.$subscription->toSql().') THEN 1 ELSE 0 END AS feed_is_promoted',
             [true, now(), ...$subscription->getBindings()]
         );
 
-        $categories = collect([
-            ...((array) ($viewer?->preferred_categories ?? [])),
-            ...((array) ($viewer?->service_subcategories ?? [])),
-            ...((array) ($viewer?->pro_service_categories ?? [])),
-            $viewer?->service_category,
-        ])->filter(fn ($category) => is_string($category) && trim($category) !== '')
-            ->map(fn ($category) => mb_strtolower(trim($category)))
-            ->unique()->values()->all();
+        $categories = $this->viewerCategories($viewer);
 
         if ($categories !== []) {
             $placeholders = implode(', ', array_fill(0, count($categories), '?'));
@@ -58,7 +52,25 @@ class ClientFeedOffersService
             ->orderByRaw('CASE WHEN ads.feed_author_position <= 2 THEN 0 ELSE 1 END')
             ->orderBy('ads.feed_affinity')
             ->orderByDesc('ads.created_at')->orderByDesc('ads.id')
-            ->paginate(6, ['*'], 'offers_page')
+            ->paginate((int) config('feed.client.page_size', 6), ['*'], 'offers_page')
             ->withQueryString()->fragment('pkFeedTitle');
+    }
+
+    /**
+     * Catégories suivies par le lecteur, en minuscules : elles départagent
+     * les offres d'un même groupe (voir App\Services\Feed\RankingDisclosure).
+     *
+     * @return list<string>
+     */
+    public function viewerCategories(?User $viewer): array
+    {
+        return collect([
+            ...((array) ($viewer?->preferred_categories ?? [])),
+            ...((array) ($viewer?->service_subcategories ?? [])),
+            ...((array) ($viewer?->pro_service_categories ?? [])),
+            $viewer?->service_category,
+        ])->filter(fn ($category) => is_string($category) && trim($category) !== '')
+            ->map(fn ($category) => mb_strtolower(trim($category)))
+            ->unique()->values()->all();
     }
 }

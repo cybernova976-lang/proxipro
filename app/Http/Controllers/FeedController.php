@@ -9,10 +9,12 @@ use App\Models\User;
 use App\Services\AdLifecycleService;
 use App\Services\ClientActivityService;
 use App\Services\ClientFeedOffersService;
+use App\Services\Feed\RankingDisclosure;
 use App\Services\FeedRankingService;
 use App\Services\HomeProviderDiscoveryService;
 use App\Support\MarketplaceCategoryRegistry;
 use App\Support\MarketplaceGuideCatalog;
+use App\Support\TerritoryResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -58,6 +60,14 @@ class FeedController extends Controller
         }
         $useNearbyScope = $geoEnabled && $feedScope === 'nearby';
         $geoFallbackUsed = false;
+
+        // ===== TERRITOIRE DU LECTEUR (DROM ou département) =====
+        // Le flux client est limité par défaut à ce territoire ; « ?scope=all »
+        // garde l'affichage de toutes les zones, annoncé en clair dans la vue.
+        $pkTerritory = app(TerritoryResolver::class)->forUser($user, (array) ($request->attributes->get('user_geo') ?? []));
+        $pkRequestedScope = $request->query('scope');
+        $pkTerritoryScoped = $pkTerritory !== null && ! in_array($pkRequestedScope, ['all', 'nearby'], true)
+            && ($pkRequestedScope === 'territory' || config('feed.client.default_scope', 'territory') === 'territory');
 
         // Une seule requête groupée fournit les compteurs des 291 sous-catégories.
         $missionCategories = $this->getHomeMegaCategories();
@@ -279,7 +289,7 @@ class FeedController extends Controller
 
         $pkProviderCategory = null;
         $pkProviderDiscovery = $pkRole === 'client'
-            ? app(HomeProviderDiscoveryService::class)->discover($user, $geoCity, $geoCountry)
+            ? app(HomeProviderDiscoveryService::class)->discover($user, $geoCity, $geoCountry, $pkTerritory)
             : ['profiles' => collect(), 'scope' => 'empty', 'city' => null, 'country' => null,
                 'expanded' => false, 'requested_location' => ''];
         $pkProviderCity = $pkProviderDiscovery['city'];
@@ -418,6 +428,7 @@ class FeedController extends Controller
 
         // --- zone 4 : six annonces par page pour les clients ---
         $pkFeedPagination = null;
+        $pkRankingDisclosure = null;
         if ($pkRole === 'provider') {
             $pkFeedTitle = 'Demandes qui correspondent à votre métier';
             $matchingQuery = $this->matchingProviderRequestsQuery($user);
@@ -431,7 +442,11 @@ class FeedController extends Controller
             $priorityProviderRequests = $pkFeedAds->filter(fn ($ad) => $this->adLifecycle->needsFirstResponseAttention($ad))->values();
         } else {
             $pkMatchingCount = 0;
-            $pkFeedTitle = $useNearbyScope && ! $geoFallbackUsed ? 'Services disponibles près de vous' : 'Services à découvrir';
+            $pkFeedTitle = match (true) {
+                $pkTerritoryScoped => 'Services '.$pkTerritory->withPreposition(),
+                $useNearbyScope && ! $geoFallbackUsed => 'Services disponibles près de vous',
+                default => 'Services à découvrir',
+            };
             $clientOffers = Ad::marketplaceActive()->with('user')
                 ->where('service_type', 'offre')
                 ->where(fn ($domain) => $domain->whereNull('publication_domain')->orWhere('publication_domain', 'service'));
@@ -439,11 +454,34 @@ class FeedController extends Controller
                 $clientOffers->where('user_id', '!=', $user->id);
             }
             $this->applyHomeShowcaseVisibility($clientOffers, $user);
-            if ($useNearbyScope && ! $geoFallbackUsed) {
+            $clientOffers->excludingHiddenAuthors();
+            $pkIncludesRemote = $pkTerritoryScoped && (bool) config('feed.client.include_remote_offers', true);
+            if ($pkTerritoryScoped) {
+                // Offres du territoire, plus les offres « À distance » publiées ailleurs.
+                $clientOffers->where(function ($scoped) use ($pkTerritory, $pkIncludesRemote) {
+                    $scoped->inTerritory($pkTerritory);
+                    if ($pkIncludesRemote) {
+                        $scoped->orWhere(fn ($remote) => $remote->remoteOutside($pkTerritory));
+                    }
+                });
+            } elseif ($useNearbyScope && ! $geoFallbackUsed) {
                 $this->applyAdGeoScope($clientOffers, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null, $userRadius, $geoCity, $geoCountry);
             }
-            $pkFeedPagination = app(ClientFeedOffersService::class)->paginate($clientOffers, $user);
+            $pkClientOffersService = app(ClientFeedOffersService::class);
+            $pkFeedPagination = $pkClientOffersService->paginate($clientOffers, $user);
+            // Page demandée au-delà de la dernière : retour à la dernière page réelle.
+            if ($pkFeedPagination->isEmpty() && $pkFeedPagination->total() > 0) {
+                return redirect()->to($pkFeedPagination->url($pkFeedPagination->lastPage()));
+            }
             $pkFeedAds = $pkFeedPagination->getCollection();
+            $pkRankingDisclosure = app(RankingDisclosure::class)->forClientFeed(
+                $pkTerritoryScoped ? $pkTerritory : null,
+                $pkIncludesRemote,
+                $pkClientOffersService->viewerCategories($user) !== [],
+                (! $pkTerritoryScoped && $useNearbyScope && ! $geoFallbackUsed)
+                    ? ($geoCity ? 'de '.$geoCity.' et alentours' : 'proches de votre position')
+                    : null
+            );
 
             // Demonstration records are restricted to the existing local-only preview.
             if ($request->attributes->get('mockup_local_preview') && $pkFeedPagination->total() === 0) {
@@ -454,6 +492,31 @@ class FeedController extends Controller
         $pkBrowseUrl = route('ads.index', [
             'type' => $pkRole === 'provider' ? 'demandes' : 'offres',
         ]);
+
+        // --- portée territoriale du flux client, toujours annoncée en clair ---
+        $pkTerritoryLinks = [
+            'all' => route('feed', ['scope' => 'all']),
+            'territory' => route('feed'),
+            'location' => route('profile.edit').'#city',
+        ];
+        $pkEmptyLocal = null;
+        // Fondé sur le total, pas sur la page courante ; et faux si le lecteur a lui-même publié dans ce territoire.
+        if ($pkRole === 'client' && $pkTerritoryScoped && $pkFeedAds->isEmpty() && $pkFeedPagination?->total() === 0
+            && ! ($user?->exists && Ad::marketplaceActive()->where('user_id', $user->id)->where('service_type', 'offre')->inTerritory($pkTerritory)->exists())) {
+            $pkProviderSignupUrl = route('register', ['account_type' => 'professionnel']);
+            $pkEmptyLocal = [
+                // Alerte « nouvelles offres du territoire » (route existante saved-searches.store).
+                'alert' => array_filter([
+                    'type' => 'offres',
+                    'territory' => $pkTerritory->code,
+                    'country' => $pkTerritory->isOverseas() ? $pkTerritory->label : null,
+                ]),
+                'invite_url' => 'https://wa.me/?text='.rawurlencode(
+                    'Bonjour, je cherche un prestataire '.$pkTerritory->withPreposition()
+                    .' sur Prokejem. Vous pouvez y proposer vos services : '.$pkProviderSignupUrl
+                ),
+            ];
+        }
 
         // --- favoris deja enregistres parmi les annonces reellement affichees ---
         $pkSavedAdIds = collect();
@@ -620,7 +683,12 @@ class FeedController extends Controller
             'pkActivity',
             'pkShowUpsell',
             'pkProfileViews',
-            'pkGuides'
+            'pkGuides',
+            'pkTerritory',
+            'pkTerritoryScoped',
+            'pkTerritoryLinks',
+            'pkRankingDisclosure',
+            'pkEmptyLocal'
         ));
     }
 
@@ -839,15 +907,26 @@ class FeedController extends Controller
 
         $profileCity = trim((string) ($user?->city ?? ''));
         $profileCountry = trim((string) ($user?->country ?? ''));
-        $detectedCity = trim((string) ($user?->detected_city ?? ''));
-        $detectedCountry = trim((string) ($user?->detected_country ?? ''));
+        // Position par défaut (Mamoudzou) : ce n'est pas une mesure. Ni le lieu détecté,
+        // ni celui de la requête, ni les coordonnées par défaut ne sont repris, comme dans
+        // TerritoryResolver::forUser : sans lieu réel, rien n'est filtré « près de vous ».
+        // Le lieu déclaré dans le profil prime toujours.
+        $userHasDefaultPosition = $user && app(TerritoryResolver::class)->hasDefaultPosition($user);
+        $requestIsDefault = ($userGeo['source'] ?? null) === 'default';
+        $isDefaultPosition = $userHasDefaultPosition || $requestIsDefault;
+        $detectedCity = $isDefaultPosition ? '' : trim((string) ($user?->detected_city ?? ''));
+        $detectedCountry = $isDefaultPosition ? '' : trim((string) ($user?->detected_country ?? ''));
+        $requestCity = $isDefaultPosition ? null : ($userGeo['city'] ?? null);
+        $requestCountry = $isDefaultPosition ? null : ($userGeo['country'] ?? null);
+        $useProfileCoordinates = $hasProfileCoordinates && ! $userHasDefaultPosition;
+        $useRequestCoordinates = ! $hasProfileCoordinates && ! $requestIsDefault;
 
         return [
-            'latitude' => $hasProfileCoordinates ? $user->latitude : ($userGeo['latitude'] ?? null),
-            'longitude' => $hasProfileCoordinates ? $user->longitude : ($userGeo['longitude'] ?? null),
-            'city' => $profileCity !== '' ? $profileCity : ($detectedCity !== '' ? $detectedCity : ($userGeo['city'] ?? null)),
-            'country' => $profileCountry !== '' ? $profileCountry : ($detectedCountry !== '' ? $detectedCountry : ($userGeo['country'] ?? null)),
-            'source' => $hasProfileCoordinates ? 'profile' : ($userGeo['source'] ?? 'unknown'),
+            'latitude' => $useProfileCoordinates ? $user->latitude : ($useRequestCoordinates ? ($userGeo['latitude'] ?? null) : null),
+            'longitude' => $useProfileCoordinates ? $user->longitude : ($useRequestCoordinates ? ($userGeo['longitude'] ?? null) : null),
+            'city' => $profileCity !== '' ? $profileCity : ($detectedCity !== '' ? $detectedCity : $requestCity),
+            'country' => $profileCountry !== '' ? $profileCountry : ($detectedCountry !== '' ? $detectedCountry : $requestCountry),
+            'source' => $useProfileCoordinates ? 'profile' : ($userGeo['source'] ?? 'unknown'),
         ];
     }
 
@@ -1383,35 +1462,6 @@ class FeedController extends Controller
     }
 
     /**
-     * Construire la liste des proCategories depuis config/categories.php
-     * Format : tableau indexé [{name, icon, color, description, subcategories: [{name, icon, count}]}]
-     */
-    private function buildProCategories(): array
-    {
-        $counts = $this->activeCategoryCounts('offre');
-        $categories = [];
-        foreach (\App\Support\MarketplaceCategoryRegistry::enabledServices() as $name => $data) {
-            $subs = [];
-            foreach (array_slice($data['subcategories'], 0, 5) as $sub) {
-                $subs[] = [
-                    'name' => $sub,
-                    'icon' => $this->getSubcategoryIcon($sub, $data['fa_icon']),
-                    'count' => (int) ($counts[$sub] ?? 0),
-                ];
-            }
-            $categories[] = [
-                'name' => $name,
-                'icon' => $data['fa_icon'],
-                'color' => $data['color'],
-                'description' => $data['description'],
-                'subcategories' => $subs,
-            ];
-        }
-
-        return $categories;
-    }
-
-    /**
      * Icône FontAwesome pour une sous-catégorie, via correspondance de mots-clés.
      */
     private function getSubcategoryIcon(string $sub, string $parentIcon = 'fas fa-tag'): string
@@ -1662,166 +1712,6 @@ class FeedController extends Controller
             ->get();
 
         return view('feed.index-v2', compact('ads', 'categories', 'pinnedAds', 'userStats', 'suggestedPrestataires'));
-    }
-
-    /**
-     * Page d'accueil TEST - Nouvelle architecture moderne
-     */
-    public function indexTest(Request $request)
-    {
-        $user = Auth::user();
-
-        // Catégories principales pour le mega menu "Trouver un Pro"
-        $proCategories = $this->buildProCategories();
-
-        // Categories + subcategories for the mega menu
-        $missionCategories = $this->getHomeMegaCategories();
-
-        // Offres de pros (service_type = offre)
-        $proOffers = Ad::marketplaceActive()
-            ->where('service_type', 'offre')
-            ->with('user')
-            ->orderBy('is_pinned', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->take(8)
-            ->get();
-
-        // Demandes de particuliers (service_type = demande)
-        $clientRequests = Ad::marketplaceActive()
-            ->where('service_type', 'demande')
-            ->with('user')
-            ->orderBy('created_at', 'desc')
-            ->take(8)
-            ->get();
-
-        // ===== SECTION "LES DERNIÈRES PÉPITES" - TOUJOURS SANS FILTRE DE CATÉGORIE =====
-        $allAdsQuery = Ad::marketplaceActive()->with('user');
-
-        // Appliquer le filtre de type si présent
-        $filterType = $request->get('type', 'all'); // all, offres, demandes
-        if ($filterType === 'offres') {
-            $allAdsQuery->where('service_type', 'offre');
-        } elseif ($filterType === 'demandes') {
-            $allAdsQuery->where('service_type', 'demande');
-        }
-
-        // Toujours trier par épinglé puis récent
-        $allAdsQuery->orderBy('is_pinned', 'desc')->orderBy('created_at', 'desc');
-
-        // Récupérer TOUTES les annonces pour la section "Dernières pépites"
-        $ads = $allAdsQuery->paginate(12)->withQueryString();
-
-        // ===== SECTION FILTRÉE PAR CATÉGORIE (optionnelle, pour afficher les offres de la catégorie sélectionnée) =====
-        $categoryFilteredAds = null;
-        if ($request->has('category')) {
-            $cat = $request->category;
-            $categoryQuery = Ad::marketplaceActive()->with('user');
-
-            // Si c'est une catégorie principale, on inclut toutes ses sous-catégories
-            if (isset($missionCategories[$cat])) {
-                $subNames = collect($missionCategories[$cat]['subs'])->pluck('name')->toArray();
-                $subNames[] = $cat; // Inclure la catégorie mère aussi
-                $categoryQuery->whereIn('category', $subNames);
-            } else {
-                $categoryQuery->where('category', $cat);
-            }
-
-            // Appliquer le tri
-            $sort = $request->get('sort', 'recent');
-            if ($sort === 'popular') {
-                $categoryQuery->orderBy('views', 'desc');
-            } else {
-                $categoryQuery->orderBy('is_pinned', 'desc')->orderBy('created_at', 'desc');
-            }
-
-            $categoryFilteredAds = $categoryQuery->get();
-        }
-
-        // Handle specific subcategory filter (from pill buttons) using 'search' param as category override
-        if ($request->has('search')) {
-            // Cette partie reste inchangée pour le filtre de sous-catégorie
-            $searchAds = Ad::marketplaceActive()->with('user')
-                ->where(function ($q) use ($request) {
-                    $q->where('category', $request->search)
-                        ->orWhere('title', 'LIKE', '%'.$request->search.'%');
-                })
-                ->orderBy('created_at', 'desc')
-                ->paginate(12)
-                ->withQueryString();
-            $ads = $searchAds;
-        }
-
-        // Toutes les annonces pour le feed principal
-        $sort = $request->get('sort', 'recent');
-
-        // Top Pros
-        $topPros = \App\Models\User::where('user_type', 'professionnel')
-            ->where('id', '!=', $user->id)
-            ->withCount(['ads as ads_count' => fn ($q) => $q->where('status', 'active')])
-            ->orderByDesc('ads_count')
-            ->take(6)
-            ->get();
-
-        // Premium Professionals (users with active subscription OR boosted ads)
-        // Priorité 1: Utilisateurs avec annonces boostées
-        $usersWithBoostedAds = \App\Models\User::where('user_type', 'professionnel')
-            ->whereHas('ads', function ($q) {
-                $q->where('status', 'active')
-                    ->where('is_boosted', true)
-                    ->where('boost_end', '>', now());
-            })
-            ->with(['ads' => fn ($q) => $q->where('status', 'active')
-                ->where('is_boosted', true)
-                ->where('boost_end', '>', now())
-                ->latest()
-                ->take(1)])
-            ->withCount(['ads as ads_count' => fn ($q) => $q->where('status', 'active')])
-            ->get();
-
-        // Priorité 2: Utilisateurs avec abonnement premium (sans doublon)
-        $boostedUserIds = $usersWithBoostedAds->pluck('id')->toArray();
-
-        $subscribedPros = \App\Models\User::where('user_type', 'professionnel')
-            ->whereNotIn('id', $boostedUserIds)
-            ->where(function ($q) {
-                $q->whereNotNull('plan')
-                    ->where('plan', '!=', '')
-                    ->whereRaw('LOWER(plan) != ?', ['free'])
-                    ->where(function ($q2) {
-                        $q2->whereNull('subscription_end')
-                            ->orWhere('subscription_end', '>', now());
-                    });
-            })
-            ->withCount(['ads as ads_count' => fn ($q) => $q->where('status', 'active')])
-            ->with(['ads' => fn ($q) => $q->where('status', 'active')->latest()->take(1)])
-            ->inRandomOrder()
-            ->take(20 - count($boostedUserIds))
-            ->get();
-
-        // Combiner les deux groupes (boosted first, then subscribed)
-        $premiumPros = $usersWithBoostedAds->merge($subscribedPros);
-
-        // Stats utilisateur
-        $userStats = [
-            'total_ads' => $user->ads()->count(),
-            'active_ads' => $user->ads()->where('status', 'active')->count(),
-            'unread_messages' => $user->unreadMessagesCount(),
-            'available_points' => $user->available_points ?? 0,
-            'saved_ads' => $user->savedAds()->count(),
-        ];
-
-        return view('feed.index', compact(
-            'proCategories',
-            'missionCategories',
-            'proOffers',
-            'clientRequests',
-            'ads',
-            'topPros',
-            'premiumPros',
-            'userStats',
-            'sort',
-            'filterType'
-        ));
     }
 
     private function getHomeMegaCategories()
@@ -2155,14 +2045,19 @@ class FeedController extends Controller
         }
 
         // Base query: professionals OR particuliers prestataires
-        $baseQuery = function () {
-            return \App\Models\User::where(function ($q) {
+        // Les comptes internes ou de test (config feed.hidden_author_ids) sont
+        // exclus ici comme dans le rail du feed qui renvoie vers cet annuaire.
+        $hiddenAuthorIds = Ad::hiddenAuthorIds();
+        $baseQuery = function () use ($hiddenAuthorIds) {
+            $query = \App\Models\User::where(function ($q) {
                 $q->where('user_type', 'professionnel')
                     ->orWhere(function ($q2) {
                         $q2->where('user_type', 'particulier')
                             ->where('is_service_provider', true);
                     });
             });
+
+            return $hiddenAuthorIds === [] ? $query : $query->whereNotIn('users.id', $hiddenAuthorIds);
         };
 
         // Get professionals with active ads in the selected category
@@ -2306,6 +2201,13 @@ class FeedController extends Controller
             ->with(['services' => fn ($query) => $query->where('is_active', true)->orderBy('subcategory')])
             ->withCount(['verifiedReviewsReceived as reviews_count'])
             ->withAvg('verifiedReviewsReceived as reviews_avg_rating', 'rating');
+
+        // Comptes internes ou de test : retirés avant le calcul de la liste des
+        // pays, pour qu'elle ne provienne pas non plus de ces comptes.
+        $hiddenAuthorIds = Ad::hiddenAuthorIds();
+        if ($hiddenAuthorIds !== []) {
+            $query->whereNotIn('users.id', $hiddenAuthorIds);
+        }
 
         if ($categoriesToSearch !== []) {
             $query->where(function ($query) use ($categoriesToSearch) {
