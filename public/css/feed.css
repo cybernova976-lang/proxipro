@@ -1053,6 +1053,25 @@
   .pk-feed--client .pk-main { grid-column: 1; grid-row: 2; }
   .pk-feed--client .pk-rail { grid-template-columns: minmax(0, 1fr); grid-column: 2; grid-row: 1 / span 2; position: sticky; top: 88px; align-self: start; max-height: calc(100dvh - 104px); overflow: auto; }
 }
+/* Z7 · repères du rail client : « À faire » (données réelles), favoris, classement, aide. */
+.pk-landmarks { padding: 0; overflow: hidden; }
+.pk-landmarks > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; padding: 12px 16px; cursor: pointer; list-style: none; color: var(--pk-950); font-size: .92rem; font-weight: 800; }
+.pk-landmarks > summary::-webkit-details-marker { display: none; }
+.pk-landmarks > summary i:first-child { color: var(--pk-600); margin-right: 6px; }
+.pk-landmarks__chevron { color: var(--pk-700); font-size: .7rem; transition: transform .15s; }
+.pk-landmarks[open] .pk-landmarks__chevron { transform: rotate(180deg); }
+.pk-landmarks__title { margin: 0; padding: 4px 16px 6px; color: var(--pk-700); font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.pk-landmarks__list { margin: 0; padding: 0 8px 8px; list-style: none; }
+.pk-landmarks__list--links { border-top: 1px solid var(--pk-100); padding-top: 8px; }
+.pk-landmarks__item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 8px 10px; border: 0; border-radius: 10px; background: transparent; color: var(--pk-950); font: inherit; font-size: .82rem; font-weight: 600; text-align: left; cursor: pointer; }
+.pk-landmarks__item > i { width: 18px; color: var(--pk-600); text-align: center; }
+.pk-landmarks__item:hover { background: var(--pk-50); color: var(--pk-950); }
+.pk-landmarks__item:focus-visible { outline: 3px solid var(--pk-600); outline-offset: 1px; }
+.pk-landmarks__tone--warn > i, .pk-landmarks__tone--warn { color: var(--pk-warn); }
+.pk-landmarks__tone--info > i { color: var(--pk-violet); }
+.pk-landmarks__how { margin: 0 16px 14px; border-top: 1px solid var(--pk-100); }
+.pk-landmarks__how > summary { min-height: 44px; padding: 12px 0 4px; cursor: pointer; color: var(--pk-700); font-size: .82rem; font-weight: 700; }
+.pk-landmarks__how .pk-trust, .pk-landmarks__how .pk-guides { margin-top: 10px; box-shadow: none; }
 /* lot3:client:fin */
 
 /* ==========================================================================

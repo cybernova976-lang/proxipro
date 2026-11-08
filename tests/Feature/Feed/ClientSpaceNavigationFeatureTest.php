@@ -25,7 +25,9 @@ class ClientSpaceNavigationFeatureTest extends TestCase
             $current = $xpath->query('//a[@data-space-section][@aria-current="page"]');
             $this->assertSame(1, $current->length, $route);
             $this->assertSame($key, $current->item(0)->getAttribute('data-space-section'));
-            $this->assertSame(0, $xpath->query('//nav[@class="pk-tabbar"]')->length, $route);
+            // Lot 3 : sur /feed seulement, la barre du bas est rendue (affichée sous 640 px,
+            // à la place des onglets « Mon espace » ; voir client-space.css).
+            $this->assertSame($route === 'feed' ? 1 : 0, $xpath->query('//nav[@class="pk-tabbar"]')->length, $route);
             $this->assertSame(0, $xpath->query('//main[contains(@class,"main-content-with-sidebar")]')->length, $route);
         }
     }

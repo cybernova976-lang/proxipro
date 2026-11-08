@@ -232,3 +232,30 @@
       });
   });
 })();
+
+/* Repères du rail client (lot 3) : dépliés à partir de 1 180 px, repliés en dessous.
+   La ligne « Activer les notifications » disparaît si le navigateur ne peut pas
+   les recevoir ou si elles ont été refusées. */
+(function () {
+  'use strict';
+  var landmarks = document.querySelector('.pk-landmarks');
+  if (landmarks && window.matchMedia) {
+    var wide = window.matchMedia('(min-width: 1180px)');
+    var sync = function () { landmarks.open = wide.matches; };
+    sync();
+    if (wide.addEventListener) wide.addEventListener('change', sync);
+  }
+  var pushTodo = document.querySelector('[data-pk-todo-push]');
+  if (pushTodo) {
+    var unsupported = !('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window);
+    if (unsupported || Notification.permission === 'denied') {
+      var list = pushTodo.parentElement;
+      pushTodo.remove();
+      if (list && !list.children.length) {
+        var title = list.previousElementSibling;
+        if (title && title.classList.contains('pk-landmarks__title')) title.remove();
+        list.remove();
+      }
+    }
+  }
+})();

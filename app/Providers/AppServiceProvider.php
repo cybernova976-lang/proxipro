@@ -23,6 +23,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Mémoire des réglages (App\Models\Setting::get) : remise à zéro par Laravel
+        // à chaque requête et à chaque tâche de file d'attente.
+        $this->app->scoped('settings.memo', fn () => new \ArrayObject());
+
         $this->app->afterResolving('mail.manager', function ($manager) {
             $manager->extend('brevo', function (array $config = []) {
                 return new BrevoApiTransport($config['key'] ?? '');

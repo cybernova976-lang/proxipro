@@ -32,6 +32,9 @@
             <a class="pk-btn-soft" href="{{ $pkBrowseUrl }}">Explorer les demandes <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
         </section>
     @endif
+    @if(! $pkIsProvider)
+        @include('feed.partials.landmarks')
+    @else
     @include('feed.partials.profile-progress')
     <details class="pk-help">
         <summary><i class="far fa-question-circle" aria-hidden="true"></i> Conseils et fonctionnement <i class="fas fa-chevron-down" aria-hidden="true"></i></summary>
@@ -40,4 +43,5 @@
             @include('feed.partials.trust')
         </div>
     </details>
+    @endif
 </aside>

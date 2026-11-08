@@ -69,6 +69,10 @@ class FeedController extends Controller
         $pkTerritoryScoped = $pkTerritory !== null && ! in_array($pkRequestedScope, ['all', 'nearby'], true)
             && ($pkRequestedScope === 'territory' || config('feed.client.default_scope', 'territory') === 'territory');
 
+        // Accueil client : seules les zones affichées sont calculées (lot 3, budget
+        // mesuré par FeedClientQueryBudgetTest). L'aperçu local garde ses données.
+        $pkLightClient = $pkRole === 'client' && ! $request->attributes->get('mockup_local_preview');
+
         // Une seule requête groupée fournit les compteurs des 291 sous-catégories.
         $missionCategories = $this->getHomeMegaCategories();
 
@@ -83,13 +87,17 @@ class FeedController extends Controller
         // ===== SECTION "LES DERNIÈRES PÉPITES" - filtrée par proximité =====
         $allAdsQuery = $this->buildMainFeedAdsQuery($user, $filterType, $useNearbyScope, $userLat, $userLng, $userRadius, $geoCity, $geoCountry);
         $this->orderMainFeedAds($allAdsQuery, $useNearbyScope, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null);
-        $feedMapQuery = clone $allAdsQuery;
-        $ads = $allAdsQuery->paginate(12)->withQueryString();
+        $feedMapQuery = $pkLightClient ? null : clone $allAdsQuery;
+        $ads = $pkLightClient
+            ? new \Illuminate\Pagination\LengthAwarePaginator([], 0, 12)
+            : $allAdsQuery->paginate(12)->withQueryString();
 
         // Si peu de résultats, élargir automatiquement le rayon
         $radiusWasExpanded = false;
         $originalRadius = $userRadius;
-        if ($useNearbyScope && $ads->total() === 0) {
+        if ($pkLightClient) {
+            // Le flux client est calculé plus bas (ClientFeedOffersService).
+        } elseif ($useNearbyScope && $ads->total() === 0) {
             $nearbyAvailabilityQuery = $this->buildMainFeedAdsQuery(
                 $user,
                 $filterType,
@@ -126,7 +134,7 @@ class FeedController extends Controller
 
         // ===== SECTION FILTRÉE PAR CATÉGORIE (optionnelle, pour afficher les offres de la catégorie sélectionnée) =====
         $categoryFilteredAds = null;
-        if ($request->has('category')) {
+        if (! $pkLightClient && $request->has('category')) {
             $cat = $request->category;
             $categoryQuery = Ad::marketplaceActive()->with('user');
 
@@ -151,7 +159,7 @@ class FeedController extends Controller
         }
 
         // Handle specific subcategory filter (from pill buttons) using 'search' param as category override
-        if ($request->has('search')) {
+        if (! $pkLightClient && $request->has('search')) {
             $buildSearchAdsQuery = function (bool $nearby) use ($request, $userLat, $userLng, $userRadius, $geoCity, $geoCountry) {
                 $query = Ad::marketplaceActive()->with('user')
                     ->where(function ($q) use ($request) {
@@ -184,7 +192,7 @@ class FeedController extends Controller
         $sort = $request->get('sort', 'recent');
 
         // Top Pros - Classement par avis VÉRIFIÉS (uniquement des utilisateurs ayant publié une annonce ou effectué un paiement)
-        $topPros = \App\Models\User::where(function ($q) {
+        $topPros = $pkLightClient ? collect() : \App\Models\User::where(function ($q) {
             $q->where('user_type', 'professionnel')
                 ->orWhere(function ($q2) {
                     $q2->where('user_type', 'particulier')
@@ -203,7 +211,7 @@ class FeedController extends Controller
 
         // Premium Pros - Utilisateurs avec annonces boostées ou abonnement actif
         // Inclut professionnels ET particuliers prestataires
-        $usersWithBoostedAds = \App\Models\User::where(function ($q) {
+        $usersWithBoostedAds = $pkLightClient ? collect() : \App\Models\User::where(function ($q) {
             $q->where('user_type', 'professionnel')
                 ->orWhere(function ($q2) {
                     $q2->where('user_type', 'particulier')
@@ -224,7 +232,7 @@ class FeedController extends Controller
         $boostedUserIds = $usersWithBoostedAds->pluck('id')->toArray();
 
         $remainingPremiumSlots = max(0, 20 - count($boostedUserIds));
-        $subscribedPros = $remainingPremiumSlots === 0 ? collect() : \App\Models\User::where(function ($q) {
+        $subscribedPros = ($pkLightClient || $remainingPremiumSlots === 0) ? collect() : \App\Models\User::where(function ($q) {
             $q->where('user_type', 'professionnel')
                 ->orWhere(function ($q2) {
                     $q2->where('user_type', 'particulier')
@@ -248,7 +256,7 @@ class FeedController extends Controller
             ->get();
 
         // Ajouter aussi les particuliers prestataires récents (même sans abonnement premium)
-        $newProviders = \App\Models\User::where('user_type', 'particulier')
+        $newProviders = $pkLightClient ? collect() : \App\Models\User::where('user_type', 'particulier')
             ->where('is_service_provider', true)
             ->whereNotIn('id', $boostedUserIds)
             ->whereNotIn('id', $subscribedPros->pluck('id')->toArray())
@@ -260,7 +268,7 @@ class FeedController extends Controller
 
         $premiumPros = $usersWithBoostedAds->merge($subscribedPros)->merge($newProviders);
 
-        $homePersonalRequests = $this->buildHomeShowcaseAds(
+        $homePersonalRequests = $pkLightClient ? collect() : $this->buildHomeShowcaseAds(
             serviceType: 'demande',
             currentUser: $user,
             authorKind: null,
@@ -271,7 +279,7 @@ class FeedController extends Controller
             geoCity: $useNearbyScope && ! $geoFallbackUsed ? $geoCity : null,
             geoCountry: $useNearbyScope && ! $geoFallbackUsed ? $geoCountry : null
         );
-        $homeProfessionalOffers = $this->buildHomeShowcaseAds(
+        $homeProfessionalOffers = $pkLightClient ? collect() : $this->buildHomeShowcaseAds(
             serviceType: 'offre',
             currentUser: $user,
             authorKind: null,
@@ -302,7 +310,7 @@ class FeedController extends Controller
                 (int) ($activeClientRequest->service_proposals_count ?? 0)
             )
             : false;
-        $priorityProviderRequests = $this->buildPriorityProviderRequests(
+        $priorityProviderRequests = $pkLightClient ? collect() : $this->buildPriorityProviderRequests(
             user: $user,
             userLat: $useNearbyScope && ! $geoFallbackUsed && $userLat !== null ? (float) $userLat : null,
             userLng: $useNearbyScope && ! $geoFallbackUsed && $userLng !== null ? (float) $userLng : null,
@@ -387,7 +395,7 @@ class FeedController extends Controller
             $proProfileCompletion = 72;
         }
 
-        $adsMapData = $this->buildAdsMapData(
+        $adsMapData = $pkLightClient ? collect() : $this->buildAdsMapData(
             (clone $feedMapQuery)
                 ->whereNotNull('latitude')
                 ->whereNotNull('longitude')
@@ -560,7 +568,8 @@ class FeedController extends Controller
         }
 
         // --- activite recente : trois chiffres mesures, mis en cache 10 minutes ---
-        $pkActivity = Cache::remember('feed:activity:v1', 600, function () {
+        // Aucune vue de l'accueil n'affiche ces lignes en mode client : rien n'est calculé.
+        $pkActivity = $pkLightClient ? [] : Cache::remember('feed:activity:v1', 600, function () {
             $lines = [];
 
             $weekRequests = Ad::marketplaceActive()
@@ -626,7 +635,16 @@ class FeedController extends Controller
         $pkPrimaryAction = null;
         $pkSituationTiles = [];
         $pkSearchConfig = [];
+        $pkTodo = [];
         if ($pkRole === 'client') {
+            // Zone « À faire » du rail : chaque ligne repose sur une donnée réelle du compte.
+            if ($user?->exists) {
+                $pkTodo = array_filter([
+                    'push' => ! $user->pushSubscriptions()->exists(),
+                    'alert' => $pkTerritory !== null && ! $user->savedSearches()->exists(),
+                    'city' => trim((string) $user->city) === '' && trim((string) $user->postal_code) === '',
+                ]);
+            }
             $pkPrimaryAction = app(\App\Services\Feed\ClientPrimaryActionResolver::class)->resolve(
                 $pkClientActivity,
                 $user?->exists ? \App\Models\DemandDraft::where('user_id', $user->id)->exists() : false
@@ -724,7 +742,8 @@ class FeedController extends Controller
             'pkEmptyLocal',
             'pkPrimaryAction',
             'pkSituationTiles',
-            'pkSearchConfig'
+            'pkSearchConfig',
+            'pkTodo'
         ));
     }
 

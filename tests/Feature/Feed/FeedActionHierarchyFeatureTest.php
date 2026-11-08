@@ -117,7 +117,9 @@ class FeedActionHierarchyFeatureTest extends TestCase
         $response = $this->actingAs(User::factory()->create())->get(route('feed'))->assertOk();
         $html = $response->getContent();
         $this->assertSame(1, substr_count($html, 'id="pkSearchForm"'));
-        $this->assertGreaterThan(strpos($html, 'id="pkFeedList"'), strpos($html, '<details class="pk-progress"'));
+        // Lot 3 : côté client, le rappel du profil (vérification d'identité) vit dans « Repères › À faire ».
+        $this->assertGreaterThan(strpos($html, 'id="pkFeedList"'), strpos($html, '<details class="pk-rcard pk-landmarks"'));
+        $this->assertStringContainsString('Vérifier mon identité', $html);
         // Lot 1 (A8) : sans profil à montrer, la zone des prestataires est masquée.
         $response->assertDontSee('id="pkProviderList"', false)
             ->assertDontSee('Aucun profil public ne correspond encore à ces critères');

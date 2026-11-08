@@ -6719,7 +6719,7 @@
     <link rel="stylesheet" href="{{ asset('css/client-space.css') }}?v={{ filemtime(public_path('css/client-space.css')) }}">
 @endif
 </head>
-<body class="device-{{ $deviceType ?? 'desktop' }}{{ ($isMobile ?? false) ? ' is-mobile' : '' }}{{ ($isTablet ?? false) ? ' is-tablet' : '' }}{{ request()->routeIs('feed.mockup', 'feed.mockup.preview') ? ' feed-mockup-route' : '' }}{{ $pkClientSpaceVisible ? ' has-client-space' : '' }}">
+<body class="device-{{ $deviceType ?? 'desktop' }}{{ ($isMobile ?? false) ? ' is-mobile' : '' }}{{ ($isTablet ?? false) ? ' is-tablet' : '' }}{{ request()->routeIs('feed.mockup', 'feed.mockup.preview') ? ' feed-mockup-route' : '' }}{{ $pkClientSpaceVisible ? ' has-client-space' : '' }}{{ request()->routeIs('feed') ? ' pk-route-feed' : '' }}">
     {{-- Variables JS pour détection appareil côté client --}}
     <script>
         window.__device = {
@@ -10294,9 +10294,10 @@
     @include('partials.user-presence')
 
     {{-- Hors de l'espace particulier, la navigation mobile existante reste disponible. --}}
-    @unless($pkClientSpaceVisible)
+    {{-- Sur /feed (client), la barre du bas remplace les onglets « Mon espace » sous 640 px (client-space.css). --}}
+    @if(! $pkClientSpaceVisible || request()->routeIs('feed'))
         @include('feed.partials.mobile-tabbar')
-    @endunless
+    @endif
     <style>
         .header-nav-center .header-nav-btn { white-space: nowrap; }
         @media (min-width: 992px) and (max-width: 1199.98px) {
