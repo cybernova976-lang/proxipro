@@ -7,9 +7,14 @@ use App\Models\DemandDraft;
 use App\Models\User;
 use App\Models\UserService;
 use App\Services\AdLifecycleService;
+use App\Services\Demand\GuidedDemandInput;
+use App\Services\Demand\GuidedDemandPage;
 use App\Services\GeocodingService;
 use App\Services\SavedSearchService;
+use App\Services\UsageAnalytics;
 use App\Support\ServiceDemandIntakeSchema;
+use App\Support\ServiceSituationCatalog;
+use App\Support\TerritoryResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -30,6 +35,21 @@ class DemandController extends Controller
      */
     public function create(Request $request)
     {
+        // Parcours guidé : seulement pour une situation valide et disponible ici.
+        // Sinon (clé absente, inconnue ou univers désactivé) : formulaire habituel.
+        $situationKey = $request->query('situation');
+        if (is_string($situationKey) && $situationKey !== '') {
+            $territory = app(TerritoryResolver::class)->forUser(
+                $request->user(),
+                (array) ($request->attributes->get('user_geo') ?? [])
+            );
+            $situation = app(ServiceSituationCatalog::class)->find($situationKey, $territory);
+
+            if ($situation !== null) {
+                return view('demands.guided', app(GuidedDemandPage::class)->build($request, $situation, $territory));
+            }
+        }
+
         $categoriesData = [];
         foreach (\App\Support\MarketplaceCategoryRegistry::enabledServices() as $name => $data) {
             $categoriesData[$name] = [
@@ -102,6 +122,14 @@ class DemandController extends Controller
             ->values()
             ->all();
 
+        // Parcours guidé : métier, précisions, titre et description préparés ici,
+        // puis contrôlés par les mêmes règles que le formulaire habituel.
+        $guided = null;
+        if ($request->filled('situation_key')) {
+            $guided = app(GuidedDemandInput::class)->prepare($request);
+            $request->merge($guided['fields']);
+        }
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:2000',
@@ -127,6 +155,10 @@ class DemandController extends Controller
         ], [
             'publication_confirmed.required' => 'Confirmez les informations et acceptez la publication publique de votre demande pendant 30 jours.',
             'publication_confirmed.accepted' => 'Confirmez les informations et acceptez la publication publique de votre demande pendant 30 jours.',
+            'photos.*.image' => 'Ce format de photo n’est pas accepté. Utilisez une photo JPEG, PNG ou WebP (les photos HEIC de l’iPhone ne sont pas lues).',
+            'photos.*.mimes' => 'Ce format de photo n’est pas accepté. Utilisez une photo JPEG, PNG ou WebP (les photos HEIC de l’iPhone ne sont pas lues).',
+            'photos.*.max' => 'Une photo dépasse 5 Mo. Choisissez une photo plus légère.',
+            'photos.max' => 'Deux photos au plus.',
         ], ServiceDemandIntakeSchema::validationAttributes($request->input('main_category')));
 
         if (! in_array($request->category, $services[$request->main_category]['subcategories'] ?? [], true)) {
@@ -135,7 +167,15 @@ class DemandController extends Controller
             ])->withInput();
         }
 
-        if ($this->adLifecycle->hasRecentDuplicate(
+        if ($guided !== null) {
+            // Même suite de choix dans les 24 heures : on montre la demande déjà publiée.
+            $existing = $this->adLifecycle->findRecentDuplicate(Auth::id(), $request->title, $request->category, 'demande');
+            if ($existing !== null) {
+                $this->recordUsage($request, 'demand_duplicate_redirect');
+
+                return redirect()->route('demand.matching', $existing)->with('demand_duplicate', true);
+            }
+        } elseif ($this->adLifecycle->hasRecentDuplicate(
             Auth::id(),
             $request->title,
             $request->category,
@@ -176,6 +216,10 @@ class DemandController extends Controller
                 $request->input('service_details', [])
             ),
         ];
+        if ($guided !== null) {
+            $ad->situation_key = $guided['situation']['key'];
+            $ad->ad_details = [...$ad->ad_details, ...$guided['ad_details_extra']];
+        }
         $ad->location = $finalLocation;
         $ad->city = $selectedCity;
         $ad->price_type = $request->price_type;
@@ -229,7 +273,23 @@ class DemandController extends Controller
 
         DemandDraft::where('user_id', Auth::id())->delete();
 
-        return redirect()->route('demand.matching', $ad);
+        $this->recordUsage($request, $guided !== null ? 'demand_published_guided' : 'demand_published_free');
+
+        return redirect()->route('demand.matching', $ad)->with('demand_published', true);
+    }
+
+    /** Compteur agrégé, sans donnée personnelle ; une panne de mesure ne bloque jamais la publication. */
+    private function recordUsage(Request $request, string $event): void
+    {
+        try {
+            app(UsageAnalytics::class)->record(
+                $event,
+                'demand.store',
+                (string) $request->attributes->get('device_type', 'desktop')
+            );
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
     }
 
     /**

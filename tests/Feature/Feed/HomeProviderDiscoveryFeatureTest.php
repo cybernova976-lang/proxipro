@@ -105,8 +105,9 @@ class HomeProviderDiscoveryFeatureTest extends TestCase
         $viewer = User::factory()->create(['city' => 'Mamoudzou', 'country' => 'Mayotte']);
         $provider = $this->provider();
         $response = $this->actingAs($viewer)->get(route('feed'))->assertOk()
-            ->assertSee('Trouver un prestataire')->assertSee('Publier une demande');
-        $this->assertStringContainsString('action="'.route('feed.professionals').'"', $response->getContent());
+            ->assertSee('Quel est votre problème ?')->assertSee('Décrire mon besoin');
+        // Lot 2 : la pilule mène au parcours de demande ; l'annuaire reste joignable par le rail.
+        $this->assertStringContainsString('action="'.route('demand.create').'"', $response->getContent());
         $this->get(route('feed.professionals', ['subcategory' => 'Plombier', 'city' => 'Mamoudzou', 'country' => 'Mayotte']))
             ->assertOk()->assertViewHas('professionals', fn ($profiles) => $profiles->contains($provider));
         $this->get(route('profile.public', $provider))->assertOk();

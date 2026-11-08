@@ -89,3 +89,18 @@
     .pk-employment-card { padding: 22px 20px; }
     .pk-employment-card__link { width: 100%; }
 }
+
+/* Sur /feed, le bouton « Publier une demande » de l'en-tête passe en contour :
+   la zone « Quel est votre problème ? » porte déjà l'action principale.
+   Les !important répondent à ceux du gabarit (layouts/app). */
+.header-modern .header-nav-btn-primary.pk-header-secondary,
+.header-modern .mobile-service-request.pk-header-secondary {
+    background: #fff !important;
+    color: #3730a3 !important;
+    border: 1px solid #a5b4fc !important;
+    box-shadow: none !important;
+}
+.header-modern .header-nav-btn-primary.pk-header-secondary:hover,
+.header-modern .mobile-service-request.pk-header-secondary:hover {
+    background: #eef2ff !important;
+}

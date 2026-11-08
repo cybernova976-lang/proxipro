@@ -2,8 +2,6 @@
 
 namespace App\Support;
 
-use Carbon\Carbon;
-
 class ServiceDemandIntakeSchema
 {
     public static function forCategory(?string $mainCategory): array
@@ -110,13 +108,15 @@ class ServiceDemandIntakeSchema
         $adDetails = is_array($adDetails) ? $adDetails : [];
         $rows = [];
 
-        if (! empty($adDetails['desired_date'])) {
-            try {
-                $date = Carbon::parse($adDetails['desired_date'])->locale('fr')->translatedFormat('d F Y');
-            } catch (\Throwable) {
+        if (! empty($adDetails['desired_date']) || ! empty($adDetails['when'])) {
+            // Libellé honnête (« Cette semaine »…) ; le moment de la journée a sa propre ligne.
+            $date = \App\Models\Ad::whenLabelFromDetails($adDetails, false);
+            if ($date === null && ! empty($adDetails['desired_date'])) {
                 $date = (string) $adDetails['desired_date'];
             }
-            $rows[] = ['key' => 'desired_date', 'label' => 'Date souhaitée', 'value' => $date];
+            if ($date !== null) {
+                $rows[] = ['key' => 'desired_date', 'label' => 'Date souhaitée', 'value' => $date];
+            }
         }
 
         $timeWindows = [

@@ -52,16 +52,8 @@
     $pkVerified = (bool) ($pkAuthor?->hasVerifiedProfileBadge() ?? false);
     $pkStatus   = \App\Support\AdDisclosure::advertiserStatus($pkAuthor);
 
-    // --- creneau souhaite, uniquement s'il a ete renseigne ---
-    $pkDetails = is_array($ad->ad_details ?? null) ? $ad->ad_details : [];
-    $pkWhen = null;
-    if (! empty($pkDetails['desired_date'])) {
-        try {
-            $pkWhen = \Carbon\Carbon::parse($pkDetails['desired_date'])->translatedFormat('D j M');
-        } catch (\Throwable $e) {
-            $pkWhen = null;
-        }
-    }
+    // --- moment souhaite, dit honnetement (« Cette semaine » plutot qu'une date technique) ---
+    $pkWhen = \App\Models\Ad::whenLabelFromDetails(is_array($ad->ad_details ?? null) ? $ad->ad_details : []);
 
     // --- distance, presente quand le flux est geolocalise ---
     $pkDistance = isset($ad->distance) && $ad->distance !== null

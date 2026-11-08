@@ -1,0 +1,615 @@
+{
+    "catalog": {
+        "version": 1,
+        "situations": {
+            "fuite-eau": {
+                "title": "Fuite d’eau",
+                "title_question": "fuite_lieu",
+                "opening": "J’ai une fuite d’eau{fragment}.",
+                "questions": [
+                    "fuite_lieu",
+                    "fuite_force",
+                    "logement"
+                ]
+            },
+            "wc-bouche": {
+                "title": "WC bouchés",
+                "title_question": null,
+                "opening": "Mes WC sont bouchés.",
+                "questions": [
+                    "wc_etat",
+                    "logement"
+                ]
+            },
+            "panne-electrique": {
+                "title": "Panne électrique",
+                "title_question": null,
+                "opening": "J’ai une panne électrique.",
+                "questions": [
+                    "panne_quoi",
+                    "logement"
+                ]
+            },
+            "clim": {
+                "title": "Clim",
+                "title_question": "clim_probleme",
+                "opening": "J’ai besoin d’un climaticien.",
+                "questions": [
+                    "clim_probleme",
+                    "logement"
+                ]
+            },
+            "menage": {
+                "title": "Ménage",
+                "title_question": null,
+                "opening": "Je cherche une aide pour le ménage.",
+                "questions": [
+                    "menage_frequence",
+                    "menage_duree"
+                ]
+            },
+            "jardin": {
+                "title": "Entretien du jardin",
+                "title_question": "jardin_travail",
+                "opening": "J’ai besoin d’un jardinier.",
+                "questions": [
+                    "jardin_travail",
+                    "jardin_taille"
+                ]
+            },
+            "demenager": {
+                "title": "Déménagement",
+                "title_question": null,
+                "opening": "Je dois déménager.",
+                "questions": [
+                    "dem_volume",
+                    "dem_acces"
+                ]
+            },
+            "telephone-casse": {
+                "title": "Téléphone cassé",
+                "title_question": null,
+                "opening": "Mon téléphone est cassé.",
+                "questions": [
+                    "tel_panne",
+                    "tel_mode"
+                ]
+            }
+        },
+        "questions": {
+            "clim_probleme": {
+                "options": {
+                    "froid": {
+                        "title_part": " en panne",
+                        "sentence": "La clim ne fait plus froid."
+                    },
+                    "coule": {
+                        "title_part": " qui coule",
+                        "sentence": "La clim coule."
+                    },
+                    "bruit": {
+                        "title_part": " bruyante",
+                        "sentence": "La clim fait du bruit."
+                    },
+                    "installer": {
+                        "title_part": " à installer",
+                        "sentence": "Je veux installer une clim."
+                    }
+                }
+            },
+            "dem_acces": {
+                "options": {
+                    "easy": {
+                        "sentence": "L’accès est facile."
+                    },
+                    "elevator": {
+                        "sentence": "Il y a un ascenseur."
+                    },
+                    "stairs": {
+                        "sentence": "Il y a des escaliers, sans ascenseur."
+                    }
+                }
+            },
+            "dem_volume": {
+                "options": {
+                    "few_items": {
+                        "sentence": "J’ai quelques objets à déplacer."
+                    },
+                    "car_load": {
+                        "sentence": "J’ai une voiture pleine à déplacer."
+                    },
+                    "utility": {
+                        "sentence": "Il faut un camion."
+                    },
+                    "large_move": {
+                        "sentence": "Je déménage toute la maison."
+                    }
+                }
+            },
+            "fuite_force": {
+                "options": {
+                    "goutte": {
+                        "sentence": "L’eau coule goutte à goutte."
+                    },
+                    "beaucoup": {
+                        "sentence": "L’eau coule beaucoup."
+                    },
+                    "coupee": {
+                        "sentence": "J’ai coupé l’eau."
+                    }
+                }
+            },
+            "fuite_lieu": {
+                "options": {
+                    "cuisine": {
+                        "title_part": " dans la cuisine",
+                        "fragment": " dans la cuisine"
+                    },
+                    "salle_de_bain": {
+                        "title_part": " dans la salle de bain",
+                        "fragment": " dans la salle de bain"
+                    },
+                    "wc": {
+                        "title_part": " dans les WC",
+                        "fragment": " dans les WC"
+                    },
+                    "dehors": {
+                        "title_part": " dehors",
+                        "fragment": " dehors"
+                    }
+                }
+            },
+            "jardin_taille": {
+                "options": {
+                    "small": {
+                        "sentence": "Le jardin est petit."
+                    },
+                    "medium": {
+                        "sentence": "Le jardin est moyen."
+                    },
+                    "large": {
+                        "sentence": "Le terrain est grand."
+                    }
+                }
+            },
+            "jardin_travail": {
+                "options": {
+                    "herbe": {
+                        "title_part": " : couper l’herbe",
+                        "sentence": "Il faut couper l’herbe."
+                    },
+                    "tailler": {
+                        "title_part": " : taille",
+                        "sentence": "Il faut tailler des arbres ou des haies."
+                    },
+                    "nettoyer": {
+                        "title_part": " : nettoyage",
+                        "sentence": "Il faut nettoyer le terrain."
+                    }
+                }
+            },
+            "logement": {
+                "options": {
+                    "house": {
+                        "sentence": "C’est dans une maison."
+                    },
+                    "apartment": {
+                        "sentence": "C’est dans un appartement."
+                    },
+                    "business": {
+                        "sentence": "C’est dans un local professionnel."
+                    }
+                }
+            },
+            "menage_duree": {
+                "options": {
+                    "short": {
+                        "sentence": "Il faut moins de 2 heures."
+                    },
+                    "half_day": {
+                        "sentence": "Il faut une demi-journée."
+                    },
+                    "day": {
+                        "sentence": "Il faut une journée."
+                    }
+                }
+            },
+            "menage_frequence": {
+                "options": {
+                    "once": {
+                        "sentence": "C’est pour une seule fois."
+                    },
+                    "weekly": {
+                        "sentence": "C’est pour chaque semaine."
+                    },
+                    "several_week": {
+                        "sentence": "C’est plusieurs fois par semaine."
+                    },
+                    "monthly": {
+                        "sentence": "C’est quelques fois par mois."
+                    }
+                }
+            },
+            "panne_quoi": {
+                "options": {
+                    "tout": {
+                        "sentence": "Je n’ai plus de courant du tout."
+                    },
+                    "prise": {
+                        "sentence": "Une prise ne marche plus."
+                    },
+                    "lumiere": {
+                        "sentence": "Une lumière ne marche plus."
+                    },
+                    "disjoncteur": {
+                        "sentence": "Le disjoncteur saute."
+                    }
+                }
+            },
+            "tel_mode": {
+                "options": {
+                    "dropoff": {
+                        "sentence": "Je peux déposer le téléphone."
+                    },
+                    "onsite": {
+                        "sentence": "Je préfère une réparation chez moi."
+                    }
+                }
+            },
+            "tel_panne": {
+                "options": {
+                    "ecran": {
+                        "sentence": "L’écran est cassé."
+                    },
+                    "batterie": {
+                        "sentence": "La batterie ne tient plus."
+                    },
+                    "charge": {
+                        "sentence": "Il ne charge plus."
+                    },
+                    "eau": {
+                        "sentence": "Il est tombé dans l’eau."
+                    }
+                }
+            },
+            "wc_etat": {
+                "options": {
+                    "monte": {
+                        "sentence": "L’eau monte dans la cuvette."
+                    },
+                    "lent": {
+                        "sentence": "L’eau descend lentement."
+                    },
+                    "deborde": {
+                        "sentence": "Les WC débordent."
+                    }
+                }
+            }
+        }
+    },
+    "cases": [
+        {
+            "name": "exemple-fuite-cuisine-koungou",
+            "input": {
+                "city": "Koungou",
+                "when": "today",
+                "time_window": "morning",
+                "price_type": "negotiable",
+                "price": "",
+                "detail": "",
+                "situation_key": "fuite-eau",
+                "answers": {
+                    "fuite_lieu": "cuisine",
+                    "fuite_force": "beaucoup",
+                    "logement": "unknown"
+                }
+            },
+            "expected": {
+                "title": "Fuite d’eau dans la cuisine à Koungou",
+                "description": "Bonjour. J’ai une fuite d’eau dans la cuisine. L’eau coule beaucoup. J’ai besoin d’aide aujourd’hui, le matin si possible. Le prix est à discuter."
+            }
+        },
+        {
+            "name": "toutes-les-reponses-inconnues",
+            "input": {
+                "city": "Mamoudzou",
+                "when": "this_week",
+                "time_window": "flexible",
+                "price_type": "negotiable",
+                "price": "",
+                "detail": "",
+                "situation_key": "fuite-eau",
+                "answers": {
+                    "fuite_lieu": "unknown",
+                    "fuite_force": "unknown",
+                    "logement": "unknown"
+                }
+            },
+            "expected": {
+                "title": "Fuite d’eau à Mamoudzou",
+                "description": "Bonjour. J’ai une fuite d’eau. J’ai besoin d’aide cette semaine. Le prix est à discuter."
+            }
+        },
+        {
+            "name": "sans-ville",
+            "input": {
+                "city": "",
+                "when": "this_month",
+                "time_window": "flexible",
+                "price_type": "negotiable",
+                "price": "",
+                "detail": "",
+                "situation_key": "wc-bouche",
+                "answers": {
+                    "wc_etat": "monte",
+                    "logement": "apartment"
+                }
+            },
+            "expected": {
+                "title": "WC bouchés",
+                "description": "Bonjour. Mes WC sont bouchés. L’eau monte dans la cuvette. C’est dans un appartement. J’ai besoin d’aide ce mois-ci. Le prix est à discuter."
+            }
+        },
+        {
+            "name": "date-choisie-3-decembre",
+            "input": {
+                "city": "Dembéni",
+                "when": "date",
+                "time_window": "afternoon",
+                "price_type": "negotiable",
+                "price": "",
+                "detail": "",
+                "situation_key": "panne-electrique",
+                "answers": {
+                    "panne_quoi": "disjoncteur",
+                    "logement": "house"
+                },
+                "desired_date": "2026-12-03"
+            },
+            "expected": {
+                "title": "Panne électrique à Dembéni",
+                "description": "Bonjour. J’ai une panne électrique. Le disjoncteur saute. C’est dans une maison. J’ai besoin d’aide le 3 décembre, l’après-midi si possible. Le prix est à discuter."
+            }
+        },
+        {
+            "name": "pas-presse-le-soir",
+            "input": {
+                "city": "Cayenne",
+                "when": "no_rush",
+                "time_window": "evening",
+                "price_type": "negotiable",
+                "price": "",
+                "detail": "",
+                "situation_key": "menage",
+                "answers": {
+                    "menage_frequence": "weekly",
+                    "menage_duree": "half_day"
+                }
+            },
+            "expected": {
+                "title": "Ménage à Cayenne",
+                "description": "Bonjour. Je cherche une aide pour le ménage. C’est pour chaque semaine. Il faut une demi-journée. Ce n’est pas pressé, le soir si possible. Le prix est à discuter."
+            }
+        },
+        {
+            "name": "prix-entier-80",
+            "input": {
+                "city": "Kourou",
+                "when": "this_week",
+                "time_window": "flexible",
+                "price_type": "fixed",
+                "price": "80",
+                "detail": "",
+                "situation_key": "demenager",
+                "answers": {
+                    "dem_volume": "car_load",
+                    "dem_acces": "stairs"
+                }
+            },
+            "expected": {
+                "title": "Déménagement à Kourou",
+                "description": "Bonjour. Je dois déménager. J’ai une voiture pleine à déplacer. Il y a des escaliers, sans ascenseur. J’ai besoin d’aide cette semaine. Je propose 80 €."
+            }
+        },
+        {
+            "name": "prix-decimal-45-5",
+            "input": {
+                "city": "Sada",
+                "when": "today",
+                "time_window": "flexible",
+                "price_type": "fixed",
+                "price": 45.5,
+                "detail": "",
+                "situation_key": "menage",
+                "answers": {
+                    "menage_frequence": "once",
+                    "menage_duree": "short"
+                }
+            },
+            "expected": {
+                "title": "Ménage à Sada",
+                "description": "Bonjour. Je cherche une aide pour le ménage. C’est pour une seule fois. Il faut moins de 2 heures. J’ai besoin d’aide aujourd’hui. Je propose 45,50 €."
+            }
+        },
+        {
+            "name": "detail-espaces-multiples-et-accents",
+            "input": {
+                "city": "  Bandraboua ",
+                "when": "today",
+                "time_window": "flexible",
+                "price_type": "negotiable",
+                "price": "",
+                "detail": "  La chasse   d’eau\n\n  fuit aussi,\tcôté évier.  ",
+                "situation_key": "wc-bouche",
+                "answers": {
+                    "wc_etat": "deborde",
+                    "logement": "house"
+                }
+            },
+            "expected": {
+                "title": "WC bouchés à Bandraboua",
+                "description": "Bonjour. Mes WC sont bouchés. Les WC débordent. C’est dans une maison. J’ai besoin d’aide aujourd’hui. Le prix est à discuter. La chasse d’eau fuit aussi, côté évier."
+            }
+        },
+        {
+            "name": "detail-de-600-caracteres-coupe-a-500",
+            "input": {
+                "city": "Tsingoni",
+                "when": "today",
+                "time_window": "flexible",
+                "price_type": "negotiable",
+                "price": "",
+                "detail": "Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. ",
+                "situation_key": "jardin",
+                "answers": {
+                    "jardin_travail": "herbe",
+                    "jardin_taille": "small"
+                }
+            },
+            "expected": {
+                "title": "Entretien du jardin : couper l’herbe à Tsingoni",
+                "description": "Bonjour. J’ai besoin d’un jardinier. Il faut couper l’herbe. Le jardin est petit. J’ai besoin d’aide aujourd’hui. Le prix est à discuter. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche. Le portail est à gauche."
+            }
+        },
+        {
+            "name": "clim-a-installer",
+            "input": {
+                "city": "Mamoudzou",
+                "when": "this_month",
+                "time_window": "morning",
+                "price_type": "negotiable",
+                "price": "",
+                "detail": "",
+                "situation_key": "clim",
+                "answers": {
+                    "clim_probleme": "installer",
+                    "logement": "house"
+                }
+            },
+            "expected": {
+                "title": "Clim à installer à Mamoudzou",
+                "description": "Bonjour. J’ai besoin d’un climaticien. Je veux installer une clim. C’est dans une maison. J’ai besoin d’aide ce mois-ci, le matin si possible. Le prix est à discuter."
+            }
+        },
+        {
+            "name": "jardin-taille",
+            "input": {
+                "city": "Koungou",
+                "when": "this_week",
+                "time_window": "flexible",
+                "price_type": "negotiable",
+                "price": "",
+                "detail": "",
+                "situation_key": "jardin",
+                "answers": {
+                    "jardin_travail": "tailler",
+                    "jardin_taille": "large"
+                }
+            },
+            "expected": {
+                "title": "Entretien du jardin : taille à Koungou",
+                "description": "Bonjour. J’ai besoin d’un jardinier. Il faut tailler des arbres ou des haies. Le terrain est grand. J’ai besoin d’aide cette semaine. Le prix est à discuter."
+            }
+        },
+        {
+            "name": "telephone-casse-prix-avec-virgule",
+            "input": {
+                "city": "Mamoudzou",
+                "when": "today",
+                "time_window": "flexible",
+                "price_type": "fixed",
+                "price": "35,5",
+                "detail": "",
+                "situation_key": "telephone-casse",
+                "answers": {
+                    "tel_panne": "ecran",
+                    "tel_mode": "dropoff"
+                }
+            },
+            "expected": {
+                "title": "Téléphone cassé à Mamoudzou",
+                "description": "Bonjour. Mon téléphone est cassé. L’écran est cassé. Je peux déposer le téléphone. J’ai besoin d’aide aujourd’hui. Je propose 35,50 €."
+            }
+        },
+        {
+            "name": "question-absente-traitee-comme-inconnue",
+            "input": {
+                "city": "Chirongui",
+                "when": "today",
+                "time_window": "flexible",
+                "price_type": "negotiable",
+                "price": "",
+                "detail": "",
+                "situation_key": "fuite-eau",
+                "answers": {
+                    "fuite_lieu": "wc"
+                }
+            },
+            "expected": {
+                "title": "Fuite d’eau dans les WC à Chirongui",
+                "description": "Bonjour. J’ai une fuite d’eau dans les WC. J’ai besoin d’aide aujourd’hui. Le prix est à discuter."
+            }
+        },
+        {
+            "name": "detail-avec-emojis-coupe-sur-un-caractere",
+            "input": {
+                "city": "Saint-Laurent-du-Maroni",
+                "when": "today",
+                "time_window": "flexible",
+                "price_type": "negotiable",
+                "price": "",
+                "detail": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa😀😀",
+                "situation_key": "menage",
+                "answers": {
+                    "menage_frequence": "monthly",
+                    "menage_duree": "day"
+                }
+            },
+            "expected": {
+                "title": "Ménage à Saint-Laurent-du-Maroni",
+                "description": "Bonjour. Je cherche une aide pour le ménage. C’est quelques fois par mois. Il faut une journée. J’ai besoin d’aide aujourd’hui. Le prix est à discuter. aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa😀"
+            }
+        },
+        {
+            "name": "reponse-hors-des-options-ignoree",
+            "input": {
+                "city": "Pamandzi",
+                "when": "today",
+                "time_window": "inconnu",
+                "price_type": "negotiable",
+                "price": "",
+                "detail": "",
+                "situation_key": "fuite-eau",
+                "answers": {
+                    "fuite_lieu": "garage",
+                    "fuite_force": "goutte",
+                    "logement": "business"
+                }
+            },
+            "expected": {
+                "title": "Fuite d’eau à Pamandzi",
+                "description": "Bonjour. J’ai une fuite d’eau. L’eau coule goutte à goutte. C’est dans un local professionnel. J’ai besoin d’aide aujourd’hui. Le prix est à discuter."
+            }
+        },
+        {
+            "name": "detail-uniquement-des-espaces-et-pas-de-prix",
+            "input": {
+                "city": "Matoury",
+                "when": "today",
+                "time_window": "flexible",
+                "price_type": "fixed",
+                "price": "",
+                "detail": "   \n\t  ",
+                "situation_key": "demenager",
+                "answers": {
+                    "dem_volume": "large_move",
+                    "dem_acces": "elevator"
+                }
+            },
+            "expected": {
+                "title": "Déménagement à Matoury",
+                "description": "Bonjour. Je dois déménager. Je déménage toute la maison. Il y a un ascenseur. J’ai besoin d’aide aujourd’hui."
+            }
+        }
+    ]
+}

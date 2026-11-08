@@ -19,6 +19,29 @@ class UsageAnalytics
         'demand_validation_error',
         'demand_auth_redirect',
         'demand_draft_resumed',
+        // Parcours guidé « Publier sans écrire » (40 caractères au plus : usage_daily_metrics.event_name).
+        'demand_guided_step_view',
+        'demand_answer_unknown',
+        'demand_photo_added',
+        'demand_photo_rejected',
+        'demand_tts_used',
+        'demand_detail_added',
+        'demand_share_click',
+        'demand_published_guided',
+        'demand_published_free',
+        'demand_duplicate_redirect',
+        // Zone « Quel est votre problème ? » de l'accueil client : jamais le texte tapé.
+        'feed_situation_click',
+        'feed_search_submit',
+        'feed_search_suggestion',
+        'feed_search_no_match',
+    ];
+
+    /** Événements comptés par le serveur seulement : le navigateur ne peut pas les déclarer. */
+    public const SERVER_EVENTS = [
+        'demand_published_guided',
+        'demand_published_free',
+        'demand_duplicate_redirect',
     ];
 
     public const DEVICE_TYPES = ['mobile', 'tablet', 'desktop'];

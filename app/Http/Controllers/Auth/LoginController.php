@@ -146,6 +146,7 @@ class LoginController extends Controller
                 $resumeDemand = $request->session()->get(DemandPublicationContinuation::SESSION_KEY, false);
                 $resumeProvider = $request->session()->get(DemandPublicationContinuation::PROVIDER_SESSION_KEY, false);
                 $contactAd = $request->session()->get(DemandPublicationContinuation::AD_SESSION_KEY);
+                $resumeSituation = $request->session()->get(DemandPublicationContinuation::SITUATION_SESSION_KEY);
                 try {
                     $this->guard()->logout();
                     $request->session()->invalidate();
@@ -161,11 +162,15 @@ class LoginController extends Controller
                     DemandPublicationContinuation::SESSION_KEY,
                     DemandPublicationContinuation::PROVIDER_SESSION_KEY,
                     DemandPublicationContinuation::AD_SESSION_KEY,
+                    DemandPublicationContinuation::SITUATION_SESSION_KEY,
                 ]);
                 if ($resumeProvider) {
                     $request->session()->put(DemandPublicationContinuation::PROVIDER_SESSION_KEY, true);
                 } elseif ($resumeDemand) {
                     $request->session()->put(DemandPublicationContinuation::SESSION_KEY, true);
+                    if (DemandPublicationContinuation::validSituation($resumeSituation) !== null) {
+                        $request->session()->put(DemandPublicationContinuation::SITUATION_SESSION_KEY, $resumeSituation);
+                    }
                 } elseif (is_int($contactAd)) {
                     $request->session()->put(DemandPublicationContinuation::AD_SESSION_KEY, $contactAd);
                 }

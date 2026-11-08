@@ -23,6 +23,7 @@
         $openGraphImage = $metaSection('og_image') ?: asset('images/social-card.png');
         $pkClientSpaceTabs = \App\Support\ClientSpaceNavigation::forRequest(request(), auth()->user(), $pkRole ?? null);
         $pkClientSpaceVisible = count($pkClientSpaceTabs) > 0;
+        $pkHeaderPublishSecondary = $pkClientSpaceVisible && request()->routeIs('feed');
     @endphp
     <title>{{ $pageTitle }}</title>
 
@@ -6768,7 +6769,7 @@
                             <i class="fas fa-clipboard-list"></i><span>Mon suivi</span>
                         </a>
                         @endunless
-                        <a href="{{ route('demand.create') }}" class="header-nav-btn header-nav-btn-primary">
+                        <a href="{{ route('demand.create') }}" class="header-nav-btn header-nav-btn-primary{{ $pkHeaderPublishSecondary ? ' pk-header-secondary' : '' }}">
                             <i class="fas fa-plus-circle"></i><span>{{ $pkClientSpaceVisible ? 'Publier une demande' : 'Demander un service' }}</span>
                         </a>
                         <a href="{{ route('contact.index') }}" class="header-nav-btn header-nav-secondary">
@@ -6780,7 +6781,7 @@
                     </nav>
 
                     <a href="{{ route('demand.create') }}"
-                       class="mobile-service-request d-lg-none"
+                       class="mobile-service-request d-lg-none{{ $pkHeaderPublishSecondary ? ' pk-header-secondary' : '' }}"
                        aria-label="Publier une annonce">
                         <i class="fas fa-plus-circle"></i>
                         <span class="mobile-service-request-long">Publier</span>

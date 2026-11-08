@@ -16,15 +16,11 @@ class FeedClientExperienceFeatureTest extends TestCase
         // Lecteur à Paris : la fabrique par défaut ne pose aucun lieu, donc aucun territoire.
         $reader = User::factory()->create(['country' => 'France', 'city' => 'Paris', 'postal_code' => '75002']);
         $response = $this->actingAs($reader)->get(route('feed'))->assertOk();
-        foreach ([
-            ['Bricolage & Travaux', 'Plombier'],
-            ['Nettoyage & Entretien', 'Femme/Homme de ménage'],
-            ['Jardinage & Extérieur', 'Jardinier'],
-            ['Informatique & Tech', 'Technicien informatique'],
-        ] as [$category, $subcategory]) {
-            $url = route('demand.create', compact('category', 'subcategory'));
+        // Lot 2 : les entrées guidées sont les tuiles des situations (parcours /demande?situation=…).
+        foreach (['fuite-eau', 'menage', 'jardin', 'demenager'] as $situation) {
+            $url = route('demand.create', ['situation' => $situation]);
             $response->assertSee(e($url), false);
-            $this->get($url)->assertOk()->assertViewHas('preCategory', $category)->assertViewHas('preSubcategory', $subcategory);
+            $this->get($url)->assertOk();
         }
         // Lot 1 (D1, D2) : la carte « Emploi » du rail renvoie à la recherche France Travail
         // du territoire (Paris : 75D) et à la page emploi publique du territoire.
@@ -43,8 +39,10 @@ class FeedClientExperienceFeatureTest extends TestCase
     {
         MarketplaceCategoryRegistry::storeEnabledIds(['jardinage-exterieur']);
         $this->actingAs(User::factory()->create())->get(route('feed'))->assertOk()
-            ->assertSee('Entretenir mon jardin')->assertDontSee('Réparer une fuite')
-            ->assertDontSee('Faire le ménage')->assertDontSee('Réparer mon ordinateur');
+            ->assertSee('data-pk-situation="jardin"', false)
+            ->assertDontSee('data-pk-situation="fuite-eau"', false)
+            ->assertDontSee('data-pk-situation="menage"', false)
+            ->assertDontSee('Fuite d’eau');
     }
 
     public function test_provider_home_keeps_its_own_workflow(): void
@@ -52,6 +50,6 @@ class FeedClientExperienceFeatureTest extends TestCase
         $provider = User::factory()->create(['is_service_provider' => true, 'user_type' => 'professionnel']);
         $this->actingAs($provider)->get(route('feed'))->assertOk()
             ->assertSee('Votre activité prestataire')->assertDontSee('pk-client-welcome', false)
-            ->assertDontSee('id="pkNeedsTitle"', false)->assertDontSee('id="pkEmploymentTitle"', false);
+            ->assertDontSee('id="pkProblemTitle"', false)->assertDontSee('id="pkEmploymentTitle"', false);
     }
 }

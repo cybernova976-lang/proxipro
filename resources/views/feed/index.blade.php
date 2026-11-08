@@ -39,7 +39,7 @@
                 <div id="pkClientActivity" data-refresh-url="{{ route('client-activity.refresh') }}" data-revision="{{ $pkClientActivity['revision'] }}">
                     @include('feed.partials.client-activity')
                 </div>
-                @include('feed.partials.quick-needs')
+                @include('feed.partials.problem-picker')
             @endif
 
             {{-- Zone 4 · le flux adapte au role --}}
@@ -91,7 +91,7 @@
                                     Décrivez votre besoin : les prestataires inscrits pourront vous faire une proposition.
                                 @endif
                             </p>
-                            <a href="{{ $pkRole === 'provider' ? route('pro.onboarding') : route('demand.create') }}" class="pk-btn">
+                            <a href="{{ $pkRole === 'provider' ? route('pro.onboarding') : route('demand.create') }}" class="{{ $pkRole === 'client' ? 'pk-btn-outline' : 'pk-btn' }}">
                                 {{ $pkRole === 'provider' ? 'Compléter mon activité' : 'Publier une demande' }}
                             </a>
                         </div>
@@ -159,6 +159,7 @@
 @push('scripts')
 <script src="{{ asset('js/feed.js') }}?v={{ @filemtime(public_path('js/feed.js')) ?: 1 }}" defer></script>
 @if($pkRole === 'client')
+<script src="{{ asset('js/pk-search.js') }}?v={{ @filemtime(public_path('js/pk-search.js')) ?: 1 }}" defer></script>
 <script src="{{ asset('js/feed-client-activity.js') }}?v={{ @filemtime(public_path('js/feed-client-activity.js')) ?: 1 }}" defer></script>
 @endif
 @endpush

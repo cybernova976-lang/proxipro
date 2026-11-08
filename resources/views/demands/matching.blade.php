@@ -3,6 +3,7 @@
 @section('title', 'Professionnels disponibles - Prokejem')
 
 @push('styles')
+<link rel="stylesheet" href="{{ asset('css/demand-guided.css') }}?v={{ @filemtime(public_path('css/demand-guided.css')) ?: 1 }}">
 <style>
 body { background: #f0f2f5; }
 
@@ -257,6 +258,7 @@ body { background: #f0f2f5; }
             @endif
         </div>
     </div>
+    @includeWhen(session('demand_published') || session('demand_duplicate'), 'demands.partials.published-next-steps', ['ad' => $ad])
 
     <div class="matching-progress" aria-label="Suivi de votre demande">
         <div class="matching-progress-step done">
@@ -292,8 +294,8 @@ body { background: #f0f2f5; }
                     @else
                         <span><i class="fas fa-comments-dollar"></i> Budget à discuter</span>
                     @endif
-                    @if(!empty($demandDetails['desired_date']))
-                        <span><i class="fas fa-calendar-day"></i> {{ \Illuminate\Support\Carbon::parse($demandDetails['desired_date'])->format('d/m/Y') }}{{ !empty($demandDetails['time_window']) ? ' · '.($timeWindowLabels[$demandDetails['time_window']] ?? '') : '' }}</span>
+                    @if($ad->desiredWhenLabel())
+                        <span><i class="fas fa-calendar-day"></i> {{ $ad->desiredWhenLabel() }}</span>
                     @endif
                 </div>
             </div>
@@ -449,7 +451,7 @@ body { background: #f0f2f5; }
         <a href="{{ route('feed') }}" class="matching-action-btn matching-action-feed">
             <i class="fas fa-home"></i> Retour au feed
         </a>
-        @if($ad && !$ad->is_boosted && $totalMatchCount > 0)
+        @if($ad && !$ad->is_boosted && $totalMatchCount > 0 && ! session('demand_published') && ! session('demand_duplicate'))
         <a href="{{ route('ads.show', $ad->id) }}?boost=1" class="matching-action-btn matching-action-boost">
             <i class="fas fa-rocket"></i> Booster ma demande
         </a>

@@ -622,6 +622,39 @@ class FeedController extends Controller
         // fin de feed pour ne pas concurrencer l'action principale.
         $pkGuides = MarketplaceGuideCatalog::forAudience($pkRole)->take(3)->values();
 
+        // --- zone « Quel est votre problème ? » et bouton dominant (mode client) ---
+        $pkPrimaryAction = null;
+        $pkSituationTiles = [];
+        $pkSearchConfig = [];
+        if ($pkRole === 'client') {
+            $pkPrimaryAction = app(\App\Services\Feed\ClientPrimaryActionResolver::class)->resolve(
+                $pkClientActivity,
+                $user?->exists ? \App\Models\DemandDraft::where('user_id', $user->id)->exists() : false
+            );
+            $pkSituationCatalog = app(\App\Support\ServiceSituationCatalog::class);
+            $pkSituationTiles = $pkSituationCatalog->tiles($pkTerritory);
+            $pkTrades = [];
+            foreach (\App\Support\MarketplaceCategoryRegistry::enabledServices() as $pkParent => $pkData) {
+                foreach ((array) ($pkData['subcategories'] ?? []) as $pkSub) {
+                    $pkTrades[] = [
+                        'label' => (string) $pkSub,
+                        'parent' => (string) $pkParent,
+                        'url' => route('demand.create', ['category' => $pkParent, 'subcategory' => $pkSub]),
+                    ];
+                }
+            }
+            $pkSearchConfig = [
+                'situations' => $pkSituationCatalog->searchIndex($pkTerritory),
+                'trades' => $pkTrades,
+                'providersUrl' => $homeProfessionalProfiles->isNotEmpty()
+                    ? route('feed.professionals', array_filter(['city' => $geoCity, 'country' => $geoCountry]))
+                    : null,
+                'providersLabel' => 'Voir les prestataires'.($pkTerritory ? ' '.$pkTerritory->withPreposition() : ''),
+                'fallbackUrl' => route('demand.create'),
+                'fallbackLabel' => 'Je ne trouve pas : décrire mon besoin',
+            ];
+        }
+
         // La maquette a ete fusionnee dans la page d'accueil : une seule vue.
         $feedView = 'feed.index';
 
@@ -688,7 +721,10 @@ class FeedController extends Controller
             'pkTerritoryScoped',
             'pkTerritoryLinks',
             'pkRankingDisclosure',
-            'pkEmptyLocal'
+            'pkEmptyLocal',
+            'pkPrimaryAction',
+            'pkSituationTiles',
+            'pkSearchConfig'
         ));
     }
 

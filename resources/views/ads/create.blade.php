@@ -943,6 +943,7 @@
         <h1 id="page-title"><i class="fas fa-plus-circle me-2"></i>Publier une annonce</h1>
         <p id="page-subtitle">Décrivez votre service pour atteindre des milliers de personnes</p>
     </div>
+    @include('ads.partials.request-switch')
     
     @if ($errors->any())
     <div class="error-alert">

@@ -6,7 +6,7 @@
             <span class="pk-resume__label">{{ $primary['status'] }}</span>
             <h2>{{ $primary['title'] }}</h2>
         </div>
-        <a class="pk-btn" href="{{ $primary['action_url'] }}">{{ $primary['short_action'] }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+        <a class="{{ ($pkPrimaryAction['state'] ?? 'action') === 'action' ? 'pk-btn' : 'pk-btn-outline' }}" href="{{ $primary['action_url'] }}">{{ $primary['short_action'] }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
         <a class="pk-resume__all" href="{{ route('home') }}">Mon suivi <span>({{ $pkClientActivity['total'] }})</span></a>
     </section>
 @elseif($pkClientActivity['total'] > 0)

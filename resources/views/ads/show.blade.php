@@ -2,6 +2,14 @@
 
 @section('title', $ad->title . ' - Prokejem')
 @section('meta_description', Str::limit(Str::squish(strip_tags(html_entity_decode($ad->description ?: $ad->title, ENT_QUOTES | ENT_HTML5, 'UTF-8'))), 160))
+@php
+    $pkOgPhoto = ($ad->visibility === 'public' && $ad->status === 'active' && $ad->user?->is_active && (! $ad->expires_at || $ad->expires_at->isFuture()))
+        ? collect($ad->photos ?? [])->first(fn ($p) => is_string($p) && preg_match('/\.(jpe?g|png|webp)$/i', $p))
+        : null;
+@endphp
+@if($pkOgPhoto)
+    @section('og_image', storage_url($pkOgPhoto))
+@endif
 
 @push('meta')
     @if($ad->visibility !== 'public' || !$ad->user?->is_active || $ad->status !== 'active' || ($ad->expires_at && !$ad->expires_at->isFuture()))

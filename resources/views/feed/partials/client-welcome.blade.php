@@ -1,19 +1,21 @@
-@php($pkFirstName = trim(Str::before(trim(Auth::user()->name ?? 'Utilisateur'), ' ')) ?: 'Utilisateur')
+@php
+    $pkFirstName = trim(Str::before(trim(Auth::user()->name ?? ''), ' '));
+    $pkPlace = $geoCity ?: ($pkTerritory?->label ?? null);
+@endphp
 <section class="pk-client-welcome" aria-labelledby="pkStateTitle">
-    <div class="pk-client-welcome__top">
-        <div>
-            <span class="pk-client-welcome__eyebrow">Mon quotidien</span>
-            <h1 id="pkStateTitle">Bonjour {{ $pkFirstName }}<span aria-hidden="true">.</span></h1>
-            <p>De quoi avez-vous besoin aujourd’hui ?</p>
+    <h1 id="pkStateTitle">Bonjour{{ $pkFirstName !== '' ? ' '.$pkFirstName : '' }}</h1>
+    <a class="pk-client-place" href="{{ route('profile.edit') }}#city">
+        <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+        @if($pkPlace)
+            <span>{{ $pkPlace }}@if($pkTerritory && $pkTerritory->label !== $pkPlace), {{ $pkTerritory->label }}@endif</span><small>changer</small>
+        @else
+            <span>Choisir ma commune</span>
+        @endif
+    </a>
+    @if(($pkPrimaryAction['state'] ?? null) === 'draft')
+        <div class="pk-draft-resume">
+            <span><i class="far fa-edit" aria-hidden="true"></i> Vous avez commencé une demande sans la publier.</span>
+            <a class="pk-btn" href="{{ $pkPrimaryAction['url'] }}">{{ $pkPrimaryAction['label'] }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
         </div>
-        <a class="pk-btn" href="{{ route('demand.create') }}"><i class="fas fa-plus" aria-hidden="true"></i> Publier une demande</a>
-    </div>
-    <div class="pk-client-welcome__tools">
-        @include('feed.partials.intent-bar')
-        <a class="pk-client-location" href="{{ route('feed.professionals', array_filter(['city' => $geoCity, 'country' => $geoCountry])) }}">
-            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-            <span>{{ $geoCity ?: 'Choisir une zone' }}@if($geoCountry)<small>{{ $geoCountry }}</small>@endif</span>
-            <i class="fas fa-chevron-right" aria-hidden="true"></i>
-        </a>
-    </div>
+    @endif
 </section>

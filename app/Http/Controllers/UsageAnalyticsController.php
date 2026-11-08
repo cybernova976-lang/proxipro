@@ -11,13 +11,17 @@ use Symfony\Component\HttpFoundation\Response;
 
 class UsageAnalyticsController extends Controller
 {
+    /** Le formulaire habituel a 5 étapes ; le tableau d'administration les lit une à une. */
+    private const FREE_FORM_STEPS = 5;
+
     public function __invoke(Request $request, UsageAnalytics $analytics): Response
     {
         $validated = $request->validate([
-            'event_name' => ['required', Rule::in(UsageAnalytics::EVENTS)],
+            'event_name' => ['required', Rule::in(array_values(array_diff(UsageAnalytics::EVENTS, UsageAnalytics::SERVER_EVENTS)))],
             'route_name' => ['nullable', 'string', 'max:100'],
             'app_mode' => ['required', 'in:browser,pwa'],
-            'step' => ['nullable', 'integer', 'between:1,5'],
+            // 9 écrans au plus dans le parcours guidé.
+            'step' => ['nullable', 'integer', 'between:1,9'],
         ]);
 
         if ($request->header('DNT') === '1') {
@@ -38,14 +42,21 @@ class UsageAnalyticsController extends Controller
             'demand_draft_resumed',
         ];
         $isJourneyEvent = in_array($validated['event_name'], $journeyEvents, true);
+        $isGuidedJourneyEvent = $validated['event_name'] === 'demand_guided_step_view';
 
-        if ($isJourneyEvent) {
+        if ($isJourneyEvent || $isGuidedJourneyEvent) {
             if (! isset($validated['step'])) {
                 return response()->noContent();
             }
 
+            // Ancien formulaire : une étape au-delà de 5 fausserait son tableau.
+            if ($isJourneyEvent && (int) $validated['step'] > self::FREE_FORM_STEPS) {
+                return response()->noContent();
+            }
+
             $audience = $request->user() ? 'member' : 'guest';
-            $routeName = 'demand.step.'.$validated['step'].'.'.$audience;
+            $prefix = $isGuidedJourneyEvent ? 'demand.guided.step.' : 'demand.step.';
+            $routeName = $prefix.$validated['step'].'.'.$audience;
         } else {
             $routeName = (string) ($validated['route_name'] ?? 'other');
             if (! Route::has($routeName) || str_starts_with($routeName, 'admin.')) {

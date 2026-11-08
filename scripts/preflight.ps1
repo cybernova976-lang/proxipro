@@ -109,8 +109,10 @@ Invoke-Gate "Construction des assets (npm run build)" {
 #     BLOQUANT. Couvre le feed (tout tests/Feature/Feed), la publication guidee,
 #     le territoire, les mentions Sponsorise, le pied de page legal, les
 #     promesses commerciales, la remontee suspendue, les alertes, les
-#     notifications de demandes, les pages emploi et l'ecran /admin/feed-sante.
-$FiltreCible = 'Feed|GuidedDemand|Territory|Sponsored|LegalFooter|PromotionClaims|AdRefresh|SavedSearch|DemandNotification|Employment|FeedHealth'
+#     notifications de demandes, les pages emploi, l'ecran /admin/feed-sante,
+#     les situations, le texte compose, le partage, l'aiguillage, les mesures
+#     d'etape et l'action dominante.
+$FiltreCible = 'Feed|GuidedDemand|Territory|Sponsored|LegalFooter|PromotionClaims|AdRefresh|SavedSearch|DemandNotification|Employment|FeedHealth|ServiceSituation|DemandTextComposer|AdShareMeta|RequestSwitch|UsageAnalyticsStep|ClientPrimaryAction'
 Invoke-Gate "Tests cibles - feed, demande guidee, territoire, transparence" {
     php artisan test "--filter=$FiltreCible"
 }

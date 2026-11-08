@@ -99,8 +99,8 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             ->assertSee('pk-pro__verified', false)
             ->assertSee('Voir le profil')
             ->assertSee('pk-pro__actions', false)
-            ->assertSee('Trouver un prestataire')
-            ->assertSee('Publier une demande')
+            ->assertSee('Quel est votre problème ?')
+            ->assertSee('Décrire mon besoin')
             ->assertSee(route('profile.public', $provider->id), false)
             ->assertDontSee('Bonjour, je souhaite demander vos services')
             ->assertDontSee('service en ligne')
@@ -112,7 +112,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $html = $response->getContent();
         $this->assertGreaterThan(strpos($html, 'id="pkFeedList"'), strpos($html, 'id="pkProviderList"'),
             'Les profils complètent les annonces, sans repousser le flux principal.');
-        $this->assertSame(1, substr_count($html, 'id="pkIntentForm"'));
+        $this->assertSame(1, substr_count($html, 'id="pkSearchForm"'));
         $this->assertStringContainsString('aria-label="Mon espace particulier"', $html);
 
     }

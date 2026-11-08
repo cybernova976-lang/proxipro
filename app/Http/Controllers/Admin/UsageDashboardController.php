@@ -127,6 +127,24 @@ class UsageDashboardController extends Controller
             return $row;
         });
 
+        // Parcours guidé : simples sommes mesurées, sans pourcentage.
+        $guidedJourney = collect([
+            'demand_guided_step_view' => 'Parcours guidé : étapes vues',
+            'demand_answer_unknown' => 'Réponses "Je ne sais pas"',
+            'demand_photo_added' => 'Photos ajoutées',
+            'demand_photo_rejected' => 'Photos refusées',
+            'demand_tts_used' => 'Lectures à voix haute',
+            'demand_detail_added' => 'Détails ajoutés',
+            'demand_share_click' => 'Partages',
+            'demand_published_guided' => 'Demandes guidées publiées',
+            'demand_published_free' => 'Demandes libres publiées',
+            'demand_duplicate_redirect' => 'Doublons redirigés',
+        ])->map(fn (string $label, string $eventName) => [
+            'event' => $eventName,
+            'label' => $label,
+            'count' => $sumEvent($eventName),
+        ])->values();
+
         $demandJourneyDevices = collect(UsageAnalytics::DEVICE_TYPES)->mapWithKeys(fn (string $deviceType) => [
             $deviceType => (int) $metrics
                 ->where('event_name', 'demand_step_view')
@@ -188,6 +206,7 @@ class UsageDashboardController extends Controller
             'deviceBreakdown',
             'demandJourney',
             'demandJourneyDevices',
+            'guidedJourney',
             'businessStats'
         ));
     }

@@ -48,6 +48,7 @@ return [
                         'house' => 'Maison',
                         'business' => 'Local professionnel',
                         'outdoor' => 'Terrain ou extérieur',
+                        'unknown' => 'À préciser avec le prestataire',
                     ],
                 ],
             ],
@@ -95,6 +96,7 @@ return [
                         'several_week' => 'Plusieurs fois par semaine',
                         'monthly' => 'Quelques fois par mois',
                         'continuous' => 'Besoin régulier à définir',
+                        'unknown' => 'À définir avec le prestataire',
                     ],
                 ],
                 'duration_band' => [
@@ -218,6 +220,7 @@ return [
                         'utility' => 'Un utilitaire',
                         'large_move' => 'Un logement complet',
                         'passenger' => 'Transport de personnes',
+                        'unknown' => 'À préciser avec le prestataire',
                     ],
                 ],
                 'access' => [

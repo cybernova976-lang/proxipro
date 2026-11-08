@@ -140,6 +140,7 @@
                 <strong>{{ number_format($demandJourneyDevices->get('desktop', 0)) }}</strong> ordinateur
                 ({{ number_format($journeyDeviceTotal) }} affichages d’étape).
             </p>
+            @include('admin.partials.usage-guided-journey')
         </div>
     </div>
 </div>

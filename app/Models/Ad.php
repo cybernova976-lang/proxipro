@@ -156,6 +156,43 @@ class Ad extends Model
         ];
     }
 
+    /**
+     * Moment souhaité, dit honnêtement : « Cette semaine » plutôt que la date
+     * technique du jour enregistrée pour une demande guidée sans date précise.
+     */
+    public function desiredWhenLabel(): ?string
+    {
+        return self::whenLabelFromDetails(is_array($this->ad_details) ? $this->ad_details : []);
+    }
+
+    /**
+     * Même règle, à partir du tableau ad_details (sans modèle).
+     * Avec $withWindow, le moment de la journée est ajouté : « · Matin ».
+     */
+    public static function whenLabelFromDetails(array $details, bool $withWindow = true): ?string
+    {
+        $labels = ['this_week' => 'Cette semaine', 'this_month' => 'Ce mois-ci', 'no_rush' => 'Pas pressé'];
+        $when = is_string($details['when'] ?? null) ? $details['when'] : null;
+        $label = $labels[$when] ?? null;
+
+        if ($label === null && ! empty($details['desired_date'])) {
+            try {
+                $label = \Carbon\Carbon::parse($details['desired_date'])->locale('fr')->translatedFormat('d F Y');
+            } catch (\Throwable) {
+                $label = null;
+            }
+        }
+
+        if ($label === null) {
+            return null;
+        }
+
+        $windows = ['morning' => 'Matin', 'afternoon' => 'Après-midi', 'evening' => 'Soir'];
+        $window = is_string($details['time_window'] ?? null) ? ($windows[$details['time_window']] ?? null) : null;
+
+        return $withWindow && $window !== null ? $label.' · '.$window : $label;
+    }
+
     public function getEffectivePriceTypeAttribute(): string
     {
         $type = $this->attributes['price_type'] ?? null;

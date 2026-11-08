@@ -9,12 +9,23 @@
     const optOutKey = 'prokejem_usage_disabled';
     const allowedEvents = [
         'page_view',
+        'feed_situation_click',
+        'feed_search_submit',
+        'feed_search_suggestion',
+        'feed_search_no_match',
         'pwa_install',
         'push_enabled',
         'demand_step_view',
         'demand_validation_error',
         'demand_auth_redirect',
         'demand_draft_resumed',
+        'demand_guided_step_view',
+        'demand_answer_unknown',
+        'demand_photo_added',
+        'demand_photo_rejected',
+        'demand_tts_used',
+        'demand_detail_added',
+        'demand_share_click',
     ];
     let pageViewSent = false;
 
@@ -41,7 +52,7 @@
         payload.append('event_name', eventName);
         payload.append('route_name', routeName);
         payload.append('app_mode', appMode());
-        if (Number.isInteger(details.step) && details.step >= 1 && details.step <= 5) {
+        if (Number.isInteger(details.step) && details.step >= 1 && details.step <= 9) {
             payload.append('step', String(details.step));
         }
 

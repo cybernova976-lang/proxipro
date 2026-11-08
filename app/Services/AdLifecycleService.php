@@ -26,6 +26,20 @@ class AdLifecycleService
         string $serviceType,
         ?int $ignoredAdId = null
     ): bool {
+        return $this->findRecentDuplicate($userId, $title, $category, $serviceType, $ignoredAdId) !== null;
+    }
+
+    /**
+     * Annonce identique publiée par le même membre dans les dernières 24 heures
+     * (même métier, même type, titre égal aux espaces, à la casse et aux accents près).
+     */
+    public function findRecentDuplicate(
+        int $userId,
+        string $title,
+        string $category,
+        string $serviceType,
+        ?int $ignoredAdId = null
+    ): ?Ad {
         $normalizedTitle = $this->normalizeTitle($title);
 
         return Ad::query()
@@ -35,8 +49,10 @@ class AdLifecycleService
             ->where('created_at', '>=', now()->subHours(self::DUPLICATE_WINDOW_HOURS))
             ->whereIn('status', ['active', 'pending'])
             ->when($ignoredAdId, fn ($query) => $query->where('id', '!=', $ignoredAdId))
-            ->pluck('title')
-            ->contains(fn ($candidate) => $this->normalizeTitle((string) $candidate) === $normalizedTitle);
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get(['id', 'title', 'created_at'])
+            ->first(fn (Ad $candidate) => $this->normalizeTitle((string) $candidate->title) === $normalizedTitle);
     }
 
     public function needsFirstResponseAttention(Ad $ad, ?int $proposalCount = null): bool

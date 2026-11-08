@@ -116,7 +116,7 @@ class FeedActionHierarchyFeatureTest extends TestCase
     {
         $response = $this->actingAs(User::factory()->create())->get(route('feed'))->assertOk();
         $html = $response->getContent();
-        $this->assertSame(1, substr_count($html, 'id="pkIntentForm"'));
+        $this->assertSame(1, substr_count($html, 'id="pkSearchForm"'));
         $this->assertGreaterThan(strpos($html, 'id="pkFeedList"'), strpos($html, '<details class="pk-progress"'));
         // Lot 1 (A8) : sans profil à montrer, la zone des prestataires est masquée.
         $response->assertDontSee('id="pkProviderList"', false)
