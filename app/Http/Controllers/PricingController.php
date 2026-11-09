@@ -2,47 +2,35 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\PointPackCatalog;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class PricingController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
-
-        return view('pricing.checkout', [
-            'pointPacks' => PointPackCatalog::all(),
-            'userPoints' => $user->available_points ?? 0,
-        ]);
+        return redirect()->route('public.provider-offers');
     }
 
     public function subscribe(Request $request)
     {
-        return redirect()->route('pricing.index')
-            ->with('info', 'Les abonnements ne sont pas encore commercialisés.');
+        return redirect()->route('pro.subscription');
     }
 
     public function cancel()
     {
-        return redirect()->route('pricing.index')
-            ->with('info', 'Aucun abonnement récurrent n’est actif sur ce parcours.');
+        return redirect()->route('pro.subscription');
     }
 
     public function resume()
     {
-        return redirect()->route('pricing.index')
-            ->with('info', 'Les abonnements ne sont pas encore commercialisés.');
+        return redirect()->route('pro.subscription');
     }
 
     /**
-     * Compatibilité avec l'ancien formulaire : tous les nouveaux achats passent
-     * par StripeCheckoutController, qui vérifie un catalogue unique côté serveur.
+     * Ancien formulaire conservé pour répondre explicitement aux liens obsolètes.
      */
     public function purchasePoints(Request $request)
     {
-        return redirect()->route('pricing.index')
-            ->with('info', 'Utilisez le paiement Stripe sécurisé proposé sur cette page.');
+        abort(410, \App\Support\RetiredPoints::MESSAGE);
     }
 }

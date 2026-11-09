@@ -76,20 +76,12 @@
             @if(Auth::user()->isProfessionnel() || Auth::user()->isServiceProvider())
                 <a href="{{ route('pro.opportunities') }}" class="menu-item"><div class="menu-icon"><i class="fas fa-briefcase"></i></div><span class="menu-text">Activité prestataire</span></a>
             @endif
-            
-            <a href="#" class="menu-item" data-dashboard-section="points" onclick="dashboardNav('points'); return false;">
-                <div class="menu-icon">
-                    <i class="fas fa-coins"></i>
-                </div>
-                <span class="menu-text">Mes Points</span>
-                <span class="menu-badge points">{{ Auth::user()->available_points ?? 0 }}</span>
-            </a>
 
             <a href="{{ route('pricing.index') }}" class="menu-item {{ request()->routeIs('pricing.*') ? 'active' : '' }}">
                 <div class="menu-icon">
                     <i class="fas fa-tags"></i>
                 </div>
-                <span class="menu-text">Tarifs & Points</span>
+                <span class="menu-text">Offres et abonnements</span>
             </a>
 
             <a href="#" class="menu-item" data-dashboard-section="transactions" onclick="dashboardNav('transactions'); return false;">
@@ -569,7 +561,7 @@ window.addEventListener('resize', function() {
 // ===== DASHBOARD SPA NAVIGATION =====
 var currentSection = 'overview';
 var isNavigating = false;
-var dashboardSections = ['overview', 'account', 'profile', 'profile-edit', 'settings', 'points', 'my-ads', 'messages', 'transactions', 'create-ad'];
+var dashboardSections = ['overview', 'account', 'profile', 'profile-edit', 'settings', 'my-ads', 'messages', 'transactions', 'create-ad'];
 
 function dashboardNav(section, restoreHistory) {
     if (!section || !dashboardSections.includes(section)) return;

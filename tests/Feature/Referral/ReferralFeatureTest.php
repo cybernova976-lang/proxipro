@@ -15,7 +15,7 @@ class ReferralFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_grants_referral_rewards_only_once_for_the_first_qualifying_purchase(): void
+    public function test_referral_rewards_remain_disabled_even_for_a_legacy_paid_purchase(): void
     {
         Notification::fake();
 
@@ -47,38 +47,23 @@ class ReferralFeatureTest extends TestCase
 
         $service = app(ReferralService::class);
 
-        $this->assertTrue($service->grantFirstPurchaseRewards($referee->fresh(), $transaction));
         $this->assertFalse($service->grantFirstPurchaseRewards($referee->fresh(), $transaction));
-
-        $this->assertDatabaseCount('referral_rewards', 2);
-        $this->assertDatabaseHas('referral_rewards', [
-            'referrer_user_id' => $referrer->id,
-            'referee_user_id' => $referee->id,
-            'reward_type' => 'first_purchase_referrer',
-            'points' => 50,
-        ]);
-        $this->assertDatabaseHas('referral_rewards', [
-            'referrer_user_id' => $referrer->id,
-            'referee_user_id' => $referee->id,
-            'reward_type' => 'first_purchase_referee',
-            'points' => 20,
-        ]);
-
-        $this->assertSame(50, $referrer->fresh()->available_points);
-        $this->assertSame(20, $referee->fresh()->available_points);
-        $this->assertNotNull($referee->fresh()->referral_bonus_granted_at);
-
-        Notification::assertSentTo($referrer, ReferralRewardNotification::class);
-        Notification::assertSentTo($referee, ReferralRewardNotification::class);
+        $this->assertFalse($service->grantFirstPurchaseRewards($referee->fresh(), $transaction));
+        $this->assertDatabaseCount('referral_rewards', 0);
+        $this->assertDatabaseCount('point_transactions', 0);
+        $this->assertSame(0, $referrer->fresh()->available_points);
+        $this->assertSame(0, $referee->fresh()->available_points);
+        $this->assertNull($referee->fresh()->referral_bonus_granted_at);
+        Notification::assertNothingSent();
     }
 
-    public function test_register_page_prefills_referral_code_from_query_string(): void
+    public function test_register_page_no_longer_promotes_referral_points(): void
     {
         $response = $this->get(route('register', ['ref' => 'ABCD1234']));
 
         $response->assertOk();
-        $response->assertSee('name="referral_code"', false);
-        $response->assertSee('value="ABCD1234"', false);
+        $response->assertDontSee('name="referral_code"', false);
+        $response->assertDontSee('value="ABCD1234"', false);
     }
 
     public function test_register_page_uses_shared_location_selects(): void

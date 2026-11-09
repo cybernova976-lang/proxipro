@@ -19,8 +19,7 @@ class PaymentController extends Controller
 
     public function purchasePoints(Request $request)
     {
-        return redirect()->route('pricing.index')
-            ->with('info', 'Ce formulaire a été remplacé par le paiement Stripe sécurisé.');
+        abort(410, \App\Support\RetiredPoints::MESSAGE);
     }
 
     public function pointsSuccess(Request $request)
@@ -36,14 +35,6 @@ class PaymentController extends Controller
 
     public function pointsHistory()
     {
-        $user = Auth::user();
-        $transactions = PointTransaction::where('user_id', $user->id)
-            ->orderByDesc('created_at')
-            ->paginate(20);
-
-        return view('payments.history', [
-            'transactions' => $transactions,
-            'userPoints' => $user->available_points ?? 0,
-        ]);
+        return app(PointController::class)->transactions();
     }
 }

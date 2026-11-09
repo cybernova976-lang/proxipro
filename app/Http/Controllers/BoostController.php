@@ -35,7 +35,6 @@ class BoostController extends Controller
         }
 
         $user = Auth::user();
-        $userPoints = $user->available_points ?? 0;
         $isPro = $user->hasActiveProSubscription();
         $status = $ad->getBoostStatus();
         $subscription = $this->sponsoringSubscription($ad);
@@ -49,12 +48,10 @@ class BoostController extends Controller
             $pkg['warning'] = null;
             $pkg['recommendation'] = null;
 
-            // Pro discount: -20% on points, -20% on euros
+            // Premium discount: -20% on card payments.
             if ($isPro) {
-                $pkg['price_points_original'] = $pkg['price_points'];
                 $pkg['price_euros_original'] = $pkg['price_euros'];
-                $pkg['price_points'] = max(1, (int) round($pkg['price_points'] * 0.8));
-                $pkg['price_euros'] = round($pkg['price_euros'] * 0.8, 2);
+                $pkg['price_euros'] = AdPromotionCatalog::discountedCents($pkg['price_euros'], true) / 100;
             }
 
             // If urgent is active and covers more days than this package → useless
@@ -107,7 +104,6 @@ class BoostController extends Controller
         return view('boost.show', [
             'ad' => $ad,
             'packages' => $smartPackages,
-            'userPoints' => $userPoints,
             'isPro' => $isPro,
             'boostStatus' => $status,
             'recommendedKey' => $recommendedKey,
@@ -122,68 +118,7 @@ class BoostController extends Controller
      */
     public function purchaseWithPoints(Request $request, Ad $ad)
     {
-        $request->validate([
-            'package' => 'required|in:boost_3,boost_7,boost_15,boost_30',
-        ]);
-
-        if (Auth::id() !== $ad->user_id) {
-            return back()->with('error', 'Vous ne pouvez pas booster cette annonce.');
-        }
-        if ($refusal = $this->refuseUnlessOffer($ad)) {
-            return $refusal;
-        }
-
-        $user = Auth::user();
-        $package = $this->boostPackages[$request->package];
-        $pointsRequired = $package['price_points'];
-        if ($refusal = $this->refuseIfCoveredBySubscription($ad, $package)) {
-            return $refusal;
-        }
-
-        // Pro discount: -20% on points
-        if ($user->hasActiveProSubscription()) {
-            $pointsRequired = max(1, (int) round($pointsRequired * 0.8));
-        }
-
-        $status = $ad->getBoostStatus();
-
-        // Prevent double-boost: reject if current boost covers more than this package
-        if ($status['is_boosted'] && $status['boost_days_left'] >= $package['duration_days']) {
-            return back()->with('error', 'Votre boost actuel couvre déjà '.$status['boost_days_left'].' jours restants. Choisissez un pack plus long pour prolonger.');
-        }
-
-        // Check points - redirect to pricing if insufficient
-        if (($user->available_points ?? 0) < $pointsRequired) {
-            return redirect()->route('pricing.index')->with('error', 'Points insuffisants. Vous avez '.($user->available_points ?? 0).' points, il vous en faut '.$pointsRequired.'. Achetez des points ci-dessous.');
-        }
-
-        // Smart: warn if package is less useful than current visibility
-        // But still allow purchase (maybe user wants to stack)
-        $user->spendPoints($pointsRequired, 'boost_purchase', 'Achat '.$package['name'].' pour l\'annonce: '.$ad->title);
-
-        // Smart boost end calculation:
-        // If already boosted, extend from current boost_end
-        // If urgent is active but not boosted, boost starts from now (both run in parallel)
-        $boostEnd = Carbon::now()->addDays($package['duration_days']);
-
-        if ($ad->isCurrentlyBoosted() && $ad->boost_end) {
-            $boostEnd = $ad->boost_end->addDays($package['duration_days']);
-        }
-
-        $ad->update([
-            'is_boosted' => true,
-            'boost_end' => $boostEnd,
-            'boost_type' => $request->package,
-            'boost_source' => null,
-        ]);
-
-        // Build smart success message
-        $message = '🚀 Annonce boostée jusqu\'au '.$boostEnd->format('d/m/Y à H:i').' !';
-        if ($status['is_urgent']) {
-            $message .= ' (+ mode Urgent actif jusqu\'au '.$status['urgent_until']->format('d/m/Y').')';
-        }
-
-        return redirect()->route('ads.show', $ad)->with('success', $message);
+        abort(410, \App\Support\RetiredPoints::MESSAGE);
     }
 
     /**
@@ -309,11 +244,26 @@ class BoostController extends Controller
             return redirect()->route('homepage');
         }
 
-        // Le boost n'a d'effet que sur les offres : aucun forfait n'est proposé pour une demande.
+        $isPro = Auth::user()->hasActiveProSubscription();
+        $subscription = $this->sponsoringSubscription($ad);
+        $packages = [];
+        if ($ad->service_type === 'offre') {
+            foreach ($this->boostPackages as $key => $package) {
+                if ($subscription && $this->subscriptionCovers($subscription, $package['duration_days'])) {
+                    continue;
+                }
+                $package['price_euros'] = AdPromotionCatalog::discountedCents($package['price_euros'], $isPro) / 100;
+                $packages[$key] = $package;
+            }
+        }
+        $urgent = AdPromotionCatalog::urgent();
+        $urgent['price_euros'] = AdPromotionCatalog::discountedCents($urgent['price_euros'], $isPro) / 100;
+
         return view('boost.after-creation', [
             'ad' => $ad,
-            'packages' => $ad->service_type === 'offre' ? $this->boostPackages : [],
-            'userPoints' => Auth::user()->available_points ?? 0,
+            'packages' => $packages,
+            'isPro' => $isPro,
+            'urgent' => $urgent,
         ]);
     }
 
@@ -495,47 +445,7 @@ class BoostController extends Controller
      */
     public function makeUrgent(Ad $ad)
     {
-        // Vérifier que l'utilisateur est propriétaire
-        if (Auth::id() !== $ad->user_id) {
-            return back()->with('error', 'Vous ne pouvez pas modifier cette annonce.');
-        }
-        if ($ad->service_type !== 'demande') {
-            return back()->with('error', 'Le mode Urgent est réservé aux demandes de services. Utilisez un Boost pour une offre.');
-        }
-
-        // Vérifier si déjà urgent
-        if ($ad->is_urgent && $ad->urgent_until && $ad->urgent_until->isFuture()) {
-            return back()->with('error', 'Cette annonce est déjà en mode URGENT jusqu\'au '.$ad->urgent_until->format('d/m/Y').'.');
-        }
-
-        $user = Auth::user();
-        $config = self::getUrgentConfig();
-        $urgentCost = $config['price_points'];
-
-        // Pro discount: -20%
-        if ($user->hasActiveProSubscription()) {
-            $urgentCost = max(1, (int) round($urgentCost * 0.8));
-        }
-
-        // Vérifier les points disponibles
-        if (($user->available_points ?? 0) < $urgentCost) {
-            return back()->with('error', 'Points insuffisants. Il vous faut '.$urgentCost.' points pour publier en mode URGENT. Vous avez '.($user->available_points ?? 0).' points.');
-        }
-
-        // Déduire les points
-        $user->spendPoints($urgentCost, 'urgent_publication', 'Publication urgente: '.$ad->title);
-
-        // Activer le mode urgent pour 7 jours
-        $ad->update([
-            'is_urgent' => true,
-            'urgent_until' => now()->addDays($config['duration_days']),
-            'urgent_source' => null,
-            'sidebar_priority' => 1,
-        ]);
-
-        return redirect()->route('ads.show', $ad)->with('success',
-            '🔥 Votre annonce est maintenant en mode URGENT pendant '.$config['duration_days'].' jours ! (-'.$urgentCost.' points)'
-        );
+        abort(410, \App\Support\RetiredPoints::MESSAGE);
     }
 
     /**

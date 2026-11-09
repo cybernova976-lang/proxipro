@@ -183,7 +183,7 @@ class IdentityVerification extends Model
         return null;
     }
 
-    // Prix de vérification selon le type (en points et en euros)
+    // Prix de vérification selon le type (en euros)
     public static function getVerificationPrice($type)
     {
         return match($type) {
@@ -196,19 +196,15 @@ class IdentityVerification extends Model
     // Coût en points pour la vérification
     public static function getVerificationPointsCost($type)
     {
-        return match($type) {
-            'profile_verification' => 10,
-            'service_provider' => 20,
-            default => 10,
-        };
+        return null;
     }
 
     /**
      * La verification d'identite du profil se regle uniquement par carte.
-     * Les points restent reserves au badge prestataire historique.
+     * Le programme de points est supprimé pour tous les types de vérification.
      */
     public static function supportsPointsPayment($type): bool
     {
-        return $type !== 'profile_verification';
+        return false;
     }
 }

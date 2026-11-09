@@ -95,7 +95,7 @@
                 "name": "Comment payer pour des crédits supplémentaires ?",
                 "acceptedAnswer": {
                     "@@type": "Answer",
-                    "text": "Vous pouvez acheter des packs de crédits par carte bancaire (paiement sécurisé via Stripe) ou utiliser vos points Prokejem. Les crédits n'expirent jamais."
+                    "text": "Vous pouvez acheter des packs de crédits par carte bancaire (paiement sécurisé via Stripe). Les crédits n'expirent jamais."
                 }
             }
         ]
@@ -357,7 +357,7 @@
                         ['q' => 'Quels metiers peuvent utiliser cet outil ?', 'a' => 'Notre outil est adapte a tous les metiers et statuts : auto-entrepreneurs, artisans, freelances, consultants, commercants, professions liberales, petites entreprises... Quel que soit votre secteur d\'activite.'],
                         ['q' => 'Les devis generes sont-ils conformes a la legislation ?', 'a' => 'Nos devis et factures incluent toutes les mentions obligatoires : numero de document, coordonnees de l\'emetteur et du client, detail des prestations, montants HT/TVA/TTC, conditions de paiement.'],
                         ['q' => 'Puis-je personnaliser mes devis et factures ?', 'a' => 'Oui, vous pouvez personnaliser vos informations d\'entreprise (nom, adresse, SIRET), les informations client, les lignes de detail, le taux de TVA, les conditions et les notes.'],
-                        ['q' => 'Comment payer pour des credits supplementaires ?', 'a' => 'Vous pouvez acheter des packs de credits par carte bancaire (paiement securise via Stripe) ou utiliser vos points Prokejem. Les credits n\'expirent jamais.'],
+                        ['q' => 'Comment payer pour des credits supplementaires ?', 'a' => 'Vous pouvez acheter des packs de credits par carte bancaire (paiement securise via Stripe). Les credits n\'expirent jamais.'],
                     ];
                 @endphp
                 @foreach($faqs as $i => $faq)

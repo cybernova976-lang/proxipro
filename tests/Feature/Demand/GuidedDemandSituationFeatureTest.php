@@ -391,7 +391,7 @@ class GuidedDemandSituationFeatureTest extends TestCase
         $response = $this->actingAs($client)->withSession(['demand_published' => true])->get(route('demand.matching', $ad))->assertOk()
             ->assertSee('Besoin de réponses plus vite ?')
             ->assertSee('votre demande passe avant les autres demandes du même métier dans l’accueil des prestataires')
-            ->assertSee('15 points ou 14,00 €')
+            ->assertSee('14,00 €')->assertDontSee('15 points')
             ->assertSee(route('boost.after-creation', $ad), false)
             ->assertDontSee('Notifications aux utilisateurs proches');
 

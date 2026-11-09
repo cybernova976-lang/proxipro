@@ -19,7 +19,7 @@
 
             <h2 style="margin: 0 0 8px; font-size: 1.5rem; color: #1e293b;">Bienvenue {{ $user->name }} !</h2>
             <p style="color: #64748b; font-size: 1rem; line-height: 1.7; margin: 0 0 24px;">
-                Nous sommes ravis de vous compter parmi la communauté {{ $appName }}. Votre compte a été créé avec succès et vous disposez déjà de <strong style="color: #0f766e;">5 points de bienvenue</strong> pour démarrer.
+                Nous sommes ravis de vous compter parmi la communauté {{ $appName }}. Votre compte a été créé avec succès.
             </p>
 
             {{-- Ce que vous pouvez faire --}}

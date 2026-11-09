@@ -39,25 +39,14 @@ class LocalizationAndPointsIntegrityFeatureTest extends TestCase
         $this->assertFalse(Route::has('social.status'));
     }
 
-    public function test_points_and_pricing_pages_only_present_traceable_rewards(): void
+    public function test_old_points_pages_explain_retirement_and_pricing_redirects_to_paid_offers(): void
     {
         $user = User::factory()->create();
-
-        $this->actingAs($user)
-            ->get(route('points.dashboard'))
-            ->assertOk()
-            ->assertSee('Inscription validée')
-            ->assertSee('Profil vérifié')
-            ->assertSee('Parrainage réussi')
-            ->assertDontSee('Partager pour gagner')
-            ->assertDontSee('Partage réseaux sociaux');
-
-        $this->actingAs($user)
-            ->get(route('pricing.index'))
-            ->assertOk()
-            ->assertSee('Un programme de parrainage traçable est disponible')
-            ->assertSee('Un simple clic de partage ne donne aucun point.')
-            ->assertDontSee('Partager pour gagner');
+        $this->actingAs($user)->get(route('points.dashboard'))->assertOk()
+            ->assertSee('Le programme de points est terminé')
+            ->assertDontSee('Gagner des points')
+            ->assertDontSee('Parrainage réussi');
+        $this->get(route('pricing.index'))->assertRedirect(route('public.provider-offers'));
     }
 
     public function test_critical_layouts_keep_mobile_viewport_and_responsive_guards(): void

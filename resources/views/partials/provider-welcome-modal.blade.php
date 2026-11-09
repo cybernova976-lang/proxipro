@@ -55,8 +55,8 @@
                             <i class="fas fa-coins"></i>
                         </div>
                         <div class="advantage-text">
-                            <strong>Plus de points</strong>
-                            <span>Gagnez 100 points bonus à l'inscription professionnelle</span>
+                            <strong>Votre profil prestataire</strong>
+                            <span>Présentez vos services et vos réalisations</span>
                         </div>
                     </div>
                 </div>

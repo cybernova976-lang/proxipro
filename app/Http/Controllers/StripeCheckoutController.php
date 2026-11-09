@@ -6,7 +6,6 @@ use App\Models\Transaction;
 use App\Services\PointPurchasePaymentService;
 use App\Services\ServiceOrderWorkflowService;
 use App\Services\StripeWebhookService;
-use App\Support\PointPackCatalog;
 use App\Support\StripeSessionData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,72 +27,7 @@ class StripeCheckoutController extends Controller
      */
     public function createCheckout(Request $request)
     {
-        $request->validate([
-            'product_key' => 'required|string',
-        ]);
-
-        $user = Auth::user();
-        $productKey = $request->product_key;
-
-        $product = PointPackCatalog::find($productKey);
-        if (! $product) {
-            return response()->json(['error' => 'Produit invalide'], 400);
-        }
-
-        try {
-            // Créer ou récupérer le customer Stripe
-            $stripeCustomerId = $user->stripe_id;
-
-            if (! $stripeCustomerId) {
-                $customer = \Stripe\Customer::create([
-                    'email' => $user->email,
-                    'name' => $user->name,
-                    'metadata' => ['user_id' => $user->id],
-                ]);
-                $stripeCustomerId = $customer->id;
-                $user->update(['stripe_id' => $stripeCustomerId]);
-            }
-
-            // Créer la session Checkout
-            $session = StripeSession::create([
-                'customer' => $stripeCustomerId,
-                'payment_method_types' => ['card'],
-                'line_items' => [[
-                    'price_data' => [
-                        'currency' => 'eur', // Euro
-                        'product_data' => [
-                            'name' => $product['name'],
-                            'description' => $product['type'] === 'subscription'
-                                ? $product['points'].' points/mois inclus'
-                                : 'Pack de '.$product['points'].' points',
-                        ],
-                        'unit_amount' => $product['price_cents'],
-                    ],
-                    'quantity' => 1,
-                ]],
-                'mode' => 'payment',
-                'success_url' => route('stripe.success').'?session_id={CHECKOUT_SESSION_ID}&product='.$productKey,
-                'cancel_url' => route('pricing.index').'?canceled=true',
-                'metadata' => [
-                    'user_id' => $user->id,
-                    'product_key' => $productKey,
-                    'type' => $product['type'],
-                    'points' => $product['points'],
-                    'expected_amount_cents' => $product['price_cents'],
-                    'expected_currency' => 'eur',
-                ],
-            ]);
-
-            return response()->json([
-                'url' => $session->url,
-                'session_id' => $session->id,
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Stripe Checkout error: '.$e->getMessage());
-
-            return response()->json(['error' => 'Erreur lors de la création du paiement'], 500);
-        }
+        abort(410, \App\Support\RetiredPoints::MESSAGE);
     }
 
     /**
@@ -130,9 +64,7 @@ class StripeCheckoutController extends Controller
             }
 
             $result = $this->pointPurchases->fulfill($session, Auth::id());
-            $message = $result['status'] === 'processed'
-                ? '🎉 '.$result['product']['points'].' points ajoutés à votre compte !'
-                : 'Ce paiement avait déjà été traité. Vos points sont disponibles.';
+            $message = 'Votre ancien paiement a été enregistré. Le système de points est arrêté ; contactez le support pour toute question sur cet achat.';
 
             return redirect()->route('pricing.index')->with('success', $message);
 

@@ -379,7 +379,6 @@
                     <p class="seller-since"><i class="fas fa-clock me-1"></i>Membre depuis {{ optional($ad->user)->created_at ? $ad->user->created_at->format('M Y') : 'N/A' }}</p>
                     <div class="seller-stats">
                         <div class="seller-stat"><div class="seller-stat-value">{{ $ad->user ? $ad->user->ads()->count() : 0 }}</div><div class="seller-stat-label">Annonces</div></div>
-                        <div class="seller-stat"><div class="seller-stat-value">{{ optional($ad->user)->available_points ?? 0 }}</div><div class="seller-stat-label">Points</div></div>
                     </div>
                     @auth
                         @if(Auth::id() !== $ad->user_id)
@@ -517,7 +516,6 @@
                         @endif
                     @else
                         <a href="{{ route('login', ['continue' => 'ad', 'ad' => $ad->id]) }}" class="btn btn-contact btn-contact-primary"><i class="fas fa-sign-in-alt me-2" aria-hidden="true"></i>Connectez-vous pour contacter l’auteur</a>
-                        <p class="text-center mt-2 small" style="color: #718096;"><i class="fas fa-gift me-1"></i>5 points offerts à l'inscription</p>
                         <a href="{{ route('profile.public', $ad->user_id) }}" class="btn btn-contact btn-contact-secondary"><i class="fas fa-user me-2"></i>Voir le profil</a>
                     @endauth
                     <div class="mt-3 p-2 rounded" style="background: rgba(255,193,7,0.1); border: 1px solid rgba(255,193,7,0.3);">
@@ -576,7 +574,6 @@
                                       rows="3" placeholder="Écrivez un commentaire..." 
                                       style="resize: none; border-radius: 12px;"></textarea>
                             <div class="d-flex justify-content-between align-items-center mt-2">
-                                <small class="text-muted"><i class="fas fa-coins me-1"></i>-2 points par commentaire</small>
                                 <button type="submit" class="btn btn-primary btn-sm" id="submit-comment" disabled>
                                     <i class="fas fa-paper-plane me-1"></i>Publier
                                 </button>

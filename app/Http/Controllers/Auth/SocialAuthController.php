@@ -150,23 +150,7 @@ class SocialAuthController extends Controller
             $user->is_verified = false;
             $user->is_active = true;
             $user->role = 'user';
-            $user->available_points = 5;
-            $user->total_points = 5;
             $user->save();
-
-            // Enregistrer la transaction de points de bienvenue
-            if (class_exists(\App\Models\PointTransaction::class)) {
-                try {
-                    \App\Models\PointTransaction::create([
-                        'user_id' => $user->id,
-                        'points' => 5,
-                        'type' => 'welcome_bonus',
-                        'description' => 'Bonus de bienvenue à l\'inscription (5 points gratuits)',
-                    ]);
-                } catch (\Exception $e) {
-                    \Log::error('Failed to log OAuth welcome points: '.$e->getMessage());
-                }
-            }
 
             // Marquer comme nouvel utilisateur OAuth pour afficher le modal de bienvenue
             session()->flash('show_provider_welcome', true);

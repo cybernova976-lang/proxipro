@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\IdentityVerification;
 use App\Models\Setting;
 use App\Support\PlatformFeatures;
-use App\Support\PointPackCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -23,7 +22,7 @@ class PublicProviderOffersTest extends TestCase
             ->assertSee('Gratuit')
             ->assertSee(number_format(IdentityVerification::getVerificationPrice('profile_verification'), 2, ',', ' ').' €')
             ->assertSee('Le contrôle d’identité se règle par carte')
-            ->assertSee('Les points ne règlent pas le contrôle d’identité du profil.')
+            ->assertDontSee('points')
             ->assertSee('7,50 %')
             ->assertSee('Elle est déduite du montant versé au prestataire.')
             ->assertSee(route('register'), false)
@@ -31,10 +30,6 @@ class PublicProviderOffersTest extends TestCase
             ->assertDontSee('<form', false)
             ->assertDontSee('Satisfait ou remboursé');
 
-        foreach (PointPackCatalog::all() as $pack) {
-            $response->assertSee($pack['points'].' points')
-                ->assertSee(number_format((float) $pack['price'], 2, ',', ' ').' €');
-        }
 
         $this->assertDatabaseCount('users', 0);
         $this->assertDatabaseCount('pro_subscriptions', 0);

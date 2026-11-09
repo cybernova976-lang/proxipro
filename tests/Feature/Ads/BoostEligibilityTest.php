@@ -29,8 +29,7 @@ class BoostEligibilityTest extends TestCase
         $demand = $this->ad($owner, ['service_type' => 'demande', 'title' => 'Cherche un plombier']);
 
         $this->actingAs($owner)->post(route('boost.purchase.points', $demand), ['package' => 'boost_3'])
-            ->assertRedirect(route('ads.show', $demand))
-            ->assertSessionHas('error', 'Le boost est réservé aux offres de services.');
+            ->assertStatus(410);
         $this->assertSame(50, (int) $owner->fresh()->available_points);
         $this->assertFalse((bool) $demand->fresh()->is_boosted);
 
@@ -56,7 +55,7 @@ class BoostEligibilityTest extends TestCase
             ->assertSee('Inutile : votre abonnement Premium affiche déjà cette offre parmi les offres sponsorisées');
 
         $this->from(route('boost.show', $offer))
-            ->post(route('boost.purchase.points', $offer), ['package' => 'boost_3'])
+            ->post(route('boost.purchase.stripe', $offer), ['package' => 'boost_3'])
             ->assertRedirect(route('boost.show', $offer))
             ->assertSessionHas('error');
         $this->assertSame(50, (int) $owner->fresh()->available_points);
@@ -73,10 +72,16 @@ class BoostEligibilityTest extends TestCase
         $this->actingAs($owner)->get(route('boost.show', $offer))->assertOk()
             ->assertSee('le boost ne change l’affichage qu’après cette date');
 
-        $this->post(route('boost.purchase.points', $offer), ['package' => 'boost_7'])
-            ->assertRedirect(route('ads.show', $offer));
-        $this->assertTrue($offer->fresh()->isCurrentlyBoosted());
-        $this->assertLessThan(50, (int) $owner->fresh()->available_points);
+        config(['services.stripe.secret' => 'sk_test_simulated']);
+        \Mockery::mock('alias:Stripe\\Checkout\\Session')->shouldReceive('create')->once()
+            ->andReturnUsing(function (array $params) {
+                $this->assertSame(480, $params['line_items'][0]['price_data']['unit_amount']);
+                return (object) ['url' => 'https://checkout.example.test/boost'];
+            });
+        $this->post(route('boost.purchase.stripe', $offer), ['package' => 'boost_7'])
+            ->assertRedirect('https://checkout.example.test/boost');
+        $this->assertFalse($offer->fresh()->isCurrentlyBoosted());
+        $this->assertSame(50, (int) $owner->fresh()->available_points);
     }
 
     private function ad(User $owner, array $attributes = []): Ad

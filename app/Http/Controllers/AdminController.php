@@ -1001,19 +1001,7 @@ class AdminController extends Controller
 
     public function updateSettingsPoints(Request $request)
     {
-        $validated = $request->validate([
-            'signup_points' => 'required|integer|min:0',
-            'daily_login_points' => 'required|integer|min:0',
-            'share_points' => 'required|integer|min:0',
-            'message_cost' => 'required|integer|min:0',
-        ]);
-
-        Setting::set('signup_points', $validated['signup_points'], 'points');
-        Setting::set('daily_login_points', $validated['daily_login_points'], 'points');
-        Setting::set('share_points', $validated['share_points'], 'points');
-        Setting::set('message_cost', $validated['message_cost'], 'points');
-
-        return back()->with('success', 'Paramètres des points mis à jour avec succès');
+        abort(410, \App\Support\RetiredPoints::MESSAGE);
     }
 
     public function updateSettingsEmail(Request $request)
@@ -1477,11 +1465,6 @@ class AdminController extends Controller
                 'pro_verified_at' => now(),
             ]);
 
-            // Ajouter des points bonus
-            if (method_exists($user, 'addPoints')) {
-                $user->addPoints(50, 'bonus', 'Bonus vérification de profil approuvée');
-            }
-
             // Envoyer notification
             $user->notify(new \App\Notifications\VerificationApproved($verification));
 
@@ -1608,10 +1591,6 @@ class AdminController extends Controller
                     'pro_verified' => true,
                     'pro_verified_at' => now(),
                 ]);
-
-                if (method_exists($user, 'addPoints')) {
-                    $user->addPoints(50, 'bonus', 'Bonus vérification de profil approuvée');
-                }
 
                 $user->notify(new \App\Notifications\VerificationApproved($verification));
 

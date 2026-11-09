@@ -518,7 +518,7 @@
                 
                 <div class="text-center mt-4">
                     <p style="color: rgba(255,255,255,0.6);">
-                        🎁 <strong style="color: #f093fb;">50 points offerts</strong> à l'inscription !
+                        Créez votre compte et publiez gratuitement votre besoin.
                     </p>
                 </div>
             </div>

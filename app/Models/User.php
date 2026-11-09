@@ -608,13 +608,14 @@ class User extends Authenticatable
 
     public function addPoints($points, $type, $description, $source = null)
     {
+        // Enregistrer uniquement les paiements historiques déjà engagés sur Stripe.
+        // Ce solde ne peut plus être dépensé.
+        if ($type !== 'purchase' || $source !== 'stripe') {
+            return;
+        }
+
         $this->total_points += $points;
         $this->available_points += $points;
-
-        // Si c'est un gain quotidien
-        if ($type === 'daily') {
-            $this->daily_points += $points;
-        }
 
         $this->save();
 
@@ -626,56 +627,22 @@ class User extends Authenticatable
             'source' => $source,
         ]);
 
-        // Vérifier si l'utilisateur a gagné un niveau
-        $this->checkLevelUp();
-
-        // Vérifier les badges
-        $this->checkBadges();
     }
 
     public function spendPoints($points, $type, $description)
     {
-        if ($this->available_points < $points) {
-            return false;
-        }
-
-        $this->available_points -= $points;
-        $this->save();
-
-        $this->pointTransactions()->create([
-            'points' => -$points,
-            'type' => $type,
-            'description' => $description,
-        ]);
-
-        return true;
+        // Old balances no longer purchase any entitlement.
+        return false;
     }
 
     public function checkLevelUp()
     {
-        $newLevel = floor($this->total_points / 100) + 1;
-
-        if ($newLevel > $this->level) {
-            $this->level = $newLevel;
-            $this->save();
-
-            return true;
-        }
-
         return false;
     }
 
     public function checkBadges()
     {
-        $badges = Badge::where('points_required', '<=', $this->total_points)
-            ->where('level_required', '<=', $this->level)
-            ->get();
-
-        foreach ($badges as $badge) {
-            if (! $this->badges->contains($badge->id)) {
-                $this->badges()->attach($badge->id);
-            }
-        }
+        // No new points-based badges are granted.
     }
 
     public function hasBadge($badgeName)
@@ -729,22 +696,16 @@ class User extends Authenticatable
         return true;
     }
 
-    /**
-     * Les abonnements ont été supprimés.
-     * Cette méthode est conservée pour la compatibilité mais retourne toujours false.
-     */
+    /** Legacy alias for the active paid subscription. */
     public function hasActiveSubscription()
     {
-        return false;
+        return $this->hasActiveProSubscription();
     }
 
-    /**
-     * Les abonnements premium ont été supprimés.
-     * Retourne false pour tous les utilisateurs.
-     */
+    /** Premium requires an active Pro subscription, never a points balance. */
     public function isPremium(): bool
     {
-        return false;
+        return $this->hasActiveProSubscription();
     }
 
     /**

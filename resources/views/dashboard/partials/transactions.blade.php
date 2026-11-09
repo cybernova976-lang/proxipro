@@ -3,7 +3,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 fw-bold mb-1">Historique des transactions</h1>
-            <p class="text-muted mb-0">Tous vos paiements et mouvements de points</p>
+            <p class="text-muted mb-0">Vos paiements et votre historique</p>
         </div>
         <a href="{{ route('home.export-transactions-pdf') }}" class="btn btn-sm" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px;">
             <i class="fas fa-file-pdf"></i>Exporter PDF
@@ -15,7 +15,7 @@
             <div class="card-body text-center py-5">
                 <i class="fas fa-receipt fa-3x text-muted mb-3 opacity-50"></i>
                 <h5 class="fw-bold text-muted">Aucune transaction pour le moment</h5>
-                <p class="text-muted">Vos achats de points, paiements et transactions apparaîtront ici.</p>
+                <p class="text-muted">Vos paiements et transactions apparaîtront ici.</p>
             </div>
         </div>
     @else

@@ -1426,34 +1426,6 @@
         });
     }
 
-    function payVerificationWithPoints(verificationId, button) {
-        setVerificationPaymentButtonLoading(button, 'Validation...');
-
-        fetch('{{ route("verification.pay.points") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify({ verification_id: verificationId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.reload();
-                return;
-            }
-
-            restoreVerificationPaymentButton(button);
-            showVerificationPaymentError(data.message);
-        })
-        .catch(() => {
-            restoreVerificationPaymentButton(button);
-            showVerificationPaymentError('Erreur de connexion pendant le paiement par points.');
-        });
-    }
-
     // Custom form validation — browser native validation fails silently on hidden inputs
     document.querySelectorAll('form[action*="verification"]').forEach(function(form) {
         form.setAttribute('novalidate', 'novalidate');

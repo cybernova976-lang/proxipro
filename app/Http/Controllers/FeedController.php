@@ -1751,7 +1751,6 @@ class FeedController extends Controller
         $userStats = [
             'total_ads' => $user->ads()->count(),
             'unread_messages' => 0,
-            'available_points' => $user->available_points ?? 0,
             'saved_ads' => 0,
         ];
 

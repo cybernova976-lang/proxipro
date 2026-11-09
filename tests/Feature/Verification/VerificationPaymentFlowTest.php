@@ -58,7 +58,7 @@ class VerificationPaymentFlowTest extends TestCase
         Storage::fake(config('filesystems.default', 'public'));
 
         $user = User::factory()->completeForVerification()->create([
-            'available_points' => IdentityVerification::getVerificationPointsCost('profile_verification'),
+            'available_points' => 1000,
             'identity_verified' => false,
             'is_verified' => false,
         ]);
@@ -81,8 +81,8 @@ class VerificationPaymentFlowTest extends TestCase
             'verification_id' => $verification->id,
         ]);
 
-        $response->assertStatus(422);
-        $response->assertJsonPath('success', false);
+        $response->assertStatus(410);
+        $response->assertJsonPath('message', \App\Support\RetiredPoints::MESSAGE);
 
         $verification->refresh();
 

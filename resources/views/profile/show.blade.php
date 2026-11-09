@@ -154,15 +154,6 @@
                     </div>
                     @endif
                     
-                    <!-- Points -->
-                    <div class="bg-light rounded-3 p-3 mb-4">
-                        <div class="d-flex justify-content-center align-items-center gap-2">
-                            <i class="fas fa-coins text-warning fa-lg"></i>
-                            <span class="fs-4 fw-bold">{{ number_format($user->available_points ?? 0, 0, ',', ' ') }}</span>
-                            <span class="text-muted">points</span>
-                        </div>
-                    </div>
-                    
                     <!-- Actions -->
                     <div class="d-grid gap-2">
                         @if($providerAction)

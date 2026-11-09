@@ -89,7 +89,7 @@
             <h2 id="offers-identity">Activer votre profil prestataire</h2>
             <span class="offers-price">{{ number_format((float) $verificationPrice, 2, ',', ' ') }} € <small>pour le contrôle d’identité du profil</small></span>
             <p>Le parcours d’activation prestataire demande un profil complété et le badge « Profil vérifié ».</p>
-            <p class="offers-small">Le contrôle d’identité se règle par carte, séparément des points et des abonnements. Le paiement ne remplace pas la vérification des pièces.</p>
+            <p class="offers-small">Le contrôle d’identité se règle par carte, séparément des abonnements. Le paiement ne remplace pas la vérification des pièces.</p>
         </section>
     </div>
 
@@ -104,6 +104,7 @@
                         <span class="offers-price">{{ number_format((float) $plan['amount'], 2, ',', ' ') }} € <small>{{ $plan['period'] ?? '' }}</small></span>
                         <p>{{ $plan['description'] ?? '' }}</p>
                         <ul>@foreach($plan['features'] ?? [] as $feature)<li>{{ $feature }}</li>@endforeach</ul>
+                        <div class="offers-actions"><a class="offers-button" href="{{ route('pro.subscription') }}">Choisir cette formule →</a></div>
                     </article>
                 @endforeach
             </div>
@@ -112,15 +113,10 @@
         @endif
     </section>
 
-    <section class="offers-section" aria-labelledby="offers-points">
-        <h2 id="offers-points">Les options de visibilité</h2>
-        <p>Des packs de points sont proposés pour les options payantes de la plateforme. L’option choisie et son coût en points sont indiqués avant validation dans votre compte.</p>
-        <div class="offers-pack-grid">
-            @foreach($pointPacks as $pack)
-                <div class="offers-pack"><strong>{{ $pack['points'] }} points</strong><span>{{ number_format((float) $pack['price'], 2, ',', ' ') }} €</span></div>
-            @endforeach
-        </div>
-        <p class="offers-small" style="margin-top:14px;">Les points ne règlent pas le contrôle d’identité du profil. Une option de visibilité ne garantit ni demande, ni mission, ni revenu.</p>
+    <section class="offers-section" aria-labelledby="offers-visibility">
+        <h2 id="offers-visibility">Les options de visibilité</h2>
+        <p>Les boosts et l’option Urgent se règlent directement par carte via Stripe. Leur prix et leur durée sont affichés avant paiement. Les abonnés Premium bénéficient de la réduction indiquée dans leur formule.</p>
+        <p class="offers-small">Une option de visibilité ne garantit ni demande, ni mission, ni revenu.</p>
     </section>
 
     <section class="offers-section offers-note" aria-labelledby="offers-payment">

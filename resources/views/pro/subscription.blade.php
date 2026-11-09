@@ -1,6 +1,6 @@
 @extends('pro.layout')
 @section('title', 'Abonnement Pro - Espace Pro')
-@section('topbar_title', 'Abonnement & Points')
+@section('topbar_title', 'Abonnement Premium')
 
 @section('content')
 <div class="pro-content-header subscription-page-header">
@@ -8,11 +8,11 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-1" style="font-size: 0.8rem;">
                 <li class="breadcrumb-item"><a href="{{ route('pro.dashboard') }}" style="color: var(--pro-primary);">Espace Pro</a></li>
-                <li class="breadcrumb-item active">Abonnement & Points</li>
+                <li class="breadcrumb-item active">Abonnement Premium</li>
             </ol>
         </nav>
-        <h1>Abonnement & Points</h1>
-        <p class="text-muted mb-0" style="font-size: 0.88rem;">Choisissez un abonnement ou achetez des points à la carte.</p>
+        <h1>Abonnement Premium</h1>
+        <p class="text-muted mb-0" style="font-size: 0.88rem;">Choisissez votre formule Premium, mensuelle ou annuelle.</p>
     </div>
 </div>
 
@@ -88,7 +88,7 @@
         <div>
             <h6 class="fw-bold mb-0">{{ $proSubscriptionsEnabled ? 'Aucun abonnement actif' : 'Abonnement Pro en préparation' }}</h6>
             <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                {{ $proSubscriptionsEnabled ? 'Choisissez un plan ci-dessous ou achetez des points à la carte.' : 'L’espace prestataire reste accessible gratuitement pendant la préparation de l’offre récurrente.' }}
+                {{ $proSubscriptionsEnabled ? 'Choisissez une formule ci-dessous pour souscrire par carte via Stripe.' : 'L’espace prestataire reste accessible gratuitement pendant la préparation de l’offre récurrente.' }}
             </p>
         </div>
     </div>
@@ -99,6 +99,7 @@
 @if($proSubscriptionsEnabled)
 <div class="pro-card sub-page-card mb-4">
     <h6 class="fw-bold mb-3"><i class="fas fa-crown me-2" style="color: #f59e0b;"></i>Plans d'abonnement</h6>
+    <p class="text-muted mb-3" style="font-size:.85rem">Renouvellement automatique à chaque échéance. Vous pouvez l’arrêter depuis votre abonnement ; votre accès reste actif jusqu’à la fin de la période payée.</p>
     @php $providerSubscriptionPlans = \App\Support\ProviderSubscriptionPlans::active(); @endphp
     <div class="row g-3">
         @foreach($providerSubscriptionPlans as $planKey => $plan)
@@ -121,7 +122,7 @@
                                 <span class="text-success fw-semibold" style="font-size: 0.72rem;">{{ $plan['subtitle'] }}</span>
                             @endif
                         </div>
-                        <div class="d-flex flex-wrap gap-1" style="font-size: 0.72rem; color: #64748b;">
+                        <div class="d-flex flex-wrap gap-1" style="font-size: 0.82rem; color: #64748b;">
                             @foreach(array_slice($plan['features'] ?? [], 0, 4) as $feature)
                                 <span><i class="fas {{ !empty($plan['recommended']) ? 'fa-star text-warning' : 'fa-check text-success' }} me-1"></i>{{ $feature }}</span>
                             @endforeach
@@ -132,6 +133,12 @@
                         <div class="text-muted" style="font-size: 0.72rem;">{{ $plan['period'] }}</div>
                     </div>
                 </div>
+                @if(count($plan['features'] ?? []) > 4)
+                    <details class="sub-plan-details">
+                        <summary>Voir tous les avantages</summary>
+                        <ul>@foreach(array_slice($plan['features'], 4) as $feature)<li>{{ $feature }}</li>@endforeach</ul>
+                    </details>
+                @endif
                 <form method="POST" action="{{ route('pro.onboarding.subscribe') }}" class="mt-2">
                     @csrf
                     <input type="hidden" name="plan" value="{{ $planKey }}">
@@ -165,59 +172,6 @@
 </div>
 @endif
 
-{{-- ===== SECTION 2: Acheter des points ===== --}}
-<div class="pro-card sub-page-card mb-4">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h6 class="fw-bold mb-0"><i class="fas fa-coins me-2" style="color: #f59e0b;"></i>Acheter des points</h6>
-        <span class="badge" style="background: linear-gradient(135deg, #7c3aed, #9333ea); font-size: 0.78rem; padding: 5px 12px; border-radius: 20px;">
-            <i class="fas fa-wallet me-1"></i>Solde : {{ number_format($user->available_points ?? 0, 0, ',', ' ') }} pts
-        </span>
-    </div>
-    <p class="text-muted mb-3" style="font-size: 0.82rem;">Pas besoin d'abonnement ! Achetez des points pour booster vos annonces et gagner en visibilité.</p>
-
-    <div class="row g-2">
-        @php
-            $packs = collect(\App\Support\PointPackCatalog::all())->map(fn ($pack, $key) => [
-                'key' => $key,
-                'name' => $pack['description'],
-                'pts' => $pack['points'],
-                'price' => $pack['price'],
-                'icon' => $pack['icon'],
-                'color' => $pack['color'],
-                'popular' => $pack['badge'] === 'popular',
-                'best' => $pack['badge'] === 'best',
-            ])->values()->all();
-        @endphp
-
-        @foreach($packs as $pack)
-        <div class="col-md-6 col-xl-4">
-            <div class="pts-pack-mini {{ !empty($pack['popular']) ? 'pts-pack-featured' : '' }} {{ !empty($pack['best']) ? 'pts-pack-best' : '' }}">
-                @if(!empty($pack['popular']))
-                    <span class="pts-mini-badge" style="background: #f59e0b;">Populaire</span>
-                @elseif(!empty($pack['best']))
-                    <span class="pts-mini-badge" style="background: #10b981;">Meilleur prix</span>
-                @endif
-                <div class="d-flex align-items-center gap-2">
-                    <div class="pts-mini-icon" style="background: {{ $pack['color'] }}20; color: {{ $pack['color'] }};">
-                        <i class="{{ $pack['icon'] }}"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="fw-bold pts-pack-name">{{ $pack['name'] }}</div>
-                        <div class="pts-pack-meta">{{ $pack['pts'] }} points · {{ number_format($pack['price'] / $pack['pts'], 2, ',', ' ') }}€/pt</div>
-                    </div>
-                    <div class="text-end">
-                        <div class="fw-bold pts-pack-price">{{ number_format($pack['price'], 0) }}€</div>
-                    </div>
-                    <button class="btn btn-sm btn-pts-mini" onclick="purchasePoints('{{ $pack['key'] }}', this)">
-                        <i class="fas fa-shopping-cart"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-        @endforeach
-    </div>
-</div>
-
 {{-- ===== SECTION 3: Pourquoi devenir Pro ? ===== --}}
 <div class="pro-card sub-page-card mb-4">
     <h6 class="fw-bold mb-3"><i class="fas fa-gift me-2 text-primary"></i>Pourquoi devenir Pro ?</h6>
@@ -229,7 +183,7 @@
                 </div>
                 <div>
                     <h6 class="fw-bold mb-0" style="font-size: 0.82rem;">Visibilité accrue</h6>
-                    <p class="text-muted mb-0" style="font-size: 0.72rem;">Annonces en priorité dans les résultats de recherche.</p>
+                    <p class="text-muted mb-0" style="font-size: 0.72rem;">Vos offres rejoignent les offres sponsorisées sur l’accueil des clients.</p>
                 </div>
             </div>
         </div>
@@ -240,7 +194,7 @@
                 </div>
                 <div>
                     <h6 class="fw-bold mb-0" style="font-size: 0.82rem;">Confiance renforcée</h6>
-                    <p class="text-muted mb-0" style="font-size: 0.72rem;">Badge vérifié + avis clients = plus de demandes.</p>
+                    <p class="text-muted mb-0" style="font-size: 0.72rem;">Le badge Premium distingue votre abonnement. La vérification d’identité reste séparée.</p>
                 </div>
             </div>
         </div>
@@ -307,6 +261,9 @@
 
 /* Subscription plan cards - compact */
 .sub-plan-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
     border: 2px solid #e2e8f0;
     border-radius: 12px;
     padding: 14px 16px;
@@ -314,6 +271,11 @@
     position: relative;
     background: white;
 }
+.sub-plan-card form { margin-top: auto !important; padding-top: 12px; }
+.sub-plan-card button { min-height: 44px; }
+.sub-plan-details { margin-top: 12px; font-size: .82rem; color: #64748b; }
+.sub-plan-details summary { cursor: pointer; color: #4338ca; min-height: 44px; display: list-item; align-content: center; }
+.sub-plan-details ul { padding-left: 20px; margin-bottom: 0; }
 .sub-plan-card:hover {
     border-color: var(--pro-primary);
     box-shadow: 0 4px 16px rgba(99,102,241,0.1);
@@ -349,70 +311,6 @@
     flex-shrink: 0;
 }
 
-/* Points pack cards - mini style */
-.pts-pack-mini {
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 10px 12px;
-    transition: all 0.25s ease;
-    position: relative;
-    background: white;
-}
-.pts-pack-mini:hover {
-    border-color: #3b82f6;
-    box-shadow: 0 4px 12px rgba(59,130,246,0.1);
-    transform: translateY(-2px);
-}
-.pts-pack-featured { border-color: #f59e0b; }
-.pts-pack-best { border-color: #10b981; }
-.pts-mini-badge {
-    position: absolute;
-    top: -7px;
-    right: 10px;
-    color: white;
-    padding: 1px 8px;
-    border-radius: 8px;
-    font-size: 0.6rem;
-    font-weight: 700;
-}
-.pts-mini-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.85rem;
-    flex-shrink: 0;
-}
-.pts-pack-name {
-    font-size: 0.85rem;
-    line-height: 1.25;
-}
-.pts-pack-meta {
-    color: #94a3b8;
-    font-size: 0.72rem;
-}
-.pts-pack-price {
-    color: #0f172a;
-    font-size: 1.1rem;
-}
-.btn-pts-mini {
-    background: linear-gradient(135deg, #0f172a, #1e3a5f);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 6px 10px;
-    font-size: 0.75rem;
-    transition: all 0.2s;
-    flex-shrink: 0;
-}
-.btn-pts-mini:hover {
-    background: linear-gradient(135deg, #1e3a5f, #2563eb);
-    color: white;
-    transform: scale(1.05);
-}
-
 @media (min-width: 1200px) {
     .subscription-page-header {
         margin-bottom: 2rem;
@@ -420,29 +318,6 @@
 
     .sub-page-card {
         padding: 1.75rem;
-    }
-
-    .pts-pack-mini {
-        min-height: 78px;
-        padding: 15px 16px;
-    }
-
-    .pts-mini-icon {
-        width: 42px;
-        height: 42px;
-        font-size: 1rem;
-    }
-
-    .pts-pack-name {
-        font-size: 0.95rem;
-    }
-
-    .pts-pack-meta {
-        font-size: 0.78rem;
-    }
-
-    .pts-pack-price {
-        font-size: 1.2rem;
     }
 
     .btn-pts-mini {
@@ -478,15 +353,6 @@
         text-align: left !important;
     }
 
-    .pts-pack-mini > .d-flex {
-        flex-wrap: wrap;
-    }
-
-    .pts-pack-mini .btn-pts-mini {
-        width: 100%;
-        min-height: 40px;
-    }
-
     .sub-page-card .badge {
         white-space: normal;
         text-align: left;
@@ -498,38 +364,4 @@
 }
 </style>
 
-@endsection
-
-@section('scripts')
-<script>
-function purchasePoints(productKey, btn) {
-    var orig = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-
-    fetch('{{ route("stripe.create-checkout") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-        },
-        body: JSON.stringify({ product_key: productKey })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if (data.url) {
-            window.location.href = data.url;
-        } else {
-            alert(data.error || 'Erreur lors du paiement');
-            btn.disabled = false;
-            btn.innerHTML = orig;
-        }
-    })
-    .catch(function() {
-        alert('Erreur réseau, veuillez réessayer');
-        btn.disabled = false;
-        btn.innerHTML = orig;
-    });
-}
-</script>
 @endsection

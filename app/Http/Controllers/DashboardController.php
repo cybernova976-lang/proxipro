@@ -76,11 +76,7 @@ class DashboardController extends Controller
      */
     public function points()
     {
-        $user = Auth::user();
-        $transactions = $user->pointTransactions()->latest()->take(10)->get();
-        $badges = $user->badges;
-
-        return view('dashboard.partials.points', compact('user', 'transactions', 'badges'));
+        return view('points.retired');
     }
 
     /**

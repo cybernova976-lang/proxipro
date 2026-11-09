@@ -62,11 +62,6 @@
                     <i class="fas fa-crown" style="color: #f59e0b;"></i>
                 </a>
                 
-                <!-- Points -->
-                <a href="{{ route('points.dashboard') }}" class="points-badge text-decoration-none d-none d-sm-flex">
-                    <span>🪙</span>
-                    <span>{{ Auth::user()->available_points ?? 0 }}</span>
-                </a>
                 
                 <!-- User Dropdown -->
                 <div class="dropdown">
@@ -101,7 +96,6 @@
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('service-provider.start') }}"><i class="fas fa-user-plus" style="color: #059669;"></i>Activer mon profil prestataire</a></li>
                         @endif
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('messages.index') }}"><i class="fas fa-envelope text-info"></i>Messages @if($unreadMessages > 0)<span class="badge bg-danger ms-auto" style="font-size: 0.65rem;">{{ $unreadMessages }}</span>@endif</a></li>
-                        <li><a class="dropdown-item dropdown-item-modern" href="{{ route('points.dashboard') }}"><i class="fas fa-coins text-warning"></i>Mes Points <span class="badge bg-success ms-auto">{{ Auth::user()->available_points ?? 0 }}</span></a></li>
                         <li><hr class="dropdown-divider my-2"></li>
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('pricing.index') }}"><i class="fas fa-crown text-warning"></i>Tarifs</a></li>
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('settings.index') }}"><i class="fas fa-cog text-secondary"></i>Paramètres</a></li>

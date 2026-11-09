@@ -18,7 +18,7 @@ class BoostPaymentSecurityFeatureTest extends TestCase
         $user = User::factory()->create(['available_points' => 100]);
         $ad = $this->ad($user, 'offre');
 
-        $this->actingAs($user)->post(route('ads.make-urgent', $ad))->assertRedirect();
+        $this->actingAs($user)->post(route('ads.make-urgent', $ad))->assertStatus(410);
 
         $this->assertFalse((bool) $ad->fresh()->is_urgent);
         $this->assertSame(100, (int) $user->fresh()->available_points);

@@ -6983,7 +6983,6 @@
                                 @endif
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('demands.tracking') }}"><i class="fas fa-route" style="color: #2563eb;"></i>Suivi de mes demandes</a></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('messages.index') }}"><i class="fas fa-envelope" style="color: var(--accent);"></i>Messages @if($unreadCount > 0)<span class="badge bg-danger ms-auto" style="font-size: 0.65rem;">{{ $unreadCount }}</span>@endif</a></li>
-                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('points.dashboard') }}"><i class="fas fa-coins text-warning"></i>Mes Points <span class="badge bg-success ms-auto">{{ Auth::user()->available_points ?? 0 }}</span></a></li>
                                 <li><hr class="dropdown-divider my-2"></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('contact.index') }}"><i class="fas fa-headset" style="color: #3b82f6;"></i>Contact</a></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('guides.index') }}"><i class="fas fa-compass" style="color: #0f9f92;"></i>Conseils pratiques</a></li>

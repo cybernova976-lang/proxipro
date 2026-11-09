@@ -223,47 +223,6 @@
         </div>
     </div>
 
-    <!-- Paramètres des points -->
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0 py-3">
-                <h5 class="mb-0">
-                    <i class="fas fa-coins me-2 text-warning"></i>
-                    Système de Points
-                </h5>
-            </div>
-            <div class="card-body">
-                <form action="{{ route('admin.settings.points') }}" method="POST">
-                    @csrf
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Points par inscription</label>
-                        <input type="number" class="form-control" name="signup_points" value="{{ $settings['points']['signup_points'] ?? '50' }}" min="0">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Points par connexion quotidienne</label>
-                        <input type="number" class="form-control" name="daily_login_points" value="{{ $settings['points']['daily_login_points'] ?? '5' }}" min="0">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Points par partage social</label>
-                        <input type="number" class="form-control" name="share_points" value="{{ $settings['points']['share_points'] ?? '10' }}" min="0">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Coût en points par message</label>
-                        <input type="number" class="form-control" name="message_cost" value="{{ $settings['points']['message_cost'] ?? '1' }}" min="0">
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i>Enregistrer
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-    
     <!-- Paramètres email -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm">

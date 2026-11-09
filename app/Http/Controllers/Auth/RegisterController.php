@@ -364,27 +364,6 @@ class RegisterController extends Controller
         $user->is_active = true;
         $user->save();
 
-        // Ajouter des points de bienvenue (5 points pour tous)
-        if (class_exists(\App\Models\PointTransaction::class)) {
-            try {
-                $welcomePoints = 5; // 5 points gratuits à l'inscription
-
-                \App\Models\PointTransaction::create([
-                    'user_id' => $user->id,
-                    'points' => $welcomePoints,
-                    'type' => 'welcome_bonus',
-                    'description' => 'Bonus de bienvenue à l\'inscription (5 points gratuits)',
-                ]);
-
-                // Créditer available_points et total_points (colonnes réelles)
-                $user->increment('available_points', $welcomePoints);
-                $user->increment('total_points', $welcomePoints);
-            } catch (\Exception $e) {
-                // Log error but don't fail registration
-                \Log::error('Failed to add welcome points: '.$e->getMessage());
-            }
-        }
-
         return $user;
     }
 }

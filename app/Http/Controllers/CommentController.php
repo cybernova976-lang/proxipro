@@ -62,14 +62,6 @@ class CommentController extends Controller
             'parent_id' => $request->parent_id,
         ]);
 
-        // Déduire 2 points pour commenter
-        try {
-            if (Auth::user()->available_points >= 2) {
-                Auth::user()->spendPoints(2, 'comment', "Commentaire sur l'annonce: ".$ad->title);
-            }
-        } catch (\Exception $e) {
-            \Log::warning('Erreur spendPoints: '.$e->getMessage());
-        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -85,7 +77,7 @@ class CommentController extends Controller
                         'initial' => strtoupper(substr($comment->user->name, 0, 1)),
                     ],
                 ],
-                'message' => 'Commentaire ajouté avec succès ! (+2 points)',
+                'message' => 'Commentaire ajouté avec succès !',
             ]);
         }
 

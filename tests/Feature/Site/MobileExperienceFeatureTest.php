@@ -139,7 +139,7 @@ class MobileExperienceFeatureTest extends TestCase
         $this->assertStringContainsString('const setProSidebarOpen = (open) =>', $layout);
         $this->assertStringContainsString("event.key === 'Escape'", $layout);
         $this->assertStringContainsString('pro-content-header subscription-page-header', $subscription);
-        $this->assertStringContainsString("@section('topbar_title', 'Abonnement & Points')", $subscription);
+        $this->assertStringContainsString("@section('topbar_title', 'Abonnement Premium')", $subscription);
         $this->assertStringContainsString('.subscription-page-header,', $subscription);
         $this->assertStringContainsString('max-width: none;', $subscription);
         $this->assertStringContainsString('@media (min-width: 1200px)', $subscription);
@@ -151,7 +151,7 @@ class MobileExperienceFeatureTest extends TestCase
             ->get(route('pro.subscription'))
             ->assertOk()
             ->assertSee('Espace professionnel')
-            ->assertSee('Abonnement & Points', false)
+            ->assertSee('Abonnement Premium', false)
             ->assertSee('Retour au feed')
             ->assertSee('pro-content-header subscription-page-header', false)
             ->assertSee('sub-page-card', false);

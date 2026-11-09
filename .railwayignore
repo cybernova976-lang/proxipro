@@ -5,6 +5,7 @@
 
 # Fichiers de travail locaux sans rapport avec l'application
 .codex-artifacts/
+.claude/
 tmp/
 Guide_technique_Prokejem.txt
 /scripts/preflight.ps1

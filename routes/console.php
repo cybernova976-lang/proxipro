@@ -62,12 +62,6 @@ Schedule::command('subscriptions:expire-pro')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/pro-subscriptions-cleanup.log'));
 
-// Remet à zéro les compteurs de points quotidiens avant une nouvelle journée.
-Schedule::command('points:daily-reset')
-    ->dailyAt('00:05')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/points-daily-reset.log'));
-
 // Retire chaque nuit les annonces arrivées au terme de leur durée de publication.
 Schedule::command('ads:expire')
     ->dailyAt('00:15')

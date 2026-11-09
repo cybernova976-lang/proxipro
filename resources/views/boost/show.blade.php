@@ -745,20 +745,6 @@
     </div>
     @endif
 
-    <!-- User Points -->
-    <div class="user-points-box">
-        <div class="points-info">
-            <i class="fas fa-coins"></i>
-            <div>
-                <h4>{{ number_format($userPoints, 0, ',', ' ') }} points</h4>
-                <span>Solde disponible</span>
-            </div>
-        </div>
-        <a href="{{ route('pricing.index') }}" class="btn-buy-points">
-            <i class="fas fa-plus me-1"></i> Acheter des points
-        </a>
-    </div>
-    
     {{-- La remontée payante n'est plus proposée : AdPromotionCatalog::refreshAvailable(). --}}
 
     <!-- ========== PACKAGES GRID ========== -->
@@ -805,15 +791,6 @@
             
             <div class="package-pricing">
                 <div class="price-row">
-                    <span class="price-label">Avec points</span>
-                    <span class="price-value points">
-                        @if($isPro && isset($package['price_points_original']))
-                            <span class="price-original">{{ $package['price_points_original'] }} pts</span>
-                        @endif
-                        {{ $package['price_points'] }} pts
-                    </span>
-                </div>
-                <div class="price-row">
                     <span class="price-label">Par carte</span>
                     <span class="price-value euros">
                         @if($isPro && isset($package['price_euros_original']))
@@ -825,22 +802,6 @@
             </div>
             
             <div class="purchase-buttons">
-                <form action="{{ route('boost.purchase.points', $ad) }}" method="POST" style="display: contents;">
-                    @csrf
-                    <input type="hidden" name="package" value="{{ $key }}">
-                    <button type="submit" class="btn-boost btn-boost-points" 
-                            {{ $userPoints < $package['price_points'] ? 'disabled' : '' }}
-                            @if($isNotUseful) 
-                                onclick="return confirm('Ce plan est inférieur à votre visibilité actuelle. Voulez-vous quand même acheter ce boost ?')" 
-                            @endif>
-                        <i class="fas fa-coins"></i>
-                        @if($userPoints >= $package['price_points'])
-                            Payer {{ $package['price_points'] }} points
-                        @else
-                            Points insuffisants
-                        @endif
-                    </button>
-                </form>
                 
                 <form action="{{ route('boost.purchase.stripe', $ad) }}" method="POST" style="display: contents;">
                     @csrf

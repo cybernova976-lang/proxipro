@@ -24,16 +24,17 @@ class CommercialPolicyConsistencyFeatureTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->get(route('pricing.index'))
+            ->get(route('public.provider-offers'))
             ->assertOk()
-            ->assertSeeInOrder(['Vérification de profil', '5,00 €', 'Carte uniquement'])
+            ->assertSee('5,00 €')
+            ->assertSee('Le contrôle d’identité se règle par carte')
             ->assertDontSee('Satisfait ou remboursé');
 
         $this->actingAs($user)
             ->getJson(route('verification.status'))
             ->assertOk()
             ->assertJsonPath('profile_verification_price', 5)
-            ->assertJsonPath('profile_verification_points', null)
+            ->assertJsonMissingPath('profile_verification_points')
             ->assertJsonPath('profile_verification_payment_methods.0', 'card');
     }
 

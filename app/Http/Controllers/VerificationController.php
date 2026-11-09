@@ -89,11 +89,8 @@ class VerificationController extends Controller
             'has_pending_payment' => (bool) $pendingPayment,
             'pending_verification_id' => $pendingPayment?->id,
             'profile_verification_price' => IdentityVerification::getVerificationPrice('profile_verification'),
-            'profile_verification_points' => null,
             'profile_verification_payment_methods' => ['card'],
             'service_provider_price' => IdentityVerification::getVerificationPrice('service_provider'),
-            'service_provider_points' => IdentityVerification::getVerificationPointsCost('service_provider'),
-            'user_points' => $user->available_points ?? 0,
         ]);
     }
 
@@ -306,10 +303,9 @@ class VerificationController extends Controller
         }
 
         $priceLabel = number_format((float) $amount, 2, ',', ' ').'€';
-        $pointsLabel = IdentityVerification::getVerificationPointsCost($verification->type).' points';
         $productName = $verification->type === 'profile_verification'
             ? "Vérification de profil Prokejem ({$priceLabel})"
-            : "Badge Prestataire Vérifié Prokejem ({$priceLabel} / {$pointsLabel})";
+            : "Badge Prestataire Vérifié Prokejem ({$priceLabel})";
 
         try {
             $session = Session::create([
@@ -363,74 +359,7 @@ class VerificationController extends Controller
      */
     public function payWithPoints(Request $request)
     {
-        $request->validate([
-            'verification_id' => 'required|exists:identity_verifications,id',
-        ]);
-
-        $user = Auth::user();
-        $missingFields = $this->getProfileMissingFields($user);
-
-        if ($missingFields !== []) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Votre profil doit être entièrement complété avant l’envoi de la demande.',
-                'missing_profile_fields' => array_column($missingFields, 'label'),
-                'redirect' => route('profile.edit'),
-            ], 422);
-        }
-
-        $verification = IdentityVerification::where('id', $request->verification_id)
-            ->where('user_id', $user->id)
-            ->where('payment_status', 'pending')
-            ->firstOrFail();
-
-        if (! IdentityVerification::supportsPointsPayment($verification->type)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'La vérification de profil nécessite un paiement sécurisé de 5 € par carte.',
-            ], 422);
-        }
-
-        $pointsCost = IdentityVerification::getVerificationPointsCost($verification->type);
-
-        try {
-            $newBalance = DB::transaction(function () use ($user, $verification, $pointsCost) {
-                $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
-                $lockedVerification = IdentityVerification::query()->lockForUpdate()->findOrFail($verification->id);
-
-                if ($lockedVerification->payment_status !== 'pending') {
-                    throw ValidationException::withMessages(['verification_id' => 'Cette demande a déjà été réglée.']);
-                }
-                if (($lockedUser->available_points ?? 0) < $pointsCost
-                    || ! $lockedUser->spendPoints($pointsCost, 'verification_payment', 'Vérification de profil - '.$lockedVerification->type)) {
-                    throw ValidationException::withMessages([
-                        'points' => 'Points insuffisants. Il vous faut '.$pointsCost.' points.',
-                    ]);
-                }
-
-                $this->verificationPayments->moveDocumentsToPermanent($lockedVerification);
-                $lockedVerification->forceFill([
-                    'payment_status' => 'paid',
-                    'payment_id' => 'points_'.$lockedVerification->id,
-                    'paid_at' => now(),
-                    'status' => 'pending',
-                    'submitted_at' => now(),
-                ])->save();
-
-                return (int) $lockedUser->fresh()->available_points;
-            });
-        } catch (ValidationException $exception) {
-            return response()->json([
-                'success' => false,
-                'message' => collect($exception->errors())->flatten()->first(),
-            ], 422);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Paiement par points réussi ! Votre demande de vérification a été envoyée.',
-            'new_balance' => $newBalance,
-        ]);
+        abort(410, \App\Support\RetiredPoints::MESSAGE);
     }
 
     /**
