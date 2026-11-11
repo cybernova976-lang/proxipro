@@ -2,6 +2,8 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Concerns\RespectsEmailPreferences;
+
 use App\Models\Ad;
 use App\Models\User;
 use App\Notifications\Concerns\SendsWebPushNotifications;
@@ -13,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 
 class NewAdMatchingNotification extends Notification implements ShouldQueue
 {
-    use Queueable, SendsWebPushNotifications;
+    use Queueable, SendsWebPushNotifications, RespectsEmailPreferences;
 
     public int $tries = 3;
 
@@ -31,11 +33,7 @@ class NewAdMatchingNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        $channels = ['database'];
-
-        if ($notifiable->pro_notifications_email) {
-            $channels[] = 'mail';
-        }
+        $channels = array_merge(['database'], $this->emailChannelsFor($notifiable, (bool) $notifiable->pro_notifications_email));
 
         if ($notifiable->pro_notifications_realtime) {
             $channels = array_merge($channels, $this->webPushChannelsFor($notifiable));

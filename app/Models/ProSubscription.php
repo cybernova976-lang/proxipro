@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProSubscription extends Model
 {
+    public const TERMINAL_STRIPE_STATUSES = ['canceled', 'incomplete_expired'];
+
     protected $fillable = [
         'user_id', 'plan', 'amount', 'status', 'starts_at', 'ends_at',
         'cancelled_at', 'stripe_subscription_id', 'stripe_payment_intent',
@@ -45,7 +47,25 @@ class ProSubscription extends Model
 
     public function getPlanLabel(): string
     {
-        return ProviderSubscriptionPlans::summaryLabel($this->plan);
+        $label = ProviderSubscriptionPlans::get($this->plan)['label'] ?? ucfirst($this->plan);
+
+        return $label.' ('.number_format((float) $this->amount, 2, ',', ' ').' €'.($this->plan === 'annual' ? '/an' : '/mois').')';
+    }
+
+    /** Stripe can still collect payment even after local Premium access has stopped. */
+    public function scopeBillingOpen($query)
+    {
+        return $query->whereNotNull('stripe_subscription_id')
+            ->where(function ($query) {
+                $query->whereNull('stripe_status')
+                    ->orWhereNotIn('stripe_status', self::TERMINAL_STRIPE_STATUSES);
+            });
+    }
+
+    public function hasOpenBilling(): bool
+    {
+        return filled($this->stripe_subscription_id)
+            && ! in_array($this->stripe_status, self::TERMINAL_STRIPE_STATUSES, true);
     }
 
     public function scopeCurrentlyActive($query)

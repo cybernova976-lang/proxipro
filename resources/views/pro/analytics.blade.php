@@ -79,7 +79,16 @@
                     <h6 class="fw-bold mb-0"><i class="fas fa-chart-area me-2 text-primary"></i>Évolution du chiffre d'affaires</h6>
                 </div>
                 <div class="analytics-card-body">
-                    <canvas id="revenueChart" height="280"></canvas>
+                    <canvas id="revenueChart" height="280" hidden aria-hidden="true"></canvas>
+                    <table class="table table-sm mb-0" data-chart-values="revenueChart">
+                        <caption class="visually-hidden">Évolution mensuelle du chiffre d’affaires</caption>
+                        <thead><tr><th scope="col">Mois</th><th scope="col">Chiffre d’affaires</th></tr></thead>
+                        <tbody>
+                            @foreach ($revenueData as $entry)
+                                <tr><th scope="row">{{ $entry['label'] }}</th><td>{{ number_format($entry['revenue'], 2, ',', ' ') }} €</td></tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -91,8 +100,8 @@
                     <h6 class="fw-bold mb-0"><i class="fas fa-chart-pie me-2 text-warning"></i>Conversion devis</h6>
                 </div>
                 <div class="analytics-card-body d-flex flex-column align-items-center justify-content-center">
-                    <canvas id="conversionChart" height="200"></canvas>
-                    <div class="mt-3 text-center">
+                    <canvas id="conversionChart" height="200" hidden aria-hidden="true"></canvas>
+                    <div class="mt-3 text-center" data-chart-summary="conversionChart">
                         <div class="d-flex gap-3 justify-content-center flex-wrap">
                             <span class="badge" style="background: #6366f1; font-size: .75rem;">
                                 {{ $stats['accepted_quotes'] }} acceptés
@@ -116,7 +125,16 @@
                     <h6 class="fw-bold mb-0"><i class="fas fa-user-plus me-2 text-success"></i>Nouveaux clients / mois</h6>
                 </div>
                 <div class="analytics-card-body">
-                    <canvas id="clientsChart" height="220"></canvas>
+                    <canvas id="clientsChart" height="220" hidden aria-hidden="true"></canvas>
+                    <table class="table table-sm mb-0" data-chart-values="clientsChart">
+                        <caption class="visually-hidden">Nouveaux clients par mois</caption>
+                        <thead><tr><th scope="col">Mois</th><th scope="col">Nouveaux clients</th></tr></thead>
+                        <tbody>
+                            @foreach ($clientsData as $entry)
+                                <tr><th scope="row">{{ $entry['month'] }}</th><td>{{ $entry['count'] }}</td></tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -342,6 +360,13 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    if (typeof Chart === 'undefined') return;
+
+    document.querySelectorAll('#revenueChart, #conversionChart, #clientsChart').forEach(canvas => {
+        canvas.hidden = false;
+    });
+    document.querySelectorAll('[data-chart-values]').forEach(table => table.classList.add('visually-hidden'));
+
     const revenueData = @json($revenueData);
     const clientsData = @json($clientsData);
 

@@ -1,0 +1,7 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Mes newsletters — PROKEJEM</title>
+<style>body{margin:0;background:#f5f7fb;color:#17243b;font:16px/1.6 system-ui,sans-serif}main{max-width:520px;margin:10vh auto;padding:28px;background:white;border:1px solid #dde4ef;border-radius:16px}h1{font-size:1.6rem;line-height:1.3}button{min-height:48px;background:#4338ca;border:0;color:white;border-radius:9px;padding:12px 20px;font:inherit;cursor:pointer}a{color:#4338ca}button:focus-visible,a:focus-visible{outline:3px solid #818cf8;outline-offset:4px}@media(max-width:600px){main{margin:24px 16px;padding:24px}}</style></head>
+<body><main><p>PROKEJEM · Vos préférences</p>
+@if($unsubscribed)<h1>Vous êtes désinscrit des newsletters.</h1><p>Aucune nouvelle newsletter ne vous sera envoyée. Vos notifications d’activité et votre compte restent disponibles.</p>
+@else<h1>Arrêter les newsletters ?</h1><p>Vous pouvez vous désinscrire sans vous connecter. Votre compte et vos notifications d’activité restent disponibles.</p><form method="POST" action="{{ $unsubscribeUrl }}">@csrf<button type="submit">Me désinscrire des newsletters</button></form>@endif
+<p><a href="{{ route('settings.index') }}#notifications">Gérer toutes mes préférences</a></p><a href="{{ route('homepage') }}">Retour à PROKEJEM</a></main></body></html>

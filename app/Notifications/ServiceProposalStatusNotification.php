@@ -2,6 +2,8 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Concerns\RespectsEmailPreferences;
+
 use App\Models\ServiceProposal;
 use App\Notifications\Concerns\SendsWebPushNotifications;
 use Illuminate\Bus\Queueable;
@@ -11,7 +13,7 @@ use Illuminate\Notifications\Notification;
 
 class ServiceProposalStatusNotification extends Notification implements ShouldQueue
 {
-    use Queueable, SendsWebPushNotifications;
+    use Queueable, SendsWebPushNotifications, RespectsEmailPreferences;
 
     public function __construct(protected ServiceProposal $proposal)
     {

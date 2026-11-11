@@ -37,8 +37,22 @@ class ProviderSubscriptionService
             throw new DomainException('Cet abonnement n’est pas disponible pour le moment.');
         }
 
+        // Subscription entry points and account deletion share the same member lock.
+        return DB::transaction(function () use ($user, $plan, $successUrl, $cancelUrl, $flow) {
+            $member = User::query()->lockForUpdate()->findOrFail($user->getKey());
+
+            return $this->prepareCheckout($member, $plan, $successUrl, $cancelUrl, $flow);
+        });
+    }
+
+    private function prepareCheckout(User $user, string $plan, string $successUrl, string $cancelUrl, string $flow): StripeCheckoutSession
+    {
         if ($user->hasActiveProSubscription()) {
             throw new DomainException('Vous disposez déjà d’un abonnement Pro actif.');
+        }
+
+        if ($user->proSubscriptions()->billingOpen()->exists()) {
+            throw new DomainException('Un abonnement est déjà en cours de facturation. Gérez sa carte ou sa résiliation depuis Mon abonnement avant de souscrire à nouveau.');
         }
 
         $client = $this->client();
@@ -56,6 +70,35 @@ class ProviderSubscriptionService
             'expected_amount_cents' => (string) ((int) round($amount * 100)),
             'expected_currency' => 'eur',
         ];
+
+        $reusable = null;
+        foreach ($this->openProviderCheckouts($client, $customerId, $user) as $session) {
+            $existing = $this->metadata($session);
+            if (! $reusable && $session->url && $existing['type'] === $flow
+                && ($existing['plan'] ?? null) === $plan
+                && ($existing['expected_amount_cents'] ?? null) === $metadata['expected_amount_cents']
+                && ($existing['expected_currency'] ?? null) === $metadata['expected_currency']) {
+                $reusable = $session;
+            } else {
+                $client->checkout->sessions->expire($session->id);
+            }
+        }
+
+        // A completed Stripe checkout can precede both the return page and the webhook.
+        $subscriptions = $client->subscriptions->all(['customer' => $customerId, 'status' => 'all', 'limit' => 100]);
+        foreach ($subscriptions->autoPagingIterator() as $remote) {
+            if (in_array($remote->status, ProSubscription::TERMINAL_STRIPE_STATUSES, true)
+                || ! $this->managesStripeSubscription($remote)) {
+                continue;
+            }
+            if ($reusable) {
+                $client->checkout->sessions->expire($reusable->id);
+            }
+            throw new DomainException('Stripe a déjà enregistré votre abonnement. Consultez Mon abonnement dans quelques instants pour suivre sa confirmation.');
+        }
+        if ($reusable) {
+            return $reusable;
+        }
 
         return $client->checkout->sessions->create([
             'customer' => $customerId,
@@ -367,6 +410,46 @@ class ProviderSubscriptionService
         return (string) $portalSession->url;
     }
 
+    /** Complete remote cancellations before any account data is erased. */
+    public function cancelForAccountDeletion(User $user): void
+    {
+        $localSubscriptions = $user->proSubscriptions()->whereNotNull('stripe_subscription_id')->get();
+        if (! $user->stripe_id && $localSubscriptions->isEmpty()) {
+            return;
+        }
+
+        $client = $this->client();
+        $remoteSubscriptions = [];
+        if ($user->stripe_id) {
+            foreach ($this->openProviderCheckouts($client, $user->stripe_id, $user) as $session) {
+                $client->checkout->sessions->expire($session->id);
+            }
+            // Include a checkout whose webhook has not reached our database yet.
+            foreach ($client->subscriptions->all(['customer' => $user->stripe_id, 'status' => 'all', 'limit' => 100])->autoPagingIterator() as $remote) {
+                if ($this->managesStripeSubscription($remote)) {
+                    $remoteSubscriptions[$remote->id] = $remote;
+                }
+            }
+        }
+        foreach ($localSubscriptions as $local) {
+            if (! isset($remoteSubscriptions[$local->stripe_subscription_id])) {
+                $remoteSubscriptions[$local->stripe_subscription_id] = $client->subscriptions->retrieve($local->stripe_subscription_id);
+            }
+        }
+
+        foreach ($remoteSubscriptions as $remote) {
+            if (in_array($remote->status, ProSubscription::TERMINAL_STRIPE_STATUSES, true)) {
+                continue;
+            }
+            $cancelled = $client->subscriptions->cancel($remote->id, ['invoice_now' => false, 'prorate' => false]);
+            // Persist each success: a partial failure is safe to retry.
+            $user->proSubscriptions()->where('stripe_subscription_id', $remote->id)->update([
+                'status' => 'cancelled', 'stripe_status' => $cancelled->status,
+                'auto_renew' => false, 'cancelled_at' => now(), 'ends_at' => now(),
+            ]);
+        }
+    }
+
     public function cancelImmediately(ProSubscription $subscription): ProSubscription
     {
         if (! $subscription->stripe_subscription_id) {
@@ -437,6 +520,18 @@ class ProviderSubscriptionService
         return new StripeClient($secret);
     }
 
+    private function openProviderCheckouts(StripeClient $client, string $customerId, User $user): iterable
+    {
+        $sessions = $client->checkout->sessions->all(['customer' => $customerId, 'status' => 'open', 'limit' => 100]);
+        foreach ($sessions->autoPagingIterator() as $session) {
+            $metadata = $this->metadata($session);
+            if ($session->mode === 'subscription' && in_array($metadata['type'] ?? null, self::CHECKOUT_TYPES, true)
+                && ($metadata['user_id'] ?? null) === (string) $user->id) {
+                yield $session;
+            }
+        }
+    }
+
     private function ensureStripeCustomer(StripeClient $client, User $user): string
     {
         if ($user->stripe_id) {
@@ -447,7 +542,7 @@ class ProviderSubscriptionService
             'email' => $user->email,
             'name' => $user->company_name ?: $user->name,
             'metadata' => ['user_id' => (string) $user->id],
-        ]);
+        ], ['idempotency_key' => 'prokejem-provider-customer-'.$user->id]);
 
         $user->update(['stripe_id' => $customer->id]);
 

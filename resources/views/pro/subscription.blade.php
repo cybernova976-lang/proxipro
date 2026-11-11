@@ -35,64 +35,41 @@
 </div>
 @endif
 
-{{-- Current Subscription Status --}}
-@if($subscription && $subscription->isActive())
-<div class="pro-card sub-page-card mb-4" style="background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(59,130,246,0.05)); border-left: 4px solid #10b981; padding: 16px 20px;">
-    <div class="d-flex flex-wrap align-items-center gap-3">
-        <div style="width: 42px; height: 42px; border-radius: 50%; background: rgba(16,185,129,0.15); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-            <i class="fas fa-check-circle"></i>
-        </div>
-        <div class="flex-grow-1">
-            <h6 class="fw-bold mb-0 text-success">Abonnement actif — {{ $subscription->getPlanLabel() }}</h6>
-            <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                Valide jusqu'au <strong>{{ optional($subscription->ends_at)->format('d/m/Y') ?: 'prochaine échéance Stripe' }}</strong> · {{ $subscription->daysRemaining() }} jours restants
-            </p>
-            <p class="mb-0 mt-1" style="font-size: .75rem;">
-                @if($subscription->stripe_subscription_id)
-                    @if($subscription->auto_renew)
-                        <span class="text-success"><i class="fas fa-repeat me-1"></i>Renouvellement automatique actif</span>
-                    @else
-                        <span class="text-warning"><i class="fas fa-calendar-xmark me-1"></i>Résiliation programmée à l’échéance</span>
-                    @endif
-                @else
-                    <span class="text-muted"><i class="fas fa-gift me-1"></i>Accès accordé manuellement, sans prélèvement</span>
-                @endif
-            </p>
-        </div>
-        <span class="pro-status pro-status-success">Actif</span>
-        @if($subscription->stripe_subscription_id)
-            <form method="POST" action="{{ route('pro.subscription.billing-portal') }}">
-                @csrf
-                <button class="btn btn-sm btn-outline-primary"><i class="fas fa-credit-card me-1"></i>Factures et carte</button>
-            </form>
-            @if($subscription->auto_renew)
-                <form method="POST" action="{{ route('pro.subscription.cancel-renewal') }}" onsubmit="return confirm('Arrêter le renouvellement automatique à la prochaine échéance ?');">
-                    @csrf
-                    <button class="btn btn-sm btn-outline-danger">Arrêter le renouvellement</button>
-                </form>
+{{-- Billing remains accessible after a payment failure or a change of account status. --}}
+<div class="pro-card sub-page-card mb-4" style="padding:22px;border-left:4px solid {{ $subscription?->isActive() ? '#10b981' : '#6366f1' }};">
+    <h2 class="h5 fw-bold">{{ $subscription?->isActive() ? 'Votre abonnement est actif' : ($subscription?->hasOpenBilling() ? 'Votre facturation demande une action' : 'Votre compte gratuit') }}</h2>
+    @if($subscription)
+        <p class="mb-2">{{ $subscription->getPlanLabel() }}</p>
+        @if($subscription->isActive())
+            @if($subscription->stripe_subscription_id)
+                <p>{{ $subscription->auto_renew ? 'Prochain renouvellement' : 'Fin de vos avantages Premium' }} : <strong>{{ $subscription->ends_at?->format('d/m/Y') ?? 'date à vérifier dans Stripe' }}</strong>.</p>
+                @unless($subscription->auto_renew)<p class="text-success">Le renouvellement est arrêté. Votre accès reste actif jusqu’à cette date.</p>@endunless
             @else
-                <form method="POST" action="{{ route('pro.subscription.resume-renewal') }}">
-                    @csrf
-                    <button class="btn btn-sm btn-outline-success">Réactiver le renouvellement</button>
-                </form>
+                <p>Accès accordé manuellement, sans prélèvement. {{ $subscription->ends_at ? 'Valable jusqu’au '.$subscription->ends_at->format('d/m/Y').'.' : 'Sans date de fin définie.' }}</p>
+            @endif
+        @elseif($subscription->hasOpenBilling())
+            <div class="alert alert-warning">Votre accès Premium est suspendu ou en attente de confirmation. Vérifiez votre paiement ou résiliez cet abonnement avant d’en ouvrir un autre.</div>
+        @endif
+    @else
+        <p>{{ $proSubscriptionsEnabled ? 'Vous pouvez continuer gratuitement ou choisir Premium selon vos besoins.' : 'L’espace prestataire reste accessible gratuitement pendant la préparation de l’offre récurrente.' }}</p>
+    @endif
+    <div class="d-flex flex-wrap gap-2 subscription-management">
+        @if($user->stripe_id)
+            <form method="POST" action="{{ route('pro.subscription.billing-portal') }}">@csrf<button class="btn btn-outline-primary">Factures et carte bancaire</button></form>
+        @endif
+        @if($subscription?->hasOpenBilling())
+            @if($subscription->isActive() && ! $subscription->auto_renew)
+                <form method="POST" action="{{ route('pro.subscription.resume-renewal') }}" onsubmit="return confirm('Réactiver les prélèvements automatiques à la prochaine échéance ?');">@csrf<button class="btn btn-outline-success">Réactiver le renouvellement</button></form>
+            @else
+                <form method="POST" action="{{ route('pro.subscription.cancel-renewal') }}" onsubmit="return confirm('{{ $subscription->isActive() ? 'Arrêter le renouvellement ? Vos avantages restent actifs jusqu’à la fin de la période payée.' : 'Résilier cet abonnement ? Aucun nouveau renouvellement ne sera effectué.' }}');">@csrf<button class="btn btn-outline-danger">{{ $subscription->isActive() ? 'Résilier à la fin de la période' : 'Résilier cet abonnement' }}</button></form>
             @endif
         @endif
+        <a class="btn btn-outline-secondary" href="{{ route('settings.index') }}">Paramètres du compte</a>
+        <a class="btn btn-link" href="{{ route('contact.index') }}">Contacter l’assistance</a>
     </div>
 </div>
-@else
-<div class="pro-card sub-page-card mb-4" style="background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(239,68,68,0.05)); border-left: 4px solid #f59e0b; padding: 16px 20px;">
-    <div class="d-flex align-items-center gap-3">
-        <div style="width: 42px; height: 42px; border-radius: 50%; background: rgba(245,158,11,0.15); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-            <i class="fas fa-exclamation-triangle"></i>
-        </div>
-        <div>
-            <h6 class="fw-bold mb-0">{{ $proSubscriptionsEnabled ? 'Aucun abonnement actif' : 'Abonnement Pro en préparation' }}</h6>
-            <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                {{ $proSubscriptionsEnabled ? 'Choisissez une formule ci-dessous pour souscrire par carte via Stripe.' : 'L’espace prestataire reste accessible gratuitement pendant la préparation de l’offre récurrente.' }}
-            </p>
-        </div>
-    </div>
-</div>
+@if($subscription?->isActive() || $proSubscriptionsEnabled)
+    @include('partials.subscription-transparency')
 @endif
 
 {{-- ===== SECTION 1: Plans d'abonnement (compact) ===== --}}
@@ -142,11 +119,11 @@
                 <form method="POST" action="{{ route('pro.onboarding.subscribe') }}" class="mt-2">
                     @csrf
                     <input type="hidden" name="plan" value="{{ $planKey }}">
-                    <button type="submit" class="btn btn-sm {{ $subscription && $subscription->isActive() && $subscription->plan === $planKey ? 'btn-outline-success' : (!empty($plan['recommended']) ? 'btn-pro-primary' : 'btn-outline-primary') }} w-100" style="border-radius: 8px; font-size: 0.8rem; padding: 6px;" {{ $subscription && $subscription->isActive() ? 'disabled' : '' }}>
+                    <button type="submit" class="btn btn-sm {{ $subscription && $subscription->isActive() && $subscription->plan === $planKey ? 'btn-outline-success' : (!empty($plan['recommended']) ? 'btn-pro-primary' : 'btn-outline-primary') }} w-100" style="border-radius: 8px; font-size: 0.8rem; padding: 6px;" {{ $subscription && ($subscription->isActive() || $subscription->hasOpenBilling()) ? 'disabled' : '' }}>
                         @if($subscription && $subscription->isActive() && $subscription->plan === $planKey)
                             <i class="fas fa-check me-1"></i> Plan actuel
-                        @elseif($subscription && $subscription->isActive())
-                            Abonnement déjà actif
+                        @elseif($subscription && ($subscription->isActive() || $subscription->hasOpenBilling()))
+                            Gérer l’abonnement existant
                         @else
                             Choisir ce plan
                         @endif
@@ -172,45 +149,14 @@
 </div>
 @endif
 
-{{-- ===== SECTION 3: Pourquoi devenir Pro ? ===== --}}
+<div class="pro-card sub-page-card mb-4">@include('partials.premium-comparison')</div>
+@if($user->isProfessionnel() || $user->isServiceProvider())
 <div class="pro-card sub-page-card mb-4">
-    <h6 class="fw-bold mb-3"><i class="fas fa-gift me-2 text-primary"></i>Pourquoi devenir Pro ?</h6>
-    <div class="row g-3">
-        <div class="col-md-4">
-            <div class="d-flex gap-2">
-                <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16,185,129,0.1); color: #10b981; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.85rem;">
-                    <i class="fas fa-eye"></i>
-                </div>
-                <div>
-                    <h6 class="fw-bold mb-0" style="font-size: 0.82rem;">Visibilité accrue</h6>
-                    <p class="text-muted mb-0" style="font-size: 0.72rem;">Vos offres rejoignent les offres sponsorisées sur l’accueil des clients.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="d-flex gap-2">
-                <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(59,130,246,0.1); color: #3b82f6; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.85rem;">
-                    <i class="fas fa-shield-alt"></i>
-                </div>
-                <div>
-                    <h6 class="fw-bold mb-0" style="font-size: 0.82rem;">Confiance renforcée</h6>
-                    <p class="text-muted mb-0" style="font-size: 0.72rem;">Le badge Premium distingue votre abonnement. La vérification d’identité reste séparée.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="d-flex gap-2">
-                <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(168,85,247,0.1); color: #a855f7; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.85rem;">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                </div>
-                <div>
-                    <h6 class="fw-bold mb-0" style="font-size: 0.82rem;">Outils pro</h6>
-                    <p class="text-muted mb-0" style="font-size: 0.72rem;">Créez devis et factures, gérez votre clientèle.</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <h2 class="h5 fw-bold">Mesurer votre activité</h2>
+    <p class="text-muted">Consultez vos vues de profil, vos annonces et votre activité dans vos statistiques. Ces chiffres décrivent votre audience réelle ; ils ne mesurent pas à eux seuls l’effet de Premium.</p>
+    <a href="{{ route('pro.analytics') }}" class="btn btn-outline-primary">Voir mes statistiques</a>
 </div>
+@endif
 
 {{-- ===== SECTION 4: Historique ===== --}}
 @if($subscriptions->isNotEmpty())
@@ -225,18 +171,20 @@
                 @foreach($subscriptions as $sub)
                 <tr>
                     <td class="fw-semibold">{{ $sub->getPlanLabel() }}</td>
-                    <td>{{ $sub->starts_at->format('d/m/Y') }}</td>
-                    <td>{{ $sub->ends_at->format('d/m/Y') }}</td>
-                    <td class="fw-bold">{{ $sub->plan === 'annual' ? '85,00 €' : '9,99 €' }}</td>
+                    <td>{{ $sub->starts_at?->format('d/m/Y') ?? '—' }}</td>
+                    <td>{{ $sub->ends_at?->format('d/m/Y') ?? '—' }}</td>
+                    <td class="fw-bold">{{ number_format((float) $sub->amount, 2, ',', ' ') }} €</td>
                     <td>
                         <span class="pro-status pro-status-{{ $sub->isActive() ? 'success' : 'secondary' }}">
-                            {{ $sub->isActive() ? 'Actif' : 'Expiré' }}
+                            {{ $sub->isActive() ? ($sub->auto_renew ? 'Actif' : 'Fin programmée / accès manuel') : ($sub->hasOpenBilling() ? 'À vérifier' : ($sub->status === 'cancelled' ? 'Résilié' : 'Expiré')) }}
                         </span>
                     </td>
                     <td>
-                        <a href="{{ route('purchase.invoice', ['type' => 'subscription', 'id' => $sub->id]) }}" class="btn btn-sm btn-outline-secondary" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px;" title="Télécharger la facture">
-                            <i class="fas fa-file-pdf me-1"></i>Facture
-                        </a>
+                        @if($sub->stripe_subscription_id && $user->stripe_id)
+                            <form action="{{ route('pro.subscription.billing-portal') }}" method="POST">@csrf<button class="btn btn-sm btn-outline-secondary">Factures Stripe</button></form>
+                        @else
+                            <span class="text-muted">Accès manuel</span>
+                        @endif
                     </td>
                 </tr>
                 @endforeach
@@ -258,6 +206,9 @@
 .subscription-page-alert {
     border-radius: 12px;
 }
+
+.subscription-management .btn { min-height: 44px; white-space: normal; }
+@media(max-width:575px) { .subscription-management > form, .subscription-management > a, .subscription-management button { width: 100%; } }
 
 /* Subscription plan cards - compact */
 .sub-plan-card {

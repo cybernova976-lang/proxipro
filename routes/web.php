@@ -46,6 +46,10 @@ use Illuminate\Support\Facades\Route;
 // Page d'accueil publique
 Route::get('/', [HomePageController::class, 'index'])->name('homepage');
 Route::get('/offres-prestataires', [\App\Http\Controllers\PublicProviderOffersController::class, 'index'])->name('public.provider-offers');
+Route::get('/communications/newsletter/{user}', [\App\Http\Controllers\NewsletterPreferenceController::class, 'show'])
+    ->middleware(['signed', 'throttle:30,1'])->name('newsletter.unsubscribe');
+Route::post('/communications/newsletter/{user}', [\App\Http\Controllers\NewsletterPreferenceController::class, 'unsubscribe'])
+    ->middleware(['signed', 'throttle:30,1'])->name('newsletter.unsubscribe.store');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 Route::get('/conseils', [MarketplaceGuideController::class, 'index'])->name('guides.index');
 Route::get('/conseils/{slug}', [MarketplaceGuideController::class, 'show'])
@@ -612,6 +616,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/emails', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'index'])->name('admin.emails.index');
     Route::get('/emails/create', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'create'])->name('admin.emails.create');
     Route::post('/emails', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'store'])->name('admin.emails.store');
+    Route::post('/emails/prepare-draft-reminders', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'prepareDraftReminders'])
+        ->name('admin.emails.prepare-draft-reminders');
     Route::get('/emails/{managedEmail}', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'show'])->name('admin.emails.show');
     Route::get('/emails/{managedEmail}/preview', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'preview'])->name('admin.emails.preview');
     Route::put('/emails/{managedEmail}', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'update'])->name('admin.emails.update');

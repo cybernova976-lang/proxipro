@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
+use App\Models\ManagedEmail;
+use App\Models\User;
+use App\Services\ProviderSubscriptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -50,13 +53,30 @@ class SettingsController extends Controller
      */
     public function updateNotifications(Request $request)
     {
+        $request->validate([
+            'email_notifications' => ['sometimes', 'boolean'],
+            'newsletter_subscribed' => ['sometimes', 'boolean'],
+            'draft_reminders_enabled' => ['sometimes', 'boolean'],
+            'pro_notifications_email' => ['sometimes', 'boolean'],
+        ]);
         $user = Auth::user();
 
         $user->update([
             'email_notifications' => $request->boolean('email_notifications'),
+            'newsletter_subscribed' => $request->boolean('newsletter_subscribed'),
+            'draft_reminders_enabled' => $request->boolean('draft_reminders_enabled'),
+            'pro_notifications_email' => $request->boolean('pro_notifications_email'),
         ]);
 
-        return back()->with('success', 'Préférences de notification mises à jour !');
+        ManagedEmail::where('user_id', $user->id)
+            ->whereIn('status', [ManagedEmail::STATUS_PENDING, ManagedEmail::STATUS_FAILED])
+            ->whereIn('type', array_filter([
+                ! $user->email_notifications || ! $user->newsletter_subscribed ? 'newsletter' : null,
+                ! $user->email_notifications || ! $user->draft_reminders_enabled ? 'abandoned_demand' : null,
+            ]))->update(['status' => ManagedEmail::STATUS_CANCELLED]);
+
+        return redirect()->to(route('settings.index').'#notifications')
+            ->with('success', 'Préférences enregistrées. Les communications désactivées en attente ont été annulées.');
     }
 
     /**
@@ -78,7 +98,7 @@ class SettingsController extends Controller
     /**
      * Supprimer le compte et toutes les données personnelles
      */
-    public function deleteAccount(Request $request)
+    public function deleteAccount(Request $request, ProviderSubscriptionService $subscriptions)
     {
         $rules = [
             'confirm_delete' => 'required|accepted',
@@ -105,6 +125,18 @@ class SettingsController extends Controller
 
         try {
             DB::beginTransaction();
+            $user = User::query()->lockForUpdate()->findOrFail($user->getKey());
+            try {
+                $subscriptions->cancelForAccountDeletion($user);
+            } catch (\Throwable $exception) {
+                // Keep any confirmed cancellations. Account removal has not started.
+                DB::commit();
+                report($exception);
+
+                return redirect()->to(route('settings.index').'#delete')->withErrors([
+                    'delete' => 'La résiliation auprès de Stripe n’a pas pu être confirmée. Votre compte est conservé pour vous permettre de gérer votre abonnement. Réessayez ou contactez l’assistance.',
+                ]);
+            }
 
             // 1. Enregistrer la suppression pour audit
             $dataSummary = json_encode([
@@ -161,6 +193,10 @@ class SettingsController extends Controller
             }
 
             // 3. Supprimer les données relationnelles
+            ManagedEmail::where('user_id', $user->id)
+                ->whereIn('status', [ManagedEmail::STATUS_PENDING, ManagedEmail::STATUS_FAILED])
+                ->update(['status' => ManagedEmail::STATUS_CANCELLED]);
+            $user->pushSubscriptions()->delete();
             // Annonces
             $user->ads()->delete();
 
@@ -256,22 +292,19 @@ class SettingsController extends Controller
                 'remember_token' => null,
             ])->save();
 
-            // 5. Déconnecter l'utilisateur
+            $user->delete();
+            DB::commit();
+
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            // 6. Soft-delete le compte
-            $user->delete();
-
-            DB::commit();
-
             Log::info('Compte utilisateur supprimé', ['user_id' => $user->id]);
 
             return redirect()->route('homepage')
-                ->with('success', 'Votre compte et toutes vos données personnelles ont été supprimés avec succès.');
+                ->with('success', 'Votre compte a été supprimé. Votre profil et vos publications ne sont plus accessibles.');
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Erreur lors de la suppression du compte', [
                 'user_id' => $user->id,

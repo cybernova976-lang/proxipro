@@ -10,6 +10,16 @@
 </div>
 
 @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
+@if($dueDrafts > 0)
+    <section class="card card-body mb-3" aria-labelledby="due-draft-reminders">
+        <h2 id="due-draft-reminders" class="h5">Rappels de brouillons à préparer</h2>
+        <p>{{ $dueDrafts }} {{ $dueDrafts === 1 ? 'demande est restée inachevée' : 'demandes sont restées inachevées' }} depuis au moins 24 heures. Vous pourrez relire chaque message avant son envoi.</p>
+        <form method="POST" action="{{ route('admin.emails.prepare-draft-reminders') }}">
+            @csrf
+            <button type="submit" class="btn btn-outline-primary">{{ $dueDrafts > 50 ? 'Préparer les 50 prochains rappels' : 'Préparer les rappels dus' }}</button>
+        </form>
+    </section>
+@endif
 @if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
 
 <div class="d-flex flex-wrap gap-2 mb-3">

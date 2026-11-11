@@ -111,6 +111,7 @@ class User extends Authenticatable
         'kbis_document',
         'id_document',
         'newsletter_subscribed',
+        'draft_reminders_enabled',
         'email_notifications',
         'profile_public',
         'show_email',
@@ -209,6 +210,7 @@ class User extends Authenticatable
             'pro_verified_at' => 'datetime',
             'can_boost_ads' => 'boolean',
             'newsletter_subscribed' => 'boolean',
+            'draft_reminders_enabled' => 'boolean',
             'stripe_connect_payouts_enabled' => 'boolean',
             'stripe_connect_charges_enabled' => 'boolean',
             'profile_completed' => 'boolean',
@@ -923,6 +925,12 @@ class User extends Authenticatable
     public function hasActiveProSubscription(): bool
     {
         return $this->proSubscriptions()->currentlyActive()->exists();
+    }
+
+    public function subscriptionForManagement(): ?ProSubscription
+    {
+        return $this->proSubscriptions()->billingOpen()->latest('id')->first()
+            ?? $this->proSubscription()->first();
     }
 
     /**

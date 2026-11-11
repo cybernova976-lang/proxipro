@@ -2,6 +2,8 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Concerns\RespectsEmailPreferences;
+
 use App\Models\Ad;
 use App\Models\SavedSearch;
 use App\Notifications\Concerns\SendsWebPushNotifications;
@@ -12,7 +14,7 @@ use Illuminate\Support\Str;
 
 class SavedSearchMatchNotification extends Notification
 {
-    use Queueable, SendsWebPushNotifications;
+    use Queueable, SendsWebPushNotifications, RespectsEmailPreferences;
 
     public function __construct(
         protected SavedSearch $savedSearch,
@@ -22,11 +24,7 @@ class SavedSearchMatchNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        $channels = ['database'];
-
-        if ($notifiable->pro_notifications_email) {
-            $channels[] = 'mail';
-        }
+        $channels = array_merge(['database'], $this->emailChannelsFor($notifiable, (bool) $notifiable->pro_notifications_email));
 
         // Notification sur l'appareil, seulement si le serveur est configuré
         // et que le membre a enregistré au moins un appareil.

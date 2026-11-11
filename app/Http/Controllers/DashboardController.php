@@ -82,12 +82,10 @@ class DashboardController extends Controller
     /**
      * Section: Mes annonces
      */
-    public function myAds()
+    public function myAds(\Illuminate\Http\Request $request, \App\Services\MemberPublicationsService $publications)
     {
-        $user = Auth::user();
-        $ads = $user->ads()->latest()->get();
-
-        return view('dashboard.partials.my-ads', compact('ads'));
+        return response()->view('dashboard.partials.my-ads', $publications->data($request->user(), $request))
+            ->header('Cache-Control', 'private, no-store');
     }
 
     /**

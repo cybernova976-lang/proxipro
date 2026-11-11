@@ -2,6 +2,8 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Concerns\RespectsEmailPreferences;
+
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -13,7 +15,7 @@ use Illuminate\Notifications\Notification;
 
 class NewMessageNotification extends Notification implements ShouldQueue
 {
-    use Queueable, SendsWebPushNotifications;
+    use Queueable, SendsWebPushNotifications, RespectsEmailPreferences;
 
     public function __construct(
         protected Message $message,

@@ -2,6 +2,8 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Concerns\RespectsEmailPreferences;
+
 use App\Models\Ad;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
@@ -10,7 +12,7 @@ use Illuminate\Notifications\Notification;
 
 class AdCandidatureNotification extends Notification
 {
-    use Queueable;
+    use Queueable, RespectsEmailPreferences;
 
     public function __construct(
         protected Ad $ad,
@@ -20,7 +22,7 @@ class AdCandidatureNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return array_merge(['database'], $this->emailChannelsFor($notifiable));
     }
 
     public function toMail(object $notifiable): MailMessage

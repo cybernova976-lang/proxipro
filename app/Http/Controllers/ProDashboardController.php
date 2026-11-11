@@ -1253,8 +1253,8 @@ class ProDashboardController extends Controller
 
     public function subscription()
     {
-        $user = $this->ensurePro();
-        $subscription = $user->proSubscription;
+        $user = Auth::user();
+        $subscription = $user->subscriptionForManagement();
         $subscriptions = $user->proSubscriptions()->latest()->get();
         $proSubscriptionsEnabled = PlatformFeatures::proSubscriptionsEnabled();
 
@@ -1263,14 +1263,19 @@ class ProDashboardController extends Controller
 
     public function cancelSubscriptionRenewal()
     {
-        $user = $this->ensurePro();
-        $subscription = $user->proSubscriptions()->currentlyActive()->latest()->first();
+        $user = Auth::user();
+        $subscription = $user->proSubscriptions()->billingOpen()->latest('id')->first();
 
         if (! $subscription) {
             return back()->with('error', 'Aucun abonnement actif à annuler.');
         }
 
         try {
+            if (! $subscription->isActive()) {
+                $this->providerSubscriptionService->cancelImmediately($subscription);
+
+                return back()->with('success', 'Votre abonnement est résilié. Aucun nouveau renouvellement ne sera effectué. Les factures déjà émises restent consultables dans le portail Stripe.');
+            }
             $subscription = $this->providerSubscriptionService->cancelAtPeriodEnd($subscription);
 
             return back()->with(
@@ -1278,13 +1283,15 @@ class ProDashboardController extends Controller
                 'Le renouvellement est arrêté. Votre accès reste actif jusqu’au '.optional($subscription->ends_at)->format('d/m/Y').'.'
             );
         } catch (\Throwable $exception) {
-            return back()->with('error', $exception->getMessage());
+            report($exception);
+
+            return back()->with('error', 'La résiliation n’a pas pu être confirmée. Réessayez depuis le portail de facturation ou contactez l’assistance.');
         }
     }
 
     public function resumeSubscriptionRenewal()
     {
-        $user = $this->ensurePro();
+        $user = Auth::user();
         $subscription = $user->proSubscriptions()->currentlyActive()->latest()->first();
 
         if (! $subscription) {
@@ -1296,13 +1303,15 @@ class ProDashboardController extends Controller
 
             return back()->with('success', 'Le renouvellement automatique est réactivé.');
         } catch (\Throwable $exception) {
-            return back()->with('error', $exception->getMessage());
+            report($exception);
+
+            return back()->with('error', 'La reprise du renouvellement n’a pas pu être confirmée. Réessayez ou contactez l’assistance.');
         }
     }
 
     public function openSubscriptionBillingPortal()
     {
-        $user = $this->ensurePro();
+        $user = Auth::user();
 
         try {
             $url = $this->providerSubscriptionService->createBillingPortalSession(
@@ -1312,7 +1321,9 @@ class ProDashboardController extends Controller
 
             return redirect()->away($url);
         } catch (\Throwable $exception) {
-            return back()->with('error', 'Le portail de facturation est indisponible : '.$exception->getMessage());
+            report($exception);
+
+            return back()->with('error', 'Le portail de facturation est temporairement indisponible. Réessayez ou contactez l’assistance.');
         }
     }
 
@@ -1576,10 +1587,14 @@ class ProDashboardController extends Controller
             ]);
 
             $status = $e instanceof \DomainException ? 422 : 500;
+            $message = $status === 422 ? $e->getMessage() : 'Le paiement ne peut pas être préparé actuellement. Veuillez réessayer.';
+            if (! $request->expectsJson() && ! $request->ajax()) {
+                return redirect()->route('pro.subscription')->with('error', $message);
+            }
 
             return response()->json([
                 'success' => false,
-                'message' => $status === 422 ? $e->getMessage() : 'Le paiement ne peut pas être préparé actuellement. Veuillez réessayer.',
+                'message' => $message,
             ], $status);
         }
     }

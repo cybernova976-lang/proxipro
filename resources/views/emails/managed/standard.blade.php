@@ -39,6 +39,6 @@
     @endif
     @if($email->cta_label && $email->cta_url)<div style="text-align:center;margin:28px 0 10px;"><a href="{{ $email->cta_url }}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-size:16px;font-weight:700;line-height:1;padding:17px 28px;border-radius:12px;box-shadow:0 10px 22px rgba(37,99,235,.22);">{{ $email->cta_label }} &nbsp;→</a></div>@endif
 </td></tr>
-<tr><td style="padding:20px 28px;background:#f8fafc;text-align:center;color:#758195;font-size:12px;line-height:1.6;">Besoin d'aide ? <a href="mailto:{{ $supportEmail }}" style="color:#2563eb;text-decoration:none;">{{ $supportEmail }}</a><br><a href="{{ route('settings.index') }}#notifications">Gérer mes préférences e-mail</a></td></tr>
+<tr><td style="padding:20px 28px;background:#f8fafc;text-align:center;color:#758195;font-size:12px;line-height:1.6;">Besoin d'aide ? <a href="mailto:{{ $supportEmail }}" style="color:#2563eb;text-decoration:none;">{{ $supportEmail }}</a><br><a href="{{ route('settings.index') }}#notifications">Gérer mes préférences e-mail</a>@if($unsubscribeUrl ?? null)<br><a href="{{ $unsubscribeUrl }}">Me désinscrire des newsletters sans me connecter</a>@endif</td></tr>
 </table></td></tr></table>
 </body></html>

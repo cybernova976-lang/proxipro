@@ -97,6 +97,7 @@
         <h2 id="offers-pro">Les offres PRO</h2>
         @if($subscriptionPlans !== [])
             <p>Les abonnements donnent accès aux fonctions PRO indiquées dans chaque offre. Les conditions, le renouvellement et le paiement sont présentés dans votre compte avant la souscription.</p>
+            @include('partials.subscription-transparency')
             <div class="offers-grid">
                 @foreach($subscriptionPlans as $plan)
                     <article class="offers-card">
@@ -112,6 +113,8 @@
             <p class="offers-note">Les abonnements PRO ne sont pas proposés à la souscription actuellement. Le contrôle d’identité et les éventuelles options de visibilité restent des coûts distincts.</p>
         @endif
     </section>
+
+    <div class="offers-section offers-card">@include('partials.premium-comparison')</div>
 
     <section class="offers-section" aria-labelledby="offers-visibility">
         <h2 id="offers-visibility">Les options de visibilité</h2>

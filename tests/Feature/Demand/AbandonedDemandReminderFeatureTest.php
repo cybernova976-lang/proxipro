@@ -99,6 +99,25 @@ class AbandonedDemandReminderFeatureTest extends TestCase
         $this->assertNotNull($draft->fresh()->review_requested_at);
     }
 
+    public function test_admin_can_prepare_due_reminders_without_a_scheduler_or_an_email_send(): void
+    {
+        Mail::fake();
+        $member = User::factory()->create(['email_notifications' => true, 'draft_reminders_enabled' => true]);
+        DemandDraft::create(['user_id' => $member->id, 'payload' => ['title' => 'Réparer une fuite'],
+            'current_step' => 3, 'last_activity_at' => now()->subHours(25)]);
+        $action = route('admin.emails.prepare-draft-reminders');
+        $this->actingAs($member)->post($action)->assertForbidden();
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->get(route('admin.emails.index'))->assertOk()->assertSee('Préparer les rappels dus');
+        $this->assertDatabaseCount('managed_emails', 0);
+        $this->post($action)->assertRedirect(route('admin.emails.index', ['status' => 'pending']));
+        $this->artisan('demand-drafts:send-reminders')->assertSuccessful();
+        $this->post($action)->assertRedirect();
+        $this->assertSame(ManagedEmail::STATUS_PENDING, ManagedEmail::sole()->status);
+        $this->get(route('admin.emails.index'))->assertDontSee('Préparer les rappels dus');
+        Mail::assertNothingSent();
+    }
+
     public function test_recent_or_opted_out_drafts_are_not_reminded(): void
     {
         $recentUser = User::factory()->create(['email_notifications' => true]);
@@ -148,8 +167,10 @@ class AbandonedDemandReminderFeatureTest extends TestCase
         Mail::fake();
         config(['filesystems.default' => 'public']);
         $admin = User::factory()->create(['role' => 'admin']);
-        $recipient = User::factory()->create();
+        $recipient = User::factory()->create(['email_notifications' => true, 'is_active' => true]);
+        $draft = DemandDraft::create(['user_id' => $recipient->id, 'payload' => ['title' => 'Demande en attente'], 'current_step' => 2, 'last_activity_at' => now()->subDays(2)]);
         $email = ManagedEmail::create([
+            'metadata' => ['demand_draft_id' => $draft->id],
             'user_id' => $recipient->id,
             'source_key' => 'admin-review-test',
             'type' => 'abandoned_demand',

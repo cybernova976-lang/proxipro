@@ -2,6 +2,8 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Concerns\RespectsEmailPreferences;
+
 use App\Models\ServiceOrder;
 use App\Notifications\Concerns\SendsWebPushNotifications;
 use Illuminate\Bus\Queueable;
@@ -10,7 +12,7 @@ use Illuminate\Notifications\Notification;
 
 class ServiceOrderStatusNotification extends Notification
 {
-    use Queueable, SendsWebPushNotifications;
+    use Queueable, SendsWebPushNotifications, RespectsEmailPreferences;
 
     public function __construct(
         protected ServiceOrder $serviceOrder,
@@ -20,7 +22,7 @@ class ServiceOrderStatusNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return array_merge(['database', 'mail'], $this->webPushChannelsFor($notifiable));
+        return array_merge(['database'], $this->emailChannelsFor($notifiable), $this->webPushChannelsFor($notifiable));
     }
 
     public function toMail(object $notifiable): MailMessage

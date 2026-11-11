@@ -157,9 +157,8 @@ class AdController extends Controller
             return redirect()->route('login');
         }
 
-        $request->merge(['user' => Auth::id()]);
-
-        return $this->index($request);
+        return response()->view('ads.mine', app(\App\Services\MemberPublicationsService::class)->data($request->user(), $request))
+            ->header('Cache-Control', 'private, no-store');
     }
 
     /**

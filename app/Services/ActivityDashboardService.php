@@ -84,7 +84,7 @@ class ActivityDashboardService
     public function account(User $user): array
     {
         $plan = strtolower(trim((string) $user->plan));
-        $subscription = $user->proSubscription()->first();
+        $subscription = $user->subscriptionForManagement();
 
         return [
             'accountPlan' => $plan === '' || $plan === 'free' ? 'Gratuit' : ucfirst($plan),
