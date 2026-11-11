@@ -29,7 +29,10 @@ Artisan::command('mail:test {to?}', function () {
 
 // ─── Nettoyage automatique des utilisateurs soft-deleted ───
 // Exécuté tous les jours à 3h du matin
+// Désactivé par défaut (config marketplace.purge_deleted_accounts) : la purge
+// est définitive, sans délai de grâce, et emporte les commandes du compte.
 Schedule::command('cleanup:orphaned-data --force')
+    ->when(fn () => (bool) config('marketplace.purge_deleted_accounts'))
     ->daily()
     ->at('03:00')
     ->withoutOverlapping()
