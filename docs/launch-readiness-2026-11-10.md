@@ -1,6 +1,6 @@
 # PROKEJEM — confiance, offre Premium et préparation du lancement
 
-Audit des 10 et 11 novembre 2026 sur la branche `codex/prokejem-pwa-mobile` du dépôt `cybernova976-lang/proxipro`.
+Audit du 10 au 12 novembre 2026 sur la branche `codex/prokejem-pwa-mobile` du dépôt `cybernova976-lang/proxipro`.
 
 ## Décision recommandée
 
@@ -91,7 +91,7 @@ Le mécanisme historique de récompense de parrainage est désactivé : `Referra
 | --- | --- | --- |
 | Serveur web | Railway utilise actuellement `php artisan migrate --force && php artisan serve ...` | Préparer un serveur adapté à la production et un test de charge ; ne pas déduire une capacité internationale du seul HTTP 200 |
 | Communications | Configuration en production : queue `sync`, SMTP | Déporter les envois dans une file supervisée, après vérification de la reprise, des échecs, du consentement au moment d'envoyer et de l'idempotence |
-| Tâches périodiques | Les rappels sont déclarés toutes les 15 minutes. Le 11 novembre, aucun processus Laravel de planification ni journal de préparation des rappels n’a été observé dans le conteneur web de production. | Vérifier une exécution périodique sur la durée et suivre son dernier succès. Dans l’intervalle, la page d’administration « E-mails à valider » permet de préparer les rappels dus. |
+| Tâches périodiques | Le 11 novembre, le conteneur web n’exécutait pas le planificateur. Le démarrage Railway lance désormais le planificateur avec le site. Les rappels dus sont préparés toutes les 15 minutes. | Suivre l’heure du dernier passage et les échecs dans la durée. L’administration peut aussi préparer les rappels depuis « E-mails à valider ». La purge définitive des comptes supprimés est désactivée par défaut. |
 | Cache | Configuration en production : cache fichier, sessions en base | Évaluer un cache partagé avant plusieurs instances et mesurer la contention |
 | Facturation | Stripe assure les cycles ; la base locale porte l'état d'accès | Tester en mode Stripe test les webhooks réels, une échéance, un impayé, une reprise, une résiliation et des checkouts simultanés |
 | Données de compte | La suppression historique efface des relations de paiement et conserve un journal nominatif | Clarifier et tester conservation comptable, anonymisation, fichiers, commandes en cours et suppression ; ce lot ne certifie pas toute la politique de rétention |
@@ -104,13 +104,15 @@ Le découpage conseillé reste un monolithe modulaire. Extraire progressivement 
 
 Les tests fonctionnels couvrent la propriété des publications, la pagination, le quota de demande, le respect des préférences, la désinscription signée, les rappels devenus obsolètes, la suppression avec ou sans disponibilité Stripe et le maintien des avantages jusqu'au terme payé. Les appels Stripe sont simulés, sans prélèvement réel.
 
-Sur la version stabilisée, **650 tests et 6 964 assertions ont réussi**. Les vues Blade ont été compilées. Le rapport JUnit local est conservé dans `tmp/account-review/phpunit-verified.xml`.
+Sur la version du 12 novembre, **653 tests et 6 980 assertions ont réussi**. Les vues Blade ont été compilées. Le rapport JUnit local est conservé dans `tmp/account-review/phpunit-scheduler-release.xml`.
 
 L’inventaire statique a repéré 123 vues Blade de page, dont 26 d’administration, en excluant les composants, gabarits partagés, emails et modèles PDF. Les 123 vues déclarent la largeur d’écran mobile ou en héritent de leur gabarit. L’inventaire inclut aussi des écrans historiques. Une déclaration de largeur ne suffit pas à valider la mise en page.
 
 Le navigateur a contrôlé 34 pages et états à 1 440, 768, 390 et 360 pixels, soit 136 rendus locaux. Aucun débordement horizontal de la page ni exception JavaScript n’a été relevé. Les contrôles couvrent notamment l’accueil, les offres, la recherche, la fiche et l’édition d’annonce, la demande guidée, les commandes, les favoris, les paramètres, la messagerie, les clients, les devis, les factures, les statistiques, la désinscription aux newsletters, l’administration des rappels et quatre états d’abonnement. Les rendus proviennent des routes Laravel avec des comptes fictifs et une base en mémoire. Les résultats et captures sont conservés dans `tmp/account-review/`.
 
 Un second passage a bloqué le téléchargement de Chart.js sur les quatre largeurs. Le chiffre d’affaires de douze mois, les nouveaux clients de six mois et les nombres de devis acceptés et autres restent lisibles. Les tables servent également de description aux lecteurs d’écran lorsque les graphiques apparaissent.
+
+Au premier contrôle de la page publique sur téléphone, les colonnes du comparatif coupaient certains mots. Le comparatif présente désormais le nom de chaque fonctionnalité sur sa propre ligne, puis les deux formules côte à côte. Les parcours de souscription décrivent les avantages Premium effectivement disponibles et indiquent comment continuer si les paiements sont suspendus. Au dernier passage local, la feuille de police Inter de Google Fonts n’a pas répondu. Les mesures de mise en page sont restées valides avec la police de secours.
 
 Les pages d'administration, chaque formulaire spécialisé, les PDF de facturation, tous les états vides et tous les cas d'accessibilité ne font pas l'objet d'une validation visuelle exhaustive dans ce lot. Le rapport de livraison distingue tests, contrôles locaux et contrôles publics en production. Ni la réception dans une vraie boîte mail, ni une transaction bancaire réelle ne sont prouvées par ces vérifications.
 

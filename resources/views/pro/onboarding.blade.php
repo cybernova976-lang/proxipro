@@ -652,11 +652,11 @@
         <!-- ========================================================= -->
         <div class="ob-step-content" id="obStep5" style="display:none;">
             <div class="ob-card">
-                <div class="ob-card-title">{{ $proSubscriptionsEnabled ? '👑 Choisissez votre abonnement' : '🚀 Accès prestataire pendant le lancement' }}</div>
+                <div class="ob-card-title">{{ $proSubscriptionsEnabled ? '👑 Choisissez votre abonnement' : 'Abonnement Premium momentanément indisponible' }}</div>
                 <div class="ob-card-subtitle">
                     {{ $proSubscriptionsEnabled
-                        ? "L'abonnement Prokejem vous donne accès à tous les outils professionnels : réception de demandes clients, devis, factures, gestion clientèle et visibilité accrue."
-                        : "L'abonnement récurrent n'est pas encore commercialisé. Terminez votre configuration et utilisez l'espace prestataire sans abonnement pendant cette phase." }}
+                        ? "Premium donne plus de visibilité aux offres éligibles et permet de présenter chaque prestation avec quatre photos."
+                        : "La souscription en ligne est suspendue pour le moment : aucun paiement n'est demandé. Terminez votre configuration ; votre espace prestataire reste accessible sans abonnement." }}
                 </div>
 
                 @if($proSubscriptionsEnabled)
@@ -754,13 +754,13 @@
 
                 <div style="margin-top: 16px; padding: 14px; background: rgba(16,185,129,0.06); border-radius: 12px; border: 1px solid rgba(16,185,129,0.15);">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                        <i class="fas {{ $proSubscriptionsEnabled ? 'fa-lock' : 'fa-gift' }}" style="color: #059669;"></i>
-                        <strong style="font-size: 0.88rem; color: #059669;">{{ $proSubscriptionsEnabled ? 'Paiement 100% sécurisé' : 'Accès gratuit pendant la phase de lancement' }}</strong>
+                        <i class="fas {{ $proSubscriptionsEnabled ? 'fa-lock' : 'fa-info-circle' }}" style="color: #059669;"></i>
+                        <strong style="font-size: 0.88rem; color: #059669;">{{ $proSubscriptionsEnabled ? 'Paiement par Stripe' : 'Souscription momentanément indisponible' }}</strong>
                     </div>
                     <p style="font-size: 0.78rem; color: var(--ob-muted); margin: 0;">
                         {{ $proSubscriptionsEnabled
-                            ? 'Votre paiement est crypté et traité par Stripe. Vous pouvez annuler votre abonnement à tout moment.'
-                            : 'Vous serez informé avant toute future mise en place d’une offre payante. Aucun abonnement ne sera activé automatiquement.' }}
+                            ? 'Stripe traite votre paiement. Vous pouvez annuler votre abonnement à tout moment.'
+                            : 'Aucun paiement n’est demandé à cette étape et aucun abonnement ne sera activé automatiquement.' }}
                     </p>
                 </div>
             </div>
@@ -1036,7 +1036,7 @@
                 : '<span style="color: var(--ob-muted);">Désactivées</span>';
 
             if (!subscriptionsEnabled) {
-                document.getElementById('recapPlan').textContent = 'Aucun — accès lancement';
+                document.getElementById('recapPlan').textContent = 'Aucun abonnement';
                 document.getElementById('recapTotal').textContent = '0,00 €';
             } else if (selectedPlan === 'annual') {
                 document.getElementById('recapPlan').textContent = 'Annuel (85€/an)';

@@ -172,8 +172,8 @@
                 <!-- Step 5: Abonnement -->
                 <div class="oauth-step-content" id="oauthStep5">
                     <div class="step-header">
-                        <h6><i class="fas fa-crown"></i> {{ $proSubscriptionsEnabled ? 'Choisissez votre abonnement' : 'Accès prestataire au lancement' }}</h6>
-                        <p>{{ $proSubscriptionsEnabled ? 'Accédez à tous les outils professionnels pour développer votre activité.' : 'Aucun abonnement n’est commercialisé pour le moment.' }}</p>
+                        <h6><i class="fas fa-crown"></i> {{ $proSubscriptionsEnabled ? 'Choisissez votre abonnement' : 'Abonnement Premium momentanément indisponible' }}</h6>
+                        <p>{{ $proSubscriptionsEnabled ? 'Présentez chaque offre avec quatre photos et bénéficiez de tarifs réduits sur les boosts.' : 'La souscription en ligne est suspendue pour le moment : aucun paiement n’est demandé.' }}</p>
                     </div>
 
                     @if($proSubscriptionsEnabled)
@@ -218,7 +218,7 @@
 
                     <div style="text-align:center;margin-top:16px;">
                         <button type="button" class="btn btn-outline-secondary" onclick="skipOAuthSubscription()" style="font-size:0.92rem;padding:10px 28px;border-radius:10px;border:2px solid #cbd5e1;font-weight:600;">
-                            <i class="fas {{ $proSubscriptionsEnabled ? 'fa-forward' : 'fa-check' }} me-1"></i> {{ $proSubscriptionsEnabled ? 'Continuer sans abonnement' : 'Continuer gratuitement' }}
+                            <i class="fas {{ $proSubscriptionsEnabled ? 'fa-forward' : 'fa-check' }} me-1"></i> {{ $proSubscriptionsEnabled ? 'Continuer sans abonnement' : 'Continuer' }}
                         </button>
                         <p style="font-size:0.8rem;color:#94a3b8;margin-top:8px;">{{ $proSubscriptionsEnabled ? 'Vous pourrez souscrire à tout moment depuis votre espace pro.' : 'Aucun abonnement ne sera activé automatiquement.' }}</p>
                     </div>

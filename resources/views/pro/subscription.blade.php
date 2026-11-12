@@ -51,7 +51,7 @@
             <div class="alert alert-warning">Votre accès Premium est suspendu ou en attente de confirmation. Vérifiez votre paiement ou résiliez cet abonnement avant d’en ouvrir un autre.</div>
         @endif
     @else
-        <p>{{ $proSubscriptionsEnabled ? 'Vous pouvez continuer gratuitement ou choisir Premium selon vos besoins.' : 'L’espace prestataire reste accessible gratuitement pendant la préparation de l’offre récurrente.' }}</p>
+        <p>{{ $proSubscriptionsEnabled ? 'Vous pouvez continuer gratuitement ou choisir Premium selon vos besoins.' : 'La souscription à Premium est momentanément indisponible. Votre espace prestataire reste accessible.' }}</p>
     @endif
     <div class="d-flex flex-wrap gap-2 subscription-management">
         @if($user->stripe_id)
@@ -141,9 +141,8 @@
             <i class="fas fa-tools"></i>
         </div>
         <div>
-            <h6 class="fw-bold mb-1">Offre Pro non commercialisée</h6>
-            <p class="text-muted mb-2" style="font-size:.84rem;">Aucun prélèvement récurrent n’est proposé pour le moment. Les plans affichés dans l’administration servent uniquement à préparer la future offre.</p>
-            <span class="badge bg-success-subtle text-success border border-success-subtle">Accès prestataire gratuit pendant la phase de lancement</span>
+            <h6 class="fw-bold mb-1">Abonnement Premium momentanément indisponible</h6>
+            <p class="text-muted mb-0" style="font-size:.84rem;">La souscription en ligne est suspendue pour le moment. Aucun paiement n’est demandé et aucun abonnement n’est activé automatiquement.</p>
         </div>
     </div>
 </div>

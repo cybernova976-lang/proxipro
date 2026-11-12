@@ -209,10 +209,10 @@
                 <div class="provider-step-content" id="step3Content">
                     <h6 class="step-title">
                         <i class="fas fa-crown"></i>
-                        {{ $proSubscriptionsEnabled ? 'Choisissez votre abonnement' : 'Accès prestataire au lancement' }}
+                        {{ $proSubscriptionsEnabled ? 'Choisissez votre abonnement' : 'Abonnement Premium momentanément indisponible' }}
                     </h6>
                     <p class="step-description">
-                        {{ $proSubscriptionsEnabled ? 'Accédez à tous les outils professionnels pour développer votre activité.' : 'L’abonnement n’est pas encore commercialisé. Votre profil prestataire peut être activé gratuitement.' }}
+                        {{ $proSubscriptionsEnabled ? 'Présentez chaque offre avec quatre photos et bénéficiez de tarifs réduits sur les boosts.' : 'La souscription en ligne est suspendue pour le moment : aucun paiement n’est demandé. Vous pouvez activer votre profil prestataire.' }}
                     </p>
 
                     @if($proSubscriptionsEnabled)
@@ -249,9 +249,9 @@
 
                     <div class="skip-subscription-wrapper" style="text-align:center;margin-top:16px;">
                         <button type="button" class="btn btn-outline-secondary" onclick="skipSubscription()" style="font-size:0.92rem;padding:10px 28px;border-radius:10px;border:2px solid #cbd5e1;font-weight:600;">
-                            <i class="fas {{ $proSubscriptionsEnabled ? 'fa-forward' : 'fa-check' }}"></i><span translate="no">{{ $proSubscriptionsEnabled ? 'Continuer sans abonnement' : 'Activer gratuitement mon profil' }}</span>
+                            <i class="fas {{ $proSubscriptionsEnabled ? 'fa-forward' : 'fa-check' }}"></i><span translate="no">{{ $proSubscriptionsEnabled ? 'Continuer sans abonnement' : 'Activer mon profil' }}</span>
                         </button>
-                        <p class="skip-note" style="font-size:0.8rem;color:#94a3b8;margin-top:8px;">{{ $proSubscriptionsEnabled ? 'Vous pourrez souscrire à tout moment depuis votre espace pro.' : 'Vous serez informé avant toute future offre payante.' }}</p>
+                        <p class="skip-note" style="font-size:0.8rem;color:#94a3b8;margin-top:8px;">{{ $proSubscriptionsEnabled ? 'Vous pourrez souscrire à tout moment depuis votre espace pro.' : 'Aucun abonnement ne sera activé automatiquement.' }}</p>
                     </div>
                 </div>
 

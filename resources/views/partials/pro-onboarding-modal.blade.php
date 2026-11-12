@@ -639,11 +639,11 @@
             {{-- ======================== STEP 5: Abonnement ======================== --}}
             <div class="obm-step-content" id="obmStep5" style="display:none;">
                 <div class="obm-card">
-                    <div class="obm-card-title">{{ $proSubscriptionsEnabled ? '👑 Choisissez votre abonnement' : '🚀 Accès prestataire pendant le lancement' }}</div>
+                    <div class="obm-card-title">{{ $proSubscriptionsEnabled ? '👑 Choisissez votre abonnement' : 'Abonnement Premium momentanément indisponible' }}</div>
                     <div class="obm-card-subtitle">
                         {{ $proSubscriptionsEnabled
-                            ? "L'abonnement Prokejem vous donne accès à tous les outils professionnels : demandes clients, devis, factures, clientèle et visibilité."
-                            : "Aucun abonnement n'est commercialisé pour le moment. Vous pouvez terminer gratuitement la configuration de votre espace." }}
+                            ? "Premium donne plus de visibilité aux offres éligibles et permet de présenter chaque prestation avec quatre photos."
+                            : "La souscription en ligne est suspendue pour le moment : aucun paiement n'est demandé. Vous pouvez terminer la configuration de votre espace." }}
                     </div>
 
                     @if($proSubscriptionsEnabled)
@@ -700,7 +700,7 @@
 
                     <div style="text-align: center; margin-top: 16px;">
                         <button type="button" class="obm-btn-skip-sub" onclick="obmSkipSubscription()">
-                            <i class="fas {{ $proSubscriptionsEnabled ? 'fa-forward' : 'fa-check' }}"></i> {{ $proSubscriptionsEnabled ? "Passer l'abonnement pour le moment" : 'Terminer gratuitement' }}
+                            <i class="fas {{ $proSubscriptionsEnabled ? 'fa-forward' : 'fa-check' }}"></i> {{ $proSubscriptionsEnabled ? "Passer l'abonnement pour le moment" : 'Terminer la configuration' }}
                         </button>
                         <p style="font-size: 0.7rem; color: #94a3b8; margin-top: 6px;">
                             {{ $proSubscriptionsEnabled ? 'Vous pourrez souscrire plus tard. Certaines fonctionnalités premium ne seront pas disponibles.' : 'Aucun abonnement ne sera activé automatiquement.' }}
@@ -749,7 +749,7 @@
                     <div style="margin-top: 14px; padding: 12px; background: rgba(16,185,129,0.05); border-radius: 10px; border: 1px solid rgba(16,185,129,0.12);">
                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
                             <i class="fas fa-lock" style="color: #059669;"></i>
-                            <strong style="font-size: 0.82rem; color: #059669;">Paiement 100% sécurisé</strong>
+                            <strong style="font-size: 0.82rem; color: #059669;">Paiement par Stripe</strong>
                         </div>
                         <p style="font-size: 0.72rem; color: #64748b; margin: 0;">
                             Paiement sécurisé par Stripe. Les conditions et modalités de résiliation sont affichées avant validation.
@@ -1155,7 +1155,7 @@
             : '<span style="color: #94a3b8;">Aucune</span>';
 
         if (!obmSubscriptionsEnabled) {
-            document.getElementById('obmRecapPlan').textContent = 'Aucun — accès lancement';
+            document.getElementById('obmRecapPlan').textContent = 'Aucun abonnement';
             document.getElementById('obmRecapTotal').textContent = '0,00 €';
         } else if (obmSelectedPlan === 'annual') {
             document.getElementById('obmRecapPlan').textContent = 'Annuel (85€/an)';

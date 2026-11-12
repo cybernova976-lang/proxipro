@@ -79,6 +79,17 @@ const fixtureDir = path.join(root, 'tmp/account-review');
                 if (fixture.name === 'admin-reminders') {
                     assert.ok(await page.getByRole('button', {name:'Préparer les rappels dus'}).isVisible());
                 }
+                if (fixture.name === 'offers') {
+                    const comparison = page.locator('.premium-comparison');
+                    assert.equal(await comparison.locator('.plan-name').first().isVisible(), width <= 575);
+                    if (width <= 575) {
+                        const row = comparison.locator('tbody tr').first();
+                        const heading = await row.locator('th').boundingBox();
+                        const value = await row.locator('td').first().boundingBox();
+                        assert.ok(heading.y + heading.height <= value.y + 1, 'The feature should span the mobile row');
+                    }
+                    await comparison.screenshot({path:path.join(fixtureDir, `comparison-${width}.png`)});
+                }
                 if (['settings','publications','offers','analytics','admin-reminders','subscription-free','subscription-active','subscription-past-due','subscription-cancelled'].includes(fixture.name)) {
                     await page.screenshot({path:path.join(fixtureDir, `${fixture.name}-${width}.png`),fullPage:true});
                 }

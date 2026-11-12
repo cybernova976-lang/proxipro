@@ -132,7 +132,7 @@ class PlatformFeatures
 
     public static function proSubscriptionUnavailableMessage(): string
     {
-        return 'Les abonnements Pro ne sont pas commercialisés actuellement. Vous pouvez utiliser l’espace prestataire gratuitement pendant cette phase.';
+        return 'L’abonnement Premium est momentanément indisponible : aucune souscription ni aucun paiement n’est possible pour le moment. Votre espace prestataire reste accessible.';
     }
 
     private static function isConfiguredSecret(string $value, array $prefixes): bool
