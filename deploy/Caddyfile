@@ -1,0 +1,44 @@
+# Serveur web de production (FrankenPHP), lancé par la commande de démarrage
+# de railway.toml.
+#
+# Copie du Caddyfile que Railpack génère pour Laravel (root /app/public), à une
+# seule différence près : le journal est au niveau INFO. Au niveau DEBUG, celui
+# de Railpack, chaque requête écrivait dans les journaux Railway l'adresse IP,
+# le navigateur et le jeton CSRF du visiteur. Au niveau INFO, seuls le démarrage,
+# les avertissements et les erreurs du serveur sont journalisés.
+#
+# Ce fichier est hors de public/ : il n'est jamais servi aux visiteurs.
+{
+	admin off
+	persist_config off
+	auto_https off
+
+	{$CADDY_GLOBAL_OPTIONS}
+
+	log {
+		format json
+		output stderr
+		level INFO
+	}
+
+	frankenphp {
+		{$FRANKENPHP_CONFIG}
+	}
+}
+
+{$CADDY_EXTRA_CONFIG}
+
+:{$PORT:8080} {
+	root * /app/public
+
+	encode zstd br gzip
+
+	file_server {
+		hide .git
+		hide .env*
+	}
+
+	{$CADDY_SERVER_EXTRA_DIRECTIVES}
+
+	php_server
+}

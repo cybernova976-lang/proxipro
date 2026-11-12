@@ -13,14 +13,15 @@
 #      aucune tache de routes/console.php ne s'execute (expiration des annonces
 #      et des boosts, fin des acces Premium offerts, rappels, purges) ;
 #   3. serveur web FrankenPHP, fourni par l'image que Railpack construit pour
-#      PHP (/Caddyfile : racine public/, port $PORT, compression, fichiers
-#      statiques servis directement). Il traite plusieurs requetes a la fois,
-#      contrairement a « php artisan serve », serveur de developpement qui les
-#      traitait une par une. Le port retombe sur 8080 si Railway n'en fournit pas.
+#      PHP. Il traite plusieurs requetes a la fois, contrairement a
+#      « php artisan serve », serveur de developpement qui les traitait une par
+#      une. Sa configuration est deploy/Caddyfile : celle de Railpack (racine
+#      public/, port $PORT ou 8080, compression, fichiers statiques servis
+#      directement), avec un journal au niveau INFO au lieu de DEBUG.
 # Les lignes vides et « No scheduled commands » sont filtrees pour ne pas noyer
 # le journal : il ne reste que les taches reellement lancees.
 # Le site est construit par Railpack : nixpacks.toml n'est pas lu.
-startCommand = "php artisan migrate --force && { (while true; do php artisan schedule:work 2>&1 | grep --line-buffered -Ev '^[[:space:]]*$|No scheduled commands'; sleep 10; done) & PORT=${PORT:-8080} docker-php-entrypoint --config /Caddyfile --adapter caddyfile; }"
+startCommand = "php artisan migrate --force && { (while true; do php artisan schedule:work 2>&1 | grep --line-buffered -Ev '^[[:space:]]*$|No scheduled commands'; sleep 10; done) & docker-php-entrypoint --config /app/deploy/Caddyfile --adapter caddyfile; }"
 healthcheckPath = "/up"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"

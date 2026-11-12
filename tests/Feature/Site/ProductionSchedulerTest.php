@@ -30,12 +30,34 @@ class ProductionSchedulerTest extends TestCase
         $this->assertStringContainsString('php artisan schedule:work', $command);
         // Serveur de production FrankenPHP (fourni par l'image Railpack), jamais le serveur
         // de développement « php artisan serve », qui traite les requêtes une par une.
-        $server = 'PORT=${PORT:-8080} docker-php-entrypoint --config /Caddyfile --adapter caddyfile';
+        $server = 'docker-php-entrypoint --config /app/deploy/Caddyfile --adapter caddyfile';
         $this->assertStringContainsString($server, $command);
         $this->assertStringNotContainsString('artisan serve', $command);
         // Le planificateur tourne en tâche de fond : le serveur web vient après lui.
         $this->assertLessThan(strpos($command, 'docker-php-entrypoint'), strpos($command, 'schedule:work'));
         $this->assertStringEndsWith($server.'; }', $command);
+    }
+
+    /**
+     * Configuration du serveur : celle de Railpack pour Laravel, avec un journal au
+     * niveau INFO. Au niveau DEBUG, chaque requête écrivait l'adresse IP, le navigateur
+     * et le jeton CSRF du visiteur dans les journaux Railway.
+     */
+    public function test_production_server_config_serves_public_and_keeps_requests_out_of_the_logs(): void
+    {
+        $caddyfile = file_get_contents(base_path('deploy/Caddyfile'));
+        $directives = preg_replace('/^\s*#.*$/m', '', $caddyfile);
+
+        $this->assertMatchesRegularExpression('/^\s*level INFO$/m', $directives);
+        $this->assertStringNotContainsStringIgnoringCase('DEBUG', $directives);
+        $this->assertDoesNotMatchRegularExpression('/^\s*log\s*\{?\s*$/m', substr($directives, strpos($directives, ':{$PORT')),
+            'Aucun journal par requête dans le bloc du site.');
+        $this->assertStringContainsString(':{$PORT:8080} {', $directives);
+        $this->assertMatchesRegularExpression('/^\s*root \* \/app\/public$/m', $directives);
+        $this->assertMatchesRegularExpression('/^\s*hide \.env\*$/m', $directives);
+        $this->assertMatchesRegularExpression('/^\s*php_server$/m', $directives);
+        $this->assertSame(substr_count($directives, '{'), substr_count($directives, '}'), 'Accolades équilibrées.');
+        $this->assertFileDoesNotExist(public_path('Caddyfile'));
     }
 
     public function test_account_purge_is_scheduled_but_disabled_by_default(): void
