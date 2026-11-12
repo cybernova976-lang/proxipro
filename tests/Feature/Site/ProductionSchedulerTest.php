@@ -20,7 +20,7 @@ class ProductionSchedulerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_railway_start_command_runs_migrations_scheduler_and_web_server(): void
+    public function test_railway_start_command_runs_migrations_scheduler_and_production_web_server(): void
     {
         $config = file_get_contents(base_path('railway.toml'));
 
@@ -28,9 +28,14 @@ class ProductionSchedulerTest extends TestCase
         $command = $match[1];
         $this->assertStringStartsWith('php artisan migrate --force && ', $command);
         $this->assertStringContainsString('php artisan schedule:work', $command);
-        $this->assertStringContainsString('php artisan serve --host=0.0.0.0', $command);
+        // Serveur de production FrankenPHP (fourni par l'image Railpack), jamais le serveur
+        // de développement « php artisan serve », qui traite les requêtes une par une.
+        $server = 'PORT=${PORT:-8080} docker-php-entrypoint --config /Caddyfile --adapter caddyfile';
+        $this->assertStringContainsString($server, $command);
+        $this->assertStringNotContainsString('artisan serve', $command);
         // Le planificateur tourne en tâche de fond : le serveur web vient après lui.
-        $this->assertLessThan(strpos($command, 'php artisan serve'), strpos($command, 'schedule:work'));
+        $this->assertLessThan(strpos($command, 'docker-php-entrypoint'), strpos($command, 'schedule:work'));
+        $this->assertStringEndsWith($server.'; }', $command);
     }
 
     public function test_account_purge_is_scheduled_but_disabled_by_default(): void

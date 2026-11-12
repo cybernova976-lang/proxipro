@@ -12,11 +12,15 @@
 #   2. planificateur Laravel en tache de fond, relance s'il s'arrete : sans lui,
 #      aucune tache de routes/console.php ne s'execute (expiration des annonces
 #      et des boosts, fin des acces Premium offerts, rappels, purges) ;
-#   3. serveur web, inchange.
+#   3. serveur web FrankenPHP, fourni par l'image que Railpack construit pour
+#      PHP (/Caddyfile : racine public/, port $PORT, compression, fichiers
+#      statiques servis directement). Il traite plusieurs requetes a la fois,
+#      contrairement a « php artisan serve », serveur de developpement qui les
+#      traitait une par une. Le port retombe sur 8080 si Railway n'en fournit pas.
 # Les lignes vides et « No scheduled commands » sont filtrees pour ne pas noyer
 # le journal : il ne reste que les taches reellement lancees.
 # Le site est construit par Railpack : nixpacks.toml n'est pas lu.
-startCommand = "php artisan migrate --force && { (while true; do php artisan schedule:work 2>&1 | grep --line-buffered -Ev '^[[:space:]]*$|No scheduled commands'; sleep 10; done) & php artisan serve --host=0.0.0.0 --port=${PORT:-8080}; }"
+startCommand = "php artisan migrate --force && { (while true; do php artisan schedule:work 2>&1 | grep --line-buffered -Ev '^[[:space:]]*$|No scheduled commands'; sleep 10; done) & PORT=${PORT:-8080} docker-php-entrypoint --config /Caddyfile --adapter caddyfile; }"
 healthcheckPath = "/up"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
