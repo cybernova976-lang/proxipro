@@ -50,6 +50,10 @@ Route::get('/communications/newsletter/{user}', [\App\Http\Controllers\Newslette
     ->middleware(['signed', 'throttle:30,1'])->name('newsletter.unsubscribe');
 Route::post('/communications/newsletter/{user}', [\App\Http\Controllers\NewsletterPreferenceController::class, 'unsubscribe'])
     ->middleware(['signed', 'throttle:30,1'])->name('newsletter.unsubscribe.store');
+Route::get('/communications/rappels-brouillon/{user}', [\App\Http\Controllers\NewsletterPreferenceController::class, 'showDraftReminders'])
+    ->middleware(['signed', 'throttle:30,1'])->name('draft-reminders.unsubscribe');
+Route::post('/communications/rappels-brouillon/{user}', [\App\Http\Controllers\NewsletterPreferenceController::class, 'unsubscribeDraftReminders'])
+    ->middleware(['signed', 'throttle:30,1'])->name('draft-reminders.unsubscribe.store');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 Route::get('/conseils', [MarketplaceGuideController::class, 'index'])->name('guides.index');
 Route::get('/conseils/{slug}', [MarketplaceGuideController::class, 'show'])
@@ -616,8 +620,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/emails', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'index'])->name('admin.emails.index');
     Route::get('/emails/create', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'create'])->name('admin.emails.create');
     Route::post('/emails', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'store'])->name('admin.emails.store');
-    Route::post('/emails/prepare-draft-reminders', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'prepareDraftReminders'])
-        ->name('admin.emails.prepare-draft-reminders');
+    Route::post('/emails/send-draft-reminders', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'sendDraftReminders'])
+        ->name('admin.emails.send-draft-reminders');
     Route::get('/emails/{managedEmail}', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'show'])->name('admin.emails.show');
     Route::get('/emails/{managedEmail}/preview', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'preview'])->name('admin.emails.preview');
     Route::put('/emails/{managedEmail}', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'update'])->name('admin.emails.update');

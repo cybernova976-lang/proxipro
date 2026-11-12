@@ -91,8 +91,12 @@ Schedule::command('service-reminders:send')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/service-reminders.log'));
 
-// Une seule relance pour les brouillons de demande associés à un compte vérifié.
+// Un seul rappel par brouillon de demande, envoyé automatiquement à un compte
+// vérifié qui l'accepte. Jamais la nuit : entre 8 h et 20 h, heure de Mayotte
+// (6 h–18 h à Paris en hiver, 9 h–21 h à La Réunion).
 Schedule::command('demand-drafts:send-reminders')
     ->everyFifteenMinutes()
+    ->timezone('Indian/Mayotte')
+    ->between('8:00', '20:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/demand-draft-reminders.log'));

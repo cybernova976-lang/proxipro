@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\ManagedEmailMail;
 use App\Models\ManagedEmail;
-use App\Models\DemandDraft;
 use App\Models\User;
 use App\Services\DemandDraftReminderService;
 use App\Support\ManagedEmailContent;
@@ -94,16 +93,18 @@ class ManagedEmailController extends Controller
         ]);
     }
 
-    public function prepareDraftReminders(DemandDraftReminderService $reminders)
+    /** Envoie tout de suite les rappels dus, sans attendre le prochain passage du planificateur. */
+    public function sendDraftReminders(DemandDraftReminderService $reminders)
     {
-        $count = $reminders->prepare(limit: 50);
-        $message = match ($count) {
-            0 => 'Tous les brouillons dus ont déjà été traités.',
-            1 => 'Un rappel de brouillon est prêt à valider.',
-            default => "{$count} rappels de brouillon sont prêts à valider.",
-        };
+        $result = $reminders->run(limit: 50);
+        $parts = array_filter([
+            $result['sent'] ? $result['sent'].' rappel(s) envoyé(s)' : null,
+            $result['cancelled'] ? $result['cancelled'].' annulé(s) car devenu(s) inutile(s)' : null,
+            $result['failed'] ? $result['failed'].' échec(s), nouvel essai automatique dans une heure' : null,
+        ]);
+        $message = $parts ? ucfirst(implode(', ', $parts)).'.' : 'Aucun rappel de brouillon n’était dû.';
 
-        return redirect()->route('admin.emails.index', ['status' => 'pending'])->with('success', $message);
+        return redirect()->route('admin.emails.index')->with($result['failed'] ? 'error' : 'success', $message);
     }
 
     public function show(ManagedEmail $managedEmail)
@@ -188,22 +189,16 @@ class ManagedEmailController extends Controller
         return back()->with('success', 'Le message a été enregistré. Vérifiez l’aperçu avant de valider l’envoi.');
     }
 
-    public function approve(Request $request, ManagedEmail $managedEmail)
+    public function approve(Request $request, ManagedEmail $managedEmail, DemandDraftReminderService $reminders)
     {
-        $email = DB::transaction(function () use ($managedEmail, $request) {
+        $email = DB::transaction(function () use ($managedEmail, $request, $reminders) {
             $email = ManagedEmail::lockForUpdate()->findOrFail($managedEmail->id);
             abort_unless(in_array($email->status, [ManagedEmail::STATUS_PENDING, ManagedEmail::STATUS_FAILED], true), 409);
             if ($email->type === 'newsletter') {
                 abort_unless($this->recipients()->whereKey($email->user_id)->where('email', $email->recipient_email)->exists(), 409, 'Ce destinataire ne souhaite plus recevoir cette communication.');
             }
-            if ($email->type === 'abandoned_demand') {
-                $recipient = $email->user;
-                abort_unless($recipient && $recipient->email_notifications && $recipient->draft_reminders_enabled
-                    && $recipient->email_verified_at && $recipient->is_active && $recipient->email === $email->recipient_email
-                    && DemandDraft::whereKey($email->metadata['demand_draft_id'] ?? 0)
-                        ->where('user_id', $recipient->id)->where('last_activity_at', '<=', now()->subDay())
-                        ->where('last_activity_at', '<=', $email->created_at)->exists(),
-                    409, 'Ce rappel n’est plus pertinent ou le destinataire l’a désactivé.');
+            if ($email->type === DemandDraftReminderService::TYPE) {
+                abort_unless($reminders->stillRelevant($email), 409, 'Ce rappel n’est plus pertinent ou le destinataire l’a désactivé.');
             }
             $email->update([
                 'status' => ManagedEmail::STATUS_SENDING,

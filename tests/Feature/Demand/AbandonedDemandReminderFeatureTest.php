@@ -7,11 +7,13 @@ use App\Models\ManagedEmail;
 use App\Models\User;
 use App\Mail\ManagedEmailMail;
 use App\Services\GeocodingService;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class AbandonedDemandReminderFeatureTest extends TestCase
@@ -78,8 +80,9 @@ class AbandonedDemandReminderFeatureTest extends TestCase
         $this->assertSame(3, $response->viewData('serverDraft')['current_step']);
     }
 
-    public function test_draft_enters_admin_review_once_only_after_twenty_four_hours(): void
+    public function test_due_draft_is_reminded_automatically_once_with_an_unsubscribe_link(): void
     {
+        Mail::fake();
         $user = User::factory()->create(['email_notifications' => true]);
         $draft = DemandDraft::create([
             'user_id' => $user->id,
@@ -93,37 +96,74 @@ class AbandonedDemandReminderFeatureTest extends TestCase
 
         $this->assertDatabaseCount('managed_emails', 1);
         $email = ManagedEmail::sole();
-        $this->assertSame(ManagedEmail::STATUS_PENDING, $email->status);
+        $this->assertSame(ManagedEmail::STATUS_SENT, $email->status);
+        $this->assertNotNull($email->sent_at);
+        $this->assertNull($email->approved_by, 'Aucune validation manuelle n’est attendue.');
+        $this->assertTrue($email->metadata['automatic']);
+        $this->assertSame(1, $email->metadata['attempts']);
         $this->assertSame($user->email, $email->recipient_email);
-        $this->assertStringContainsString('Réparer une fuite', $email->body);
         $this->assertNotNull($draft->fresh()->review_requested_at);
+
+        Mail::assertSent(ManagedEmailMail::class, 1);
+        Mail::assertSent(ManagedEmailMail::class, fn ($mail) => $mail->hasTo($user->email) && $mail->managedEmail->is($email));
+        $html = (new ManagedEmailMail($email))->render();
+        $this->assertStringContainsString('Réparer une fuite', $html);
+        $this->assertStringContainsString('resume=1', $html);
+        $this->assertStringContainsString('Ne plus recevoir de rappels de demande inachevée', $html);
+        $this->assertStringContainsString('/communications/rappels-brouillon/'.$user->id.'?signature=', $html);
     }
 
-    public function test_admin_can_prepare_due_reminders_without_a_scheduler_or_an_email_send(): void
+    public function test_resumed_and_abandoned_again_draft_is_not_reminded_twice(): void
+    {
+        Mail::fake();
+        $user = User::factory()->create(['email_notifications' => true]);
+        $draft = DemandDraft::create(['user_id' => $user->id, 'payload' => ['title' => 'Réparer une fuite'],
+            'current_step' => 2, 'last_activity_at' => now()->subDays(2)]);
+        $this->artisan('demand-drafts:send-reminders')->assertSuccessful();
+
+        $this->actingAs($user)->putJson(route('demand.draft.save'), ['current_step' => 3, 'payload' => ['title' => 'Réparer une fuite']])->assertOk();
+        $this->travel(3)->days();
+        $this->artisan('demand-drafts:send-reminders')->assertSuccessful();
+
+        $this->assertNotNull($draft->fresh()->review_requested_at);
+        Mail::assertSent(ManagedEmailMail::class, 1);
+    }
+
+    public function test_admin_can_send_due_reminders_now_without_waiting_for_the_scheduler(): void
     {
         Mail::fake();
         $member = User::factory()->create(['email_notifications' => true, 'draft_reminders_enabled' => true]);
         DemandDraft::create(['user_id' => $member->id, 'payload' => ['title' => 'Réparer une fuite'],
             'current_step' => 3, 'last_activity_at' => now()->subHours(25)]);
-        $action = route('admin.emails.prepare-draft-reminders');
+        $action = route('admin.emails.send-draft-reminders');
         $this->actingAs($member)->post($action)->assertForbidden();
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
-            ->get(route('admin.emails.index'))->assertOk()->assertSee('Préparer les rappels dus');
-        $this->assertDatabaseCount('managed_emails', 0);
-        $this->post($action)->assertRedirect(route('admin.emails.index', ['status' => 'pending']));
-        $this->artisan('demand-drafts:send-reminders')->assertSuccessful();
-        $this->post($action)->assertRedirect();
-        $this->assertSame(ManagedEmail::STATUS_PENDING, ManagedEmail::sole()->status);
-        $this->get(route('admin.emails.index'))->assertDontSee('Préparer les rappels dus');
         Mail::assertNothingSent();
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->get(route('admin.emails.index'))->assertOk()
+            ->assertSee('Envoyer les rappels dus')->assertSee('partent automatiquement');
+        $this->post($action)->assertRedirect(route('admin.emails.index'))
+            ->assertSessionHas('success', '1 rappel(s) envoyé(s).');
+        $this->assertSame(ManagedEmail::STATUS_SENT, ManagedEmail::sole()->status);
+        Mail::assertSent(ManagedEmailMail::class, 1);
+
+        $this->get(route('admin.emails.index'))->assertDontSee('Envoyer les rappels dus')->assertSee('Rappel automatique');
+        $this->post($action)->assertSessionHas('success', 'Aucun rappel de brouillon n’était dû.');
+        Mail::assertSent(ManagedEmailMail::class, 1);
     }
 
-    public function test_recent_or_opted_out_drafts_are_not_reminded(): void
+    public function test_recent_stale_unverified_or_opted_out_drafts_are_not_reminded(): void
     {
-        $recentUser = User::factory()->create(['email_notifications' => true]);
-        $optedOutUser = User::factory()->create(['email_notifications' => false]);
+        Mail::fake();
+        $cases = [
+            [User::factory()->create(['email_notifications' => true]), now()->subHours(23)],
+            [User::factory()->create(['email_notifications' => true]), now()->subDays(31)],
+            [User::factory()->create(['email_notifications' => false]), now()->subDays(2)],
+            [User::factory()->create(['draft_reminders_enabled' => false]), now()->subDays(2)],
+            [User::factory()->unverified()->create(), now()->subDays(2)],
+        ];
 
-        foreach ([[$recentUser, now()->subHours(23)], [$optedOutUser, now()->subDays(2)]] as [$user, $activity]) {
+        foreach ($cases as [$user, $activity]) {
             DemandDraft::create([
                 'user_id' => $user->id,
                 'payload' => ['version' => 2, 'title' => 'Demande inachevée'],
@@ -135,6 +175,113 @@ class AbandonedDemandReminderFeatureTest extends TestCase
         $this->artisan('demand-drafts:send-reminders')->assertSuccessful();
 
         $this->assertDatabaseCount('managed_emails', 0);
+        Mail::assertNothingSent();
+    }
+
+    public function test_reminder_left_pending_by_the_former_manual_circuit_is_sent_or_cancelled(): void
+    {
+        Mail::fake();
+        $legacy = function (User $user, ?DemandDraft $draft): ManagedEmail {
+            $draft?->update(['review_requested_at' => now()]);
+
+            return ManagedEmail::create(['user_id' => $user->id, 'source_key' => 'abandoned-demand:legacy-'.$user->id,
+                'type' => 'abandoned_demand', 'recipient_email' => $user->email, 'recipient_name' => $user->name,
+                'subject' => 'Votre demande Prokejem est presque terminée', 'headline' => 'Vous y étiez presque',
+                'body' => 'Votre demande n’est pas encore publiée.', 'status' => ManagedEmail::STATUS_PENDING,
+                'metadata' => ['demand_draft_id' => $draft?->id ?? 999999]]);
+        };
+        $waiting = User::factory()->create(['email_notifications' => true]);
+        $resumed = User::factory()->create(['email_notifications' => true]);
+        $removed = User::factory()->create(['email_notifications' => true]);
+        $stillDue = $legacy($waiting, DemandDraft::create(['user_id' => $waiting->id, 'payload' => ['title' => 'A'],
+            'current_step' => 2, 'last_activity_at' => now()->subDays(2)]));
+        $obsolete = $legacy($resumed, DemandDraft::create(['user_id' => $resumed->id, 'payload' => ['title' => 'B'],
+            'current_step' => 2, 'last_activity_at' => now()->subHours(2)]));
+        $orphan = $legacy($removed, null);
+
+        $this->artisan('demand-drafts:send-reminders')->assertSuccessful();
+
+        $this->assertSame(ManagedEmail::STATUS_SENT, $stillDue->fresh()->status);
+        $this->assertSame(ManagedEmail::STATUS_CANCELLED, $obsolete->fresh()->status);
+        $this->assertSame(ManagedEmail::STATUS_CANCELLED, $orphan->fresh()->status);
+        Mail::assertSent(ManagedEmailMail::class, 1);
+        Mail::assertSent(ManagedEmailMail::class, fn ($mail) => $mail->hasTo($waiting->email));
+    }
+
+    public function test_mail_server_failure_is_recorded_then_retried_after_an_hour_three_times_at_most(): void
+    {
+        $user = User::factory()->create(['email_notifications' => true]);
+        DemandDraft::create(['user_id' => $user->id, 'payload' => ['title' => 'Réparer une fuite'],
+            'current_step' => 2, 'last_activity_at' => now()->subDays(2)]);
+
+        Mail::shouldReceive('to')->andThrow(new \RuntimeException('Serveur SMTP indisponible'));
+        $this->artisan('demand-drafts:send-reminders')->assertSuccessful();
+        $email = ManagedEmail::sole();
+        $this->assertSame(ManagedEmail::STATUS_FAILED, $email->status);
+        $this->assertSame('Serveur SMTP indisponible', $email->failure_message);
+        $this->assertSame(1, $email->metadata['attempts']);
+
+        // Pas de nouvel essai avant une heure.
+        $this->artisan('demand-drafts:send-reminders')->assertSuccessful();
+        $this->assertSame(1, $email->fresh()->metadata['attempts']);
+
+        $this->travel(61)->minutes();
+        $this->artisan('demand-drafts:send-reminders')->assertSuccessful();
+        $this->travel(61)->minutes();
+        $this->artisan('demand-drafts:send-reminders')->assertSuccessful();
+        $this->assertSame(3, $email->fresh()->metadata['attempts']);
+
+        // Après trois échecs, plus d'essai automatique : l'administrateur peut le relancer à la main.
+        $this->travel(61)->minutes();
+        $this->artisan('demand-drafts:send-reminders')->assertSuccessful();
+        $this->assertSame(3, $email->fresh()->metadata['attempts']);
+        $this->assertSame(ManagedEmail::STATUS_FAILED, $email->fresh()->status);
+    }
+
+    public function test_signed_link_stops_draft_reminders_in_one_click_without_login(): void
+    {
+        $user = User::factory()->create(['email_notifications' => true, 'draft_reminders_enabled' => true, 'newsletter_subscribed' => true]);
+        $pending = ManagedEmail::create(['user_id' => $user->id, 'source_key' => 'abandoned-demand:pending', 'type' => 'abandoned_demand',
+            'recipient_email' => $user->email, 'subject' => 'Rappel', 'headline' => 'Rappel', 'body' => 'Rappel',
+            'status' => ManagedEmail::STATUS_PENDING]);
+        $url = URL::signedRoute('draft-reminders.unsubscribe', ['user' => $user]);
+
+        $this->get($url)->assertOk()->assertSee('Arrêter les rappels de demande inachevée ?');
+        $this->assertTrue($user->fresh()->draft_reminders_enabled, 'Ouvrir le lien ne doit rien modifier.');
+        $this->post(route('draft-reminders.unsubscribe.store', $user))->assertForbidden();
+        $this->assertTrue($user->fresh()->draft_reminders_enabled);
+
+        // Bouton « Se désabonner » de la messagerie (RFC 8058) : POST sans session.
+        $this->post($url, ['List-Unsubscribe' => 'One-Click'])->assertRedirect($url);
+        $this->assertFalse($user->fresh()->draft_reminders_enabled);
+        $this->assertTrue($user->fresh()->email_notifications);
+        $this->assertTrue($user->fresh()->newsletter_subscribed);
+        $this->assertSame(ManagedEmail::STATUS_CANCELLED, $pending->fresh()->status);
+        $this->get($url)->assertOk()->assertSee('Vous ne recevrez plus de rappels de demande inachevée.');
+
+        // La messagerie n'a pas de jeton de session : ces adresses sont exemptées du contrôle CSRF.
+        $this->assertContains('communications/*', app(ValidateCsrfToken::class)->getExcludedPaths());
+    }
+
+    public function test_reminders_and_newsletters_carry_one_click_unsubscribe_headers(): void
+    {
+        $user = User::factory()->create();
+        $make = fn (string $type) => ManagedEmail::create(['user_id' => $user->id, 'source_key' => 'headers-'.$type, 'type' => $type,
+            'recipient_email' => $user->email, 'subject' => 'Objet', 'headline' => 'Titre', 'body' => 'Texte', 'status' => ManagedEmail::STATUS_PENDING]);
+
+        $mailer = Mail::mailer('array');
+        foreach (['abandoned_demand', 'newsletter', 'transactional'] as $type) {
+            $mailer->to($user->email)->send(new ManagedEmailMail($make($type)));
+        }
+        $headers = $mailer->getSymfonyTransport()->messages()
+            ->map(fn ($sent) => $sent->getOriginalMessage()->getHeaders())->values();
+
+        $this->assertStringContainsString('/communications/rappels-brouillon/'.$user->id.'?', $headers[0]->get('List-Unsubscribe')->getBodyAsString());
+        $this->assertStringContainsString('/communications/newsletter/'.$user->id.'?', $headers[1]->get('List-Unsubscribe')->getBodyAsString());
+        foreach ([0, 1] as $index) {
+            $this->assertSame('List-Unsubscribe=One-Click', $headers[$index]->get('List-Unsubscribe-Post')->getBodyAsString());
+        }
+        $this->assertNull($headers[2]->get('List-Unsubscribe'), 'Pas de lien de désinscription sur un message de service.');
     }
 
     public function test_managed_email_uses_the_custom_resume_template(): void

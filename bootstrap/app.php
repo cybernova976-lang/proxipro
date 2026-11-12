@@ -16,8 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Stripe signe lui-meme ses webhooks. Ils ne peuvent pas fournir de
         // jeton CSRF de session, mais restent verifies par leur signature.
+        // Idem pour la désinscription en un clic (RFC 8058) : la messagerie
+        // envoie un POST sans session ; le lien signé fait office de preuve.
         $middleware->validateCsrfTokens(except: [
             'stripe/webhook',
+            'communications/*',
         ]);
 
         // Détection appareil (mobile/tablet/desktop) sur toutes les requêtes web

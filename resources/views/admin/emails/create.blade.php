@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 @section('title', 'Studio e-mail')
 @section('content')
-<a href="{{ route('admin.emails.index') }}">← E-mails à valider</a>
+<a href="{{ route('admin.emails.index') }}">← E-mails</a>
 <h1 class="h3 fw-bold mt-3">Studio e-mail Prokejem</h1>
 <p class="text-muted">Composez votre message, placez vos photos et choisissez vos destinataires.</p>
 @if($errors->any())<div class="alert alert-danger" role="alert"><ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif

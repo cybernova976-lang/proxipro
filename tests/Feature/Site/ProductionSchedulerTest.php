@@ -48,6 +48,29 @@ class ProductionSchedulerTest extends TestCase
         $this->assertTrue($purge->filtersPass($this->app));
     }
 
+    public function test_draft_reminders_run_every_quarter_hour_but_never_at_night_in_mayotte(): void
+    {
+        // Laravel calcule la plage horaire au chargement de routes/console.php, comme le
+        // fait chaque minute `schedule:work` en production : on le recharge à chaque heure testée.
+        $eventAt = function (string $utc) {
+            $this->travelTo(\Illuminate\Support\Carbon::parse("2026-11-12 {$utc}:00", 'UTC'));
+            $this->app->instance(Schedule::class, new Schedule());
+            \Illuminate\Support\Facades\Facade::clearResolvedInstances();
+            require base_path('routes/console.php');
+
+            return collect(app(Schedule::class)->events())
+                ->first(fn ($event) => str_contains((string) $event->command, 'demand-drafts:send-reminders'));
+        };
+
+        $this->assertSame('*/15 * * * *', $eventAt('10:00')->expression);
+
+        // 04:59 UTC = 07:59 à Mayotte ; 05:00 UTC = 08:00 ; 17:00 UTC = 20:00 ; 17:15 UTC = 20:15.
+        foreach (['04:59' => false, '05:00' => true, '10:00' => true, '17:00' => true, '17:15' => false, '23:00' => false] as $utc => $allowed) {
+            $this->assertSame($allowed, $eventAt($utc)->filtersPass($this->app), "Passage de {$utc} UTC.");
+        }
+        $this->travelBack();
+    }
+
     public function test_expiring_alert_is_sent_once_per_day_without_sql_json_operators(): void
     {
         $owner = User::factory()->create();

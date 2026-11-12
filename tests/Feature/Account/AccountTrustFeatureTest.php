@@ -104,11 +104,17 @@ class AccountTrustFeatureTest extends TestCase
         $draft = DemandDraft::create(['user_id' => $user->id, 'payload' => ['title' => 'Brouillon privé'], 'current_step' => 2, 'last_activity_at' => now()->subDays(2)]);
         $this->artisan('demand-drafts:send-reminders')->assertSuccessful();
         $this->assertDatabaseCount('managed_emails', 0);
+
+        // Rappel préparé par l'ancien circuit (validation manuelle) puis brouillon supprimé :
+        // ni l'envoi automatique ni l'administrateur ne peuvent plus le faire partir.
         $user->update(['draft_reminders_enabled' => true]);
-        $this->artisan('demand-drafts:send-reminders')->assertSuccessful();
-        $email = ManagedEmail::sole();
+        $draft->update(['review_requested_at' => now()]);
+        $email = $this->email($user, 'abandoned_demand');
+        $email->update(['metadata' => ['demand_draft_id' => $draft->id]]);
         $draft->delete();
         $this->actingAs(User::factory()->create(['role' => 'admin']))->post(route('admin.emails.approve', $email))->assertStatus(409);
+        $this->artisan('demand-drafts:send-reminders')->assertSuccessful();
+        $this->assertSame(ManagedEmail::STATUS_CANCELLED, $email->fresh()->status);
         Mail::assertNothingSent();
     }
 
