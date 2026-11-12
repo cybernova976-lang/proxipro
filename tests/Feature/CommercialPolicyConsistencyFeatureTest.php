@@ -85,9 +85,37 @@ class CommercialPolicyConsistencyFeatureTest extends TestCase
         $this->actingAs($provider)
             ->get(route('pro.subscription'))
             ->assertOk()
-            ->assertSee('Accès lancement')
-            ->assertSee("L'espace prestataire est actuellement accessible sans abonnement.", false)
+            ->assertSee('Abonnement indisponible')
+            ->assertSee("La souscription à Premium est momentanément suspendue. Aucun paiement n'est demandé.", false)
+            // Décision du fondateur (11/11/2026) : aucune gratuité « de lancement » n'est annoncée.
+            ->assertDontSee('Accès lancement')
+            ->assertDontSee('gratuit pendant')
             ->assertDontSee('Activez votre abonnement pour recevoir des demandes clients');
+    }
+
+    /**
+     * Décision du fondateur (11/11/2026) : tout ce qui est payant le reste dès le
+     * premier jour. Aucun écran ne doit annoncer une gratuité « de lancement »,
+     * même dans l'état où les souscriptions sont coupées.
+     */
+    public function test_no_screen_announces_a_free_launch_period(): void
+    {
+        $forbidden = ['gratuit pendant', 'phase de lancement', 'accès lancement', 'pendant le lancement',
+            'prestataire au lancement', 'offre de lancement', 'pendant cette phase'];
+        $files = array_merge(
+            iterator_to_array(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(resource_path('views'), \FilesystemIterator::SKIP_DOTS))),
+            [new \SplFileInfo(app_path('Support/PlatformFeatures.php'))]
+        );
+
+        foreach ($files as $file) {
+            if ($file->getExtension() !== 'php') {
+                continue;
+            }
+            $content = mb_strtolower(file_get_contents($file->getPathname()));
+            foreach ($forbidden as $wording) {
+                $this->assertStringNotContainsString($wording, $content, $file->getPathname().' annonce « '.$wording.' ».');
+            }
+        }
     }
 
     public function test_professional_teaser_is_explicitly_marked_as_demo_data(): void

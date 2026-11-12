@@ -1082,15 +1082,15 @@
             @elseif($subscriptionsAvailable)
                 <div class="pro-sidebar-sub-card" style="background: linear-gradient(135deg, #f97316, #ef4444);">
                     <h6><i class="fas fa-star me-1"></i> Pas d'abonnement</h6>
-                    <p>Activez votre abonnement pour recevoir des demandes clients</p>
+                    <p>Premium : vos offres mises en avant avec la mention « Sponsorisé », 4 photos par offre et 20 % de réduction sur les options.</p>
                     <a href="{{ route('pro.subscription') }}" class="btn-upgrade">
                         <i class="fas fa-rocket me-1"></i> S'abonner
                     </a>
                 </div>
             @else
                 <div class="pro-sidebar-sub-card" style="background: linear-gradient(135deg, #2563eb, #0891b2);">
-                    <h6><i class="fas fa-gift me-1"></i> Accès lancement</h6>
-                    <p>L'espace prestataire est actuellement accessible sans abonnement.</p>
+                    <h6><i class="fas fa-info-circle me-1"></i> Abonnement indisponible</h6>
+                    <p>La souscription à Premium est momentanément suspendue. Aucun paiement n'est demandé.</p>
                     <a href="{{ route('pro.subscription') }}" class="btn-upgrade">
                         <i class="fas fa-info-circle me-1"></i> Voir les conditions
                     </a>
