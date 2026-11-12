@@ -6,7 +6,7 @@
         <nav class="pk-shortcuts" aria-label="Raccourcis personnels">
             <a href="{{ $pkIsProvider ? route('pro.opportunities') : route('home') }}">
                 <i class="fas fa-clipboard-list" aria-hidden="true"></i>
-                <span>{{ $pkIsProvider ? 'Mes propositions et missions' : 'Mon suivi' }}<small>{{ $pkIsProvider ? 'Retrouver mes échanges en cours' : 'Demandes, propositions et commandes' }}</small></span>
+                <span>{{ $pkIsProvider ? 'Mes propositions et missions' : 'Mes demandes' }}<small>{{ $pkIsProvider ? 'Retrouver mes échanges en cours' : 'Demandes, propositions et commandes' }}</small></span>
                 <i class="fas fa-chevron-right pk-shortcuts__arrow" aria-hidden="true"></i>
             </a>
             <a href="{{ route('messages.index') }}">

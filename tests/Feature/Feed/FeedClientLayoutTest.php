@@ -28,7 +28,7 @@ class FeedClientLayoutTest extends TestCase
             'city' => 'Mamoudzou', 'country' => 'Mayotte', 'postal_code' => '97600']);
     }
 
-    public function test_feed_renders_the_bottom_tab_bar_and_other_client_pages_do_not(): void
+    public function test_every_client_space_page_swaps_tabs_for_the_bottom_bar_on_phones(): void
     {
         $client = $this->mayotteClient();
 
@@ -37,9 +37,17 @@ class FeedClientLayoutTest extends TestCase
             ->assertSee('pk-route-feed', false)
             ->assertSee('aria-label="Mon espace particulier"', false);
 
+        // Même modèle hors du feed : les deux navigations sont rendues, la feuille choisit.
         $this->actingAs($client)->get(route('messages.index'))->assertOk()
-            ->assertDontSee('class="pk-tabbar"', false)
+            ->assertSee('class="pk-tabbar"', false)
+            ->assertSee('aria-label="Mon espace particulier"', false)
             ->assertDontSee('pk-route-feed', false);
+
+        $css = preg_replace('/\s+/', ' ', file_get_contents(public_path('css/client-space.css')));
+        $this->assertStringContainsString('@media (max-width: 639px) { .has-client-space .pk-client-space { display: none; }', $css);
+        $this->assertStringContainsString('@media (min-width: 640px) { .has-client-space .pk-tabbar, .has-client-space .pk-tabbar-spacer { display: none; } }', $css);
+        $this->assertStringContainsString('.has-client-space .pk-messaging { height: calc(100dvh - 68px); padding: 0 0 calc(80px + env(safe-area-inset-bottom)); }', $css,
+            'Sur téléphone, la zone de saisie des messages doit rester au-dessus de la barre du bas.');
     }
 
     public function test_rail_never_shows_paid_content(): void

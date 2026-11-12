@@ -84,15 +84,18 @@
     .pk-client-space__tab > i { font-size: 1.08rem; }
     .pk-client-space__tab[aria-current]::before { left: 12px; right: 12px; }
     .pk-client-space__badge { position: absolute; top: 4px; right: 4px; height: 17px; min-width: 17px; padding: 0 3px; font-size: .58rem; }
-    .has-client-space .pk-messaging { padding: 0 0 env(safe-area-inset-bottom); }
+    /* Comme pour les prestataires (messaging.css) : la messagerie occupe l'écran sous
+       l'en-tête et garde sa zone de saisie au-dessus de la barre du bas, fixe. */
+    .pk-messaging-page .has-client-space #app { height: auto; display: block; }
+    .has-client-space .pk-messaging { height: calc(100dvh - 68px); padding: 0 0 calc(80px + env(safe-area-inset-bottom)); }
     .pk-employment-page { padding: 24px 16px; }
     .pk-employment-card { padding: 22px 20px; }
     .pk-employment-card__link { width: 100%; }
 }
 
-/* Sur /feed, le bouton « Publier une demande » de l'en-tête passe en contour :
-   la zone « Quel est votre problème ? » porte déjà l'action principale.
-   Les !important répondent à ceux du gabarit (layouts/app). */
+/* Dans l'espace particulier, le bouton « Publier une demande » de l'en-tête passe
+   en contour : chaque page porte déjà son action principale (sur /feed, la zone
+   « Quel est votre problème ? »). Les !important répondent à ceux du gabarit (layouts/app). */
 .header-modern .header-nav-btn-primary.pk-header-secondary,
 .header-modern .mobile-service-request.pk-header-secondary {
     background: #fff !important;
@@ -105,14 +108,15 @@
     background: #eef2ff !important;
 }
 
-/* Accueil /feed sur téléphone (lot 3) : sous 640 px, la barre d'onglets du bas
-   remplace les onglets « Mon espace » ; le bouton « Publier » de l'en-tête
-   s'efface, la barre du bas le porte déjà. Au-dessus, la barre du bas reste masquée. */
+/* Une seule navigation par taille d'écran, sur toutes les pages de l'espace :
+   sous 640 px, la barre d'onglets du bas remplace les onglets « Mon espace » et
+   le bouton « Publier » de l'en-tête s'efface (la barre du bas le porte déjà) ;
+   au-dessus, les onglets « Mon espace » restent et la barre du bas est masquée. */
 @media (max-width: 639px) {
-    .pk-route-feed .pk-client-space { display: none; }
-    .pk-route-feed.has-client-space .mobile-service-request { display: none !important; }
+    .has-client-space .pk-client-space { display: none; }
+    .has-client-space .mobile-service-request { display: none !important; }
 }
 @media (min-width: 640px) {
-    .pk-route-feed.has-client-space .pk-tabbar,
-    .pk-route-feed.has-client-space .pk-tabbar-spacer { display: none; }
+    .has-client-space .pk-tabbar,
+    .has-client-space .pk-tabbar-spacer { display: none; }
 }

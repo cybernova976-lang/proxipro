@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Commandes securisees - Prokejem')
+@section('title', 'Commandes sécurisées - Prokejem')
 
 @push('styles')
 <style>
@@ -49,8 +49,8 @@
 
 @section('content')
 <div class="service-orders-page">
-    <h1 class="service-orders-title"><i class="fas fa-shield-alt me-2" style="color:#0f766e;"></i>Commandes securisees</h1>
-    <p class="service-orders-subtitle">Suivez vos commandes acheteur et les demandes recues en tant que vendeur.</p>
+    <h1 class="service-orders-title"><i class="fas fa-shield-alt me-2" style="color:#0f766e;"></i>Commandes sécurisées</h1>
+    <p class="service-orders-subtitle">Suivez vos commandes acheteur et les demandes reçues en tant que vendeur.</p>
 
     @if(session('success'))
         <div class="alert alert-success" role="status">{{ session('success') }}</div>
@@ -232,12 +232,12 @@
                 @endforeach
             </div>
         @else
-            <div class="service-order-empty"><i class="fas fa-receipt mb-3" style="font-size:2.4rem;color:#cbd5e1;"></i><h3 class="h5">Aucune commande envoyee</h3><p class="text-muted mb-0">Declenchez une commande securisee depuis une annonce.</p></div>
+            <div class="service-order-empty"><i class="fas fa-receipt mb-3" style="font-size:2.4rem;color:#cbd5e1;"></i><h3 class="h5">Aucune commande envoyée</h3><p class="text-muted mb-0">Déclenchez une commande sécurisée depuis une annonce.</p></div>
         @endif
     </div>
 
     <div>
-        <h2 class="h5 fw-bold text-dark mb-3">Demandes recues</h2>
+        <h2 class="h5 fw-bold text-dark mb-3">Demandes reçues</h2>
         @if($ordersAsSeller->count() > 0)
             <div class="service-orders-grid">
                 @foreach($ordersAsSeller as $order)
@@ -296,7 +296,7 @@
                 @endforeach
             </div>
         @else
-            <div class="service-order-empty"><i class="fas fa-inbox mb-3" style="font-size:2.4rem;color:#cbd5e1;"></i><h3 class="h5">Aucune demande recue</h3><p class="text-muted mb-0">Les commandes securisees recues apparaîtront ici.</p></div>
+            <div class="service-order-empty"><i class="fas fa-inbox mb-3" style="font-size:2.4rem;color:#cbd5e1;"></i><h3 class="h5">Aucune demande reçue</h3><p class="text-muted mb-0">Les commandes sécurisées reçues apparaîtront ici.</p></div>
         @endif
     </div>
 </div>

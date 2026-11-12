@@ -97,7 +97,7 @@ class ActivityDashboardFeatureTest extends TestCase
         $old->forceFill(['created_at' => now()->subDays(2)])->save();
         $summary = app(\App\Services\ClientActivityService::class)->summary($client);
         $html = view('feed.partials.client-activity', ['pkClientActivity' => $summary])->render();
-        $this->assertStringContainsString('Voir mon suivi', $html);
+        $this->assertStringContainsString('Voir mes demandes', $html);
         $this->assertStringNotContainsString('Besoin déjà bien décrit', $html);
         $this->assertStringNotContainsString('Toujours aucune', $html);
         $order = $this->booking($client, $seller, $this->demand($client, 'Mission à régler'), ServiceOrder::STATUS_AWAITING_PAYMENT);

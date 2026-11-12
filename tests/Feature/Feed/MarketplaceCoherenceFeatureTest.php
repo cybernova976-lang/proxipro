@@ -111,20 +111,33 @@ class MarketplaceCoherenceFeatureTest extends TestCase
         }
     }
 
+    /**
+     * Une demande passe toujours par le parcours guidé (/demande). En mode prestataire,
+     * le bouton de l'en-tête publie une offre, comme le « Publier » de la barre du bas :
+     * deux boutons « Publier » ne mènent jamais à deux endroits différents.
+     */
     public function test_header_request_action_uses_the_guided_journey_for_both_roles(): void
     {
-        foreach (['particulier', 'professionnel'] as $role) {
-            $this->actingAs(User::factory()->create(['user_type' => $role]));
+        $expected = [
+            'particulier' => route('demand.create'),
+            'professionnel' => route('ads.create', ['type' => 'offre']),
+            'professionnel en mode client' => route('demand.create'),
+        ];
+        foreach ($expected as $case => $target) {
+            $this->actingAs(User::factory()->create(['user_type' => str_starts_with($case, 'professionnel') ? 'professionnel' : 'particulier']));
+            if ($case === 'professionnel en mode client') {
+                $this->get(route('feed', ['mode' => 'client']))->assertOk();
+            }
             $response = $this->get(route('ads.create'))->assertOk()
                 ->assertDontSee('id="onb-step-1"', false)
                 ->assertSee('const installSurfaceAllowed = false;', false);
             $dom = new \DOMDocument;
             @$dom->loadHTML($response->getContent());
             $xpath = new \DOMXPath($dom);
-            $links = $xpath->query('//a[contains(@class,"header-nav-btn-primary")]');
-            $this->assertGreaterThan(0, $links->length);
+            $links = $xpath->query('//a[contains(@class,"header-nav-btn-primary")] | //nav[@class="pk-tabbar"]/a[contains(@class,"pk-tabbar__pub")]');
+            $this->assertSame(2, $links->length, $case);
             foreach ($links as $link) {
-                $this->assertSame(route('demand.create'), $link->getAttribute('href'));
+                $this->assertSame($target, $link->getAttribute('href'), $case);
             }
             $this->get(route('demand.create'))->assertOk()
                 ->assertDontSee('id="sidebarNav"', false)

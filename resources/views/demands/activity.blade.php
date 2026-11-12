@@ -10,7 +10,7 @@
         <header class="pk-activity-page__head">
             <h1>Mes demandes et missions en cours</h1>
             <p>{{ $total }} élément{{ $total > 1 ? 's' : '' }} en cours. Retrouvez chaque besoin et son action suivante.</p>
-            <a class="pk-btn" href="{{ route('demand.create') }}">Publier un besoin</a>
+            <a class="pk-btn" href="{{ route('demand.create') }}">Publier une demande</a>
         </header>
         @foreach(['Demandes publiées' => $requests, 'Missions et commandes' => $orders] as $label => $items)
             <section class="pk-activity pk-activity-page__section" aria-label="{{ $label }}">

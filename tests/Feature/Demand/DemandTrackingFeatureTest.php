@@ -71,7 +71,7 @@ class DemandTrackingFeatureTest extends TestCase
         $this->assertFalse($items->has('request-'.$funded->id), 'La demande attribuée ne doit pas dupliquer sa commande.');
 
         $response
-            ->assertSee('Mon suivi')
+            ->assertSee('Mes demandes')
             ->assertSee('En attente de propositions')
             ->assertDontSee('Toujours aucune proposition')
             ->assertSee('1 proposition à examiner')
@@ -114,7 +114,7 @@ class DemandTrackingFeatureTest extends TestCase
             ->assertSee('Historique')
             ->assertSee('aria-current="page"', false)
             ->assertSee(route('service-orders.index').'#order-'.$order->id, false)
-            ->assertSee('Suivi', false);
+            ->assertSee('Mes demandes', false);
 
         $this->get(route('demands.tracking', ['etat' => 'closed']))
             ->assertRedirect(route('home', ['etat' => 'closed']));

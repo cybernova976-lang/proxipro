@@ -174,7 +174,7 @@ class NewFeedMockupFeatureTest extends TestCase
             ->assertDontSee('Toujours aucune réponse')
             ->assertDontSee('Améliorer ma demande')
             ->assertSee('1 demande ou mission en cours')
-            ->assertSee('Voir mon suivi')
+            ->assertSee('Voir mes demandes')
             ->assertSee(route('home'), false)
             ->assertDontSee('data-activity-key="request-'.$requestAd->id.'"', false);
         $this->get(route('home'))->assertOk()->assertSee('En attente de propositions')

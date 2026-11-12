@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Mon suivi - Prokejem')
+@section('title', 'Mes demandes - Prokejem')
 @push('styles')
 <style>
     /* ===== CLEAN FLAT DASHBOARD ===== */

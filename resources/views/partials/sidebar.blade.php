@@ -13,7 +13,7 @@
                 <div class="menu-icon">
                     <i class="fas fa-th-large"></i>
                 </div>
-                <span class="menu-text">Mon suivi</span>
+                <span class="menu-text">Mes demandes</span>
             </a>
 
             <a href="#" class="menu-item" data-dashboard-section="profile" onclick="dashboardNav('profile'); return false;">
@@ -40,7 +40,7 @@
                 <div class="menu-icon highlight">
                     <i class="fas fa-plus-circle"></i>
                 </div>
-                <span class="menu-text">Publier un besoin</span>
+                <span class="menu-text">Publier une demande</span>
             </a>
         </div>
 

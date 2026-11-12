@@ -25,11 +25,88 @@ class ClientSpaceNavigationFeatureTest extends TestCase
             $current = $xpath->query('//a[@data-space-section][@aria-current="page"]');
             $this->assertSame(1, $current->length, $route);
             $this->assertSame($key, $current->item(0)->getAttribute('data-space-section'));
-            // Lot 3 : sur /feed seulement, la barre du bas est rendue (affichée sous 640 px,
-            // à la place des onglets « Mon espace » ; voir client-space.css).
-            $this->assertSame($route === 'feed' ? 1 : 0, $xpath->query('//nav[@class="pk-tabbar"]')->length, $route);
+            // La barre du bas est rendue partout ; client-space.css l'affiche sous 640 px,
+            // à la place des onglets « Mon espace », et la masque au-dessus.
+            $this->assertSame(1, $xpath->query('//nav[@class="pk-tabbar"]')->length, $route);
             $this->assertSame(0, $xpath->query('//main[contains(@class,"main-content-with-sidebar")]')->length, $route);
         }
+    }
+
+    public function test_every_client_account_page_uses_the_same_tabs_instead_of_the_old_sidebar(): void
+    {
+        $this->actingAs(User::factory()->create(['user_type' => 'particulier', 'is_service_provider' => false]));
+
+        foreach (['service-orders.index' => 'requests', 'saved-searches.index' => 'saved',
+            'settings.index' => null, 'profile.show' => null] as $route => $key) {
+            $xpath = $this->xpath($this->get(route($route))->assertOk()->getContent());
+            $this->assertSame(5, $xpath->query('//nav[@aria-label="Mon espace particulier"]/a')->length, $route);
+            $current = $xpath->query('//a[@data-space-section][@aria-current="page"]');
+            $this->assertSame($key === null ? 0 : 1, $current->length, $route);
+            if ($key !== null) {
+                $this->assertSame($key, $current->item(0)->getAttribute('data-space-section'), $route);
+            }
+            $this->assertSame(0, $xpath->query('//aside[@id="sidebarNav"]')->length, "{$route} : ancienne barre latérale.");
+            $this->assertSame(1, $xpath->query('//nav[@class="pk-tabbar"]')->length, $route);
+        }
+    }
+
+    public function test_each_page_has_one_name_and_the_publish_button_one_label_and_one_address(): void
+    {
+        $this->actingAs(User::factory()->create(['user_type' => 'particulier', 'is_service_provider' => false]));
+        $labels = ['Accueil', 'Mes demandes', 'Messages', 'Favoris', 'Emploi'];
+
+        foreach (['feed', 'home', 'messages.index', 'saved-ads.index', 'settings.index', 'ads.index'] as $route) {
+            $html = $this->get(route($route))->assertOk()->getContent();
+            foreach (['Demander un service', 'Publier un besoin', 'Mon suivi', 'Suivi de mes demandes', 'Découvrir</span>'] as $old) {
+                $this->assertStringNotContainsString($old, $html, "{$route} affiche encore « {$old} ».");
+            }
+            $xpath = $this->xpath($html);
+            if ($route !== 'ads.index') {
+                $tabs = [];
+                foreach ($xpath->query('//nav[@aria-label="Mon espace particulier"]/a/span[1]') as $span) {
+                    $tabs[] = trim($span->textContent);
+                }
+                $this->assertSame($labels, $tabs, $route);
+            }
+            // Seule abréviation : « Demandes » dans la barre du bas, faute de place à 375 px.
+            $this->assertSame(['Accueil', 'Demandes', 'Publier', 'Messages', 'Profil'], $this->tabbarLabels($xpath), $route);
+            $this->assertSame([route('demand.create')], $this->publishTargets($xpath), $route);
+            $this->assertStringContainsString('Publier une demande', $html, $route);
+        }
+    }
+
+    public function test_provider_journey_publishes_an_offer_from_the_header_and_the_bottom_bar(): void
+    {
+        $provider = User::factory()->create(['user_type' => 'professionnel', 'is_service_provider' => true]);
+        $html = $this->actingAs($provider)->get(route('feed', ['mode' => 'provider']))->assertOk()->getContent();
+        $xpath = $this->xpath($html);
+
+        $this->assertSame([route('ads.create', ['type' => 'offre'])], $this->publishTargets($xpath));
+        $this->assertStringContainsString('Publier une offre', $html);
+        $this->assertStringNotContainsString('Demander un service', $html);
+        $this->assertSame(['Accueil', 'Annonces', 'Publier', 'Messages', 'Profil'], $this->tabbarLabels($xpath));
+    }
+
+    /** @return array<int, string> */
+    private function tabbarLabels(DOMXPath $xpath): array
+    {
+        $labels = [];
+        foreach ($xpath->query('//nav[@class="pk-tabbar"]/a/span') as $span) {
+            $labels[] = trim($span->textContent);
+        }
+
+        return $labels;
+    }
+
+    /** Adresses distinctes des boutons de publication : en-tête (ordinateur et téléphone) et barre du bas. */
+    private function publishTargets(DOMXPath $xpath): array
+    {
+        $targets = [];
+        foreach ($xpath->query('//a[contains(@class,"header-nav-btn-primary")] | //a[contains(@class,"mobile-service-request")] | //nav[@class="pk-tabbar"]/a[contains(@class,"pk-tabbar__pub")]') as $link) {
+            $targets[] = $link->getAttribute('href');
+        }
+
+        return array_values(array_unique($targets));
     }
 
     public function test_provider_only_sees_client_tabs_when_using_the_client_journey(): void

@@ -20,7 +20,7 @@ class FeedActionHierarchyFeatureTest extends TestCase
             ->assertViewHas('pkRole', 'client')->assertSee('Je cherche un service');
         $this->get(route('feed'))->assertOk()->assertViewHas('pkRole', 'client');
         $this->get(route('demands.tracking'))->assertRedirect(route('home'));
-        $this->get(route('home'))->assertOk()->assertSee('Mon suivi');
+        $this->get(route('home'))->assertOk()->assertSee('Mes demandes');
         $this->assertTrue($provider->fresh()->is_service_provider);
         $this->get(route('feed', ['mode' => 'provider']))->assertOk()->assertViewHas('pkRole', 'provider');
         $this->get(route('feed'))->assertViewHas('pkRole', 'provider');
@@ -43,7 +43,7 @@ class FeedActionHierarchyFeatureTest extends TestCase
         $this->actingAs($client)->get(route('feed'))->assertOk()
             ->assertViewHas('activeClientRequest', fn ($ad) => $ad->id === $older->id)
             ->assertViewHas('pkActiveRequestCount', 2)
-            ->assertSee('Comparer')->assertSee('Mon suivi')
+            ->assertSee('Comparer')->assertSee('Mes demandes')
             ->assertSee('data-activity-key="request-'.$older->id.'"', false)
             ->assertDontSee('data-activity-key="request-'.$newer->id.'"', false);
     }
@@ -56,7 +56,7 @@ class FeedActionHierarchyFeatureTest extends TestCase
             'message' => 'Proposition retirée', 'status' => ServiceProposal::STATUS_WITHDRAWN]);
         $response = $this->actingAs($client)->get(route('feed'))->assertOk();
         $this->assertSame(0, (int) $response->viewData('activeClientRequest')->pending_proposals_count);
-        $response->assertDontSee('Comparer les propositions')->assertSee('Voir mon suivi')
+        $response->assertDontSee('Comparer les propositions')->assertSee('Voir mes demandes')
             ->assertDontSee('data-activity-key="request-'.$ad->id.'"', false);
     }
 
@@ -135,7 +135,7 @@ class FeedActionHierarchyFeatureTest extends TestCase
             'status' => ServiceOrder::STATUS_FUNDED, 'payment_status' => ServiceOrder::PAYMENT_PAID]);
         $this->actingAs($client)->get(route('feed'))->assertOk()
             ->assertViewHas('pkActiveRequestCount', 0)->assertDontSee('Mission déjà financée')
-            ->assertSee('1 demande ou mission en cours')->assertSee('Voir mon suivi')
+            ->assertSee('1 demande ou mission en cours')->assertSee('Voir mes demandes')
             ->assertSee(route('home'), false);
         $this->get(route('home'))->assertOk()->assertSee('Mission déjà financée')
             ->assertSee('Voir ma commande')->assertViewHas('activityCounts', fn ($counts) => $counts['ongoing'] === 1);

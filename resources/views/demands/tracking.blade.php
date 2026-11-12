@@ -16,7 +16,7 @@
             <h1>Suivi de mes demandes</h1>
             <p>Retrouvez l’étape actuelle de chaque besoin et l’action utile à effectuer, sans chercher entre plusieurs écrans.</p>
         </div>
-        <a class="tracking-new" href="{{ route('demand.create') }}"><i class="fas fa-plus"></i> Publier un besoin</a>
+        <a class="tracking-new" href="{{ route('demand.create') }}"><i class="fas fa-plus"></i> Publier une demande</a>
     </header>
 
     <section class="tracking-summary" aria-label="Résumé de vos demandes">

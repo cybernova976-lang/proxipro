@@ -7,8 +7,8 @@
             <h2>{{ $primary['title'] }}</h2>
         </div>
         <a class="{{ ($pkPrimaryAction['state'] ?? 'action') === 'action' ? 'pk-btn' : 'pk-btn-outline' }}" href="{{ $primary['action_url'] }}">{{ $primary['short_action'] }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
-        <a class="pk-resume__all" href="{{ route('home') }}">Mon suivi <span>({{ $pkClientActivity['total'] }})</span></a>
+        <a class="pk-resume__all" href="{{ route('home') }}">Mes demandes <span>({{ $pkClientActivity['total'] }})</span></a>
     </section>
 @elseif($pkClientActivity['total'] > 0)
-    <a class="pk-waiting-summary" href="{{ route('home') }}"><i class="far fa-clock" aria-hidden="true"></i><span>{{ $pkClientActivity['total'] }} demande{{ $pkClientActivity['total'] > 1 ? 's' : '' }} ou mission{{ $pkClientActivity['total'] > 1 ? 's' : '' }} en cours</span><strong>Voir mon suivi <i class="fas fa-arrow-right" aria-hidden="true"></i></strong></a>
+    <a class="pk-waiting-summary" href="{{ route('home') }}"><i class="far fa-clock" aria-hidden="true"></i><span>{{ $pkClientActivity['total'] }} demande{{ $pkClientActivity['total'] > 1 ? 's' : '' }} ou mission{{ $pkClientActivity['total'] > 1 ? 's' : '' }} en cours</span><strong>Voir mes demandes <i class="fas fa-arrow-right" aria-hidden="true"></i></strong></a>
 @endif

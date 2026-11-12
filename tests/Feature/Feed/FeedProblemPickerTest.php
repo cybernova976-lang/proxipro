@@ -93,10 +93,12 @@ class FeedProblemPickerTest extends TestCase
         $this->assertDatabaseHas('demand_drafts', ['user_id' => $owner->id]);
     }
 
-    public function test_header_publish_button_is_secondary_on_the_client_feed_only(): void
+    public function test_header_publish_button_is_secondary_in_the_client_space_only(): void
     {
         $client = $this->client();
-        $this->actingAs($client)->get(route('feed'))->assertOk()->assertSee('pk-header-secondary', false);
+        foreach (['feed', 'home', 'messages.index', 'settings.index'] as $route) {
+            $this->actingAs($client)->get(route($route))->assertOk()->assertSee('pk-header-secondary', false);
+        }
         $this->actingAs($client)->get(route('ads.create'))->assertDontSee('pk-header-secondary', false);
     }
 

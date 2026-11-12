@@ -23,7 +23,12 @@
         $openGraphImage = $metaSection('og_image') ?: asset('images/social-card.png');
         $pkClientSpaceTabs = \App\Support\ClientSpaceNavigation::forRequest(request(), auth()->user(), $pkRole ?? null);
         $pkClientSpaceVisible = count($pkClientSpaceTabs) > 0;
-        $pkHeaderPublishSecondary = $pkClientSpaceVisible && request()->routeIs('feed');
+        // Dans l'espace particulier, chaque page porte sa propre action principale :
+        // le bouton de l'en-tête passe en contour (un seul bouton plein par écran).
+        $pkHeaderPublishSecondary = $pkClientSpaceVisible;
+        // Un seul bouton de publication par parcours, identique dans l'en-tête et la barre du bas.
+        $pkNavRole = \App\Support\ClientSpaceNavigation::role(request(), auth()->user(), $pkRole ?? null);
+        $pkPublish = \App\Support\ClientSpaceNavigation::publishAction($pkNavRole);
     @endphp
     <title>{{ $pageTitle }}</title>
 
@@ -6766,11 +6771,11 @@
                             <i class="fas fa-home"></i><span>Accueil</span>
                         </a>
                         <a href="{{ route('home') }}" class="header-nav-btn {{ request()->routeIs('home') ? 'active' : '' }}">
-                            <i class="fas fa-clipboard-list"></i><span>Mon suivi</span>
+                            <i class="fas fa-clipboard-list"></i><span>{{ \App\Support\ClientSpaceNavigation::REQUESTS_LABEL }}</span>
                         </a>
                         @endunless
-                        <a href="{{ route('demand.create') }}" class="header-nav-btn header-nav-btn-primary{{ $pkHeaderPublishSecondary ? ' pk-header-secondary' : '' }}">
-                            <i class="fas fa-plus-circle"></i><span>{{ $pkClientSpaceVisible ? 'Publier une demande' : 'Demander un service' }}</span>
+                        <a href="{{ $pkPublish['url'] }}" class="header-nav-btn header-nav-btn-primary{{ $pkHeaderPublishSecondary ? ' pk-header-secondary' : '' }}">
+                            <i class="fas fa-plus-circle"></i><span>{{ $pkPublish['label'] }}</span>
                         </a>
                         <a href="{{ route('contact.index') }}" class="header-nav-btn header-nav-secondary">
                             <i class="fas fa-headset"></i><span>Contact</span>
@@ -6780,12 +6785,12 @@
                         </button>
                     </nav>
 
-                    <a href="{{ route('demand.create') }}"
+                    <a href="{{ $pkPublish['url'] }}"
                        class="mobile-service-request d-lg-none{{ $pkHeaderPublishSecondary ? ' pk-header-secondary' : '' }}"
-                       aria-label="Publier une annonce">
+                       aria-label="{{ $pkPublish['label'] }}">
                         <i class="fas fa-plus-circle"></i>
-                        <span class="mobile-service-request-long">Publier</span>
-                        <span class="mobile-service-request-short">Publier</span>
+                        <span class="mobile-service-request-long">{{ $pkPublish['short'] }}</span>
+                        <span class="mobile-service-request-short">{{ $pkPublish['short'] }}</span>
                     </a>
 
                     <!-- Actions utilisateur -->
@@ -6976,12 +6981,11 @@
                                     </div>
                                 </li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('profile.show') }}"><i class="fas fa-user" style="color: var(--primary);"></i>Mon Profil</a></li>
-                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('home') }}"><i class="fas fa-clipboard-list text-secondary"></i>Mon suivi</a></li>
+                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('home') }}"><i class="fas fa-clipboard-list text-secondary"></i>{{ \App\Support\ClientSpaceNavigation::REQUESTS_LABEL }}</a></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('ads.index') }}"><i class="fas fa-bullhorn" style="color: #6366f1;"></i>Annonces</a></li>
                                 @if(!Auth::user()->isProfessionnel() && !Auth::user()->isServiceProvider())
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('service-provider.start') }}"><i class="fas fa-user-plus" style="color: #059669;"></i>Activer mon profil prestataire</a></li>
                                 @endif
-                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('demands.tracking') }}"><i class="fas fa-route" style="color: #2563eb;"></i>Suivi de mes demandes</a></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('messages.index') }}"><i class="fas fa-envelope" style="color: var(--accent);"></i>Messages @if($unreadCount > 0)<span class="badge bg-danger ms-auto" style="font-size: 0.65rem;">{{ $unreadCount }}</span>@endif</a></li>
                                 <li><hr class="dropdown-divider my-2"></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('contact.index') }}"><i class="fas fa-headset" style="color: #3b82f6;"></i>Contact</a></li>
@@ -10292,11 +10296,9 @@
     @include('partials.pwa-install')
     @include('partials.user-presence')
 
-    {{-- Hors de l'espace particulier, la navigation mobile existante reste disponible. --}}
-    {{-- Sur /feed (client), la barre du bas remplace les onglets « Mon espace » sous 640 px (client-space.css). --}}
-    @if(! $pkClientSpaceVisible || request()->routeIs('feed'))
-        @include('feed.partials.mobile-tabbar')
-    @endif
+    {{-- Barre du bas sur toutes les pages connectées. Dans l'espace particulier, elle remplace
+         les onglets « Mon espace » sous 640 px et reste masquée au-dessus (client-space.css). --}}
+    @include('feed.partials.mobile-tabbar')
     <style>
         .header-nav-center .header-nav-btn { white-space: nowrap; }
         @media (min-width: 992px) and (max-width: 1199.98px) {

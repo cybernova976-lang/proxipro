@@ -1,15 +1,15 @@
 <div class="pk-dashboard">
     @if(session('success'))<div class="alert alert-success" role="status">{{ session('success') }}</div>@endif
     <header class="pk-dash-head">
-        <div><span class="pk-dash-kicker">Votre espace de suivi</span><h1>Mon suivi</h1><p>Vos demandes et vos réservations, de la première réponse à la prestation terminée.</p></div>
-        <a class="pk-dash-primary" href="{{ route('demand.create') }}"><i class="fas fa-plus" aria-hidden="true"></i> Publier un besoin</a>
+        <div><span class="pk-dash-kicker">Votre espace de suivi</span><h1>Mes demandes</h1><p>Vos demandes et vos réservations, de la première réponse à la prestation terminée.</p></div>
+        <a class="pk-dash-primary" href="{{ route('demand.create') }}"><i class="fas fa-plus" aria-hidden="true"></i> Publier une demande</a>
     </header>
     <nav class="pk-dash-tools" aria-label="Vos raccourcis">
         <a href="{{ route('messages.index') }}"><i class="far fa-comments" aria-hidden="true"></i> Mes messages @if($unread = Auth::user()->unreadMessagesCount())<b>{{ $unread }} non lu{{ $unread > 1 ? 's' : '' }}</b>@endif</a>
         @if($canProvide)<a href="{{ route('pro.opportunities') }}"><i class="fas fa-briefcase" aria-hidden="true"></i> Mon activité prestataire</a>@endif
         <a href="{{ route('home') }}#account" onclick="dashboardNav('account'); return false;"><i class="far fa-user" aria-hidden="true"></i> Mon compte</a>
     </nav>
-    <nav class="pk-dash-tabs" aria-label="Filtrer mon suivi">
+    <nav class="pk-dash-tabs" aria-label="Filtrer mes demandes">
         @foreach(['active' => 'Tout en cours', 'action' => 'À traiter', 'waiting' => 'En attente', 'ongoing' => 'En cours', 'closed' => 'Historique'] as $key => $label)
             <a href="{{ route('home', ['etat' => $key]) }}" @if($activityFilter === $key) aria-current="page" @endif>{{ $label }}<b>{{ $key === 'active' ? $activityCounts['action'] + $activityCounts['waiting'] + $activityCounts['ongoing'] : $activityCounts[$key] }}</b></a>
         @endforeach
