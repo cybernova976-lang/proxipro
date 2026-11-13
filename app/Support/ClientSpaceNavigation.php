@@ -86,6 +86,20 @@ class ClientSpaceNavigation
     }
 
     /**
+     * Accès à l'espace Pro depuis l'en-tête. La même adresse pour tous : un
+     * prestataire y trouve son poste de pilotage, un autre membre le parcours
+     * pour devenir prestataire.
+     *
+     * @return array{label: string, is_provider: bool}
+     */
+    public static function proEntry(?User $user): array
+    {
+        $isProvider = $user !== null && ($user->isProfessionnel() || $user->isServiceProvider());
+
+        return ['label' => $isProvider ? 'Espace Pro' : 'Devenir pro', 'is_provider' => $isProvider];
+    }
+
+    /**
      * Barre du bas (téléphone), avec les mêmes noms que les onglets.
      *
      * @return array<int, array{url: string, icon: string, label: string, active: bool, class: string}>

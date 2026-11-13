@@ -148,59 +148,79 @@ class ProDashboardController extends Controller
         $user = Auth::user();
         $isPro = $user->isProfessionnel() || $user->isServiceProvider();
 
-        // Accessible à tous : les non-pros voient un teaser
+        // Accessible à tous : un membre qui ne propose pas encore de services
+        // voit le parcours pour devenir prestataire, avec ses étapes réelles.
         if (! $isPro) {
             return view('pro.dashboard', [
                 'user' => $user,
                 'isPro' => false,
-                'stats' => [],
-                'recentClients' => collect(),
-                'recentQuotes' => collect(),
-                'recentInvoices' => collect(),
-                'subscription' => null,
+                'joinSteps' => [
+                    ['done' => $user->verificationProfileMissingFields() === [], 'label' => 'Compléter votre profil',
+                        'detail' => 'Nom, téléphone, adresse et photo : ce que les clients voient avant de vous contacter.'],
+                    ['done' => $user->hasVerifiedProfileBadge(), 'label' => 'Obtenir le badge « Profil vérifié »',
+                        'detail' => 'La vérification rassure les clients et protège la plateforme.'],
+                    ['done' => false, 'label' => 'Choisir votre métier et votre statut',
+                        'detail' => 'Particulier, auto-entrepreneur ou société : vous pourrez changer plus tard.'],
+                ],
             ]);
         }
 
+        $isProfessional = $user->isProfessionnel();
+        $providerCategories = $this->providerServiceCategories($user);
+        $reviewsCount = $user->reviewsReceived()->count();
+
+        // Quatre chiffres seulement, tous mesurés. Le montant encaissé
+        // n'apparaît que pour un professionnel, seul autorisé à émettre des factures.
         $stats = [
-            'total_clients' => $user->proClients()->count(),
-            'active_clients' => $user->proClients()->where('status', 'active')->count(),
-            'total_quotes' => $user->proQuotes()->count(),
-            'pending_quotes' => $user->proQuotes()->where('status', 'pending')->count(),
-            'total_invoices' => $user->proInvoices()->count(),
-            'unpaid_invoices' => $user->proInvoices()->where('status', 'sent')->count(),
-            'total_revenue' => $user->proInvoices()->where('status', 'paid')->sum('total'),
-            'monthly_revenue' => $user->proInvoices()->where('status', 'paid')
+            'new_opportunities' => $providerCategories->isEmpty()
+                ? 0
+                : $this->matchingOpportunityQuery($user, $providerCategories)->count(),
+            'pending_proposals' => ServiceProposal::query()
+                ->where('provider_id', $user->id)
+                ->where('status', ServiceProposal::STATUS_PENDING)
+                ->count(),
+            'active_missions' => ServiceOrder::query()
+                ->where('seller_id', $user->id)
+                ->whereIn('status', [
+                    ServiceOrder::STATUS_PENDING_ACCEPTANCE,
+                    ServiceOrder::STATUS_AWAITING_PAYMENT,
+                    ServiceOrder::STATUS_FUNDED,
+                    ServiceOrder::STATUS_DISPUTED,
+                ])
+                ->count(),
+            'monthly_revenue' => (float) $user->proInvoices()->where('status', 'paid')
                 ->whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()])->sum('total'),
-            'total_documents' => $user->proDocuments()->count(),
-            'reviews_count' => $user->reviewsReceived()->count(),
-            'average_rating' => round($user->reviewsReceived()->avg('rating') ?? 0, 1),
-            'active_ads' => $user->ads()->where('status', 'active')->count(),
+            'reviews_count' => $reviewsCount,
+            'average_rating' => $reviewsCount > 0 ? round((float) $user->reviewsReceived()->avg('rating'), 1) : null,
         ];
 
-        $providerCategories = $this->providerServiceCategories($user);
-        $stats['new_opportunities'] = $providerCategories->isEmpty()
-            ? 0
-            : $this->matchingOpportunityQuery($user, $providerCategories)->count();
-        $stats['pending_proposals'] = ServiceProposal::query()
-            ->where('provider_id', $user->id)
-            ->where('status', ServiceProposal::STATUS_PENDING)
-            ->count();
-        $stats['active_missions'] = ServiceOrder::query()
-            ->where('seller_id', $user->id)
-            ->whereIn('status', [
-                ServiceOrder::STATUS_PENDING_ACCEPTANCE,
-                ServiceOrder::STATUS_AWAITING_PAYMENT,
-                ServiceOrder::STATUS_FUNDED,
-                ServiceOrder::STATUS_DISPUTED,
-            ])
-            ->count();
+        $nextSteps = app(\App\Services\ProNextSteps::class)->for($user, [
+            'new_opportunities' => $stats['new_opportunities'],
+            'has_services' => $providerCategories->isNotEmpty(),
+        ]);
 
-        $recentClients = $user->proClients()->latest('last_interaction_at')->take(5)->get();
-        $recentQuotes = $user->proQuotes()->with('client')->latest()->take(5)->get();
-        $recentInvoices = $user->proInvoices()->with('client')->latest()->take(5)->get();
-        $subscription = $user->proSubscription;
+        // Devis et factures récents dans une seule liste, du plus récent au plus ancien.
+        $recentDocuments = $isProfessional
+            ? $user->proQuotes()->latest()->take(5)->get()->map(fn (ProQuote $quote) => [
+                'type' => 'Devis', 'number' => $quote->quote_number, 'client' => $quote->client_name,
+                'total' => (float) $quote->total, 'status' => $quote->getStatusLabel(), 'tone' => $quote->getStatusColor(),
+                'url' => route('pro.quotes.show', $quote->id), 'date' => $quote->created_at,
+            ])->concat($user->proInvoices()->latest()->take(5)->get()->map(fn (ProInvoice $invoice) => [
+                'type' => 'Facture', 'number' => $invoice->invoice_number, 'client' => $invoice->client_name,
+                'total' => (float) $invoice->total, 'status' => $invoice->getStatusLabel(), 'tone' => $invoice->getStatusColor(),
+                'url' => route('pro.invoices.show', $invoice->id), 'date' => $invoice->created_at,
+            ]))->sortByDesc('date')->take(5)->values()
+            : collect();
 
-        return view('pro.dashboard', compact('user', 'stats', 'recentClients', 'recentQuotes', 'recentInvoices', 'subscription') + ['isPro' => true]);
+        return view('pro.dashboard', [
+            'user' => $user,
+            'isPro' => true,
+            'isProfessional' => $isProfessional,
+            'stats' => $stats,
+            'nextSteps' => $nextSteps,
+            'recentDocuments' => $recentDocuments,
+            'subscription' => $user->proSubscription,
+        ]);
     }
 
     /**
@@ -1262,7 +1282,21 @@ class ProDashboardController extends Controller
             $updateData['max_active_ads'] = 5;
         }
 
+        $wasProfessional = $user->isProfessionnel();
         $user->update($updateData);
+
+        // Passage en professionnel : on enchaîne directement sur ce qu'il reste
+        // à faire pour émettre des devis et factures, au lieu de revenir au formulaire.
+        if (! $wasProfessional && $user->isProfessionnel() && ! $user->canIssueCommercialDocuments()) {
+            $remaining = count($user->proCommercialMissingRequirements());
+
+            return redirect()->route('pro.compliance')->with('success', sprintf(
+                'Votre statut est maintenant « %s ». Il reste %d %s pour émettre vos devis et factures.',
+                $user->getAccountTypeLabel(),
+                $remaining,
+                $remaining > 1 ? 'étapes' : 'étape'
+            ));
+        }
 
         return redirect()->route('pro.account-status')->with('success', 'Statut du compte mis à jour avec succès.');
     }

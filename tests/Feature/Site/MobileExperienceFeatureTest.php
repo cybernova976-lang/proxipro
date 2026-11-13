@@ -125,19 +125,22 @@ class MobileExperienceFeatureTest extends TestCase
     public function test_pro_subscription_uses_the_desktop_workspace_without_mobile_chrome(): void
     {
         $layout = file_get_contents(resource_path('views/pro/layout.blade.php'));
+        $topbar = file_get_contents(resource_path('views/pro/layout/topbar.blade.php'));
+        $styles = file_get_contents(public_path('css/pro-space.css'));
+        $script = file_get_contents(public_path('js/pro-space.js'));
         $subscription = file_get_contents(resource_path('views/pro/subscription.blade.php'));
 
         $this->assertMatchesRegularExpression(
-            '/@media \(min-width: 992px\).*?\.pro-sidebar-toggle\s*\{\s*display: none;/s',
-            $layout
+            '/@media \(min-width: 1024px\).*?\.pro-sidebar-toggle\s*\{\s*display: none;/s',
+            $styles
         );
-        $this->assertStringContainsString('class="pro-topbar-context"', $layout);
-        $this->assertStringContainsString("@yield('topbar_title', 'Espace Pro')", $layout);
-        $this->assertStringContainsString('pro-topbar-action-label">Retour au feed', $layout);
-        $this->assertStringContainsString('pro-topbar-action-label">Messages', $layout);
-        $this->assertStringContainsString('aria-controls="proSidebar" aria-expanded="false"', $layout);
-        $this->assertStringContainsString('const setProSidebarOpen = (open) =>', $layout);
-        $this->assertStringContainsString("event.key === 'Escape'", $layout);
+        $this->assertStringContainsString("yieldContent('topbar_title')", $layout);
+        $this->assertStringContainsString('class="pro-topbar-context"', $topbar);
+        $this->assertStringContainsString('pro-topbar-action-label">Retour au feed', $topbar);
+        $this->assertStringContainsString('pro-topbar-action-label">Messages', $topbar);
+        $this->assertStringContainsString('aria-controls="proSidebar" aria-expanded="false"', $topbar);
+        $this->assertStringContainsString('const setProSidebarOpen = (open) =>', $script);
+        $this->assertStringContainsString("event.key === 'Escape'", $script);
         $this->assertStringContainsString('pro-content-header subscription-page-header', $subscription);
         $this->assertStringContainsString("@section('topbar_title', 'Abonnement Premium')", $subscription);
         $this->assertStringContainsString('.subscription-page-header,', $subscription);

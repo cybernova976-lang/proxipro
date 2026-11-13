@@ -53,15 +53,20 @@ class LocalizationAndPointsIntegrityFeatureTest extends TestCase
     {
         $appLayout = file_get_contents(resource_path('views/layouts/app.blade.php'));
         $proLayout = file_get_contents(resource_path('views/pro/layout.blade.php'));
+        // Les règles responsives de l'espace Pro vivent dans sa feuille de style, chargée par la mise en page.
+        $proStyles = file_get_contents(public_path('css/pro-space.css'));
         $authLayout = file_get_contents(resource_path('views/layouts/auth.blade.php'));
 
         foreach ([$appLayout, $proLayout, $authLayout] as $layout) {
             $this->assertStringContainsString('width=device-width, initial-scale=1', $layout);
-            $this->assertStringContainsString('@media (max-width:', $layout);
+        }
+        foreach ([$appLayout, $proStyles, $authLayout] as $styles) {
+            $this->assertStringContainsString('@media (max-width:', $styles);
         }
 
-        $this->assertStringContainsString('.table-responsive', $proLayout);
-        $this->assertStringContainsString('.pro-card[style*="position: sticky"]', $proLayout);
+        $this->assertStringContainsString("asset('css/pro-space.css')", $proLayout);
+        $this->assertStringContainsString('.table-responsive', $proStyles);
+        $this->assertStringContainsString('.pro-card[style*="position: sticky"]', $proStyles);
 
         $passwordConfirmation = file_get_contents(resource_path('views/auth/passwords/confirm.blade.php'));
         $this->assertStringContainsString('Confirmez votre mot de passe avant de continuer.', $passwordConfirmation);

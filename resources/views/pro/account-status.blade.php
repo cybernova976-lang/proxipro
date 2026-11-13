@@ -1,176 +1,75 @@
 @extends('pro.layout')
 @section('title', 'Statut du compte - Espace Pro')
+@section('topbar_title', 'Statut et conformité')
 
 @section('content')
 @php
     $currentStatus = $user->isEntreprise() ? 'entreprise' : ($user->isAutoEntrepreneur() ? 'auto-entrepreneur' : 'particulier');
     $selectedStatus = old('pro_status', $currentStatus);
+    $statusOptions = [
+        'particulier' => ['icon' => 'fa-user', 'title' => 'Particulier prestataire',
+            'text' => 'Vous rendez des services ponctuels, sans activité déclarée. Pas de devis ni de facture à votre nom.'],
+        'auto-entrepreneur' => ['icon' => 'fa-user-tie', 'title' => 'Auto-entrepreneur',
+            'text' => 'Micro-entreprise immatriculée. Devis et factures à votre nom, avec votre SIRET.'],
+        'entreprise' => ['icon' => 'fa-building', 'title' => 'Société',
+            'text' => 'SASU, SAS, SARL, EURL, SA… Devis et factures au nom de votre société.'],
+    ];
 @endphp
 <div class="pro-content-header">
     <div>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-1" style="font-size: 0.8rem;">
-                <li class="breadcrumb-item"><a href="{{ route('pro.dashboard') }}" style="color: var(--pro-primary);">Espace Pro</a></li>
-                <li class="breadcrumb-item active">Statut du compte</li>
-            </ol>
-        </nav>
-        <h1>Statut du compte</h1>
-        <p class="text-muted mb-0" style="font-size: 0.88rem;">Changez votre statut professionnel selon votre situation.</p>
+        <h1>Votre statut professionnel</h1>
+        <p class="text-muted mb-0">Statut actuel : <strong>{{ $user->getAccountTypeLabel() }}</strong>. Vous pouvez en changer à tout moment, vos clients, devis et factures sont conservés.</p>
     </div>
 </div>
 
-{{-- Current Status --}}
-<div class="pro-card mb-4">
-    <div class="d-flex align-items-center gap-3 mb-3">
-        <div style="width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem;
-            @if($currentStatus === 'entreprise') background: rgba(59,130,246,0.1); color: #3b82f6;
-            @elseif($currentStatus === 'auto-entrepreneur') background: rgba(168,85,247,0.1); color: #a855f7;
-            @else background: rgba(16,185,129,0.1); color: #10b981; @endif">
-            @if($currentStatus === 'entreprise') <i class="fas fa-building"></i>
-            @elseif($currentStatus === 'auto-entrepreneur') <i class="fas fa-user-tie"></i>
-            @else <i class="fas fa-user"></i> @endif
-        </div>
-        <div>
-            <h5 class="fw-bold mb-1">Statut actuel : {{ $user->getAccountTypeLabel() }}</h5>
-            <p class="text-muted mb-0" style="font-size: 0.85rem;">
-                @if($currentStatus === 'entreprise')
-                    Vous êtes inscrit en tant qu’entreprise. L’émission de devis et factures dépend des étapes de configuration de votre espace PRO.
-                @elseif($currentStatus === 'auto-entrepreneur')
-                    Vous êtes inscrit en tant qu'auto-entrepreneur / micro-entrepreneur.
-                @else
-                    Vous êtes inscrit en tant que particulier prestataire.
-                @endif
-            </p>
-        </div>
-    </div>
-</div>
+@include('pro.partials.status-tabs')
 
-{{-- Status Options --}}
-<form method="POST" action="{{ route('pro.account-status.update') }}">
+<form method="POST" action="{{ route('pro.account-status.update') }}" class="pk-status-form">
     @csrf @method('PUT')
 
-    <div class="row g-3 mb-4">
-        {{-- Particulier --}}
-        <div class="col-md-4">
-            <label class="d-block h-100 cursor-pointer">
-                <input type="radio" name="pro_status" value="particulier" {{ $selectedStatus === 'particulier' ? 'checked' : '' }} class="visually-hidden status-radio" aria-label="Particulier">
-                <div class="pro-card mb-0 h-100 status-card {{ $selectedStatus === 'particulier' ? 'active' : '' }}" style="cursor: pointer; transition: all 0.2s;">
-                    <div class="text-center">
-                        <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(16,185,129,0.1); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 12px;">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <h6 class="fw-bold">Particulier</h6>
-                        <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                            Un compte particulier ne permet pas d’émettre des devis ou factures professionnels dans cet espace.
-                        </p>
-                        <div class="mt-2">
-                            <span class="pro-status pro-status-success" style="font-size: 0.72rem;">Pas d’émission PRO</span>
-                        </div>
-                    </div>
-                </div>
-            </label>
+    <fieldset class="pro-card">
+        <legend class="pro-card-title">Quelle est votre situation ?</legend>
+        <div class="pk-status-options">
+            @foreach($statusOptions as $value => $option)
+                <label class="pk-status-option">
+                    <input type="radio" name="pro_status" value="{{ $value }}" {{ $selectedStatus === $value ? 'checked' : '' }} class="visually-hidden status-radio">
+                    <span class="pk-status-option__card">
+                        <i class="fas {{ $option['icon'] }}" aria-hidden="true"></i>
+                        <span class="pk-status-option__title">{{ $option['title'] }}</span>
+                        <span class="pk-status-option__text">{{ $option['text'] }}</span>
+                    </span>
+                </label>
+            @endforeach
         </div>
+    </fieldset>
 
-        {{-- Auto-entrepreneur --}}
-        <div class="col-md-4">
-            <label class="d-block h-100 cursor-pointer">
-                <input type="radio" name="pro_status" value="auto-entrepreneur" {{ $selectedStatus === 'auto-entrepreneur' ? 'checked' : '' }} class="visually-hidden status-radio" aria-label="Auto-entrepreneur">
-                <div class="pro-card mb-0 h-100 status-card {{ $selectedStatus === 'auto-entrepreneur' ? 'active' : '' }}" style="cursor: pointer; transition: all 0.2s;">
-                    <div class="text-center">
-                        <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(168,85,247,0.1); color: #a855f7; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 12px;">
-                            <i class="fas fa-user-tie"></i>
-                        </div>
-                        <h6 class="fw-bold">Auto-Entrepreneur</h6>
-                        <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                            Micro-entreprise / auto-entrepreneur. Préparez vos documents puis validez la checklist de conformité avant émission.
-                        </p>
-                        <div class="mt-2">
-                            <span class="pro-status pro-status-info" style="font-size: 0.72rem;">SIRET requis</span>
-                        </div>
-                    </div>
-                </div>
-            </label>
-        </div>
-
-        {{-- Entreprise --}}
-        <div class="col-md-4">
-            <label class="d-block h-100 cursor-pointer">
-                <input type="radio" name="pro_status" value="entreprise" {{ $selectedStatus === 'entreprise' ? 'checked' : '' }} class="visually-hidden status-radio" aria-label="Entreprise">
-                <div class="pro-card mb-0 h-100 status-card {{ $selectedStatus === 'entreprise' ? 'active' : '' }}" style="cursor: pointer; transition: all 0.2s;">
-                    <div class="text-center">
-                        <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(59,130,246,0.1); color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 12px;">
-                            <i class="fas fa-building"></i>
-                        </div>
-                        <h6 class="fw-bold">Entreprise</h6>
-                        <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                            SASU, SAS, SARL, EURL, SA… Renseignez les informations de votre propre société pour préparer vos documents.
-                        </p>
-                        <div class="mt-2">
-                            <span class="pro-status pro-status-primary" style="font-size: 0.72rem;">Entreprise immatriculée</span>
-                        </div>
-                    </div>
-                </div>
-            </label>
-        </div>
-    </div>
-
-    {{-- Additional fields based on status --}}
-    <div class="pro-card" id="statusFields">
-        <h6 class="fw-bold mb-3">Informations complémentaires</h6>
-        <p class="small text-muted">Renseignez l’identité de l’entreprise qui émettra vos devis et factures. L’immatriculation de la plateforme PROKEJEM ne remplit pas automatiquement les informations des prestataires. Ne renseignez un numéro de TVA que s’il vous a été attribué.</p>
-
+    {{-- Visible seulement pour un statut professionnel (règle CSS dans pro-space.css). --}}
+    <fieldset class="pro-card pk-status-company">
+        <legend class="pro-card-title">Votre entreprise</legend>
+        <p class="small text-muted">Ces informations figureront sur vos devis et factures. Elles concernent votre activité, pas l’entreprise qui exploite Prokejem. Ne renseignez un numéro de TVA que s’il vous a été attribué.</p>
         <div class="row g-3">
             <div class="col-md-6">
-                <label class="form-label fw-semibold">Nom de l'entreprise / Raison sociale</label>
-                <input type="text" name="company_name" class="form-control" value="{{ old('company_name', $user->company_name) }}" style="border-radius: 10px;">
+                <label class="form-label fw-semibold" for="companyName">Nom de l’entreprise ou raison sociale</label>
+                <input type="text" id="companyName" name="company_name" class="form-control" value="{{ old('company_name', $user->company_name) }}" autocomplete="organization">
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-semibold">Immatriculation professionnelle</label>
-                <input type="text" name="siret" class="form-control" value="{{ old('siret', $user->siret) }}" style="border-radius: 10px;" placeholder="SIRET (France) ou registre local" maxlength="64">
+                <label class="form-label fw-semibold" for="siret">Numéro SIRET</label>
+                <input type="text" id="siret" name="siret" class="form-control" value="{{ old('siret', $user->siret) }}" placeholder="14 chiffres (ou registre local hors de France)" maxlength="64" inputmode="numeric">
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-semibold">Numéro TVA intracommunautaire</label>
-                <input type="text" name="tva_number" class="form-control" value="{{ old('tva_number', $user->tva_number) }}" style="border-radius: 10px;" placeholder="FR12345678901">
+                <label class="form-label fw-semibold" for="tvaNumber">Numéro de TVA intracommunautaire <span class="text-muted fw-normal">(facultatif)</span></label>
+                <input type="text" id="tvaNumber" name="tva_number" class="form-control" value="{{ old('tva_number', $user->tva_number) }}" placeholder="FR12345678901">
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-semibold">N° d'assurance RC Pro</label>
-                <input type="text" name="insurance_number" class="form-control" value="{{ old('insurance_number', $user->insurance_number) }}" style="border-radius: 10px;">
+                <label class="form-label fw-semibold" for="insuranceNumber">Assurance RC Pro <span class="text-muted fw-normal">(facultatif)</span></label>
+                <input type="text" id="insuranceNumber" name="insurance_number" class="form-control" value="{{ old('insurance_number', $user->insurance_number) }}">
             </div>
         </div>
-    </div>
+    </fieldset>
 
-    <div class="mt-3 d-flex justify-content-end">
-        <button type="submit" class="btn btn-pro-primary btn-lg">
-            <i class="fas fa-save me-1"></i> Enregistrer le changement
-        </button>
+    <div class="pk-status-submit">
+        <p class="small text-muted mb-0">Après l’enregistrement, il vous reste à cocher les conditions d’émission (profil vérifié, adresse, acceptation des conditions PRO).</p>
+        <button type="submit" class="btn btn-pro-primary">Enregistrer mon statut</button>
     </div>
 </form>
-
-{{-- Info Box --}}
-<div class="pro-card mt-4" style="background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(168,85,247,0.05)); border-left: 4px solid var(--pro-primary);">
-    <h6 class="fw-bold mb-2"><i class="fas fa-info-circle me-2 text-primary"></i>Important à savoir</h6>
-    <ul class="mb-0" style="font-size: 0.85rem; color: #64748b;">
-        <li>Le changement de statut n'affecte pas vos données existantes (clients, devis, factures).</li>
-        <li>Les informations saisies alimentent vos documents ; vous devez vérifier les mentions exigées pour votre activité et votre pays.</li>
-        <li>Certains documents peuvent être requis selon votre nouveau statut (KBIS, attestation d'assurance…).</li>
-        <li>Le changement est immédiat, mais l’émission de documents reste soumise au profil complet, au badge vérifié, à l’immatriculation et aux conditions PRO.</li>
-        <li><a href="{{ route('pro.compliance') }}">Consultez la checklist de conformité PRO</a> avant tout envoi à un client.</li>
-    </ul>
-</div>
-
-<style>
-.status-card { border: 2px solid transparent; }
-.status-card.active { border-color: var(--pro-primary); box-shadow: 0 0 0 3px rgba(168,85,247,0.15); }
-.status-card:hover { border-color: rgba(168,85,247,0.3); transform: translateY(-2px); }
-.status-radio:focus-visible + .status-card { outline: 3px solid var(--pro-primary); outline-offset: 3px; }
-</style>
-
-<script>
-document.querySelectorAll('.status-radio').forEach(radio => {
-    radio.addEventListener('change', function() {
-        document.querySelectorAll('.status-card').forEach(c => c.classList.remove('active'));
-        this.closest('label').querySelector('.status-card').classList.add('active');
-    });
-});
-</script>
 @endsection

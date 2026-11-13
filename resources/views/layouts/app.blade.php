@@ -29,6 +29,9 @@
         // Un seul bouton de publication par parcours, identique dans l'en-tête et la barre du bas.
         $pkNavRole = \App\Support\ClientSpaceNavigation::role(request(), auth()->user(), $pkRole ?? null);
         $pkPublish = \App\Support\ClientSpaceNavigation::publishAction($pkNavRole);
+        // Accès à l'espace Pro depuis l'en-tête : « Espace Pro » pour un prestataire,
+        // « Devenir pro » pour un membre qui ne propose pas encore de services.
+        $pkProEntry = \App\Support\ClientSpaceNavigation::proEntry(auth()->user());
     @endphp
     <title>{{ $pageTitle }}</title>
 
@@ -6774,15 +6777,13 @@
                             <i class="fas fa-clipboard-list"></i><span>{{ \App\Support\ClientSpaceNavigation::REQUESTS_LABEL }}</span>
                         </a>
                         @endunless
+                        <a href="{{ route('pro.dashboard') }}" class="header-nav-btn {{ request()->routeIs('pro.*') ? 'active' : '' }}" data-header-pro>
+                            <i class="fas fa-briefcase"></i><span>{{ $pkProEntry['label'] }}</span>
+                        </a>
                         <a href="{{ $pkPublish['url'] }}" class="header-nav-btn header-nav-btn-primary{{ $pkHeaderPublishSecondary ? ' pk-header-secondary' : '' }}">
                             <i class="fas fa-plus-circle"></i><span>{{ $pkPublish['label'] }}</span>
                         </a>
-                        <a href="{{ route('contact.index') }}" class="header-nav-btn header-nav-secondary">
-                            <i class="fas fa-headset"></i><span>Contact</span>
-                        </a>
-                        <button type="button" class="header-nav-btn header-nav-secondary" data-site-share-trigger>
-                            <i class="fas fa-share-nodes"></i><span>Partager</span>
-                        </button>
+                        {{-- Contact et Partager restent dans le menu du compte : la barre garde quatre entrées. --}}
                     </nav>
 
                     <a href="{{ $pkPublish['url'] }}"
@@ -6800,8 +6801,14 @@
                             $unreadCount = Auth::user()->unreadMessagesCount();
                         @endphp
 
-                        <!-- Groupe icônes : Alertes boost, Notifications -->
+                        <!-- Groupe icônes : Espace Pro (mobile), Alertes boost, Notifications -->
                         <div class="d-flex align-items-center gap-2">
+                            <div class="mobile-header-item d-lg-none">
+                                <a href="{{ route('pro.dashboard') }}" class="header-alert-btn header-mobile-action position-relative" aria-label="{{ $pkProEntry['label'] }}" data-header-pro-mobile>
+                                    <i class="fas fa-briefcase"></i>
+                                </a>
+                                <span class="mobile-header-label d-md-none">Pro</span>
+                            </div>
                             <!-- Boost Expiration Alerts -->
                             @php
                                 $boostAlerts = \App\Http\Controllers\BoostController::getExpiringAlerts(Auth::user());
@@ -6991,13 +6998,9 @@
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('contact.index') }}"><i class="fas fa-headset" style="color: #3b82f6;"></i>Contact</a></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('guides.index') }}"><i class="fas fa-compass" style="color: #0f9f92;"></i>Conseils pratiques</a></li>
                                 <li><button type="button" class="dropdown-item dropdown-item-modern" data-site-share-trigger><i class="fas fa-share-nodes" style="color: #7c3aed;"></i>Partager {{ config('app.name', 'Prokejem') }}</button></li>
-                                @if(Auth::user()->isProfessionnel() || Auth::user()->isServiceProvider() || Auth::user()->hasCompletedProOnboarding())
+                                @if($pkProEntry['is_provider'])
                                 <li><hr class="dropdown-divider my-2"></li>
-                                <li style="padding: 4px 16px 2px;"><small class="text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Espace Pro</small></li>
-                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('pro.dashboard') }}"><i class="fas fa-briefcase" style="color: #6366f1;"></i>Tableau de bord Pro</a></li>
-                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('pro.quotes.create') }}"><i class="fas fa-file-alt" style="color: #f59e0b;"></i>Nouveau devis</a></li>
-                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('pro.invoices.create') }}"><i class="fas fa-file-invoice-dollar" style="color: #ec4899;"></i>Nouvelle facture</a></li>
-                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('pro.clients') }}"><i class="fas fa-users" style="color: #3b82f6;"></i>Mes clients</a></li>
+                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('pro.dashboard') }}"><i class="fas fa-briefcase" style="color: #4f46e5;"></i>Espace Pro</a></li>
                                 @endif
                                 <li><hr class="dropdown-divider my-2"></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('pricing.index') }}"><i class="fas fa-crown text-warning"></i>Tarifs</a></li>
@@ -10302,7 +10305,9 @@
     <style>
         .header-nav-center .header-nav-btn { white-space: nowrap; }
         @media (min-width: 992px) and (max-width: 1199.98px) {
-            .header-nav-center .header-nav-secondary { display: none; }
+            /* Avec le lien « Espace Pro », les libellés seuls tiennent sans chevaucher les actions. */
+            .header-nav-center .header-nav-btn { padding: 8px 10px; }
+            .header-nav-center .header-nav-btn:not(.header-nav-btn-primary) i { display: none; }
         }
     </style>
 </body>

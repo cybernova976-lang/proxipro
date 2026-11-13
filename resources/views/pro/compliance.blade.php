@@ -1,5 +1,6 @@
 @extends('pro.layout')
 @section('title', 'Conformité PRO - Espace Pro')
+@section('topbar_title', 'Statut et conformité')
 
 @section('content')
 @php
@@ -32,6 +33,8 @@
         {{ $canIssue ? 'Émission autorisée' : ($user->isProfessionnel() ? 'Brouillons uniquement' : 'Statut professionnel à déclarer') }}
     </span>
 </div>
+
+@include('pro.partials.status-tabs')
 
 <div class="row g-4">
     <div class="col-lg-7">

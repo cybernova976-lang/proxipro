@@ -85,8 +85,8 @@ class CommercialPolicyConsistencyFeatureTest extends TestCase
         $this->actingAs($provider)
             ->get(route('pro.subscription'))
             ->assertOk()
-            ->assertSee('Abonnement indisponible')
-            ->assertSee("La souscription à Premium est momentanément suspendue. Aucun paiement n'est demandé.", false)
+            ->assertSee('Abonnement Premium momentanément indisponible')
+            ->assertSee('Aucun paiement n’est demandé et aucun abonnement n’est activé automatiquement.', false)
             // Décision du fondateur (11/11/2026) : aucune gratuité « de lancement » n'est annoncée.
             ->assertDontSee('Accès lancement')
             ->assertDontSee('gratuit pendant')
@@ -118,11 +118,14 @@ class CommercialPolicyConsistencyFeatureTest extends TestCase
         }
     }
 
-    public function test_professional_teaser_is_explicitly_marked_as_demo_data(): void
+    /** Aucun chiffre inventé : l'espace Pro d'un non-prestataire ne montre plus de faux devis. */
+    public function test_professional_teaser_shows_no_invented_figures(): void
     {
-        $html = file_get_contents(resource_path('views/pro/dashboard.blade.php'));
+        $views = file_get_contents(resource_path('views/pro/dashboard.blade.php'))
+            .file_get_contents(resource_path('views/pro/dashboard/join.blade.php'));
 
-        $this->assertStringContainsString('Données de démonstration', $html);
-        $this->assertStringContainsString('Jean Dupont', $html);
+        foreach (['Jean Dupont', 'Marie Martin', 'Société ABC', 'Données de démonstration', 'DEV-001'] as $fake) {
+            $this->assertStringNotContainsString($fake, $views);
+        }
     }
 }

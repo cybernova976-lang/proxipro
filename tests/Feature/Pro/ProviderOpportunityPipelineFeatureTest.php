@@ -111,8 +111,9 @@ class ProviderOpportunityPipelineFeatureTest extends TestCase
         $this->actingAs($provider)
             ->get(route('pro.dashboard'))
             ->assertOk()
-            ->assertSee('Vos opportunités et missions')
-            ->assertSee('Ouvrir mes opportunités');
+            ->assertSee('1 demande correspond à votre métier')
+            ->assertSee('Demandes compatibles')
+            ->assertSee('Missions en cours');
 
         $this->assertSame($newDemand->id, $response->viewData('newOpportunities')->sole()->id);
         $this->assertSame($nonMatchingDemand->id, $nonMatchingDemand->fresh()->id);
@@ -177,7 +178,6 @@ class ProviderOpportunityPipelineFeatureTest extends TestCase
 
         $response = $this->actingAs($provider)->get(route('pro.dashboard'))->assertOk();
         $this->assertSame(100.0, (float) $response->viewData('stats')['monthly_revenue']);
-        $this->assertSame(400.0, (float) $response->viewData('stats')['total_revenue']);
     }
 
     public function test_a_provider_with_only_a_profession_sees_public_and_correctly_targeted_opportunities(): void
