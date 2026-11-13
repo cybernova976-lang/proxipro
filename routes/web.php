@@ -565,6 +565,14 @@ Route::middleware(['auth'])->prefix('pro')->name('pro.')->group(function () {
     Route::get('/quotes/{id}/shared-download', [$ctrl, 'downloadSharedQuote'])
         ->middleware('signed')->name('quotes.shared-download');
 
+    // Services Premium des devis : modèles réutilisables et relance automatique
+    Route::post('/quotes/{id}/template', [\App\Http\Controllers\ProQuoteToolsController::class, 'storeTemplate'])
+        ->whereNumber('id')->name('quotes.template.store');
+    Route::put('/quotes/{id}/reminder', [\App\Http\Controllers\ProQuoteToolsController::class, 'updateReminder'])
+        ->whereNumber('id')->name('quotes.reminder');
+    Route::delete('/quote-templates/{id}', [\App\Http\Controllers\ProQuoteToolsController::class, 'destroyTemplate'])
+        ->whereNumber('id')->name('quote-templates.destroy');
+
     // Factures
     Route::get('/invoices', [$ctrl, 'invoices'])->name('invoices');
     Route::get('/invoices/create/{quoteId?}', [$ctrl, 'createInvoice'])->name('invoices.create');
@@ -602,6 +610,10 @@ Route::middleware(['auth'])->prefix('pro')->name('pro.')->group(function () {
 
     // Statistiques (page complète)
     Route::get('/analytics', [$ctrl, 'analytics'])->name('analytics');
+
+    // Rapport d'activité mensuel (Premium)
+    Route::get('/rapport/{mois?}', [\App\Http\Controllers\ProActivityReportController::class, 'show'])
+        ->where('mois', '\d{4}-\d{2}')->name('report');
 
     // Agenda / Planning
     Route::get('/agenda', [$ctrl, 'agenda'])->name('agenda');

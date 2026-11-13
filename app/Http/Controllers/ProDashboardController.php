@@ -465,15 +465,29 @@ class ProDashboardController extends Controller
             'refused' => $user->proQuotes()->where('status', 'refused')->count(),
         ];
 
-        return view('pro.quotes', compact('user', 'quotes', 'clients', 'quoteStats'));
+        $quoteTemplates = $user->proQuoteTemplates()->latest()->get();
+
+        return view('pro.quotes', compact('user', 'quotes', 'clients', 'quoteStats', 'quoteTemplates'));
     }
 
-    public function createQuote()
+    public function createQuote(Request $request)
     {
         $user = $this->ensureCommercialProfessional();
         $clients = $user->proClients()->orderBy('name')->get();
+        $quoteTemplates = $user->proQuoteTemplates()->latest()->get();
 
-        return view('pro.quote-create', compact('user', 'clients'));
+        // Partir d'un modèle (Premium) : le formulaire est prérempli, rien n'est enregistré.
+        $template = null;
+        if ($request->filled('modele')) {
+            $template = $quoteTemplates->firstWhere('id', (int) $request->query('modele'));
+            abort_if($template === null, 404);
+            if (! $user->hasActiveProSubscription()) {
+                return redirect()->route('pro.subscription')
+                    ->with('warning', 'Les modèles de devis font partie de Premium. Vos modèles enregistrés sont conservés.');
+            }
+        }
+
+        return view('pro.quote-create', compact('user', 'clients', 'quoteTemplates', 'template'));
     }
 
     public function storeQuote(Request $request)
@@ -716,7 +730,13 @@ class ProDashboardController extends Controller
             $quote->update(['status' => 'sent', 'sent_at' => now()]);
         }
 
-        return redirect()->route('pro.quotes.show', $id)->with('success', 'Devis envoyé par email à '.$request->email);
+        // Relance automatique unique (Premium), à l'adresse réellement utilisée.
+        $reminder = $request->boolean('auto_reminder') && $user->hasActiveProSubscription()
+            && $quote->status === 'sent' && $quote->reminder_sent_at === null;
+        $quote->update(['sent_to_email' => $request->email, 'reminder_enabled' => $reminder]);
+
+        return redirect()->route('pro.quotes.show', $id)->with('success', 'Devis envoyé par email à '.$request->email
+            .($reminder ? '. Une relance partira dans '.\App\Services\QuoteReminderService::DELAY_DAYS.' jours s’il reste sans réponse.' : ''));
     }
 
     public function sendQuoteMessage(Request $request, $id)

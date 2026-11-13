@@ -885,6 +885,12 @@ class User extends Authenticatable
         return $this->hasMany(ProQuote::class);
     }
 
+    /** Modèles de devis réutilisables (Premium). */
+    public function proQuoteTemplates()
+    {
+        return $this->hasMany(ProQuoteTemplate::class);
+    }
+
     /**
      * Factures créées par le professionnel
      */

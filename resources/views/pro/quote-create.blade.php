@@ -63,6 +63,14 @@
 </div>
 @endunless
 
+@if($template ?? null)
+<div class="alert alert-info" role="status" style="border-radius: 12px;">
+    <i class="fas fa-copy me-2"></i>Formulaire prérempli avec le modèle « {{ $template->name }} ». Ajoutez le client, ajustez si besoin, puis enregistrez.
+</div>
+@else
+    @include('pro.partials.quote-templates')
+@endif
+
 <form method="POST" action="{{ route('pro.quotes.store') }}">
     @csrf
     
@@ -319,4 +327,8 @@ function fillClientInfo(select) {
     document.getElementById('clientCompany').value = option.dataset.company || '';
 }
 </script>
+@if($template ?? null)
+<script type="application/json" id="pkQuoteTemplate">{!! json_encode($template->formPayload(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) !!}</script>
+<script src="{{ asset('js/pro-quote-template.js') }}?v={{ @filemtime(public_path('js/pro-quote-template.js')) ?: 1 }}"></script>
+@endif
 @endsection

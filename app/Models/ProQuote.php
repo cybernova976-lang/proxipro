@@ -14,6 +14,7 @@ class ProQuote extends Model
         'client_registration_number', 'client_vat_number', 'operation_type',
         'execution_location', 'currency', 'is_free', 'deposit_percentage',
         'seller_snapshot', 'issued_at', 'sent_at', 'accepted_at', 'refused_at',
+        'sent_to_email', 'reminder_enabled', 'reminder_sent_at',
     ];
 
     protected $casts = [
@@ -30,6 +31,8 @@ class ProQuote extends Model
         'sent_at' => 'datetime',
         'accepted_at' => 'datetime',
         'refused_at' => 'datetime',
+        'reminder_enabled' => 'boolean',
+        'reminder_sent_at' => 'datetime',
     ];
 
     public function user()

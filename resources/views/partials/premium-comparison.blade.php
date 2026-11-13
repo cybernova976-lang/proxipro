@@ -24,6 +24,8 @@
                     ['Offres sur l’accueil des clients', 'Affichage ordinaire', 'Priorité avec mention Sponsorisé, sans place fixe'],
                     ['Suggestions après une demande', 'Selon la recherche', 'Profil présenté avant les non-abonnés éligibles'],
                     ['Boosts et option Urgent', 'Tarif standard', 'Réduction de 20 %'],
+                    ['Rapport d’activité mensuel', 'Non inclus', 'Chiffres mesurés, comparaison au mois précédent, récapitulatif par e-mail'],
+                    ['Modèles de devis et relance des devis sans réponse', 'Non inclus', 'Inclus pour les comptes professionnels'],
                     ['CRM des prestataires et suivi d’activité', 'Accessibles aux prestataires', 'Accessibles aux prestataires'],
                     ['Notifications, confidentialité et assistance', 'Inclus', 'Inclus'],
                 ] as $row)

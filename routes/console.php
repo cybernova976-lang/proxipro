@@ -100,3 +100,22 @@ Schedule::command('demand-drafts:send-reminders')
     ->between('8:00', '20:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/demand-draft-reminders.log'));
+
+// Rapport d'activité du mois écoulé pour les abonnés Premium. La commande passe
+// chaque matin mais n'envoie qu'une fois par mois et par abonné : un passage
+// manqué (redémarrage) est rattrapé le lendemain, et un nouvel abonné reçoit
+// son rapport dès le matin suivant sa souscription.
+Schedule::command('pro:send-activity-reports')
+    ->timezone('Indian/Mayotte')
+    ->dailyAt('08:30')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/pro-activity-reports.log'));
+
+// Relance unique des devis Premium restés sans réponse depuis 7 jours, à la
+// demande du prestataire. Elle écrit à ses clients : jamais la nuit.
+Schedule::command('pro-quotes:send-reminders')
+    ->hourly()
+    ->timezone('Indian/Mayotte')
+    ->between('8:00', '20:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/pro-quote-reminders.log'));

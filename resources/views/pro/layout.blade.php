@@ -864,6 +864,7 @@
 
     @yield('styles')
     </style>
+    @stack('head')
 </head>
 <body>
     {{-- TOP BAR --}}
@@ -1009,6 +1010,12 @@
                     <i class="fas fa-chart-line"></i>
                 </div>
                 Statistiques
+            </a>
+            <a href="{{ route('pro.report') }}" class="pro-nav-item {{ request()->routeIs('pro.report') ? 'active' : '' }}">
+                <div class="pro-nav-icon" style="background: rgba(79,70,229,0.1); color: #4f46e5;">
+                    <i class="fas fa-chart-column"></i>
+                </div>
+                Rapport mensuel
             </a>
             <a href="{{ route('pro.agenda') }}" class="pro-nav-item {{ request()->routeIs('pro.agenda*') ? 'active' : '' }}">
                 <div class="pro-nav-icon" style="background: rgba(245,158,11,0.1); color: #f59e0b;">

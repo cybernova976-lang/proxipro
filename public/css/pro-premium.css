@@ -1,0 +1,89 @@
+/* ==========================================================================
+   PROKEJEM — Services Premium de l'Espace Pro
+   Rapport d'activité mensuel (.pk-report) et modèles de devis (.pk-templates).
+
+   Tout est préfixé pk- : rien ne se mélange avec pro/layout.blade.php.
+   Une seule rampe : indigo #eef2ff → #312e81, plus le violet #7c3aed.
+   Points de rupture : 640 / 1024 / 1180.
+   ========================================================================== */
+
+.pk-report, .pk-templates {
+  --pk-50: #eef2ff; --pk-100: #e0e7ff; --pk-200: #c7d2fe; --pk-300: #a5b4fc;
+  --pk-600: #4f46e5; --pk-700: #4338ca; --pk-800: #3730a3; --pk-900: #312e81;
+  --pk-violet: #7c3aed; --pk-ink: #1e1b4b; --pk-muted: #5b6983; --pk-rule: #e0e7ff;
+  color: var(--pk-ink);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.pk-report *, .pk-templates * { box-sizing: border-box; }
+.pk-report { max-width: 1180px; margin: 0 auto; }
+
+/* En-tête */
+.pk-report__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.pk-report__kicker { margin: 0 0 6px; color: var(--pk-violet); font-size: .74rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.pk-report__head h1 { margin: 0 0 6px; color: var(--pk-900); font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 750; line-height: 1.25; }
+.pk-report__head p { margin: 0; max-width: 640px; color: var(--pk-muted); line-height: 1.6; }
+
+/* Choix du mois */
+.pk-report__months { display: flex; align-items: center; gap: 8px; }
+.pk-report__months label { color: var(--pk-muted); font-size: .85rem; }
+.pk-report__months select { min-height: 44px; padding: 8px 12px; border: 1px solid var(--pk-200); border-radius: 10px; background: #fff; color: var(--pk-900); font: inherit; font-weight: 600; }
+.pk-report__months button { min-height: 44px; padding: 8px 16px; border: 1px solid var(--pk-300); border-radius: 10px; background: #fff; color: var(--pk-800); font: inherit; font-weight: 650; cursor: pointer; }
+.pk-report__months button:hover { background: var(--pk-50); }
+.pk-report__months select:focus-visible, .pk-report__months button:focus-visible, .pk-report a:focus-visible { outline: 3px solid var(--pk-600); outline-offset: 2px; }
+
+.pk-report__notice { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 20px; padding: 12px 16px; border: 1px solid var(--pk-200); border-radius: 12px; background: var(--pk-50); color: var(--pk-800); font-size: .9rem; line-height: 1.5; }
+
+/* Sections et chiffres */
+.pk-report__section { margin-bottom: 24px; padding: 22px; border: 1px solid var(--pk-rule); border-radius: 16px; background: #fff; }
+.pk-report__section h2 { margin: 0 0 16px; color: var(--pk-900); font-size: 1.05rem; font-weight: 750; }
+.pk-report__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.pk-metric { display: flex; flex-direction: column; gap: 4px; padding: 16px; border: 1px solid var(--pk-rule); border-radius: 12px; background: #fbfbff; }
+.pk-metric__label { color: var(--pk-muted); font-size: .82rem; font-weight: 600; }
+.pk-metric__value { color: var(--pk-900); font-size: 1.7rem; font-weight: 750; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.pk-metric__value small { color: var(--pk-muted); font-size: .85rem; font-weight: 600; }
+.pk-metric__value--none { color: var(--pk-muted); font-size: 1rem; font-weight: 600; }
+.pk-metric__delta { color: var(--pk-800); font-size: .8rem; font-weight: 650; }
+.pk-metric__delta--same, .pk-metric__delta--down { color: var(--pk-muted); }
+.pk-metric__hint { margin-top: 4px; color: var(--pk-muted); font-size: .76rem; line-height: 1.45; }
+
+.pk-report__foot { color: var(--pk-muted); font-size: .82rem; line-height: 1.6; }
+.pk-report__foot a { color: var(--pk-700); font-weight: 650; text-underline-offset: 3px; }
+
+/* Présentation sans abonnement : aucun chiffre, une seule action */
+.pk-report__locked { max-width: 760px; padding: 28px; border: 1px solid var(--pk-200); border-radius: 16px; background: linear-gradient(140deg, #fff, var(--pk-50)); }
+.pk-report__locked h2 { margin: 0 0 12px; color: var(--pk-900); font-size: 1.2rem; font-weight: 750; }
+.pk-report__locked ul { margin: 0 0 20px; padding-left: 20px; color: #334155; line-height: 1.75; }
+.pk-report__locked p { color: var(--pk-muted); line-height: 1.6; }
+.pk-report__cta { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 12px 22px; border-radius: 10px; background: var(--pk-600); color: #fff; font-weight: 700; text-decoration: none; }
+.pk-report__cta:hover { background: var(--pk-700); color: #fff; }
+
+/* Modèles de devis */
+.pk-templates { margin-bottom: 20px; padding: 18px 20px; border: 1px solid var(--pk-rule); border-radius: 14px; background: #fff; }
+.pk-templates__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.pk-templates__head h2 { margin: 0; color: var(--pk-900); font-size: 1rem; font-weight: 750; }
+.pk-templates__head span { color: var(--pk-violet); font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.pk-templates p { margin: 0; color: var(--pk-muted); font-size: .88rem; line-height: 1.55; }
+.pk-templates__list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.pk-templates__list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 10px 14px; border: 1px solid var(--pk-rule); border-radius: 10px; background: #fbfbff; }
+.pk-templates__list strong { color: var(--pk-900); font-size: .92rem; }
+.pk-templates__list small { display: block; color: var(--pk-muted); font-size: .78rem; }
+.pk-templates__actions { display: flex; align-items: center; gap: 8px; }
+.pk-templates__use, .pk-templates__delete { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 14px; border-radius: 9px; font: inherit; font-size: .85rem; font-weight: 650; text-decoration: none; cursor: pointer; }
+.pk-templates__use { border: 1px solid var(--pk-300); background: #fff; color: var(--pk-800); }
+.pk-templates__use:hover { background: var(--pk-50); color: var(--pk-800); }
+.pk-templates__delete { border: 0; background: transparent; color: var(--pk-muted); text-decoration: underline; text-underline-offset: 3px; }
+.pk-templates__use:focus-visible, .pk-templates__delete:focus-visible, .pk-templates a:focus-visible { outline: 3px solid var(--pk-600); outline-offset: 2px; }
+.pk-templates a { color: var(--pk-700); font-weight: 650; text-underline-offset: 3px; }
+
+@media (max-width: 639px) {
+  .pk-report__head { align-items: stretch; }
+  .pk-report__months { flex-wrap: wrap; }
+  .pk-report__months select { flex: 1; min-width: 0; }
+  .pk-report__section { padding: 16px; }
+  .pk-report__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .pk-metric { padding: 12px; }
+  .pk-metric__value { font-size: 1.35rem; }
+  .pk-report__locked { padding: 20px; }
+  .pk-report__cta { width: 100%; }
+  .pk-templates__actions { width: 100%; justify-content: space-between; }
+}

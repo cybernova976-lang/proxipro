@@ -167,6 +167,8 @@
     @endif
 </div>
 
+@include('pro.partials.quote-premium-tools')
+
 {{-- ===== SEND QUOTE MODAL ===== --}}
 <div class="modal fade" id="sendQuoteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -202,6 +204,13 @@
                             <i class="fas fa-paperclip"></i>
                             <span>Le devis PDF sera automatiquement joint à l'email</span>
                         </div>
+                        @if($user->hasActiveProSubscription() && ! $quote->reminder_sent_at)
+                        <div class="form-check mb-3" style="font-size: 0.85rem;">
+                            <input type="hidden" name="auto_reminder" value="0">
+                            <input class="form-check-input" type="checkbox" name="auto_reminder" value="1" id="pkAutoReminder" checked>
+                            <label class="form-check-label" for="pkAutoReminder">Relancer automatiquement ce client une seule fois, après {{ \App\Services\QuoteReminderService::DELAY_DAYS }} jours sans réponse <span class="text-muted">(Premium)</span></label>
+                        </div>
+                        @endif
                         <button type="submit" class="btn w-100 py-2 fw-bold" style="background: linear-gradient(135deg, #0f172a, #1e3a5f); color: white; border-radius: 10px;">
                             <i class="fas fa-paper-plane me-2"></i>Envoyer par email
                         </button>
