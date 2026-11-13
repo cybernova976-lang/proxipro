@@ -21,11 +21,11 @@ $ErrorActionPreference = 'Continue'
 $script:Echecs = @()
 $script:Etape  = 0
 
+# Chaque etape est bloquante : un seul echec rend le verdict ROUGE.
 function Invoke-Gate {
     param(
         [string] $Titre,
-        [scriptblock] $Action,
-        [switch] $NonBloquant
+        [scriptblock] $Action
     )
 
     $script:Etape++
@@ -37,12 +37,8 @@ function Invoke-Gate {
     $code = $LASTEXITCODE
 
     if ($code -ne 0) {
-        if ($NonBloquant) {
-            Write-Host "  AVERTISSEMENT - echec non bloquant (code $code)" -ForegroundColor Yellow
-        } else {
-            Write-Host "  ECHEC (code $code)" -ForegroundColor Red
-            $script:Echecs += $Titre
-        }
+        Write-Host "  ECHEC (code $code)" -ForegroundColor Red
+        $script:Echecs += $Titre
     } else {
         Write-Host "  OK" -ForegroundColor Green
     }
@@ -131,11 +127,12 @@ Invoke-Gate "Tests JavaScript (node --test tests/Browser)" {
 }
 
 # --- 7. Suite complete ---------------------------------------------------------
-#     Non bloquante : certains anciens tests ne correspondent plus a la
-#     nouvelle interface. A remettre en bloquant une fois la suite assainie.
+#     BLOQUANT depuis le 13/11/2026 (683 tests verts). Auparavant non bloquante,
+#     elle affichait VERT malgre un test en echec. Un test devenu faux se corrige
+#     ou se supprime dans le meme commit : il ne s'ignore pas ici.
 Invoke-Gate "Suite de tests complete" {
     php artisan test
-} -NonBloquant
+}
 
 # --- Remise en etat pour le developpement local --------------------------------
 php artisan view:clear --no-interaction   | Out-Null

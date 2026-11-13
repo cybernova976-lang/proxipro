@@ -19,7 +19,8 @@ Ce script enchaîne : syntaxe PHP → **compilation Blade réelle (`view:cache`)
 résolution des routes → `npm run build` → tests ciblés → suite complète.
 
 **Tant qu'il n'est pas VERT, la version n'est pas déployable.** Ne propose pas
-de déployer, ne dis pas « c'est prêt ».
+de déployer, ne dis pas « c'est prêt ». Toutes les étapes sont bloquantes,
+suite complète comprise : un seul test en échec rend le verdict ROUGE.
 
 L'étape 2 est la plus importante : une vérification statique (équilibre des
 directives, `php -l`) **ne remplace pas** la compilation Blade. Une erreur de
