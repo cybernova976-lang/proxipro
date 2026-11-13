@@ -162,7 +162,9 @@
     const iosDialog = document.getElementById('pwaIosDialog');
     const iosDialogClose = document.getElementById('pwaIosDialogClose');
     @php
-        $installSurfaceAllowed = !request()->routeIs('messages.*', 'demand.*', 'ads.create', 'ads.edit', 'login', 'register');
+        // Pas de bouton flottant sur les écrans de saisie : il recouvrirait le bouton
+        // d'enregistrement. L'espace Pro (devis, factures, statut) en fait partie.
+        $installSurfaceAllowed = !request()->routeIs('messages.*', 'demand.*', 'ads.create', 'ads.edit', 'login', 'register', 'pro.*');
     @endphp
     const installSurfaceAllowed = @json($installSurfaceAllowed);
 

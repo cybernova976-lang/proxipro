@@ -142,6 +142,20 @@ class ProSpaceRedesignFeatureTest extends TestCase
             ->assertRedirect(route('pro.account-status'));
     }
 
+    /** Constaté en production : « Installer Prokejem » recouvrait « Enregistrer mon statut ». */
+    public function test_install_button_stays_out_of_the_pro_space_but_remains_on_the_feed(): void
+    {
+        $pro = $this->professional();
+
+        foreach (['pro.dashboard', 'pro.account-status', 'pro.quotes'] as $route) {
+            $this->actingAs($pro)->get(route($route))->assertOk()
+                ->assertSee('const installSurfaceAllowed = false;', false);
+        }
+
+        $this->actingAs($pro)->get(route('feed'))->assertOk()
+            ->assertSee('const installSurfaceAllowed = true;', false);
+    }
+
     /** Constaté en production : un modèle de devis d'un autre compte renvoyait une page « Not Found » en anglais. */
     public function test_missing_page_is_explained_in_french(): void
     {
