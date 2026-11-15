@@ -1,6 +1,9 @@
 @php
     $targetIsAdmin = ($user->role ?? 'user') === 'admin';
-    $targetPrivileges = $user->adminPrivilegeList();
+    // Seuls les privilèges d’un administrateur en poste sont précochés : d’anciens
+    // privilèges restés sur un compte redevenu simple utilisateur ne doivent pas
+    // être réattribués par mégarde lors d’une nouvelle nomination.
+    $targetPrivileges = $targetIsAdmin ? $user->adminPrivilegeList() : [];
 @endphp
 <div class="card border-0 shadow-sm h-100" id="adminUserRole">
     <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">

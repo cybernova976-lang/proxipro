@@ -86,6 +86,19 @@ class AdminUserProfileActionsTest extends TestCase
             ->assertSee(config('admin.privileges.manage_ads.label'));
     }
 
+    /** Constaté en production : un simple utilisateur gardait un ancien privilège, précoché sur sa fiche. */
+    public function test_stale_privileges_of_a_plain_user_are_not_prechecked_for_a_new_promotion(): void
+    {
+        $principal = $this->principalAdmin();
+        $formerAdmin = User::factory()->create(['role' => 'user']);
+        $formerAdmin->forceFill(['admin_privileges' => ['grant_premium']])->save();
+
+        $html = $this->actingAs($principal)->get(route('admin.users.show', $formerAdmin->id))->assertOk()->getContent();
+
+        $this->assertStringContainsString('id="userPrivilege_grant_premium"', $html);
+        $this->assertDoesNotMatchRegularExpression('/id="userPrivilege_[a-z_]+"\s+checked/', $html);
+    }
+
     public function test_secondary_admin_cannot_name_admins_nor_touch_the_principal_account(): void
     {
         $principal = $this->principalAdmin();
