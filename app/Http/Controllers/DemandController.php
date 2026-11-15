@@ -74,7 +74,26 @@ class DemandController extends Controller
             }
         }
 
-        return view('demands.create', compact('categoriesData', 'preCategory', 'preSubcategory', 'intakeSchemas', 'serverDraft'));
+        // Pays présélectionné : celui du profil, sinon le territoire du visiteur
+        // (un visiteur à Mayotte trouve « Mayotte » déjà choisi, et ses communes).
+        $defaultCountry = $request->user()?->country;
+        if (blank($defaultCountry)) {
+            $territory = app(TerritoryResolver::class)->forUser(
+                $request->user(),
+                (array) ($request->attributes->get('user_geo') ?? [])
+            );
+            $defaultCountry = match (true) {
+                $territory?->isOverseas() => $territory->label,
+                $territory?->isDepartment() => 'France',
+                default => null,
+            };
+        }
+        if (! array_key_exists((string) $defaultCountry, config('locations.countries', []))) {
+            $defaultCountry = null;
+        }
+        $defaultCity = $request->user()?->city;
+
+        return view('demands.create', compact('categoriesData', 'preCategory', 'preSubcategory', 'intakeSchemas', 'serverDraft', 'defaultCountry', 'defaultCity'));
     }
 
     /**

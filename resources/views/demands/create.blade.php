@@ -203,6 +203,8 @@ body { background: #f0f2f5; }
 .demand-confirm input { width: 18px; height: 18px; margin-top: 2px; flex: 0 0 auto; }
 .demand-confirm label { margin: 0; color: #374151; font-size: .88rem; line-height: 1.45; cursor: pointer; }
 .demand-confirm .pk-field-feedback { grid-column: 2; margin-top: 0; }
+.demand-guest-next { margin: 12px 2px 0; color: #475569; font-size: .86rem; line-height: 1.5; }
+.demand-guest-next a { color: #4338ca; font-weight: 700; }
 
 /* Urgency */
 .demand-urgency { display: flex; gap: 10px; }
@@ -457,8 +459,8 @@ body { background: #f0f2f5; }
                             <div>
                                 <select name="country" id="demandCountry" onchange="updateDemandCities()" required>
                                     <option value="">-- Pays --</option>
-                                    @foreach(config('locations.countries', []) as $countryName => $flag)
-                                        <option value="{{ $countryName }}" {{ (old('country') ?? Auth::user()->country ?? '') == $countryName ? 'selected' : '' }}>{{ $flag }} {{ $countryName }}</option>
+                                    @foreach(array_keys(config('locations.countries', [])) as $countryName)
+                                        <option value="{{ $countryName }}" @selected((old('country') ?? $defaultCountry ?? '') === $countryName)>{{ $countryName }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -634,6 +636,14 @@ body { background: #f0f2f5; }
                         <label for="publicationConfirmed">Je confirme que les informations de cette demande sont exactes et j’accepte sa publication publique pendant 30 jours.</label>
                     </div>
 
+                    @guest
+                    {{-- Visiteur : la création du compte est la suite naturelle, la connexion reste à un clic. --}}
+                    <p class="demand-guest-next" data-demand-guest-next>
+                        Votre demande est conservée pendant la création de votre compte gratuit.
+                        Déjà inscrit ? <a href="{{ route('login', ['continue' => 'demand']) }}" onclick="saveDemandDraft()">Se connecter et publier</a>
+                    </p>
+                    @endguest
+
                     <div class="demand-error" id="step5Error" role="alert">
                         <i class="fas fa-exclamation-circle"></i> <span></span>
                     </div>
@@ -652,9 +662,10 @@ body { background: #f0f2f5; }
                 <button type="submit" class="demand-btn demand-btn-submit" id="demandBtnSubmit" style="display:none;">
                     <span class="demand-btn-submit-content">
                         @guest
-                        <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
+                        <i class="fas fa-user-plus" aria-hidden="true"></i>
                         <span class="demand-btn-submit-text">
-                            <span>Continuer</span>
+                            <span>Créer mon compte</span>
+                            <span>et publier</span>
                         </span>
                         @else
                         <i class="fas fa-paper-plane" aria-hidden="true"></i>
@@ -690,9 +701,11 @@ const demandDraftSyncUrl = @json(Auth::check() ? route('demand.draft.save') : nu
 const serverDemandDraft = @json($serverDraft);
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 @php
-    $guestDemandLoginUrl = route('login', ['continue' => 'demand']);
+    // Un visiteur qui arrive au bout du parcours est le plus souvent nouveau :
+    // le bouton principal mène à l'inscription, la connexion reste proposée à côté.
+    $guestDemandRegisterUrl = route('register', ['continue' => 'demand']);
 @endphp
-const guestDemandLoginUrl = @json($guestDemandLoginUrl);
+const guestDemandRegisterUrl = @json($guestDemandRegisterUrl);
 const resumeDemandAfterAuth = @json(auth()->check() && request()->boolean('resume'));
 const demandDraftIdentity = @json(Auth::id() ?: 'guest');
 const demandDraftKey = 'prokejem-demand-draft-v2-' + demandDraftIdentity;
@@ -1441,7 +1454,7 @@ function hideErrors() {
 // ─── Init ───
 document.addEventListener('DOMContentLoaded', function() {
     const countryEl = document.getElementById('demandCountry');
-    const oldCity = @json(old('city'));
+    const oldCity = @json(old('city') ?? $defaultCity);
     const storedDraft = !hasServerInput ? loadDemandDraft() : null;
     const draft = storedDraft && (!preCategory || storedDraft.main_category === preCategory)
         ? storedDraft
@@ -1499,7 +1512,7 @@ document.addEventListener('DOMContentLoaded', function() {
             event.preventDefault();
             saveDemandDraft();
             trackDemandEvent('demand_auth_redirect', totalDemandSteps);
-            window.location.assign(guestDemandLoginUrl);
+            window.location.assign(guestDemandRegisterUrl);
             return;
         }
     });
