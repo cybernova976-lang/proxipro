@@ -105,7 +105,7 @@
 }
 
 .premium-pros-dynamic-title i {
-    color: #3a86ff;
+    color: #4f46e5;
     font-size: 1.1rem;
 }
 
@@ -137,8 +137,8 @@
 }
 
 .carousel-nav-btn:hover {
-    background: #3a86ff;
-    border-color: #3a86ff;
+    background: #4f46e5;
+    border-color: #4f46e5;
     color: white;
 }
 
@@ -204,7 +204,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #3a86ff 0%, #8338ec 100%);
+    background: linear-gradient(135deg, #4f46e5 0%, #8338ec 100%);
     color: white;
     font-size: 3rem;
 }
@@ -354,7 +354,7 @@
 
 .pros-loading i {
     font-size: 2rem;
-    color: #3a86ff;
+    color: #4f46e5;
     animation: spin 1s linear infinite;
     margin-bottom: 10px;
 }

@@ -180,6 +180,11 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('ads', AdController::class)->except(['index', 'show', 'store']);
     Route::delete('/ads/{ad}/photos/{index}', [AdController::class, 'deletePhoto'])->name('ads.photos.delete');
 });
+// Adresse française de la liste des annonces : on la garde lisible et partageable,
+// en conservant les filtres de la requête.
+Route::get('/annonces', fn (\Illuminate\Http\Request $request) => redirect()->to(
+    route('ads.index').($request->getQueryString() ? '?'.$request->getQueryString() : ''), 301
+))->name('ads.index.fr');
 Route::resource('ads', AdController::class)->only(['index', 'show'])
     ->missing(function (\Illuminate\Http\Request $request) {
         // Les notifications et les messages gardent des liens vers des annonces

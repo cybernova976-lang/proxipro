@@ -20,10 +20,10 @@ body { background: #f0f2f5; }
 }
 .demand-hero-icon {
     width: 84px; height: 84px; border-radius: 50%;
-    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
     display: flex; align-items: center; justify-content: center;
     margin: 0 auto 20px; color: white; font-size: 2.1rem;
-    box-shadow: 0 8px 30px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 8px 30px rgba(79, 70, 229, 0.3);
 }
 .demand-hero h1 {
     font-size: 2rem; font-weight: 800; color: #111827; margin-bottom: 10px;
@@ -46,25 +46,25 @@ body { background: #f0f2f5; }
     font-size: 0.95rem; font-weight: 700; transition: all 0.3s;
 }
 .demand-step-num.pending { background: #e5e7eb; color: #9ca3af; }
-.demand-step-num.active { background: linear-gradient(135deg, #3b82f6, #6366f1); color: #fff; box-shadow: 0 3px 12px rgba(59,130,246,0.3); }
+.demand-step-num.active { background: linear-gradient(135deg, #4f46e5, #6366f1); color: #fff; box-shadow: 0 3px 12px rgba(79, 70, 229,0.3); }
 .demand-step-num.done { background: #22c55e; color: #fff; }
 .demand-step-label { font-size: 0.92rem; font-weight: 600; color: #9ca3af; }
-.demand-step-label.active { color: #3b82f6; }
+.demand-step-label.active { color: #4f46e5; }
 .demand-step-label.done { color: #22c55e; }
 .demand-step-line { width: 40px; height: 2px; background: #e5e7eb; margin: 0 8px; }
 .demand-step-line.done { background: #22c55e; }
 
 .demand-draft-bar {
     display: flex; align-items: center; justify-content: space-between; gap: 14px;
-    margin: -10px 0 18px; padding: 11px 14px; border: 1px solid #dbeafe;
-    border-radius: 12px; background: #f8fbff; color: #475569; font-size: .84rem;
+    margin: -10px 0 18px; padding: 11px 14px; border: 1px solid #e0e7ff;
+    border-radius: 12px; background: #f8f9ff; color: #475569; font-size: .84rem;
 }
 .demand-draft-status { display: inline-flex; align-items: center; gap: 8px; }
 .demand-draft-bar[hidden] { display: none; }
 .demand-draft-status { min-width: 0; line-height: 1.45; }
 .demand-draft-status i { flex-shrink: 0; }
-.demand-draft-status i { color: #3b82f6; }
-.demand-draft-reset { border: 0; background: transparent; color: #2563eb; font-weight: 700; cursor: pointer; }
+.demand-draft-status i { color: #4f46e5; }
+.demand-draft-reset { border: 0; background: transparent; color: #4338ca; font-weight: 700; cursor: pointer; }
 
 /* Card */
 .demand-card {
@@ -93,11 +93,11 @@ body { background: #f0f2f5; }
     padding: 22px 12px; border-radius: 16px; border: 2px solid #e5e7eb;
     background: #fff; cursor: pointer; transition: all 0.2s; text-align: center;
 }
-.demand-cat-btn:hover { border-color: #93c5fd; background: #f0f7ff; transform: translateY(-2px); }
-.demand-cat-btn.selected { border-color: #3b82f6; background: #eff6ff; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+.demand-cat-btn:hover { border-color: #a5b4fc; background: #f1f3ff; transform: translateY(-2px); }
+.demand-cat-btn.selected { border-color: #4f46e5; background: #eef2ff; box-shadow: 0 0 0 3px rgba(79, 70, 229,0.12); }
 .demand-cat-btn .cat-emoji { font-size: 2.2rem; }
 .demand-cat-btn .cat-label { font-size: 0.88rem; font-weight: 600; color: #374151; line-height: 1.3; }
-.demand-cat-btn.selected .cat-label { color: #3b82f6; }
+.demand-cat-btn.selected .cat-label { color: #4f46e5; }
 .demand-sub-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb; scroll-margin-top: 110px; }
 
 /* Search */
@@ -108,7 +108,7 @@ body { background: #f0f2f5; }
     width: 100%; padding: 14px 16px 14px 42px; border: 2px solid #e5e7eb;
     border-radius: 14px; font-size: 1rem; outline: none; transition: border-color 0.2s;
 }
-.demand-search input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+.demand-search input:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229,0.1); }
 .demand-search i {
     position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 0.85rem;
 }
@@ -120,16 +120,16 @@ body { background: #f0f2f5; }
     font-size: 0.95rem; font-weight: 500; color: #6b7280; background: #fff;
     cursor: pointer; transition: all 0.2s;
 }
-.demand-sub-chip:hover { border-color: #93c5fd; background: #f0f7ff; }
-.demand-sub-chip.selected { border-color: #3b82f6; background: #3b82f6; color: #fff; }
+.demand-sub-chip:hover { border-color: #a5b4fc; background: #f1f3ff; }
+.demand-sub-chip.selected { border-color: #4f46e5; background: #4f46e5; color: #fff; }
 
 /* Selection badge */
 .demand-selection-badge {
     display: inline-flex; align-items: center; gap: 10px;
-    background: linear-gradient(135deg, #eff6ff, #e0e7ff); border: 1px solid #93c5fd;
-    border-radius: 12px; padding: 12px 20px; margin-bottom: 22px; font-size: 0.98rem; color: #1e40af;
+    background: linear-gradient(135deg, #eef2ff, #e0e7ff); border: 1px solid #a5b4fc;
+    border-radius: 12px; padding: 12px 20px; margin-bottom: 22px; font-size: 0.98rem; color: #3730a3;
 }
-.demand-selection-badge i { color: #3b82f6; }
+.demand-selection-badge i { color: #4f46e5; }
 .demand-selection-badge button {
     background: none; border: none; color: #6366f1; cursor: pointer; font-size: 0.8rem; font-weight: 600;
     margin-left: 8px;
@@ -147,7 +147,7 @@ body { background: #f0f2f5; }
     background: #fafbfc;
 }
 .demand-field input:focus, .demand-field textarea:focus, .demand-field select:focus {
-    border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    border-color: #4f46e5; background: #fff; box-shadow: 0 0 0 3px rgba(79, 70, 229,0.1);
 }
 .demand-field textarea { min-height: 130px; resize: vertical; }
 .demand-field .hint { font-size: 0.85rem; color: #9ca3af; margin-top: 6px; }
@@ -155,7 +155,7 @@ body { background: #f0f2f5; }
 @media (max-width: 480px) { .demand-field-row { grid-template-columns: 1fr; } }
 
 .demand-step-heading { margin-bottom: 22px; }
-.demand-step-heading small { display: block; color: #3b82f6; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }
+.demand-step-heading small { display: block; color: #4f46e5; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }
 .demand-step-heading h2 { margin: 0 0 6px; color: #111827; font-size: 1.35rem; font-weight: 800; }
 .demand-step-heading p { margin: 0; color: #64748b; font-size: .92rem; }
 .demand-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
@@ -163,20 +163,20 @@ body { background: #f0f2f5; }
     display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 2px solid #e5e7eb;
     border-radius: 14px; background: #fff; color: #374151; cursor: pointer; text-align: left;
 }
-.demand-choice:hover { border-color: #93c5fd; background: #f8fbff; }
-.demand-choice.selected { border-color: #3b82f6; background: #eff6ff; box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
-.demand-choice i { width: 22px; color: #3b82f6; margin-top: 2px; text-align: center; }
+.demand-choice:hover { border-color: #a5b4fc; background: #f8f9ff; }
+.demand-choice.selected { border-color: #4f46e5; background: #eef2ff; box-shadow: 0 0 0 3px rgba(79, 70, 229,.1); }
+.demand-choice i { width: 22px; color: #4f46e5; margin-top: 2px; text-align: center; }
 .demand-choice strong, .demand-choice span { display: block; }
 .demand-choice span { margin-top: 3px; color: #64748b; font-size: .82rem; line-height: 1.4; }
 .demand-intake-card {
     margin-bottom: 24px; padding: 18px; border: 1px solid #bfdbfe;
-    border-radius: 16px; background: linear-gradient(145deg, #f8fbff, #eef4ff);
+    border-radius: 16px; background: linear-gradient(145deg, #f8f9ff, #eef4ff);
 }
 .demand-intake-card[hidden] { display: none; }
 .demand-intake-head { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 16px; }
 .demand-intake-icon {
     width: 38px; height: 38px; flex: 0 0 38px; display: grid; place-items: center;
-    border-radius: 11px; color: #2563eb; background: #dbeafe;
+    border-radius: 11px; color: #4338ca; background: #e0e7ff;
 }
 .demand-intake-head strong { display: block; color: #172554; font-size: .94rem; }
 .demand-intake-head p { margin: .25rem 0 0; color: #52627a; font-size: .8rem; line-height: 1.45; }
@@ -210,7 +210,7 @@ body { background: #f0f2f5; }
     flex: 1; padding: 16px 12px; border-radius: 14px; border: 2px solid #e5e7eb;
     background: #fff; cursor: pointer; text-align: center; transition: all 0.2s;
 }
-.demand-urgency-btn:hover { border-color: #93c5fd; }
+.demand-urgency-btn:hover { border-color: #a5b4fc; }
 .demand-urgency-btn.selected { border-color: var(--urgency-color); background: var(--urgency-bg); }
 .demand-urgency-btn .urgency-icon { font-size: 1.5rem; margin-bottom: 6px; }
 .demand-urgency-btn .urgency-label { font-size: 0.92rem; font-weight: 600; color: #374151; }
@@ -220,7 +220,7 @@ body { background: #f0f2f5; }
     border: 2px dashed #d1d5db; border-radius: 16px; padding: 28px;
     text-align: center; cursor: pointer; transition: all 0.2s; background: #fafbfc;
 }
-.demand-photo-area:hover { border-color: #93c5fd; background: #f0f7ff; }
+.demand-photo-area:hover { border-color: #a5b4fc; background: #f1f3ff; }
 .demand-photo-area i { font-size: 1.8rem; color: #9ca3af; }
 .demand-photo-area p { font-size: 0.9rem; color: #9ca3af; margin: 8px 0 0; }
 .demand-photo-previews { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
@@ -247,10 +247,10 @@ body { background: #f0f2f5; }
 .demand-btn-back { background: #f3f4f6; color: #6b7280; }
 .demand-btn-back:hover { background: #e5e7eb; }
 .demand-btn-next {
-    background: linear-gradient(135deg, #3b82f6, #6366f1); color: #fff;
-    box-shadow: 0 4px 14px rgba(59,130,246,0.3);
+    background: linear-gradient(135deg, #4f46e5, #6366f1); color: #fff;
+    box-shadow: 0 4px 14px rgba(79, 70, 229,0.3);
 }
-.demand-btn-next:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59,130,246,0.4); }
+.demand-btn-next:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79, 70, 229,0.4); }
 .demand-btn-next:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 .demand-btn-submit {
     background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff;
@@ -428,7 +428,7 @@ body { background: #f0f2f5; }
                     <!-- The category list remains available while a service is being chosen. -->
                     <div id="demandSubSection" class="demand-sub-section" style="display:none;">
                         <p style="font-size:0.88rem; color:#6b7280; margin-bottom:12px;">
-                            Choisissez le service dont vous avez besoin dans <strong id="demandSelectedCatName" style="color:#3b82f6;"></strong> :
+                            Choisissez le service dont vous avez besoin dans <strong id="demandSelectedCatName" style="color:#4f46e5;"></strong> :
                         </p>
                         <div id="demandSubList" class="demand-sub-list"></div>
                     </div>
@@ -603,7 +603,7 @@ body { background: #f0f2f5; }
                 <!-- ═══ STEP 5 : Récapitulatif ═══ -->
                 <div class="demand-section" id="demandStep5">
                     <div style="text-align:center; margin-bottom:20px;">
-                        <small style="display:block;color:#3b82f6;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Étape 5 sur 5</small>
+                        <small style="display:block;color:#4f46e5;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Étape 5 sur 5</small>
                         <div style="width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#22c55e,#16a34a); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; color:#fff; font-size:1.4rem;">
                             <i class="fas fa-check-double"></i>
                         </div>
@@ -615,12 +615,12 @@ body { background: #f0f2f5; }
                         <!-- Rempli dynamiquement -->
                     </div>
 
-                    <div style="background:linear-gradient(135deg,#eff6ff,#e0e7ff); border:1px solid #93c5fd; border-radius:12px; padding:14px 18px; margin-bottom:16px;">
+                    <div style="background:linear-gradient(135deg,#eef2ff,#e0e7ff); border:1px solid #a5b4fc; border-radius:12px; padding:14px 18px; margin-bottom:16px;">
                         <div style="display:flex; align-items:flex-start; gap:10px;">
-                            <i class="fas fa-magic" style="color:#3b82f6; margin-top:2px;"></i>
+                            <i class="fas fa-magic" style="color:#4f46e5; margin-top:2px;"></i>
                             <div>
-                                <strong style="color:#1e40af; font-size:0.9rem;">Que se passe-t-il ensuite ?</strong>
-                                <ul style="margin:6px 0 0; padding-left:18px; font-size:0.82rem; color:#1e40af;">
+                                <strong style="color:#3730a3; font-size:0.9rem;">Que se passe-t-il ensuite ?</strong>
+                                <ul style="margin:6px 0 0; padding-left:18px; font-size:0.82rem; color:#3730a3;">
                                     <li>Prokejem recherche les prestataires compatibles</li>
                                     <li>Votre demande reste visible même si aucun profil n’est trouvé immédiatement</li>
                                     <li>Vous suivez ensuite les propositions depuis votre feed</li>
@@ -1215,7 +1215,7 @@ function buildRecap() {
     const serviceDetailRows = Object.entries(serviceDetails).map(([key, value]) => {
         const field = intakeFields[key] || {};
         const displayValue = field.options?.[value] || value;
-        return `<div style="display:flex;align-items:flex-start;gap:10px;"><i class="fas fa-circle-check" style="color:#2563eb;width:20px;text-align:center;margin-top:4px;"></i><div><small style="color:#9ca3af;">${safe(field.label || key)}</small><br><strong style="color:#111827;">${safe(displayValue)}</strong></div></div>`;
+        return `<div style="display:flex;align-items:flex-start;gap:10px;"><i class="fas fa-circle-check" style="color:#4338ca;width:20px;text-align:center;margin-top:4px;"></i><div><small style="color:#9ca3af;">${safe(field.label || key)}</small><br><strong style="color:#111827;">${safe(displayValue)}</strong></div></div>`;
     }).join('');
 
     let html = `
@@ -1226,7 +1226,7 @@ function buildRecap() {
             </div>
             ${serviceDetailRows}
             <div style="display:flex; align-items:center; gap:10px;">
-                <i class="fas fa-heading" style="color:#3b82f6; width:20px; text-align:center;"></i>
+                <i class="fas fa-heading" style="color:#4f46e5; width:20px; text-align:center;"></i>
                 <div><small style="color:#9ca3af;">Titre</small><br><strong style="color:#111827;">${safe(title)}</strong></div>
             </div>
             <div style="display:flex; align-items:flex-start; gap:10px;">

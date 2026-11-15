@@ -251,7 +251,7 @@
                 <div class="col-md-4">
                     <div class="card border-0 shadow-sm h-100 own-profile-stat-card">
                         <div class="card-body d-flex align-items-center gap-3 py-3">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: rgba(58,134,255,0.1);">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: rgba(79, 70, 229,0.1);">
                                 <i class="fas fa-bullhorn text-primary"></i>
                             </div>
                             <div>
@@ -460,7 +460,7 @@
     }
     .own-profile-placeholder {
         font-size: clamp(4rem, 10vw, 7rem);
-        background: linear-gradient(145deg, #2563eb, #6857f5) !important;
+        background: linear-gradient(145deg, #4338ca, #6857f5) !important;
     }
     .own-profile-photo-edit {
         width: 44px;
@@ -632,7 +632,7 @@
     }
     .own-realization-empty i {
         font-size: 1.4rem;
-        color: #2563eb;
+        color: #4338ca;
     }
     .own-realization-empty p {
         color: #64748b;

@@ -46,7 +46,7 @@
         align-items: center;
         justify-content: center;
         border-radius: 14px;
-        background: linear-gradient(135deg, #3a86ff, #7c3aed);
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
         color: #fff;
         font-size: 1.35rem;
         font-weight: 800;
@@ -92,7 +92,7 @@
     .profile-share-option:hover {
         transform: translateY(-2px);
         border-color: #bfdbfe;
-        box-shadow: 0 8px 18px rgba(59, 130, 246, .1);
+        box-shadow: 0 8px 18px rgba(79, 70, 229, .1);
         color: #1e293b;
     }
 
@@ -109,7 +109,7 @@
         padding: 12px 16px;
         border: 0;
         border-radius: 12px;
-        background: linear-gradient(135deg, #3a86ff, #2563eb);
+        background: linear-gradient(135deg, #4f46e5, #4338ca);
         color: #fff;
         font-weight: 700;
     }

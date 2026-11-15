@@ -26,7 +26,7 @@
     width: 44px; height: 44px; border-radius: 12px; background: #eef2ff;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.onb-header-icon i { font-size: 1.2rem; color: #3a86ff; }
+.onb-header-icon i { font-size: 1.2rem; color: #4f46e5; }
 .onb-header h2 { font-size: 1.15rem; font-weight: 700; color: #1a1a1a; margin: 0; }
 .onb-header p { font-size: 0.82rem; color: #888; margin: 4px 0 0; }
 
@@ -37,11 +37,11 @@
     width: 28px; height: 28px; border-radius: 50%; font-size: 0.75rem; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
 }
-.onb-step-num.active { background: #3a86ff; color: #fff; }
+.onb-step-num.active { background: #4f46e5; color: #fff; }
 .onb-step-num.done { background: #22c55e; color: #fff; }
 .onb-step-num.pending { background: #e5e7eb; color: #9ca3af; }
 .onb-step span { font-size: 0.82rem; font-weight: 600; }
-.onb-step span.active-label { color: #3a86ff; }
+.onb-step span.active-label { color: #4f46e5; }
 .onb-step span.done-label { color: #22c55e; }
 .onb-step span.pending-label { color: #9ca3af; }
 .onb-stepper-line { flex: 1; height: 1px; background: #e5e7eb; }
@@ -58,10 +58,10 @@
     background: #fff; cursor: pointer; transition: all 0.2s; text-align: center;
 }
 .onb-cat-btn:hover { border-color: #c7d2fe; background: #fafbff; }
-.onb-cat-btn.selected { border-color: #3a86ff; background: #eef2ff; }
+.onb-cat-btn.selected { border-color: #4f46e5; background: #eef2ff; }
 .onb-cat-btn .onb-cat-icon { font-size: 1.6rem; }
 .onb-cat-btn .onb-cat-name { font-size: 0.72rem; font-weight: 600; color: #374151; line-height: 1.2; }
-.onb-cat-btn.selected .onb-cat-name { color: #3a86ff; }
+.onb-cat-btn.selected .onb-cat-name { color: #4f46e5; }
 
 /* Subcategory chips */
 .onb-sub-list { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -71,7 +71,7 @@
     cursor: pointer; transition: all 0.2s;
 }
 .onb-sub-chip:hover { border-color: #93c5fd; background: #f0f7ff; }
-.onb-sub-chip.selected { border-color: #3a86ff; background: #eef2ff; color: #3a86ff; }
+.onb-sub-chip.selected { border-color: #4f46e5; background: #eef2ff; color: #4f46e5; }
 
 /* Back button */
 .onb-back-btn {
@@ -85,16 +85,16 @@
     width: 100%; padding: 10px 14px; border: 1.5px solid #e5e7eb; border-radius: 10px;
     font-size: 0.88rem; color: #374151; outline: none; transition: border-color 0.2s;
 }
-.onb-input:focus { border-color: #3a86ff; box-shadow: 0 0 0 3px rgba(58,134,255,0.1); }
+.onb-input:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229,0.1); }
 .onb-input-label { display: block; font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 6px; }
 .onb-input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
 @media (max-width: 576px) { .onb-input-row { grid-template-columns: 1fr; } }
 .onb-geo-btn {
     display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px;
-    border: 1.5px solid #3a86ff; border-radius: 10px; background: #eef2ff;
-    color: #3a86ff; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    border: 1.5px solid #4f46e5; border-radius: 10px; background: #eef2ff;
+    color: #4f46e5; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
 }
-.onb-geo-btn:hover { background: #3a86ff; color: #fff; }
+.onb-geo-btn:hover { background: #4f46e5; color: #fff; }
 
 /* Count badge */
 .onb-count { font-size: 0.78rem; font-weight: 600; color: #22c55e; margin-top: 10px; }
@@ -108,10 +108,10 @@
 .onb-skip:hover { color: #6b7280; }
 .onb-save-btn {
     padding: 10px 28px; border-radius: 10px; border: none;
-    background: linear-gradient(135deg, #3a86ff, #2667cc); color: #fff;
+    background: linear-gradient(135deg, #4f46e5, #4338ca); color: #fff;
     font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
 }
-.onb-save-btn:hover { background: linear-gradient(135deg, #2667cc, #1a4a99); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(58,134,255,0.35); }
+.onb-save-btn:hover { background: linear-gradient(135deg, #4338ca, #3730a3); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(79, 70, 229,0.35); }
 .onb-save-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
 
 /* Toast */
@@ -167,7 +167,7 @@
                     <i class="fas fa-chevron-left"></i> Retour
                 </button>
                 <p style="font-size:0.85rem; color:#888; margin-bottom:14px;">
-                    Sélectionnez vos spécialités dans <strong id="onb-cat-name" style="color:#3a86ff;"></strong> :
+                    Sélectionnez vos spécialités dans <strong id="onb-cat-name" style="color:#4f46e5;"></strong> :
                 </p>
                 <div style="background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 1px solid #93c5fd; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 0.8rem; color: #1e40af; display: flex; align-items: flex-start; gap: 8px;">
                     <i class="fas fa-info-circle" style="margin-top: 1px; flex-shrink: 0;"></i>
@@ -397,7 +397,7 @@
         var geoBtn = document.getElementById('onb-geo-btn');
         geoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Localisation en cours...';
         statusEl.style.display = '';
-        statusEl.style.color = '#3a86ff';
+        statusEl.style.color = '#4f46e5';
         statusEl.textContent = 'Recherche de votre position...';
 
         if (!navigator.geolocation) {

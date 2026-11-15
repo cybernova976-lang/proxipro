@@ -24,7 +24,7 @@
   --pk-surface: #FFFFFF;
   --pk-rule:    #E1E7F0;
   --pk-ink-3:   #7B879B;
-  --pk-600:     #2563eb;
+  --pk-600:     #4f46e5;
 
   display: none;
   font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -48,9 +48,9 @@
 .pk-tabbar i { font-size: 1.2rem; transition: transform .12s ease; }
 .pk-tabbar .is-active { color: var(--pk-600); }
 .pk-tabbar a:active,
-.pk-tabbar a.is-pressed { color: var(--pk-600); background: #eff6ff; transform: scale(.96); }
+.pk-tabbar a.is-pressed { color: var(--pk-600); background: #eef2ff; transform: scale(.96); }
 .pk-tabbar a.is-pending,
-.pk-tabbar a.is-feedback { color: var(--pk-600); background: #eff6ff; }
+.pk-tabbar a.is-feedback { color: var(--pk-600); background: #eef2ff; }
 .pk-tabbar a.is-pending i { animation: pk-tabbar-pulse .42s ease-in-out infinite alternate; }
 .pk-tabbar .pk-tabbar__pub { color: var(--pk-600); font-weight: 700; }
 .pk-tabbar .pk-tabbar__pub i {
@@ -78,4 +78,7 @@
 @media (max-width: 900px) {
   .pk-tabbar { display: grid; }
   .pk-tabbar-spacer { display: block; height: 92px; }
+  /* La barre du bas porte déjà « Publier » : un seul bouton dominant par écran,
+     le bouton de l’en-tête s’efface (comme dans l’espace particulier). */
+  body:has(.pk-tabbar) .mobile-service-request { display: none !important; }
 }
