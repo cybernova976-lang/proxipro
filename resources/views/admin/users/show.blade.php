@@ -165,6 +165,9 @@
         </div>
         @endif
 
+        <!-- Abonnements, paiements et commandes du compte -->
+        @include('admin.users.partials.purchases')
+
         <!-- Annonces de l'utilisateur -->
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-0 py-3">

@@ -200,6 +200,12 @@ class AdminController extends Controller
     }
 
     // Voir un utilisateur
+    /** Types de transaction qui sont un paiement fait par le membre (ni versement reçu, ni remboursement). */
+    private const USER_PAYMENT_TYPES = [
+        'SUBSCRIPTION', 'AD_BOOST', 'AD_REFRESH', 'AD_URGENT', 'IDENTITY_VERIFICATION',
+        'POINTS', 'DOCUMENT_CREDITS', 'SERVICE_ORDER_PAYMENT',
+    ];
+
     public function showUser($id)
     {
         $user = User::with('ads')->findOrFail($id);
@@ -210,6 +216,14 @@ class AdminController extends Controller
                 ?? $user->proSubscriptions()->latest('id')->first(),
             'adminPrivilegeCatalog' => config('admin.privileges', []),
             'viewerIsPrincipalAdmin' => $this->isPrincipalAdmin(),
+            // Abonnements et achats du compte : tout vient des tables, rien n’est estimé.
+            'subscriptionHistory' => $user->proSubscriptions()->latest('id')->take(10)->get(),
+            'userTransactions' => $user->transactions()->latest('id')->take(15)->get(),
+            'userTransactionsCount' => $user->transactions()->count(),
+            'userPaidTotal' => (float) $user->transactions()->where('status', 'completed')
+                ->whereIn('type', self::USER_PAYMENT_TYPES)->sum('amount'),
+            'ordersPlacedCount' => $user->serviceOrdersPlaced()->count(),
+            'ordersReceivedCount' => $user->serviceOrdersReceived()->count(),
         ]);
     }
 
@@ -457,9 +471,11 @@ class AdminController extends Controller
             'duration_days' => 'required|integer|min:1|max:90',
         ]);
 
-        $urgentUntil = now()->addDays($validated['duration_days']);
+        // Un formulaire envoie du texte (« 30 ») : Carbon exige un nombre.
+        $durationDays = (int) $validated['duration_days'];
+        $urgentUntil = now()->addDays($durationDays);
         if ($ad->isCurrentlyUrgent() && $ad->urgent_until) {
-            $urgentUntil = $ad->urgent_until->addDays($validated['duration_days']);
+            $urgentUntil = $ad->urgent_until->addDays($durationDays);
         }
 
         // Octroi gratuit : jamais présenté comme payé (AdDisclosure).
@@ -691,7 +707,8 @@ class AdminController extends Controller
             'amount' => 0,
             'status' => 'active',
             'starts_at' => now(),
-            'ends_at' => now()->addDays($validated['duration']),
+            // Un formulaire envoie du texte (« 30 ») : Carbon exige un nombre.
+            'ends_at' => now()->addDays((int) $validated['duration']),
             'auto_renew' => false,
             'notifications_enabled' => true,
             'realtime_notifications' => $user->pro_notifications_realtime ?? true,

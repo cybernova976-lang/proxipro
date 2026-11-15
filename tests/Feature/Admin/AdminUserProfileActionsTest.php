@@ -151,11 +151,17 @@ class AdminUserProfileActionsTest extends TestCase
             ->post(route('admin.subscriptions.provider.grant'), [
                 'email' => $provider->email,
                 'plan' => 'monthly',
-                'duration' => 30,
+                // En texte, comme l’envoie un vrai formulaire : un entier masquait une erreur 500 en production.
+                'duration' => '45',
             ])
-            ->assertRedirect(route('admin.users.show', $provider->id));
+            ->assertRedirect(route('admin.users.show', $provider->id))
+            ->assertSessionHas('success');
 
         $this->assertTrue($provider->fresh()->isPremium());
+        $this->assertSame(
+            now()->addDays(45)->toDateString(),
+            ProSubscription::where('user_id', $provider->id)->firstOrFail()->ends_at->toDateString()
+        );
         $subscription = ProSubscription::where('user_id', $provider->id)->firstOrFail();
 
         $profile = $this->actingAs($principal)->get(route('admin.users.show', $provider->id));
@@ -163,6 +169,54 @@ class AdminUserProfileActionsTest extends TestCase
         $profile->assertSee('Premium actif');
         $profile->assertSee(route('admin.subscriptions.provider.cancel', $subscription), false);
         $profile->assertDontSee('Accorder le Premium sans paiement');
+    }
+
+    /** Même défaut constaté sur l'option Urgent : la durée du formulaire arrive en texte. */
+    public function test_urgent_can_be_granted_with_a_duration_sent_as_text(): void
+    {
+        $principal = $this->principalAdmin();
+        $ad = \App\Models\Ad::create([
+            'user_id' => $this->provider()->id, 'title' => 'Dépannage plomberie', 'description' => 'Intervention rapide.',
+            'category' => 'Plombier', 'location' => 'Mamoudzou', 'service_type' => 'offre', 'status' => 'active', 'visibility' => 'public',
+        ]);
+
+        $this->actingAs($principal)->from(route('admin.ads'))
+            ->post(route('admin.ads.grant-urgent', $ad->id), ['duration_days' => '7'])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(now()->addDays(7)->toDateString(), $ad->fresh()->urgent_until->toDateString());
+    }
+
+    public function test_user_profile_lists_subscriptions_payments_and_orders_from_real_records(): void
+    {
+        $principal = $this->principalAdmin();
+        $provider = $this->provider();
+        ProSubscription::create(['user_id' => $provider->id, 'plan' => 'monthly', 'amount' => 9.99, 'status' => 'expired',
+            'starts_at' => now()->subMonths(2), 'ends_at' => now()->subMonth(), 'stripe_subscription_id' => 'sub_test_1']);
+        \App\Models\Transaction::create(['user_id' => $provider->id, 'amount' => 9.99, 'type' => 'SUBSCRIPTION',
+            'description' => 'Paiement Premium mensuel', 'status' => 'completed']);
+        \App\Models\Transaction::create(['user_id' => $provider->id, 'amount' => 4, 'type' => 'AD_BOOST',
+            'description' => 'Promotion de l’annonce #12', 'status' => 'completed']);
+        // Un versement reçu n'est pas un paiement effectué par le membre.
+        \App\Models\Transaction::create(['user_id' => $provider->id, 'amount' => 90, 'type' => 'SERVICE_ORDER_RELEASE',
+            'description' => 'Liberation commande CMD-1', 'status' => 'completed']);
+
+        $this->actingAs($principal)->get(route('admin.users.show', $provider->id))->assertOk()
+            ->assertSee('Abonnements et achats')
+            ->assertSee('Historique des abonnements Premium')
+            ->assertSee('Expiré')
+            ->assertSee('Paiement Stripe')
+            ->assertSee('Boost d’annonce')
+            ->assertSee('Versement reçu pour une commande')
+            ->assertSee('data-user-figure="paid">13,99 €', false)
+            ->assertSee('data-user-figure="premium">Non', false);
+
+        // Compte sans aucun achat : la fiche le dit, sans chiffre inventé.
+        $this->get(route('admin.users.show', User::factory()->create()->id))->assertOk()
+            ->assertSee('Ce compte n’a jamais eu d’abonnement Premium.')
+            ->assertSee('Aucun paiement enregistré pour ce compte.')
+            ->assertSee('data-user-figure="paid">0,00 €', false);
     }
 
     public function test_premium_grant_is_explained_rather_than_offered_for_a_non_provider(): void
