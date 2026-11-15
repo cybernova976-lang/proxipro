@@ -223,7 +223,7 @@
 
 @if($ads->hasPages())
     <div class="d-flex justify-content-center mt-4">
-        {{ $ads->withQueryString()->links() }}
+        {{ $ads->withQueryString()->links('admin.partials.pagination') }}
     </div>
 @endif
 @endsection

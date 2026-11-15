@@ -91,7 +91,7 @@
             </tbody>
         </table>
     </div>
-    @if($providerSubscriptions->hasPages())<div class="card-footer bg-white">{{ $providerSubscriptions->links() }}</div>@endif
+    @if($providerSubscriptions->hasPages())<div class="card-footer bg-white">{{ $providerSubscriptions->links('admin.partials.pagination') }}</div>@endif
 </div>
 
 <!-- Statistiques -->
@@ -530,7 +530,7 @@
     </div>
     @if($users->hasPages())
     <div class="card-footer bg-white border-0 py-3">
-        {{ $users->links() }}
+        {{ $users->links('admin.partials.pagination') }}
     </div>
     @endif
 </div>

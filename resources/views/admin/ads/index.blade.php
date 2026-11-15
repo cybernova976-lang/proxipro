@@ -172,7 +172,7 @@
                         </td>
                         <td>
                             @if($ad->price)
-                                {{ number_format($ad->price, 0, ',', ' ') }} FCFA
+                                {{ number_format($ad->price, 0, ',', ' ') }} €
                             @else
                                 <span class="text-muted">—</span>
                             @endif
@@ -240,7 +240,7 @@
     </div>
     @if($ads->hasPages())
     <div class="card-footer bg-white border-0 py-3">
-        {{ $ads->withQueryString()->links() }}
+        {{ $ads->withQueryString()->links('admin.partials.pagination') }}
     </div>
     @endif
 </div>

@@ -65,7 +65,7 @@
                             <i class="fas fa-money-bill text-muted me-2"></i>
                             <strong>Prix:</strong> 
                             @if($ad->price)
-                                <span class="text-success fw-bold">{{ number_format($ad->price, 0, ',', ' ') }} FCFA</span>
+                                <span class="text-success fw-bold">{{ number_format($ad->price, 0, ',', ' ') }} €</span>
                             @else
                                 <span class="text-muted">À négocier</span>
                             @endif

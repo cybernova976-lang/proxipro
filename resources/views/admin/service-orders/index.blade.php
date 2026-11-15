@@ -139,7 +139,7 @@
         </table>
     </div>
     @if($orders->hasPages())
-        <div class="card-footer bg-white">{{ $orders->links() }}</div>
+        <div class="card-footer bg-white">{{ $orders->links('admin.partials.pagination') }}</div>
     @endif
 </div>
 @endsection

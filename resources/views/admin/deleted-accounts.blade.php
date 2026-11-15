@@ -153,7 +153,7 @@
         
         @if($deletedUsers->hasPages())
         <div class="card-footer bg-white border-0 py-3">
-            {{ $deletedUsers->links() }}
+            {{ $deletedUsers->links('admin.partials.pagination') }}
         </div>
         @endif
         @else

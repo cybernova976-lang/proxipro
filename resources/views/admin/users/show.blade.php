@@ -3,6 +3,9 @@
 @section('title', 'Profil Utilisateur - ' . $user->name)
 
 @section('content')
+@php
+    $isPrincipalAdmin = $user->isPrincipalAdmin();
+@endphp
 <div class="row mb-4">
     <div class="col">
         <nav aria-label="breadcrumb">
@@ -32,7 +35,7 @@
                 <h5 class="fw-bold mb-1">{{ $user->name }}</h5>
                 <p class="text-muted mb-3">{{ $user->email }}</p>
                 
-                <div class="d-flex justify-content-center gap-2 mb-3">
+                <div class="d-flex justify-content-center flex-wrap gap-2 mb-2">
                     <span class="badge bg-{{ ($user->role ?? 'user') == 'admin' ? 'danger' : 'primary' }} px-3 py-2">
                         {{ ucfirst($user->role ?? 'user') }}
                     </span>
@@ -47,6 +50,12 @@
                         <span class="badge bg-info px-3 py-2">Actif</span>
                     @else
                         <span class="badge bg-secondary px-3 py-2">Inactif</span>
+                    @endif
+                </div>
+                <div class="d-flex justify-content-center flex-wrap gap-2 mb-3">
+                    <span class="badge bg-light text-dark border px-3 py-2">{{ $user->getAccountTypeLabel() }}</span>
+                    @if($user->isPremium())
+                        <span class="badge bg-warning text-dark px-3 py-2"><i class="fas fa-crown me-1"></i>Premium</span>
                     @endif
                 </div>
                 
@@ -87,10 +96,6 @@
                 <h6 class="mb-0">Actions rapides</h6>
             </div>
             <div class="card-body">
-                @php
-                    $isPrincipalAdmin = $user->email === config('admin.principal_admin.email');
-                @endphp
-                
                 @if($isPrincipalAdmin)
                     <div class="alert alert-warning mb-0">
                         <i class="fas fa-shield-alt me-2"></i>
@@ -147,8 +152,20 @@
         </div>
     </div>
     
-    <!-- Annonces de l'utilisateur -->
     <div class="col-lg-8">
+        @if(! $isPrincipalAdmin)
+        <!-- Statut du compte : Premium et rôle administrateur -->
+        <div class="row g-4 mb-4">
+            <div class="col-xl-6">
+                @include('admin.users.partials.premium')
+            </div>
+            <div class="col-xl-6">
+                @include('admin.users.partials.admin-role')
+            </div>
+        </div>
+        @endif
+
+        <!-- Annonces de l'utilisateur -->
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-0 py-3">
                 <h5 class="mb-0">
@@ -184,7 +201,7 @@
                                 </td>
                                 <td>
                                     @if($ad->price)
-                                        {{ number_format($ad->price, 0, ',', ' ') }} FCFA
+                                        {{ number_format($ad->price, 0, ',', ' ') }} €
                                     @else
                                         <span class="text-muted">—</span>
                                     @endif

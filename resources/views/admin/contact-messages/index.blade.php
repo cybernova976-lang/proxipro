@@ -179,7 +179,7 @@
 
 @if($messages->hasPages())
     <div class="d-flex justify-content-center mt-4">
-        {{ $messages->withQueryString()->links() }}
+        {{ $messages->withQueryString()->links('admin.partials.pagination') }}
     </div>
 @endif
 @endsection

@@ -204,7 +204,13 @@ class AdminController extends Controller
     {
         $user = User::with('ads')->findOrFail($id);
 
-        return view('admin.users.show', compact('user'));
+        return view('admin.users.show', [
+            'user' => $user,
+            'providerSubscription' => $user->subscriptionForManagement()
+                ?? $user->proSubscriptions()->latest('id')->first(),
+            'adminPrivilegeCatalog' => config('admin.privileges', []),
+            'viewerIsPrincipalAdmin' => $this->isPrincipalAdmin(),
+        ]);
     }
 
     // Mettre à jour un utilisateur
@@ -219,10 +225,27 @@ class AdminController extends Controller
             'role' => 'nullable|in:user,admin,moderator',
         ]);
 
+        // Le compte de l'administrateur principal est protégé côté serveur,
+        // pas seulement masqué dans l'interface.
+        if ($user->isPrincipalAdmin()) {
+            return back()->with('error', 'Le compte de l’administrateur principal ne peut pas être modifié ici.');
+        }
+
+        // Nommer ou destituer un administrateur est réservé à l'administrateur
+        // principal : un autre administrateur ne peut pas changer un rôle.
+        $currentRole = $user->role ?? 'user';
+        $requestedRole = $validated['role'] ?? $currentRole;
+        if ($requestedRole !== $currentRole && ! $this->isPrincipalAdmin()) {
+            return back()->with('error', 'Seul l’administrateur principal peut modifier le rôle d’un compte.');
+        }
+
         $user->name = $validated['name'];
         $user->email = $validated['email'];
         $user->phone = $validated['phone'] ?? $user->phone;
-        $user->role = $validated['role'] ?? $user->role ?? 'user';
+        $user->role = $requestedRole;
+        if ($requestedRole !== 'admin') {
+            $user->admin_privileges = null;
+        }
 
         $newVerifiedStatus = $request->boolean('is_verified');
         $oldVerifiedStatus = (bool) $user->is_verified;
@@ -266,6 +289,15 @@ class AdminController extends Controller
     public function deleteUser($id)
     {
         $user = User::findOrFail($id);
+
+        if ($user->isPrincipalAdmin()) {
+            return back()->with('error', 'Le compte de l’administrateur principal ne peut pas être supprimé.');
+        }
+
+        if ((int) $user->id === (int) \Auth::id()) {
+            return back()->with('error', 'Vous ne pouvez pas supprimer votre propre compte depuis l’administration.');
+        }
+
         $user->delete();
 
         return redirect()->route('admin.users')->with('success', 'Utilisateur supprimé avec succès');
@@ -1164,7 +1196,7 @@ class AdminController extends Controller
         ]);
 
         $user->role = 'admin';
-        $user->admin_privileges = json_encode($validated['privileges'] ?? []);
+        $user->admin_privileges = array_values($validated['privileges'] ?? []);
         $user->save();
 
         return back()->with('success', $user->name.' a été promu administrateur');
@@ -1210,7 +1242,7 @@ class AdminController extends Controller
             'privileges.*' => 'in:'.implode(',', array_keys(config('admin.privileges'))),
         ]);
 
-        $user->admin_privileges = json_encode($validated['privileges'] ?? []);
+        $user->admin_privileges = array_values($validated['privileges'] ?? []);
         $user->save();
 
         return back()->with('success', 'Privilèges de '.$user->name.' mis à jour');

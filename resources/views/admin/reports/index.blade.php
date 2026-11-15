@@ -195,7 +195,7 @@
                 </div>
 
                 <div class="d-flex justify-content-center p-3">
-                    {{ $reports->appends(request()->query())->links() }}
+                    {{ $reports->appends(request()->query())->links('admin.partials.pagination') }}
                 </div>
             @endif
         </div>

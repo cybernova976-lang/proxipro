@@ -26,6 +26,9 @@
             background: linear-gradient(180deg, #2c3e50, #1a252f);
             color: white;
             transition: all 0.3s;
+            /* Le menu est plus haut que l'écran d'un ordinateur portable :
+               sans défilement, ses derniers liens restaient inaccessibles. */
+            overflow-y: auto;
         }
         
         .main-content {

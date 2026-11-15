@@ -151,7 +151,7 @@
 
             @if($blockedEmails->hasPages())
                 <div class="card-footer bg-white border-0 py-3 px-4">
-                    {{ $blockedEmails->links() }}
+                    {{ $blockedEmails->links('admin.partials.pagination') }}
                 </div>
             @endif
         @else

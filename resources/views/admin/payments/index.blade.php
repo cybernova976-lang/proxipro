@@ -43,7 +43,7 @@
             </tbody>
         </table>
     </div>
-    @if($events->hasPages())<div class="card-footer bg-white">{{ $events->links() }}</div>@endif
+    @if($events->hasPages())<div class="card-footer bg-white">{{ $events->links('admin.partials.pagination') }}</div>@endif
 </div>
 
 <div class="card border-0 shadow-sm">
@@ -67,6 +67,6 @@
             </tbody>
         </table>
     </div>
-    @if($transactions->hasPages())<div class="card-footer bg-white">{{ $transactions->links() }}</div>@endif
+    @if($transactions->hasPages())<div class="card-footer bg-white">{{ $transactions->links('admin.partials.pagination') }}</div>@endif
 </div>
 @endsection

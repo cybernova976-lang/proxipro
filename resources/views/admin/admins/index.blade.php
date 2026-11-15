@@ -42,7 +42,7 @@
                             @foreach($admins as $admin)
                             @php
                                 $isPrincipal = $admin->email === config('admin.principal_admin.email');
-                                $adminPrivileges = $admin->admin_privileges ?? [];
+                                $adminPrivileges = $admin->adminPrivilegeList();
                             @endphp
                             <tr>
                                 <td class="ps-4">

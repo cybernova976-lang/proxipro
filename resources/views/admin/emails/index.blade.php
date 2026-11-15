@@ -47,5 +47,5 @@
     <div class="col-12"><div class="card border-0 shadow-sm"><div class="card-body py-5 text-center"><i class="fas fa-circle-check text-success fs-1"></i><h2 class="h5 mt-3">Aucun message dans cette file</h2></div></div></div>
 @endforelse
 </div>
-<div class="mt-4">{{ $emails->links() }}</div>
+<div class="mt-4">{{ $emails->links('admin.partials.pagination') }}</div>
 @endsection

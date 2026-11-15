@@ -161,7 +161,7 @@
     
     @if($advertisements->hasPages())
     <div class="card-footer bg-white border-0">
-        {{ $advertisements->links() }}
+        {{ $advertisements->links('admin.partials.pagination') }}
     </div>
     @endif
 </div>

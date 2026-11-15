@@ -562,9 +562,25 @@ class User extends Authenticatable
         }
 
         // Les autres admins ont des privilèges spécifiques
-        $privileges = $this->admin_privileges ?? [];
+        return in_array($privilege, $this->adminPrivilegeList(), true);
+    }
 
-        return in_array($privilege, $privileges);
+    /**
+     * Liste des privilèges admin, toujours sous forme de tableau.
+     *
+     * Les privilèges ont longtemps été enregistrés encodés deux fois (une
+     * chaîne JSON dans une colonne déjà convertie en tableau) : la valeur
+     * relue était alors une chaîne. Les deux formats sont acceptés ici.
+     */
+    public function adminPrivilegeList(): array
+    {
+        $privileges = $this->admin_privileges;
+
+        if (is_string($privileges)) {
+            $privileges = json_decode($privileges, true);
+        }
+
+        return is_array($privileges) ? array_values($privileges) : [];
     }
 
     public function isAdmin()

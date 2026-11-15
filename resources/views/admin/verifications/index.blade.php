@@ -228,7 +228,7 @@
             </div>
 
             <div class="d-flex justify-content-center mt-3">
-                {{ $verifications->withQueryString()->links() }}
+                {{ $verifications->withQueryString()->links('admin.partials.pagination') }}
             </div>
         @else
             <div class="text-center py-5">
