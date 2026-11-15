@@ -96,7 +96,7 @@
                     <input 
                         id="email" name="email" type="email" required value="{{ old('email') }}" 
                         placeholder="nom@exemple.com" autofocus
-                        class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400 @error('email') border-red-400 @enderror"
+                        class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 @error('email') border-red-400 @enderror"
                     >
                     @error('email')
                         <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
@@ -107,14 +107,14 @@
                     <div class="flex items-center justify-between mb-1.5">
                         <label for="password" class="text-sm font-medium text-gray-700">Mot de passe</label>
                         @if (Route::has('password.request'))
-                        <a href="{{ route('password.request') }}" class="text-xs text-blue-600 hover:text-blue-700 font-medium">Oublié ?</a>
+                        <a href="{{ route('password.request') }}" class="text-xs text-indigo-600 hover:text-indigo-700 font-medium">Oublié ?</a>
                         @endif
                     </div>
                     <div class="relative">
                         <input 
                             id="password" name="password" type="password" required 
                             placeholder="••••••••"
-                            class="w-full px-3 py-2.5 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400 @error('password') border-red-400 @enderror"
+                            class="w-full px-3 py-2.5 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 @error('password') border-red-400 @enderror"
                         >
                         <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                             <svg id="eye-icon" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -130,7 +130,7 @@
 
                 <p class="text-sm text-gray-600">Pour votre sécurité, vous serez déconnecté après 1 heure d’inactivité.</p>
 
-                <button type="submit" id="loginSubmitBtn" class="w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                <button type="submit" id="loginSubmitBtn" class="w-full py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed">
                     Se connecter
                 </button>
 
@@ -140,7 +140,7 @@
 
         <!-- Lien inscription -->
         <p class="text-center text-sm text-gray-500 mt-6">
-            Pas encore de compte ? <a href="{{ route('register') }}" class="font-semibold text-blue-600 hover:text-blue-700">Créer un compte</a>
+            Pas encore de compte ? <a href="{{ route('register') }}" class="font-semibold text-indigo-600 hover:text-indigo-700">Créer un compte</a>
         </p>
         
         <p class="text-center text-xs text-gray-400 mt-4">

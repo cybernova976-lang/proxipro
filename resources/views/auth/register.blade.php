@@ -56,10 +56,10 @@
                     type="button"
                     onclick="setAccountType('particulier')"
                     id="btn-particulier"
-                    class="flex-1 py-3 px-3 rounded-lg border-2 text-center transition-all group border-blue-600 bg-blue-50"
+                    class="flex-1 py-3 px-3 rounded-lg border-2 text-center transition-all group border-indigo-600 bg-indigo-50"
                 >
                     <div class="text-lg mb-1">👤</div>
-                    <div class="text-sm font-semibold text-blue-600">Particulier</div>
+                    <div class="text-sm font-semibold text-indigo-600">Particulier</div>
                 </button>
                 <button
                     type="button"
@@ -128,7 +128,7 @@
                                 type="text" 
                                 placeholder="Jean"
                                 value="{{ old('firstname') }}"
-                                class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400"
+                                class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400"
                             >
                         </div>
                         <div>
@@ -138,7 +138,7 @@
                                 type="text" 
                                 placeholder="Dupont"
                                 value="{{ old('lastname') }}"
-                                class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400"
+                                class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400"
                             >
                         </div>
                     </div>
@@ -189,7 +189,7 @@
                             id="company_name_input"
                             placeholder="Mon entreprise"
                             value="{{ old('company_name') }}"
-                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400"
                         >
                         <span class="hidden" id="company-icon">🏢</span>
                     </div>
@@ -203,7 +203,7 @@
                                 placeholder="12345678901234"
                                 maxlength="14"
                                 value="{{ old('siret') }}"
-                                class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400"
+                                class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400"
                             >
                         </div>
                         <div>
@@ -213,7 +213,7 @@
                                 type="tel" 
                                 placeholder="01 23 45 67 89"
                                 value="{{ old('phone') }}"
-                                class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400"
+                                class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400"
                             >
                         </div>
                     </div>
@@ -222,7 +222,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Secteur d'activité</label>
                         <select 
                             name="sector" 
-                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
                         >
                             <option value="">Choisir...</option>
                             <option value="BTP / Construction" {{ old('sector') == 'BTP / Construction' ? 'selected' : '' }}>BTP / Construction</option>
@@ -257,11 +257,11 @@
                             id="country"
                             name="country"
                             required
-                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white @error('country') border-red-400 @enderror"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white @error('country') border-red-400 @enderror"
                         >
                             <option value="">-- Sélectionner un pays / département --</option>
                             @foreach($locationCountries as $countryName => $flag)
-                                <option value="{{ $countryName }}" {{ $selectedCountry === $countryName ? 'selected' : '' }}>{{ $flag }} {{ $countryName }}</option>
+                                <option value="{{ $countryName }}" {{ $selectedCountry === $countryName ? 'selected' : '' }}>{{ $countryName }}</option>
                             @endforeach
                         </select>
                         @error('country')
@@ -275,7 +275,7 @@
                             name="city"
                             required
                             data-selected-city="{{ $selectedCityIsListed ? $selectedCity : ($selectedCity ? '__other__' : '') }}"
-                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white @error('city') border-red-400 @enderror"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white @error('city') border-red-400 @enderror"
                         >
                             <option value="">-- Sélectionnez d'abord un pays --</option>
                         </select>
@@ -285,7 +285,7 @@
                             type="text"
                             placeholder="Saisir votre ville"
                             value="{{ $selectedCity && !$selectedCityIsListed ? $selectedCity : old('city_manual') }}"
-                            class="mt-2 w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400"
+                            class="mt-2 w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400"
                             style="display: {{ $selectedCity && !$selectedCityIsListed ? 'block' : 'none' }};"
                         >
                         @error('city')
@@ -299,7 +299,7 @@
                     <input 
                         id="email" name="email" type="email" required 
                         placeholder="nom@exemple.com" value="{{ old('email') }}"
-                        class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400 @error('email') border-red-400 @enderror"
+                        class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 @error('email') border-red-400 @enderror"
                     >
                     @error('email')
                         <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
@@ -317,7 +317,7 @@
                             autocomplete="new-password"
                             autocapitalize="off"
                             spellcheck="false"
-                            class="w-full px-3 py-2.5 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400 @error('password') border-red-400 @enderror"
+                            class="w-full px-3 py-2.5 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 @error('password') border-red-400 @enderror"
                         >
                         <button type="button" onclick="togglePassword('password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                             <svg id="password-toggle" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -343,7 +343,7 @@
                             autocomplete="new-password"
                             autocapitalize="off"
                             spellcheck="false"
-                            class="w-full px-3 py-2.5 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400"
+                            class="w-full px-3 py-2.5 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400"
                         >
                         <button type="button" onclick="togglePassword('password-confirm')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                             <svg id="password-confirm-toggle" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -355,19 +355,19 @@
                 <!-- Conditions -->
                 <div class="space-y-2 pt-1">
                     <label class="flex items-start gap-2.5 cursor-pointer">
-                        <input type="checkbox" name="terms" required class="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <input type="checkbox" name="terms" required class="mt-0.5 w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                         <span class="text-xs text-gray-600 leading-relaxed">
-                            J'accepte les <a href="{{ route('legal.terms') }}" target="_blank" class="text-blue-600 hover:underline">Conditions d'utilisation</a> et la <a href="{{ route('legal.privacy') }}" target="_blank" class="text-blue-600 hover:underline">Politique de confidentialité</a> *
+                            J'accepte les <a href="{{ route('legal.terms') }}" target="_blank" class="text-indigo-600 hover:underline">Conditions d'utilisation</a> et la <a href="{{ route('legal.privacy') }}" target="_blank" class="text-indigo-600 hover:underline">Politique de confidentialité</a> *
                         </span>
                     </label>
                     <label class="flex items-start gap-2.5 cursor-pointer">
-                        <input type="checkbox" name="newsletter" class="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <input type="checkbox" name="newsletter" class="mt-0.5 w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                         <span class="text-xs text-gray-600">Recevoir des offres et actualités par e-mail</span>
                     </label>
                 </div>
 
                 <!-- Bouton de soumission -->
-                <button type="submit" id="submitBtn" class="w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                <button type="submit" id="submitBtn" class="w-full py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed">
                     Créer mon compte
                 </button>
 
@@ -376,7 +376,7 @@
 
             <!-- Lien connexion -->
             <p class="text-center text-sm text-gray-500 mt-6">
-                Déjà inscrit ? <a href="{{ route('login') }}" class="font-semibold text-blue-600 hover:text-blue-700">Se connecter</a>
+                Déjà inscrit ? <a href="{{ route('login') }}" class="font-semibold text-indigo-600 hover:text-indigo-700">Se connecter</a>
             </p>
         </div>
 
@@ -447,9 +447,9 @@
         const fieldsProfessionnel = document.getElementById('fields-professionnel');
 
         if (type === 'particulier') {
-            btnParticulier.className = 'flex-1 py-3 px-3 rounded-lg border-2 text-center transition-all group border-blue-600 bg-blue-50';
+            btnParticulier.className = 'flex-1 py-3 px-3 rounded-lg border-2 text-center transition-all group border-indigo-600 bg-indigo-50';
             btnParticulier.querySelector('div:first-child').className = 'text-lg mb-1';
-            btnParticulier.querySelector('div:last-child').className = 'text-sm font-semibold text-blue-600';
+            btnParticulier.querySelector('div:last-child').className = 'text-sm font-semibold text-indigo-600';
             
             btnProfessionnel.className = 'flex-1 py-3 px-3 rounded-lg border-2 text-center transition-all group border-gray-200 hover:border-gray-300 hover:bg-gray-50';
             btnProfessionnel.querySelector('div:first-child').className = 'text-lg mb-1';
@@ -458,9 +458,9 @@
             fieldsParticulier.classList.remove('hidden');
             fieldsProfessionnel.classList.add('hidden');
         } else {
-            btnProfessionnel.className = 'flex-1 py-3 px-3 rounded-lg border-2 text-center transition-all group border-blue-600 bg-blue-50';
+            btnProfessionnel.className = 'flex-1 py-3 px-3 rounded-lg border-2 text-center transition-all group border-indigo-600 bg-indigo-50';
             btnProfessionnel.querySelector('div:first-child').className = 'text-lg mb-1';
-            btnProfessionnel.querySelector('div:last-child').className = 'text-sm font-semibold text-blue-600';
+            btnProfessionnel.querySelector('div:last-child').className = 'text-sm font-semibold text-indigo-600';
             
             btnParticulier.className = 'flex-1 py-3 px-3 rounded-lg border-2 text-center transition-all group border-gray-200 hover:border-gray-300 hover:bg-gray-50';
             btnParticulier.querySelector('div:first-child').className = 'text-lg mb-1';
@@ -487,14 +487,14 @@
         const companyIcon = document.getElementById('company-icon');
 
         if (type === 'entreprise') {
-            btnEntreprise.className = 'py-3 px-4 rounded-lg border-2 text-center transition-all border-blue-600 bg-blue-50';
+            btnEntreprise.className = 'py-3 px-4 rounded-lg border-2 text-center transition-all border-indigo-600 bg-indigo-50';
             btnAutoEntrepreneur.className = 'py-3 px-4 rounded-lg border-2 text-center transition-all border-gray-200 hover:border-gray-300 hover:bg-gray-50';
             
             companyLabel.textContent = "Nom de l'entreprise";
             companyInput.placeholder = "Ma société SARL";
             companyIcon.textContent = '🏢';
         } else {
-            btnAutoEntrepreneur.className = 'py-3 px-4 rounded-lg border-2 text-center transition-all border-blue-600 bg-blue-50';
+            btnAutoEntrepreneur.className = 'py-3 px-4 rounded-lg border-2 text-center transition-all border-indigo-600 bg-indigo-50';
             btnEntreprise.className = 'py-3 px-4 rounded-lg border-2 text-center transition-all border-gray-200 hover:border-gray-300 hover:bg-gray-50';
             
             companyLabel.textContent = "Nom commercial";

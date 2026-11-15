@@ -228,3 +228,11 @@
     body:has(#mobileMenu[aria-hidden="false"]) .home-mobile-cta, body:has(.modal.show) .home-mobile-cta, body:has(input:focus, textarea:focus, select:focus) .home-mobile-cta { display: none; }
     .public-home #scrollTopBtn { display: none !important; }
 }
+
+/* Pied de page sombre : le logo horizontal (lettres bleu nuit) repose sur une pastille blanche. */
+.public-home .footer-brand h4 .prokejem-brand-mark {
+    box-sizing: content-box;
+    padding: 6px 12px;
+    border-radius: 10px;
+    background: #fff;
+}

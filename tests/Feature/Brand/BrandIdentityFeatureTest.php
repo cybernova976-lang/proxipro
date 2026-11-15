@@ -27,7 +27,9 @@ class BrandIdentityFeatureTest extends TestCase
         $homepage->assertOk()
             ->assertSee('Prokejem')
             ->assertSee('prokejem-brand-mark', false)
-            ->assertSee('images/brand/prokejem-logo.png', false)
+            // Sur le site, le logo horizontal est servi sans fond : il ne fait plus de
+            // tache claire sur l’en-tête ni de rectangle blanc dans le pied de page sombre.
+            ->assertSee('images/brand/prokejem-logo-transparent.png', false)
             ->assertDontSee('images/brand/prokejem-mark.png', false)
             ->assertSee('images/social-card.png', false)
             ->assertSee('"@context":"https://schema.org"', false)
@@ -72,6 +74,11 @@ class BrandIdentityFeatureTest extends TestCase
         $logoSize = getimagesize($logoPath);
         $this->assertSame([1153, 214], array_slice($logoSize, 0, 2));
         $this->assertSame(IMAGETYPE_PNG, $logoSize[2]);
+
+        // La variante transparente garde exactement les mêmes proportions.
+        $transparentLogoSize = getimagesize(public_path('images/brand/prokejem-logo-transparent.png'));
+        $this->assertSame([1153, 214], array_slice($transparentLogoSize, 0, 2));
+        $this->assertSame(IMAGETYPE_PNG, $transparentLogoSize[2]);
 
         $symbolSize = getimagesize($symbolPath);
         $this->assertSame([1024, 1024], array_slice($symbolSize, 0, 2));

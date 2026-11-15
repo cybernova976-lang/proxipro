@@ -119,7 +119,7 @@ const {chromium} = require('playwright');
 
         const http = [];
         if (target.startsWith('https://')) {
-            for (const path of ['/', '/up', '/css/public-home.css?v=20261027-publication-cards1', '/js/public-home.js?v=20261027-publication-cards1']) {
+            for (const path of ['/', '/up', '/css/public-home.css?v=20261115', '/js/public-home.js?v=20261027-publication-cards1']) {
                 const response = await context.request.get(new URL(path, target).href);
                 assert.equal(response.status(), 200);
                 if (path.startsWith('/css/') || path.startsWith('/js/')) assert.equal(createHash('sha256').update(await response.body()).digest('hex'), createHash('sha256').update(await readFile('public' + path.split('?')[0])).digest('hex'));

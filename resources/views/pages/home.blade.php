@@ -559,7 +559,7 @@
         }
     </style>
     <link rel="preload" as="image" type="image/webp" href="{{ asset('images/home/artisan-maison-panorama-1920.webp') }}" imagesrcset="{{ asset('images/home/artisan-maison-panorama-960.webp') }} 960w, {{ asset('images/home/artisan-maison-panorama-1920.webp') }} 1920w" imagesizes="100vw" fetchpriority="high">
-    <link rel="stylesheet" href="{{ asset('css/public-home.css') }}?v=20261027-publication-cards1">
+    <link rel="stylesheet" href="{{ asset('css/public-home.css') }}?v=20261115">
     <script defer src="{{ asset('js/public-home.js') }}?v=20261027-publication-cards1"></script>
 </head>
 <body class="public-home">

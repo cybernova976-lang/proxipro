@@ -11,7 +11,7 @@
     // tout étirement ou tassement dans les en-têtes et les e-mails.
     $width = $isWordmark ? (int) round($height * 1153 / 214) : $height;
     $source = $isWordmark
-        ? asset('images/brand/prokejem-logo.png')
+        ? asset('images/brand/prokejem-logo-transparent.png')
         : asset('images/brand/prokejem-symbol.png');
 @endphp
 

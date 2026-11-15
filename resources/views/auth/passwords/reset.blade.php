@@ -5,7 +5,7 @@
     <div class="row justify-content-center">
         <div class="col-lg-7 col-xl-6">
             <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 24px;">
-                <div style="background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%); padding: 2rem; color: white;">
+                <div style="background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%); padding: 2rem; color: white;">
                     <div class="d-flex align-items-center gap-3 mb-3">
                         <div style="width: 58px; height: 58px; border-radius: 18px; background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
                             <i class="fas fa-lock"></i>
@@ -67,7 +67,7 @@
 
                         <div id="password-confirm-error" class="text-danger small" role="alert" @unless($errors->has('password_confirmation')) hidden @endunless>{{ $errors->first('password_confirmation') }}</div>
 
-                        <button type="submit" class="btn btn-lg text-white fw-semibold" style="background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%); border: none; border-radius: 14px; padding: 0.95rem 1.2rem;">
+                        <button type="submit" class="btn btn-lg text-white fw-semibold" style="background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%); border: none; border-radius: 14px; padding: 0.95rem 1.2rem;">
                             <i class="fas fa-rotate-right me-2"></i>Réinitialiser mon mot de passe
                         </button>
                     </form>
