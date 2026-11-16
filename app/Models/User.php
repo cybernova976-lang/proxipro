@@ -447,6 +447,38 @@ class User extends Authenticatable
         return $this->account_type === 'particulier';
     }
 
+    /** Valeurs de `user_type` qui désignent un compte professionnel. */
+    public const PROFESSIONAL_USER_TYPES = ['professionnel', 'entreprise'];
+
+    /**
+     * Compte inscrit comme professionnel (entreprise ou auto-entrepreneur).
+     * Un particulier qui propose des services reste un particulier.
+     */
+    public function isRegisteredAsProfessional(): bool
+    {
+        return $this->account_type === 'professionnel'
+            || in_array($this->user_type, self::PROFESSIONAL_USER_TYPES, true);
+    }
+
+    /** Comptes inscrits comme professionnels. */
+    public function scopeProfessionnels($query)
+    {
+        return $query->where(fn ($q) => $q
+            ->where('users.account_type', 'professionnel')
+            ->orWhereIn('users.user_type', self::PROFESSIONAL_USER_TYPES));
+    }
+
+    /**
+     * Comptes particuliers : tous ceux qui ne sont pas professionnels.
+     * Les deux portées se complètent : leur somme est le nombre d'inscrits.
+     */
+    public function scopeParticuliers($query)
+    {
+        return $query
+            ->where(fn ($q) => $q->whereNull('users.account_type')->orWhere('users.account_type', '!=', 'professionnel'))
+            ->where(fn ($q) => $q->whereNull('users.user_type')->orWhereNotIn('users.user_type', self::PROFESSIONAL_USER_TYPES));
+    }
+
     /**
      * Vérifie si le profil professionnel est vérifié
      */

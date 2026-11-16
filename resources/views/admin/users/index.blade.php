@@ -6,14 +6,61 @@
 <div class="row mb-4">
     <div class="col">
         <h2 class="h4 fw-bold">Gestion des Utilisateurs</h2>
-        <p class="text-muted mb-0">Liste de tous les utilisateurs de la plateforme</p>
+        <p class="text-muted mb-0">Particuliers et professionnels inscrits sur la plateforme</p>
     </div>
 </div>
+
+@php
+    $listes = [
+        'particuliers' => ['label' => 'Particuliers', 'icon' => 'fa-user'],
+        'professionnels' => ['label' => 'Professionnels', 'icon' => 'fa-briefcase'],
+    ];
+    $filtres = array_filter(request()->only(['search', 'role', 'status']), fn ($valeur) => filled($valeur));
+@endphp
+
+<!-- Les deux listes, avec le nombre d'inscrits de chacune -->
+<nav class="row g-3 mb-4" aria-label="Listes d’utilisateurs">
+    @foreach($listes as $cle => $info)
+        @php
+            $inscrits = $registeredCounts[$cle];
+            $correspondances = $matchingCounts[$cle] ?? null;
+        @endphp
+        <div class="col-md-6">
+            <a href="{{ route('admin.users', $filtres + ['liste' => $cle]) }}"
+               class="card shadow-sm h-100 text-decoration-none border border-2 {{ $liste === $cle ? 'border-primary' : 'border-light' }}"
+               data-liste="{{ $cle }}" aria-current="{{ $liste === $cle ? 'page' : 'false' }}">
+                <div class="card-body d-flex align-items-center justify-content-between gap-3">
+                    <div>
+                        <div class="fw-bold {{ $liste === $cle ? 'text-primary' : 'text-dark' }}">
+                            <i class="fas {{ $info['icon'] }} me-2"></i>{{ $info['label'] }}
+                        </div>
+                        @if($correspondances !== null)
+                            <small class="text-muted">
+                                @if($correspondances === 0)
+                                    Aucun ne correspond aux filtres
+                                @elseif($correspondances === 1)
+                                    1 correspond aux filtres
+                                @else
+                                    {{ $correspondances }} correspondent aux filtres
+                                @endif
+                            </small>
+                        @endif
+                    </div>
+                    <div class="text-end">
+                        <div class="h3 fw-bold text-dark mb-0" data-compteur="{{ $cle }}">{{ $inscrits }}</div>
+                        <small class="text-muted">{{ $inscrits > 1 ? 'inscrits' : 'inscrit' }}</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+    @endforeach
+</nav>
 
 <!-- Filtres et recherche -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
         <form method="GET" action="{{ route('admin.users') }}">
+            <input type="hidden" name="liste" value="{{ $liste }}">
             <div class="row g-3">
                 <div class="col-md-4">
                     <div class="input-group">
@@ -33,14 +80,6 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <select name="user_type" class="form-select">
-                        <option value="">Tous les types</option>
-                        <option value="particulier" {{ request('user_type') == 'particulier' ? 'selected' : '' }}>Particulier</option>
-                        <option value="professionnel" {{ request('user_type') == 'professionnel' ? 'selected' : '' }}>Professionnel</option>
-                        <option value="entreprise" {{ request('user_type') == 'entreprise' ? 'selected' : '' }}>Entreprise</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
                     <select name="status" class="form-select">
                         <option value="">Tous les statuts</option>
                         <option value="verified" {{ request('status') == 'verified' ? 'selected' : '' }}>Vérifié</option>
@@ -57,7 +96,7 @@
                     </button>
                 </div>
                 <div class="col-md-2">
-                    <a href="{{ route('admin.users') }}" class="btn btn-outline-secondary w-100">
+                    <a href="{{ route('admin.users', ['liste' => $liste]) }}" class="btn btn-outline-secondary w-100">
                         <i class="fas fa-times me-1"></i>Réinitialiser
                     </a>
                 </div>
@@ -88,8 +127,18 @@
                     @forelse($users as $user)
                     @php
                         $isPrincipalAdmin = $user->email === config('admin.principal_admin.email');
-                        $userTypes = config('admin.user_types');
-                        $userType = $userTypes[$user->user_type ?? 'particulier'] ?? $userTypes['particulier'];
+                        if ($user->isRegisteredAsProfessional()) {
+                            $userType = match (true) {
+                                $user->business_type === 'entreprise', $user->user_type === 'entreprise' => ['label' => 'Entreprise', 'color' => 'primary', 'icon' => 'fa-building'],
+                                $user->business_type === 'auto_entrepreneur' => ['label' => 'Auto-entrepreneur', 'color' => 'success', 'icon' => 'fa-briefcase'],
+                                default => ['label' => 'Professionnel', 'color' => 'success', 'icon' => 'fa-briefcase'],
+                            };
+                        } else {
+                            // Un particulier peut proposer des services sans être un professionnel.
+                            $userType = $user->is_service_provider
+                                ? ['label' => 'Particulier prestataire', 'color' => 'info', 'icon' => 'fa-user-tie']
+                                : ['label' => 'Particulier', 'color' => 'info', 'icon' => 'fa-user'];
+                        }
                     @endphp
                     <tr>
                         <td class="ps-4">{{ $user->id }}</td>
@@ -219,9 +268,9 @@
                     </div>
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center py-4">
+                        <td colspan="9" class="text-center py-4">
                             <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">Aucun utilisateur trouvé</p>
+                            <p class="text-muted">{{ ['particuliers' => 'Aucun particulier trouvé', 'professionnels' => 'Aucun professionnel trouvé'][$liste] ?? 'Aucun utilisateur trouvé' }}</p>
                         </td>
                     </tr>
                     @endforelse

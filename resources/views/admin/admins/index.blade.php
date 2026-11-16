@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         debounceTimer = setTimeout(async function() {
             try {
-                const response = await fetch(`{{ route('admin.users') }}?search=${encodeURIComponent(query)}&role=user`);
+                const response = await fetch(`{{ route('admin.users') }}?search=${encodeURIComponent(query)}&role=user&liste=tous`);
                 const html = await response.text();
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');

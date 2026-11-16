@@ -157,7 +157,45 @@ class AdminController extends Controller
     // Liste des utilisateurs
     public function users(Request $request)
     {
-        $query = User::withCount('ads');
+        // Deux listes : particuliers et professionnels. « tous » sert à la
+        // recherche d'un compte depuis la page des administrateurs.
+        $liste = $request->query('liste');
+        if (! in_array($liste, ['particuliers', 'professionnels', 'tous'], true)) {
+            // Anciens liens filtrés par type (?user_type=professionnel).
+            $liste = in_array($request->query('user_type'), User::PROFESSIONAL_USER_TYPES, true)
+                ? 'professionnels'
+                : 'particuliers';
+        }
+
+        // Nombre d'inscrits de chaque liste, compté dans la table, sans filtre.
+        $registeredCounts = [
+            'particuliers' => User::particuliers()->count(),
+            'professionnels' => User::professionnels()->count(),
+        ];
+
+        $hasFilters = $request->filled('search') || $request->filled('role') || $request->filled('status');
+        $matchingCounts = $hasFilters ? [
+            'particuliers' => $this->filteredUsersQuery($request)->particuliers()->count(),
+            'professionnels' => $this->filteredUsersQuery($request)->professionnels()->count(),
+        ] : null;
+
+        $query = $this->filteredUsersQuery($request)->withCount('ads');
+        if ($liste === 'particuliers') {
+            $query->particuliers();
+        } elseif ($liste === 'professionnels') {
+            $query->professionnels();
+        }
+
+        $users = $query->latest()->paginate(20)
+            ->appends($request->only(['search', 'role', 'status']) + ['liste' => $liste]);
+
+        return view('admin.users.index', compact('users', 'liste', 'registeredCounts', 'matchingCounts'));
+    }
+
+    /** Utilisateurs correspondant à la recherche et aux filtres de la page. */
+    private function filteredUsersQuery(Request $request)
+    {
+        $query = User::query();
 
         // Recherche par nom ou email
         if ($request->filled('search')) {
@@ -171,11 +209,6 @@ class AdminController extends Controller
         // Filtre par rôle
         if ($request->filled('role')) {
             $query->where('role', $request->role);
-        }
-
-        // Filtre par type d'utilisateur
-        if ($request->filled('user_type')) {
-            $query->where('user_type', $request->user_type);
         }
 
         // Filtre par statut
@@ -196,9 +229,7 @@ class AdminController extends Controller
             }
         }
 
-        $users = $query->latest()->paginate(20);
-
-        return view('admin.users.index', compact('users'));
+        return $query;
     }
 
     // Voir un utilisateur
