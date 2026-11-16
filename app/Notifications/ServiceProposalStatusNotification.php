@@ -43,11 +43,11 @@ class ServiceProposalStatusNotification extends Notification implements ShouldQu
         $accepted = $this->proposal->status === ServiceProposal::STATUS_ACCEPTED;
 
         return (new MailMessage)
-            ->subject($accepted ? 'Votre proposition a ete acceptee' : 'Mise a jour de votre proposition')
+            ->subject($accepted ? 'Votre proposition a été acceptée' : 'Mise à jour de votre proposition')
             ->greeting('Bonjour '.$notifiable->name.',')
             ->line($accepted
-                ? 'Votre proposition pour « '.$this->proposal->ad->title.' » a ete acceptee. La commande securisee est maintenant en attente de paiement du client.'
-                : 'Votre proposition pour « '.$this->proposal->ad->title.' » n a pas ete retenue.')
+                ? 'Votre proposition pour « '.$this->proposal->ad->title.' » a été acceptée. La commande sécurisée est maintenant en attente de paiement du client.'
+                : 'Votre proposition pour « '.$this->proposal->ad->title.' » n’a pas été retenue.')
             ->action('Voir mes propositions', route('proposals.index'));
     }
 
@@ -59,10 +59,10 @@ class ServiceProposalStatusNotification extends Notification implements ShouldQu
             'type' => 'service_proposal_'.$this->proposal->status,
             'icon' => $accepted ? 'fas fa-check-circle' : 'fas fa-times-circle',
             'color' => $accepted ? '#15803d' : '#b91c1c',
-            'title' => $accepted ? 'Proposition acceptee' : 'Proposition refusee',
+            'title' => $accepted ? 'Proposition acceptée' : 'Proposition refusée',
             'message' => $accepted
-                ? 'Votre proposition pour « '.$this->proposal->ad->title.' » a ete acceptee.'
-                : 'Votre proposition pour « '.$this->proposal->ad->title.' » n a pas ete retenue.',
+                ? 'Votre proposition pour « '.$this->proposal->ad->title.' » a été acceptée.'
+                : 'Votre proposition pour « '.$this->proposal->ad->title.' » n’a pas été retenue.',
             'action_url' => route('proposals.index'),
             'proposal_id' => $this->proposal->id,
             'service_order_id' => $this->proposal->service_order_id,

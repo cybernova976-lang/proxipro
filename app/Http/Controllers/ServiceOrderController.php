@@ -88,7 +88,7 @@ class ServiceOrderController extends Controller
         \App\Support\SafeNotifier::send($serviceOrder->seller, new ServiceOrderRequestedNotification($serviceOrder));
 
         return redirect()->route('service-orders.index')
-            ->with('success', 'Commande securisee envoyee. Le vendeur peut maintenant l\'examiner.');
+            ->with('success', 'Commande sécurisée envoyée. Le vendeur peut maintenant l\'examiner.');
     }
 
     public function accept(ServiceOrder $serviceOrder)
@@ -96,7 +96,7 @@ class ServiceOrderController extends Controller
         $this->workflowService->accept($serviceOrder, Auth::user());
 
         return redirect()->route('service-orders.index')
-            ->with('success', 'Commande acceptee. L\'acheteur peut maintenant payer via Stripe.');
+            ->with('success', 'Commande acceptée. L\'acheteur peut maintenant payer via Stripe.');
     }
 
     public function refuse(Request $request, ServiceOrder $serviceOrder)
@@ -108,7 +108,7 @@ class ServiceOrderController extends Controller
         $this->workflowService->refuse($serviceOrder, Auth::user(), $request->reason);
 
         return redirect()->route('service-orders.index')
-            ->with('success', 'Commande refusee.');
+            ->with('success', 'Commande refusée.');
     }
 
     public function checkout(ServiceOrder $serviceOrder)
@@ -135,7 +135,7 @@ class ServiceOrderController extends Controller
                     'price_data' => [
                         'currency' => $currency,
                         'product_data' => [
-                            'name' => 'Commande securisee '.$serviceOrder->order_number,
+                            'name' => 'Commande sécurisée '.$serviceOrder->order_number,
                             'description' => $serviceOrder->ad->title,
                         ],
                         'unit_amount' => $amountCents,
@@ -183,7 +183,7 @@ class ServiceOrderController extends Controller
         }
 
         return redirect()->route('service-orders.index')
-            ->with('success', 'Fonds liberes au vendeur.');
+            ->with('success', 'Fonds libérés au vendeur.');
     }
 
     public function dispute(Request $request, ServiceOrder $serviceOrder)
@@ -195,7 +195,7 @@ class ServiceOrderController extends Controller
         $this->workflowService->dispute($serviceOrder, Auth::user(), $request->reason);
 
         return redirect()->route('service-orders.index')
-            ->with('success', 'Litige ouvert. Les fonds restent bloques.');
+            ->with('success', 'Litige ouvert. Les fonds restent bloqués.');
     }
 
     public function connectOnboarding()
@@ -216,7 +216,7 @@ class ServiceOrderController extends Controller
         $this->stripeConnectService->syncAccountStatus(Auth::user());
 
         return redirect()->route('service-orders.index')
-            ->with('success', 'Le statut Stripe Connect a ete mis a jour.');
+            ->with('success', 'Le statut Stripe Connect a été mis à jour.');
     }
 
     protected function ensureStripeCustomer($user): string

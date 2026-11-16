@@ -56,9 +56,9 @@ class ServiceProposal extends Model
     {
         return match ($this->status) {
             self::STATUS_PENDING => 'En attente',
-            self::STATUS_ACCEPTED => 'Acceptee',
-            self::STATUS_REFUSED => 'Refusee',
-            self::STATUS_WITHDRAWN => 'Retiree',
+            self::STATUS_ACCEPTED => 'Acceptée',
+            self::STATUS_REFUSED => 'Refusée',
+            self::STATUS_WITHDRAWN => 'Retirée',
             default => ucfirst($this->status),
         };
     }

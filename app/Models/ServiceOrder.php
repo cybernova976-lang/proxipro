@@ -91,11 +91,11 @@ class ServiceOrder extends Model
         return match ($this->status) {
             self::STATUS_PENDING_ACCEPTANCE => 'En attente d\'acceptation',
             self::STATUS_AWAITING_PAYMENT => 'En attente de paiement',
-            self::STATUS_FUNDED => 'Fonds bloques',
-            self::STATUS_COMPLETED => 'Terminee',
-            self::STATUS_REFUSED => 'Refusee',
+            self::STATUS_FUNDED => 'Fonds bloqués',
+            self::STATUS_COMPLETED => 'Terminée',
+            self::STATUS_REFUSED => 'Refusée',
             self::STATUS_DISPUTED => 'Litige ouvert',
-            self::STATUS_REFUNDED => 'Remboursee',
+            self::STATUS_REFUNDED => 'Remboursée',
             default => str_replace('_', ' ', (string) $this->status),
         };
     }
@@ -105,11 +105,11 @@ class ServiceOrder extends Model
         return match ($this->payment_status) {
             self::PAYMENT_AWAITING => 'Paiement en attente',
             self::PAYMENT_CHECKOUT_OPEN => 'Paiement en cours',
-            self::PAYMENT_PAID => 'Paiement confirme',
-            self::PAYMENT_RELEASED => 'Fonds liberes',
-            self::PAYMENT_CANCELED => 'Paiement annule',
+            self::PAYMENT_PAID => 'Paiement confirmé',
+            self::PAYMENT_RELEASED => 'Fonds libérés',
+            self::PAYMENT_CANCELED => 'Paiement annulé',
             self::PAYMENT_DISPUTED => 'Litige ouvert',
-            self::PAYMENT_REFUNDED => 'Paiement rembourse',
+            self::PAYMENT_REFUNDED => 'Paiement remboursé',
             default => str_replace('_', ' ', (string) $this->payment_status),
         };
     }

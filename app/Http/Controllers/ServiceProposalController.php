@@ -82,7 +82,7 @@ class ServiceProposalController extends Controller
         abort_if($ad->user_id === $provider->id, 403);
 
         if (! $provider->isProfessionnel() && ! $provider->isServiceProvider()) {
-            return back()->with('error', 'Activez votre profil prestataire avant d envoyer une proposition.');
+            return back()->with('error', 'Activez votre profil prestataire avant d’envoyer une proposition.');
         }
 
         $validated = $request->validate([
@@ -96,7 +96,7 @@ class ServiceProposalController extends Controller
             ->first();
 
         if ($existing && $existing->status !== ServiceProposal::STATUS_PENDING) {
-            return back()->with('error', 'Cette proposition a deja ete traitee et ne peut plus etre modifiee.');
+            return back()->with('error', 'Cette proposition a déjà été traitée et ne peut plus être modifiée.');
         }
 
         $proposal = ServiceProposal::updateOrCreate(
@@ -113,7 +113,7 @@ class ServiceProposalController extends Controller
         \App\Support\SafeNotifier::send($ad->user, new ServiceProposalReceivedNotification($proposal));
 
         return redirect()->route('proposals.index')
-            ->with('success', 'Votre proposition chiffree a bien ete envoyee.');
+            ->with('success', 'Votre proposition chiffrée a bien été envoyée.');
     }
 
     public function accept(ServiceProposal $proposal)
@@ -181,7 +181,7 @@ class ServiceProposalController extends Controller
         });
 
         return redirect()->route('service-orders.index')
-            ->with('success', 'Proposition acceptee. La commande securisee est prete pour le paiement.');
+            ->with('success', 'Proposition acceptée. La commande sécurisée est prête pour le paiement.');
     }
 
     public function refuse(ServiceProposal $proposal)
@@ -197,7 +197,7 @@ class ServiceProposalController extends Controller
         $proposal->load(['ad', 'provider']);
         \App\Support\SafeNotifier::send($proposal->provider, new ServiceProposalStatusNotification($proposal));
 
-        return back()->with('success', 'La proposition a ete refusee.');
+        return back()->with('success', 'La proposition a été refusée.');
     }
 
     public function withdraw(ServiceProposal $proposal)
@@ -210,6 +210,6 @@ class ServiceProposalController extends Controller
             'responded_at' => now(),
         ]);
 
-        return back()->with('success', 'Votre proposition a ete retiree.');
+        return back()->with('success', 'Votre proposition a été retirée.');
     }
 }

@@ -83,7 +83,7 @@
                             <tr>
                                 <td class="text-nowrap">{{ optional($transaction->created_at)->format('d/m/Y H:i') }}</td>
                                 <td>{{ $transactionTypeLabels[$transaction->type] ?? $transaction->type }}</td>
-                                <td class="small text-muted">{{ $transaction->description ?: '—' }}</td>
+                                <td class="small text-muted">{{ $transaction->description ? str_replace('Liberation commande', 'Libération de la commande', $transaction->description) : '—' }}</td>
                                 <td class="text-end text-nowrap fw-semibold">{{ number_format((float) $transaction->amount, 2, ',', ' ') }} €</td>
                                 <td><span class="badge bg-{{ $transaction->status === 'completed' ? 'success' : 'warning' }}">{{ $transactionStatusLabels[$transaction->status] ?? $transaction->status }}</span></td>
                             </tr>

@@ -1,12 +1,12 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Commandes securisees')
+@section('title', 'Commandes sécurisées')
 
 @section('content')
 <div class="row mb-4 align-items-center">
     <div class="col">
-        <h2 class="h4 fw-bold mb-1">Commandes securisees</h2>
-        <p class="text-muted mb-0">Controlez les litiges, les liberations de fonds et les remboursements Stripe.</p>
+        <h2 class="h4 fw-bold mb-1">Commandes sécurisées</h2>
+        <p class="text-muted mb-0">Contrôlez les litiges, les libérations de fonds et les remboursements Stripe.</p>
     </div>
     <div class="col-auto">
         <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary">
@@ -17,9 +17,9 @@
 
 <div class="row g-3 mb-4">
     <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Litiges ouverts</div><div class="fs-3 fw-bold text-warning">{{ $stats['disputed'] }}</div></div></div></div>
-    <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Fonds bloques</div><div class="fs-3 fw-bold text-primary">{{ $stats['funded'] }}</div></div></div></div>
-    <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Terminees</div><div class="fs-3 fw-bold text-success">{{ $stats['completed'] }}</div></div></div></div>
-    <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Remboursees</div><div class="fs-3 fw-bold text-info">{{ $stats['refunded'] }}</div></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Fonds bloqués</div><div class="fs-3 fw-bold text-primary">{{ $stats['funded'] }}</div></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Terminées</div><div class="fs-3 fw-bold text-success">{{ $stats['completed'] }}</div></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Remboursées</div><div class="fs-3 fw-bold text-info">{{ $stats['refunded'] }}</div></div></div></div>
 </div>
 
 <div class="card border-0 shadow-sm mb-4">
@@ -33,7 +33,7 @@
                 <label class="form-label">Statut</label>
                 <select name="status" class="form-select">
                     <option value="">Tous</option>
-                    @foreach(['pending_acceptance' => 'En attente', 'awaiting_payment' => 'Attente paiement', 'funded' => 'Fonds bloques', 'disputed' => 'Litige', 'completed' => 'Terminee', 'refunded' => 'Remboursee'] as $value => $label)
+                    @foreach(['pending_acceptance' => 'En attente', 'awaiting_payment' => 'Attente paiement', 'funded' => 'Fonds bloqués', 'disputed' => 'Litige', 'completed' => 'Terminée', 'refunded' => 'Remboursée'] as $value => $label)
                         <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
@@ -56,7 +56,7 @@
                     <th>Montant</th>
                     <th>Statut</th>
                     <th>Stripe Connect</th>
-                    <th>Decision admin</th>
+                    <th>Décision de l’administration</th>
                 </tr>
             </thead>
             <tbody>
@@ -92,7 +92,7 @@
                             <span class="badge text-bg-light border">{{ $order->status_label }}</span><br>
                             <small class="text-muted">{{ $order->payment_status_label }}</small>
                             @if($order->dispute_reason)
-                                <div class="small text-danger mt-2">Litige: {{ $order->dispute_reason }}</div>
+                                <div class="small text-danger mt-2">Litige : {{ $order->dispute_reason }}</div>
                             @endif
                         </td>
                         <td>
@@ -115,7 +115,7 @@
                                 <form action="{{ route('admin.service-orders.release', $order) }}" method="POST" class="mb-2">
                                     @csrf
                                     <textarea name="resolution_note" class="form-control form-control-sm mb-2" rows="2" placeholder="Note optionnelle de libération"></textarea>
-                                    <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-unlock-alt me-1"></i>Liberer les fonds</button>
+                                    <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-unlock-alt me-1"></i>Libérer les fonds</button>
                                 </form>
                                 <form action="{{ route('admin.service-orders.refund', $order) }}" method="POST">
                                     @csrf
@@ -132,7 +132,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">Aucune commande securisee correspondante.</td>
+                        <td colspan="7" class="text-center py-5 text-muted">Aucune commande sécurisée correspondante.</td>
                     </tr>
                 @endforelse
             </tbody>

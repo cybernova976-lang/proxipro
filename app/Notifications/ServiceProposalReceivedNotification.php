@@ -43,7 +43,7 @@ class ServiceProposalReceivedNotification extends Notification implements Should
         return (new MailMessage)
             ->subject('Nouvelle proposition pour votre demande')
             ->greeting('Bonjour '.$notifiable->name.',')
-            ->line($this->proposal->provider->name.' vous propose '.number_format((float) $this->proposal->amount, 2, ',', ' ').' EUR pour « '.$this->proposal->ad->title.' ».')
+            ->line($this->proposal->provider->name.' vous propose '.number_format((float) $this->proposal->amount, 2, ',', ' ').' € pour « '.$this->proposal->ad->title.' ».')
             ->action('Comparer mes propositions', route('proposals.compare', $this->proposal->ad));
     }
 
@@ -54,7 +54,7 @@ class ServiceProposalReceivedNotification extends Notification implements Should
             'icon' => 'fas fa-file-signature',
             'color' => '#2563eb',
             'title' => 'Nouvelle proposition',
-            'message' => $this->proposal->provider->name.' a envoye une proposition pour « '.$this->proposal->ad->title.' ».',
+            'message' => $this->proposal->provider->name.' a envoyé une proposition pour « '.$this->proposal->ad->title.' ».',
             'action_url' => route('proposals.compare', $this->proposal->ad),
             'proposal_id' => $this->proposal->id,
             'ad_id' => $this->proposal->ad_id,

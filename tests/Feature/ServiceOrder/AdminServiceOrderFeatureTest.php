@@ -21,7 +21,7 @@ class AdminServiceOrderFeatureTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.service-orders.index'));
 
         $response->assertOk();
-        $response->assertSee('Commandes securisees');
+        $response->assertSee('Commandes sécurisées');
     }
 
     public function test_admin_can_view_an_order_when_the_buyer_account_was_deleted(): void
