@@ -30,6 +30,14 @@
                 <span class="badge-count" aria-hidden="true">{{ $proUnreadMessages }}</span>
             @endif
         </a>
+        {{-- Cloche : mène à la page des notifications, avec le nombre de non lues. --}}
+        <a href="{{ route('notifications.index') }}" class="pro-topbar-action pro-topbar-bell" data-pro-notifications
+           aria-label="Notifications{{ $proUnreadNotifications > 0 ? ' ('.$proUnreadNotifications.' non lues)' : '' }}">
+            <i class="fas fa-bell" aria-hidden="true"></i>
+            @if($proUnreadNotifications > 0)
+                <span class="badge-count" aria-hidden="true">{{ $proUnreadNotifications > 99 ? '99+' : $proUnreadNotifications }}</span>
+            @endif
+        </a>
         <div class="dropdown">
             <a href="#" class="pro-user-menu dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Mon compte">
                 @if(Auth::user()->avatar)

@@ -30,7 +30,7 @@ class SendBoostExpiringAlerts extends Command
 
             if (!$alreadyNotified) {
                 $hoursLeft = (int) now()->diffInHours($ad->boost_end, false);
-                $ad->user->notify(new BoostExpiringNotification($ad, 'boost', max(1, $hoursLeft)));
+                \App\Support\SafeNotifier::send($ad->user, new BoostExpiringNotification($ad, 'boost', max(1, $hoursLeft)));
                 $notified++;
             }
         }
@@ -50,7 +50,7 @@ class SendBoostExpiringAlerts extends Command
 
             if (!$alreadyNotified) {
                 $hoursLeft = (int) now()->diffInHours($ad->urgent_until, false);
-                $ad->user->notify(new BoostExpiringNotification($ad, 'urgent', max(1, $hoursLeft)));
+                \App\Support\SafeNotifier::send($ad->user, new BoostExpiringNotification($ad, 'urgent', max(1, $hoursLeft)));
                 $notified++;
             }
         }

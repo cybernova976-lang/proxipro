@@ -6943,11 +6943,9 @@
                                             @endforeach
                                         @endif
                                     </div>
-                                    @if($navNotifications->count() > 3)
                                     <div class="notif-dropdown-footer">
-                                        <a href="{{ route('verification.index') }}">Voir tout</a>
+                                        <a href="{{ route('notifications.index') }}">Voir toutes mes notifications</a>
                                     </div>
-                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -7031,12 +7029,12 @@
 
         {{-- Sidebar de navigation --}}
         @auth
-            @if(!$pkClientSpaceVisible && !request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*', 'employment.*') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*'))
+            @if(!$pkClientSpaceVisible && !request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*', 'employment.*', 'notifications.*') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*'))
                 @include('partials.sidebar')
             @endif
         @endauth
 
-        <main class="@auth @if(!$pkClientSpaceVisible && !request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*', 'employment.*') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*')) main-content-with-sidebar @endif @endauth">
+        <main class="@auth @if(!$pkClientSpaceVisible && !request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*', 'employment.*', 'notifications.*') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*')) main-content-with-sidebar @endif @endauth">
             @if(session('info'))
                 <div class="pk-flash-info" role="status">
                     <i class="fas fa-circle-info"></i>

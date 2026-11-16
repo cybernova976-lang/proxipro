@@ -36,6 +36,9 @@ class ExpireManualProSubscriptions extends Command
                             'pro_status' => 'inactive',
                         ]);
                     }
+
+                    // Le membre apprend la fin de son accès au moment où elle a lieu.
+                    \App\Notifications\AccountStatusNotification::dispatch($user, 'premium_expired');
                 }
             });
 

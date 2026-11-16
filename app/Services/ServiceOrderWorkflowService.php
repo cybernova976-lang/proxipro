@@ -28,7 +28,7 @@ class ServiceOrderWorkflowService
         ])->save();
 
         $serviceOrder->loadMissing(['buyer', 'seller', 'ad']);
-        $serviceOrder->buyer?->notify(new ServiceOrderStatusNotification($serviceOrder, 'accepted'));
+        \App\Support\SafeNotifier::send($serviceOrder->buyer, new ServiceOrderStatusNotification($serviceOrder, 'accepted'));
 
         return $serviceOrder;
     }
@@ -46,7 +46,7 @@ class ServiceOrderWorkflowService
         ])->save();
 
         $serviceOrder->loadMissing(['buyer', 'seller', 'ad']);
-        $serviceOrder->buyer?->notify(new ServiceOrderStatusNotification($serviceOrder, 'refused', $reason));
+        \App\Support\SafeNotifier::send($serviceOrder->buyer, new ServiceOrderStatusNotification($serviceOrder, 'refused', $reason));
 
         return $serviceOrder;
     }
@@ -133,7 +133,7 @@ class ServiceOrderWorkflowService
 
         $serviceOrder = ServiceOrder::with(['buyer', 'seller', 'ad'])->findOrFail($serviceOrderId);
         if ($wasApplied) {
-            $serviceOrder->seller?->notify(new ServiceOrderStatusNotification($serviceOrder, 'funded'));
+            \App\Support\SafeNotifier::send($serviceOrder->seller, new ServiceOrderStatusNotification($serviceOrder, 'funded'));
         }
 
         return $serviceOrder;
@@ -174,7 +174,7 @@ class ServiceOrderWorkflowService
         });
 
         $serviceOrder->loadMissing(['buyer', 'seller', 'ad']);
-        $serviceOrder->seller?->notify(new ServiceOrderStatusNotification($serviceOrder, 'released'));
+        \App\Support\SafeNotifier::send($serviceOrder->seller, new ServiceOrderStatusNotification($serviceOrder, 'released'));
 
         return $serviceOrder;
     }
@@ -192,7 +192,7 @@ class ServiceOrderWorkflowService
         ])->save();
 
         $serviceOrder->loadMissing(['buyer', 'seller', 'ad']);
-        $serviceOrder->seller?->notify(new ServiceOrderStatusNotification($serviceOrder, 'disputed', $reason));
+        \App\Support\SafeNotifier::send($serviceOrder->seller, new ServiceOrderStatusNotification($serviceOrder, 'disputed', $reason));
 
         return $serviceOrder;
     }
@@ -237,8 +237,8 @@ class ServiceOrderWorkflowService
         });
 
         $serviceOrder->loadMissing(['buyer', 'seller', 'ad']);
-        $serviceOrder->buyer?->notify(new ServiceOrderStatusNotification($serviceOrder, 'released', $note));
-        $serviceOrder->seller?->notify(new ServiceOrderStatusNotification($serviceOrder, 'released', $note));
+        \App\Support\SafeNotifier::send($serviceOrder->buyer, new ServiceOrderStatusNotification($serviceOrder, 'released', $note));
+        \App\Support\SafeNotifier::send($serviceOrder->seller, new ServiceOrderStatusNotification($serviceOrder, 'released', $note));
 
         return $serviceOrder;
     }
@@ -278,8 +278,8 @@ class ServiceOrderWorkflowService
         });
 
         $serviceOrder->loadMissing(['buyer', 'seller', 'ad']);
-        $serviceOrder->buyer?->notify(new ServiceOrderStatusNotification($serviceOrder, 'refunded', $note));
-        $serviceOrder->seller?->notify(new ServiceOrderStatusNotification($serviceOrder, 'refunded', $note));
+        \App\Support\SafeNotifier::send($serviceOrder->buyer, new ServiceOrderStatusNotification($serviceOrder, 'refunded', $note));
+        \App\Support\SafeNotifier::send($serviceOrder->seller, new ServiceOrderStatusNotification($serviceOrder, 'refunded', $note));
 
         return $serviceOrder;
     }

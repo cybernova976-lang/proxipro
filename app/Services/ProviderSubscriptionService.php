@@ -289,7 +289,35 @@ class ProviderSubscriptionService
             return $subscription;
         });
 
+        // Notification au passage en « actif » ou à la fin de l'accès, une seule fois :
+        // Stripe renvoie le même état plusieurs fois (retour de paiement, webhooks).
+        $previousStatus = $existing?->status;
+        if (! $this->notifyStatusChanges) {
+            // Action d’un administrateur : c’est elle qui prévient le membre, avec le bon message.
+        } elseif ($localStatus === 'active' && $previousStatus !== 'active') {
+            \App\Notifications\AccountStatusNotification::dispatch($user, 'premium_activated', [
+                'until' => $endsAt?->format('d/m/Y'),
+            ]);
+        } elseif ($previousStatus === 'active' && in_array($localStatus, ['cancelled', 'expired'], true)) {
+            \App\Notifications\AccountStatusNotification::dispatch($user, 'premium_expired');
+        }
+
         return $subscription->fresh();
+    }
+
+    /** Les actions de l’administration envoient leur propre notification : la synchronisation reste muette. */
+    private bool $notifyStatusChanges = true;
+
+    private function withoutStatusNotifications(callable $callback): mixed
+    {
+        $previous = $this->notifyStatusChanges;
+        $this->notifyStatusChanges = false;
+
+        try {
+            return $callback();
+        } finally {
+            $this->notifyStatusChanges = $previous;
+        }
     }
 
     public function managesStripeSubscription(object $stripeSubscription): bool
@@ -466,7 +494,9 @@ class ProviderSubscriptionService
 
         $stripeSubscription = $this->client()->subscriptions->cancel($subscription->stripe_subscription_id);
 
-        return $this->syncStripeSubscription($stripeSubscription, $subscription->user, $subscription->plan);
+        return $this->withoutStatusNotifications(
+            fn () => $this->syncStripeSubscription($stripeSubscription, $subscription->user, $subscription->plan)
+        );
     }
 
     public function suspend(ProSubscription $subscription): ProSubscription
@@ -477,7 +507,9 @@ class ProviderSubscriptionService
                 ['pause_collection' => ['behavior' => 'void']]
             );
 
-            return $this->syncStripeSubscription($stripeSubscription, $subscription->user, $subscription->plan);
+            return $this->withoutStatusNotifications(
+                fn () => $this->syncStripeSubscription($stripeSubscription, $subscription->user, $subscription->plan)
+            );
         }
 
         $subscription->update(['status' => 'pending', 'auto_renew' => false]);
@@ -494,7 +526,9 @@ class ProviderSubscriptionService
                 ['pause_collection' => '']
             );
 
-            return $this->syncStripeSubscription($stripeSubscription, $subscription->user, $subscription->plan);
+            return $this->withoutStatusNotifications(
+                fn () => $this->syncStripeSubscription($stripeSubscription, $subscription->user, $subscription->plan)
+            );
         }
 
         $subscription->update([

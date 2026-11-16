@@ -803,7 +803,7 @@ class ProDashboardController extends Controller
             'content' => $content,
         ]);
 
-        $recipient->notify(new \App\Notifications\NewMessageNotification($message, $conversation, $user));
+        \App\Support\SafeNotifier::send($recipient, new \App\Notifications\NewMessageNotification($message, $conversation, $user));
 
         // Mark as sent
         if ($quote->status === 'draft') {

@@ -58,6 +58,21 @@ return Application::configure(basePath: dirname(__DIR__))
                 }
             }
 
+            // Limite de fréquence atteinte : Laravel répond « Too Many Attempts. » en anglais.
+            // Les appels en arrière-plan (JSON) reçoivent le message en français ;
+            // les pages classiques affichent errors/429.blade.php.
+            if ($response->getStatusCode() === 429 && request()->expectsJson()) {
+                return response()->json(
+                    ['message' => 'Trop de tentatives. Patientez une minute avant de réessayer.'],
+                    429,
+                    array_filter([
+                        'Retry-After' => $response->headers->get('Retry-After'),
+                        'X-RateLimit-Limit' => $response->headers->get('X-RateLimit-Limit'),
+                        'X-RateLimit-Remaining' => $response->headers->get('X-RateLimit-Remaining'),
+                    ], fn ($value) => $value !== null)
+                );
+            }
+
             if ($response->getStatusCode() >= 500) {
                 \Illuminate\Support\Facades\Log::error('Server error: '.$e->getMessage(), [
                     'exception' => get_class($e),

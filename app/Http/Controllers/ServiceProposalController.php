@@ -110,7 +110,7 @@ class ServiceProposalController extends Controller
         );
 
         $proposal->load(['ad', 'provider']);
-        $ad->user?->notify(new ServiceProposalReceivedNotification($proposal));
+        \App\Support\SafeNotifier::send($ad->user, new ServiceProposalReceivedNotification($proposal));
 
         return redirect()->route('proposals.index')
             ->with('success', 'Votre proposition chiffree a bien ete envoyee.');
@@ -174,10 +174,10 @@ class ServiceProposalController extends Controller
             return $proposal->fresh(['ad', 'provider', 'serviceOrder']);
         });
 
-        $accepted->provider?->notify(new ServiceProposalStatusNotification($accepted));
+        \App\Support\SafeNotifier::send($accepted->provider, new ServiceProposalStatusNotification($accepted));
         $refusedProposals->each(function (ServiceProposal $refused) {
             $refused->status = ServiceProposal::STATUS_REFUSED;
-            $refused->provider?->notify(new ServiceProposalStatusNotification($refused));
+            \App\Support\SafeNotifier::send($refused->provider, new ServiceProposalStatusNotification($refused));
         });
 
         return redirect()->route('service-orders.index')
@@ -195,7 +195,7 @@ class ServiceProposalController extends Controller
         ]);
 
         $proposal->load(['ad', 'provider']);
-        $proposal->provider?->notify(new ServiceProposalStatusNotification($proposal));
+        \App\Support\SafeNotifier::send($proposal->provider, new ServiceProposalStatusNotification($proposal));
 
         return back()->with('success', 'La proposition a ete refusee.');
     }

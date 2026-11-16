@@ -1,0 +1,44 @@
+/* Page « Notifications ». Rampe indigo de la marque, points de rupture 640 / 1024 / 1180. */
+.pk-notifs { max-width: 760px; margin: 0 auto; padding: 28px 16px 48px; }
+
+.pk-notifs__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+.pk-notifs__head h1 { margin: 0; font-size: 1.6rem; font-weight: 800; color: #1e1b4b; }
+.pk-notifs__head p { margin: 4px 0 0; color: #64748b; font-size: .92rem; }
+
+.pk-notifs__actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.pk-notifs__btn { min-height: 40px; padding: 8px 14px; border: 1px solid #c7d2fe; border-radius: 10px; background: #fff; color: #4338ca; font-weight: 600; font-size: .88rem; cursor: pointer; }
+.pk-notifs__btn:hover { background: #eef2ff; }
+.pk-notifs__link { color: #4338ca; font-size: .88rem; font-weight: 600; }
+
+.pk-notifs__flash { margin: 0 0 14px; padding: 10px 14px; border-radius: 10px; background: #ecfdf5; color: #047857; font-size: .9rem; }
+
+.pk-notifs__list { list-style: none; margin: 0; padding: 0; border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; overflow: hidden; }
+.pk-notifs__list li + li { border-top: 1px solid #f1f5f9; }
+
+.pk-notifs__item { display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px; color: inherit; text-decoration: none; }
+.pk-notifs__item:hover { background: #f8fafc; color: inherit; }
+.pk-notifs__item.is-unread { background: #eef2ff; }
+.pk-notifs__item.is-unread:hover { background: #e0e7ff; }
+
+.pk-notifs__icon { flex: 0 0 40px; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #fff; border: 1px solid #e0e7ff; color: #4f46e5; }
+.pk-notifs__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pk-notifs__title { font-weight: 700; color: #1e293b; }
+.pk-notifs__message { color: #475569; font-size: .92rem; overflow-wrap: anywhere; }
+.pk-notifs__time { color: #94a3b8; font-size: .8rem; }
+.pk-notifs__dot { flex: 0 0 10px; width: 10px; height: 10px; margin-top: 8px; border-radius: 50%; background: #4f46e5; }
+
+.pk-notifs__empty { padding: 48px 20px; border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; text-align: center; color: #475569; }
+.pk-notifs__empty i { font-size: 2rem; color: #a5b4fc; margin-bottom: 10px; }
+.pk-notifs__empty p { margin: 0; font-weight: 600; }
+.pk-notifs__empty .pk-notifs__hint { margin-top: 6px; font-weight: 400; color: #64748b; font-size: .9rem; }
+
+.pk-notifs__pages { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; font-size: .9rem; color: #64748b; }
+.pk-notifs__pages a { color: #4338ca; font-weight: 600; }
+.pk-notifs__pages .is-disabled { color: #cbd5e1; }
+
+@media (max-width: 639.98px) {
+    .pk-notifs { padding: 18px 12px 96px; }
+    .pk-notifs__head h1 { font-size: 1.3rem; }
+    .pk-notifs__actions { width: 100%; justify-content: space-between; }
+    .pk-notifs__item { padding: 14px; gap: 12px; }
+}

@@ -21,7 +21,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 // Géocodage inverse (coordonnées -> adresse) - Rate limited
-Route::middleware('throttle:30,1')->get('/reverse-geocode', function (Request $request) {
+Route::middleware('throttle:30,1,api.reverse-geocode:')->get('/reverse-geocode', function (Request $request) {
     $lat = $request->query('lat');
     $lng = $request->query('lng');
     
@@ -36,7 +36,7 @@ Route::middleware('throttle:30,1')->get('/reverse-geocode', function (Request $r
 });
 
 // Géocodage (adresse -> coordonnées) - Rate limited
-Route::middleware('throttle:30,1')->get('/geocode', function (Request $request) {
+Route::middleware('throttle:30,1,api.geocode:')->get('/geocode', function (Request $request) {
     $address = $request->query('address');
     
     if (!$address) {
@@ -50,7 +50,7 @@ Route::middleware('throttle:30,1')->get('/geocode', function (Request $request) 
 });
 
 // Incrémenter le compteur de partages - Rate limited & auth-aware
-Route::middleware('throttle:20,1')->post('/ads/{id}/share', function ($id) {
+Route::middleware('throttle:20,1,api.ads.share:')->post('/ads/{id}/share', function ($id) {
     $ad = Ad::find($id);
     
     if (!$ad) {

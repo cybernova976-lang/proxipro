@@ -48,7 +48,7 @@ class RegisterController extends Controller
     public function __construct(protected ReferralService $referralService)
     {
         $this->middleware('guest');
-        $this->middleware('throttle:5,1'); // Max 5 registration attempts per minute
+        $this->middleware('throttle:5,1,register.form:'); // Max 5 registration attempts per minute
     }
 
     /**

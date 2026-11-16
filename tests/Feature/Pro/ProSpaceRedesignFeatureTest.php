@@ -36,8 +36,9 @@ class ProSpaceRedesignFeatureTest extends TestCase
         $this->assertMatchesRegularExpression('#href="'.preg_quote(route('pro.account-status'), '#').'"[^>]*data-pro-nav="quotes"#', $menu);
         $this->assertStringContainsString('Statut professionnel requis', $menu);
         $this->assertStringContainsString('Passer pro', $menu);
-        // La cloche sans action a disparu de la barre du haut.
-        $this->assertStringNotContainsString('aria-label="Notifications"', $html);
+        // La cloche n'est plus un bouton sans action : c'est un lien vers la page des notifications.
+        $this->assertStringNotContainsString('<button type="button" class="pro-topbar-btn"', $html);
+        $this->assertMatchesRegularExpression('#<a href="'.preg_quote(route('notifications.index'), '#').'"[^>]*data-pro-notifications#', $html);
     }
 
     public function test_professional_dashboard_lists_measured_next_steps_and_a_single_primary_button(): void

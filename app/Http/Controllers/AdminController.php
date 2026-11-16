@@ -13,6 +13,8 @@ use App\Models\ProSubscription;
 use App\Models\Report;
 use App\Models\Setting;
 use App\Models\User;
+use App\Notifications\AccountStatusNotification;
+use App\Notifications\AdminReplyNotification;
 use App\Services\ProviderSubscriptionService;
 use App\Support\MarketplaceCategoryRegistry;
 use App\Support\PlatformFeatures;
@@ -293,8 +295,22 @@ class AdminController extends Controller
             }
         }
 
+        $wasActive = (bool) $user->is_active;
         $user->is_active = $request->boolean('is_active');
         $user->save();
+
+        // Le membre est prévenu de chaque changement réel de son statut.
+        if ($newVerifiedStatus !== $oldVerifiedStatus) {
+            AccountStatusNotification::dispatch($user, $newVerifiedStatus ? 'account_verified' : 'account_unverified');
+        }
+        if ((bool) $user->is_active !== $wasActive) {
+            AccountStatusNotification::dispatch($user, $user->is_active ? 'account_reactivated' : 'account_deactivated');
+        }
+        if ($requestedRole !== $currentRole && $requestedRole === 'admin') {
+            AccountStatusNotification::dispatch($user, 'admin_promoted', ['privileges' => $user->adminPrivilegeList()]);
+        } elseif ($requestedRole !== $currentRole && $currentRole === 'admin') {
+            AccountStatusNotification::dispatch($user, 'admin_revoked');
+        }
 
         return back()->with('success', 'Utilisateur mis à jour avec succès');
     }
@@ -721,6 +737,8 @@ class AdminController extends Controller
             'pro_status' => 'active',
         ]);
 
+        AccountStatusNotification::dispatch($user, 'premium_granted', ['until' => $subscription->ends_at->format('d/m/Y')]);
+
         return back()->with('success', 'Accès Pro manuel accordé à '.$user->name.'. Aucun prélèvement Stripe ne sera créé.');
     }
 
@@ -728,6 +746,7 @@ class AdminController extends Controller
     {
         try {
             $this->providerSubscriptionService->suspend($proSubscription);
+            AccountStatusNotification::dispatch($proSubscription->user, 'premium_suspended');
 
             return back()->with('success', 'Abonnement prestataire suspendu.');
         } catch (\Throwable $exception) {
@@ -738,7 +757,10 @@ class AdminController extends Controller
     public function resumeProviderSubscription(ProSubscription $proSubscription)
     {
         try {
-            $this->providerSubscriptionService->resumeSuspended($proSubscription);
+            $resumed = $this->providerSubscriptionService->resumeSuspended($proSubscription);
+            AccountStatusNotification::dispatch($proSubscription->user, 'premium_resumed', [
+                'until' => optional($resumed->ends_at)->format('d/m/Y'),
+            ]);
 
             return back()->with('success', 'Abonnement prestataire réactivé.');
         } catch (\Throwable $exception) {
@@ -750,6 +772,7 @@ class AdminController extends Controller
     {
         try {
             $this->providerSubscriptionService->cancelImmediately($proSubscription);
+            AccountStatusNotification::dispatch($proSubscription->user, 'premium_cancelled');
 
             return back()->with('success', 'Abonnement prestataire annulé immédiatement.');
         } catch (\Throwable $exception) {
@@ -1216,6 +1239,8 @@ class AdminController extends Controller
         $user->admin_privileges = array_values($validated['privileges'] ?? []);
         $user->save();
 
+        AccountStatusNotification::dispatch($user, 'admin_promoted', ['privileges' => $user->adminPrivilegeList()]);
+
         return back()->with('success', $user->name.' a été promu administrateur');
     }
 
@@ -1233,9 +1258,14 @@ class AdminController extends Controller
             return back()->with('error', 'Impossible de révoquer l\'administrateur principal');
         }
 
+        $wasAdmin = $user->role === 'admin';
         $user->role = 'user';
         $user->admin_privileges = null;
         $user->save();
+
+        if ($wasAdmin) {
+            AccountStatusNotification::dispatch($user, 'admin_revoked');
+        }
 
         return back()->with('success', 'Droits administrateur de '.$user->name.' révoqués');
     }
@@ -1259,8 +1289,15 @@ class AdminController extends Controller
             'privileges.*' => 'in:'.implode(',', array_keys(config('admin.privileges'))),
         ]);
 
+        $previousPrivileges = $user->adminPrivilegeList();
         $user->admin_privileges = array_values($validated['privileges'] ?? []);
         $user->save();
+
+        // Pas de notification si rien n'a réellement changé.
+        $newPrivileges = $user->adminPrivilegeList();
+        if (array_diff($previousPrivileges, $newPrivileges) !== [] || array_diff($newPrivileges, $previousPrivileges) !== []) {
+            AccountStatusNotification::dispatch($user, 'admin_privileges_updated', ['privileges' => $newPrivileges]);
+        }
 
         return back()->with('success', 'Privilèges de '.$user->name.' mis à jour');
     }
@@ -1515,7 +1552,7 @@ class AdminController extends Controller
             ]);
 
             // Envoyer notification
-            $user->notify(new \App\Notifications\VerificationApproved($verification));
+            \App\Support\SafeNotifier::send($user, new \App\Notifications\VerificationApproved($verification));
 
             DB::commit();
 
@@ -1566,7 +1603,7 @@ class AdminController extends Controller
 
         // Notifier l'utilisateur
         $rejectedDocs = $verification->getRejectedDocuments();
-        $verification->user->notify(new \App\Notifications\VerificationDocumentRejected(
+        \App\Support\SafeNotifier::send($verification->user, new \App\Notifications\VerificationDocumentRejected(
             $verification, $rejectedDocs, $request->rejection_reason
         ));
 
@@ -1641,7 +1678,7 @@ class AdminController extends Controller
                     'pro_verified_at' => now(),
                 ]);
 
-                $user->notify(new \App\Notifications\VerificationApproved($verification));
+                \App\Support\SafeNotifier::send($user, new \App\Notifications\VerificationApproved($verification));
 
                 DB::commit();
 
@@ -1652,7 +1689,7 @@ class AdminController extends Controller
             if ($verification->hasRejectedDocuments()) {
                 $verification->update(['status' => 'returned']);
                 $rejectedDocs = $verification->getRejectedDocuments();
-                $verification->user->notify(new \App\Notifications\VerificationDocumentRejected(
+                \App\Support\SafeNotifier::send($verification->user, new \App\Notifications\VerificationDocumentRejected(
                     $verification, $rejectedDocs, $request->admin_message
                 ));
 
@@ -1746,7 +1783,7 @@ class AdminController extends Controller
 
         // Notifier l'utilisateur
         $verification->refresh();
-        $verification->user->notify(new \App\Notifications\VerificationDocumentRejected(
+        \App\Support\SafeNotifier::send($verification->user, new \App\Notifications\VerificationDocumentRejected(
             $verification,
             $verification->getRejectedDocuments(),
             $request->admin_message
@@ -1946,6 +1983,10 @@ class AdminController extends Controller
             'status' => 'replied',
             'replied_at' => now(),
         ]);
+
+        // Si l'auteur du message a un compte, il retrouve aussi la réponse
+        // signalée dans ses notifications Prokejem.
+        AdminReplyNotification::dispatch(User::where('email', $message->email)->first(), $message);
 
         return back()->with('success', 'Réponse envoyée avec succès.');
     }

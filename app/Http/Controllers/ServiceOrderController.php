@@ -85,7 +85,7 @@ class ServiceOrderController extends Controller
         ]);
 
         $serviceOrder->load(['buyer', 'seller', 'ad']);
-        $serviceOrder->seller?->notify(new ServiceOrderRequestedNotification($serviceOrder));
+        \App\Support\SafeNotifier::send($serviceOrder->seller, new ServiceOrderRequestedNotification($serviceOrder));
 
         return redirect()->route('service-orders.index')
             ->with('success', 'Commande securisee envoyee. Le vendeur peut maintenant l\'examiner.');

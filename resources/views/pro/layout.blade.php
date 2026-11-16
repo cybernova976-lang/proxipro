@@ -5,6 +5,7 @@
     $proPageTitle = html_entity_decode(trim($__env->yieldContent('topbar_title')), ENT_QUOTES | ENT_HTML5, 'UTF-8')
         ?: \App\Support\ProSpaceNavigation::activeLabel($proNavGroups);
     $proUnreadMessages = (int) Auth::user()->unreadMessagesCount();
+    $proUnreadNotifications = (int) Auth::user()->unreadNotifications()->count();
 @endphp
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">

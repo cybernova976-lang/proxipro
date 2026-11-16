@@ -47,20 +47,20 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomePageController::class, 'index'])->name('homepage');
 Route::get('/offres-prestataires', [\App\Http\Controllers\PublicProviderOffersController::class, 'index'])->name('public.provider-offers');
 Route::get('/communications/newsletter/{user}', [\App\Http\Controllers\NewsletterPreferenceController::class, 'show'])
-    ->middleware(['signed', 'throttle:30,1'])->name('newsletter.unsubscribe');
+    ->middleware(['signed', 'throttle:30,1,newsletter.unsubscribe:'])->name('newsletter.unsubscribe');
 Route::post('/communications/newsletter/{user}', [\App\Http\Controllers\NewsletterPreferenceController::class, 'unsubscribe'])
-    ->middleware(['signed', 'throttle:30,1'])->name('newsletter.unsubscribe.store');
+    ->middleware(['signed', 'throttle:30,1,newsletter.unsubscribe.store:'])->name('newsletter.unsubscribe.store');
 Route::get('/communications/rappels-brouillon/{user}', [\App\Http\Controllers\NewsletterPreferenceController::class, 'showDraftReminders'])
-    ->middleware(['signed', 'throttle:30,1'])->name('draft-reminders.unsubscribe');
+    ->middleware(['signed', 'throttle:30,1,draft-reminders.unsubscribe:'])->name('draft-reminders.unsubscribe');
 Route::post('/communications/rappels-brouillon/{user}', [\App\Http\Controllers\NewsletterPreferenceController::class, 'unsubscribeDraftReminders'])
-    ->middleware(['signed', 'throttle:30,1'])->name('draft-reminders.unsubscribe.store');
+    ->middleware(['signed', 'throttle:30,1,draft-reminders.unsubscribe.store:'])->name('draft-reminders.unsubscribe.store');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 Route::get('/conseils', [MarketplaceGuideController::class, 'index'])->name('guides.index');
 Route::get('/conseils/{slug}', [MarketplaceGuideController::class, 'show'])
     ->where('slug', '[a-z0-9-]+')
     ->name('guides.show');
 Route::post('/usage/events', UsageAnalyticsController::class)
-    ->middleware('throttle:120,1')
+    ->middleware('throttle:120,1,usage.store:')
     ->name('usage.store');
 
 if (app()->environment('local')) {
@@ -81,7 +81,7 @@ if (app()->environment('local')) {
         });
 
         return "Mail sent to {$to}";
-    })->middleware('throttle:5,1')->name('test-mail');
+    })->middleware('throttle:5,1,test-mail:')->name('test-mail');
 }
 
 // Authentication Routes...
@@ -96,7 +96,7 @@ Route::get('login', function () {
 Route::post('login', [App\Http\Controllers\Auth\LoginController::class, 'login'])->name('login.attempt');
 Route::post('logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
 Route::match(['get', 'post'], '/auth/session-activity', \App\Http\Controllers\SessionActivityController::class)
-    ->middleware(['auth', 'throttle:30,1'])->name('auth.session-activity');
+    ->middleware(['auth', 'throttle:30,1,auth.session-activity:'])->name('auth.session-activity');
 
 // Registration Routes...
 Route::get('register', function () {
@@ -108,7 +108,7 @@ Route::get('register', function () {
     return view('auth.register');
 })->name('register');
 Route::post('register', [App\Http\Controllers\Auth\RegisterController::class, 'register'])
-    ->middleware('throttle:5,1');  // Max 5 attempts/minute
+    ->middleware('throttle:5,1,register:');  // Max 5 attempts/minute
 
 // Password Reset Routes...
 Route::get('password/reset', [App\Http\Controllers\Auth\ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
@@ -129,7 +129,7 @@ Route::get('/auth/csrf-token', function () {
     return response()
         ->json(['token' => csrf_token()])
         ->header('Cache-Control', 'no-store, private');
-})->middleware('throttle:30,1')->name('auth.csrf.refresh');
+})->middleware('throttle:30,1,auth.csrf.refresh:')->name('auth.csrf.refresh');
 
 // Social Authentication Routes (Google, Facebook)
 Route::get('/auth/{provider}', [App\Http\Controllers\Auth\SocialAuthController::class, 'redirect'])
@@ -143,13 +143,13 @@ Route::get('/auth/{provider}/callback', [App\Http\Controllers\Auth\SocialAuthCon
 Route::get('/email/verify-code', [App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'show'])
     ->name('verification.code.show');
 Route::post('/email/verify-code', [App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'verify'])
-    ->middleware('throttle:5,1')
+    ->middleware('throttle:5,1,verification.code.verify:')
     ->name('verification.code.verify');
 Route::post('/email/resend-code', [App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'resend'])
-    ->middleware('throttle:3,1')
+    ->middleware('throttle:3,1,verification.code.resend:')
     ->name('verification.code.resend');
 Route::post('/email/update-address', [App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'updateEmail'])
-    ->middleware('throttle:3,1')
+    ->middleware('throttle:3,1,verification.code.email.update:')
     ->name('verification.code.email.update');
 
 // Email Verification Routes (legacy link-based)
@@ -159,11 +159,11 @@ Route::middleware('auth')->group(function () {
     })->name('verification.notice');
 
     Route::get('/email/verify/{id}/{hash}', [App\Http\Controllers\Auth\VerificationController::class, 'verify'])
-        ->middleware(['signed', 'throttle:6,1'])
+        ->middleware(['signed', 'throttle:6,1,verification.verify:'])
         ->name('verification.verify');
 
     Route::post('/email/verification-notification', [App\Http\Controllers\Auth\VerificationController::class, 'resend'])
-        ->middleware('throttle:3,1')
+        ->middleware('throttle:3,1,verification.resend:')
         ->name('verification.resend');
 });
 
@@ -175,8 +175,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/ads/my-ads', [AdController::class, 'myAds'])->name('ads.myads');
     Route::patch('/ads/{ad}/archive', [AdController::class, 'archive'])->name('ads.archive');
     Route::post('/ads/{ad}/republish', [AdController::class, 'republish'])->name('ads.republish');
-    Route::post('/ads/store-from-popup', [AdController::class, 'storeFromPopup'])->middleware('throttle:10,60')->name('ads.storeFromPopup');
-    Route::post('/ads', [AdController::class, 'store'])->middleware('throttle:10,60')->name('ads.store');
+    Route::post('/ads/store-from-popup', [AdController::class, 'storeFromPopup'])->middleware('throttle:10,60,ads.storefrompopup:')->name('ads.storeFromPopup');
+    Route::post('/ads', [AdController::class, 'store'])->middleware('throttle:10,60,ads.store:')->name('ads.store');
     Route::resource('ads', AdController::class)->except(['index', 'show', 'store']);
     Route::delete('/ads/{ad}/photos/{index}', [AdController::class, 'deletePhoto'])->name('ads.photos.delete');
 });
@@ -316,7 +316,7 @@ Route::middleware(['auth'])->prefix('become-provider')->name('become-provider.')
 Route::get('/demande', [\App\Http\Controllers\DemandController::class, 'create'])->name('demand.create');
 Route::middleware(['auth'])->prefix('demande')->name('demand.')->group(function () {
     Route::put('/brouillon', [\App\Http\Controllers\DemandController::class, 'saveDraft'])
-        ->middleware('throttle:30,1')
+        ->middleware('throttle:30,1,draft.save:')
         ->name('draft.save');
     Route::delete('/brouillon', [\App\Http\Controllers\DemandController::class, 'destroyDraft'])->name('draft.destroy');
     Route::post('/', [\App\Http\Controllers\DemandController::class, 'store'])->name('store');
@@ -335,7 +335,7 @@ Route::middleware(['auth'])->group(function () {
 });
 Route::get('/user/{id}', [ProfileController::class, 'publicProfile'])->name('profile.public');
 Route::post('/user/{id}/share', [ProfileController::class, 'recordShare'])
-    ->middleware('throttle:30,1')
+    ->middleware('throttle:30,1,profile.share.record:')
     ->name('profile.share.record');
 Route::middleware(['auth'])->group(function () {
     Route::post('/user/{id}/reviews', [ReviewController::class, 'store'])->name('reviews.store');
@@ -350,13 +350,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/settings/delete-account', [SettingsController::class, 'deleteAccount'])->name('settings.delete-account');
 
     Route::post('/push-notifications/subscriptions', [PushSubscriptionController::class, 'store'])
-        ->middleware('throttle:30,1')
+        ->middleware('throttle:30,1,push-subscriptions.store:')
         ->name('push-subscriptions.store');
     Route::delete('/push-notifications/subscriptions', [PushSubscriptionController::class, 'destroy'])
-        ->middleware('throttle:30,1')
+        ->middleware('throttle:30,1,push-subscriptions.destroy:')
         ->name('push-subscriptions.destroy');
     Route::post('/push-notifications/test', [PushSubscriptionController::class, 'test'])
-        ->middleware('throttle:5,1')
+        ->middleware('throttle:5,1,push-subscriptions.test:')
         ->name('push-subscriptions.test');
 });
 
@@ -400,7 +400,7 @@ Route::middleware(['auth'])->prefix('outils')->name('quote-tool.')->group(functi
 // Routes de contact
 Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
 Route::post('/contact', [ContactController::class, 'store'])
-    ->middleware('throttle:5,1')
+    ->middleware('throttle:5,1,contact.store:')
     ->name('contact.store');
 Route::middleware(['auth'])->group(function () {
     Route::get('/contact/mes-messages', [ContactController::class, 'myMessages'])->name('contact.my-messages');
@@ -424,7 +424,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/verification/payment/success/{id}', [VerificationController::class, 'paymentSuccess'])->name('verification.payment.success');
     Route::get('/verification/payment/cancel/{id}', [VerificationController::class, 'paymentCancel'])->name('verification.payment.cancel');
 
-    // Notifications
+    // Notifications : la page qui les liste toutes, et l'ouverture de l'une d'elles.
+    Route::get('/notifications', [\App\Http\Controllers\NotificationCenterController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/{id}/ouvrir', [\App\Http\Controllers\NotificationCenterController::class, 'open'])->name('notifications.open');
+    Route::post('/notifications/tout-lire', [\App\Http\Controllers\NotificationCenterController::class, 'markAllRead'])->name('notifications.read-all');
+
     Route::post('/notifications/{id}/mark-read', function ($id) {
         $notification = Auth::user()->notifications()->findOrFail($id);
         $notification->markAsRead();
@@ -442,7 +446,7 @@ Route::middleware(['auth'])->group(function () {
 // Routes de messagerie
 Route::middleware(['auth'])->group(function () {
     Route::post('/presence/heartbeat', \App\Http\Controllers\UserPresenceController::class)
-        ->middleware('throttle:120,1')->name('presence.heartbeat');
+        ->middleware('throttle:120,1,presence.heartbeat:')->name('presence.heartbeat');
     Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
     Route::get('/messages/{conversation}', [MessageController::class, 'show'])->name('messages.show');
     Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
@@ -457,7 +461,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Recherche d'utilisateurs (AJAX)
-Route::middleware(['auth', 'throttle:20,1'])->get('/api/users/search', function (\Illuminate\Http\Request $request) {
+Route::middleware(['auth', 'throttle:20,1,users.search:'])->get('/api/users/search', function (\Illuminate\Http\Request $request) {
     $q = $request->query('q', '');
     if (strlen($q) < 2) {
         return response()->json([]);

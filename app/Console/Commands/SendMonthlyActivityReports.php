@@ -45,7 +45,7 @@ class SendMonthlyActivityReports extends Command
                     return;
                 }
 
-                $user->notify(new MonthlyActivityReportNotification($report));
+                \App\Support\SafeNotifier::send($user, new MonthlyActivityReportNotification($report));
                 $sent++;
             });
 

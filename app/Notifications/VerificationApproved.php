@@ -3,12 +3,15 @@
 namespace App\Notifications;
 
 use App\Models\IdentityVerification;
+use App\Notifications\Concerns\RespectsEmailPreferences;
+use App\Notifications\Concerns\SendsWebPushNotifications;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class VerificationApproved extends Notification
 {
-    use Queueable;
+    use Queueable, RespectsEmailPreferences, SendsWebPushNotifications;
 
     protected $verification;
 
@@ -17,9 +20,19 @@ class VerificationApproved extends Notification
         $this->verification = $verification;
     }
 
+    /** Réponse de l'administration : dans le compte, par e-mail et sur les appareils activés. */
     public function via($notifiable): array
     {
-        return ['database'];
+        return array_merge(['database'], $this->emailChannelsFor($notifiable), $this->webPushChannelsFor($notifiable));
+    }
+
+    public function toMail($notifiable): MailMessage
+    {
+        return (new MailMessage)
+            ->subject('Votre profil est vérifié — '.config('app.name', 'Prokejem'))
+            ->greeting('Bonjour '.$notifiable->name.',')
+            ->line('Votre demande de vérification a été acceptée : le badge « Profil vérifié » est maintenant affiché sur votre profil.')
+            ->action('Voir mon profil', route('profile.show'));
     }
 
     public function toArray($notifiable): array
