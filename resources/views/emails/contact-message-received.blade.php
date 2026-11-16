@@ -30,7 +30,7 @@
                     </tr>
                     <tr>
                         <td style="padding:18px 28px;background:#f6f8fc;color:#6d778a;font-size:12px;line-height:1.5;">
-                            Répondre depuis l’administration conserve la réponse avec le message. Répondre à cet e-mail écrit directement à {{ $contactMessage->email }}.
+                            Répondre à cet e-mail depuis la boîte contact@ écrit directement à {{ $contactMessage->email }} : pensez ensuite à passer le message en « Répondu » dans l’administration. Répondre depuis l’administration conserve la réponse avec le message.
                         </td>
                     </tr>
                 </table>

@@ -84,7 +84,8 @@ class ContactAlertEmailTest extends TestCase
     public function test_reply_goes_to_the_visitor_only_even_with_a_global_reply_to(): void
     {
         config(['mail.admin_email' => 'contact@prokejem.test', 'mail.reply_to' => ['address' => 'contact@prokejem.test', 'name' => 'Prokejem'],
-            // L'adresse générale (info@) ne doit pas servir pour le formulaire de contact.
+            // L'alerte arrive dans la boîte contact@ : elle part de l'adresse générale,
+            // sinon certaines messageries ignorent l'adresse de réponse.
             'mail.from' => ['address' => 'info@prokejem.test', 'name' => 'Prokejem'],
             'mail.contact_from' => ['address' => 'contact@prokejem.test', 'name' => 'Prokejem']]);
         app()->forgetInstance('mail.manager');
@@ -95,7 +96,8 @@ class ContactAlertEmailTest extends TestCase
         $sent = collect(app('mailer')->getSymfonyTransport()->messages())->map(fn ($message) => $message->getOriginalMessage())->last();
         $this->assertNotNull($sent, 'Aucun e-mail envoyé.');
         $this->assertSame(['assiata@example.test'], array_map(fn ($address) => $address->getAddress(), $sent->getReplyTo()));
-        $this->assertSame(['contact@prokejem.test'], array_map(fn ($address) => $address->getAddress(), $sent->getFrom()));
+        $this->assertSame(['info@prokejem.test'], array_map(fn ($address) => $address->getAddress(), $sent->getFrom()));
+        $this->assertSame('Assiata Abdou via '.config('app.name'), $sent->getFrom()[0]->getName());
         $this->assertSame(['contact@prokejem.test'], array_map(fn ($address) => $address->getAddress(), $sent->getTo()));
         $this->assertSame(['fondateur@example.test'], array_map(fn ($address) => $address->getAddress(), $sent->getCc()));
     }

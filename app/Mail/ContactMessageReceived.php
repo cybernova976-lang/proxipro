@@ -28,11 +28,16 @@ class ContactMessageReceived extends Mailable
         $visitorEmail = (string) $this->contactMessage->email;
         $visitorName = (string) $this->contactMessage->name;
 
-        // Le formulaire de contact part de la boîte contact@ ; tout le reste de
-        // la plateforme utilise l'adresse d'envoi générale (info@).
-        $contactFrom = (string) config('mail.contact_from.address');
-        if (filter_var($contactFrom, FILTER_VALIDATE_EMAIL)) {
-            $this->from($contactFrom, (string) config('mail.contact_from.name', config('app.name')));
+        // Cette alerte arrive dans la boîte contact@ : elle ne doit pas en partir.
+        // Un message « de soi à soi » fait ignorer l'adresse de réponse à
+        // certaines messageries (Gmail notamment), et « Répondre » écrirait alors
+        // à contact@ au lieu du visiteur. Elle part donc de l'adresse générale,
+        // au nom du visiteur ; le visiteur, lui, ne voit que contact@ (la boîte
+        // d'où part la réponse).
+        $generalFrom = (string) config('mail.from.address');
+        if (filter_var($generalFrom, FILTER_VALIDATE_EMAIL)) {
+            $displayName = trim(preg_replace('/[\r\n"<>]+/', ' ', Str::limit($visitorName, 60, '')));
+            $this->from($generalFrom, trim($displayName.' via '.config('app.name', 'Prokejem')));
         }
 
         return $this
