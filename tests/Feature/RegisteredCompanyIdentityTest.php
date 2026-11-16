@@ -24,12 +24,25 @@ class RegisteredCompanyIdentityTest extends TestCase
             ->assertSee('131 775 942 00017')->assertSee('23/10/2026')
             ->assertSee('6312Z')->assertSee('Hardali SAID')
             ->assertSee('Railway Corporation')->assertSee('+1 415 707 7675')
-            ->assertSee('contact@prokejem.fr')->assertSee('+262 639 71 94 22')
+            ->assertSee('contact@prokejem.fr')
             ->assertDontSee('Document à finaliser avant la mise en production');
-        $this->get(route('contact.index'))->assertOk()
-            ->assertSee('contact@prokejem.fr')->assertSee('+262 639 71 94 22');
+        $this->get(route('contact.index'))->assertOk()->assertSee('contact@prokejem.fr');
         $this->get(route('legal.terms'))->assertDontSee('l’identité et le pays d’établissement de l’éditeur seront finalisés');
         $this->assertFalse(PlatformFeatures::proSubscriptionsRequested());
+    }
+
+    /** Aucun téléphone n'est publié tant qu'un numéro professionnel n'est pas configuré. */
+    public function test_no_phone_number_is_shown_to_the_public_by_default(): void
+    {
+        $this->assertNull(config('site.contact_phone'));
+
+        foreach (['/', route('contact.index'), route('legal.mentions')] as $url) {
+            $this->get($url)->assertOk()->assertDontSee('href="tel:', false)->assertDontSee('+262 6');
+        }
+
+        config(['site.contact_phone' => '+262 269 00 00 00']);
+        $this->get(route('contact.index'))->assertOk()->assertSee('+262 269 00 00 00');
+        $this->get(route('legal.mentions'))->assertOk()->assertSee('+262 269 00 00 00');
     }
 
     public function test_empty_legacy_settings_fall_back_to_registered_identity_without_hiding_overrides(): void

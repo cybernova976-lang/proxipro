@@ -175,8 +175,9 @@ return [
         'name' => $replyToName,
     ],
 
+    // Boîte réservée au formulaire de contact et aux réponses qui en partent.
     'contact_from' => [
-        'address' => env('CONTACT_MAIL_FROM_ADDRESS', $fromAddress),
+        'address' => trim((string) env('CONTACT_MAIL_FROM_ADDRESS', '')) ?: 'contact@prokejem.fr',
         'name' => env('CONTACT_MAIL_FROM_NAME', $fromName),
     ],
 

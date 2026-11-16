@@ -83,7 +83,10 @@ class ContactAlertEmailTest extends TestCase
     /** Envoi réel (sans simulation) : une seule adresse de réponse, celle du visiteur. */
     public function test_reply_goes_to_the_visitor_only_even_with_a_global_reply_to(): void
     {
-        config(['mail.admin_email' => 'contact@prokejem.test', 'mail.reply_to' => ['address' => 'contact@prokejem.test', 'name' => 'Prokejem']]);
+        config(['mail.admin_email' => 'contact@prokejem.test', 'mail.reply_to' => ['address' => 'contact@prokejem.test', 'name' => 'Prokejem'],
+            // L'adresse générale (info@) ne doit pas servir pour le formulaire de contact.
+            'mail.from' => ['address' => 'info@prokejem.test', 'name' => 'Prokejem'],
+            'mail.contact_from' => ['address' => 'contact@prokejem.test', 'name' => 'Prokejem']]);
         app()->forgetInstance('mail.manager');
         Setting::set('mail_admin_copy_address', 'fondateur@example.test', 'email');
 
@@ -92,8 +95,28 @@ class ContactAlertEmailTest extends TestCase
         $sent = collect(app('mailer')->getSymfonyTransport()->messages())->map(fn ($message) => $message->getOriginalMessage())->last();
         $this->assertNotNull($sent, 'Aucun e-mail envoyé.');
         $this->assertSame(['assiata@example.test'], array_map(fn ($address) => $address->getAddress(), $sent->getReplyTo()));
+        $this->assertSame(['contact@prokejem.test'], array_map(fn ($address) => $address->getAddress(), $sent->getFrom()));
         $this->assertSame(['contact@prokejem.test'], array_map(fn ($address) => $address->getAddress(), $sent->getTo()));
         $this->assertSame(['fondateur@example.test'], array_map(fn ($address) => $address->getAddress(), $sent->getCc()));
+    }
+
+    /** Newsletters, rappels et messages rédigés dans l'administration partent de l'adresse générale. */
+    public function test_newsletters_leave_from_the_general_address_not_the_contact_one(): void
+    {
+        config(['mail.from' => ['address' => 'info@prokejem.test', 'name' => 'Prokejem'],
+            'mail.contact_from' => ['address' => 'contact@prokejem.test', 'name' => 'Prokejem']]);
+        app()->forgetInstance('mail.manager');
+        $user = User::factory()->create();
+        $email = \App\Models\ManagedEmail::create([
+            'user_id' => $user->id, 'recipient_email' => $user->email, 'recipient_name' => $user->name,
+            'source_key' => 'test:'.$user->id, 'type' => 'newsletter', 'status' => \App\Models\ManagedEmail::STATUS_PENDING,
+            'subject' => 'Nouveautés', 'headline' => 'Les nouveautés du mois', 'body' => 'Bonjour à tous.', 'image_paths' => [],
+        ]);
+
+        Mail::to($user->email)->send(new \App\Mail\ManagedEmailMail($email));
+
+        $sent = collect(app('mailer')->getSymfonyTransport()->messages())->map(fn ($message) => $message->getOriginalMessage())->last();
+        $this->assertSame(['info@prokejem.test'], array_map(fn ($address) => $address->getAddress(), $sent->getFrom()));
     }
 
     public function test_admin_can_save_and_clear_the_copy_address(): void

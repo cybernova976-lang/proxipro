@@ -28,6 +28,13 @@ class ContactMessageReceived extends Mailable
         $visitorEmail = (string) $this->contactMessage->email;
         $visitorName = (string) $this->contactMessage->name;
 
+        // Le formulaire de contact part de la boîte contact@ ; tout le reste de
+        // la plateforme utilise l'adresse d'envoi générale (info@).
+        $contactFrom = (string) config('mail.contact_from.address');
+        if (filter_var($contactFrom, FILTER_VALIDATE_EMAIL)) {
+            $this->from($contactFrom, (string) config('mail.contact_from.name', config('app.name')));
+        }
+
         return $this
             ->replyTo($visitorEmail, $visitorName)
             // L'adresse de réponse globale (contact@…) s'ajouterait à celle du visiteur :

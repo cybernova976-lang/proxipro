@@ -24,7 +24,6 @@
         'Forme juridique' => $legal['entity_form'],
         'Capital social' => $legal['share_capital'],
         'Contact' => config('site.support_email'),
-        'Téléphone' => config('site.contact_phone'),
         'Directeur de publication' => $legal['publication_director'],
         'Hébergeur' => config('legal.host_name'),
         'Adresse de l’hébergeur' => config('legal.host_address'),
