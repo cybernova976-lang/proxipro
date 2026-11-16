@@ -61,13 +61,13 @@
                         <td>{{ $providerSubscription->getPlanLabel() }}<div class="small text-muted">{{ number_format((float) $providerSubscription->amount, 2, ',', ' ') }} €</div></td>
                         <td>
                             @php $providerStatusColor = ['active' => 'success', 'pending' => 'warning', 'cancelled' => 'secondary', 'expired' => 'danger'][$providerSubscription->status] ?? 'secondary'; @endphp
-                            <span class="badge bg-{{ $providerStatusColor }}">{{ ucfirst($providerSubscription->status) }}</span>
+                            <span class="badge bg-{{ $providerStatusColor }}">{{ \App\Support\StatusLabels::providerSubscription($providerSubscription->status) }}</span>
                             @if($providerSubscription->status === 'active' && ! $providerSubscription->auto_renew)<div class="small text-warning mt-1">Fin à l’échéance</div>@endif
                         </td>
                         <td class="small">{{ optional($providerSubscription->starts_at)->format('d/m/Y') ?: '—' }} → {{ optional($providerSubscription->ends_at)->format('d/m/Y') ?: '—' }}</td>
                         <td>
                             @if($providerSubscription->stripe_subscription_id)
-                                <span class="badge bg-primary-subtle text-primary border">Stripe</span><div class="small text-muted">{{ $providerSubscription->stripe_status ?: '—' }}</div>
+                                <span class="badge bg-primary-subtle text-primary border">Stripe</span><div class="small text-muted">{{ \App\Support\StatusLabels::stripeSubscription($providerSubscription->stripe_status) }}</div>
                             @else
                                 <span class="badge bg-light text-dark border">Manuel</span>
                             @endif
@@ -95,14 +95,14 @@
 </div>
 
 <!-- Statistiques -->
-<div class="mb-2"><h5 class="fw-bold mb-0">Plans de visibilité historiques</h5><p class="text-muted small mb-0">Gestion séparée des anciens plans STARTER / PRO / BUSINESS liés aux annonces.</p></div>
+<div class="mb-2"><h5 class="fw-bold mb-0">Anciens plans de visibilité (STARTER / PRO / BUSINESS)</h5><p class="text-muted small mb-0">Ancien système, distinct du Premium prestataire ci-dessus : ces compteurs ne comptent pas les abonnements Premium.</p></div>
 <div class="row g-4 mb-4">
     <div class="col-xl-2 col-lg-4 col-md-6">
         <div class="card stat-card border-0 bg-primary bg-gradient text-white">
             <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-subtitle mb-1 opacity-75" style="font-size: 0.75rem;">Total Premium</h6>
+                        <h6 class="card-subtitle mb-1 opacity-75" style="font-size: 0.75rem;">Anciens plans attribués</h6>
                         <h3 class="card-title mb-0">{{ $stats['total_premium'] }}</h3>
                     </div>
                     <i class="fas fa-crown fa-2x opacity-50"></i>
@@ -116,7 +116,7 @@
             <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-subtitle mb-1 opacity-75" style="font-size: 0.75rem;">Actifs</h6>
+                        <h6 class="card-subtitle mb-1 opacity-75" style="font-size: 0.75rem;">Anciens plans en cours</h6>
                         <h3 class="card-title mb-0">{{ $stats['active_subscriptions'] }}</h3>
                     </div>
                     <i class="fas fa-check-circle fa-2x opacity-50"></i>
@@ -130,7 +130,7 @@
             <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-subtitle mb-1 opacity-75" style="font-size: 0.75rem;">Expirés</h6>
+                        <h6 class="card-subtitle mb-1 opacity-75" style="font-size: 0.75rem;">Anciens plans expirés</h6>
                         <h3 class="card-title mb-0">{{ $stats['expired_subscriptions'] }}</h3>
                     </div>
                     <i class="fas fa-times-circle fa-2x opacity-50"></i>

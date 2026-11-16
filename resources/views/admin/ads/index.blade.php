@@ -187,7 +187,7 @@
                                 ];
                             @endphp
                             <span class="badge bg-{{ $statusColors[$ad->status] ?? 'secondary' }}">
-                                {{ ucfirst($ad->status) }}
+                                {{ \App\Support\StatusLabels::ad($ad->status) }}
                             </span>
                         </td>
                         <td>{{ $ad->created_at->format('d/m/Y') }}</td>

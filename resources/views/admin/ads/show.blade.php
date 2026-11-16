@@ -37,7 +37,7 @@
                         ];
                     @endphp
                     <span class="badge bg-{{ $statusColors[$ad->status] ?? 'secondary' }} px-3 py-2">
-                        {{ ucfirst($ad->status) }}
+                        {{ \App\Support\StatusLabels::ad($ad->status) }}
                     </span>
                 </div>
             </div>

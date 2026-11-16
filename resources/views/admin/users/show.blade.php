@@ -211,7 +211,7 @@
                                 </td>
                                 <td>
                                     <span class="badge bg-{{ $ad->status == 'active' ? 'success' : ($ad->status == 'pending' ? 'warning' : 'secondary') }}">
-                                        {{ ucfirst($ad->status) }}
+                                        {{ \App\Support\StatusLabels::ad($ad->status) }}
                                     </span>
                                 </td>
                                 <td>{{ $ad->created_at->format('d/m/Y') }}</td>

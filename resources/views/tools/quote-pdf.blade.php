@@ -80,7 +80,7 @@
                 <div class="doc-number">Valide jusqu'au : {{ \Carbon\Carbon::parse($document->valid_until)->format('d/m/Y') }}</div>
             @endif
             <div style="margin-top: 6px;">
-                <span class="status-badge status-{{ $document->status }}">{{ ucfirst($document->status) }}</span>
+                <span class="status-badge status-{{ $document->status }}">{{ method_exists($document, 'getStatusLabel') ? $document->getStatusLabel() : ucfirst($document->status) }}</span>
             </div>
         </div>
     </div>
