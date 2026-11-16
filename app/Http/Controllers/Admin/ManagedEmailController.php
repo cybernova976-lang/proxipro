@@ -26,8 +26,14 @@ class ManagedEmailController extends Controller
 
     public function create()
     {
-        return view('admin.emails.create', ['recipients' => $this->recipients()
-            ->orderBy('name')->get(['id', 'name', 'email'])]);
+        $recipients = $this->recipients()->orderBy('name')
+            ->get(['id', 'name', 'email', 'account_type', 'user_type']);
+
+        return view('admin.emails.create', [
+            'recipients' => $recipients,
+            // Comptes joignables de chaque type, comptés sur la liste affichée.
+            'professionalCount' => $recipients->filter(fn (User $user) => $user->isRegisteredAsProfessional())->count(),
+        ]);
     }
 
     public function store(Request $request)
