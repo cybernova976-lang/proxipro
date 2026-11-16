@@ -733,9 +733,9 @@ Cordialement,
                         </div>
                         <div class="mb-3">
                             <label class="form-label-light">Message</label>
-                            <textarea name="message" class="form-control form-control-dark" rows="4" placeholder="Precisez le besoin, le perimetre et les attentes.">Bonjour,
+                            <textarea name="message" class="form-control form-control-dark" rows="4" placeholder="Précisez le besoin, le périmètre et les attentes.">Bonjour,
 
-Je souhaite lancer une commande securisee pour votre annonce "{{ $ad->title }}".
+Je souhaite lancer une commande sécurisée pour votre annonce "{{ $ad->title }}".
 
 Cordialement,
 {{ Auth::user()->name }}</textarea>

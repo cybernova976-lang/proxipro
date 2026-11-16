@@ -278,7 +278,7 @@
                             </form>
                         @endif
                         @if($order->paid_at)
-                            <div class="service-order-note">Paiement Stripe confirmé le {{ $order->paid_at->format('d/m/Y H:i') }}. Les fonds sont bloques jusqu'a liberation.</div>
+                            <div class="service-order-note">Paiement Stripe confirmé le {{ $order->paid_at->format('d/m/Y H:i') }}. Les fonds sont bloqués jusqu’à leur libération.</div>
                         @endif
                         @if($order->refunded_at)
                             <div class="service-order-note">Remboursement Stripe emis le {{ $order->refunded_at->format('d/m/Y H:i') }}.</div>

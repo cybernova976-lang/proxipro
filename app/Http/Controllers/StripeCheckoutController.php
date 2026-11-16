@@ -60,7 +60,7 @@ class StripeCheckoutController extends Controller
                 }
 
                 return redirect()->route('service-orders.index')
-                    ->with('success', 'Paiement Stripe confirme. Les fonds sont bloques jusqu\'a liberation ou litige.');
+                    ->with('success', 'Paiement Stripe confirmé. Les fonds sont bloqués jusqu\'à leur libération ou jusqu\'à l’ouverture d’un litige.');
             }
 
             $result = $this->pointPurchases->fulfill($session, Auth::id());
