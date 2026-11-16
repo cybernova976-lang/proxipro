@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ContactMessageReceived;
 use App\Models\ContactMessage;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ContactController extends Controller
 {
@@ -29,7 +33,7 @@ class ContactController extends Controller
             'website' => 'nullable|max:0',
         ]);
 
-        ContactMessage::create([
+        $contactMessage = ContactMessage::create([
             'user_id' => Auth::id(),
             'name' => $request->name,
             'email' => $request->email,
@@ -38,7 +42,41 @@ class ContactController extends Controller
             'status' => 'pending',
         ]);
 
+        $this->alertTeam($contactMessage);
+
         return redirect()->route('contact.index')->with('success', 'Votre message a bien été enregistré.');
+    }
+
+    /**
+     * Prévient l'équipe par e-mail : adresse admin, plus l'adresse de copie si
+     * elle est renseignée dans les paramètres. Le message est déjà enregistré :
+     * un envoi en échec est journalisé et ne gêne jamais le visiteur.
+     */
+    private function alertTeam(ContactMessage $contactMessage): void
+    {
+        if (Setting::get('email_new_message', '1') !== '1') {
+            return;
+        }
+
+        $recipient = (string) config('mail.admin_email');
+        if (! filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        $copy = trim((string) Setting::get('mail_admin_copy_address', ''));
+
+        try {
+            $mail = Mail::to($recipient);
+            if (filter_var($copy, FILTER_VALIDATE_EMAIL) && strcasecmp($copy, $recipient) !== 0) {
+                $mail->cc($copy);
+            }
+            $mail->send(new ContactMessageReceived($contactMessage));
+        } catch (\Throwable $error) {
+            Log::error('Alerte de message de contact non envoyée', [
+                'contact_message_id' => $contactMessage->id,
+                'exception' => $error->getMessage(),
+            ]);
+        }
     }
 
     /**

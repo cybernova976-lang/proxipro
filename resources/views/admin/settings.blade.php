@@ -317,7 +317,13 @@
                         <input type="email" class="form-control" name="mail_admin_address" value="{{ $settings['email']['mail_admin_address'] ?? config('mail.admin_email') }}">
                         <small class="text-muted">Destinataire par défaut des tests et des notifications administratives.</small>
                     </div>
-                    
+
+                    <div class="mb-3">
+                        <label class="form-label" for="mailAdminCopyAddress">Copie des alertes <span class="text-muted fw-normal">(facultatif)</span></label>
+                        <input type="email" class="form-control" id="mailAdminCopyAddress" name="mail_admin_copy_address" value="{{ $settings['email']['mail_admin_copy_address'] ?? '' }}" placeholder="Par exemple votre adresse personnelle">
+                        <small class="text-muted">Chaque message reçu par le formulaire de contact est envoyé à l’adresse admin, avec une copie à cette adresse.</small>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label">Notifications par email</label>
                         <div class="form-check">
@@ -330,7 +336,7 @@
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="email_new_message" id="emailNewMessage" {{ ($settings['email']['email_new_message'] ?? '1') == '1' ? 'checked' : '' }}>
-                            <label class="form-check-label" for="emailNewMessage">Nouveau message</label>
+                            <label class="form-check-label" for="emailNewMessage">Nouveau message du formulaire de contact</label>
                         </div>
                     </div>
                     

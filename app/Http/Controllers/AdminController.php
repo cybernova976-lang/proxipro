@@ -1085,6 +1085,7 @@ class AdminController extends Controller
             'mail_reply_to_address' => 'nullable|email|max:255',
             'mail_reply_to_name' => 'nullable|string|max:255',
             'mail_admin_address' => 'required|email|max:255',
+            'mail_admin_copy_address' => 'nullable|email|max:255',
         ]);
 
         $replyToAddress = trim((string) ($validated['mail_reply_to_address'] ?? ''));
@@ -1103,6 +1104,8 @@ class AdminController extends Controller
         Setting::set('mail_reply_to_address', $replyToAddress, 'email');
         Setting::set('mail_reply_to_name', $replyToName, 'email');
         Setting::set('mail_admin_address', $validated['mail_admin_address'], 'email');
+        // Copie des alertes de contact vers une seconde adresse (vide = pas de copie).
+        Setting::set('mail_admin_copy_address', trim((string) ($validated['mail_admin_copy_address'] ?? '')), 'email');
         Setting::set('email_new_user', $request->has('email_new_user') ? '1' : '0', 'email');
         Setting::set('email_new_ad', $request->has('email_new_ad') ? '1' : '0', 'email');
         Setting::set('email_new_message', $request->has('email_new_message') ? '1' : '0', 'email');
