@@ -249,18 +249,34 @@ class ServiceOrderController extends Controller
     {
         $user = Auth::user();
 
-        $url = $this->stripeConnectService->createOnboardingLink(
-            $user,
-            route('service-orders.connect.return'),
-            route('service-orders.connect.onboarding')
-        );
+        try {
+            $url = $this->stripeConnectService->createOnboardingLink(
+                $user,
+                route('service-orders.connect.return'),
+                route('service-orders.connect.onboarding')
+            );
+        } catch (\Throwable $exception) {
+            // Stripe a refusé ou est injoignable : le prestataire n'y peut rien,
+            // on le lui dit clairement et l'erreur reste dans les journaux.
+            report($exception);
+
+            return redirect()->route('service-orders.index')
+                ->with('error', 'L’activation des paiements est momentanément indisponible. Notre équipe est prévenue : réessayez un peu plus tard.');
+        }
 
         return redirect()->away($url);
     }
 
     public function connectReturn()
     {
-        $this->stripeConnectService->syncAccountStatus(Auth::user());
+        try {
+            $this->stripeConnectService->syncAccountStatus(Auth::user());
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return redirect()->route('service-orders.index')
+                ->with('error', 'L’état de votre compte de paiement n’a pas pu être vérifié pour le moment. Rechargez cette page dans quelques minutes.');
+        }
 
         return redirect()->route('service-orders.index')
             ->with('success', 'L’état de votre compte de paiement a été mis à jour.');

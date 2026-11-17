@@ -190,6 +190,31 @@ class MarketplaceCommissionTest extends TestCase
             ->assertSee('Vous recevez');
     }
 
+    public function test_a_stripe_refusal_during_payment_setup_is_explained_instead_of_a_server_error(): void
+    {
+        $seller = User::factory()->create();
+        $this->order(User::factory()->create(), $seller);
+
+        $connect = Mockery::mock(StripeConnectService::class);
+        $connect->shouldReceive('createOnboardingLink')->once()
+            ->andThrow(new \RuntimeException('You must complete your platform profile to use Connect.'));
+        $connect->shouldReceive('syncAccountStatus')->once()->andThrow(new \RuntimeException('Stripe est injoignable.'));
+        $this->app->instance(StripeConnectService::class, $connect);
+
+        // Le message technique de Stripe n'est jamais montré au prestataire.
+        $this->actingAs($seller)->get(route('service-orders.connect.onboarding'))
+            ->assertRedirect(route('service-orders.index'))
+            ->assertSessionHas('error', 'L’activation des paiements est momentanément indisponible. Notre équipe est prévenue : réessayez un peu plus tard.');
+        $this->actingAs($seller)->get(route('service-orders.connect.return'))
+            ->assertRedirect(route('service-orders.index'))
+            ->assertSessionHas('error', fn ($message) => str_contains($message, 'n’a pas pu être vérifié'));
+
+        $this->actingAs($seller)->withSession(['error' => 'L’activation des paiements est momentanément indisponible.'])
+            ->get(route('service-orders.index'))->assertOk()
+            ->assertSee('L’activation des paiements est momentanément indisponible.')
+            ->assertDontSee('platform profile');
+    }
+
     public function test_admin_follows_earned_and_pending_commissions(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
