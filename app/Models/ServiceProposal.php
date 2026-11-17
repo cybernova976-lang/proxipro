@@ -17,6 +17,9 @@ class ServiceProposal extends Model
 
     public const STATUS_WITHDRAWN = 'withdrawn';
 
+    /** Propositions encore utiles au client : en attente ou choisie. */
+    public const COMPARABLE_STATUSES = [self::STATUS_PENDING, self::STATUS_ACCEPTED];
+
     protected $fillable = [
         'ad_id',
         'provider_id',
@@ -35,6 +38,12 @@ class ServiceProposal extends Model
             'scheduled_for' => 'datetime',
             'responded_at' => 'datetime',
         ];
+    }
+
+    /** Écarte les propositions retirées ou refusées : elles ne sont plus à comparer. */
+    public function scopeComparable($query)
+    {
+        return $query->whereIn('status', self::COMPARABLE_STATUSES);
     }
 
     public function ad()

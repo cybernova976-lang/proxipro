@@ -17,6 +17,7 @@
     .compare-summary span{display:block;color:#64748b;font-size:.75rem;margin-top:3px}
     .compare-guide{display:flex;align-items:flex-start;gap:11px;margin:18px 0 20px;padding:14px 16px;border:1px solid #fde3a7;border-radius:14px;background:#fffbeb;color:#784b08;font-size:.86rem;line-height:1.5}
     .compare-guide i{margin-top:3px;color:#d97706}
+    .compare-guide--choice{margin-top:-8px;border-color:#c7d2fe;background:#eef2ff;color:#312e81}.compare-guide--choice i{color:#4f46e5}
     .compare-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
     .compare-card{position:relative;display:flex;flex-direction:column;min-width:0;border:1px solid #dbe3ef;border-radius:19px;background:#fff;overflow:hidden;box-shadow:0 10px 30px -24px rgba(15,23,42,.6)}
     .compare-card.is-accepted{border-color:#86d5b9;box-shadow:0 10px 30px -24px rgba(5,150,105,.8)}
@@ -73,6 +74,13 @@
         <i class="fas fa-lightbulb" aria-hidden="true"></i>
         <div><strong>Conseil :</strong> comparez aussi les avis vérifiés, le message et la disponibilité. Le prix le plus bas n’est pas toujours le choix le plus adapté.</div>
     </div>
+
+    @if($pendingCount > 0)
+        <div class="compare-guide compare-guide--choice" id="compareChoiceNote">
+            <i class="fas fa-shield-alt" aria-hidden="true"></i>
+            <div><strong>Quand vous choisissez une proposition :</strong> une commande est créée au prix proposé, à régler en ligne, sans frais ajoutés. Votre paiement est conservé jusqu’à la fin de la prestation, puis versé au prestataire. Les autres propositions sont refusées. Tant que vous n’avez pas payé, vous pouvez annuler la commande.</div>
+        </div>
+    @endif
 
     @if($proposals->isNotEmpty())
         <section class="compare-grid" aria-label="Comparaison des propositions">
@@ -147,7 +155,7 @@
                     <div class="compare-actions">
                         <a href="{{ route('profile.public', $provider) }}" class="btn btn-outline-secondary btn-sm">Voir le profil</a>
                         @if($isPending)
-                            <form method="POST" action="{{ route('proposals.accept', $proposal) }}">
+                            <form method="POST" action="{{ route('proposals.accept', $proposal) }}" data-pk-confirm="Choisir la proposition de {{ $provider->name }} à {{ number_format((float) $proposal->amount, 2, ',', ' ') }} € ? Une commande à régler en ligne sera créée et les autres propositions seront refusées.">
                                 @csrf
                                 <button class="btn btn-primary btn-sm"><i class="fas fa-check me-1"></i>Choisir cette proposition</button>
                             </form>
@@ -172,3 +180,7 @@
     @endif
 </main>
 @endsection
+
+@push('scripts')
+<script defer src="{{ asset('js/confirm-submit.js') }}?v={{ filemtime(public_path('js/confirm-submit.js')) }}"></script>
+@endpush

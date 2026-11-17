@@ -158,6 +158,26 @@ class StripeConnectService
         return $chargeId;
     }
 
+    /**
+     * Ferme la page de paiement d'une commande que l'on annule, pour qu'aucun
+     * paiement ne puisse arriver après coup. Refuse si le client vient de payer.
+     */
+    public function expireCheckoutSession(ServiceOrder $serviceOrder): void
+    {
+        if (! $serviceOrder->stripe_checkout_session_id) {
+            return;
+        }
+
+        $session = \Stripe\Checkout\Session::retrieve($serviceOrder->stripe_checkout_session_id);
+
+        if (($session->status ?? null) === 'complete') {
+            throw new RuntimeException('Un paiement vient d’être enregistré pour cette commande : elle ne peut plus être annulée.');
+        }
+        if (($session->status ?? null) === 'open') {
+            $session->expire();
+        }
+    }
+
     public function refundOrder(ServiceOrder $serviceOrder): string
     {
         if (!$serviceOrder->stripe_payment_intent_id) {

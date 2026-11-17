@@ -444,7 +444,7 @@ class FeedController extends Controller
                 $this->applyAdGeoScope($matchingQuery, $userLat !== null ? (float) $userLat : null, $userLng !== null ? (float) $userLng : null, $userRadius, $geoCity, $geoCountry);
             }
             $pkMatchingCount = (clone $matchingQuery)->count();
-            $pkFeedAds = $matchingQuery->with('user')->withCount('serviceProposals')
+            $pkFeedAds = $matchingQuery->with('user')->withCount(['serviceProposals', 'serviceProposals as active_proposals_count' => fn ($proposals) => $proposals->comparable()])
                 ->orderByRaw('CASE WHEN NOT EXISTS (SELECT 1 FROM service_proposals WHERE service_proposals.ad_id = ads.id) THEN 0 ELSE 1 END')
                 ->orderByDesc('is_urgent')->latest('created_at')->take(6)->get();
             $priorityProviderRequests = $pkFeedAds->filter(fn ($ad) => $this->adLifecycle->needsFirstResponseAttention($ad))->values();
@@ -1101,7 +1101,7 @@ class FeedController extends Controller
             ->with('user');
 
         if ($serviceType === 'demande') {
-            $query->withCount('serviceProposals');
+            $query->withCount(['serviceProposals', 'serviceProposals as active_proposals_count' => fn ($proposals) => $proposals->comparable()]);
         }
 
         if ($currentUser?->exists) {
@@ -1202,7 +1202,7 @@ class FeedController extends Controller
             ->whereIn('category', $viewerCategories)
             ->whereDoesntHave('serviceProposals')
             ->with('user')
-            ->withCount('serviceProposals');
+            ->withCount(['serviceProposals', 'serviceProposals as active_proposals_count' => fn ($proposals) => $proposals->comparable()]);
 
         $this->applyHomeShowcaseVisibility($query, $user);
 

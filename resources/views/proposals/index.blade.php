@@ -50,7 +50,7 @@
                             </a>
                             <a href="{{ route('ads.show', $proposal->ad) }}" class="btn btn-sm btn-outline-secondary">Voir la demande</a>
                             @if($proposal->status === \App\Models\ServiceProposal::STATUS_PENDING)
-                                <form method="POST" action="{{ route('proposals.accept', $proposal) }}">
+                                <form method="POST" action="{{ route('proposals.accept', $proposal) }}" data-pk-confirm="Choisir la proposition de {{ $proposal->provider->name }} à {{ number_format((float) $proposal->amount, 2, ',', ' ') }} € ? Une commande à régler en ligne sera créée et les autres propositions pour cette demande seront refusées.">
                                     @csrf
                                     <button class="btn btn-sm btn-success"><i class="fas fa-check me-1"></i>Choisir</button>
                                 </form>

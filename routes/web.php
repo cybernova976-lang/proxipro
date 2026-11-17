@@ -265,6 +265,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/service-orders/{serviceOrder}/accept', [ServiceOrderController::class, 'accept'])->name('service-orders.accept');
     Route::post('/service-orders/{serviceOrder}/refuse', [ServiceOrderController::class, 'refuse'])->name('service-orders.refuse');
     Route::post('/service-orders/{serviceOrder}/checkout', [ServiceOrderController::class, 'checkout'])->name('service-orders.checkout');
+    Route::post('/service-orders/{serviceOrder}/cancel', [ServiceOrderController::class, 'cancel'])->name('service-orders.cancel');
     Route::post('/service-orders/{serviceOrder}/release', [ServiceOrderController::class, 'release'])->name('service-orders.release');
     Route::post('/service-orders/{serviceOrder}/dispute', [ServiceOrderController::class, 'dispute'])->name('service-orders.dispute');
     Route::post('/service-orders/{serviceOrder}/reminder', [ServiceReminderController::class, 'store'])->name('service-reminders.store');

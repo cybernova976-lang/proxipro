@@ -186,6 +186,32 @@ class ServiceOrderController extends Controller
         return redirect()->away($session->url);
     }
 
+    /** Annulation d'une commande non payée, par le client ou le prestataire. */
+    public function cancel(ServiceOrder $serviceOrder)
+    {
+        $user = Auth::user();
+
+        try {
+            $this->workflowService->cancel($serviceOrder, $user);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $exception) {
+            throw $exception;
+        } catch (\RuntimeException $exception) {
+            return redirect()->route('service-orders.index')->with('error', $exception->getMessage());
+        } catch (\Throwable $exception) {
+            // Stripe injoignable : on n'annule pas sans avoir fermé la page de paiement.
+            report($exception);
+
+            return redirect()->route('service-orders.index')
+                ->with('error', 'La commande n’a pas pu être annulée pour le moment. Réessayez dans quelques minutes.');
+        }
+
+        $message = (int) $user->id === (int) $serviceOrder->buyer_id
+            ? 'Commande annulée : rien ne vous sera prélevé. Si vous n’avez plus besoin de prestataire, pensez à supprimer votre demande.'
+            : 'Commande annulée. Le client en est informé.';
+
+        return redirect()->route('service-orders.index')->with('success', $message);
+    }
+
     public function release(ServiceOrder $serviceOrder)
     {
         try {

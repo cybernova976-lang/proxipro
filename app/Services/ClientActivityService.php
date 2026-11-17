@@ -97,6 +97,7 @@ class ClientActivityService
             ServiceOrder::STATUS_COMPLETED => ['Mission terminée', 'La prestation est terminée et les fonds ont été libérés.', 'Voir', 7, 'complete'],
             ServiceOrder::STATUS_REFUNDED => ['Commande remboursée', 'Le remboursement de cette commande a été enregistré.', 'Voir', 7, 'muted'],
             ServiceOrder::STATUS_REFUSED => ['Commande refusée', 'Le prestataire n’a pas accepté cette commande.', 'Voir', 7, 'muted'],
+            ServiceOrder::STATUS_CANCELED => ['Commande annulée', 'Cette commande a été annulée avant tout paiement.', 'Voir', 7, 'muted'],
             ServiceOrder::STATUS_DISPUTED => ['Litige en cours', 'Un litige est en cours. Retrouvez son suivi et les échanges depuis votre commande.', 'Consulter', 0, 'attention'],
             ServiceOrder::STATUS_AWAITING_PAYMENT => ['En attente de paiement', 'Votre proposition est acceptée. Consultez la commande pour préparer le paiement sécurisé.', 'Voir la commande', 1, 'action'],
             ServiceOrder::STATUS_PENDING_ACCEPTANCE => ['En attente du prestataire', 'Le prestataire doit encore confirmer votre commande. Retrouvez son suivi et les échanges.', 'Suivre', 5, 'waiting'],

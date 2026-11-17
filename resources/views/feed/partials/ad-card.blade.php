@@ -63,7 +63,10 @@
     $pkPlace = $ad->location ?: ($ad->city ?: null);
 
     // --- nombre de reponses (demandes uniquement) ---
-    $pkReplies = $pkIsDemande ? (int) ($ad->service_proposals_count ?? 0) : null;
+    // Seules les propositions en attente ou choisie comptent : une proposition
+    // retiree ou refusee n'est plus une reponse a comparer.
+    $pkRepliesEver = $pkIsDemande ? (int) ($ad->service_proposals_count ?? 0) : null;
+    $pkReplies = $pkIsDemande ? (int) ($ad->active_proposals_count ?? $pkRepliesEver) : null;
 
     $pkIsSaved = $pkSaved->contains((int) $ad->id);
     $pkUrl = route('ads.show', $ad);
@@ -124,6 +127,8 @@
                     <i class="far fa-comment" aria-hidden="true"></i>
                     @if($pkReplies > 0)
                         {{ $pkReplies }} réponse{{ $pkReplies > 1 ? 's' : '' }}
+                    @elseif($pkRepliesEver > 0)
+                        Aucune réponse en cours
                     @else
                         {{ $pkRole === 'provider' ? 'Soyez le premier à répondre' : 'En attente de réponses' }}
                     @endif

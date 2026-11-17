@@ -105,6 +105,20 @@ class ServiceOrderStatusNotification extends Notification
                 'icon' => 'fas fa-exclamation-triangle',
                 'color' => '#c2410c',
             ],
+            'canceled_by_buyer' => [
+                'subject' => 'Commande annulée par le client',
+                'title' => 'Commande annulée',
+                'line' => 'Le client a annulé la commande "'.$this->serviceOrder->ad->title.'" avant de la payer. Aucun paiement n’a été encaissé.',
+                'icon' => 'fas fa-ban',
+                'color' => '#b91c1c',
+            ],
+            'canceled_by_seller' => [
+                'subject' => 'Commande annulée par le prestataire',
+                'title' => 'Commande annulée',
+                'line' => 'Le prestataire a annulé la commande "'.$this->serviceOrder->ad->title.'". Vous n’avez rien payé : aucun montant ne vous sera prélevé.',
+                'icon' => 'fas fa-ban',
+                'color' => '#b91c1c',
+            ],
             'payout_setup_required' => [
                 'subject' => 'Activez la réception de vos paiements',
                 'title' => 'Un client attend pour vous payer',

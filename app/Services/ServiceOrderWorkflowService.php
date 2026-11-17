@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ServiceOrder;
+use App\Models\ServiceProposal;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Notifications\ServiceOrderStatusNotification;
@@ -48,6 +49,53 @@ class ServiceOrderWorkflowService
 
         $serviceOrder->loadMissing(['buyer', 'seller', 'ad']);
         \App\Support\SafeNotifier::send($serviceOrder->buyer, new ServiceOrderStatusNotification($serviceOrder, 'refused', $reason));
+
+        return $serviceOrder;
+    }
+
+    /**
+     * Annule une commande qui n'a pas été payée. La page de paiement ouverte
+     * est d'abord fermée chez Stripe ; la proposition liée est libérée pour
+     * que la demande du client puisse recevoir d'autres propositions.
+     */
+    public function cancel(ServiceOrder $serviceOrder, User $user): ServiceOrder
+    {
+        abort_unless(in_array((int) $user->id, [(int) $serviceOrder->buyer_id, (int) $serviceOrder->seller_id], true), 403);
+        abort_unless($serviceOrder->canBeCanceledBy($user), 422);
+
+        $byBuyer = (int) $user->id === (int) $serviceOrder->buyer_id;
+
+        DB::transaction(function () use ($serviceOrder, $user, $byBuyer) {
+            // Verrou : un paiement qui arrive au même instant passe avant ou après, jamais pendant.
+            $serviceOrder = ServiceOrder::query()->lockForUpdate()->findOrFail($serviceOrder->id);
+            abort_unless($serviceOrder->canBeCanceledBy($user), 422);
+
+            if ($serviceOrder->payment_status === ServiceOrder::PAYMENT_CHECKOUT_OPEN) {
+                $this->stripeConnectService->expireCheckoutSession($serviceOrder);
+            }
+
+            $serviceOrder->forceFill([
+                'status' => ServiceOrder::STATUS_CANCELED,
+                'payment_status' => ServiceOrder::PAYMENT_CANCELED,
+                'metadata' => array_merge($serviceOrder->metadata ?? [], [
+                    'canceled_at' => now()->toIso8601String(),
+                    'canceled_by' => $byBuyer ? 'buyer' : 'seller',
+                ]),
+            ])->save();
+
+            ServiceProposal::where('service_order_id', $serviceOrder->id)
+                ->where('status', ServiceProposal::STATUS_ACCEPTED)
+                ->update([
+                    'status' => $byBuyer ? ServiceProposal::STATUS_REFUSED : ServiceProposal::STATUS_WITHDRAWN,
+                    'responded_at' => now(),
+                ]);
+        });
+
+        $serviceOrder->refresh()->loadMissing(['buyer', 'seller', 'ad']);
+        \App\Support\SafeNotifier::send(
+            $byBuyer ? $serviceOrder->seller : $serviceOrder->buyer,
+            new ServiceOrderStatusNotification($serviceOrder, $byBuyer ? 'canceled_by_buyer' : 'canceled_by_seller')
+        );
 
         return $serviceOrder;
     }

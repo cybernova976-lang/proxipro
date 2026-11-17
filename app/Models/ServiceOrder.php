@@ -23,6 +23,9 @@ class ServiceOrder extends Model
 
     public const STATUS_REFUNDED = 'refunded';
 
+    /** Annulée par le client ou le prestataire avant tout paiement. */
+    public const STATUS_CANCELED = 'canceled';
+
     public const PAYMENT_AWAITING = 'awaiting_payment';
 
     public const PAYMENT_CHECKOUT_OPEN = 'checkout_open';
@@ -96,6 +99,7 @@ class ServiceOrder extends Model
             self::STATUS_REFUSED => 'Refusée',
             self::STATUS_DISPUTED => 'Litige ouvert',
             self::STATUS_REFUNDED => 'Remboursée',
+            self::STATUS_CANCELED => 'Annulée',
             default => str_replace('_', ' ', (string) $this->status),
         };
     }
@@ -128,6 +132,31 @@ class ServiceOrder extends Model
     {
         return $this->status === self::STATUS_AWAITING_PAYMENT
             && in_array($this->payment_status, [self::PAYMENT_AWAITING, self::PAYMENT_CHECKOUT_OPEN], true);
+    }
+
+    /**
+     * Une commande peut être annulée tant qu'aucun paiement n'est encaissé :
+     * par le client à tout moment avant de payer, par le prestataire une fois
+     * la commande en attente de paiement (avant, il la refuse).
+     */
+    public function canBeCanceledBy(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+        if ((int) $user->id === (int) $this->buyer_id) {
+            return $this->status === self::STATUS_PENDING_ACCEPTANCE || $this->canBuyerPay();
+        }
+
+        return (int) $user->id === (int) $this->seller_id && $this->canBuyerPay();
+    }
+
+    /** Date d'annulation, lue dans les métadonnées de la commande. */
+    public function getCanceledAtAttribute(): ?\Illuminate\Support\Carbon
+    {
+        $date = $this->metadata['canceled_at'] ?? null;
+
+        return $date ? \Illuminate\Support\Carbon::parse($date) : null;
     }
 
     public function canBuyerRelease(): bool

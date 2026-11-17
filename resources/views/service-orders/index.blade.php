@@ -55,6 +55,9 @@
     @if(session('success'))
         <div class="alert alert-success" role="status">{{ session('success') }}</div>
     @endif
+    @if(session('error'))
+        <div class="alert alert-danger" role="alert">{{ session('error') }}</div>
+    @endif
 
     @if($needsStripeConnectOnboarding ?? false)
         <div class="alert alert-warning d-flex justify-content-between align-items-center gap-3 flex-wrap" style="border-radius:16px;">
@@ -83,12 +86,12 @@
                         </div>
                         <div class="service-order-stats">
                             <div class="service-order-stat"><div class="service-order-stat-label">Montant</div><div class="service-order-stat-value">{{ number_format((float) $order->amount, 2, ',', ' ') }} €</div></div>
-                            <div class="service-order-stat"><div class="service-order-stat-label">Commission</div><div class="service-order-stat-value">{{ number_format((float) $order->commission_amount, 2, ',', ' ') }} €</div></div>
+                            <div class="service-order-stat"><div class="service-order-stat-label">Frais ajoutés</div><div class="service-order-stat-value">Aucun</div></div>
                             <div class="service-order-stat"><div class="service-order-stat-label">Paiement</div><div class="service-order-stat-value">{{ $order->payment_status_label }}</div></div>
                         </div>
-                        <div class="service-order-meta">Vendeur: <strong>{{ $order->seller->name }}</strong></div>
-                        @if($order->seller->stripe_connect_account_id)
-                            <div class="service-order-meta">Connect vendeur: <strong>{{ $order->seller->stripe_connect_payouts_enabled ? 'actif' : 'en attente' }}</strong></div>
+                        <div class="service-order-meta">Prestataire : <strong>{{ $order->seller->name }}</strong></div>
+                        @if($order->canBuyerPay() && ! $order->seller->stripe_connect_payouts_enabled)
+                            <div class="service-order-note">Le prestataire n’a pas encore activé la réception de ses paiements : le paiement en ligne sera possible dès que ce sera fait.</div>
                         @endif
                         @if($order->message)
                             <div class="service-order-meta">Message: {{ $order->message }}</div>
@@ -97,20 +100,31 @@
                             <div class="service-order-actions">
                                 <form action="{{ route('service-orders.checkout', $order) }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-credit-card me-1"></i>Payer avec Stripe</button>
+                                    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-credit-card me-1"></i>Payer en ligne</button>
                                 </form>
                             </div>
+                        @endif
+                        @if($order->canBeCanceledBy(auth()->user()))
+                            <div class="service-order-actions">
+                                <form action="{{ route('service-orders.cancel', $order) }}" method="POST" data-pk-confirm="Annuler cette commande ? Rien ne vous sera prélevé et le prestataire sera prévenu.">
+                                    @csrf
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm" data-order-cancel="buyer">Annuler la commande</button>
+                                </form>
+                            </div>
+                        @endif
+                        @if($order->status === \App\Models\ServiceOrder::STATUS_CANCELED)
+                            <div class="service-order-note">Commande annulée{{ $order->canceled_at ? ' le '.$order->canceled_at->format('d/m/Y') : '' }}. Aucun paiement n’a été encaissé.</div>
                         @endif
                         @if($order->canBuyerRelease())
                             <div class="service-order-actions">
                                 <form action="{{ route('service-orders.release', $order) }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-unlock-alt me-1"></i>Liberer les fonds</button>
+                                    <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-unlock-alt me-1"></i>Libérer les fonds</button>
                                 </form>
                             </div>
                             <form action="{{ route('service-orders.dispute', $order) }}" method="POST" class="mt-2">
                                 @csrf
-                                <textarea name="reason" class="service-order-reason" placeholder="Expliquez le probleme pour ouvrir un litige." required></textarea>
+                                <textarea name="reason" class="service-order-reason" placeholder="Expliquez le problème pour ouvrir un litige." required></textarea>
                                 <div class="service-order-actions">
                                     <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fas fa-exclamation-triangle me-1"></i>Ouvrir un litige</button>
                                 </div>
@@ -120,7 +134,7 @@
                             <div class="service-order-note">Fonds libérés le {{ $order->released_at->format('d/m/Y H:i') }}.</div>
                         @endif
                         @if($order->refunded_at)
-                            <div class="service-order-note">Remboursement Stripe emis le {{ $order->refunded_at->format('d/m/Y H:i') }}.</div>
+                            <div class="service-order-note">Remboursement émis le {{ $order->refunded_at->format('d/m/Y H:i') }}.</div>
                         @endif
                         @if($order->dispute_reason)
                             <div class="service-order-note">Litige: {{ $order->dispute_reason }}</div>
@@ -254,10 +268,10 @@
                             <div class="service-order-stat"><div class="service-order-stat-label">Vous recevez</div><div class="service-order-stat-value">{{ number_format((float) $order->seller_amount, 2, ',', ' ') }} €</div></div>
                             <div class="service-order-stat"><div class="service-order-stat-label">Paiement</div><div class="service-order-stat-value">{{ $order->payment_status_label }}</div></div>
                         </div>
-                        <div class="service-order-meta">Acheteur: <strong>{{ $order->buyer->name }}</strong></div>
-                        <div class="service-order-meta">Connect vendeur: <strong>{{ $order->seller->stripe_connect_payouts_enabled ? 'actif' : 'en attente' }}</strong></div>
+                        <div class="service-order-meta">Client : <strong>{{ $order->buyer->name }}</strong></div>
+                        <div class="service-order-meta">Réception des paiements : <strong>{{ $order->seller->stripe_connect_payouts_enabled ? 'activée' : 'à activer' }}</strong></div>
                         @if($order->scheduled_for)
-                            <div class="service-order-meta">Souhaite demarrer le {{ $order->scheduled_for->format('d/m/Y') }}</div>
+                            <div class="service-order-meta">Souhaite démarrer le {{ $order->scheduled_for->format('d/m/Y') }}</div>
                         @endif
                         @if($order->message)
                             <div class="service-order-meta">Message: {{ $order->message }}</div>
@@ -277,17 +291,28 @@
                                 </div>
                             </form>
                         @endif
+                        @if($order->canBeCanceledBy(auth()->user()))
+                            <div class="service-order-actions">
+                                <form action="{{ route('service-orders.cancel', $order) }}" method="POST" data-pk-confirm="Annuler cette commande ? Le client n’a rien payé ; il sera prévenu.">
+                                    @csrf
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm" data-order-cancel="seller">Annuler la commande</button>
+                                </form>
+                            </div>
+                        @endif
+                        @if($order->status === \App\Models\ServiceOrder::STATUS_CANCELED)
+                            <div class="service-order-note">Commande annulée{{ $order->canceled_at ? ' le '.$order->canceled_at->format('d/m/Y') : '' }}. Aucun paiement n’a été encaissé.</div>
+                        @endif
                         @if($order->paid_at)
                             <div class="service-order-note">Paiement Stripe confirmé le {{ $order->paid_at->format('d/m/Y H:i') }}. Les fonds sont bloqués jusqu’à leur libération.</div>
                         @endif
                         @if($order->refunded_at)
-                            <div class="service-order-note">Remboursement Stripe emis le {{ $order->refunded_at->format('d/m/Y H:i') }}.</div>
+                            <div class="service-order-note">Remboursement émis le {{ $order->refunded_at->format('d/m/Y H:i') }}.</div>
                         @endif
                         @if($order->dispute_reason)
                             <div class="service-order-note">Litige: {{ $order->dispute_reason }}</div>
                         @endif
                         @if($order->admin_resolution_note)
-                            <div class="service-order-note">Decision admin: {{ $order->admin_resolution_note }}</div>
+                            <div class="service-order-note">Décision de la plateforme : {{ $order->admin_resolution_note }}</div>
                         @endif
                         @if($order->refused_reason)
                             <div class="service-order-note">Refus: {{ $order->refused_reason }}</div>
@@ -301,3 +326,7 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script defer src="{{ asset('js/confirm-submit.js') }}?v={{ filemtime(public_path('js/confirm-submit.js')) }}"></script>
+@endpush
