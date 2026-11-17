@@ -26,12 +26,19 @@ class User extends Authenticatable
             $user->pushSubscriptions()->delete();
 
             if (! $user->isForceDeleting()) {
-                $user->ads()->delete();
+                // Les annonces qui portent une commande à conserver sont seulement dépubliées.
+                Ad::removeAllOf($user);
             }
         });
 
         // Lors d'une suppression définitive (forceDelete)
         static::forceDeleting(function (User $user) {
+            // La base efface les commandes d'un compte supprimé définitivement :
+            // un compte qui porte une commande à conserver n'est jamais purgé.
+            if ($user->hasKeptServiceOrders()) {
+                return false;
+            }
+
             // Supprimer les annonces de l'utilisateur
             $user->ads()->delete();
 
@@ -769,6 +776,25 @@ class User extends Authenticatable
     public function savedSearches()
     {
         return $this->hasMany(SavedSearch::class);
+    }
+
+    /** Commandes du compte, comme client ou comme prestataire, dans les statuts donnés. */
+    private function serviceOrdersIn(array $statuses)
+    {
+        return ServiceOrder::whereIn('status', $statuses)
+            ->where(fn ($orders) => $orders->where('buyer_id', $this->id)->orWhere('seller_id', $this->id));
+    }
+
+    /** Le compte a-t-il une commande en cours, comme client ou comme prestataire ? */
+    public function hasOpenServiceOrders(): bool
+    {
+        return $this->serviceOrdersIn(ServiceOrder::OPEN_STATUSES)->exists();
+    }
+
+    /** Le compte porte-t-il une commande à conserver (en cours, terminée ou remboursée) ? */
+    public function hasKeptServiceOrders(): bool
+    {
+        return $this->serviceOrdersIn(ServiceOrder::KEPT_STATUSES)->exists();
     }
 
     public function serviceOrdersPlaced()

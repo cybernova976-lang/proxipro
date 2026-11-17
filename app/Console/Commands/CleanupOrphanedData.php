@@ -54,6 +54,12 @@ class CleanupOrphanedData extends Command
                 $this->info('🗑️ Suppression définitive des utilisateurs soft-deleted et leurs données...');
                 
                 foreach ($softDeletedUsers as $user) {
+                    if ($user->hasKeptServiceOrders()) {
+                        $this->line("  ⏭️ Utilisateur {$user->id} conservé : il porte des commandes à garder");
+
+                        continue;
+                    }
+
                     $this->deleteUserData($user);
                     $user->forceDelete();
                     $this->line("  ✅ Utilisateur {$user->email} supprimé définitivement");

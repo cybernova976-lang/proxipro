@@ -20,6 +20,36 @@ class Ad extends Model
 
         static::saved($clearFeedCategoryCache);
         static::deleted($clearFeedCategoryCache);
+
+        // Dernier rempart : supprimer une annonce efface ses commandes en base.
+        // Une annonce qui porte une commande à conserver n'est donc jamais supprimée.
+        static::deleting(fn (Ad $ad) => $ad->hasKeptOrders() ? false : null);
+    }
+
+    /** L'annonce porte-t-elle une commande en cours (à accepter, à payer, payée ou en litige) ? */
+    public function hasOpenOrders(): bool
+    {
+        return $this->serviceOrders()->whereIn('status', ServiceOrder::OPEN_STATUSES)->exists();
+    }
+
+    /** L'annonce porte-t-elle une commande à conserver (en cours, terminée ou remboursée) ? */
+    public function hasKeptOrders(): bool
+    {
+        return $this->serviceOrders()->whereIn('status', ServiceOrder::KEPT_STATUSES)->exists();
+    }
+
+    /**
+     * Retire toutes les annonces d'un compte : celles qui portent une commande
+     * à conserver sont seulement dépubliées, les autres sont supprimées.
+     */
+    public static function removeAllOf(User $user): void
+    {
+        $keptIds = static::where('user_id', $user->id)
+            ->whereHas('serviceOrders', fn ($orders) => $orders->whereIn('status', ServiceOrder::KEPT_STATUSES))
+            ->pluck('id');
+
+        static::whereIn('id', $keptIds)->update(['status' => 'inactive']);
+        static::where('user_id', $user->id)->whereNotIn('id', $keptIds)->delete();
     }
 
     protected $fillable = [

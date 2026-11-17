@@ -359,6 +359,10 @@ class AdminController extends Controller
             return back()->with('error', 'Vous ne pouvez pas supprimer votre propre compte depuis l’administration.');
         }
 
+        if ($user->hasOpenServiceOrders()) {
+            return back()->with('error', 'Ce compte a une commande en cours (à payer, payée ou en litige) : réglez d’abord la commande avant de supprimer le compte.');
+        }
+
         $user->delete();
 
         return redirect()->route('admin.users')->with('success', 'Utilisateur supprimé avec succès');
@@ -422,6 +426,14 @@ class AdminController extends Controller
     public function deleteAd($id)
     {
         $ad = Ad::findOrFail($id);
+
+        // Une annonce qui porte une commande à conserver est dépubliée, jamais supprimée.
+        if ($ad->hasKeptOrders()) {
+            $ad->update(['status' => 'inactive']);
+
+            return redirect()->route('admin.ads')->with('success', 'Cette annonce porte une commande : elle est retirée de la publication, mais conservée avec la commande.');
+        }
+
         $ad->delete();
 
         return redirect()->route('admin.ads')->with('success', 'Annonce supprimée avec succès');
@@ -632,6 +644,11 @@ class AdminController extends Controller
     {
         $user = User::onlyTrashed()->findOrFail($id);
         $userName = $user->name;
+
+        if ($user->hasKeptServiceOrders()) {
+            return back()->with('error', 'Le compte de '.$userName.' porte des commandes à conserver : il ne peut pas être supprimé définitivement.');
+        }
+
         $user->forceDelete();
 
         return back()->with('success', 'Compte de '.$userName.' supprimé définitivement');

@@ -330,7 +330,12 @@ class RegisterController extends Controller
                 'old_user_id' => $trashedUser->id,
                 'email' => $data['email'],
             ]);
-            $trashedUser->forceDelete();
+            if ($trashedUser->hasKeptServiceOrders()) {
+                // Ce compte porte des commandes à conserver : on libère seulement son adresse.
+                $trashedUser->forceFill(['email' => 'deleted_'.$trashedUser->id.'_'.time().'@deleted.local'])->save();
+            } else {
+                $trashedUser->forceDelete();
+            }
         }
 
         $referrer = $this->referralService->findReferrerByCode($data['referral_code'] ?? null);

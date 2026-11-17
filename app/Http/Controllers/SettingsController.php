@@ -123,6 +123,14 @@ class SettingsController extends Controller
             return back()->withErrors(['password' => 'Mot de passe incorrect.']);
         }
 
+        // Une commande en cours engage une autre personne et parfois de l'argent
+        // bloqué : le compte ne se supprime pas tant qu'elle n'est pas close.
+        if ($user->hasOpenServiceOrders()) {
+            return redirect()->to(route('settings.index').'#delete')->withErrors([
+                'delete' => 'Vous avez une commande en cours. Terminez-la ou annulez-la avant de supprimer votre compte.',
+            ]);
+        }
+
         try {
             DB::beginTransaction();
             $user = User::query()->lockForUpdate()->findOrFail($user->getKey());
@@ -197,8 +205,8 @@ class SettingsController extends Controller
                 ->whereIn('status', [ManagedEmail::STATUS_PENDING, ManagedEmail::STATUS_FAILED])
                 ->update(['status' => ManagedEmail::STATUS_CANCELLED]);
             $user->pushSubscriptions()->delete();
-            // Annonces
-            $user->ads()->delete();
+            // Annonces : celles qui portent une commande à conserver sont seulement dépubliées
+            \App\Models\Ad::removeAllOf($user);
 
             // Transactions de points
             $user->pointTransactions()->delete();

@@ -26,6 +26,19 @@ class ServiceOrder extends Model
     /** Annulée par le client ou le prestataire avant tout paiement. */
     public const STATUS_CANCELED = 'canceled';
 
+    /** Commandes en cours : rien ne doit les faire disparaître tant qu'elles ne sont pas closes. */
+    public const OPEN_STATUSES = [
+        self::STATUS_PENDING_ACCEPTANCE, self::STATUS_AWAITING_PAYMENT, self::STATUS_FUNDED, self::STATUS_DISPUTED,
+    ];
+
+    /**
+     * Commandes à conserver : en cours, ou closes après un paiement (terminée,
+     * remboursée). Elles portent l'argent des clients et les commissions.
+     */
+    public const KEPT_STATUSES = [
+        ...self::OPEN_STATUSES, self::STATUS_COMPLETED, self::STATUS_REFUNDED,
+    ];
+
     public const PAYMENT_AWAITING = 'awaiting_payment';
 
     public const PAYMENT_CHECKOUT_OPEN = 'checkout_open';

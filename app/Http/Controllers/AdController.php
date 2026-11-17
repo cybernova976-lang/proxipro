@@ -840,9 +840,24 @@ class AdController extends Controller
             abort(403);
         }
 
+        // Supprimer l'annonce effacerait ses commandes : on ne le fait jamais
+        // tant qu'une commande est en cours ou doit être conservée.
+        if ($ad->hasOpenOrders()) {
+            return redirect()->back()->with('info', 'Cette annonce porte une commande en cours : elle ne peut pas être supprimée. Terminez ou annulez d’abord la commande.');
+        }
+        if ($ad->hasKeptOrders()) {
+            $ad->update(['status' => 'inactive']);
+
+            return redirect()->back()->with('info', 'Cette annonce porte une commande terminée : elle est retirée de la publication, mais conservée avec l’historique de la commande.');
+        }
+
+        // Depuis la page de l'annonce, « retour » mènerait à une page qui n'existe plus.
+        $cameFromAdPage = rtrim(url()->previous(), '/') === rtrim(route('ads.show', $ad), '/');
         $ad->delete();
 
-        return redirect()->back()->with('success', 'Annonce supprimée avec succès.');
+        return $cameFromAdPage
+            ? redirect()->route('feed')->with('info', 'Annonce supprimée.')
+            : redirect()->back()->with('success', 'Annonce supprimée avec succès.');
     }
 
     public function archive(Ad $ad)
