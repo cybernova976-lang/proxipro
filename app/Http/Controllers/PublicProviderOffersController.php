@@ -15,7 +15,7 @@ class PublicProviderOffersController extends Controller
 
         return view('pages.provider-offers', [
             'verificationPrice' => IdentityVerification::getVerificationPrice('profile_verification'),
-            'commissionPercent' => max(0, min(100, (float) config('marketplace.commission_percent', 10))),
+            'commissionPercent' => \App\Support\MarketplaceCommission::percent(),
             'subscriptionPlans' => $subscriptionsEnabled
                 ? array_filter(ProviderSubscriptionPlans::active(), fn (array $plan): bool => (float) ($plan['amount'] ?? 0) >= 0.5)
                 : [],

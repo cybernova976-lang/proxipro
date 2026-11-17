@@ -532,7 +532,7 @@
                         </div>
                         <div class="flex items-center text-gray-300">
                             <i class="fas fa-check-circle text-green-500 mr-3"></i>
-                            <span>Aucune commission sur vos services</span>
+                            <span>Une commission seulement sur les commandes réglées via Prokejem</span>
                         </div>
                         <div class="flex items-center text-gray-300">
                             <i class="fas fa-check-circle text-green-500 mr-3"></i>

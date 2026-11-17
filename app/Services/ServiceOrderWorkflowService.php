@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Notifications\ServiceOrderStatusNotification;
 use App\Support\StripeSessionData;
 use DomainException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ServiceOrderWorkflowService
@@ -49,6 +50,20 @@ class ServiceOrderWorkflowService
         \App\Support\SafeNotifier::send($serviceOrder->buyer, new ServiceOrderStatusNotification($serviceOrder, 'refused', $reason));
 
         return $serviceOrder;
+    }
+
+    /**
+     * Rappelle au prestataire d'activer la réception de ses paiements quand un
+     * client veut régler. Un rappel par commande et par jour au plus.
+     */
+    public function remindSellerToEnablePayouts(ServiceOrder $serviceOrder): void
+    {
+        if (! Cache::add('service-order:'.$serviceOrder->id.':payout-reminder', true, now()->addDay())) {
+            return;
+        }
+
+        $serviceOrder->loadMissing(['buyer', 'seller', 'ad']);
+        \App\Support\SafeNotifier::send($serviceOrder->seller, new ServiceOrderStatusNotification($serviceOrder, 'payout_setup_required'));
     }
 
     public function markPaidFromCheckoutSession(object|array $session): ?ServiceOrder
@@ -145,6 +160,10 @@ class ServiceOrderWorkflowService
         abort_unless($serviceOrder->canBuyerRelease(), 422);
 
         DB::transaction(function () use ($serviceOrder) {
+            // Verrou : deux clics simultanés ne doivent jamais donner deux versements.
+            $serviceOrder = ServiceOrder::query()->lockForUpdate()->findOrFail($serviceOrder->id);
+            abort_unless($serviceOrder->canBuyerRelease() && ! $serviceOrder->stripe_transfer_id, 422);
+
             $transferId = $this->stripeConnectService->transferToSeller($serviceOrder->loadMissing('seller'));
 
             $serviceOrder->forceFill([
@@ -173,7 +192,7 @@ class ServiceOrderWorkflowService
             );
         });
 
-        $serviceOrder->loadMissing(['buyer', 'seller', 'ad']);
+        $serviceOrder->refresh()->loadMissing(['buyer', 'seller', 'ad']);
         \App\Support\SafeNotifier::send($serviceOrder->seller, new ServiceOrderStatusNotification($serviceOrder, 'released'));
 
         return $serviceOrder;
@@ -203,6 +222,10 @@ class ServiceOrderWorkflowService
         abort_unless($serviceOrder->canAdminResolveDispute(), 422);
 
         DB::transaction(function () use ($serviceOrder, $admin, $note) {
+            // Même verrou que pour la libération par le client.
+            $serviceOrder = ServiceOrder::query()->lockForUpdate()->findOrFail($serviceOrder->id);
+            abort_unless($serviceOrder->canAdminResolveDispute() && ! $serviceOrder->stripe_transfer_id, 422);
+
             $transferId = $this->stripeConnectService->transferToSeller($serviceOrder->loadMissing('seller'));
 
             $serviceOrder->forceFill([
@@ -236,7 +259,7 @@ class ServiceOrderWorkflowService
             );
         });
 
-        $serviceOrder->loadMissing(['buyer', 'seller', 'ad']);
+        $serviceOrder->refresh()->loadMissing(['buyer', 'seller', 'ad']);
         \App\Support\SafeNotifier::send($serviceOrder->buyer, new ServiceOrderStatusNotification($serviceOrder, 'released', $note));
         \App\Support\SafeNotifier::send($serviceOrder->seller, new ServiceOrderStatusNotification($serviceOrder, 'released', $note));
 

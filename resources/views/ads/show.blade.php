@@ -713,15 +713,15 @@ Cordialement,
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2 text-success"></i>Lancer une commande securisee</h5>
+                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2 text-success"></i>Lancer une commande sécurisée</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="{{ route('service-orders.store', $ad) }}" method="POST">
                     @csrf
                     <div class="modal-body">
                         <div class="alert alert-success" style="border-radius: 12px;">
-                            <strong>Paiement securise</strong><br>
-                            Une commission Prokejem de 10% est previsualisee. Le paiement securise sera branche a l'etape suivante.
+                            <strong>Paiement sécurisé</strong><br>
+                            Vous payez le montant convenu, sans frais ajoutés. Votre paiement est conservé jusqu’à ce que vous confirmiez la fin de la prestation, puis versé au prestataire.
                         </div>
                         <div class="mb-3">
                             <label class="form-label-light">Montant convenu</label>
@@ -767,8 +767,9 @@ Cordialement,
                         <div class="alert alert-primary" style="border-radius:12px;">
                             Le client pourra comparer votre prix, votre message et votre profil avant d’accepter.
                         </div>
+                        <p class="small text-muted" id="proposalCommissionNote">Si la commande est réglée via Prokejem, la commission de la plateforme ({{ \App\Support\MarketplaceCommission::label() }}) est déduite du montant qui vous est versé : pour 100,00 € proposés, vous recevez {{ \App\Support\MarketplaceCommission::sellerAmountLabel(100) }}.</p>
                         <div class="mb-3">
-                            <label class="form-label-light" for="proposalAmount">Prix propose</label>
+                            <label class="form-label-light" for="proposalAmount">Prix proposé</label>
                             <div class="input-group">
                                 <input id="proposalAmount" type="number" step="0.01" min="1" max="999999.99" name="amount" class="form-control form-control-dark" value="{{ old('amount', $ad->price ? number_format((float)$ad->price, 2, '.', '') : '') }}" required>
                                 <span class="input-group-text">€</span>

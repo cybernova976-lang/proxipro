@@ -22,6 +22,14 @@
     <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Remboursées</div><div class="fs-3 fw-bold text-info">{{ $stats['refunded'] }}</div></div></div></div>
 </div>
 
+<div class="card border-0 shadow-sm mb-4" id="commissionSummary">
+    <div class="card-body d-flex flex-wrap gap-4 align-items-center">
+        <div><div class="text-muted small">Commissions acquises</div><div class="fs-5 fw-bold text-success" data-commission="earned">{{ number_format($commissions['earned'], 2, ',', ' ') }} €</div></div>
+        <div><div class="text-muted small">Commissions en attente (fonds bloqués ou litige)</div><div class="fs-5 fw-bold text-primary" data-commission="pending">{{ number_format($commissions['pending'], 2, ',', ' ') }} €</div></div>
+        <div><div class="text-muted small">Taux appliqué aux nouvelles commandes</div><div class="fs-5 fw-bold" data-commission="rate">{{ $commissions['rate'] }}</div></div>
+    </div>
+</div>
+
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
         <form method="GET" class="row g-3">
@@ -55,7 +63,7 @@
                     <th>Acheteur / vendeur</th>
                     <th>Montant</th>
                     <th>Statut</th>
-                    <th>Stripe Connect</th>
+                    <th>Compte de paiement</th>
                     <th>Décision de l’administration</th>
                 </tr>
             </thead>
@@ -101,7 +109,7 @@
                                     {{ $order->seller?->stripe_connect_payouts_enabled ? 'Actif' : 'En attente' }}
                                 </span>
                             @else
-                                <span class="badge text-bg-secondary">Non configure</span>
+                                <span class="badge text-bg-secondary">Non activé</span>
                             @endif
                             @if($order->stripe_transfer_id)
                                 <div class="small text-muted mt-1">Transfer: {{ $order->stripe_transfer_id }}</div>

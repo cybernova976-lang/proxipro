@@ -42,7 +42,15 @@ class AdminServiceOrderController extends Controller
             'refunded' => ServiceOrder::where('status', ServiceOrder::STATUS_REFUNDED)->count(),
         ];
 
-        return view('admin.service-orders.index', compact('orders', 'stats'));
+        // Commissions mesurées sur les commandes : acquises une fois les fonds
+        // versés au prestataire, en attente tant que les fonds sont bloqués.
+        $commissions = [
+            'earned' => (float) ServiceOrder::where('payment_status', ServiceOrder::PAYMENT_RELEASED)->sum('commission_amount'),
+            'pending' => (float) ServiceOrder::whereIn('payment_status', [ServiceOrder::PAYMENT_PAID, ServiceOrder::PAYMENT_DISPUTED])->sum('commission_amount'),
+            'rate' => \App\Support\MarketplaceCommission::label(),
+        ];
+
+        return view('admin.service-orders.index', compact('orders', 'stats', 'commissions'));
     }
 
     public function release(Request $request, ServiceOrder $serviceOrder)
@@ -51,7 +59,9 @@ class AdminServiceOrderController extends Controller
             'resolution_note' => 'nullable|string|max:1000',
         ]);
 
-        $this->workflowService->adminReleaseDispute($serviceOrder, Auth::user(), $request->resolution_note);
+        if ($failure = $this->attempt(fn () => $this->workflowService->adminReleaseDispute($serviceOrder, Auth::user(), $request->resolution_note))) {
+            return $failure;
+        }
 
         return redirect()->route('admin.service-orders.index')
             ->with('success', 'Litige résolu: fonds libérés vers le vendeur.');
@@ -63,9 +73,34 @@ class AdminServiceOrderController extends Controller
             'resolution_note' => 'required|string|min:10|max:1000',
         ]);
 
-        $this->workflowService->adminRefundDispute($serviceOrder, Auth::user(), $request->resolution_note);
+        if ($failure = $this->attempt(fn () => $this->workflowService->adminRefundDispute($serviceOrder, Auth::user(), $request->resolution_note))) {
+            return $failure;
+        }
 
         return redirect()->route('admin.service-orders.index')
             ->with('success', 'Litige résolu: remboursement Stripe déclenché.');
+    }
+
+    /**
+     * Exécute un versement ou un remboursement. Si Stripe le refuse, la
+     * commande reste en l'état et l'administrateur voit pourquoi, au lieu
+     * d'une page d'erreur.
+     */
+    private function attempt(callable $operation): ?\Illuminate\Http\RedirectResponse
+    {
+        try {
+            $operation();
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $exception) {
+            throw $exception;
+        } catch (\RuntimeException $exception) {
+            return redirect()->route('admin.service-orders.index')->with('error', $exception->getMessage());
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return redirect()->route('admin.service-orders.index')
+                ->with('error', 'Stripe a refusé l’opération : la commande n’a pas été modifiée. Réessayez ou consultez le tableau de bord Stripe.');
+        }
+
+        return null;
     }
 }

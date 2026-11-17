@@ -56,14 +56,14 @@
         <div class="alert alert-success" role="status">{{ session('success') }}</div>
     @endif
 
-    @if(($needsStripeConnectOnboarding ?? false) && auth()->user()?->role !== 'admin')
+    @if($needsStripeConnectOnboarding ?? false)
         <div class="alert alert-warning d-flex justify-content-between align-items-center gap-3 flex-wrap" style="border-radius:16px;">
             <div>
-                <strong>Activez Stripe Connect pour recevoir les fonds.</strong><br>
-                Tant que le compte vendeur n'est pas finalise, les libérations de fonds restent bloquées.
+                <strong>Activez la réception de vos paiements.</strong><br>
+                Tant que votre compte de paiement Stripe n’est pas activé, vos clients ne peuvent pas régler leurs commandes et aucun versement ne peut vous être fait.
             </div>
             <a href="{{ route('service-orders.connect.onboarding') }}" class="btn btn-warning text-dark">
-                <i class="fas fa-plug me-1"></i>Configurer Stripe Connect
+                <i class="fas fa-university me-1"></i>Activer mes paiements
             </a>
         </div>
     @endif
@@ -251,7 +251,7 @@
                         </div>
                         <div class="service-order-stats">
                             <div class="service-order-stat"><div class="service-order-stat-label">Montant</div><div class="service-order-stat-value">{{ number_format((float) $order->amount, 2, ',', ' ') }} €</div></div>
-                            <div class="service-order-stat"><div class="service-order-stat-label">Net vendeur</div><div class="service-order-stat-value">{{ number_format((float) $order->seller_amount, 2, ',', ' ') }} €</div></div>
+                            <div class="service-order-stat"><div class="service-order-stat-label">Vous recevez</div><div class="service-order-stat-value">{{ number_format((float) $order->seller_amount, 2, ',', ' ') }} €</div></div>
                             <div class="service-order-stat"><div class="service-order-stat-label">Paiement</div><div class="service-order-stat-value">{{ $order->payment_status_label }}</div></div>
                         </div>
                         <div class="service-order-meta">Acheteur: <strong>{{ $order->buyer->name }}</strong></div>

@@ -7,6 +7,7 @@ use App\Models\User;
 use RuntimeException;
 use Stripe\Account;
 use Stripe\AccountLink;
+use Stripe\PaymentIntent;
 use Stripe\Refund;
 use Stripe\Stripe;
 use Stripe\Transfer;
@@ -77,21 +78,57 @@ class StripeConnectService
         return $user->fresh();
     }
 
+    /**
+     * Le prestataire peut-il recevoir un versement ? L'état enregistré peut
+     * dater : s'il n'est pas encore actif, on le relit chez Stripe avant de
+     * répondre (la vérification du compte se termine parfois après coup).
+     */
+    public function sellerCanBePaid(?User $seller): bool
+    {
+        if (! $seller?->stripe_connect_account_id) {
+            return false;
+        }
+        if ($seller->stripe_connect_payouts_enabled) {
+            return true;
+        }
+
+        try {
+            return (bool) $this->syncAccountStatus($seller)->stripe_connect_payouts_enabled;
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return false;
+        }
+    }
+
+    /**
+     * Verse au prestataire sa part de la commande (prix moins la commission).
+     *
+     * Le versement est rattaché au paiement du client (« source_transaction ») :
+     * il aboutit même si l'argent n'est pas encore disponible sur le solde de
+     * la plateforme, et Stripe refuse tout versement dont le total dépasserait
+     * le paiement d'origine, ce qui empêche de verser deux fois.
+     */
     public function transferToSeller(ServiceOrder $serviceOrder): string
     {
         $seller = $serviceOrder->seller;
-        if (!$seller?->stripe_connect_account_id) {
-            throw new RuntimeException('Le vendeur doit finaliser Stripe Connect avant la libération des fonds.');
+        if (! $seller?->stripe_connect_account_id) {
+            throw new RuntimeException('Le prestataire doit d’abord activer la réception de ses paiements.');
         }
 
-        if (!$seller->stripe_connect_payouts_enabled) {
-            throw new RuntimeException('Le compte Stripe Connect du vendeur n\'est pas encore activé pour les virements.');
+        if (! $this->sellerCanBePaid($seller)) {
+            throw new RuntimeException('Le compte de paiement du prestataire n’est pas encore activé pour les virements.');
+        }
+
+        if ($serviceOrder->stripe_transfer_id) {
+            throw new RuntimeException('Cette commande a déjà été versée au prestataire.');
         }
 
         $transfer = Transfer::create([
             'amount' => (int) round(((float) $serviceOrder->seller_amount) * 100),
-            'currency' => 'eur',
+            'currency' => strtolower((string) config('marketplace.currency', 'eur')),
             'destination' => $seller->stripe_connect_account_id,
+            'source_transaction' => $this->chargeIdFor($serviceOrder),
             'transfer_group' => $serviceOrder->order_number,
             'metadata' => [
                 'service_order_id' => $serviceOrder->id,
@@ -101,6 +138,24 @@ class StripeConnectService
         ]);
 
         return $transfer->id;
+    }
+
+    /** Identifiant du paiement par carte du client, auquel le versement est rattaché. */
+    private function chargeIdFor(ServiceOrder $serviceOrder): string
+    {
+        if (! $serviceOrder->stripe_payment_intent_id) {
+            throw new RuntimeException('Aucun paiement confirmé n’est rattaché à cette commande.');
+        }
+
+        $paymentIntent = PaymentIntent::retrieve($serviceOrder->stripe_payment_intent_id);
+        $charge = $paymentIntent->latest_charge ?? null;
+        $chargeId = is_string($charge) ? $charge : ($charge->id ?? null);
+
+        if (! $chargeId) {
+            throw new RuntimeException('Le paiement de cette commande est introuvable chez Stripe.');
+        }
+
+        return $chargeId;
     }
 
     public function refundOrder(ServiceOrder $serviceOrder): string

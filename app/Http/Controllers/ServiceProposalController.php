@@ -130,18 +130,16 @@ class ServiceProposalController extends Controller
 
             abort_unless($proposal->status === ServiceProposal::STATUS_PENDING, 422);
 
-            $commissionRate = max(0, min(100, (float) config('marketplace.commission_percent', 10))) / 100;
-            $amount = round((float) $proposal->amount, 2);
-            $commissionAmount = round($amount * $commissionRate, 2);
+            $split = \App\Support\MarketplaceCommission::split((float) $proposal->amount);
 
             $order = ServiceOrder::create([
                 'order_number' => 'CMD-'.now()->format('Ymd').'-'.Str::upper(Str::random(6)),
                 'ad_id' => $proposal->ad_id,
                 'buyer_id' => $client->id,
                 'seller_id' => $proposal->provider_id,
-                'amount' => $amount,
-                'commission_amount' => $commissionAmount,
-                'seller_amount' => round($amount - $commissionAmount, 2),
+                'amount' => $split['amount'],
+                'commission_amount' => $split['commission_amount'],
+                'seller_amount' => $split['seller_amount'],
                 'status' => ServiceOrder::STATUS_AWAITING_PAYMENT,
                 'payment_status' => ServiceOrder::PAYMENT_AWAITING,
                 'message' => $proposal->message,

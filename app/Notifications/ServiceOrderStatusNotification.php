@@ -105,6 +105,13 @@ class ServiceOrderStatusNotification extends Notification
                 'icon' => 'fas fa-exclamation-triangle',
                 'color' => '#c2410c',
             ],
+            'payout_setup_required' => [
+                'subject' => 'Activez la réception de vos paiements',
+                'title' => 'Un client attend pour vous payer',
+                'line' => 'Un client veut régler la commande "'.$this->serviceOrder->ad->title.'", mais vous n’avez pas encore activé la réception de vos paiements. Activez-la depuis vos commandes : le client pourra payer aussitôt.',
+                'icon' => 'fas fa-university',
+                'color' => '#c2410c',
+            ],
             default => [
                 'subject' => 'Mise à jour de commande sécurisée',
                 'title' => 'Commande mise à jour',

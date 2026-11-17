@@ -125,7 +125,8 @@ class ServiceOrderFeatureTest extends TestCase
     public function test_buyer_can_start_stripe_checkout_for_accepted_order(): void
     {
         $buyer = User::factory()->create(['stripe_id' => 'cus_existing']);
-        $seller = User::factory()->create();
+        // Le paiement n'est ouvert que si le prestataire peut être versé ensuite.
+        $seller = User::factory()->create(['stripe_connect_account_id' => 'acct_test_seller', 'stripe_connect_payouts_enabled' => true]);
         $ad = Ad::create([
             'title' => 'Annonce test checkout',
             'description' => 'Annonce pour tester Stripe Checkout',

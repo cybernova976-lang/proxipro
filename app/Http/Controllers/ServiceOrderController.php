@@ -61,19 +61,16 @@ class ServiceOrderController extends Controller
             'scheduled_for' => 'nullable|date|after_or_equal:today',
         ]);
 
-        $amount = round((float) $request->amount, 2);
-        $commissionRate = max(0, min(100, (float) config('marketplace.commission_percent', 10))) / 100;
-        $commissionAmount = round($amount * $commissionRate, 2);
-        $sellerAmount = round($amount - $commissionAmount, 2);
+        $split = \App\Support\MarketplaceCommission::split((float) $request->amount);
 
         $serviceOrder = ServiceOrder::create([
             'order_number' => 'CMD-'.now()->format('Ymd').'-'.Str::upper(Str::random(6)),
             'ad_id' => $ad->id,
             'buyer_id' => $user->id,
             'seller_id' => $ad->user_id,
-            'amount' => $amount,
-            'commission_amount' => $commissionAmount,
-            'seller_amount' => $sellerAmount,
+            'amount' => $split['amount'],
+            'commission_amount' => $split['commission_amount'],
+            'seller_amount' => $split['seller_amount'],
             'status' => 'pending_acceptance',
             'payment_status' => 'awaiting_payment',
             'message' => $request->message,
@@ -95,8 +92,14 @@ class ServiceOrderController extends Controller
     {
         $this->workflowService->accept($serviceOrder, Auth::user());
 
+        // Sans compte de paiement actif, le client ne pourra pas régler : on le dit tout de suite.
+        if (! $this->stripeConnectService->sellerCanBePaid(Auth::user())) {
+            return redirect()->route('service-orders.index')
+                ->with('success', 'Commande acceptée. Activez la réception de vos paiements pour que le client puisse régler.');
+        }
+
         return redirect()->route('service-orders.index')
-            ->with('success', 'Commande acceptée. L\'acheteur peut maintenant payer via Stripe.');
+            ->with('success', 'Commande acceptée. Le client peut maintenant payer en ligne.');
     }
 
     public function refuse(Request $request, ServiceOrder $serviceOrder)
@@ -121,6 +124,15 @@ class ServiceOrderController extends Controller
         if (! config('services.stripe.secret')) {
             return redirect()->route('service-orders.index')
                 ->with('error', 'Le paiement sécurisé est momentanément indisponible.');
+        }
+
+        // On n'encaisse jamais une somme qui ne pourrait pas être versée ensuite :
+        // le prestataire doit d'abord pouvoir recevoir ses paiements.
+        if (! $this->stripeConnectService->sellerCanBePaid($serviceOrder->seller)) {
+            $this->workflowService->remindSellerToEnablePayouts($serviceOrder);
+
+            return redirect()->route('service-orders.index')
+                ->with('error', 'Le prestataire n’a pas encore activé la réception de ses paiements. Nous venons de le lui rappeler : vous pourrez payer dès que ce sera fait.');
         }
 
         try {
@@ -178,12 +190,21 @@ class ServiceOrderController extends Controller
     {
         try {
             $this->workflowService->release($serviceOrder, Auth::user());
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $exception) {
+            // Un refus (403, 422) n'est pas une erreur de versement : il garde son code.
+            throw $exception;
         } catch (\RuntimeException $exception) {
             return redirect()->route('service-orders.index')->with('error', $exception->getMessage());
+        } catch (\Throwable $exception) {
+            // Refus de Stripe : la commande reste payée et les fonds bloqués, rien n'est perdu.
+            report($exception);
+
+            return redirect()->route('service-orders.index')
+                ->with('error', 'Le versement n’a pas pu être effectué pour le moment. Vos fonds restent bloqués : réessayez plus tard ou contactez-nous.');
         }
 
         return redirect()->route('service-orders.index')
-            ->with('success', 'Fonds libérés au vendeur.');
+            ->with('success', 'Fonds libérés au prestataire.');
     }
 
     public function dispute(Request $request, ServiceOrder $serviceOrder)
@@ -216,7 +237,7 @@ class ServiceOrderController extends Controller
         $this->stripeConnectService->syncAccountStatus(Auth::user());
 
         return redirect()->route('service-orders.index')
-            ->with('success', 'Le statut Stripe Connect a été mis à jour.');
+            ->with('success', 'L’état de votre compte de paiement a été mis à jour.');
     }
 
     protected function ensureStripeCustomer($user): string
