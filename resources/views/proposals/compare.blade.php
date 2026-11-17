@@ -164,7 +164,7 @@
                                 <button class="btn btn-outline-danger btn-sm">Écarter</button>
                             </form>
                         @elseif($proposal->serviceOrder)
-                            <a href="{{ route('service-orders.index') }}" class="btn btn-success btn-sm">Continuer vers le paiement</a>
+                            <a href="{{ route('service-orders.index') }}#order-{{ $proposal->serviceOrder->id }}" class="btn btn-success btn-sm">{{ $proposal->serviceOrder->canBuyerPay() ? 'Continuer vers le paiement' : 'Voir la commande' }}</a>
                         @endif
                     </div>
                 </article>

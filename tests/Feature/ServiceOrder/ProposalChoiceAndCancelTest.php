@@ -77,6 +77,27 @@ class ProposalChoiceAndCancelTest extends TestCase
             ->assertSee('data-pk-confirm="Choisir la proposition de Amina Plomberie à 120,00 € ?', false);
     }
 
+    public function test_the_chosen_proposal_leads_to_payment_only_while_the_order_is_unpaid(): void
+    {
+        $client = User::factory()->create();
+        $order = $this->chosenOrder($client, $this->provider());
+        $compare = route('proposals.compare', $order->ad_id);
+        $link = route('service-orders.index').'#order-'.$order->id;
+
+        $this->actingAs($client)->get($compare)->assertOk()
+            ->assertSee('href="'.$link.'"', false)
+            ->assertSee('Continuer vers le paiement')
+            // Plus aucune proposition en attente : rien à expliquer sur le choix.
+            ->assertDontSee('Quand vous choisissez une proposition :');
+
+        $order->forceFill(['status' => ServiceOrder::STATUS_FUNDED, 'payment_status' => ServiceOrder::PAYMENT_PAID])->save();
+
+        $this->actingAs($client)->get($compare)->assertOk()
+            ->assertSee('href="'.$link.'"', false)
+            ->assertSee('Voir la commande')
+            ->assertDontSee('Continuer vers le paiement');
+    }
+
     public function test_the_client_can_cancel_an_order_he_has_not_paid(): void
     {
         Notification::fake();
