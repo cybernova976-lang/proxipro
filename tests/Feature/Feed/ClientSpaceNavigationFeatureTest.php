@@ -139,8 +139,8 @@ class ClientSpaceNavigationFeatureTest extends TestCase
         $this->assertStringContainsString('private', (string) $member->headers->get('Cache-Control'));
         $member->assertSee('data-space-section="employment"', false)
             ->assertSee(e(route('employment.territory', ['territoire' => 'departement-75'])), false)
-            ->assertSee('Site externe · France Travail')->assertSee('nouvel onglet')
-            ->assertSee('La recherche et la candidature se poursuivent sur le site France Travail.')
+            ->assertSee('Les offres d’emploi publiées par les membres de Prokejem')
+            ->assertDontSee('France Travail')->assertDontSee('Site externe')
             ->assertDontSee('notre partenaire')->assertDontSee('Commander');
     }
 

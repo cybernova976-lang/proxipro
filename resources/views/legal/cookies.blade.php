@@ -22,7 +22,7 @@
         </div>
 
         <h4 class="mt-4">3. Services externes</h4>
-        <p>Une connexion OAuth ou un paiement peut vous rediriger vers le service choisi, par exemple Google, Facebook ou Stripe. Ces services appliquent leurs propres politiques lorsque vous interagissez avec eux.</p>
+        <p>Une connexion OAuth ou un paiement peut vous rediriger vers le service choisi, par exemple Google ou Stripe. Ces services appliquent leurs propres politiques lorsque vous interagissez avec eux.</p>
 
         <h4 class="mt-4">4. Vos choix</h4>
         <p>Vous pouvez supprimer ou bloquer les cookies depuis votre navigateur. Le blocage des cookies nécessaires peut empêcher la connexion et l’envoi de formulaires.</p>

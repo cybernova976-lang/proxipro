@@ -14,7 +14,6 @@
 | code postal (voir App\Support\TerritoryResolver).
 |
 | « preposition » sert à écrire « à Mayotte », « en Guyane », etc.
-| « ft_lieux » est le code de lieu attendu par la recherche France Travail.
 |
 */
 
@@ -25,7 +24,6 @@ return [
             'slug' => 'mayotte',
             'timezone' => 'Indian/Mayotte',
             'location_country' => 'Mayotte',
-            'ft_lieux' => '976D',
             'preposition' => 'à',
             'aliases' => [],
         ],
@@ -34,7 +32,6 @@ return [
             'slug' => 'guyane',
             'timezone' => 'America/Cayenne',
             'location_country' => 'Guyane',
-            'ft_lieux' => '973D',
             'preposition' => 'en',
             'aliases' => ['Guyane française'],
         ],
@@ -43,7 +40,6 @@ return [
             'slug' => 'la-reunion',
             'timezone' => 'Indian/Reunion',
             'location_country' => 'La Réunion',
-            'ft_lieux' => '974D',
             'preposition' => 'à',
             'aliases' => ['Réunion', 'Île de la Réunion'],
         ],
@@ -52,7 +48,6 @@ return [
             'slug' => 'guadeloupe',
             'timezone' => 'America/Guadeloupe',
             'location_country' => 'Guadeloupe',
-            'ft_lieux' => '971D',
             'preposition' => 'en',
             'aliases' => [],
         ],
@@ -61,7 +56,6 @@ return [
             'slug' => 'martinique',
             'timezone' => 'America/Martinique',
             'location_country' => 'Martinique',
-            'ft_lieux' => '972D',
             'preposition' => 'en',
             'aliases' => [],
         ],

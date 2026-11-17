@@ -22,16 +22,15 @@ class FeedClientExperienceFeatureTest extends TestCase
             $response->assertSee(e($url), false);
             $this->get($url)->assertOk();
         }
-        // Lot 1 (D1, D2) : la carte « Emploi » du rail renvoie à la recherche France Travail
-        // du territoire (Paris : 75D) et à la page emploi publique du territoire.
+        // La carte « Emploi » du rail renvoie à la page emploi publique du territoire
+        // (Paris : département 75), qui n'affiche que les offres des membres de Prokejem.
         $territoryPage = route('employment.territory', ['territoire' => 'departement-75']);
         $response->assertSee($territoryPage, false)
-            ->assertSee(e('https://candidat.francetravail.fr/offres/recherche?lieux=75D'), false)
-            ->assertDontSee('https://candidat.francetravail.fr/rechercheoffre/emploi', false);
+            ->assertDontSee('francetravail', false);
         $this->get(route('employment.index'))->assertRedirect($territoryPage);
         $this->get($territoryPage)->assertOk()
-            ->assertSee(e('https://candidat.francetravail.fr/offres/recherche?lieux=75D'), false)
-            ->assertSee('La recherche et la candidature se poursuivent sur le site France Travail.')
+            ->assertSee('Les offres d’emploi publiées par les membres de Prokejem')
+            ->assertDontSee('francetravail', false)->assertDontSee('France Travail')
             ->assertDontSee('notre partenaire');
     }
 

@@ -37,7 +37,6 @@ class TerritoryResolverTest extends TestCase
         $this->assertSame('Mayotte', $mayotte->label);
         $this->assertSame('mayotte', $mayotte->slug);
         $this->assertSame('Indian/Mayotte', $mayotte->timezone);
-        $this->assertSame('976D', $mayotte->ftLieux);
         $this->assertContains('Mamoudzou', $mayotte->communes);
         $this->assertTrue($mayotte->isOverseas());
         $this->assertSame('974', $this->resolver->fromParts(null, 'la reunion', null)?->code);
@@ -63,12 +62,11 @@ class TerritoryResolverTest extends TestCase
         $paris = $this->resolver->fromParts('75011', 'France', 'Paris');
         $this->assertSame('75', $paris?->code);
         $this->assertSame('Département 75', $paris->label);
-        $this->assertSame('75D', $paris->ftLieux);
         $this->assertTrue($paris->isDepartment());
         $this->assertSame('dans le département 75', $paris->withPreposition());
         $this->assertSame('2A', $this->resolver->fromParts('20090', null, 'Ajaccio')?->code);
         $this->assertSame('2B', $this->resolver->fromParts('20200', 'France', 'Bastia')?->code);
-        $this->assertSame('2AD', $this->resolver->fromParts('20000', null, null)?->ftLieux);
+        $this->assertSame('2A', $this->resolver->fromParts('20000', null, null)?->code);
         $this->assertSame('01', $this->resolver->fromParts('01000', null, null)?->code);
         // Un code postal valide prime sur un nom de commune d'outre-mer homonyme.
         $this->assertSame('68', $this->resolver->fromParts('68300', 'France', 'Saint-Louis')?->code);

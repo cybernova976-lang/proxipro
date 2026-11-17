@@ -16,7 +16,7 @@ class FeedEmploymentCardTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_client_rail_links_to_france_travail_for_the_territory(): void
+    public function test_client_rail_links_to_the_job_offers_of_the_territory(): void
     {
         $reader = User::factory()->create(['city' => 'Mamoudzou', 'country' => 'Mayotte', 'postal_code' => '97600']);
 
@@ -26,16 +26,18 @@ class FeedEmploymentCardTest extends TestCase
         $this->assertSame(1, $card->length, 'Une seule carte emploi dans le rail.');
         $text = preg_replace('/\s+/u', ' ', $card->item(0)->textContent);
         $this->assertStringContainsString('Emploi à Mayotte', $text);
-        $this->assertStringContainsString('Offres d’emploi à Mayotte sur France Travail (site externe)', $text);
+        $this->assertStringContainsString('Voir les offres d’emploi', $text);
+        $this->assertStringContainsString('Publiées par les membres de Prokejem', $text);
         $this->assertStringContainsString('Proposer mes services', $text);
-        $this->assertStringContainsString('Toutes les infos emploi', $text);
-        $this->assertStringNotContainsStringIgnoringCase('partenaire', $text);
-        $this->assertDoesNotMatchRegularExpression('/\d/', str_replace(['976D'], '', $text), 'Aucun compteur dans la carte emploi.');
+        $this->assertStringNotContainsStringIgnoringCase('France Travail', $text);
+        $this->assertStringNotContainsStringIgnoringCase('site externe', $text);
+        $this->assertDoesNotMatchRegularExpression('/\d/', $text, 'Aucun compteur dans la carte emploi.');
 
         $links = collect($this->xpath($html)->query('//section[@aria-labelledby="pkRailEmploymentTitle"]//a'))
             ->map(fn ($a) => $a->getAttribute('href'))->all();
-        $this->assertContains('https://candidat.francetravail.fr/offres/recherche?lieux=976D', $links);
+        $this->assertCount(2, $links, 'Deux liens : les offres du territoire et la proposition de services.');
         $this->assertContains(route('employment.territory', ['territoire' => 'mayotte']), $links);
+        $this->assertStringNotContainsString('francetravail', implode(' ', $links));
         $this->assertContains(route('service-provider.start'), $links);
     }
 
@@ -50,7 +52,7 @@ class FeedEmploymentCardTest extends TestCase
         $this->assertSame(route('employment.territory', ['territoire' => 'mayotte']), $tab->item(0)->getAttribute('href'));
     }
 
-    public function test_unknown_territory_uses_the_general_search(): void
+    public function test_unknown_territory_links_to_the_general_job_page(): void
     {
         $reader = User::factory()->create(['city' => 'Bruxelles', 'country' => 'Belgique', 'postal_code' => null]);
 
@@ -58,8 +60,8 @@ class FeedEmploymentCardTest extends TestCase
         $links = collect($this->xpath($html)->query('//section[@aria-labelledby="pkRailEmploymentTitle"]//a'))
             ->map(fn ($a) => $a->getAttribute('href'))->all();
 
-        $this->assertContains('https://candidat.francetravail.fr/offres/recherche', $links);
         $this->assertContains(route('employment.index'), $links);
+        $this->assertStringNotContainsString('francetravail', implode(' ', $links));
         $this->assertSame(route('employment.index'),
             $this->xpath($html)->query('//a[@data-space-section="employment"]')->item(0)->getAttribute('href'));
     }

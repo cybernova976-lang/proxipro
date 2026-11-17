@@ -18,7 +18,7 @@ class SocialAuthController extends Controller
     public function redirect($provider)
     {
         // Valider le provider
-        if (! in_array($provider, ['google', 'facebook'])) {
+        if (! in_array($provider, ['google'], true)) {
             return redirect()->route('login')->with('error', 'Fournisseur non supporté.');
         }
 
@@ -29,13 +29,7 @@ class SocialAuthController extends Controller
             );
         }
 
-        $driver = Socialite::driver($provider);
-
-        if ($provider === 'facebook') {
-            $driver->scopes(['email']);
-        }
-
-        return $driver->redirect();
+        return Socialite::driver($provider)->redirect();
     }
 
     /**
@@ -45,7 +39,7 @@ class SocialAuthController extends Controller
     {
         try {
             // Valider le provider
-            if (! in_array($provider, ['google', 'facebook'])) {
+            if (! in_array($provider, ['google'], true)) {
                 return redirect()->route('login')->with('error', 'Fournisseur non supporté.');
             }
 

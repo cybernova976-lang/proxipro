@@ -131,12 +131,12 @@ Route::get('/auth/csrf-token', function () {
         ->header('Cache-Control', 'no-store, private');
 })->middleware('throttle:30,1,auth.csrf.refresh:')->name('auth.csrf.refresh');
 
-// Social Authentication Routes (Google, Facebook)
+// Connexion sociale : Google uniquement (la connexion Facebook a été retirée)
 Route::get('/auth/{provider}', [App\Http\Controllers\Auth\SocialAuthController::class, 'redirect'])
-    ->whereIn('provider', ['google', 'facebook'])
+    ->whereIn('provider', ['google'])
     ->name('social.redirect');
 Route::get('/auth/{provider}/callback', [App\Http\Controllers\Auth\SocialAuthController::class, 'callback'])
-    ->whereIn('provider', ['google', 'facebook'])
+    ->whereIn('provider', ['google'])
     ->name('social.callback');
 
 // Email Verification Code Routes (code-based, before login)

@@ -42,18 +42,29 @@
 .pk-employment-page h1 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 750; margin: 0 0 10px; }
 .pk-employment-page__intro p { color: #61718a; line-height: 1.6; margin: 0; }
 .pk-employment-card { max-width: 900px; padding: 28px; background: #fff; border: 1px solid #e0e7ff; border-radius: 16px; }
-.pk-employment-card__source { display: inline-flex; align-items: center; gap: 8px; font-size: .78rem; color: #3730a3; background: #eef2ff; border-radius: 8px; padding: 6px 10px; margin-bottom: 16px; }
 .pk-employment-card h2 { font-size: 1.2rem; font-weight: 750; margin: 0 0 10px; }
 .pk-employment-card p { max-width: 650px; color: #5b6b82; line-height: 1.7; }
 .pk-employment-card__link { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 48px; padding: 12px 18px; border-radius: 10px; background: #4f46e5; color: #fff; font-weight: 650; text-decoration: none; }
 .pk-employment-card__link:hover { background: #4338ca; color: #fff; }
 .pk-employment-card__link:focus-visible { outline: 3px solid #4f46e5; outline-offset: 3px; }
-.pk-employment-card small { display: block; color: #64748b; line-height: 1.6; margin-top: 14px; }
+/* Offres d'emploi publiées par les membres. */
+.pk-employment-offers { max-width: 900px; }
+.pk-employment-offers__title { font-size: 1.05rem; font-weight: 750; margin: 0 0 12px; }
+.pk-employment-offers__list { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }
+.pk-job { display: grid; gap: 6px; padding: 16px 18px; background: #fff; border: 1px solid #e0e7ff; border-radius: 12px; color: #17243a; text-decoration: none; }
+.pk-job:hover { border-color: #a5b4fc; color: #17243a; }
+.pk-job:focus-visible { outline: 3px solid #4f46e5; outline-offset: 2px; }
+.pk-job__title { font-weight: 700; color: #312e81; }
+.pk-job__facts { color: #475569; font-size: .92rem; }
+.pk-job__foot { color: #64748b; font-size: .82rem; }
+.pk-employment-offers__pages { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-top: 14px; color: #64748b; font-size: .9rem; }
+.pk-employment-offers__pages a,
+.pk-employment-offers__publish { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: #4338ca; font-weight: 650; text-underline-offset: 3px; }
+.pk-employment-offers__publish { margin-top: 10px; }
 .pk-employment-page__back { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; min-height: 44px; color: #3730a3; font-size: .9rem; text-underline-offset: 3px; }
 /* Pages emploi publiques : suites possibles et autres territoires. */
 .pk-employment-next,
 .pk-employment-territories { max-width: 900px; margin-top: 24px; }
-.pk-employment-territories--main { margin: 0 0 24px; }
 .pk-employment-next__title,
 .pk-employment-territories__title { font-size: 1.05rem; font-weight: 750; margin: 0 0 12px; }
 .pk-employment-next__list { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }

@@ -19,7 +19,7 @@
     <div class="d-flex gap-3">
         <i class="fas fa-shield-halved mt-1"></i>
         <div>
-            <strong>Blocage ciblé :</strong> cette liste empêche uniquement une nouvelle inscription ou la restauration automatique par Google/Facebook.
+            <strong>Blocage ciblé :</strong> cette liste empêche uniquement une nouvelle inscription ou la restauration automatique par Google.
             Elle ne suspend pas un compte encore actif. Pour vos tests, une suppression simple reste donc réversible tant que l’adresse n’est pas ajoutée ici.
         </div>
     </div>

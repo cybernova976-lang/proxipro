@@ -23,7 +23,6 @@ final class Territory
         public readonly string $slug,
         public readonly string $timezone,
         public readonly array $communes = [],
-        public readonly string $ftLieux = '',
         public readonly string $kind = self::KIND_OVERSEAS,
         public readonly array $countryLabels = [],
         public readonly string $preposition = 'à',
@@ -87,7 +86,6 @@ final class Territory
             'slug' => $this->slug,
             'timezone' => $this->timezone,
             'communes' => $this->communes,
-            'ft_lieux' => $this->ftLieux,
             'kind' => $this->kind,
         ];
     }

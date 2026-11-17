@@ -234,7 +234,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Vérifie si l'utilisateur est inscrit via OAuth (Google, Facebook, etc.)
+     * Vérifie si l'utilisateur est inscrit via OAuth (Google)
      */
     public function isOAuthUser(): bool
     {
