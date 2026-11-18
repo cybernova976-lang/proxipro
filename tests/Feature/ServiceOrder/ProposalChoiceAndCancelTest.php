@@ -229,10 +229,10 @@ class ProposalChoiceAndCancelTest extends TestCase
             ->get(route('service-orders.index'))->assertOk()
             ->assertSee('<div class="alert alert-danger" role="alert">Le prestataire n’a pas encore activé la réception de ses paiements.</div>', false)
             ->assertSee('Frais ajoutés')
-            ->assertSee('Prestataire : <strong>Karim Services</strong>', false)
+            ->assertSee('<dt>Prestataire</dt><dd>Karim Services</dd>', false)
             ->assertSee('Payer en ligne')
             ->assertSee('le paiement en ligne sera possible dès que ce sera fait')
-            ->assertDontSee('service-order-stat-label">Commission', false)
+            ->assertDontSee('Commission Prokejem')
             ->assertDontSee('Connect vendeur')
             ->assertDontSee('Payer avec Stripe');
     }

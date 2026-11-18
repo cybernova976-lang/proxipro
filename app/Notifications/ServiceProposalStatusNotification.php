@@ -46,7 +46,7 @@ class ServiceProposalStatusNotification extends Notification implements ShouldQu
             ->subject($accepted ? 'Votre proposition a été acceptée' : 'Mise à jour de votre proposition')
             ->greeting('Bonjour '.$notifiable->name.',')
             ->line($accepted
-                ? 'Votre proposition pour « '.$this->proposal->ad->title.' » a été acceptée. La commande sécurisée est maintenant en attente de paiement du client.'
+                ? 'Votre proposition pour « '.$this->proposal->ad->title.' » a été acceptée. La commande est créée : le client doit maintenant payer en ligne.'
                 : 'Votre proposition pour « '.$this->proposal->ad->title.' » n’a pas été retenue.')
             ->action('Voir mes propositions', route('proposals.index'));
     }

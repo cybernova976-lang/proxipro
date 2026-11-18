@@ -91,7 +91,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="card-subtitle mb-2">Commandes securisees</h6>
+                            <h6 class="card-subtitle mb-2">Commandes payées en ligne</h6>
                             <h2 class="card-title mb-0">Piloter</h2>
                             <small>Litiges, remboursements, payouts</small>
                         </div>

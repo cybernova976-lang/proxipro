@@ -6987,6 +6987,7 @@
                                 </li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('profile.show') }}"><i class="fas fa-user" style="color: var(--primary);"></i>Mon Profil</a></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('home') }}"><i class="fas fa-clipboard-list text-secondary"></i>{{ \App\Support\ClientSpaceNavigation::REQUESTS_LABEL }}</a></li>
+                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('service-orders.index') }}" data-menu="orders"><i class="fas fa-receipt" style="color: #4f46e5;"></i>Mes commandes</a></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('ads.index') }}"><i class="fas fa-bullhorn" style="color: #6366f1;"></i>Annonces</a></li>
                                 @if(!Auth::user()->isProfessionnel() && !Auth::user()->isServiceProvider())
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('service-provider.start') }}"><i class="fas fa-user-plus" style="color: #059669;"></i>Activer mon profil prestataire</a></li>

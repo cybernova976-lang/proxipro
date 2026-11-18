@@ -92,7 +92,7 @@ class ProviderActivityReport
             ['title' => 'Vos missions sur Prokejem', 'metrics' => [
                 $metric('proposals_sent', 'Propositions envoyées', 'Propositions faites en réponse à des demandes de clients.'),
                 $metric('proposals_accepted', 'Propositions acceptées', 'Propositions acceptées par un client pendant le mois.'),
-                $metric('orders_received', 'Commandes reçues', 'Commandes sécurisées passées auprès de vous.'),
+                $metric('orders_received', 'Commandes reçues', 'Prestations réservées et payées en ligne auprès de vous.'),
                 $metric('orders_completed', 'Missions terminées', 'Commandes terminées, paiement libéré.'),
                 $metric('revenue', 'Montant versé', 'Somme qui vous a été versée pour les missions terminées, commission déduite.', '€'),
             ]],

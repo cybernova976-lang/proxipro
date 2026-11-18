@@ -20,10 +20,10 @@
         <div class="pk-step">
             <span class="n">2</span>
             <div>
-                <b>{{ $pkRole === 'provider' ? 'Envoyez une proposition claire' : 'Les fonds sont bloqués' }}</b>
+                <b>{{ $pkRole === 'provider' ? 'Envoyez une proposition claire' : 'Vous payez en ligne' }}</b>
                 <span>{{ $pkRole === 'provider'
                     ? 'Précisez le prix, le délai, ce qui est inclus et votre prochain créneau disponible.'
-                    : 'L’argent est mis de côté : le prestataire ne le reçoit pas encore.' }}</span>
+                    : 'Votre argent est conservé en sécurité : le prestataire ne le reçoit pas encore.' }}</span>
             </div>
         </div>
         <div class="pk-step">

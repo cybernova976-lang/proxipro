@@ -9,7 +9,7 @@
         <div class="menu-section">
             <span class="menu-label">Navigation</span>
             
-            <a href="#" class="menu-item active" data-dashboard-section="overview" onclick="dashboardNav('overview'); return false;">
+            <a href="#" class="menu-item {{ request()->routeIs('service-orders.*') ? '' : 'active' }}" data-dashboard-section="overview" onclick="dashboardNav('overview'); return false;">
                 <div class="menu-icon">
                     <i class="fas fa-th-large"></i>
                 </div>
@@ -33,6 +33,19 @@
                 @endphp
                 @if($myAdsCount > 0)
                     <span class="menu-badge">{{ $myAdsCount }}</span>
+                @endif
+            </a>
+
+            <a href="{{ route('service-orders.index') }}" class="menu-item {{ request()->routeIs('service-orders.*') ? 'active' : '' }}" data-menu="orders">
+                <div class="menu-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <span class="menu-text">Mes commandes</span>
+                @php
+                    $pkOrdersToHandle = \App\Models\ServiceOrder::awaitingActionCount(Auth::user());
+                @endphp
+                @if($pkOrdersToHandle > 0)
+                    <span class="menu-badge urgent" title="Commandes à accepter ou à payer">{{ $pkOrdersToHandle }}</span>
                 @endif
             </a>
 
@@ -86,7 +99,7 @@
 
             <a href="#" class="menu-item" data-dashboard-section="transactions" onclick="dashboardNav('transactions'); return false;">
                 <div class="menu-icon">
-                    <i class="fas fa-receipt"></i>
+                    <i class="fas fa-credit-card"></i>
                 </div>
                 <span class="menu-text">Transactions</span>
             </a>
@@ -239,8 +252,12 @@
 /* Menu Sections */
 .sidebar-menu {
     flex: 1;
+    min-height: 0;
     padding: 16px 0;
-    overflow: hidden;
+    /* Le menu défile sur les petits écrans : aucune entrée ne doit rester hors d'atteinte. */
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
 }
 
 .menu-section {

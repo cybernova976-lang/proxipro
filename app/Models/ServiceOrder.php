@@ -107,7 +107,7 @@ class ServiceOrder extends Model
         return match ($this->status) {
             self::STATUS_PENDING_ACCEPTANCE => 'En attente d\'acceptation',
             self::STATUS_AWAITING_PAYMENT => 'En attente de paiement',
-            self::STATUS_FUNDED => 'Fonds bloqués',
+            self::STATUS_FUNDED => 'Payée',
             self::STATUS_COMPLETED => 'Terminée',
             self::STATUS_REFUSED => 'Refusée',
             self::STATUS_DISPUTED => 'Litige ouvert',
@@ -120,20 +120,43 @@ class ServiceOrder extends Model
     public function getPaymentStatusLabelAttribute(): string
     {
         return match ($this->payment_status) {
-            self::PAYMENT_AWAITING => 'Paiement en attente',
-            self::PAYMENT_CHECKOUT_OPEN => 'Paiement en cours',
-            self::PAYMENT_PAID => 'Paiement confirmé',
-            self::PAYMENT_RELEASED => 'Fonds libérés',
-            self::PAYMENT_CANCELED => 'Paiement annulé',
-            self::PAYMENT_DISPUTED => 'Litige ouvert',
-            self::PAYMENT_REFUNDED => 'Paiement remboursé',
+            // Lu après le mot « Paiement » : pas besoin de le répéter.
+            self::PAYMENT_AWAITING => 'En attente',
+            self::PAYMENT_CHECKOUT_OPEN => 'En cours',
+            self::PAYMENT_PAID => 'Reçu, conservé en sécurité',
+            self::PAYMENT_RELEASED => 'Versé au prestataire',
+            self::PAYMENT_CANCELED => 'Annulé',
+            self::PAYMENT_DISPUTED => 'Bloqué par un litige',
+            self::PAYMENT_REFUNDED => 'Remboursé au client',
             default => str_replace('_', ' ', (string) $this->payment_status),
         };
     }
 
+    /**
+     * Réservation passée sur une DEMANDE (possible jusqu'en juillet 2026) : les
+     * rôles y sont inversés, l'auteur de la demande s'y retrouve « prestataire »
+     * alors qu'il est le client. Une telle commande ne peut qu'être refusée.
+     */
+    public function isReservationOnDemand(): bool
+    {
+        return $this->ad !== null
+            && $this->ad->service_type === 'demande'
+            && (int) $this->ad->user_id === (int) $this->seller_id;
+    }
+
+    /** Commandes où une action de ce membre est attendue : à accepter, ou à payer. */
+    public static function awaitingActionCount(User $user): int
+    {
+        return static::query()
+            ->where(fn ($orders) => $orders
+                ->where(fn ($asSeller) => $asSeller->where('seller_id', $user->id)->where('status', self::STATUS_PENDING_ACCEPTANCE))
+                ->orWhere(fn ($asBuyer) => $asBuyer->where('buyer_id', $user->id)->where('status', self::STATUS_AWAITING_PAYMENT)))
+            ->count();
+    }
+
     public function canSellerAccept(): bool
     {
-        return $this->status === self::STATUS_PENDING_ACCEPTANCE;
+        return $this->status === self::STATUS_PENDING_ACCEPTANCE && ! $this->isReservationOnDemand();
     }
 
     public function canSellerRefuse(): bool

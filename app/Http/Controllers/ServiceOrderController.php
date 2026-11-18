@@ -37,7 +37,8 @@ class ServiceOrderController extends Controller
             ->latest()
             ->get();
 
-        $needsStripeConnectOnboarding = $ordersAsSeller->count() > 0
+        // Rappel utile seulement s'il y a une commande en cours à encaisser.
+        $needsStripeConnectOnboarding = $ordersAsSeller->whereIn('status', ServiceOrder::OPEN_STATUSES)->isNotEmpty()
             && (! $user->stripe_connect_account_id || ! $user->stripe_connect_payouts_enabled);
 
         return view('service-orders.index', compact('ordersAsBuyer', 'ordersAsSeller', 'needsStripeConnectOnboarding'));
@@ -85,7 +86,7 @@ class ServiceOrderController extends Controller
         \App\Support\SafeNotifier::send($serviceOrder->seller, new ServiceOrderRequestedNotification($serviceOrder));
 
         return redirect()->route('service-orders.index')
-            ->with('success', 'Commande sécurisée envoyée. Le vendeur peut maintenant l\'examiner.');
+            ->with('success', 'Réservation envoyée. Le prestataire doit maintenant l’accepter : vous pourrez ensuite payer en ligne.');
     }
 
     public function accept(ServiceOrder $serviceOrder)
@@ -147,7 +148,7 @@ class ServiceOrderController extends Controller
                     'price_data' => [
                         'currency' => $currency,
                         'product_data' => [
-                            'name' => 'Commande sécurisée '.$serviceOrder->order_number,
+                            'name' => 'Commande Prokejem '.$serviceOrder->order_number,
                             'description' => $serviceOrder->ad->title,
                         ],
                         'unit_amount' => $amountCents,
@@ -226,11 +227,11 @@ class ServiceOrderController extends Controller
             report($exception);
 
             return redirect()->route('service-orders.index')
-                ->with('error', 'Le versement n’a pas pu être effectué pour le moment. Vos fonds restent bloqués : réessayez plus tard ou contactez-nous.');
+                ->with('error', 'Le versement n’a pas pu être effectué pour le moment. Votre argent reste conservé en sécurité : réessayez plus tard ou contactez-nous.');
         }
 
         return redirect()->route('service-orders.index')
-            ->with('success', 'Fonds libérés au prestataire.');
+            ->with('success', 'Prestation confirmée : le prestataire va recevoir son paiement.');
     }
 
     public function dispute(Request $request, ServiceOrder $serviceOrder)
@@ -242,7 +243,7 @@ class ServiceOrderController extends Controller
         $this->workflowService->dispute($serviceOrder, Auth::user(), $request->reason);
 
         return redirect()->route('service-orders.index')
-            ->with('success', 'Litige ouvert. Les fonds restent bloqués.');
+            ->with('success', 'Problème signalé. Votre argent reste conservé en sécurité pendant que notre équipe examine la situation.');
     }
 
     public function connectOnboarding()

@@ -1,11 +1,11 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Commandes sécurisées')
+@section('title', 'Commandes payées en ligne')
 
 @section('content')
 <div class="row mb-4 align-items-center">
     <div class="col">
-        <h2 class="h4 fw-bold mb-1">Commandes sécurisées</h2>
+        <h2 class="h4 fw-bold mb-1">Commandes payées en ligne</h2>
         <p class="text-muted mb-0">Contrôlez les litiges, les libérations de fonds et les remboursements Stripe.</p>
     </div>
     <div class="col-auto">
@@ -140,7 +140,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">Aucune commande sécurisée correspondante.</td>
+                        <td colspan="7" class="text-center py-5 text-muted">Aucune commande correspondante.</td>
                     </tr>
                 @endforelse
             </tbody>

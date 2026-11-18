@@ -24,9 +24,9 @@ class ServiceOrderRequestedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Nouvelle commande sécurisée Prokejem')
+            ->subject('Nouvelle commande sur Prokejem')
             ->greeting('Bonjour '.$notifiable->name.',')
-            ->line($this->serviceOrder->buyer->name.' souhaite lancer une commande sécurisée pour votre annonce "'.$this->serviceOrder->ad->title.'".')
+            ->line($this->serviceOrder->buyer->name.' souhaite réserver votre prestation "'.$this->serviceOrder->ad->title.'" et la payer en ligne.')
             ->line('Montant proposé : '.number_format((float) $this->serviceOrder->amount, 2, ',', ' ').' €')
             ->action('Voir mes commandes', route('service-orders.index'))
             ->line('Vous pourrez accepter ou refuser cette commande depuis votre espace.');
@@ -38,8 +38,8 @@ class ServiceOrderRequestedNotification extends Notification
             'type' => 'service_order_requested',
             'icon' => 'fas fa-shield-alt',
             'color' => '#0f766e',
-            'title' => 'Nouvelle commande sécurisée',
-            'message' => $this->serviceOrder->buyer->name.' a proposé une commande pour "'.$this->serviceOrder->ad->title.'".',
+            'title' => 'Nouvelle commande',
+            'message' => $this->serviceOrder->buyer->name.' souhaite réserver votre prestation "'.$this->serviceOrder->ad->title.'".',
             'action_url' => route('service-orders.index'),
             'service_order_id' => $this->serviceOrder->id,
             'ad_id' => $this->serviceOrder->ad_id,

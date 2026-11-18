@@ -406,11 +406,11 @@
                                 <button class="btn btn-contact btn-contact-primary" data-bs-toggle="modal" data-bs-target="#contactModal"><i class="fas fa-paper-plane me-2"></i>Contacter</button>
                                 @if($ad->service_type === 'offre')
                                     <button class="btn btn-contact" style="background:#0f766e;color:white;border:none;" data-bs-toggle="modal" data-bs-target="#secureOrderModal">
-                                        <i class="fas fa-shield-alt me-2"></i>Reserver avec paiement securise
+                                        <i class="fas fa-shield-alt me-2"></i>Réserver et payer en ligne
                                     </button>
                                 @elseif($viewerIsProvider)
                                     <button class="btn btn-contact" style="background:#2563eb;color:white;border:none;" data-bs-toggle="modal" data-bs-target="#proposalModal">
-                                        <i class="fas fa-file-signature me-2"></i>Envoyer une proposition chiffree
+                                        <i class="fas fa-file-signature me-2"></i>Envoyer une proposition chiffrée
                                     </button>
                                 @else
                                     <a href="{{ route('pro.dashboard') }}" class="btn btn-contact" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;">
@@ -713,29 +713,29 @@ Cordialement,
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2 text-success"></i>Lancer une commande sécurisée</h5>
+                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2 text-success"></i>Réserver cette prestation</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="{{ route('service-orders.store', $ad) }}" method="POST">
                     @csrf
                     <div class="modal-body">
                         <div class="alert alert-success" style="border-radius: 12px;">
-                            <strong>Paiement sécurisé</strong><br>
-                            Vous payez le montant convenu, sans frais ajoutés. Votre paiement est conservé jusqu’à ce que vous confirmiez la fin de la prestation, puis versé au prestataire.
+                            <strong>Vous ne payez pas tout de suite.</strong><br>
+                            Le prestataire doit d’abord accepter votre réservation. Vous payez ensuite en ligne le montant convenu, sans frais ajoutés. Votre argent est conservé en sécurité et n’est versé au prestataire que lorsque vous confirmez la fin de la prestation.
                         </div>
                         <div class="mb-3">
                             <label class="form-label-light">Montant convenu</label>
                             <input type="number" step="0.01" min="1" name="amount" class="form-control form-control-dark" value="{{ $ad->price ? number_format((float) $ad->price, 2, '.', '') : '' }}" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label-light">Date souhaitee</label>
+                            <label class="form-label-light">Date souhaitée</label>
                             <input type="date" name="scheduled_for" class="form-control form-control-dark" min="{{ now()->toDateString() }}">
                         </div>
                         <div class="mb-3">
                             <label class="form-label-light">Message</label>
                             <textarea name="message" class="form-control form-control-dark" rows="4" placeholder="Précisez le besoin, le périmètre et les attentes.">Bonjour,
 
-Je souhaite lancer une commande sécurisée pour votre annonce "{{ $ad->title }}".
+Je souhaite réserver votre prestation "{{ $ad->title }}".
 
 Cordialement,
 {{ Auth::user()->name }}</textarea>
@@ -743,7 +743,7 @@ Cordialement,
                     </div>
                     <div class="modal-footer border-0 pt-0">
                         <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
-                        <button type="submit" class="btn btn-success"><i class="fas fa-lock me-1"></i>Envoyer la commande</button>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-lock me-1"></i>Envoyer la réservation</button>
                     </div>
                 </form>
             </div>
@@ -776,12 +776,12 @@ Cordialement,
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label-light" for="proposalDate">Date ou disponibilite</label>
+                            <label class="form-label-light" for="proposalDate">Date ou disponibilité</label>
                             <input id="proposalDate" type="date" name="scheduled_for" class="form-control form-control-dark" min="{{ now()->toDateString() }}" value="{{ old('scheduled_for') }}">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label-light" for="proposalMessage">Details de la prestation</label>
-                            <textarea id="proposalMessage" name="message" class="form-control form-control-dark" rows="5" minlength="20" maxlength="1500" required placeholder="Expliquez ce qui est inclus, votre disponibilite et les conditions de votre intervention.">{{ old('message') }}</textarea>
+                            <label class="form-label-light" for="proposalMessage">Détails de la prestation</label>
+                            <textarea id="proposalMessage" name="message" class="form-control form-control-dark" rows="5" minlength="20" maxlength="1500" required placeholder="Expliquez ce qui est inclus, votre disponibilité et les conditions de votre intervention.">{{ old('message') }}</textarea>
                         </div>
                     </div>
                     <div class="modal-footer border-0 pt-0">

@@ -179,7 +179,7 @@ class ServiceProposalController extends Controller
         });
 
         return redirect()->route('service-orders.index')
-            ->with('success', 'Proposition acceptée. La commande sécurisée est prête pour le paiement.');
+            ->with('success', 'Proposition choisie. Votre commande est créée : vous pouvez payer en ligne.');
     }
 
     public function refuse(ServiceProposal $proposal)

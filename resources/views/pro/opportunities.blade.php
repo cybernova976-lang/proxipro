@@ -486,7 +486,7 @@
             <span class="pipeline-stage-icon" style="color: #475569; background: #e2e8f0;"><i class="fas fa-flag-checkered"></i></span>
             <div class="pipeline-stage-title">
                 <h2 id="pipeline-completed-title">4. Terminée</h2>
-                <p>Fonds libérés</p>
+                <p>Paiement versé</p>
             </div>
             <span class="pipeline-count">{{ $pipelineCounts['completed'] }}</span>
         </header>
