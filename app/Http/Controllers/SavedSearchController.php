@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SavedSearch;
+use App\Models\User;
 use App\Services\SavedSearchService;
 use App\Support\TerritoryResolver;
 use Illuminate\Http\RedirectResponse;
@@ -37,6 +38,10 @@ class SavedSearchController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        if ($request->filled('provider')) {
+            return $this->storeProviderAlert($request);
+        }
+
         if ($request->filled('territory')) {
             return $this->storeTerritoryAlert($request);
         }
@@ -92,6 +97,28 @@ class SavedSearchController extends Controller
         };
 
         return back()->with('info', 'Alerte enregistrée : vous recevrez une notification dès qu’'.$subject.' sera publiée '.$territory->withPreposition().'.');
+    }
+
+    /**
+     * Alerte sur un prestataire choisi (cartes d'offres, fiche d'une offre) :
+     * le membre est prévenu de chacune de ses nouvelles offres.
+     */
+    private function storeProviderAlert(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+        $provider = is_numeric($request->input('provider')) ? User::find((int) $request->input('provider')) : null;
+
+        if ($provider === null || ! $this->savedSearchService->canFollowProvider($user, $provider)) {
+            return back()->with('error', 'Cette alerte ne peut pas être créée pour ce compte.');
+        }
+
+        if ($this->savedSearchService->findProviderAlert($user, $provider)?->is_active) {
+            return back()->with('info', 'Vous êtes déjà prévenu des nouvelles offres de '.$provider->name.'.');
+        }
+
+        $this->savedSearchService->saveProviderAlert($user, $provider);
+
+        return back()->with('info', 'Alerte enregistrée : vous recevrez une notification dès que '.$provider->name.' publiera une nouvelle offre.');
     }
 
     public function destroy(SavedSearch $savedSearch): RedirectResponse

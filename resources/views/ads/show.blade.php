@@ -440,6 +440,9 @@
                                 </button>
                             @endif
                             <a href="{{ route('profile.public', $ad->user_id) }}" class="btn btn-contact btn-contact-secondary"><i class="fas fa-user me-2"></i>Voir le profil</a>
+                            @if($ad->service_type === 'offre')
+                                @include('saved-searches.partials.follow-provider', ['provider' => $ad->user])
+                            @endif
                         @else
                             @if($ad->service_type === 'demande' && ($ad->comparable_proposals_count ?? 0) > 0)
                                 <a href="{{ route('proposals.compare', $ad) }}" class="btn btn-contact mb-2" style="background:#2563eb;color:#fff;border:none;">

@@ -22,6 +22,8 @@ class SavedSearch extends Model
         'radius_km',
         // Alerte de territoire (« 976 », « 75 »…) ; NULL = alerte classique.
         'territory_code',
+        // Alerte sur un prestataire : prévenu à chacune de ses nouvelles offres.
+        'provider_id',
         'filters',
         'is_active',
         'last_matched_at',
@@ -42,6 +44,17 @@ class SavedSearch extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function provider()
+    {
+        return $this->belongsTo(User::class, 'provider_id');
+    }
+
+    /** Où mène « Ouvrir » : le profil du prestataire suivi, sinon les annonces de l'alerte. */
+    public function openUrl(): string
+    {
+        return $this->provider_id ? route('profile.public', $this->provider_id) : $this->buildFeedUrl();
     }
 
     public function matches()

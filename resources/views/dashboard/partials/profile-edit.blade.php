@@ -75,7 +75,7 @@
                             </div>
                             
                             <div class="col-md-6">
-                                <label for="country" class="form-label">Pays <span class="text-danger">*</span></label>
+                                <label for="country" class="form-label">Pays / Département <span class="text-danger">*</span></label>
                                 <select class="form-select @error('country') is-invalid @enderror" id="country" name="country" required>
                                     <option value="">Sélectionnez votre pays</option>
                                     @foreach(config('locations.countries', []) as $countryName => $flag)

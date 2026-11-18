@@ -152,7 +152,7 @@ return [
         'address' => 'adresse',
         'city' => 'ville',
         'postal_code' => 'code postal',
-        'country' => 'pays',
+        'country' => 'pays / département',
         'price' => 'prix',
         'budget' => 'budget',
         'photos' => 'photos',

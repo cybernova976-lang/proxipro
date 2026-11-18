@@ -22,7 +22,7 @@
                 <input id="directoryCity" name="city" value="{{ $city }}" maxlength="120" placeholder="Ex. Mamoudzou" aria-describedby="directoryLocationHelp">
             </div>
             <div class="directory-field">
-                <label for="directoryCountry">Pays / territoire</label>
+                <label for="directoryCountry">Pays / Département</label>
                 <select id="directoryCountry" name="country">
                     <option value="">Tous</option>
                     @foreach($directoryCountries->merge([$country])->filter()->unique()->sort() as $choice)

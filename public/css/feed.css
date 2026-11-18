@@ -567,6 +567,10 @@
 .pk-save { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border: 1px solid var(--pk-rule) !important; border-radius: 9px; color: var(--pk-ink-2); }
 .pk-save:hover, .pk-save[aria-pressed="true"] { background: var(--pk-50); color: var(--pk-700); border-color: var(--pk-300) !important; }
 .pk-save[aria-busy="true"] { opacity: .55; pointer-events: none; }
+/* Alerte sur un prestataire : même bouton que le favori, dans un formulaire. */
+.pk-follow { margin: 0; flex: none; }
+.pk-follow .pk-save { background: transparent; cursor: pointer; }
+.pk-follow .pk-save[aria-pressed="true"] { background: var(--pk-50); }
 @media (max-width: 599px) {
   .pk-feed-list { grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 14px; }
   .pk-ad__media { height: 164px; }
@@ -1131,7 +1135,14 @@
 .pk-empty-local p a { color: #4338ca; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
 .pk-empty-local__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 18px; }
 .pk-empty-local__alert { margin: 0; }
+.pk-empty-local__active { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: #3730a3; font-size: .85rem; font-weight: 700; }
 .pk-landmarks__form { margin: 0; }
+
+/* Offres d'autres territoires, sous l'état vide du territoire du lecteur. */
+.pk-elsewhere { margin-top: 28px; }
+.pk-elsewhere__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 18px; flex-wrap: wrap; }
+.pk-elsewhere__head h3 { margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--pk-950); }
+.pk-elsewhere__head p { margin: 4px 0 0; font-size: .84rem; color: var(--pk-ink-2); }
 .pk-empty-local__invite { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: #3730a3; font-size: .85rem; font-weight: 700; }
 .pk-empty-local__invite i { color: #7c3aed; }
 .pk-empty-local__elsewhere { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-top: 10px; color: var(--pk-ink-2); font-size: .8rem; text-decoration: underline; text-underline-offset: 2px; }

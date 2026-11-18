@@ -14,7 +14,7 @@
     @if($pkPrefill['country'] !== null)
         <input type="hidden" name="country" value="{{ $pkPrefill['country'] }}">
     @else
-        <p class="pk-guided__hint">Votre pays ou territoire :</p>
+        <p class="pk-guided__hint">Votre pays ou département :</p>
         <div class="pk-answers pk-answers--text">
             @foreach($pkCountries as $pkCountry)
                 <label class="pk-answer pk-answer--text">

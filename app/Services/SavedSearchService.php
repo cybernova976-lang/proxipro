@@ -50,9 +50,53 @@ class SavedSearchService
     {
         return $user->savedSearches()
             ->where('territory_code', $territory->code)
-            ->where('service_type', 'offres')
+            ->whereNull('provider_id')
+            ->whereIn('service_type', ['offres', 'all'])
             ->where('is_active', true)
             ->exists();
+    }
+
+    /** L'alerte du membre sur ce prestataire, active ou non. */
+    public function findProviderAlert(User $user, User $provider): ?SavedSearch
+    {
+        return $user->savedSearches()->where('provider_id', $provider->id)->first();
+    }
+
+    /**
+     * Peut-on créer une alerte sur ce compte ? Il faut un autre membre que soi,
+     * visible du public, qui propose réellement des services.
+     */
+    public function canFollowProvider(User $user, User $provider): bool
+    {
+        if ((int) $user->id === (int) $provider->id || in_array((int) $provider->id, Ad::hiddenAuthorIds(), true)) {
+            return false;
+        }
+
+        return $provider->isProfessionnel() || $provider->isServiceProvider()
+            || Ad::marketplaceActive()->where('user_id', $provider->id)->where('service_type', 'offre')->exists();
+    }
+
+    /** Alerte « nouvelles offres de ce prestataire », où qu'il les publie. */
+    public function saveProviderAlert(User $user, User $provider): SavedSearch
+    {
+        $savedSearch = SavedSearch::firstOrNew(['user_id' => $user->id, 'provider_id' => $provider->id]);
+        $savedSearch->fill([
+            'name' => 'Offres de '.$provider->name,
+            'search_term' => null,
+            'category' => null,
+            'service_type' => 'offres',
+            'country' => null,
+            'city' => null,
+            'latitude' => null,
+            'longitude' => null,
+            'radius_km' => null,
+            'territory_code' => null,
+            'filters' => ['type' => 'offres', 'provider' => $provider->id],
+            'is_active' => true,
+        ]);
+        $savedSearch->save();
+
+        return $savedSearch;
     }
 
     public function buildSnapshot(array $input, ?User $user = null, array $geoContext = []): array
@@ -106,6 +150,7 @@ class SavedSearchService
             'city' => $snapshot['city'],
             'radius_km' => $snapshot['radius_km'],
             'territory_code' => $snapshot['territory_code'] ?? null,
+            'provider_id' => null,
         ];
 
         $savedSearch = SavedSearch::firstOrNew($attributes);
@@ -132,6 +177,7 @@ class SavedSearchService
             ->where('city', $snapshot['city'])
             ->where('radius_km', $snapshot['radius_km'])
             ->where('territory_code', $snapshot['territory_code'] ?? null)
+            ->whereNull('provider_id')
             ->first();
     }
 
@@ -152,6 +198,8 @@ class SavedSearchService
                     $scope->orWhere('territory_code', $adTerritoryCode);
                 }
             })
+            // Une alerte sur un prestataire ne concerne que les annonces de ce prestataire.
+            ->where(fn ($scope) => $scope->whereNull('provider_id')->orWhere('provider_id', $ad->user_id))
             ->with('user')
             ->get();
 
@@ -205,6 +253,10 @@ class SavedSearchService
         // Les annonces des comptes internes ou de test ne sont pas publiques
         // (config feed.hidden_author_ids) : elles ne déclenchent aucune alerte.
         if (in_array((int) $ad->user_id, Ad::hiddenAuthorIds(), true)) {
+            return false;
+        }
+
+        if ($savedSearch->provider_id !== null && (int) $savedSearch->provider_id !== (int) $ad->user_id) {
             return false;
         }
 

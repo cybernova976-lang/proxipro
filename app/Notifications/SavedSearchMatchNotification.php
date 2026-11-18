@@ -36,11 +36,11 @@ class SavedSearchMatchNotification extends Notification
         return (new MailMessage)
             ->subject('Nouvelle annonce pour votre alerte Prokejem')
             ->greeting('Bonjour ' . $notifiable->name . ',')
-            ->line('Une nouvelle annonce correspond a votre alerte "' . $this->savedSearch->name . '".')
+            ->line('Une nouvelle annonce correspond à votre alerte "' . $this->savedSearch->name . '".')
             ->line('Catégorie : ' . ($this->ad->category ?? 'Non précisée'))
             ->line('Lieu : ' . ($this->ad->location ?? 'Non précisé'))
             ->action('Voir l\'annonce', route('ads.show', $this->ad->id))
-            ->line('Vous pouvez gerer vos alertes depuis votre espace Prokejem.');
+            ->line('Vous pouvez gérer vos alertes depuis votre espace Prokejem.');
     }
 
     public function toArray(object $notifiable): array

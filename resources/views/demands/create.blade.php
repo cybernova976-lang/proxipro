@@ -458,7 +458,7 @@ body { background: #f0f2f5; }
                         <div class="demand-field-row">
                             <div>
                                 <select name="country" id="demandCountry" onchange="updateDemandCities()" required>
-                                    <option value="">-- Pays --</option>
+                                    <option value="">-- Pays / Département --</option>
                                     @foreach(array_keys(config('locations.countries', [])) as $countryName)
                                         <option value="{{ $countryName }}" @selected((old('country') ?? $defaultCountry ?? '') === $countryName)>{{ $countryName }}</option>
                                     @endforeach

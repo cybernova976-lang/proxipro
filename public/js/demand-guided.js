@@ -27,7 +27,7 @@
         tooMany: 'Deux photos au plus.',
         added: 'Photo ajoutée.',
         city: 'Choisissez votre commune.',
-        country: 'Choisissez votre pays ou territoire.',
+        country: 'Choisissez votre pays ou département.',
         when: 'Choisissez quand vous avez besoin d’aide.',
         date: 'Choisissez une date à partir d’aujourd’hui.',
         price: 'Indiquez un prix en euros, ou choisissez « À discuter ».',

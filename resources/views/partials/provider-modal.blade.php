@@ -134,11 +134,11 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold" style="font-size: 0.88rem;">
-                                    <i class="fas fa-globe text-info me-1"></i>Pays <span class="text-danger">*</span>
+                                    <i class="fas fa-globe text-info me-1"></i>Pays / Département <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" class="form-control" id="providerProfileCountry" 
                                        value="{{ Auth::user()->country ?? Auth::user()->detected_country ?? 'France' }}" 
-                                       placeholder="Votre pays" required
+                                       placeholder="Votre pays ou département" required
                                        style="border-radius: 10px; padding: 10px 14px;">
                             </div>
                             <div class="col-md-6">
@@ -1207,7 +1207,7 @@
         if (!profile.name) errors.push('Le nom est obligatoire');
         if (!profile.phone) errors.push('Le téléphone est obligatoire pour que les clients puissent vous contacter');
         if (!profile.city) errors.push('La ville est obligatoire');
-        if (!profile.country) errors.push('Le pays est obligatoire');
+        if (!profile.country) errors.push('Le pays ou département est obligatoire');
         if (!providerUserHasAvatar && !(providerAvatarInput?.files?.length)) {
             errors.push('Ajoutez une photo de profil pour rassurer les clients');
         }
@@ -1423,7 +1423,7 @@
                         <strong style="color: #1e293b;">${profile.city || '<span class=&quot;text-danger&quot;>Non renseigné</span>'}</strong>
                     </div>
                     <div style="padding: 8px 12px; background: rgba(255,255,255,0.7); border-radius: 8px;">
-                        <span style="color: #64748b; font-size: 0.78rem; display: block;">Pays</span>
+                        <span style="color: #64748b; font-size: 0.78rem; display: block;">Pays / Département</span>
                         <strong style="color: #1e293b;">${profile.country || '—'}</strong>
                     </div>
                     ${profile.postal_code ? `<div style="padding: 8px 12px; background: rgba(255,255,255,0.7); border-radius: 8px;">

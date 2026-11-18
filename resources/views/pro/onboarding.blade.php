@@ -520,7 +520,7 @@
 
                 <div class="ob-two-col">
                     <div>
-                        <label class="ob-label">Pays</label>
+                        <label class="ob-label">Pays / Département</label>
                         <input type="text" class="ob-input" id="obCountry" placeholder="France" value="{{ $user->country ?? $user->detected_country ?? 'France' }}">
                     </div>
                     <div>

@@ -463,6 +463,8 @@ class FeedController extends Controller
             }
             $this->applyHomeShowcaseVisibility($clientOffers, $user);
             $clientOffers->excludingHiddenAuthors();
+            // Copie avant le filtre de territoire : sert à montrer les offres d'ailleurs si le territoire est vide.
+            $pkAllOffers = clone $clientOffers;
             $pkIncludesRemote = $pkTerritoryScoped && (bool) config('feed.client.include_remote_offers', true);
             if ($pkTerritoryScoped) {
                 // Offres du territoire, plus les offres « À distance » publiées ailleurs.
@@ -511,6 +513,19 @@ class FeedController extends Controller
         $pkTerritoryAlert = $pkTerritory !== null
             ? app(\App\Services\SavedSearchService::class)->territoryOfferAlertFields($pkTerritory)
             : null;
+        // Alertes du lecteur, lues une seule fois : territoire déjà couvert,
+        // prestataires suivis (cloche des offres) et lien « Mes alertes ».
+        $pkUserAlerts = $user?->exists
+            ? $user->savedSearches()->get(['id', 'provider_id', 'territory_code', 'service_type', 'is_active'])
+            : collect();
+        $pkHasAlerts = $pkUserAlerts->isNotEmpty();
+        $pkTerritoryAlertActive = $pkTerritory !== null && $pkUserAlerts->contains(
+            fn ($alert) => $alert->is_active && $alert->provider_id === null
+                && $alert->territory_code === $pkTerritory->code
+                && in_array($alert->service_type, ['offres', 'all'], true)
+        );
+        // Prestataire => alerte active du lecteur.
+        $pkProviderAlerts = $pkUserAlerts->where('is_active', true)->whereNotNull('provider_id')->pluck('id', 'provider_id');
         $pkEmptyLocal = null;
         // Fondé sur le total, pas sur la page courante ; et faux si le lecteur a lui-même publié dans ce territoire.
         if ($pkRole === 'client' && $pkTerritoryScoped && $pkFeedAds->isEmpty() && $pkFeedPagination?->total() === 0
@@ -519,18 +534,29 @@ class FeedController extends Controller
             $pkEmptyLocal = [
                 // Alerte « nouvelles offres du territoire » (route existante saved-searches.store).
                 'alert' => $pkTerritoryAlert,
+                'alert_active' => $pkTerritoryAlertActive,
                 'invite_url' => 'https://wa.me/?text='.rawurlencode(
                     'Bonjour, je cherche un prestataire '.$pkTerritory->withPreposition()
                     .' sur Prokejem. Vous pouvez y proposer vos services : '.$pkProviderSignupUrl
                 ),
             ];
+            // Un territoire vide ne doit pas donner l'impression d'un site vide :
+            // on montre les offres publiées ailleurs, annoncées comme telles et
+            // jamais mêlées au flux local.
+            $pkEmptyLocal['elsewhere'] = $pkClientOffersService->ranked($pkAllOffers, $user)
+                ->limit((int) config('feed.client.page_size', 6))->get();
+            $pkEmptyLocal['elsewhere_disclosure'] = $pkEmptyLocal['elsewhere']->isNotEmpty()
+                ? app(RankingDisclosure::class)->forClientFeed(null, false, $pkClientOffersService->viewerCategories($user) !== [])
+                : null;
         }
+        // Toutes les offres réellement affichées (flux local ou offres d'ailleurs).
+        $pkShownAds = $pkFeedAds->concat($pkEmptyLocal['elsewhere'] ?? []);
 
         // --- favoris deja enregistres parmi les annonces reellement affichees ---
         $pkSavedAdIds = collect();
-        if ($user?->exists && $pkFeedAds->isNotEmpty()) {
+        if ($user?->exists && $pkShownAds->isNotEmpty()) {
             $pkSavedAdIds = $user->savedAds()
-                ->whereIn('ads.id', $pkFeedAds->pluck('id')->all())
+                ->whereIn('ads.id', $pkShownAds->pluck('id')->all())
                 ->pluck('ads.id')
                 ->map(fn ($id) => (int) $id)
                 ->values();
@@ -636,14 +662,13 @@ class FeedController extends Controller
         $pkSituationTiles = [];
         $pkSearchConfig = [];
         $pkTodo = [];
-        $pkHasAlerts = false;
         if ($pkRole === 'client') {
             // Zone « À faire » du rail : chaque ligne repose sur une donnée réelle du compte.
             if ($user?->exists) {
-                $pkHasAlerts = $user->savedSearches()->exists();
                 $pkTodo = array_filter([
                     'push' => ! $user->pushSubscriptions()->exists(),
-                    'alert' => $pkTerritoryAlert !== null && ! $pkHasAlerts,
+                    // Une alerte sur un prestataire ne dispense pas de celle du territoire.
+                    'alert' => $pkTerritoryAlert !== null && ! $pkTerritoryAlertActive,
                     'city' => trim((string) $user->city) === '' && trim((string) $user->postal_code) === '',
                 ]);
             }
@@ -743,6 +768,7 @@ class FeedController extends Controller
             'pkRankingDisclosure',
             'pkEmptyLocal',
             'pkTerritoryAlert',
+            'pkProviderAlerts',
             'pkHasAlerts',
             'pkPrimaryAction',
             'pkSituationTiles',

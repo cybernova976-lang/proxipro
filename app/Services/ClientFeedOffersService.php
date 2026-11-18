@@ -15,6 +15,17 @@ class ClientFeedOffersService
      */
     public function paginate(Builder $query, ?User $viewer): LengthAwarePaginator
     {
+        return $this->ranked($query, $viewer)
+            ->paginate((int) config('feed.client.page_size', 6), ['*'], 'offers_page')
+            ->withQueryString()->fragment('pkFeedTitle');
+    }
+
+    /**
+     * Les mêmes offres, dans l'ordre du flux client : sert à la pagination et
+     * à la liste « offres d'ailleurs » affichée quand le territoire est vide.
+     */
+    public function ranked(Builder $query, ?User $viewer): Builder
+    {
         $subscription = ProSubscription::query()->selectRaw('1')
             ->whereColumn('pro_subscriptions.user_id', 'ads.user_id')
             ->currentlyActive()
@@ -51,9 +62,7 @@ class ClientFeedOffersService
             ->orderByDesc('ads.feed_is_promoted')
             ->orderByRaw('CASE WHEN ads.feed_author_position <= 2 THEN 0 ELSE 1 END')
             ->orderBy('ads.feed_affinity')
-            ->orderByDesc('ads.created_at')->orderByDesc('ads.id')
-            ->paginate((int) config('feed.client.page_size', 6), ['*'], 'offers_page')
-            ->withQueryString()->fragment('pkFeedTitle');
+            ->orderByDesc('ads.created_at')->orderByDesc('ads.id');
     }
 
     /**

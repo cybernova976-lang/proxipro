@@ -277,7 +277,7 @@ class User extends Authenticatable
             ['field' => 'phone', 'label' => 'Numéro de téléphone', 'complete' => filled($this->phone)],
             ['field' => 'avatar', 'label' => 'Photo de profil', 'complete' => filled($this->avatar)],
             ['field' => 'bio', 'label' => 'Présentation du profil', 'complete' => filled($this->bio)],
-            ['field' => 'country', 'label' => 'Pays', 'complete' => filled($this->country)],
+            ['field' => 'country', 'label' => 'Pays / Département', 'complete' => filled($this->country)],
             ['field' => 'city', 'label' => 'Ville', 'complete' => filled($this->city)],
             ['field' => 'address', 'label' => 'Adresse', 'complete' => filled($this->address)],
             ['field' => 'postal_code', 'label' => 'Code postal', 'complete' => filled($this->postal_code)],

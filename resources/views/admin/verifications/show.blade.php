@@ -190,7 +190,7 @@
                         if (!$verification->user->name) $missingFields[] = 'Nom';
                         if (!$verification->user->phone) $missingFields[] = 'Téléphone';
                         if (!$verification->user->city) $missingFields[] = 'Ville';
-                        if (!$verification->user->country) $missingFields[] = 'Pays';
+                        if (!$verification->user->country) $missingFields[] = 'Pays / Département';
                         if (!$verification->user->address) $missingFields[] = 'Adresse';
                         if ($verification->user->isProfessionnel()) {
                             if (!$verification->user->profession) $missingFields[] = 'Profession';

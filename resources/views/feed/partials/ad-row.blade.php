@@ -73,6 +73,7 @@
                     aria-label="{{ $pkIsSaved ? 'Retirer des favoris' : 'Enregistrer dans les favoris' }}">
                 <i class="{{ $pkIsSaved ? 'fas' : 'far' }} fa-bookmark" aria-hidden="true"></i>
             </button>
+            @include('feed.partials.provider-alert')
         @endauth
     </div>
 </article>

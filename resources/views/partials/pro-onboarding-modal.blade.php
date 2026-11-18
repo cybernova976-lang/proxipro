@@ -540,7 +540,7 @@
                             <input type="text" class="obm-input" id="obmCity" placeholder="Paris" value="{{ Auth::user()->city ?? Auth::user()->detected_city ?? '' }}">
                         </div>
                         <div>
-                            <label class="obm-label">Pays</label>
+                            <label class="obm-label">Pays / Département</label>
                             <input type="text" class="obm-input" id="obmCountry" placeholder="France" value="{{ Auth::user()->country ?? Auth::user()->detected_country ?? 'France' }}">
                         </div>
                     </div>

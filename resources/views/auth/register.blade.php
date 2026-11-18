@@ -210,27 +210,6 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Secteur d'activité</label>
-                        <select 
-                            name="sector" 
-                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
-                        >
-                            <option value="">Choisir...</option>
-                            <option value="BTP / Construction" {{ old('sector') == 'BTP / Construction' ? 'selected' : '' }}>BTP / Construction</option>
-                            <option value="Services à la personne" {{ old('sector') == 'Services à la personne' ? 'selected' : '' }}>Services à la personne</option>
-                            <option value="Informatique / Tech" {{ old('sector') == 'Informatique / Tech' ? 'selected' : '' }}>Informatique / Tech</option>
-                            <option value="Transport / Logistique" {{ old('sector') == 'Transport / Logistique' ? 'selected' : '' }}>Transport / Logistique</option>
-                            <option value="Commerce / Vente" {{ old('sector') == 'Commerce / Vente' ? 'selected' : '' }}>Commerce / Vente</option>
-                            <option value="Restauration / Hôtellerie" {{ old('sector') == 'Restauration / Hôtellerie' ? 'selected' : '' }}>Restauration / Hôtellerie</option>
-                            <option value="Santé / Bien-être" {{ old('sector') == 'Santé / Bien-être' ? 'selected' : '' }}>Santé / Bien-être</option>
-                            <option value="Éducation / Formation" {{ old('sector') == 'Éducation / Formation' ? 'selected' : '' }}>Éducation / Formation</option>
-                            <option value="Agriculture / Jardinage" {{ old('sector') == 'Agriculture / Jardinage' ? 'selected' : '' }}>Agriculture / Jardinage</option>
-                            <option value="Autre" {{ old('sector') == 'Autre' ? 'selected' : '' }}>Autre</option>
-                        </select>
-                    </div>
-
-
                 </div>
 
                 @php
@@ -244,7 +223,7 @@
                 <!-- Champs communs -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label for="country" class="block text-sm font-medium text-gray-700 mb-1.5">Pays *</label>
+                        <label for="country" class="block text-sm font-medium text-gray-700 mb-1.5">Pays / Département *</label>
                         <select
                             id="country"
                             name="country"

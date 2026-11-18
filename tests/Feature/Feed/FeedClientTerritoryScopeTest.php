@@ -232,10 +232,14 @@ class FeedClientTerritoryScopeTest extends TestCase
             ->assertSee('rel="noopener"', false)
             ->assertSee('Voir les autres territoires')
             ->assertDontSee('les prestataires de votre zone la recevront')
-            ->assertDontSee('id="pkRankingDisclosure"', false);
+            // Depuis le 18/11/2026 : un territoire vide montre les offres d'ailleurs,
+            // annoncées comme telles, avec la mention de classement de cette liste.
+            ->assertSee('Offres publiées dans d’autres territoires')
+            ->assertSee('Plomberie à Paris')
+            ->assertSee('Classement : offres de toutes les zones.');
         // Aucun compteur dans l'état vide.
         $this->assertDoesNotMatchRegularExpression('/\d+ (prestataires?|artisans?|alertes?)/u', strip_tags(
-            (string) str($response->getContent())->between('id="pkEmptyLocal"', 'Voir les autres territoires')
+            (string) str($response->getContent())->between('id="pkEmptyLocal"', 'id="pkElsewhere"')
         ));
 
         $this->post(route('saved-searches.store'), ['type' => 'offres', 'territory' => '976', 'country' => 'Mayotte'])

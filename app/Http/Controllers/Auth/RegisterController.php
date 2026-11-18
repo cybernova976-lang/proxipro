@@ -260,7 +260,6 @@ class RegisterController extends Controller
             $rules['company_name'] = ['required', 'string', 'max:255'];
             $rules['business_type'] = ['required', 'in:entreprise,auto_entrepreneur'];
             $rules['siret'] = ['nullable', 'string', 'size:14'];
-            $rules['sector'] = ['nullable', 'string', 'max:255'];
         } else {
             $rules['firstname'] = ['required', 'string', 'max:255'];
             $rules['lastname'] = ['required', 'string', 'max:255'];
@@ -352,7 +351,6 @@ class RegisterController extends Controller
             'business_type' => $businessType,
             'company_name' => $isProfessionnel ? $data['company_name'] : null,
             'siret' => $isProfessionnel ? ($data['siret'] ?? null) : null,
-            'business_sector' => $isProfessionnel ? ($data['sector'] ?? null) : null,
             'service_category' => null,
             'service_subcategories' => null,
             'profession' => null,

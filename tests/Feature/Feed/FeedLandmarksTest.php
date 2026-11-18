@@ -56,7 +56,8 @@ class FeedLandmarksTest extends TestCase
     {
         $user = $this->client(['city' => 'Mamoudzou', 'postal_code' => '97600', 'country' => 'Mayotte']);
         $user->updatePushSubscription('https://push.example.test/def', 'cle-publique', 'jeton', 'aesgcm');
-        SavedSearch::create(['user_id' => $user->id, 'name' => 'Offres à Mayotte', 'service_type' => 'offre', 'country' => 'Mayotte', 'territory_code' => '976']);
+        // L'alerte du territoire, telle que l'accueil la crée (une alerte sur un prestataire ne la remplace pas).
+        SavedSearch::create(['user_id' => $user->id, 'name' => 'Offres à Mayotte', 'service_type' => 'offres', 'country' => 'Mayotte', 'territory_code' => '976', 'is_active' => true]);
         $user->forceFill(['is_verified' => true])->save();
         $this->assertTrue($user->fresh()->hasVerifiedProfileBadge());
 

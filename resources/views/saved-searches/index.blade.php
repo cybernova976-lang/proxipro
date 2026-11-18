@@ -153,8 +153,8 @@
                     </div>
 
                     <div class="saved-search-actions">
-                        <a href="{{ $savedSearch->buildFeedUrl() }}" class="btn btn-outline-primary">
-                            <i class="fas fa-eye me-2"></i>Ouvrir
+                        <a href="{{ $savedSearch->openUrl() }}" class="btn btn-outline-primary">
+                            <i class="fas fa-{{ $savedSearch->provider_id ? 'user' : 'eye' }} me-2"></i>{{ $savedSearch->provider_id ? 'Voir le profil' : 'Ouvrir' }}
                         </a>
                         <form method="POST" action="{{ route('saved-searches.destroy', $savedSearch) }}" style="flex:1;">
                             @csrf

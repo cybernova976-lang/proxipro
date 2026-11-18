@@ -928,9 +928,9 @@
             
             <div class="row g-4">
                 <div class="col-md-4" id="location-country-column">
-                    <label for="country" class="form-label">Pays <span class="text-danger">*</span></label>
+                    <label for="country" class="form-label">Pays / Département <span class="text-danger">*</span></label>
                     <select class="form-select @error('country') is-invalid @enderror" id="country" name="country" required>
-                        <option value="">-- Sélectionner un pays --</option>
+                        <option value="">-- Sélectionner un pays / département --</option>
                         @foreach(config('locations.countries', []) as $countryName => $flag)
                             <option value="{{ $countryName }}" {{ old('country', $ad->country) == $countryName ? 'selected' : '' }}>{{ $flag }} {{ $countryName }}</option>
                         @endforeach

@@ -9,7 +9,7 @@
             'desired_date_choice' => null,
             'location' => 'Choisissez votre commune.',
             'city' => 'Choisissez votre commune.',
-            'country' => 'Choisissez votre pays ou territoire.',
+            'country' => 'Choisissez votre pays ou département.',
             'price' => 'Indiquez un prix en euros, ou choisissez « À discuter ».',
             'price_type' => 'Choisissez « À discuter » ou proposez un prix.',
             'publication_confirmed' => 'Cochez la case « Ma demande sera visible pendant 30 jours » avant de publier.',
