@@ -1,0 +1,54 @@
+/*
+ * Messages de retour après une action (succès, erreur, avertissement),
+ * affichés par le gabarit principal : resources/views/partials/flash-messages.blade.php
+ */
+.pk-flash {
+    display: flex;
+    align-items: flex-start;
+    gap: .65rem;
+    width: calc(100% - 2rem);
+    max-width: 720px;
+    margin: 1rem auto 0;
+    padding: .8rem 2.75rem .8rem 1rem;
+    border: 1px solid;
+    border-left-width: 5px;
+    border-radius: 12px;
+    font-size: .9rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.pk-flash > i {
+    flex: 0 0 auto;
+    margin-top: .2rem;
+}
+
+.pk-flash > ul {
+    margin: 0;
+    padding-left: 1.1rem;
+}
+
+.pk-flash .btn-close {
+    padding: 1rem;
+}
+
+.pk-flash--success {
+    border-color: #a7f3d0;
+    border-left-color: #047857;
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.pk-flash--error {
+    border-color: #fecaca;
+    border-left-color: #b91c1c;
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.pk-flash--warning {
+    border-color: #fde68a;
+    border-left-color: #b45309;
+    background: #fffbeb;
+    color: #92400e;
+}

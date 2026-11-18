@@ -4107,6 +4107,7 @@
          autonome et legere : charger feed.css ici pour quatre couleurs
          melangerait les styles du feed au reste du site. --}}
     <link rel="stylesheet" href="{{ asset('css/tabbar.css') }}?v={{ @filemtime(public_path('css/tabbar.css')) ?: 1 }}">
+    <link rel="stylesheet" href="{{ asset('css/flash.css') }}?v={{ @filemtime(public_path('css/flash.css')) ?: 1 }}">
     {{-- Liens légaux du pied de page (partials/legal-footer-links). --}}
     <link rel="stylesheet" href="{{ asset('css/legal-footer.css') }}?v={{ @filemtime(public_path('css/legal-footer.css')) ?: 1 }}">
 
@@ -7045,6 +7046,7 @@
                     </button>
                 </div>
             @endif
+            @include('partials.flash-messages')
             @yield('content')
             {{-- Dans main : le pied de page garde le décalage de la barre latérale. --}}
             @include('partials.legal-footer-links')
@@ -10214,6 +10216,10 @@
         }
     </style>
 
+    @auth
+        {{-- Navigation entre les rubriques de « Mes demandes » : nécessaire avec ou sans le menu latéral. --}}
+        <script src="{{ asset('js/dashboard-nav.js') }}?v={{ @filemtime(public_path('js/dashboard-nav.js')) ?: 1 }}"></script>
+    @endauth
     @yield('scripts')
     @stack('scripts')
     

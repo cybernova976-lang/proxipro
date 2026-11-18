@@ -442,7 +442,7 @@
 
         <!-- Actions -->
         <div class="form-actions">
-            <a href="#" onclick="dashboardNav('overview'); return false;" class="btn-cancel">
+            <a href="{{ route('home') }}" onclick="dashboardNav('overview'); return false;" class="btn-cancel">
                 <i class="fas fa-times me-2"></i>Annuler
             </a>
             <button type="submit" class="btn-publish" id="btn-publish" disabled>

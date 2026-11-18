@@ -33,8 +33,11 @@ class ServiceProviderController extends Controller
         }
 
         if (! $user->hasCompleteVerificationProfile()) {
+            // On nomme ce qui manque : « complétez votre profil » seul ne dit pas quoi remplir.
+            $missing = collect($user->verificationProfileMissingFields())->pluck('label')->implode(', ');
+
             return redirect()->route('profile.edit')
-                ->with('error', 'Complétez les informations obligatoires pour activer votre profil prestataire.');
+                ->with('error', 'Pour activer votre profil prestataire, complétez d’abord votre profil. Il manque : '.$missing.'.');
         }
 
         if (! $user->hasVerifiedProfileBadge()) {

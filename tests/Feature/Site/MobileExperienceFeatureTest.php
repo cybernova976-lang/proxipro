@@ -94,12 +94,19 @@ class MobileExperienceFeatureTest extends TestCase
 
     public function test_dashboard_navigation_does_not_hijack_settings_page_anchors(): void
     {
+        // La navigation entre rubriques a quitté le menu latéral pour un script
+        // chargé par le gabarit ; les garde-fous d'origine restent vérifiés.
         $sidebar = file_get_contents(resource_path('views/partials/sidebar.blade.php'));
+        $navigation = file_get_contents(public_path('js/dashboard-nav.js'));
 
-        $this->assertStringContainsString('if (!section || !dashboardSections.includes(section)) return;', $sidebar);
-        $this->assertStringContainsString("if (!document.getElementById('dashboardContent')) return;", $sidebar);
-        $this->assertStringContainsString('closeDashboardSidebar();', $sidebar);
-        $this->assertStringNotContainsString("if (window.innerWidth <= 1024) {\n        toggleSidebar();", $sidebar);
+        // Une ancre inconnue (celles de la page Paramètres) n'est jamais prise pour une rubrique.
+        $this->assertStringContainsString('if (!section || sections.indexOf(section) === -1) return;', $navigation);
+        // Hors de « Mes demandes », rien ne se charge à l'arrivée ni au retour arrière.
+        $this->assertSame(2, substr_count($navigation, "if (!document.getElementById('dashboardContent')) return;"));
+        // Le menu se referme, il ne bascule pas.
+        $this->assertStringContainsString('function closeDashboardSidebar()', $sidebar);
+        $this->assertStringContainsString('window.closeDashboardSidebar();', $navigation);
+        $this->assertStringNotContainsString('toggleSidebar', $navigation);
     }
 
     public function test_admin_mobile_sidebar_is_fully_hidden_outside_the_viewport(): void

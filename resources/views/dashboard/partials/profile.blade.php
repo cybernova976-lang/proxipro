@@ -83,10 +83,10 @@
                     
                     <!-- Actions -->
                     <div class="d-grid gap-2">
-                        <a href="#" onclick="dashboardNav('profile-edit'); return false;" class="btn btn-primary">
+                        <a href="{{ route('profile.edit') }}" class="btn btn-primary">
                             <i class="fas fa-edit me-2"></i>Modifier le profil
                         </a>
-                        <a href="#" onclick="dashboardNav('settings'); return false;" class="btn btn-outline-secondary">
+                        <a href="{{ route('settings.index') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-cog me-2"></i>Paramètres
                         </a>
                     </div>
@@ -192,7 +192,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                     <h6 class="mb-0"><i class="fas fa-bullhorn me-2"></i>Mes dernières annonces</h6>
-                    <a href="#" onclick="dashboardNav('my-ads'); return false;" class="btn btn-sm btn-outline-primary">
+                    <a href="{{ route('ads.myads') }}" class="btn btn-sm btn-outline-primary">
                         Voir tout
                     </a>
                 </div>

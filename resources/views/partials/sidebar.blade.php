@@ -9,21 +9,21 @@
         <div class="menu-section">
             <span class="menu-label">Navigation</span>
             
-            <a href="#" class="menu-item {{ request()->routeIs('service-orders.*') ? '' : 'active' }}" data-dashboard-section="overview" onclick="dashboardNav('overview'); return false;">
+            <a href="{{ route('home') }}" class="menu-item {{ request()->routeIs('home') ? 'active' : '' }}" data-dashboard-section="overview" onclick="dashboardNav('overview'); return false;">
                 <div class="menu-icon">
                     <i class="fas fa-th-large"></i>
                 </div>
                 <span class="menu-text">Mes demandes</span>
             </a>
 
-            <a href="#" class="menu-item" data-dashboard-section="profile" onclick="dashboardNav('profile'); return false;">
+            <a href="{{ route('profile.show') }}" class="menu-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
                 <div class="menu-icon">
                     <i class="fas fa-user-circle"></i>
                 </div>
                 <span class="menu-text">Profil</span>
             </a>
 
-            <a href="#" class="menu-item" data-dashboard-section="my-ads" onclick="dashboardNav('my-ads'); return false;">
+            <a href="{{ route('ads.myads') }}" class="menu-item {{ request()->routeIs('ads.myads') ? 'active' : '' }}">
                 <div class="menu-icon">
                     <i class="fas fa-briefcase"></i>
                 </div>
@@ -97,7 +97,7 @@
                 <span class="menu-text">Offres et abonnements</span>
             </a>
 
-            <a href="#" class="menu-item" data-dashboard-section="transactions" onclick="dashboardNav('transactions'); return false;">
+            <a href="{{ route('home') }}#transactions" class="menu-item" data-dashboard-section="transactions" onclick="dashboardNav('transactions'); return false;">
                 <div class="menu-icon">
                     <i class="fas fa-credit-card"></i>
                 </div>
@@ -112,7 +112,7 @@
             <i class="fas fa-home"></i>
             <span>Retour à l'accueil</span>
         </a>
-        <a href="#" class="footer-link" data-dashboard-section="settings" onclick="dashboardNav('settings'); return false;">
+        <a href="{{ route('settings.index') }}" class="footer-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">
             <i class="fas fa-cog"></i>
             <span>Paramètres</span>
         </a>
@@ -575,125 +575,6 @@ window.addEventListener('resize', function() {
     }
 });
 
-// ===== DASHBOARD SPA NAVIGATION =====
-var currentSection = 'overview';
-var isNavigating = false;
-var dashboardSections = ['overview', 'account', 'profile', 'profile-edit', 'settings', 'my-ads', 'messages', 'transactions', 'create-ad'];
-
-function dashboardNav(section, restoreHistory) {
-    if (!section || !dashboardSections.includes(section)) return;
-    // Prevent double-clicks while a fetch is in progress
-    if (isNavigating) return;
-
-    // Close mobile sidebar
-    if (window.innerWidth <= 1024) {
-        closeDashboardSidebar();
-    }
-
-    // Update active state in sidebar
-    document.querySelectorAll('.menu-item[data-dashboard-section], .footer-link[data-dashboard-section]').forEach(function(item) {
-        item.classList.remove('active');
-    });
-    var activeItem = document.querySelector('[data-dashboard-section="' + section + '"]');
-    if (activeItem) activeItem.classList.add('active');
-
-    currentSection = section;
-
-    // Find content area
-    var contentArea = document.getElementById('dashboardContent');
-    if (!contentArea) {
-        // Not on dashboard page - redirect to dashboard
-        window.location.href = '/home#' + section;
-        return;
-    }
-
-    // Update URL without reload
-    var newUrl = '/home' + (section === 'overview' ? window.location.search : '') + '#' + section;
-    if (!restoreHistory) history.pushState({ section: section }, '', newUrl);
-
-    isNavigating = true;
-
-    // Safety timeout: reset lock after 15s in case fetch hangs
-    var safetyTimer = setTimeout(function() {
-        isNavigating = false;
-        var existingLoader = document.getElementById('dashboardLoader');
-        if (existingLoader) existingLoader.remove();
-    }, 15000);
-
-    // Show loading spinner overlay
-    contentArea.style.position = 'relative';
-    var loader = document.createElement('div');
-    loader.id = 'dashboardLoader';
-    loader.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;z-index:10;min-height:200px;';
-    loader.innerHTML = '<div style="text-align:center;"><div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem;"></div><p style="margin-top:12px;color:#64748b;font-size:0.9rem;">Chargement...</p></div>';
-    contentArea.appendChild(loader);
-
-    // Fetch content
-    fetch('/dashboard/' + encodeURIComponent(section) + (section === 'overview' ? window.location.search : ''), {
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'text/html'
-        },
-        credentials: 'same-origin'
-    })
-    .then(function(response) {
-        if (!response.ok) throw new Error('HTTP ' + response.status);
-        return response.text();
-    })
-    .then(function(html) {
-        clearTimeout(safetyTimer);
-
-        // Remove loader
-        var existingLoader = document.getElementById('dashboardLoader');
-        if (existingLoader) existingLoader.remove();
-
-        // Set content
-        contentArea.innerHTML = html;
-
-        // Execute inline scripts from loaded content
-        var scripts = contentArea.querySelectorAll('script');
-        scripts.forEach(function(oldScript) {
-            var newScript = document.createElement('script');
-            if (oldScript.src) {
-                newScript.src = oldScript.src;
-            } else {
-                newScript.textContent = oldScript.textContent;
-            }
-            oldScript.parentNode.replaceChild(newScript, oldScript);
-        });
-
-        // Scroll to top of content
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        isNavigating = false;
-    })
-    .catch(function(error) {
-        clearTimeout(safetyTimer);
-
-        // Remove loader
-        var existingLoader = document.getElementById('dashboardLoader');
-        if (existingLoader) existingLoader.remove();
-
-        contentArea.innerHTML = '<div class="container py-5 text-center"><div class="alert alert-danger" style="border-radius:14px;"><i class="fas fa-exclamation-triangle me-2"></i>Erreur de chargement. <a href="#" onclick="dashboardNav(\'' + section + '\'); return false;" style="font-weight:600;">Réessayer</a></div></div>';
-        isNavigating = false;
-    });
-}
-
-// Handle browser back/forward
-window.addEventListener('popstate', function(event) {
-    var section = (event.state && event.state.section) || window.location.hash.replace('#', '') || 'overview';
-    if (dashboardSections.includes(section)) {
-        isNavigating = false;
-        dashboardNav(section, true);
-    }
-});
-
-// Load section from hash on page load
-document.addEventListener('DOMContentLoaded', function() {
-    if (!document.getElementById('dashboardContent')) return;
-
-    var hash = window.location.hash.replace('#', '');
-    if (dashboardSections.includes(hash) && hash !== 'overview') {
-        dashboardNav(hash, true);
-    }
-});
+// La navigation entre rubriques (dashboardNav) vit dans public/js/dashboard-nav.js,
+// chargé par le gabarit principal : elle fonctionne aussi sans ce menu.
 </script>

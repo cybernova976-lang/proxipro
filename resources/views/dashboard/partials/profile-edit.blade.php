@@ -6,7 +6,7 @@
                 <div class="card-header bg-transparent py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="fas fa-user-edit me-2"></i>Modifier le profil</h5>
-                        <a href="#" onclick="dashboardNav('profile'); return false;" class="btn btn-outline-secondary btn-sm">
+                        <a href="{{ route('profile.show') }}" class="btn btn-outline-secondary btn-sm">
                             <i class="fas fa-arrow-left me-1"></i>Retour
                         </a>
                     </div>
@@ -165,7 +165,7 @@
                         <hr class="my-4">
                         
                         <div class="d-flex justify-content-end gap-2">
-                            <a href="#" onclick="dashboardNav('profile'); return false;" class="btn btn-light">Annuler</a>
+                            <a href="{{ route('profile.show') }}" class="btn btn-light">Annuler</a>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>Enregistrer
                             </button>

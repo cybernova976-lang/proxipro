@@ -42,12 +42,12 @@ class SavedSearchController extends Controller
         $existing = $this->savedSearchService->findExistingSearch(Auth::user(), $snapshot);
 
         if ($existing) {
-            return back()->with('success', 'Cette alerte existe deja dans votre espace.');
+            return back()->with('success', 'Cette alerte existe déjà dans votre espace.');
         }
 
         $this->savedSearchService->saveFromSnapshot(Auth::user(), $snapshot);
 
-        return back()->with('success', 'Alerte enregistree. Vous serez prevenu des nouvelles annonces correspondantes.');
+        return back()->with('success', 'Alerte enregistrée. Vous serez prévenu des nouvelles annonces correspondantes.');
     }
 
     /**
@@ -90,6 +90,6 @@ class SavedSearchController extends Controller
 
         $savedSearch->delete();
 
-        return back()->with('success', 'Alerte supprimee.');
+        return back()->with('success', 'Alerte supprimée.');
     }
 }

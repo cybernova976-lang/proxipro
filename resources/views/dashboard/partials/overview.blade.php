@@ -36,5 +36,5 @@
         @endforelse
     </div>
     @if($activityItems->hasPages())<div class="mt-4">{{ $activityItems->links('pagination::bootstrap-5') }}</div>@endif
-    <footer class="pk-dash-bottom"><span>Une question sur une prestation ?</span><a href="{{ route('contact.index') }}">Contacter l’assistance</a><a href="{{ route('home') }}#my-ads" onclick="dashboardNav('my-ads'); return false;">Gérer mes annonces</a></footer>
+    <footer class="pk-dash-bottom"><span>Une question sur une prestation ?</span><a href="{{ route('contact.index') }}">Contacter l’assistance</a><a href="{{ route('ads.myads') }}">Gérer mes annonces</a></footer>
 </div>

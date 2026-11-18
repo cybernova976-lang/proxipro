@@ -145,7 +145,7 @@
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><i class="fas fa-history text-secondary me-2"></i>Dernières transactions</h5>
-            <a href="#" onclick="dashboardNav('transactions'); return false;" class="btn btn-sm btn-outline-primary">
+            <a href="{{ route('home') }}#transactions" onclick="dashboardNav('transactions'); return false;" class="btn btn-sm btn-outline-primary">
                 Voir tout <i class="fas fa-arrow-right ms-1"></i>
             </a>
         </div>
