@@ -11,7 +11,7 @@ class TermsAcceptanceController extends Controller
     public function show(Request $request)
     {
         $version = TermsVersion::current();
-        if (! $version || $request->user()->hasAcceptedTerms($version)) {
+        if (! $version || TermsVersion::isPaused() || $request->user()->hasAcceptedTerms($version)) {
             return redirect()->intended(route('feed'));
         }
 

@@ -178,6 +178,43 @@ class TermsAcceptanceTest extends TestCase
             ->assertSee('Version des conditions : 2026-11-18-2, applicable à partir du 03/12/2026.');
     }
 
+    public function test_the_administrator_can_suspend_and_resume_the_request_without_losing_anything(): void
+    {
+        $version = $this->publish();
+        $admin = User::factory()->create(['role' => 'admin']);
+        $admin->acceptTerms($version, '127.0.0.1', 'publication');
+        $member = User::factory()->create();
+
+        $this->actingAs($member)->get(route('service-orders.index'))->assertRedirect(route('terms.accept.show'));
+        $this->actingAs($admin)->get(route('admin.terms.index'))->assertOk()
+            ->assertSee('data-terms-paused="0"', false)->assertSee('Suspendre la demande');
+
+        // Suspendue : plus personne n'est sollicité, même sur une version obligatoire.
+        $this->actingAs($admin)->post(route('admin.terms.pause'), ['paused' => '1'])
+            ->assertRedirect(route('admin.terms.index'))
+            ->assertSessionHas('success', fn ($message) => str_contains($message, 'suspendue'));
+        $this->assertTrue(TermsVersion::isPaused());
+        $this->actingAs($member)->get(route('service-orders.index'))->assertOk();
+        $this->actingAs($member)->getJson(route('service-orders.index'))->assertOk();
+        $this->actingAs($member)->get(route('terms.accept.show'))->assertRedirect();
+        $this->actingAs($admin)->get(route('admin.terms.index'))->assertOk()
+            ->assertSee('data-terms-paused="1"', false)->assertSee('Reprendre la demande');
+        // Rien n'est effacé : la version et l'acceptation de l'administrateur sont toujours là.
+        $this->assertSame(1, TermsVersion::count());
+        $this->assertSame(1, TermsAcceptance::count());
+
+        // Reprise : ceux qui n'avaient pas accepté sont de nouveau sollicités, les autres non.
+        $this->actingAs($admin)->post(route('admin.terms.pause'), ['paused' => '0'])
+            ->assertSessionHas('success', fn ($message) => str_contains($message, 'reprise'));
+        $this->assertFalse(TermsVersion::isPaused());
+        $this->actingAs($member)->get(route('service-orders.index'))->assertRedirect(route('terms.accept.show'));
+        $this->actingAs($admin)->get(route('admin.dashboard'))->assertOk();
+
+        // Un membre ordinaire ne peut pas toucher à l'interrupteur.
+        $this->actingAs($member->fresh())->post(route('admin.terms.pause'), ['paused' => '1']);
+        $this->assertFalse(TermsVersion::isPaused());
+    }
+
     public function test_only_an_administrator_can_publish(): void
     {
         $member = User::factory()->create();

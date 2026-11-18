@@ -25,12 +25,24 @@ class AdminTermsController extends Controller
 
         return view('admin.terms.index', [
             'current' => $current,
+            'paused' => TermsVersion::isPaused(),
             'members' => $members,
             // Nombres mesurés : membres actifs ayant accepté la version en cours.
             'accepted' => $current ? User::where('accepted_terms_version_id', $current->id)->count() : 0,
             'versions' => TermsVersion::with('publisher')->withCount('acceptances')->latest('id')->get(),
             'defaultEffectiveDate' => now()->addDays(15)->format('Y-m-d'),
         ]);
+    }
+
+    /** Interrupteur : suspendre ou reprendre la demande d'acceptation, sans rien effacer. */
+    public function pause(Request $request)
+    {
+        $data = $request->validate(['paused' => ['required', 'in:0,1']]);
+        TermsVersion::setPaused($data['paused'] === '1');
+
+        return redirect()->route('admin.terms.index')->with('success', $data['paused'] === '1'
+            ? 'Demande d’acceptation suspendue : plus aucun membre n’est sollicité. Les acceptations déjà données sont conservées.'
+            : 'Demande d’acceptation reprise : les membres qui n’ont pas encore accepté sont de nouveau sollicités.');
     }
 
     public function publish(Request $request)

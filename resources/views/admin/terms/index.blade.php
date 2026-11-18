@@ -29,6 +29,26 @@
     </div>
 </div>
 
+<div class="card border-0 shadow-sm mb-4" id="termsSwitch" data-terms-paused="{{ $paused ? '1' : '0' }}">
+    <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+            <h3 class="h6 fw-bold mb-1">Demande d’acceptation : {{ $paused ? 'suspendue' : 'active' }}</h3>
+            <p class="small text-muted mb-0">
+                @if($paused)
+                    Plus aucun membre n’est sollicité, même après la date d’entrée en vigueur. Les acceptations déjà données sont conservées.
+                @else
+                    Les membres qui n’ont pas accepté la version en cours sont sollicités. Suspendez en cas de problème : rien n’est effacé.
+                @endif
+            </p>
+        </div>
+        <form action="{{ route('admin.terms.pause') }}" method="POST">
+            @csrf
+            <input type="hidden" name="paused" value="{{ $paused ? '0' : '1' }}">
+            <button type="submit" class="btn {{ $paused ? 'btn-success' : 'btn-outline-danger' }}">{{ $paused ? 'Reprendre la demande' : 'Suspendre la demande' }}</button>
+        </form>
+    </div>
+</div>
+
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
         <h3 class="h6 fw-bold mb-3">Publier une nouvelle version</h3>

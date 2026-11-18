@@ -759,6 +759,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     // Conditions d'utilisation : publier une version et suivre son acceptation
     Route::get('/conditions-utilisation', [\App\Http\Controllers\Admin\AdminTermsController::class, 'index'])->name('admin.terms.index');
     Route::post('/conditions-utilisation', [\App\Http\Controllers\Admin\AdminTermsController::class, 'publish'])->name('admin.terms.publish');
+    Route::post('/conditions-utilisation/suspension', [\App\Http\Controllers\Admin\AdminTermsController::class, 'pause'])->name('admin.terms.pause');
 });
 
 // Diagnostic boost (admin uniquement) - TEMPORAIRE

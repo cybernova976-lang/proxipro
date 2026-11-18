@@ -14,6 +14,8 @@ class TermsVersion extends Model
 {
     private const CACHE_KEY = 'terms_version_current_id';
 
+    private const PAUSE_KEY = 'terms_acceptance_paused';
+
     protected $fillable = ['version', 'summary', 'effective_at', 'published_by'];
 
     protected function casts(): array
@@ -40,6 +42,21 @@ class TermsVersion extends Model
     public static function forgetCurrent(): void
     {
         Cache::forget(self::CACHE_KEY);
+    }
+
+    /**
+     * Interrupteur de l'administrateur : suspendue, la demande d'acceptation
+     * n'est plus présentée à personne. Les acceptations déjà données restent
+     * enregistrées, et tout reprend là où cela s'était arrêté à la réactivation.
+     */
+    public static function isPaused(): bool
+    {
+        return (string) Setting::get(self::PAUSE_KEY, '0') === '1';
+    }
+
+    public static function setPaused(bool $paused): void
+    {
+        Setting::set(self::PAUSE_KEY, $paused ? '1' : '0', 'legal');
     }
 
     /** À partir de cette date, un membre ne peut plus continuer sans avoir accepté. */

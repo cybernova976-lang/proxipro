@@ -11,7 +11,8 @@ use Symfony\Component\HttpFoundation\Response;
  * Fait accepter la dernière version des conditions à tout membre connecté,
  * administrateurs compris. Avant la date d'entrée en vigueur, l'acceptation est
  * proposée une fois par session ; à partir de cette date, elle est obligatoire
- * pour continuer. Sans version publiée, rien n'est demandé.
+ * pour continuer. Sans version publiée, ou si l'administrateur a suspendu la
+ * demande, rien n'est demandé.
  */
 class EnsureTermsAccepted
 {
@@ -26,7 +27,7 @@ class EnsureTermsAccepted
         }
 
         $version = TermsVersion::current();
-        if (! $version || (int) $user->accepted_terms_version_id === (int) $version->id) {
+        if (! $version || (int) $user->accepted_terms_version_id === (int) $version->id || TermsVersion::isPaused()) {
             return $next($request);
         }
 
