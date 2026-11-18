@@ -93,7 +93,7 @@
         border: 1px solid #e2e8f0;
         box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
     }
-    .saved-search-empty i {
+    .saved-search-empty > i {
         font-size: 3rem;
         color: #cbd5e1;
         margin-bottom: 14px;
@@ -105,12 +105,12 @@
 <div class="saved-searches-page">
     <div class="saved-searches-header">
         <div>
-            <h1 class="saved-searches-title"><i class="fas fa-bell me-2" style="color:#f97316;"></i>Mes alertes</h1>
-            <p class="saved-searches-subtitle">Retrouvez vos recherches sauvegardees et les nouvelles annonces qui y correspondent.</p>
+            <h1 class="saved-searches-title"><i class="fas fa-bell me-2" style="color:#4338ca;"></i>Mes alertes</h1>
+            <p class="saved-searches-subtitle">Une alerte vous prévient dès qu’une nouvelle annonce correspond à ce que vous cherchez.</p>
         </div>
-        <a href="{{ route('feed') }}" class="btn btn-primary" style="border-radius:12px; font-weight:700;">
-            <i class="fas fa-plus me-2"></i>Nouvelle alerte
-        </a>
+        @if($savedSearches->count() > 0 && $territoryAlert)
+            @include('saved-searches.partials.create-territory-alert')
+        @endif
     </div>
 
     @if($savedSearches->count() > 0)
@@ -120,7 +120,7 @@
                     <div class="saved-search-card-top">
                         <div>
                             <h2 class="saved-search-name">{{ $savedSearch->name }}</h2>
-                            <small class="text-muted">Creee {{ $savedSearch->created_at->diffForHumans() }}</small>
+                            <small class="text-muted">Créée {{ $savedSearch->created_at->diffForHumans() }}</small>
                         </div>
                         <span class="saved-search-pill" style="background:{{ $savedSearch->is_active ? '#dcfce7' : '#f1f5f9' }}; border-color:{{ $savedSearch->is_active ? '#86efac' : '#e2e8f0' }}; color:{{ $savedSearch->is_active ? '#166534' : '#475569' }};">
                             <i class="fas fa-{{ $savedSearch->is_active ? 'check' : 'pause' }}-circle"></i>
@@ -147,7 +147,7 @@
                     <div class="saved-search-stats">
                         <span><strong>{{ $savedSearch->matches_count }}</strong> correspondances</span>
                         <span>
-                            Derniere activite:
+                            Dernière activité :
                             <strong>{{ $savedSearch->last_matched_at ? $savedSearch->last_matched_at->diffForHumans() : 'Aucune' }}</strong>
                         </span>
                     </div>
@@ -174,11 +174,16 @@
     @else
         <div class="saved-search-empty">
             <i class="fas fa-bell-slash"></i>
-            <h3>Aucune alerte enregistree</h3>
-            <p class="text-muted mb-4">Sauvegardez une recherche depuis le feed pour etre notifie des nouvelles annonces correspondantes.</p>
-            <a href="{{ route('feed') }}" class="btn btn-primary" style="border-radius:12px; font-weight:700;">
-                <i class="fas fa-compass me-2"></i>Retour au feed
-            </a>
+            <h3>Aucune alerte enregistrée</h3>
+            @if($territoryAlert)
+                <p class="text-muted mb-4">Soyez prévenu dès qu’un prestataire publie une offre {{ $territory->withPreposition() }}.</p>
+                @include('saved-searches.partials.create-territory-alert')
+            @else
+                <p class="text-muted mb-4">Indiquez votre commune : nous pourrons vous prévenir des nouvelles offres près de chez vous.</p>
+                <a href="{{ route('profile.edit') }}#city" class="btn btn-primary" style="border-radius:12px; font-weight:700;">
+                    <i class="fas fa-map-marker-alt me-2"></i>Indiquer ma commune
+                </a>
+            @endif
         </div>
     @endif
 </div>

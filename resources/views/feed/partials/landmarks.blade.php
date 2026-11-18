@@ -30,7 +30,17 @@
                 </li>
             @endif
             @if(! empty($pkTodo['alert']))
-                <li><a class="pk-landmarks__item" href="{{ route('saved-searches.index') }}"><i class="far fa-bookmark" aria-hidden="true"></i><span>Créer une alerte pour les nouvelles offres</span></a></li>
+                <li>
+                    <form method="POST" action="{{ route('saved-searches.store') }}" class="pk-landmarks__form">
+                        @csrf
+                        @foreach($pkTerritoryAlert as $pkAlertField => $pkAlertValue)
+                            <input type="hidden" name="{{ $pkAlertField }}" value="{{ $pkAlertValue }}">
+                        @endforeach
+                        <button type="submit" class="pk-landmarks__item">
+                            <i class="far fa-bookmark" aria-hidden="true"></i><span>Me prévenir des nouvelles offres {{ $pkTerritory->withPreposition() }}</span>
+                        </button>
+                    </form>
+                </li>
             @endif
             @if(! empty($pkTodo['city']))
                 <li><a class="pk-landmarks__item" href="{{ route('profile.edit') }}#city"><i class="fas fa-map-marker-alt" aria-hidden="true"></i><span>Indiquer ma commune</span></a></li>
@@ -43,6 +53,9 @@
 
     <ul class="pk-landmarks__list pk-landmarks__list--links">
         <li><a class="pk-landmarks__item" href="{{ route('saved-ads.index') }}"><i class="far fa-heart" aria-hidden="true"></i><span>Mes favoris</span></a></li>
+        @if($pkHasAlerts)
+            <li><a class="pk-landmarks__item" href="{{ route('saved-searches.index') }}"><i class="far fa-bell" aria-hidden="true"></i><span>Mes alertes</span></a></li>
+        @endif
         <li><a class="pk-landmarks__item" href="{{ route('legal.platform-rules') }}#classement"><i class="fas fa-sort-amount-down" aria-hidden="true"></i><span>Comment les offres sont classées</span></a></li>
     </ul>
 

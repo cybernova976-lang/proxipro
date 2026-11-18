@@ -507,6 +507,10 @@ class FeedController extends Controller
             'territory' => route('feed'),
             'location' => route('profile.edit').'#city',
         ];
+        // Alerte « nouvelles offres du territoire » : mêmes champs pour « Me prévenir » et pour « À faire ».
+        $pkTerritoryAlert = $pkTerritory !== null
+            ? app(\App\Services\SavedSearchService::class)->territoryOfferAlertFields($pkTerritory)
+            : null;
         $pkEmptyLocal = null;
         // Fondé sur le total, pas sur la page courante ; et faux si le lecteur a lui-même publié dans ce territoire.
         if ($pkRole === 'client' && $pkTerritoryScoped && $pkFeedAds->isEmpty() && $pkFeedPagination?->total() === 0
@@ -514,11 +518,7 @@ class FeedController extends Controller
             $pkProviderSignupUrl = route('register', ['account_type' => 'professionnel']);
             $pkEmptyLocal = [
                 // Alerte « nouvelles offres du territoire » (route existante saved-searches.store).
-                'alert' => array_filter([
-                    'type' => 'offres',
-                    'territory' => $pkTerritory->code,
-                    'country' => $pkTerritory->isOverseas() ? $pkTerritory->label : null,
-                ]),
+                'alert' => $pkTerritoryAlert,
                 'invite_url' => 'https://wa.me/?text='.rawurlencode(
                     'Bonjour, je cherche un prestataire '.$pkTerritory->withPreposition()
                     .' sur Prokejem. Vous pouvez y proposer vos services : '.$pkProviderSignupUrl
@@ -636,12 +636,14 @@ class FeedController extends Controller
         $pkSituationTiles = [];
         $pkSearchConfig = [];
         $pkTodo = [];
+        $pkHasAlerts = false;
         if ($pkRole === 'client') {
             // Zone « À faire » du rail : chaque ligne repose sur une donnée réelle du compte.
             if ($user?->exists) {
+                $pkHasAlerts = $user->savedSearches()->exists();
                 $pkTodo = array_filter([
                     'push' => ! $user->pushSubscriptions()->exists(),
-                    'alert' => $pkTerritory !== null && ! $user->savedSearches()->exists(),
+                    'alert' => $pkTerritoryAlert !== null && ! $pkHasAlerts,
                     'city' => trim((string) $user->city) === '' && trim((string) $user->postal_code) === '',
                 ]);
             }
@@ -740,6 +742,8 @@ class FeedController extends Controller
             'pkTerritoryLinks',
             'pkRankingDisclosure',
             'pkEmptyLocal',
+            'pkTerritoryAlert',
+            'pkHasAlerts',
             'pkPrimaryAction',
             'pkSituationTiles',
             'pkSearchConfig',

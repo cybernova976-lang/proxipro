@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SavedSearch;
 use App\Services\SavedSearchService;
+use App\Support\TerritoryResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,15 +15,24 @@ class SavedSearchController extends Controller
     {
     }
 
-    public function index()
+    public function index(Request $request, TerritoryResolver $territories)
     {
-        $savedSearches = Auth::user()
+        $user = Auth::user();
+        $savedSearches = $user
             ->savedSearches()
             ->withCount('matches')
             ->latest()
             ->paginate(12);
 
-        return view('saved-searches.index', compact('savedSearches'));
+        // La page doit permettre de créer une alerte, pas seulement de les lire :
+        // on propose celle des nouvelles offres du territoire du membre, tant
+        // qu'il ne l'a pas déjà.
+        $territory = $territories->forUser($user, (array) ($request->attributes->get('user_geo') ?? []));
+        $territoryAlert = $territory !== null && ! $this->savedSearchService->hasActiveTerritoryOfferAlert($user, $territory)
+            ? $this->savedSearchService->territoryOfferAlertFields($territory)
+            : null;
+
+        return view('saved-searches.index', compact('savedSearches', 'territory', 'territoryAlert'));
     }
 
     public function store(Request $request): RedirectResponse

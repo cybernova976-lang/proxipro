@@ -1131,6 +1131,7 @@
 .pk-empty-local p a { color: #4338ca; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
 .pk-empty-local__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 18px; }
 .pk-empty-local__alert { margin: 0; }
+.pk-landmarks__form { margin: 0; }
 .pk-empty-local__invite { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: #3730a3; font-size: .85rem; font-weight: 700; }
 .pk-empty-local__invite i { color: #7c3aed; }
 .pk-empty-local__elsewhere { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-top: 10px; color: var(--pk-ink-2); font-size: .8rem; text-decoration: underline; text-underline-offset: 2px; }

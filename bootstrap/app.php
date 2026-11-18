@@ -25,6 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Détection appareil (mobile/tablet/desktop) sur toutes les requêtes web
         $middleware->web(append: [
+            // En premier : voit la réponse finale, et garde les messages de
+            // retour quand la requête n'affiche aucune page (signaux d'arrière-plan).
+            \App\Http\Middleware\PreserveFlashMessages::class,
             \App\Http\Middleware\RedirectToCanonicalHost::class,
             \App\Http\Middleware\DetectDevice::class,
             \App\Http\Middleware\SecurityHeaders::class,

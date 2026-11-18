@@ -30,6 +30,31 @@ class SavedSearchService
         return $code === '' ? null : $this->territories->find($code);
     }
 
+    /**
+     * Champs du formulaire « nouvelles offres du territoire » : les mêmes sur
+     * l'accueil (« Me prévenir », « Créer une alerte ») et sur « Mes alertes ».
+     *
+     * @return array<string, string>
+     */
+    public function territoryOfferAlertFields(Territory $territory): array
+    {
+        return array_filter([
+            'type' => 'offres',
+            'territory' => $territory->code,
+            'country' => $territory->isOverseas() ? $territory->label : null,
+        ]);
+    }
+
+    /** Le membre est-il déjà prévenu des nouvelles offres de ce territoire ? */
+    public function hasActiveTerritoryOfferAlert(User $user, Territory $territory): bool
+    {
+        return $user->savedSearches()
+            ->where('territory_code', $territory->code)
+            ->where('service_type', 'offres')
+            ->where('is_active', true)
+            ->exists();
+    }
+
     public function buildSnapshot(array $input, ?User $user = null, array $geoContext = []): array
     {
         // Alerte « nouvelles offres du territoire » (état vide du flux client) :
