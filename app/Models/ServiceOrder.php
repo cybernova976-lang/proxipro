@@ -195,6 +195,19 @@ class ServiceOrder extends Model
         return $date ? \Illuminate\Support\Carbon::parse($date) : null;
     }
 
+    /** Nombre de rappels « confirmez la fin de la prestation » déjà envoyés au client. */
+    public function getReleaseRemindersSentAttribute(): int
+    {
+        return (int) ($this->metadata['release_reminders_sent'] ?? 0);
+    }
+
+    public function getReleaseReminderLastAtAttribute(): ?\Illuminate\Support\Carbon
+    {
+        $date = $this->metadata['release_reminder_last_at'] ?? null;
+
+        return $date ? \Illuminate\Support\Carbon::parse($date) : null;
+    }
+
     public function canBuyerRelease(): bool
     {
         return $this->status === self::STATUS_FUNDED && $this->payment_status === self::PAYMENT_PAID;

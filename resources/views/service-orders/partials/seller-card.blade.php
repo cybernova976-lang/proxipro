@@ -59,6 +59,9 @@
     @if($pkNext)
         <p class="pk-order__next pk-order__next--{{ $pkTone }}">{{ $pkNext }}</p>
     @endif
+    @if($order->status === $pkStatus::STATUS_FUNDED && $order->release_reminder_last_at)
+        <p class="pk-order__ref" data-order-reminded>Nous avons rappelé au client de confirmer la fin de la prestation le {{ $order->release_reminder_last_at->format('d/m/Y') }}.</p>
+    @endif
     @if($order->refused_reason)
         <p class="pk-order__message"><b>Motif du refus</b>{{ $order->refused_reason }}</p>
     @endif

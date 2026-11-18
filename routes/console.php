@@ -111,6 +111,15 @@ Schedule::command('pro:send-activity-reports')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/pro-activity-reports.log'));
 
+// Rappelle au client de confirmer la fin d'une prestation payée : sans cela le
+// prestataire n'est pas versé. La tâche ne verse rien elle-même. Jamais la nuit.
+Schedule::command('service-orders:remind-release')
+    ->hourly()
+    ->timezone('Indian/Mayotte')
+    ->between('8:00', '20:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/release-reminders.log'));
+
 // Relance unique des devis Premium restés sans réponse depuis 7 jours, à la
 // demande du prestataire. Elle écrit à ses clients : jamais la nuit.
 Schedule::command('pro-quotes:send-reminders')

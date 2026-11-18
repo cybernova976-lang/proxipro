@@ -119,6 +119,13 @@ class ServiceOrderStatusNotification extends Notification
                 'icon' => 'fas fa-ban',
                 'color' => '#b91c1c',
             ],
+            'release_reminder' => [
+                'subject' => 'Votre prestation est-elle terminée ?',
+                'title' => 'Votre prestation est-elle terminée ?',
+                'line' => 'Vous avez payé la commande "'.$this->serviceOrder->ad->title.'". Si le travail est terminé, confirmez-le depuis vos commandes : '.($this->serviceOrder->seller?->name ?? 'le prestataire').' ne sera payé qu’à ce moment-là. En cas de problème, signalez-le au même endroit.',
+                'icon' => 'fas fa-clipboard-check',
+                'color' => '#4f46e5',
+            ],
             'payout_setup_required' => [
                 'subject' => 'Activez la réception de vos paiements',
                 'title' => 'Un client attend pour vous payer',
