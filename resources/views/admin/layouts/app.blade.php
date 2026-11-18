@@ -352,6 +352,11 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('admin.terms.index') }}" class="{{ request()->routeIs('admin.terms.*') ? 'active' : '' }}">
+                    <i class="fas fa-file-signature me-2"></i> Conditions (CGU)
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('admin.settings') }}" class="{{ request()->routeIs('admin.settings') ? 'active' : '' }}">
                     <i class="fas fa-cog me-2"></i> Paramètres
                 </a>

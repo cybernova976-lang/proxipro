@@ -33,7 +33,7 @@ class ServiceOrderStatusNotification extends Notification
             ->subject($content['subject'])
             ->greeting('Bonjour '.$notifiable->name.',')
             ->line($content['line'])
-            ->action('Voir la commande', route('service-orders.index'));
+            ->action('Voir la commande', $content['url'] ?? route('service-orders.index'));
 
         if ($this->note) {
             $mail->line('Motif / note: '.$this->note);
@@ -53,7 +53,7 @@ class ServiceOrderStatusNotification extends Notification
             'title' => $content['title'],
             'message' => $content['line'],
             'note' => $this->note,
-            'action_url' => route('service-orders.index'),
+            'action_url' => $content['url'] ?? route('service-orders.index'),
             'service_order_id' => $this->serviceOrder->id,
             'order_number' => $this->serviceOrder->order_number,
             'ad_id' => $this->serviceOrder->ad_id,
@@ -125,6 +125,14 @@ class ServiceOrderStatusNotification extends Notification
                 'line' => 'Vous avez payé la commande "'.$this->serviceOrder->ad->title.'". Si le travail est terminé, confirmez-le depuis vos commandes : '.($this->serviceOrder->seller?->name ?? 'le prestataire').' ne sera payé qu’à ce moment-là. En cas de problème, signalez-le au même endroit.',
                 'icon' => 'fas fa-clipboard-check',
                 'color' => '#4f46e5',
+            ],
+            'admin_decision_needed' => [
+                'subject' => 'Commande payée sans confirmation du client : à vous de décider',
+                'title' => 'Commande à trancher',
+                'line' => 'Le client de la commande "'.$this->serviceOrder->ad->title.'" ('.$this->serviceOrder->order_number.') n’a ni confirmé la fin de la prestation ni signalé de problème, malgré tous les rappels. Le prestataire n’est pas payé. Décidez depuis l’administration : verser au prestataire ou rembourser le client.',
+                'icon' => 'fas fa-gavel',
+                'color' => '#c2410c',
+                'url' => route('admin.service-orders.index', ['status' => 'unconfirmed']),
             ],
             'payout_setup_required' => [
                 'subject' => 'Activez la réception de vos paiements',

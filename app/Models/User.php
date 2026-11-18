@@ -627,6 +627,22 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
+    /** Ce membre a-t-il accepté cette version des conditions d'utilisation ? */
+    public function hasAcceptedTerms(TermsVersion $version): bool
+    {
+        return (int) $this->accepted_terms_version_id === (int) $version->id;
+    }
+
+    /** Enregistre l'acceptation, avec sa preuve (date, adresse IP, origine). */
+    public function acceptTerms(TermsVersion $version, ?string $ip, string $source): void
+    {
+        TermsAcceptance::firstOrCreate(
+            ['user_id' => $this->id, 'terms_version_id' => $version->id],
+            ['accepted_at' => now(), 'ip' => $ip, 'source' => $source]
+        );
+        $this->forceFill(['accepted_terms_version_id' => $version->id])->saveQuietly();
+    }
+
     public function ads()
     {
         return $this->hasMany(Ad::class);

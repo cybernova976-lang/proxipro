@@ -23,6 +23,7 @@
         $order->status === $pkStatus::STATUS_PENDING_ACCEPTANCE => $pkSellerName.' doit d’abord accepter votre réservation. Vous serez prévenu, et vous pourrez alors payer en ligne.',
         $order->canBuyerPay() && ! $pkSellerPayable => 'Le prestataire n’a pas encore activé la réception de ses paiements : le paiement en ligne sera possible dès que ce sera fait.',
         $order->canBuyerPay() => 'Payez en ligne pour confirmer la prestation. Votre argent est conservé en sécurité : le prestataire ne le reçoit qu’une fois le travail terminé.',
+        $order->isAwaitingAdminDecision() => 'Vous n’avez pas confirmé la fin de cette prestation malgré nos rappels. Prokejem examine maintenant la situation et décidera de payer le prestataire ou de vous rembourser. Vous pouvez encore confirmer ou signaler un problème ici.',
         $order->canBuyerRelease() => 'Vous avez payé'.($order->paid_at ? ' le '.$order->paid_at->format('d/m/Y') : '').'. Votre argent est conservé en sécurité. Quand le travail est terminé, confirmez-le ici : '.$pkSellerName.' sera alors payé.',
         $order->status === $pkStatus::STATUS_COMPLETED => 'Prestation terminée'.($order->released_at ? ' le '.$order->released_at->format('d/m/Y') : '').' : le prestataire a été payé.',
         $order->status === $pkStatus::STATUS_DISPUTED => 'Vous avez signalé un problème. Votre argent reste conservé en sécurité pendant que notre équipe examine la situation.',

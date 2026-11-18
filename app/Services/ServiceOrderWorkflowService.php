@@ -267,12 +267,12 @@ class ServiceOrderWorkflowService
     public function adminReleaseDispute(ServiceOrder $serviceOrder, User $admin, ?string $note = null): ServiceOrder
     {
         abort_unless($admin->isAdmin(), 403);
-        abort_unless($serviceOrder->canAdminResolveDispute(), 422);
+        abort_unless($serviceOrder->canAdminResolve(), 422);
 
         DB::transaction(function () use ($serviceOrder, $admin, $note) {
             // Même verrou que pour la libération par le client.
             $serviceOrder = ServiceOrder::query()->lockForUpdate()->findOrFail($serviceOrder->id);
-            abort_unless($serviceOrder->canAdminResolveDispute() && ! $serviceOrder->stripe_transfer_id, 422);
+            abort_unless($serviceOrder->canAdminResolve() && ! $serviceOrder->stripe_transfer_id, 422);
 
             $transferId = $this->stripeConnectService->transferToSeller($serviceOrder->loadMissing('seller'));
 
@@ -317,7 +317,7 @@ class ServiceOrderWorkflowService
     public function adminRefundDispute(ServiceOrder $serviceOrder, User $admin, string $note): ServiceOrder
     {
         abort_unless($admin->isAdmin(), 403);
-        abort_unless($serviceOrder->canAdminResolveDispute(), 422);
+        abort_unless($serviceOrder->canAdminResolve(), 422);
 
         DB::transaction(function () use ($serviceOrder, $admin, $note) {
             $refundId = $this->stripeConnectService->refundOrder($serviceOrder);

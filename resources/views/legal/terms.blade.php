@@ -34,6 +34,7 @@
 
     <h4 class="mt-4">8. Prix, paiement, annulation et remboursement</h4>
     <p id="commission">Lorsqu’une commande est réglée en ligne via Prokejem, le client paie le prix convenu avec le prestataire, sans frais ajoutés. La plateforme perçoit une commission de <strong>{{ \App\Support\MarketplaceCommission::label() }}</strong> du prix de la commande, déduite du montant versé au prestataire. Le paiement est encaissé par l’intermédiaire de Stripe et la part du prestataire ne lui est versée qu’après confirmation de la fin de la prestation par le client, ou après décision de la plateforme en cas de litige. Le prix, la commission et le montant versé sont affichés sur la commande. Un accord réglé directement entre le client et le prestataire, sans paiement en ligne sur Prokejem, ne donne lieu à aucune commission.</p>
+    <p id="confirmation">Une fois la commande payée en ligne, il appartient au client de confirmer la fin de la prestation depuis ses commandes : c’est cette confirmation qui déclenche le versement au prestataire. La plateforme rappelle au client de le faire. <strong>Aucun versement n’est effectué automatiquement à l’expiration d’un délai.</strong> Si, malgré ces rappels, le client ne confirme pas la fin de la prestation et ne signale aucun problème, la plateforme examine la situation, peut demander des éléments au client et au prestataire, puis décide soit de verser la somme au prestataire, soit de rembourser le client. Sa décision est communiquée aux deux parties.</p>
     <p>Les prix, frais de plateforme et modalités de paiement sont affichés avant validation. Les paiements en ligne, lorsqu’ils sont activés, sont traités par le prestataire de paiement indiqué. Une demande d’annulation ou de remboursement est examinée selon l’état de la commande, les conditions acceptées entre les parties et les droits impératifs du consommateur. Aucun texte de la plateforme ne réduit un droit auquel la loi interdit de renoncer.</p>
 
     <h4 class="mt-4">9. Avis et réputation</h4>
@@ -52,9 +53,14 @@
     <p>L’utilisateur peut demander la fermeture de son compte, sous réserve des commandes, litiges et obligations de conservation en cours. Une adresse associée à un compte supprimé pour fraude, abus ou risque peut être bloquée afin d’empêcher une réinscription non autorisée.</p>
 
     <h4 class="mt-4">14. Évolution, droit applicable et litiges</h4>
+    <p id="evolution">Toute nouvelle version des présentes conditions est présentée à chaque utilisateur connecté, avec un résumé des changements et sa date d’entrée en vigueur. Avant cette date, l’utilisateur peut l’accepter ou poursuivre sa navigation ; à compter de cette date, l’utilisation du compte suppose de l’avoir acceptée. L’utilisateur qui ne souhaite pas l’accepter peut demander la fermeture de son compte dans les conditions de l’article 13. La date et la version acceptées sont conservées à titre de preuve.</p>
     <p>Les changements importants sont communiqués dans un délai raisonnable. Les droits impératifs du pays de résidence du consommateur demeurent applicables. Les parties recherchent d’abord une solution amiable avec le support ; les voies de médiation et juridictions légalement compétentes restent accessibles.</p>
 
-    <p class="mt-5 text-muted small">Dernière mise à jour de l’identité de l’exploitant : {{ config('legal.last_updated') }}.</p>
+    @php
+        $pkTermsVersion = \App\Models\TermsVersion::current();
+    @endphp
+    <p class="mt-5 text-muted small">@if($pkTermsVersion)<span data-terms-version>Version des conditions : {{ $pkTermsVersion->version }}, applicable à partir du {{ $pkTermsVersion->effective_at->format('d/m/Y') }}.</span>@endif
+    Dernière mise à jour de l’identité de l’exploitant : {{ config('legal.last_updated') }}.</p>
 </div></div>
 </div></div></div>
 @endsection

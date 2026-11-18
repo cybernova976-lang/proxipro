@@ -369,6 +369,11 @@ class RegisterController extends Controller
         $user->is_active = true;
         $user->save();
 
+        // La case cochée à l'inscription vaut acceptation de la version en cours des conditions.
+        if (! empty($data['terms']) && ($terms = \App\Models\TermsVersion::current())) {
+            $user->acceptTerms($terms, request()->ip(), 'registration');
+        }
+
         return $user;
     }
 }

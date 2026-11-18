@@ -29,6 +29,8 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\DetectDevice::class,
             \App\Http\Middleware\SecurityHeaders::class,
             \App\Http\Middleware\EnforceSessionInactivity::class,
+            // Après la session : fait accepter la dernière version des conditions.
+            \App\Http\Middleware\EnsureTermsAccepted::class,
         ]);
 
         $middleware->alias([

@@ -7,9 +7,11 @@ use App\Models\ServiceOrder;
 use App\Models\User;
 use App\Notifications\ServiceOrderStatusNotification;
 use App\Services\ReleaseReminderService;
+use App\Services\StripeConnectService;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Mockery;
 use Tests\TestCase;
 
 /**
@@ -158,6 +160,92 @@ class ReleaseReminderTest extends TestCase
         $this->flushSession();
         $this->actingAs($order->seller)->get(route('service-orders.index'))->assertOk()
             ->assertSee('Nous avons rappelé au client de confirmer la fin de la prestation le 04/11/2026.');
+    }
+
+    public function test_once_all_reminders_are_sent_the_administrator_decides_and_nothing_is_paid_automatically(): void
+    {
+        Notification::fake();
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->travelTo('2026-11-01 10:00:00');
+        $order = $this->paidOrder();
+
+        foreach (['2026-11-04', '2026-11-07', '2026-11-10'] as $day) {
+            $this->travelTo($day.' 10:00:00');
+            $this->remind();
+        }
+        // Le dernier rappel vient de partir : le client a encore le délai habituel pour répondre.
+        $this->assertFalse($order->fresh()->isAwaitingAdminDecision());
+        $this->flushSession();
+        $this->actingAs($admin)->post(route('admin.service-orders.release', $order))->assertStatus(422);
+        Notification::assertNotSentTo($admin, ServiceOrderStatusNotification::class);
+
+        // Trois jours plus tard, toujours rien : l'administrateur est prévenu, une seule fois.
+        $this->travelTo('2026-11-13 10:00:01');
+        $this->assertSame(['sent' => 0, 'failed' => 0], $this->remind());
+        $this->remind();
+        $this->assertTrue($order->fresh()->isAwaitingAdminDecision());
+        Notification::assertSentToTimes($admin, ServiceOrderStatusNotification::class, 1);
+        Notification::assertSentTo($admin, ServiceOrderStatusNotification::class, function ($notification) use ($admin) {
+            $data = $notification->toArray($admin);
+
+            return $data['type'] === 'service_order_admin_decision_needed'
+                && $data['action_url'] === route('admin.service-orders.index', ['status' => 'unconfirmed']);
+        });
+        // Rien n'a été versé tout seul.
+        $this->assertSame(ServiceOrder::STATUS_FUNDED, $order->fresh()->status);
+        $this->assertNull($order->fresh()->stripe_transfer_id);
+
+        $this->flushSession();
+        $this->actingAs($admin)->get(route('admin.service-orders.index'))->assertOk()
+            ->assertSee('1 commande à trancher.')
+            ->assertSee('data-order-unconfirmed', false)
+            ->assertSee('Client sans réponse après 3 rappels (dernier le 10/11/2026).')
+            ->assertSee('Payer le prestataire')->assertSee('Rembourser le client');
+        $this->actingAs($admin)->get(route('admin.service-orders.index', ['status' => 'unconfirmed']))->assertOk()
+            ->assertSee($order->order_number);
+
+        // Chaque partie voit que la décision appartient désormais à la plateforme.
+        $this->flushSession();
+        $this->actingAs($order->seller)->get(route('service-orders.index'))->assertOk()
+            ->assertSee('Prokejem examine la situation et vous tiendra informé de sa décision');
+        $this->flushSession();
+        $this->actingAs($order->buyer)->get(route('service-orders.index'))->assertOk()
+            ->assertSee('Prokejem examine maintenant la situation')
+            ->assertSee('Prestation terminée : payer le prestataire');
+    }
+
+    public function test_the_administrator_can_pay_the_provider_or_refund_the_client_of_an_unconfirmed_order(): void
+    {
+        Notification::fake();
+        $admin = User::factory()->create(['role' => 'admin']);
+        $silent = ['metadata' => ['release_reminders_sent' => 3, 'release_reminder_last_at' => now()->subDays(4)->toIso8601String()]];
+        $toPay = $this->paidOrder($silent);
+        $toRefund = $this->paidOrder($silent);
+
+        $connect = Mockery::mock(StripeConnectService::class);
+        $connect->shouldReceive('transferToSeller')->once()->andReturn('tr_admin');
+        $connect->shouldReceive('refundOrder')->once()->andReturn('re_admin');
+        $this->app->instance(StripeConnectService::class, $connect);
+
+        // Un membre ordinaire ne peut rien décider.
+        $this->actingAs($toPay->seller)->post(route('admin.service-orders.release', $toPay));
+        $this->assertSame(ServiceOrder::STATUS_FUNDED, $toPay->fresh()->status);
+
+        $this->actingAs($admin)->post(route('admin.service-orders.release', $toPay), ['resolution_note' => 'Travail confirmé par photos.'])
+            ->assertRedirect(route('admin.service-orders.index'))
+            ->assertSessionHas('success', 'Décision enregistrée : le prestataire est payé. Les deux parties sont prévenues.');
+        $toPay->refresh();
+        $this->assertSame([ServiceOrder::STATUS_COMPLETED, ServiceOrder::PAYMENT_RELEASED, 'tr_admin', 'released', $admin->id],
+            [$toPay->status, $toPay->payment_status, $toPay->stripe_transfer_id, $toPay->admin_resolution, (int) $toPay->admin_resolved_by]);
+
+        $this->actingAs($admin)->post(route('admin.service-orders.refund', $toRefund), ['resolution_note' => 'Prestation non réalisée selon les deux parties.'])
+            ->assertRedirect(route('admin.service-orders.index'))
+            ->assertSessionHas('success', 'Décision enregistrée : le client est remboursé. Les deux parties sont prévenues.');
+        $toRefund->refresh();
+        $this->assertSame([ServiceOrder::STATUS_REFUNDED, 're_admin', 'refunded'], [$toRefund->status, $toRefund->stripe_refund_id, $toRefund->admin_resolution]);
+
+        Notification::assertSentTo($toPay->buyer, ServiceOrderStatusNotification::class);
+        Notification::assertSentTo($toRefund->seller, ServiceOrderStatusNotification::class);
     }
 
     public function test_the_command_runs_and_is_scheduled_by_day_only(): void

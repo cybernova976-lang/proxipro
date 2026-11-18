@@ -19,7 +19,14 @@ class AdminServiceOrderController extends Controller
     {
         $query = ServiceOrder::with(['ad', 'buyer', 'seller']);
 
-        if ($request->filled('status')) {
+        // Payées, tous rappels envoyés, client sans réponse : à trancher par l'administrateur.
+        $awaitingDecision = ServiceOrder::with('ad')
+            ->where('status', ServiceOrder::STATUS_FUNDED)->where('payment_status', ServiceOrder::PAYMENT_PAID)
+            ->get()->filter->isAwaitingAdminDecision();
+
+        if ($request->status === 'unconfirmed') {
+            $query->whereIn('id', $awaitingDecision->pluck('id'));
+        } elseif ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
@@ -40,6 +47,7 @@ class AdminServiceOrderController extends Controller
             'funded' => ServiceOrder::where('status', ServiceOrder::STATUS_FUNDED)->count(),
             'completed' => ServiceOrder::where('status', ServiceOrder::STATUS_COMPLETED)->count(),
             'refunded' => ServiceOrder::where('status', ServiceOrder::STATUS_REFUNDED)->count(),
+            'unconfirmed' => $awaitingDecision->count(),
         ];
 
         // Commissions mesurées sur les commandes : acquises une fois les fonds
@@ -64,7 +72,7 @@ class AdminServiceOrderController extends Controller
         }
 
         return redirect()->route('admin.service-orders.index')
-            ->with('success', 'Litige résolu: fonds libérés vers le vendeur.');
+            ->with('success', 'Décision enregistrée : le prestataire est payé. Les deux parties sont prévenues.');
     }
 
     public function refund(Request $request, ServiceOrder $serviceOrder)
@@ -78,7 +86,7 @@ class AdminServiceOrderController extends Controller
         }
 
         return redirect()->route('admin.service-orders.index')
-            ->with('success', 'Litige résolu: remboursement Stripe déclenché.');
+            ->with('success', 'Décision enregistrée : le client est remboursé. Les deux parties sont prévenues.');
     }
 
     /**

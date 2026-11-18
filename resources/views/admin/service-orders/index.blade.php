@@ -17,10 +17,17 @@
 
 <div class="row g-3 mb-4">
     <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Litiges ouverts</div><div class="fs-3 fw-bold text-warning">{{ $stats['disputed'] }}</div></div></div></div>
-    <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Fonds bloqués</div><div class="fs-3 fw-bold text-primary">{{ $stats['funded'] }}</div></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Payées, à confirmer par le client</div><div class="fs-3 fw-bold text-primary">{{ $stats['funded'] }}</div></div></div></div>
     <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Terminées</div><div class="fs-3 fw-bold text-success">{{ $stats['completed'] }}</div></div></div></div>
     <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Remboursées</div><div class="fs-3 fw-bold text-info">{{ $stats['refunded'] }}</div></div></div></div>
 </div>
+
+@if($stats['unconfirmed'] > 0)
+    <div class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-3" id="ordersToDecide">
+        <div><strong>{{ $stats['unconfirmed'] }} commande{{ $stats['unconfirmed'] > 1 ? 's' : '' }} à trancher.</strong> Le client a payé mais n’a ni confirmé la fin de la prestation ni signalé de problème, malgré tous les rappels. Le prestataire n’est pas payé tant que vous n’avez pas décidé.</div>
+        <a href="{{ route('admin.service-orders.index', ['status' => 'unconfirmed']) }}" class="btn btn-warning text-dark">Voir ces commandes</a>
+    </div>
+@endif
 
 <div class="card border-0 shadow-sm mb-4" id="commissionSummary">
     <div class="card-body d-flex flex-wrap gap-4 align-items-center">
@@ -41,7 +48,7 @@
                 <label class="form-label">Statut</label>
                 <select name="status" class="form-select">
                     <option value="">Tous</option>
-                    @foreach(['pending_acceptance' => 'En attente', 'awaiting_payment' => 'Attente paiement', 'funded' => 'Fonds bloqués', 'disputed' => 'Litige', 'completed' => 'Terminée', 'refunded' => 'Remboursée'] as $value => $label)
+                    @foreach(['pending_acceptance' => 'En attente', 'awaiting_payment' => 'Attente paiement', 'funded' => 'Payée', 'unconfirmed' => 'À trancher (client sans réponse)', 'disputed' => 'Litige', 'completed' => 'Terminée', 'refunded' => 'Remboursée'] as $value => $label)
                         <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
@@ -119,16 +126,19 @@
                             @endif
                         </td>
                         <td style="min-width: 320px;">
-                            @if($order->canAdminResolveDispute())
+                            @if($order->isAwaitingAdminDecision())
+                                <div class="small text-danger mb-2" data-order-unconfirmed>Client sans réponse après {{ $order->release_reminders_sent }} rappels (dernier le {{ $order->release_reminder_last_at->format('d/m/Y') }}). À vous de décider.</div>
+                            @endif
+                            @if($order->canAdminResolve())
                                 <form action="{{ route('admin.service-orders.release', $order) }}" method="POST" class="mb-2">
                                     @csrf
-                                    <textarea name="resolution_note" class="form-control form-control-sm mb-2" rows="2" placeholder="Note optionnelle de libération"></textarea>
-                                    <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-unlock-alt me-1"></i>Libérer les fonds</button>
+                                    <textarea name="resolution_note" class="form-control form-control-sm mb-2" rows="2" placeholder="Note facultative, transmise aux deux parties"></textarea>
+                                    <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-unlock-alt me-1"></i>Payer le prestataire</button>
                                 </form>
                                 <form action="{{ route('admin.service-orders.refund', $order) }}" method="POST">
                                     @csrf
-                                    <textarea name="resolution_note" class="form-control form-control-sm mb-2" rows="2" placeholder="Motif obligatoire du remboursement" required></textarea>
-                                    <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fas fa-undo-alt me-1"></i>Rembourser</button>
+                                    <textarea name="resolution_note" class="form-control form-control-sm mb-2" rows="2" placeholder="Motif obligatoire du remboursement, transmis aux deux parties" required></textarea>
+                                    <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fas fa-undo-alt me-1"></i>Rembourser le client</button>
                                 </form>
                             @else
                                 <div class="small text-muted">{{ $order->admin_resolution_note ?: 'Aucune action admin requise pour cette commande.' }}</div>

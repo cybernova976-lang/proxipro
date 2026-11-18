@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ServiceOrder;
+use App\Models\User;
 use App\Notifications\ServiceOrderStatusNotification;
 use App\Support\SafeNotifier;
 use Illuminate\Support\Carbon;
@@ -30,6 +31,8 @@ class ReleaseReminderService
             ->whereNotNull('paid_at')
             ->chunkById(100, function ($orders) use ($now, &$result) {
                 foreach ($orders as $order) {
+                    $this->alertAdminsOnce($order);
+
                     if (! $this->isDue($order, $now)) {
                         continue;
                     }
@@ -49,6 +52,28 @@ class ReleaseReminderService
             });
 
         return $result;
+    }
+
+    /**
+     * Tous les rappels sont partis et le client n'a pas répondu : les
+     * administrateurs sont prévenus une seule fois, pour décider eux-mêmes.
+     */
+    private function alertAdminsOnce(ServiceOrder $order): void
+    {
+        if (! $order->isAwaitingAdminDecision() || ! empty($order->metadata['admin_alerted_at'])) {
+            return;
+        }
+
+        $sent = false;
+        foreach (User::where('role', 'admin')->get() as $admin) {
+            $sent = SafeNotifier::send($admin, new ServiceOrderStatusNotification($order, 'admin_decision_needed')) || $sent;
+        }
+
+        if ($sent) {
+            $order->forceFill(['metadata' => array_merge($order->metadata ?? [], [
+                'admin_alerted_at' => now()->toIso8601String(),
+            ])])->save();
+        }
     }
 
     public function isDue(ServiceOrder $order, ?Carbon $now = null): bool

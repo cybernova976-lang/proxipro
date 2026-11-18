@@ -755,6 +755,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/service-orders', [AdminServiceOrderController::class, 'index'])->name('admin.service-orders.index');
     Route::post('/service-orders/{serviceOrder}/release', [AdminServiceOrderController::class, 'release'])->name('admin.service-orders.release');
     Route::post('/service-orders/{serviceOrder}/refund', [AdminServiceOrderController::class, 'refund'])->name('admin.service-orders.refund');
+
+    // Conditions d'utilisation : publier une version et suivre son acceptation
+    Route::get('/conditions-utilisation', [\App\Http\Controllers\Admin\AdminTermsController::class, 'index'])->name('admin.terms.index');
+    Route::post('/conditions-utilisation', [\App\Http\Controllers\Admin\AdminTermsController::class, 'publish'])->name('admin.terms.publish');
 });
 
 // Diagnostic boost (admin uniquement) - TEMPORAIRE
@@ -927,6 +931,12 @@ Route::get('/politique-cookies', function () {
 Route::get('/regles-marketplace', function () {
     return view('legal.platform-rules');
 })->name('legal.platform-rules');
+
+// Acceptation d'une nouvelle version des conditions par un membre connecté.
+Route::middleware('auth')->group(function () {
+    Route::get('/conditions-utilisation/accepter', [\App\Http\Controllers\TermsAcceptanceController::class, 'show'])->name('terms.accept.show');
+    Route::post('/conditions-utilisation/accepter', [\App\Http\Controllers\TermsAcceptanceController::class, 'store'])->name('terms.accept.store');
+});
 
 Route::get('/conditions-espace-pro', function () {
     return view('legal.pro-terms');

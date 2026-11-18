@@ -218,6 +218,27 @@ class ServiceOrder extends Model
         return $this->status === self::STATUS_FUNDED && $this->payment_status === self::PAYMENT_PAID;
     }
 
+    /**
+     * Payée, tous les rappels envoyés, et le client n'a toujours ni confirmé ni
+     * signalé de problème : c'est à l'administrateur de trancher. Rien n'est
+     * jamais versé automatiquement.
+     */
+    public function isAwaitingAdminDecision(): bool
+    {
+        $max = (int) config('marketplace.release_reminders.max', 3);
+        $every = max(1, (int) config('marketplace.release_reminders.every_days', 3));
+        $last = $this->release_reminder_last_at;
+
+        return $max > 0 && $this->canBuyerRelease() && $this->release_reminders_sent >= $max
+            && $last !== null && $last->copy()->addDays($every)->isPast();
+    }
+
+    /** L'administrateur peut verser ou rembourser : litige ouvert, ou client resté sans réponse. */
+    public function canAdminResolve(): bool
+    {
+        return $this->canAdminResolveDispute() || $this->isAwaitingAdminDecision();
+    }
+
     public function canAdminResolveDispute(): bool
     {
         return $this->status === self::STATUS_DISPUTED && $this->payment_status === self::PAYMENT_DISPUTED;
