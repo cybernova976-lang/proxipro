@@ -122,6 +122,13 @@ class ServiceOrderController extends Controller
         abort_if($serviceOrder->buyer_id !== $buyer->id, 403);
         abort_unless($serviceOrder->canBuyerPay(), 422);
 
+        // Réservation passée sur une demande (ancienne version) : les rôles y sont
+        // inversés, personne ne doit payer l'auteur d'une demande.
+        if ($serviceOrder->isReservationOnDemand()) {
+            return redirect()->route('service-orders.index')
+                ->with('error', 'Cette commande porte sur une demande, pas sur une prestation à vendre : elle ne peut pas être payée. Annulez-la, puis envoyez une proposition depuis l’annonce.');
+        }
+
         if (! config('services.stripe.secret')) {
             return redirect()->route('service-orders.index')
                 ->with('error', 'Le paiement sécurisé est momentanément indisponible.');

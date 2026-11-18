@@ -5,6 +5,9 @@
     $pkPayable = (bool) auth()->user()->stripe_connect_payouts_enabled;
     $pkMoney = fn ($value) => number_format((float) $value, 2, ',', ' ').' €';
     $pkMisdirected = $order->isReservationOnDemand();
+    // À défaire tant qu'elle n'est pas payée : à refuser, ou à annuler si elle a déjà été acceptée.
+    $pkAccepted = $order->status === $pkStatus::STATUS_AWAITING_PAYMENT;
+    $pkToUndo = $pkMisdirected && in_array($order->status, [$pkStatus::STATUS_PENDING_ACCEPTANCE, $pkStatus::STATUS_AWAITING_PAYMENT], true);
     // Commande née d'une proposition : le texte enregistré est celui du prestataire, pas du client.
     $pkFromProposal = ($order->metadata['source'] ?? null) === 'service_proposal';
     // Refusée ou annulée : aucun argent n'a circulé, on n'affiche pas de lignes de paiement.
@@ -16,7 +19,7 @@
         default => 'closed',
     };
     $pkNext = match (true) {
-        $pkMisdirected && $order->status === $pkStatus::STATUS_PENDING_ACCEPTANCE => 'Cette réservation a été faite sur votre demande, avec une ancienne version du site. Or sur une demande, c’est vous le client : vous n’avez rien à encaisser. Refusez-la, puis invitez '.$pkBuyerName.' à vous envoyer une proposition.',
+        $pkToUndo => 'Cette réservation a été faite sur votre demande, avec une ancienne version du site. Or sur une demande, c’est vous le client : vous n’avez rien à encaisser. '.($pkAccepted ? 'Annulez-la' : 'Refusez-la').', puis invitez '.$pkBuyerName.' à vous envoyer une proposition.',
         $order->status === $pkStatus::STATUS_PENDING_ACCEPTANCE => $pkBuyerName.' souhaite réserver cette prestation. Acceptez pour que le paiement en ligne lui soit ouvert.',
         $order->canBuyerPay() && ! $pkPayable => 'Vous avez accepté. Activez la réception de vos paiements : le client ne peut pas payer avant.',
         $order->canBuyerPay() => 'Vous avez accepté. Le client doit maintenant payer en ligne ; vous serez prévenu dès que ce sera fait.',
@@ -31,7 +34,7 @@
 @endphp
 <article id="order-{{ $order->id }}" class="pk-order" @if($pkMisdirected) data-order-misdirected @endif>
     <header class="pk-order__head">
-        <span class="pk-order__status pk-order__status--{{ $pkTone }}">{{ $pkMisdirected && $order->status === $pkStatus::STATUS_PENDING_ACCEPTANCE ? 'À refuser' : $order->status_label }}</span>
+        <span class="pk-order__status pk-order__status--{{ $pkToUndo ? 'action' : $pkTone }}">{{ $pkToUndo ? ($pkAccepted ? 'À annuler' : 'À refuser') : $order->status_label }}</span>
         <h3 class="pk-order__title">{{ $order->ad?->title ?? 'Prestation' }}</h3>
         <p class="pk-order__ref">Commande n° {{ $order->order_number }}</p>
     </header>
@@ -77,7 +80,7 @@
             @if($order->canBeCanceledBy(auth()->user()))
                 <form action="{{ route('service-orders.cancel', $order) }}" method="POST" data-pk-confirm="Annuler cette commande ? Le client n’a rien payé ; il sera prévenu.">
                     @csrf
-                    <button type="submit" class="pk-orders__link" data-order-cancel="seller">Annuler la commande</button>
+                    <button type="submit" class="{{ $pkToUndo ? 'pk-orders__btn' : 'pk-orders__link' }}" data-order-cancel="seller">Annuler la commande</button>
                 </form>
             @endif
         </div>

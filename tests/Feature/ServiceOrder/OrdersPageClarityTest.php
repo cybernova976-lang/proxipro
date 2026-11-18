@@ -126,6 +126,40 @@ class OrdersPageClarityTest extends TestCase
         $this->assertSame(ServiceOrder::STATUS_REFUSED, $order->fresh()->status);
     }
 
+    public function test_a_reservation_on_a_demand_already_accepted_is_cancelled_never_paid(): void
+    {
+        Notification::fake();
+        config(['services.stripe.secret' => 'sk_test_placeholder']);
+        // L'auteur de la demande a accepté avant la correction : la commande attend un paiement qui n'a pas lieu d'être.
+        $author = User::factory()->create(['stripe_connect_account_id' => 'acct_test', 'stripe_connect_payouts_enabled' => true]);
+        $responder = User::factory()->create(['name' => 'Fatima Répondante', 'stripe_id' => 'cus_existing']);
+        $order = $this->order($this->ad($author, 'demande', 'Cherche informaticien'), $responder, $author, [
+            'status' => ServiceOrder::STATUS_AWAITING_PAYMENT, 'accepted_at' => now(),
+        ]);
+
+        $this->actingAs($author)->get(route('service-orders.index'))->assertOk()
+            ->assertSee('À annuler')
+            ->assertSee('Annulez-la, puis invitez Fatima Répondante à vous envoyer une proposition.')
+            ->assertSee('class="pk-orders__btn" data-order-cancel="seller"', false)
+            ->assertDontSee('Le client doit maintenant payer en ligne')
+            ->assertDontSee('Vous recevez');
+
+        $this->actingAs($responder)->get(route('service-orders.index'))->assertOk()
+            ->assertSee('À annuler')
+            ->assertSee('Cette annonce est une demande')
+            ->assertSee('class="pk-orders__btn" data-order-cancel="buyer"', false)
+            ->assertDontSee('Payer en ligne');
+
+        // Aucun appel à Stripe : le paiement est refusé avant.
+        $this->actingAs($responder)->post(route('service-orders.checkout', $order))
+            ->assertRedirect(route('service-orders.index'))
+            ->assertSessionHas('error', fn ($message) => str_contains($message, 'ne peut pas être payée'));
+        $this->assertNull($order->fresh()->stripe_checkout_session_id);
+
+        $this->actingAs($author)->post(route('service-orders.cancel', $order))->assertRedirect(route('service-orders.index'));
+        $this->assertSame(ServiceOrder::STATUS_CANCELED, $order->fresh()->status);
+    }
+
     public function test_a_normal_order_keeps_its_roles(): void
     {
         $client = User::factory()->create();
