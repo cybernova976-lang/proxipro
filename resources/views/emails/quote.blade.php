@@ -86,6 +86,13 @@
                 </div>
             </div>
 
+            @if(!empty($responseUrl))
+            <p style="text-align:center;margin:24px 0 8px;">
+                <a href="{{ $responseUrl }}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:10px;">Répondre au devis en ligne</a>
+            </p>
+            <p class="note" style="text-align:center;margin-top:0;">Vous pouvez l’accepter (« Bon pour accord ») ou le refuser en un clic, sans créer de compte.</p>
+            @endif
+
             <p class="note">
                 📎 Le devis complet est joint à cet email au format PDF.<br>
                 Pour toute question, n'hésitez pas à contacter <strong>{{ $user->company_name ?? $user->name }}</strong> directement.

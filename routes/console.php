@@ -137,3 +137,12 @@ Schedule::command('pro-quotes:send-reminders')
     ->between('8:00', '20:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/pro-quote-reminders.log'));
+
+// Factures : passage « En retard » des factures échues (tous les comptes) et
+// rappel unique des factures Premium impayées. Il écrit aux clients : jamais la nuit.
+Schedule::command('pro-invoices:follow-up')
+    ->hourly()
+    ->timezone('Indian/Mayotte')
+    ->between('8:00', '20:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/pro-invoice-follow-up.log'));

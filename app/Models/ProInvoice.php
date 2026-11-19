@@ -16,6 +16,7 @@ class ProInvoice extends Model
         'delivery_address', 'currency', 'vat_exemption_reason',
         'early_payment_discount', 'late_penalty_rate', 'seller_snapshot',
         'finalized_at', 'sent_at',
+        'sent_to_email', 'reminder_enabled', 'reminder_sent_at',
     ];
 
     protected $casts = [
@@ -31,6 +32,8 @@ class ProInvoice extends Model
         'seller_snapshot' => 'array',
         'finalized_at' => 'datetime',
         'sent_at' => 'datetime',
+        'reminder_enabled' => 'boolean',
+        'reminder_sent_at' => 'datetime',
     ];
 
     public function user()

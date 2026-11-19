@@ -1,0 +1,54 @@
+/*
+ * Page publique de réponse à un devis (resources/views/quotes/respond.blade.php).
+ * Page autonome : tout est porté par .pk-quote et préfixé pk-.
+ * Une seule rampe : indigo #eef2ff → #312e81, plus le violet. Rupture : 640.
+ */
+.pk-quote-body { margin: 0; background: #f5f7fb; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.pk-quote {
+  --pk-50: #eef2ff; --pk-200: #c7d2fe; --pk-600: #4f46e5; --pk-700: #4338ca; --pk-900: #312e81;
+  --pk-ink: #172033; --pk-muted: #526176; --pk-rule: #e1e7f0; --pk-ok: #0b6e52; --pk-urgent: #b3321f;
+  max-width: 760px; margin: 0 auto; padding: 28px 20px 48px; color: var(--pk-ink); font-size: 1rem; line-height: 1.55;
+}
+.pk-quote *, .pk-quote *::before, .pk-quote *::after { box-sizing: border-box; }
+.pk-quote a { color: var(--pk-700); font-weight: 650; }
+
+.pk-quote__card { margin: 0 0 16px; padding: 22px 24px; background: #fff; border: 1px solid var(--pk-rule); border-radius: 16px; }
+.pk-quote__seller { margin: 0 0 4px; color: var(--pk-700); font-weight: 750; }
+.pk-quote h1 { margin: 0 0 6px; font-size: clamp(1.35rem, 3vw, 1.75rem); font-weight: 800; }
+.pk-quote h2 { margin: 0 0 10px; font-size: 1.1rem; font-weight: 800; color: var(--pk-900); }
+.pk-quote__meta { margin: 0; color: var(--pk-muted); font-size: .93rem; }
+
+.pk-quote__flash { margin: 0 0 16px; padding: 14px 18px; border-radius: 14px; font-weight: 650; }
+.pk-quote__flash--ok { background: #e8f6f1; border: 1px solid #a9dccb; color: var(--pk-ok); }
+.pk-quote__flash--error { background: #fdecea; border: 1px solid #f3b9b1; color: var(--pk-urgent); }
+
+.pk-quote__lines { width: 100%; border-collapse: collapse; font-size: .93rem; }
+.pk-quote__lines th { padding: 8px 6px; border-bottom: 2px solid var(--pk-rule); color: var(--pk-muted); font-size: .8rem; font-weight: 700; text-align: left; }
+.pk-quote__lines td { padding: 10px 6px; border-bottom: 1px solid var(--pk-rule); vertical-align: top; }
+.pk-quote__lines .pk-num { text-align: right; white-space: nowrap; }
+.pk-quote__totals { margin: 14px 0 0 auto; max-width: 300px; font-size: .95rem; }
+.pk-quote__totals div { display: flex; justify-content: space-between; gap: 16px; padding: 4px 0; }
+.pk-quote__totals .pk-quote__total { margin-top: 6px; padding-top: 10px; border-top: 2px solid var(--pk-ink); font-size: 1.15rem; font-weight: 800; }
+.pk-quote__text { margin: 12px 0 0; color: var(--pk-muted); font-size: .9rem; white-space: pre-line; }
+
+.pk-quote__field { display: block; margin: 0 0 14px; }
+.pk-quote__field span { display: block; margin: 0 0 6px; font-weight: 650; }
+.pk-quote__field input[type="text"] { width: 100%; min-height: 48px; padding: 10px 14px; border: 1.5px solid var(--pk-200); border-radius: 12px; font: inherit; }
+.pk-quote__field input[type="text"]:focus-visible { outline: 3px solid var(--pk-200); border-color: var(--pk-600); }
+.pk-quote__agree { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 16px; }
+.pk-quote__agree input { flex: none; width: 20px; height: 20px; margin: 3px 0 0; accent-color: var(--pk-600); }
+.pk-quote__error { margin: -8px 0 12px; color: var(--pk-urgent); font-size: .88rem; font-weight: 650; }
+
+.pk-quote__accept { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 50px; padding: 12px 20px; border: 0; border-radius: 14px; background: var(--pk-600); color: #fff; font: inherit; font-weight: 750; cursor: pointer; }
+.pk-quote__accept:hover { background: var(--pk-700); }
+.pk-quote__refuse { display: block; margin: 14px auto 0; padding: 8px 12px; border: 0; background: transparent; color: var(--pk-muted); font: inherit; font-size: .93rem; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.pk-quote__accept:focus-visible, .pk-quote__refuse:focus-visible { outline: 3px solid var(--pk-200); outline-offset: 2px; }
+.pk-quote__legal { margin: 12px 0 0; color: var(--pk-muted); font-size: .84rem; }
+.pk-quote__foot { margin: 20px 0 0; color: var(--pk-muted); font-size: .82rem; text-align: center; }
+
+@media (max-width: 640px) {
+  .pk-quote { padding: 18px 14px 40px; }
+  .pk-quote__card { padding: 18px 16px; }
+  .pk-quote__lines th:nth-child(2), .pk-quote__lines td:nth-child(2),
+  .pk-quote__lines th:nth-child(3), .pk-quote__lines td:nth-child(3) { display: none; }
+}

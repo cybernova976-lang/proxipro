@@ -15,6 +15,7 @@ class ProQuote extends Model
         'execution_location', 'currency', 'is_free', 'deposit_percentage',
         'seller_snapshot', 'issued_at', 'sent_at', 'accepted_at', 'refused_at',
         'sent_to_email', 'reminder_enabled', 'reminder_sent_at',
+        'public_token', 'response_name', 'response_channel',
     ];
 
     protected $casts = [
@@ -58,6 +59,47 @@ class ProQuote extends Model
     public function isEditable(): bool
     {
         return $this->status === 'draft' && $this->issued_at === null;
+    }
+
+    /** Le client peut encore répondre : devis envoyé, validité non dépassée. */
+    public function isAwaitingResponse(): bool
+    {
+        return $this->status === 'sent'
+            && ($this->valid_until === null || $this->valid_until->copy()->endOfDay()->isFuture());
+    }
+
+    /**
+     * Adresse personnelle où le client lit le devis et y répond, sans compte.
+     * Le jeton est créé au premier besoin et ne change plus ; un brouillon n'en a pas.
+     */
+    public function responseUrl(): ?string
+    {
+        if ($this->status === 'draft' || $this->issued_at === null) {
+            return null;
+        }
+        if (! $this->public_token) {
+            $this->forceFill(['public_token' => \Illuminate\Support\Str::random(40)])->saveQuietly();
+        }
+
+        return route('quotes.respond', $this->public_token);
+    }
+
+    /**
+     * « Accepté en ligne par Jeanne Martin le 03/12/2026 à 14:05 (heure de Paris) »,
+     * ou null sans réponse en ligne. Les dates sont enregistrées en UTC : l'heure
+     * est donnée dans un fuseau nommé, pour que l'horodatage se lise sans ambiguïté.
+     */
+    public function onlineResponseLabel(): ?string
+    {
+        $at = $this->status === 'accepted' ? $this->accepted_at : ($this->status === 'refused' ? $this->refused_at : null);
+        if ($this->response_channel !== 'online' || ! $at || ! $this->response_name) {
+            return null;
+        }
+
+        $at = $at->copy()->timezone('Europe/Paris');
+
+        return ($this->status === 'accepted' ? 'Accepté' : 'Refusé').' en ligne par '.$this->response_name
+            .' le '.$at->format('d/m/Y').' à '.$at->format('H:i').' (heure de Paris)';
     }
 
     public function getStatusBadgeClass(): string

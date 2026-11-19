@@ -385,6 +385,13 @@ Route::middleware(['auth'])->group(function () {
 // Outil Devis/Facture - Landing SEO publique
 Route::get('/creer-devis-facture-gratuit', [QuoteToolController::class, 'landing'])->name('quote-tool.landing');
 
+// Réponse du client à un devis, par son lien personnel, sans compte.
+Route::controller(\App\Http\Controllers\QuoteResponseController::class)->prefix('devis/reponse')->name('quotes.respond')->group(function () {
+    Route::get('/{token}', 'show')->middleware('throttle:60,1,quotes.respond.show:');
+    Route::get('/{token}/pdf', 'download')->middleware('throttle:20,1,quotes.respond.pdf:')->name('.pdf');
+    Route::post('/{token}', 'store')->middleware('throttle:10,1,quotes.respond.store:')->name('.store');
+});
+
 // Outil Devis/Facture - Routes protégées
 Route::middleware(['auth'])->prefix('outils')->name('quote-tool.')->group(function () {
     Route::get('/devis/creer', [QuoteToolController::class, 'createQuote'])->name('quote.create');
@@ -569,6 +576,7 @@ Route::middleware(['auth'])->prefix('pro')->name('pro.')->group(function () {
     Route::put('/quotes/{id}', [$ctrl, 'updateQuote'])->name('quotes.update');
     Route::put('/quotes/{id}/status', [$ctrl, 'updateQuoteStatus'])->name('quotes.status');
     Route::delete('/quotes/{id}', [$ctrl, 'deleteQuote'])->name('quotes.delete');
+    Route::post('/quotes/{id}/duplicate', [$ctrl, 'duplicateQuote'])->whereNumber('id')->name('quotes.duplicate');
     Route::get('/quotes/{id}/download', [$ctrl, 'downloadQuote'])->name('quotes.download');
     Route::post('/quotes/{id}/send-email', [$ctrl, 'sendQuoteEmail'])->name('quotes.sendEmail');
     Route::post('/quotes/{id}/send-message', [$ctrl, 'sendQuoteMessage'])->name('quotes.sendMessage');
@@ -594,6 +602,8 @@ Route::middleware(['auth'])->prefix('pro')->name('pro.')->group(function () {
     Route::get('/invoices/{id}/download', [$ctrl, 'downloadInvoice'])->name('invoices.download');
     Route::post('/invoices/{id}/send-email', [$ctrl, 'sendInvoiceEmail'])->name('invoices.sendEmail');
     Route::delete('/invoices/{id}', [$ctrl, 'destroyInvoice'])->name('invoices.destroy');
+    Route::put('/invoices/{id}/reminder', [\App\Http\Controllers\ProQuoteToolsController::class, 'updateInvoiceReminder'])
+        ->whereNumber('id')->name('invoices.reminder');
 
     // Documents
     Route::get('/documents', [$ctrl, 'documents'])->name('documents');

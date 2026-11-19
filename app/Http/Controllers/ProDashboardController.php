@@ -392,11 +392,28 @@ class ProDashboardController extends Controller
             'specialties' => 'nullable|array',
             'social_links' => 'nullable|array',
             'avatar' => 'nullable|image|max:2048',
+            'company_logo' => 'nullable|file|mimes:jpeg,jpg,png|max:'.\App\Support\DocumentLogo::MAX_KILOBYTES,
+        ], [
+            'company_logo.mimes' => 'Le logo doit être une image PNG ou JPG.',
+            'company_logo.max' => 'Le logo ne doit pas dépasser '.(int) (\App\Support\DocumentLogo::MAX_KILOBYTES / 1024).' Mo.',
         ]);
+        unset($validated['company_logo']);
 
         if ($request->hasFile('avatar')) {
             $path = $request->file('avatar')->store('avatars', config('filesystems.default', 'public'));
             $validated['avatar'] = $path;
+        }
+
+        // Logo des devis et factures : avantage Premium. Le retrait reste toujours possible.
+        if ($request->boolean('remove_company_logo')) {
+            \App\Support\DocumentLogo::remove($user);
+        } elseif ($request->hasFile('company_logo')) {
+            if (! $user->hasActiveProSubscription()) {
+                return back()->withInput()->withErrors(['company_logo' => 'Le logo sur les devis et factures est un avantage Premium.']);
+            }
+            if (! \App\Support\DocumentLogo::store($user, $request->file('company_logo'))) {
+                return back()->withInput()->withErrors(['company_logo' => 'Ce fichier n’a pas pu être lu. Envoyez une image PNG ou JPG.']);
+            }
         }
 
         $user->update($validated);
@@ -545,7 +562,7 @@ class ProDashboardController extends Controller
         });
 
         $subtotal = $items->sum('total');
-        $taxRate = $validated['tax_rate'] ?? 20;
+        $taxRate = $validated['tax_rate'] ?? $user->defaultVatRate();
         $tax = round($subtotal * $taxRate / 100, 2);
         $total = $subtotal + $tax;
 
@@ -612,8 +629,8 @@ class ProDashboardController extends Controller
 
         $timestamps = match ($target) {
             'sent' => ['sent_at' => now()],
-            'accepted' => ['accepted_at' => now()],
-            'refused' => ['refused_at' => now()],
+            'accepted' => ['accepted_at' => now(), 'response_channel' => 'manual'],
+            'refused' => ['refused_at' => now(), 'response_channel' => 'manual'],
             default => [],
         };
         $quote->update(['status' => $target] + $timestamps);
@@ -694,6 +711,28 @@ class ProDashboardController extends Controller
         return redirect()->route('pro.quotes.show', $quote->id)->with('success', 'Devis mis à jour avec succès.');
     }
 
+    /** Copie d'un devis en nouveau brouillon : lignes, client et conditions repris, rien de son historique. */
+    public function duplicateQuote($id)
+    {
+        $user = $this->ensureCommercialProfessional();
+        $source = $user->proQuotes()->findOrFail($id);
+
+        $copy = $source->replicate([
+            'quote_number', 'status', 'issued_at', 'sent_at', 'accepted_at', 'refused_at', 'seller_snapshot',
+            'sent_to_email', 'reminder_enabled', 'reminder_sent_at', 'public_token', 'response_name', 'response_channel',
+        ]);
+        $copy->fill([
+            'quote_number' => 'BROUILLON-DEV-'.strtoupper(Str::random(10)),
+            'status' => 'draft',
+            'reminder_enabled' => false,
+            // Une validité déjà dépassée n'est pas reprise.
+            'valid_until' => $source->valid_until && $source->valid_until->isFuture() ? $source->valid_until : null,
+        ])->save();
+
+        return redirect()->route('pro.quotes.edit', $copy->id)
+            ->with('success', 'Copie créée en brouillon. Modifiez-la, puis envoyez-la : elle recevra son propre numéro.');
+    }
+
     public function deleteQuote($id)
     {
         $user = $this->ensureCommercialProfessional();
@@ -729,25 +768,33 @@ class ProDashboardController extends Controller
 
         $this->issueQuote($quote, $user);
         $quote->refresh();
+        $wasDraft = $quote->status === 'draft';
+        if ($wasDraft) {
+            $quote->update(['status' => 'sent', 'sent_at' => now()]);
+        }
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pro.quote-pdf', compact('user', 'quote'));
         $pdf->setPaper('a4');
 
-        Mail::send('emails.quote', [
-            'quote' => $quote,
-            'user' => $user,
-            'customMessage' => $request->message,
-        ], function ($mail) use ($request, $quote, $user, $pdf) {
-            $mail->to($request->email)
-                ->subject('Devis '.$quote->quote_number.' - '.($user->company_name ?? $user->name))
-                ->attachData($pdf->output(), 'Devis_'.$quote->quote_number.'.pdf', [
-                    'mime' => 'application/pdf',
-                ]);
-        });
-
-        // Mark as sent
-        if ($quote->status === 'draft') {
-            $quote->update(['status' => 'sent', 'sent_at' => now()]);
+        try {
+            Mail::send('emails.quote', [
+                'quote' => $quote,
+                'user' => $user,
+                'customMessage' => $request->message,
+                'responseUrl' => $quote->isAwaitingResponse() ? $quote->responseUrl() : null,
+            ], function ($mail) use ($request, $quote, $user, $pdf) {
+                $mail->to($request->email)
+                    ->subject('Devis '.$quote->quote_number.' - '.($user->company_name ?? $user->name))
+                    ->attachData($pdf->output(), 'Devis_'.$quote->quote_number.'.pdf', [
+                        'mime' => 'application/pdf',
+                    ]);
+            });
+        } catch (\Throwable $exception) {
+            // L'e-mail n'est pas parti : le devis émis ne passe pas pour envoyé.
+            if ($wasDraft) {
+                $quote->update(['status' => 'draft', 'sent_at' => null]);
+            }
+            throw $exception;
         }
 
         // Relance automatique unique (Premium), à l'adresse réellement utilisée.
@@ -792,6 +839,12 @@ class ProDashboardController extends Controller
             ['id' => $quote->id, 'recipient' => $recipient->id]
         );
         $content .= "\n🔗 Télécharger le devis (lien personnel valable 30 jours) : ".$downloadUrl;
+        if ($quote->status === 'draft') {
+            $quote->update(['status' => 'sent', 'sent_at' => now()]);
+        }
+        if ($quote->isAwaitingResponse()) {
+            $content .= "\n✅ Répondre au devis en ligne (accepter ou refuser) : ".$quote->responseUrl();
+        }
 
         if ($request->message) {
             $content .= "\n\n💬 Message :\n".$request->message;
@@ -907,7 +960,7 @@ class ProDashboardController extends Controller
         });
 
         $subtotal = $items->sum('total');
-        $taxRate = $validated['tax_rate'] ?? 20;
+        $taxRate = $validated['tax_rate'] ?? $user->defaultVatRate();
         $tax = round($subtotal * $taxRate / 100, 2);
         $total = $subtotal + $tax;
 
@@ -973,7 +1026,7 @@ class ProDashboardController extends Controller
     {
         $user = $this->ensureCommercialProfessional();
         $invoice = $user->proInvoices()->with('client', 'quote')->findOrFail($id);
-        if (! in_array($invoice->status, ['draft', 'sent'], true)) {
+        if (! in_array($invoice->status, ['draft', 'sent', 'overdue'], true)) {
             return back()->with('error', 'Cette facture ne peut plus être envoyée dans son état actuel.');
         }
 
@@ -984,26 +1037,42 @@ class ProDashboardController extends Controller
 
         $this->finalizeInvoice($invoice, $user);
         $invoice->refresh();
+        // Le statut « envoyée » est posé avant de produire le PDF : la pièce jointe
+        // n'est plus marquée « brouillon ».
+        $wasDraft = $invoice->status === 'draft';
+        if ($wasDraft) {
+            $invoice->update(['status' => 'sent', 'sent_at' => now()]);
+        }
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pro.invoice-pdf', compact('user', 'invoice'));
         $pdf->setPaper('a4');
 
-        Mail::send('emails.invoice', [
-            'invoice' => $invoice,
-            'user' => $user,
-            'customMessage' => $validated['message'] ?? null,
-        ], function ($mail) use ($validated, $invoice, $user, $pdf) {
-            $mail->to($validated['email'])
-                ->subject('Facture '.$invoice->invoice_number.' - '.($user->company_name ?? $user->name))
-                ->attachData($pdf->output(), 'Facture_'.$invoice->invoice_number.'.pdf', [
-                    'mime' => 'application/pdf',
-                ]);
-        });
-
-        if ($invoice->status === 'draft') {
-            $invoice->update(['status' => 'sent', 'sent_at' => now()]);
+        try {
+            Mail::send('emails.invoice', [
+                'invoice' => $invoice,
+                'user' => $user,
+                'customMessage' => $validated['message'] ?? null,
+            ], function ($mail) use ($validated, $invoice, $user, $pdf) {
+                $mail->to($validated['email'])
+                    ->subject('Facture '.$invoice->invoice_number.' - '.($user->company_name ?? $user->name))
+                    ->attachData($pdf->output(), 'Facture_'.$invoice->invoice_number.'.pdf', [
+                        'mime' => 'application/pdf',
+                    ]);
+            });
+        } catch (\Throwable $exception) {
+            // L'e-mail n'est pas parti : la facture finalisée ne passe pas pour envoyée.
+            if ($wasDraft) {
+                $invoice->update(['status' => 'draft', 'sent_at' => null]);
+            }
+            throw $exception;
         }
 
-        return back()->with('success', 'Facture envoyée par email à '.$validated['email'].'.');
+        // Rappel unique d'une facture impayée (Premium), à l'adresse réellement utilisée.
+        $reminder = $request->boolean('auto_reminder') && $user->hasActiveProSubscription()
+            && $invoice->due_date !== null && $invoice->reminder_sent_at === null;
+        $invoice->update(['sent_to_email' => $validated['email'], 'reminder_enabled' => $reminder]);
+
+        return back()->with('success', 'Facture envoyée par email à '.$validated['email']
+            .($reminder ? '. Un rappel partira '.\App\Services\InvoiceFollowUpService::DELAY_DAYS.' jours après l’échéance si elle reste impayée.' : '.'));
     }
 
     public function destroyInvoice($id)
@@ -1070,7 +1139,7 @@ class ProDashboardController extends Controller
         $user = $this->ensureCommercialProfessional();
         $invoice = $user->proInvoices()->with('quote')->findOrFail($id);
         if (! $invoice->isEditable()) {
-            return redirect()->route('pro.invoices.show', $invoice)->with('error', 'Une facture émise ne peut plus être modifiée. Créez un avoir pour la corriger.');
+            return redirect()->route('pro.invoices.show', $invoice)->with('error', 'Une facture émise ne peut plus être modifiée.');
         }
         $clients = $user->proClients()->orderBy('name')->get();
 
@@ -1174,7 +1243,7 @@ class ProDashboardController extends Controller
             'status' => 'pending',
         ]);
 
-        return redirect()->route('pro.documents')->with('success', 'Document uploadé avec succès. Il sera vérifié sous 48h.');
+        return redirect()->route('pro.documents')->with('success', 'Document envoyé. Il sera vérifié par notre équipe.');
     }
 
     public function deleteDocument($id)
@@ -1863,12 +1932,14 @@ class ProDashboardController extends Controller
         }
 
         // Quote conversion rate
-        $totalQuotes = $user->proQuotes()->count();
+        // Un brouillon n'a jamais été proposé à un client : il n'entre pas dans le taux.
+        $totalQuotes = $user->proQuotes()->where('status', '!=', 'draft')->count();
         $acceptedQuotes = $user->proQuotes()->where('status', 'accepted')->count();
         $conversionRate = $totalQuotes > 0 ? round(($acceptedQuotes / $totalQuotes) * 100, 1) : 0;
 
         // Invoice payment rate
-        $totalInvoices = $user->proInvoices()->count();
+        // Seules les factures émises et non annulées comptent.
+        $totalInvoices = $user->proInvoices()->whereIn('status', ['sent', 'overdue', 'paid'])->count();
         $paidInvoices = $user->proInvoices()->where('status', 'paid')->count();
         $paymentRate = $totalInvoices > 0 ? round(($paidInvoices / $totalInvoices) * 100, 1) : 0;
 
@@ -1890,7 +1961,7 @@ class ProDashboardController extends Controller
                 ->whereMonth('paid_at', now()->month)
                 ->whereYear('paid_at', now()->year)
                 ->sum('total'),
-            'avg_quote_value' => round($user->proQuotes()->avg('total') ?? 0, 2),
+            'avg_quote_value' => round($user->proQuotes()->where('status', '!=', 'draft')->avg('total') ?? 0, 2),
             'avg_invoice_value' => round($user->proInvoices()->where('status', 'paid')->avg('total') ?? 0, 2),
             'total_clients' => $user->proClients()->count(),
             'active_clients' => $user->proClients()->where('status', 'active')->count(),
@@ -1900,7 +1971,7 @@ class ProDashboardController extends Controller
             'total_invoices' => $totalInvoices,
             'paid_invoices' => $paidInvoices,
             'payment_rate' => $paymentRate,
-            'pending_amount' => $user->proInvoices()->whereIn('status', ['sent', 'pending'])->sum('total'),
+            'pending_amount' => $user->proInvoices()->whereIn('status', ['sent', 'overdue'])->sum('total'),
             'reviews_count' => $user->reviewsReceived()->count(),
             'average_rating' => round($user->reviewsReceived()->avg('rating') ?? 0, 1),
             'active_ads' => $user->ads()->where('status', 'active')->count(),
@@ -1941,7 +2012,7 @@ class ProDashboardController extends Controller
 
         // Get unpaid invoices as reminders
         $pendingInvoices = $user->proInvoices()
-            ->whereIn('status', ['sent', 'pending'])
+            ->whereIn('status', ['sent', 'overdue'])
             ->with('client')
             ->orderBy('due_date', 'asc')
             ->take(20)
@@ -1983,14 +2054,15 @@ class ProDashboardController extends Controller
 
         // Stats for agenda header
         $agendaStats = [
-            'upcoming_deadlines' => $user->proInvoices()->whereIn('status', ['sent', 'pending'])
-                ->where('due_date', '>=', now())
-                ->where('due_date', '<=', now()->addDays(7))
+            'upcoming_deadlines' => $user->proInvoices()->where('status', 'sent')
+                ->where('due_date', '>=', now()->toDateString())
+                ->where('due_date', '<=', now()->addDays(7)->toDateString())
                 ->count(),
-            'overdue_invoices' => $user->proInvoices()->whereIn('status', ['sent', 'pending'])
-                ->where('due_date', '<', now())
+            'overdue_invoices' => $user->proInvoices()->whereIn('status', ['sent', 'overdue'])
+                ->where('due_date', '<', now()->toDateString())
                 ->count(),
-            'active_quotes' => $user->proQuotes()->where('status', 'pending')->count(),
+            // Devis envoyés, encore sans réponse.
+            'active_quotes' => $user->proQuotes()->where('status', 'sent')->count(),
             'today_tasks' => $events->filter(function ($e) {
                 return \Carbon\Carbon::parse($e['date'])->isToday();
             })->count(),

@@ -219,7 +219,7 @@
                 <div class="pro-card-title"><i class="fas fa-cog text-secondary"></i> Paramètres</div>
                 <div class="mb-3">
                     <label class="form-label fw-semibold">TVA (%)</label>
-                    <input type="number" name="tax_rate" id="taxRate" class="form-control" value="20" min="0" max="100" step="0.1" style="border-radius: 10px;" oninput="recalculate()">
+                    <input type="number" name="tax_rate" id="taxRate" class="form-control" value="{{ old('tax_rate', $quote ? (float) $quote->tax_rate : $user->defaultVatRate()) }}" min="0" max="100" step="0.1" style="border-radius: 10px;" oninput="recalculate()">
                 </div>
                 <div class="mb-3">
                     <div class="form-check mb-2">

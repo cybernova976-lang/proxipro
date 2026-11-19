@@ -261,7 +261,9 @@
     </a>
 </div>
 
-@if(in_array($invoice->status, ['draft', 'sent']))
+@include('pro.partials.invoice-reminder')
+
+@if(in_array($invoice->status, ['draft', 'sent', 'overdue']))
 <div class="pro-card mt-3" style="max-width: 720px;">
     <div class="pro-card-title"><i class="fas fa-envelope text-primary"></i> Envoyer la facture par email</div>
     <form method="POST" action="{{ route('pro.invoices.sendEmail', $invoice->id) }}" class="row g-3">
@@ -274,6 +276,15 @@
             <label class="form-label fw-semibold">Message (facultatif)</label>
             <input type="text" name="message" class="form-control" placeholder="Veuillez trouver votre facture en pièce jointe.">
         </div>
+        @if($user->hasActiveProSubscription() && $invoice->due_date && ! $invoice->reminder_sent_at)
+        <div class="col-12">
+            <div class="form-check">
+                <input type="hidden" name="auto_reminder" value="0">
+                <input class="form-check-input" type="checkbox" name="auto_reminder" value="1" id="pkInvoiceAutoReminder" checked>
+                <label class="form-check-label" for="pkInvoiceAutoReminder">Rappeler automatiquement ce client une seule fois, {{ \App\Services\InvoiceFollowUpService::DELAY_DAYS }} jours après l’échéance si la facture reste impayée <span class="text-muted">(Premium)</span></label>
+            </div>
+        </div>
+        @endif
         <div class="col-12"><button class="btn btn-pro-primary"><i class="fas fa-paper-plane me-1"></i> Envoyer le PDF</button></div>
     </form>
 </div>

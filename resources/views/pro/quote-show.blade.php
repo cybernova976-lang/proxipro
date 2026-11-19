@@ -154,6 +154,10 @@
     <button onclick="window.print()" class="btn btn-pro-outline">
         <i class="fas fa-print me-1"></i> Imprimer
     </button>
+    <form method="POST" action="{{ route('pro.quotes.duplicate', $quote->id) }}">
+        @csrf
+        <button type="submit" class="btn btn-pro-outline"><i class="fas fa-copy me-1" aria-hidden="true"></i> Dupliquer</button>
+    </form>
     <a href="{{ route('pro.quotes') }}" class="btn btn-light" style="border-radius: 10px;">
         <i class="fas fa-arrow-left me-1"></i> Retour
     </a>
@@ -167,6 +171,7 @@
     @endif
 </div>
 
+@include('pro.partials.quote-response')
 @include('pro.partials.quote-premium-tools')
 
 {{-- ===== SEND QUOTE MODAL ===== --}}

@@ -79,6 +79,33 @@ class ProQuoteToolsController extends Controller
             : 'Relance automatique annulée : votre client ne recevra pas de rappel.');
     }
 
+    /** Rappel unique d'une facture impayée : activation (Premium) ou annulation. */
+    public function updateInvoiceReminder(Request $request, int $id, \App\Services\InvoiceFollowUpService $followUp)
+    {
+        $user = $this->professional($request);
+        $invoice = $user->proInvoices()->findOrFail($id);
+        $enabled = $request->boolean('enabled');
+
+        if ($enabled) {
+            if (! $user->hasActiveProSubscription()) {
+                return redirect()->route('pro.subscription')
+                    ->with('warning', 'Cette fonctionnalité fait partie de Premium. Votre facture n’est pas modifiée.');
+            }
+            if ($invoice->reminder_sent_at) {
+                return back()->with('error', 'Cette facture a déjà fait l’objet d’un rappel : il n’y a pas de second rappel automatique.');
+            }
+            if (! $followUp->canPlan($invoice)) {
+                return back()->with('error', 'Le rappel automatique concerne une facture envoyée par e-mail, avec une échéance, et encore impayée.');
+            }
+        }
+
+        $invoice->update(['reminder_enabled' => $enabled]);
+
+        return back()->with('success', $enabled
+            ? 'Rappel automatique activé pour cette facture.'
+            : 'Rappel automatique annulé : votre client ne recevra pas de rappel.');
+    }
+
     private function professional(Request $request): User
     {
         $user = $request->user();

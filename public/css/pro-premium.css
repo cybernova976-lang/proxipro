@@ -68,6 +68,7 @@
 .pk-templates__list strong { color: var(--pk-900); font-size: .92rem; }
 .pk-templates__list small { display: block; color: var(--pk-muted); font-size: .78rem; }
 .pk-templates__actions { display: flex; align-items: center; gap: 8px; }
+.pk-templates__field { flex: 1; min-width: 0; min-height: 44px; border-radius: 10px; font-size: .85rem; }
 .pk-templates__use, .pk-templates__delete { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 14px; border-radius: 9px; font: inherit; font-size: .85rem; font-weight: 650; text-decoration: none; cursor: pointer; }
 .pk-templates__use { border: 1px solid var(--pk-300); background: #fff; color: var(--pk-800); }
 .pk-templates__use:hover { background: var(--pk-50); color: var(--pk-800); }

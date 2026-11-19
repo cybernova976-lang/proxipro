@@ -207,7 +207,7 @@
                 <div class="pro-card-title"><i class="fas fa-cog text-secondary"></i> Paramètres</div>
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Taux TVA (%)</label>
-                    <input type="number" name="tax_rate" id="taxRate" class="form-control" value="20" min="0" max="100" step="0.1" style="border-radius: 10px;" onchange="recalculate()">
+                    <input type="number" name="tax_rate" id="taxRate" class="form-control" value="{{ old('tax_rate', $user->defaultVatRate()) }}" min="0" max="100" step="0.1" style="border-radius: 10px;" onchange="recalculate()">
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Validité jusqu'au</label>
@@ -231,7 +231,7 @@
                         <span id="subtotal" class="fw-semibold">0,00€</span>
                     </div>
                     <div class="total-line">
-                        <span>TVA (<span id="taxLabel">20</span>%)</span>
+                        <span>TVA (<span id="taxLabel">{{ old('tax_rate', $user->defaultVatRate()) }}</span>%)</span>
                         <span id="taxAmount" class="fw-semibold">0,00€</span>
                     </div>
                     <div class="total-line total-final">

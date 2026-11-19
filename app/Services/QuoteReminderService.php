@@ -88,7 +88,8 @@ class QuoteReminderService
         $pdf = Pdf::loadView('pro.quote-pdf', ['user' => $owner, 'quote' => $quote]);
         $pdf->setPaper('a4');
 
-        Mail::send('emails.quote', ['quote' => $quote, 'user' => $owner, 'customMessage' => $message],
+        Mail::send('emails.quote', ['quote' => $quote, 'user' => $owner, 'customMessage' => $message,
+            'responseUrl' => $quote->isAwaitingResponse() ? $quote->responseUrl() : null],
             function ($mail) use ($quote, $owner, $sender, $pdf) {
                 $mail->to($quote->sent_to_email)
                     ->replyTo([$owner->email => $sender]) // tableau : remplace l’adresse de réponse globale au lieu de s’y ajouter

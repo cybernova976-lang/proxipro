@@ -144,6 +144,8 @@
                 <small class="text-muted d-block mt-1">JPG, PNG — Max 2 Mo</small>
             </div>
 
+            @include('pro.partials.document-logo')
+
             {{-- Categories --}}
             <div class="pro-card">
                 <h6 class="fw-bold mb-3"><i class="fas fa-tags me-2 text-primary"></i>Catégories de services</h6>

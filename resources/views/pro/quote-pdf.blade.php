@@ -85,6 +85,9 @@
         {{-- Header --}}
         <div class="header">
             <div class="header-left">
+                @if($pkDocumentLogo = \App\Support\DocumentLogo::dataUri($user))
+                    <img src="{{ $pkDocumentLogo }}" alt="" style="max-height: 60px; max-width: 220px; margin-bottom: 8px;">
+                @endif
                 <div class="company-logo">{{ $seller['company_name'] ?? $seller['name'] }}</div>
                 <div class="company-info">
                     @if(!empty($seller['address'])){{ $seller['address'] }}<br>@endif
@@ -191,6 +194,13 @@
                 <div class="notes-text">{{ $quote->conditions }}</div>
             </div>
             @endif
+        </div>
+        @endif
+
+        @if($quote->onlineResponseLabel())
+        <div class="notes-section">
+            <div class="notes-title">{{ $quote->status === 'accepted' ? 'Bon pour accord' : 'Réponse du client' }}</div>
+            <div class="notes-text">{{ $quote->onlineResponseLabel() }}, depuis le lien personnel envoyé avec ce devis.</div>
         </div>
         @endif
 
