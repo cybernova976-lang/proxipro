@@ -143,8 +143,19 @@
                             @else
                                 <div class="small text-muted">{{ $order->admin_resolution_note ?: 'Aucune action admin requise pour cette commande.' }}</div>
                                 @if($order->admin_resolution)
-                                    <div class="mt-2"><span class="badge text-bg-info">{{ $order->admin_resolution }}</span></div>
+                                    <div class="mt-2"><span class="badge text-bg-info">{{ ['released' => 'Prestataire payé', 'refunded' => 'Client remboursé', 'closed_unreachable' => 'Clôturée : paiement introuvable chez Stripe'][$order->admin_resolution] ?? $order->admin_resolution }}</span></div>
                                 @endif
+                            @endif
+                            @if($order->canAdminCloseUnreachablePayment())
+                                <details class="mt-2" data-order-close-unreachable>
+                                    <summary class="small text-muted">Paiement introuvable chez Stripe ?</summary>
+                                    <form action="{{ route('admin.service-orders.close-unreachable', $order) }}" method="POST" class="mt-2">
+                                        @csrf
+                                        <p class="small text-muted mb-2">Pour une commande payée avec d’anciennes clés de test. Stripe est interrogé d’abord : si le paiement existe, rien n’est modifié.</p>
+                                        <textarea name="resolution_note" class="form-control form-control-sm mb-2" rows="2" placeholder="Motif obligatoire, conservé avec la commande" required minlength="10"></textarea>
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="fas fa-folder-minus me-1"></i>Clôturer sans mouvement d’argent</button>
+                                    </form>
+                                </details>
                             @endif
                         </td>
                     </tr>

@@ -90,6 +90,25 @@ class AdminServiceOrderController extends Controller
     }
 
     /**
+     * Commande payée avec d'anciennes clés de test : Stripe ne connaît pas son
+     * paiement, elle ne peut être ni versée ni remboursée. On la clôture sans
+     * mouvement d'argent, après avoir vérifié auprès de Stripe.
+     */
+    public function closeUnreachable(Request $request, ServiceOrder $serviceOrder)
+    {
+        $request->validate([
+            'resolution_note' => 'required|string|min:10|max:1000',
+        ]);
+
+        if ($failure = $this->attempt(fn () => $this->workflowService->adminCloseUnreachablePayment($serviceOrder, Auth::user(), $request->resolution_note))) {
+            return $failure;
+        }
+
+        return redirect()->route('admin.service-orders.index')
+            ->with('success', 'Commande clôturée : Stripe confirme que ce paiement n’existe pas pour les clés actuelles. Aucun argent n’a bougé.');
+    }
+
+    /**
      * Exécute un versement ou un remboursement. Si Stripe le refuse, la
      * commande reste en l'état et l'administrateur voit pourquoi, au lieu
      * d'une page d'erreur.

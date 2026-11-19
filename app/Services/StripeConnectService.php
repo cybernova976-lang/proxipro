@@ -7,6 +7,7 @@ use App\Models\User;
 use RuntimeException;
 use Stripe\Account;
 use Stripe\AccountLink;
+use Stripe\Exception\InvalidRequestException;
 use Stripe\PaymentIntent;
 use Stripe\Refund;
 use Stripe\Stripe;
@@ -176,6 +177,33 @@ class StripeConnectService
         if (($session->status ?? null) === 'open') {
             $session->expire();
         }
+    }
+
+    /**
+     * Le paiement de cette commande existe-t-il pour les clés Stripe actuelles ?
+     *
+     * Faux quand il a été encaissé avec d'autres clés, par exemple les clés de
+     * test utilisées avant le passage en mode réel : Stripe répond alors
+     * « resource_missing ». Toute autre erreur remonte telle quelle : on ne
+     * conclut jamais à un paiement introuvable sans cette réponse précise.
+     */
+    public function paymentExists(ServiceOrder $serviceOrder): bool
+    {
+        if (! $serviceOrder->stripe_payment_intent_id) {
+            throw new RuntimeException('Aucun paiement n’est rattaché à cette commande.');
+        }
+
+        try {
+            PaymentIntent::retrieve($serviceOrder->stripe_payment_intent_id);
+        } catch (InvalidRequestException $exception) {
+            if ($exception->getStripeCode() === 'resource_missing') {
+                return false;
+            }
+
+            throw $exception;
+        }
+
+        return true;
     }
 
     public function refundOrder(ServiceOrder $serviceOrder): string

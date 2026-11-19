@@ -314,6 +314,38 @@ class ServiceOrderWorkflowService
         return $serviceOrder;
     }
 
+    /**
+     * Clôture une commande dont le paiement n'existe pas pour les clés Stripe
+     * actuelles (payée avec d'anciennes clés de test). Stripe est interrogé
+     * d'abord : si le paiement existe, rien n'est modifié. Aucun versement,
+     * aucun remboursement, aucune écriture comptable : il n'y a pas d'argent.
+     */
+    public function adminCloseUnreachablePayment(ServiceOrder $serviceOrder, User $admin, string $note): ServiceOrder
+    {
+        abort_unless($admin->isAdmin(), 403);
+        abort_unless($serviceOrder->canAdminCloseUnreachablePayment(), 422);
+
+        DB::transaction(function () use ($serviceOrder, $admin, $note) {
+            $serviceOrder = ServiceOrder::query()->lockForUpdate()->findOrFail($serviceOrder->id);
+            abort_unless($serviceOrder->canAdminCloseUnreachablePayment(), 422);
+
+            if ($this->stripeConnectService->paymentExists($serviceOrder)) {
+                throw new \RuntimeException('Stripe connaît ce paiement : la commande ne peut pas être clôturée ainsi. Utilisez le versement ou le remboursement.');
+            }
+
+            $serviceOrder->forceFill([
+                'status' => ServiceOrder::STATUS_CANCELED,
+                'payment_status' => ServiceOrder::PAYMENT_CANCELED,
+                'admin_resolution' => 'closed_unreachable',
+                'admin_resolution_note' => $note,
+                'admin_resolved_at' => now(),
+                'admin_resolved_by' => $admin->id,
+            ])->save();
+        });
+
+        return $serviceOrder->fresh();
+    }
+
     public function adminRefundDispute(ServiceOrder $serviceOrder, User $admin, string $note): ServiceOrder
     {
         abort_unless($admin->isAdmin(), 403);

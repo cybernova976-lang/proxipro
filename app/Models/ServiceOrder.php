@@ -23,7 +23,11 @@ class ServiceOrder extends Model
 
     public const STATUS_REFUNDED = 'refunded';
 
-    /** Annulée par le client ou le prestataire avant tout paiement. */
+    /**
+     * Annulée par le client ou le prestataire avant tout paiement, ou clôturée
+     * par l'administrateur quand Stripe ne connaît pas son paiement (commande
+     * payée avec d'anciennes clés de test) : dans les deux cas, aucun argent.
+     */
     public const STATUS_CANCELED = 'canceled';
 
     /** Commandes en cours : rien ne doit les faire disparaître tant qu'elles ne sont pas closes. */
@@ -237,6 +241,18 @@ class ServiceOrder extends Model
     public function canAdminResolve(): bool
     {
         return $this->canAdminResolveDispute() || $this->isAwaitingAdminDecision();
+    }
+
+    /**
+     * Commande dite payée, sans versement ni remboursement : la seule situation
+     * où l'administrateur peut demander à Stripe si le paiement existe encore.
+     */
+    public function canAdminCloseUnreachablePayment(): bool
+    {
+        return in_array($this->status, [self::STATUS_FUNDED, self::STATUS_DISPUTED], true)
+            && in_array($this->payment_status, [self::PAYMENT_PAID, self::PAYMENT_DISPUTED], true)
+            && filled($this->stripe_payment_intent_id)
+            && ! $this->stripe_transfer_id && ! $this->stripe_refund_id;
     }
 
     public function canAdminResolveDispute(): bool

@@ -755,6 +755,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/service-orders', [AdminServiceOrderController::class, 'index'])->name('admin.service-orders.index');
     Route::post('/service-orders/{serviceOrder}/release', [AdminServiceOrderController::class, 'release'])->name('admin.service-orders.release');
     Route::post('/service-orders/{serviceOrder}/refund', [AdminServiceOrderController::class, 'refund'])->name('admin.service-orders.refund');
+    Route::post('/service-orders/{serviceOrder}/close-unreachable', [AdminServiceOrderController::class, 'closeUnreachable'])->name('admin.service-orders.close-unreachable');
 
     // Conditions d'utilisation : publier une version et suivre son acceptation
     Route::get('/conditions-utilisation', [\App\Http\Controllers\Admin\AdminTermsController::class, 'index'])->name('admin.terms.index');
