@@ -26,7 +26,7 @@ class ManagedEmailContent
         Validator::make(['blocks' => $blocks], [
             'blocks' => ['required', 'array', 'min:1', 'max:30'],
             'blocks.*' => ['array:type,text,ref,width,align,caption,label,url'],
-            'blocks.*.type' => ['required', Rule::in(['text', 'image', 'button'])],
+            'blocks.*.type' => ['required', Rule::in(['text', 'image', 'button', 'comparison'])],
             'blocks.*.text' => ['nullable', 'string', 'max:5000'],
             'blocks.*.ref' => ['nullable', 'string', 'max:40'],
             'blocks.*.width' => ['nullable', 'integer', 'min:80', 'max:560'],
@@ -44,6 +44,14 @@ class ManagedEmailContent
                 if ($value !== '') {
                     $normalized[] = ['type' => 'text', 'text' => $value];
                     $text[] = $value;
+                }
+                continue;
+            }
+            if ($block['type'] === 'comparison') {
+                // Comparatif des offres : rendu à l'envoi depuis App\Support\OfferComparison,
+                // donc toujours aux tarifs en vigueur. Une seule fois par message.
+                if (! in_array(['type' => 'comparison'], $normalized, true)) {
+                    $normalized[] = ['type' => 'comparison'];
                 }
                 continue;
             }

@@ -176,6 +176,9 @@ return [
     ],
 
     // Boîte réservée aux réponses envoyées aux visiteurs du formulaire de contact.
+    // Studio e-mail : délai, en secondes, entre deux messages d'un lot validé.
+    'managed_batch_interval' => (int) env('MAIL_BATCH_INTERVAL_SECONDS', 20),
+
     'contact_from' => [
         'address' => trim((string) env('CONTACT_MAIL_FROM_ADDRESS', '')) ?: 'contact@prokejem.fr',
         'name' => env('CONTACT_MAIL_FROM_NAME', $fromName),

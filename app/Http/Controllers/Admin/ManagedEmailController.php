@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendManagedEmail;
 use App\Mail\ManagedEmailMail;
 use App\Models\ManagedEmail;
 use App\Models\User;
 use App\Services\DemandDraftReminderService;
+use App\Support\LaunchEmailTemplates;
+use App\Support\ManagedEmailAudience;
 use App\Support\ManagedEmailContent;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -17,19 +20,35 @@ use Illuminate\Support\Facades\Storage;
 
 class ManagedEmailController extends Controller
 {
-    private function recipients()
+    private function recipients(string $type = ManagedEmailAudience::NEWSLETTER)
     {
-        return User::query()->where('newsletter_subscribed', true)
-            ->where('email_notifications', true)->whereNotNull('email_verified_at')
-            ->where('is_active', true);
+        return ManagedEmailAudience::query($type);
     }
 
-    public function create()
+    /** Le comparatif des offres est un argument de vente : jamais dans un message de service. */
+    private function refuseSalesContentInServiceMessage(string $type, ?array $blocks): void
     {
-        $recipients = $this->recipients()->orderBy('name')
+        if ($type === ManagedEmailAudience::SERVICE && collect($blocks)->contains(fn ($block) => ($block['type'] ?? null) === 'comparison')) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'content_layout' => 'Le comparatif des offres est un argument de vente : retirez-le d’un message de service, ou envoyez-le comme newsletter.',
+            ]);
+        }
+    }
+
+    public function create(Request $request)
+    {
+        $model = $request->query('modele');
+        $template = LaunchEmailTemplates::get(is_string($model) ? $model : null);
+        $type = ManagedEmailAudience::normalize($template['type'] ?? $request->query('type'));
+        $recipients = $this->recipients($type)->orderBy('name')
             ->get(['id', 'name', 'email', 'account_type', 'user_type']);
 
         return view('admin.emails.create', [
+            'emailType' => $type,
+            'template' => $template,
+            'templateBlocks' => $template['blocks'] ?? null,
+            'templates' => LaunchEmailTemplates::all(),
+            'unverifiedCount' => $type === ManagedEmailAudience::SERVICE ? ManagedEmailAudience::unverifiedCount() : 0,
             'recipients' => $recipients,
             // Comptes joignables de chaque type, comptés sur la liste affichée.
             'professionalCount' => $recipients->filter(fn (User $user) => $user->isRegisteredAsProfessional())->count(),
@@ -51,15 +70,18 @@ class ManagedEmailController extends Controller
             'recipients.*' => ['integer', 'distinct'],
             'images' => ['nullable', 'array', 'list', 'max:3'],
             'images.*' => ['image', 'mimes:jpeg,png,webp', 'max:5120'],
+            'type' => ['nullable', Rule::in(ManagedEmailAudience::TYPES)],
         ]);
-        $recipients = $this->recipients()
+        $type = ManagedEmailAudience::normalize($data['type'] ?? null);
+        $this->refuseSalesContentInServiceMessage($type, $blocks);
+        $recipients = $this->recipients($type)
             ->when($data['audience'] === 'selected', fn ($q) => $q->whereIn('id', $data['recipients']))->get();
         if ($recipients->isEmpty() || ($data['audience'] === 'selected' && $recipients->count() !== count($data['recipients']))) {
             throw \Illuminate\Validation\ValidationException::withMessages(['recipients' => 'Sélectionnez des destinataires éligibles. Actualisez la liste si leurs préférences ont changé.']);
         }
         $paths = [];
         try {
-            DB::transaction(function () use ($request, $data, $recipients, $blocks, &$paths) {
+            DB::transaction(function () use ($request, $data, $recipients, $blocks, $type, &$paths) {
                 $batch = (string) Str::uuid();
                 foreach ($recipients as $recipient) {
                     $images = [];
@@ -70,7 +92,7 @@ class ManagedEmailController extends Controller
                         ...collect($data)->only(['subject', 'eyebrow', 'headline', 'body', 'cta_label', 'cta_url'])->all(),
                         'user_id' => $recipient->id, 'recipient_email' => $recipient->email,
                         'recipient_name' => $recipient->name, 'source_key' => $batch.':'.$recipient->id,
-                        'type' => 'newsletter', 'status' => ManagedEmail::STATUS_PENDING,
+                        'type' => $type, 'status' => ManagedEmail::STATUS_PENDING,
                         'image_paths' => $images, 'metadata' => ['batch' => $batch, 'created_by' => $request->user()->id,
                             ...($blocks !== null ? ['content_blocks' => ManagedEmailContent::resolve($blocks, $images)] : [])],
                     ]);
@@ -80,7 +102,7 @@ class ManagedEmailController extends Controller
             Storage::disk(config('filesystems.default', 'public'))->delete($paths);
             throw $exception;
         }
-        return redirect()->route('admin.emails.index')->with('success', $recipients->count().' message(s) préparé(s). Vous pouvez maintenant vérifier et valider chaque envoi.');
+        return redirect()->route('admin.emails.index')->with('success', $recipients->count().' message(s) préparé(s). Rien n’est parti : vérifiez un message, puis validez l’envoi du lot.');
     }
 
     public function index(Request $request, DemandDraftReminderService $reminders)
@@ -92,7 +114,20 @@ class ManagedEmailController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        // Lots préparés depuis le studio et encore à valider (au moins deux messages).
+        $batches = ManagedEmail::query()->whereIn('type', ManagedEmailAudience::TYPES)
+            ->whereIn('status', [ManagedEmail::STATUS_PENDING, ManagedEmail::STATUS_FAILED])
+            ->orderBy('id')->get(['id', 'source_key', 'subject', 'type', 'created_at'])
+            ->groupBy(fn (ManagedEmail $email) => Str::before($email->source_key, ':'))
+            ->filter(fn ($group, $batch) => Str::isUuid((string) $batch) && $group->count() > 1)
+            ->map(fn ($group, $batch) => [
+                'batch' => (string) $batch, 'subject' => $group->first()->subject, 'type' => $group->first()->type,
+                'count' => $group->count(), 'first' => $group->first(), 'created_at' => $group->first()->created_at,
+            ])->values();
+
         return view('admin.emails.index', [
+            'batches' => $batches,
+            'sendingCount' => ManagedEmail::where('status', ManagedEmail::STATUS_SENDING)->count(),
             'emails' => $emails,
             'status' => $status,
             'dueDrafts' => $reminders->due()->count(),
@@ -132,6 +167,7 @@ class ManagedEmailController extends Controller
         abort_unless(in_array($managedEmail->status, [ManagedEmail::STATUS_PENDING, ManagedEmail::STATUS_FAILED], true), 409);
 
         $blocks = ManagedEmailContent::read($request, $managedEmail->image_paths ?? []);
+        $this->refuseSalesContentInServiceMessage((string) $managedEmail->type, $blocks);
 
         $validated = $request->validate([
             'subject' => ['required', 'string', 'max:255'],
@@ -200,8 +236,11 @@ class ManagedEmailController extends Controller
         $email = DB::transaction(function () use ($managedEmail, $request, $reminders) {
             $email = ManagedEmail::lockForUpdate()->findOrFail($managedEmail->id);
             abort_unless(in_array($email->status, [ManagedEmail::STATUS_PENDING, ManagedEmail::STATUS_FAILED], true), 409);
-            if ($email->type === 'newsletter') {
-                abort_unless($this->recipients()->whereKey($email->user_id)->where('email', $email->recipient_email)->exists(), 409, 'Ce destinataire ne souhaite plus recevoir cette communication.');
+            if ($email->type === ManagedEmailAudience::NEWSLETTER) {
+                abort_unless(ManagedEmailAudience::stillReachable($email), 409, 'Ce destinataire ne souhaite plus recevoir cette communication.');
+            }
+            if ($email->type === ManagedEmailAudience::SERVICE) {
+                abort_unless(ManagedEmailAudience::stillReachable($email), 409, 'Ce compte n’est plus actif ou son adresse a changé.');
             }
             if ($email->type === DemandDraftReminderService::TYPE) {
                 abort_unless($reminders->stillRelevant($email), 409, 'Ce rappel n’est plus pertinent ou le destinataire l’a désactivé.');
@@ -230,6 +269,56 @@ class ManagedEmailController extends Controller
         }
 
         return redirect()->route('admin.emails.show', $email)->with('success', 'Message validé et envoyé.');
+    }
+
+    /** Messages d'un lot du studio encore à valider. */
+    private function pendingOfBatch(string $batch)
+    {
+        return ManagedEmail::query()->whereIn('type', ManagedEmailAudience::TYPES)
+            ->where('source_key', 'like', $batch.':%')
+            ->whereIn('status', [ManagedEmail::STATUS_PENDING, ManagedEmail::STATUS_FAILED]);
+    }
+
+    /**
+     * Valide tout un lot d'un seul geste. Les messages partent ensuite un par un,
+     * en arrière-plan et espacés, pour rester sous les limites du service d'envoi.
+     */
+    public function approveBatch(Request $request, string $batch)
+    {
+        $ids = DB::transaction(function () use ($batch, $request) {
+            $ids = $this->pendingOfBatch($batch)->lockForUpdate()->orderBy('id')->pluck('id');
+            ManagedEmail::whereIn('id', $ids)->update([
+                'status' => ManagedEmail::STATUS_SENDING,
+                'approved_by' => $request->user()->id,
+                'approved_at' => now(),
+                'failure_message' => null,
+            ]);
+
+            return $ids;
+        });
+        if ($ids->isEmpty()) {
+            return redirect()->route('admin.emails.index')->with('error', 'Ce lot ne contient plus aucun message à valider.');
+        }
+
+        $interval = max(0, (int) config('mail.managed_batch_interval', 20));
+        foreach ($ids->values() as $position => $id) {
+            SendManagedEmail::dispatch($id)->delay(now()->addSeconds($position * $interval));
+        }
+        $minutes = (int) ceil($ids->count() * $interval / 60);
+
+        return redirect()->route('admin.emails.index', ['status' => 'sending'])->with('success', $ids->count().' message(s) validé(s). '
+            .'L’envoi se fait en arrière-plan, un message toutes les '.$interval.' secondes'
+            .($minutes > 1 ? ' : comptez environ '.$minutes.' minutes.' : '.')
+            .' Les préférences de chaque destinataire sont relues au moment de l’envoi.');
+    }
+
+    public function cancelBatch(string $batch)
+    {
+        $cancelled = $this->pendingOfBatch($batch)->update(['status' => ManagedEmail::STATUS_CANCELLED]);
+
+        return redirect()->route('admin.emails.index')->with($cancelled ? 'success' : 'error', $cancelled
+            ? $cancelled.' envoi(s) annulé(s). Aucun e-mail n’a été transmis.'
+            : 'Ce lot ne contient plus aucun message à annuler.');
     }
 
     public function cancel(ManagedEmail $managedEmail)

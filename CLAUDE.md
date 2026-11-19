@@ -31,6 +31,10 @@ parsing Blade a déjà provoqué une erreur 500 en production sur `/feed`.
 - `@json([...])` **sur plusieurs lignes** casse la compilation. Construis le
   tableau dans un bloc `@php`, puis affiche-le avec
   `{!! Illuminate\Support\Js::encode($tableau) !!}`.
+- **Jamais de directive collée à une lettre ou à un chiffre** : dans
+  `Premium@if(...)`, Blade prend `@if` pour du texte (comme dans une adresse
+  e-mail) mais compile le `@endif`, et la vue plante au rendu. `view:cache`
+  **ne le détecte pas** : seul un test qui rend la vue le voit. Laisse une espace.
 - **Aucune directive Blade dans un commentaire `{{-- --}}`.** Blade compile les
   directives *avant* de retirer les commentaires : écrire `@php` ou `@json()`
   dans un commentaire casse la vue.

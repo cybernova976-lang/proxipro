@@ -1,0 +1,35 @@
+/* Comparatif « Gratuit / À la carte / Premium » (partials/premium-comparison).
+   Rampe indigo de welcome.blade.php, plus le violet #7c3aed. Un seul point de
+   rupture utile ici : 640. */
+.pk-compare { color: #334155; line-height: 1.55; }
+.pk-compare__title { margin: 0 0 8px; color: #0f172a; font-size: 1.3rem; font-weight: 750; line-height: 1.25; }
+.pk-compare__lead { margin: 0 0 16px; max-width: 760px; color: #526176; font-size: .95rem; }
+.pk-compare__argument { margin: 0 0 18px; padding: 14px 18px; border-left: 4px solid #7c3aed; border-radius: 0 12px 12px 0; background: #eef2ff; color: #312e81; font-size: .95rem; }
+
+.pk-compare__table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid #e0e7ff; border-radius: 16px; overflow: hidden; background: #fff; font-size: .88rem; }
+.pk-compare__table th, .pk-compare__table td { padding: 12px 14px; border-top: 1px solid #e0e7ff; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.pk-compare__table thead th { border-top: 0; background: #f8fafc; color: #0f172a; font-size: .82rem; font-weight: 700; }
+.pk-compare__table tbody th[scope="row"] { width: 34%; color: #1e293b; font-weight: 600; }
+.pk-compare__table td { width: 22%; color: #334155; }
+.pk-compare__table td.is-off { color: #64748b; }
+
+.pk-compare__section th { background: #f8fafc; color: #6d28d9; font-size: .74rem; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
+
+.pk-compare__table .pk-compare__premium { background: #eef2ff; color: #312e81; font-weight: 650; }
+.pk-compare__table thead .pk-compare__premium { background: #4338ca; color: #fff; }
+.pk-compare__table td.pk-compare__premium.is-off { color: #64748b; font-weight: 400; }
+.pk-compare__price { display: block; font-size: .78rem; font-weight: 500; opacity: .92; }
+
+.pk-compare__notes { margin: 14px 0 0; padding-left: 18px; color: #64748b; font-size: .82rem; }
+.pk-compare__notes li { margin: 4px 0; }
+
+@media (max-width: 640px) {
+    /* En colonne : la fonctionnalité en titre, puis une ligne par formule. */
+    .pk-compare__table, .pk-compare__table tbody, .pk-compare__table tr, .pk-compare__table th, .pk-compare__table td { display: block; width: auto; }
+    .pk-compare__table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .pk-compare__table tbody th[scope="row"] { width: auto; padding-bottom: 6px; }
+    .pk-compare__table td { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; width: auto; padding: 6px 14px; border-top: 0; }
+    .pk-compare__table td::before { content: attr(data-plan); color: #64748b; font-size: .78rem; font-weight: 650; }
+    .pk-compare__table td.pk-compare__premium { padding-bottom: 12px; }
+    .pk-compare__table td.pk-compare__premium::before { color: #4338ca; }
+}

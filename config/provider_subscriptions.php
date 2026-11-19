@@ -5,7 +5,8 @@
 | par le code (badge du profil public, mention « Sponsorisé » des offres sur
 | l'accueil des clients, ordre des prestataires suggérés après une demande,
 | 4 photos par annonce, réduction sur les boosts et l'option Urgent, rapport
-| d'activité mensuel, modèles de devis et relance automatique des devis).
+| d'activité mensuel, modèles de devis et relance automatique des devis, logo
+| sur les devis et factures, rappel unique des factures impayées).
 | Ce qui est ouvert à tout prestataire sans abonnement (Espace Pro, carnet de
 | clients, alertes) n'y figure pas : ce ne sont pas des avantages payants.
 | Une seule formule, mensuelle : l'annuelle n'apportait aucun avantage réel
@@ -35,6 +36,8 @@ return [
                 'Réduction de 20 % sur les boosts et l’option Urgent',
                 'Rapport d’activité mensuel : vues de profil, contacts, missions et montants mesurés, avec récapitulatif par e-mail',
                 'Modèles de devis et relance automatique des devis sans réponse (comptes professionnels)',
+                'Votre logo sur vos devis et vos factures (comptes professionnels)',
+                'Rappel automatique de vos factures impayées (comptes professionnels)',
             ],
         ],
     ],

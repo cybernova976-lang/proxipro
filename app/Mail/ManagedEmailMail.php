@@ -25,6 +25,7 @@ class ManagedEmailMail extends Mailable
                 'email' => $this->managedEmail,
                 'unsubscribeUrl' => $unsubscribe['url'] ?? null,
                 'unsubscribeLabel' => $unsubscribe['label'] ?? null,
+                'serviceNotice' => $this->managedEmail->type === \App\Support\ManagedEmailAudience::SERVICE,
                 'supportEmail' => config('mail.reply_to.address')
                     ?: config('mail.admin_email')
                     ?: config('mail.from.address'),

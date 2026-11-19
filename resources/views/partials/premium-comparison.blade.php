@@ -1,41 +1,43 @@
-<section class="premium-comparison" aria-label="Comparer le compte gratuit et Premium">
-    <h2 style="font-size:1.2rem;font-weight:700;">Ce que Premium change pour vous</h2>
-    <p style="color:#526176;font-size:.9rem;">Les échanges et les réglages du compte restent accessibles gratuitement. Premium ajoute des avantages de présentation et de visibilité.</p>
-    <style>
-        .premium-comparison .plan-name { display: none; }
-        @media (max-width: 575px) {
-            .premium-comparison table, .premium-comparison tbody, .premium-comparison caption { display: block; }
-            .premium-comparison thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-            .premium-comparison tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 12px 0; }
-            .premium-comparison tbody th { grid-column: 1 / -1; text-align: left; }
-            .premium-comparison tbody :is(th, td) { padding: 4px 8px !important; border: 0; overflow-wrap: normal; }
-            .premium-comparison .plan-name { display: block; color: #526176; font-size: .76rem; font-weight: 650; }
-            .premium-comparison caption { margin: 10px 0; text-align: left; }
-        }
-    </style>
-    <div>
-        <table class="table" style="width:100%;font-size:.86rem;border-collapse:collapse;">
-            <caption style="caption-side:bottom;font-size:.8rem;color:#526176;">Les quotas d’annonces dépendent du statut du compte. Premium ne rend pas les publications illimitées.</caption>
-            <thead><tr><th scope="col" style="padding:12px 8px;">Fonctionnalité</th><th scope="col" style="padding:12px 8px;">Gratuit</th><th scope="col" style="padding:12px 8px;">Premium</th></tr></thead>
+@php
+    // Même source que le bloc « comparatif » des e-mails : App\Support\OfferComparison.
+    $pkSections = \App\Support\OfferComparison::sections();
+    $pkPremiumPrice = \App\Support\OfferComparison::premiumPrice();
+    $pkArgument = \App\Support\OfferComparison::argument();
+    $pkOff = \App\Support\OfferComparison::NOT_INCLUDED;
+@endphp
+<link rel="stylesheet" href="{{ asset('css/offer-comparison.css') }}?v={{ filemtime(public_path('css/offer-comparison.css')) }}">
+<section class="pk-compare" aria-labelledby="pk-compare-title">
+    <h2 class="pk-compare__title" id="pk-compare-title">Gratuit, à la carte ou Premium : ce que vous obtenez</h2>
+    <p class="pk-compare__lead">Publier et échanger restent gratuits. Vous payez seulement pour être vu avant les autres, ou pour gagner du temps sur vos devis et vos factures.</p>
+    @if($pkArgument)
+        <p class="pk-compare__argument"><strong>Le calcul.</strong> {{ $pkArgument }}</p>
+    @endif
+    <table class="pk-compare__table">
+        <thead>
+            <tr>
+                <th scope="col">Fonctionnalité</th>
+                <th scope="col">Gratuit</th>
+                <th scope="col">À la carte</th>
+                <th scope="col" class="pk-compare__premium">Premium @if($pkPremiumPrice)<span class="pk-compare__price">{{ $pkPremiumPrice }}</span>@endif</th>
+            </tr>
+        </thead>
+        @foreach($pkSections as $pkSection)
             <tbody>
-                @foreach([
-                    ['Rechercher et échanger', 'Inclus', 'Inclus'],
-                    ['Photos par offre', '2 photos', '4 photos'],
-                    ['Offres sur l’accueil des clients', 'Affichage ordinaire', 'Priorité avec mention Sponsorisé, sans place fixe'],
-                    ['Suggestions après une demande', 'Selon la recherche', 'Profil présenté avant les non-abonnés éligibles'],
-                    ['Boosts et option Urgent', 'Tarif standard', 'Réduction de 20 %'],
-                    ['Rapport d’activité mensuel', 'Non inclus', 'Chiffres mesurés, comparaison au mois précédent, récapitulatif par e-mail'],
-                    ['Modèles de devis et relance des devis sans réponse', 'Non inclus', 'Inclus pour les comptes professionnels'],
-                    ['CRM des prestataires et suivi d’activité', 'Accessibles aux prestataires', 'Accessibles aux prestataires'],
-                    ['Notifications, confidentialité et assistance', 'Inclus', 'Inclus'],
-                ] as $row)
-                    <tr style="border-top:1px solid #e2e8f0;">
-                        <th scope="row" style="padding:12px 8px;font-weight:600;">{{ $row[0] }}</th>
-                        <td style="padding:12px 8px;"><span class="plan-name" aria-hidden="true">Gratuit</span>{{ $row[1] }}</td>
-                        <td style="padding:12px 8px;"><span class="plan-name" aria-hidden="true">Premium</span>{{ $row[2] }}</td>
+                <tr class="pk-compare__section"><th colspan="4" scope="colgroup">{{ $pkSection['title'] }}</th></tr>
+                @foreach($pkSection['rows'] as $pkRow)
+                    <tr>
+                        <th scope="row">{{ $pkRow['label'] }}</th>
+                        <td data-plan="Gratuit" @class(['is-off' => $pkRow['free'] === $pkOff])>{{ $pkRow['free'] }}</td>
+                        <td data-plan="À la carte" @class(['is-off' => $pkRow['unit'] === $pkOff])>{{ $pkRow['unit'] }}</td>
+                        <td data-plan="Premium" @class(['pk-compare__premium', 'is-off' => $pkRow['premium'] === $pkOff])>{{ $pkRow['premium'] }}</td>
                     </tr>
                 @endforeach
             </tbody>
-        </table>
-    </div>
+        @endforeach
+    </table>
+    <ul class="pk-compare__notes">
+        @foreach(\App\Support\OfferComparison::notes() as $pkNote)
+            <li>{{ $pkNote }}</li>
+        @endforeach
+    </ul>
 </section>

@@ -1,7 +1,10 @@
 @php
     $emailForEditor = $managedEmail ?? null;
     $existingPaths = $emailForEditor?->image_paths ?? [];
-    $initialBlocks = $emailForEditor?->metadata['content_blocks'] ?? null;
+    $initialBlocks = $emailForEditor?->metadata['content_blocks'] ?? ($templateBlocks ?? null);
+    // Le comparatif des offres est un argument de vente : proposé pour une newsletter seulement.
+    $allowComparison = ($emailType ?? ($emailForEditor?->type ?? 'newsletter')) === 'newsletter';
+    $comparisonHtml = $allowComparison ? view('emails.partials.offer-comparison')->render() : '';
     if (!$initialBlocks) {
         $initialBlocks = collect($existingPaths)->map(fn($path) => ['type'=>'image','path'=>$path,'width'=>560,'align'=>'center','caption'=>''])->all();
         $initialBlocks[] = ['type'=>'text', 'text'=>old('body', $emailForEditor?->body ?? '')];
@@ -29,6 +32,7 @@
     <div class="d-flex flex-wrap gap-2 mt-3">
         <button type="button" class="btn btn-outline-primary" id="add-text-block">+ Ajouter du texte</button>
         <button type="button" class="btn btn-outline-primary" id="add-button-block">+ Ajouter un bouton avec lien</button>
+        @if($allowComparison)<button type="button" class="btn btn-outline-primary" id="add-comparison-block">+ Ajouter le comparatif des offres</button>@endif
         <label for="block-images" class="form-label w-100 mb-0">Ajouter une ou plusieurs photos</label>
         <input id="block-images" class="form-control" type="file" name="images[]" multiple accept="image/jpeg,image/png,image/webp">
     </div>
@@ -43,7 +47,9 @@
     const input = document.getElementById('block-images'), error = document.getElementById('block-error');
     const existing = @json($editorImages);
     const initial = @json($initialBlocks);
-    const blocks = initial.filter(b => ['text','image','button'].includes(b.type)).map(b => b.type === 'image'
+    const comparisonHtml = @json($comparisonHtml);
+    const titles = {text:'Texte', image:'Photo', button:'Bouton avec lien', comparison:'Comparatif des offres'};
+    const blocks = initial.filter(b => ['text','image','button'].includes(b.type) || (b.type === 'comparison' && comparisonHtml)).map(b => b.type === 'image'
         ? {...b, url: /^existing:\d+$/.test(b.ref || '') ? existing[Number(b.ref.split(':')[1])] : null}
         : {...b});
     let frameRequested = false, initialized = false;
@@ -53,6 +59,7 @@
         const transfer = new DataTransfer();
         const layout = blocks.map(b => {
             if (b.type === 'text') return {type:'text',text:b.text || ''};
+            if (b.type === 'comparison') return {type:'comparison'};
             if (b.type === 'button') return {type:'button',label:b.label||'',url:b.url||'',align:b.align||'center'};
             let ref = b.ref;
             if (b.file) {ref = 'new:'+transfer.items.length; transfer.items.add(b.file);}
@@ -68,6 +75,7 @@
         if (!target) return;
         const html = blocks.map(b => {
             if (b.type === 'text') return `<div style="white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65;margin:0 0 20px;color:#536176">${safe(b.text)}</div>`;
+            if (b.type === 'comparison') return comparisonHtml;
             const align=['left','right'].includes(b.align)?b.align:'center';
             if (b.type === 'button') return `<div style="text-align:${align};margin:6px 0 24px">${/^https?:\/\//i.test(b.url||'')&&b.label?`<a href="${safe(b.url)}" style="display:inline-block;padding:16px 26px;background:#2563eb;color:white;border-radius:999px;text-decoration:none;font-weight:700;box-shadow:0 10px 22px rgba(37,99,235,.22)">${safe(b.label)} &nbsp;→</a>`:'<span style="color:#b45309">Complétez le texte et le lien du bouton</span>'}</div>`;
             return `<div style="text-align:${align};margin:0 0 20px">${b.url?`<img src="${safe(b.url)}" alt="${safe(b.caption||'Illustration')}" width="${Number(b.width)||560}" style="display:inline-block;width:${Number(b.width)||560}px;max-width:100%;height:auto;border-radius:8px">`:'<p>Photo à sélectionner à nouveau</p>'}${b.caption?`<div style="font-size:12px;color:#64748b;margin-top:6px">${safe(b.caption)}</div>`:''}</div>`;
@@ -83,7 +91,7 @@
         blocks.forEach((b,i)=>{
             const card=document.createElement('div'); card.className='border rounded-3 p-3 bg-light'; card.style.minWidth='0';
             const bar=document.createElement('div'); bar.className='d-flex flex-wrap align-items-center gap-2 mb-2';
-            const title=document.createElement('strong'); title.className='me-auto small'; title.textContent=`${i+1}. ${b.type==='text'?'Texte':(b.type==='image'?'Photo':'Bouton avec lien')}`; bar.append(title);
+            const title=document.createElement('strong'); title.className='me-auto small'; title.textContent=`${i+1}. ${titles[b.type]}`; bar.append(title);
             bar.append(button('↑',`Monter le bloc ${i+1}`,()=>{[blocks[i-1],blocks[i]]=[blocks[i],blocks[i-1]];render();},i===0));
             bar.append(button('↓',`Descendre le bloc ${i+1}`,()=>{[blocks[i],blocks[i+1]]=[blocks[i+1],blocks[i]];render();},i===blocks.length-1));
             bar.append(button('Retirer',`Retirer le bloc ${i+1}`,()=>{blocks.splice(i,1);render();})); card.append(bar);
@@ -103,6 +111,9 @@
                 const align=document.createElement('select');align.className='form-select form-select-sm mb-2';align.setAttribute('aria-label',`Alignement de la photo ${i+1}`);
                 [['left','À gauche'],['center','Centrée'],['right','À droite']].forEach(([value,label])=>{const o=document.createElement('option');o.value=value;o.textContent=label;align.append(o);});align.value=b.align||'center';align.onchange=()=>{b.align=align.value;sync();};card.append(align);
                 const caption=document.createElement('input');caption.className='form-control form-control-sm';caption.placeholder='Légende (facultatif)';caption.setAttribute('aria-label',`Légende de la photo ${i+1}`);caption.maxLength=200;caption.value=b.caption||'';caption.oninput=()=>{b.caption=caption.value;sync();};card.append(caption);
+            } else if(b.type==='comparison') {
+                const note=document.createElement('p');note.className='small text-muted mb-0';
+                note.textContent='Tableau « Gratuit / À la carte / Premium ». Ses lignes et ses prix sont repris du catalogue au moment de l’envoi : ils ne se modifient pas ici.';card.append(note);
             } else {
                 const label=document.createElement('input');label.className='form-control mb-2';label.placeholder='Ex. Terminer ma demande';label.maxLength=80;label.required=true;label.setAttribute('aria-label',`Texte du bouton ${i+1}`);label.value=b.label||'';label.oninput=()=>{b.label=label.value;sync();};card.append(label);
                 const url=document.createElement('input');url.className='form-control mb-2';url.type='url';url.placeholder='https://www.prokejem.fr/...';url.maxLength=2000;url.required=true;url.setAttribute('aria-label',`Lien du bouton ${i+1}`);url.value=b.url||'';url.oninput=()=>{b.url=url.value;sync();};card.append(url);
@@ -116,6 +127,8 @@
     }
     document.getElementById('add-text-block').onclick=()=>{if(blocks.length>=30){error.textContent='Maximum 30 blocs.';return;}blocks.push({type:'text',text:''});render();};
     document.getElementById('add-button-block').onclick=()=>{if(blocks.length>=30){error.textContent='Maximum 30 blocs.';return;}blocks.push({type:'button',label:'',url:'',align:'center'});render();};
+    const addComparison=document.getElementById('add-comparison-block');
+    if(addComparison) addComparison.onclick=()=>{if(blocks.some(b=>b.type==='comparison')){error.textContent='Le comparatif figure déjà dans le message.';return;}if(blocks.length>=30){error.textContent='Maximum 30 blocs.';return;}blocks.push({type:'comparison'});render();};
     input.onchange=()=>{
         error.textContent='';
         for(const file of [...input.files]) {

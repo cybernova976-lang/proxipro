@@ -659,6 +659,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::put('/emails/{managedEmail}', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'update'])->name('admin.emails.update');
     Route::post('/emails/{managedEmail}/approve', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'approve'])->name('admin.emails.approve');
     Route::post('/emails/{managedEmail}/cancel', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'cancel'])->name('admin.emails.cancel');
+    Route::post('/emails/lots/{batch}/approve', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'approveBatch'])
+        ->whereUuid('batch')->name('admin.emails.batch.approve');
+    Route::post('/emails/lots/{batch}/cancel', [\App\Http\Controllers\Admin\ManagedEmailController::class, 'cancelBatch'])
+        ->whereUuid('batch')->name('admin.emails.batch.cancel');
 
     // Gestion des utilisateurs
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');

@@ -25,6 +25,8 @@
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="{{ $align }}" style="padding:6px 0 24px;">
                     <a href="{{ $block['url'] }}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:16px 26px;border-radius:999px;box-shadow:0 10px 22px rgba(37,99,235,.22);">{{ $block['label'] }} &nbsp;→</a>
                 </td></tr></table>
+            @elseif($block['type'] === 'comparison')
+                @include('emails.partials.offer-comparison')
             @elseif($block['type'] === 'image' && !empty($block['path']) && in_array($block['path'], $email->image_paths ?? [], true))
                 @php($width = max(80, min(560, (int) ($block['width'] ?? 560))))
                 @php($align = in_array($block['align'] ?? '', ['left','center','right'], true) ? $block['align'] : 'center')
@@ -39,6 +41,6 @@
     @endif
     @if($email->cta_label && $email->cta_url)<div style="text-align:center;margin:28px 0 10px;"><a href="{{ $email->cta_url }}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-size:16px;font-weight:700;line-height:1;padding:17px 28px;border-radius:12px;box-shadow:0 10px 22px rgba(37,99,235,.22);">{{ $email->cta_label }} &nbsp;→</a></div>@endif
 </td></tr>
-<tr><td style="padding:20px 28px;background:#f8fafc;text-align:center;color:#758195;font-size:12px;line-height:1.6;">Besoin d'aide ? <a href="mailto:{{ $supportEmail }}" style="color:#2563eb;text-decoration:none;">{{ $supportEmail }}</a><br><a href="{{ route('settings.index') }}#notifications">Gérer mes préférences e-mail</a>@if($unsubscribeUrl ?? null)<br><a href="{{ $unsubscribeUrl }}">{{ $unsubscribeLabel ?? 'Me désinscrire sans me connecter' }}</a>@endif</td></tr>
+<tr><td style="padding:20px 28px;background:#f8fafc;text-align:center;color:#758195;font-size:12px;line-height:1.6;">Besoin d'aide ? <a href="mailto:{{ $supportEmail }}" style="color:#2563eb;text-decoration:none;">{{ $supportEmail }}</a><br><a href="{{ route('settings.index') }}#notifications">Gérer mes préférences e-mail</a>@if($serviceNotice ?? false)<br>Vous recevez ce message d’information parce que vous avez un compte Prokejem. Il ne contient aucune offre commerciale.@endif @if($unsubscribeUrl ?? null)<br><a href="{{ $unsubscribeUrl }}">{{ $unsubscribeLabel ?? 'Me désinscrire sans me connecter' }}</a>@endif</td></tr>
 </table></td></tr></table>
 </body></html>
