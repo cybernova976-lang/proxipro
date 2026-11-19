@@ -60,7 +60,7 @@ Route::get('/conseils/{slug}', [MarketplaceGuideController::class, 'show'])
     ->where('slug', '[a-z0-9-]+')
     ->name('guides.show');
 Route::post('/usage/events', UsageAnalyticsController::class)
-    ->middleware('throttle:120,1,usage.store:')
+    ->middleware([\App\Http\Middleware\BackgroundSignal::class, 'throttle:120,1,usage.store:'])
     ->name('usage.store');
 
 if (app()->environment('local')) {
@@ -96,7 +96,7 @@ Route::get('login', function () {
 Route::post('login', [App\Http\Controllers\Auth\LoginController::class, 'login'])->name('login.attempt');
 Route::post('logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
 Route::match(['get', 'post'], '/auth/session-activity', \App\Http\Controllers\SessionActivityController::class)
-    ->middleware(['auth', 'throttle:30,1,auth.session-activity:'])->name('auth.session-activity');
+    ->middleware([\App\Http\Middleware\BackgroundSignal::class, 'auth', 'throttle:30,1,auth.session-activity:'])->name('auth.session-activity');
 
 // Registration Routes...
 Route::get('register', function () {
@@ -447,7 +447,7 @@ Route::middleware(['auth'])->group(function () {
 // Routes de messagerie
 Route::middleware(['auth'])->group(function () {
     Route::post('/presence/heartbeat', \App\Http\Controllers\UserPresenceController::class)
-        ->middleware('throttle:120,1,presence.heartbeat:')->name('presence.heartbeat');
+        ->middleware([\App\Http\Middleware\BackgroundSignal::class, 'throttle:120,1,presence.heartbeat:'])->name('presence.heartbeat');
     Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
     Route::get('/messages/{conversation}', [MessageController::class, 'show'])->name('messages.show');
     Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');

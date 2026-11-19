@@ -39,6 +39,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Sessions en base : un signal d'arrière-plan qui n'a rien changé ne
+        // réécrit pas la session (sinon il efface ce qu'une action vient d'y écrire).
+        \Illuminate\Support\Facades\Session::extend('database', fn ($app) => new \App\Session\SignalAwareDatabaseSessionHandler(
+            $app['db']->connection($app['config']->get('session.connection')),
+            $app['config']->get('session.table'),
+            $app['config']->get('session.lifetime'),
+            $app,
+        ));
+
         foreach (['password-email' => 3, 'password-update' => 5] as $name => $attempts) {
             \Illuminate\Support\Facades\RateLimiter::for($name, function (\Illuminate\Http\Request $request) use ($name, $attempts) {
                 return \Illuminate\Cache\RateLimiting\Limit::perMinute($attempts)
