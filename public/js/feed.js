@@ -260,12 +260,6 @@
   }
 })();
 
-/* Confirmation des actions destructives de l'accueil (ex. « Abandonner » un brouillon). */
-(function () {
-  'use strict';
-  document.querySelectorAll('form[data-pk-confirm]').forEach(function (form) {
-    form.addEventListener('submit', function (event) {
-      if (!window.confirm(form.getAttribute('data-pk-confirm'))) event.preventDefault();
-    });
-  });
-})();
+/* La confirmation des formulaires « data-pk-confirm » (abandonner un brouillon,
+   arrêter une alerte) est assurée pour tout le site par public/js/confirm-submit.js,
+   chargé par le gabarit principal. Ne pas la refaire ici : la question serait posée deux fois. */

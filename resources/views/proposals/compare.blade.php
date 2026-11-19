@@ -180,7 +180,3 @@
     @endif
 </main>
 @endsection
-
-@push('scripts')
-<script defer src="{{ asset('js/confirm-submit.js') }}?v={{ filemtime(public_path('js/confirm-submit.js')) }}"></script>
-@endpush

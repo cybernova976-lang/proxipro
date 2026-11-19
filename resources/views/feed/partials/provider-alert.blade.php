@@ -5,7 +5,8 @@
     $pkCanFollow = auth()->check() && $pkAuthor && $ad->service_type === 'offre' && (int) $pkAuthor->id !== (int) auth()->id();
 @endphp
 @if($pkCanFollow && $pkAlertId)
-    <form method="POST" action="{{ route('saved-searches.destroy', $pkAlertId) }}" class="pk-follow">
+    <form method="POST" action="{{ route('saved-searches.destroy', $pkAlertId) }}" class="pk-follow"
+          data-pk-confirm="Ne plus être prévenu des nouvelles offres de {{ $pkName }} ?">
         @csrf
         @method('DELETE')
         <button type="submit" class="pk-save" aria-pressed="true"

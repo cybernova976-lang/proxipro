@@ -6,7 +6,8 @@
     $followAlert = $followAllowed ? $followService->findProviderAlert($followViewer, $provider) : null;
 @endphp
 @if($followAllowed && $followAlert?->is_active)
-    <form method="POST" action="{{ route('saved-searches.destroy', $followAlert) }}" class="mt-2">
+    <form method="POST" action="{{ route('saved-searches.destroy', $followAlert) }}" class="mt-2"
+          data-pk-confirm="Ne plus être prévenu des nouvelles offres de {{ $provider->name }} ?">
         @csrf
         @method('DELETE')
         <button type="submit" class="btn btn-contact btn-contact-secondary" aria-pressed="true">

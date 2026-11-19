@@ -156,7 +156,8 @@
                         <a href="{{ $savedSearch->openUrl() }}" class="btn btn-outline-primary">
                             <i class="fas fa-{{ $savedSearch->provider_id ? 'user' : 'eye' }} me-2"></i>{{ $savedSearch->provider_id ? 'Voir le profil' : 'Ouvrir' }}
                         </a>
-                        <form method="POST" action="{{ route('saved-searches.destroy', $savedSearch) }}" style="flex:1;">
+                        <form method="POST" action="{{ route('saved-searches.destroy', $savedSearch) }}" style="flex:1;"
+                              data-pk-confirm="Supprimer l’alerte « {{ $savedSearch->name }} » ? Vous ne serez plus prévenu.">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-outline-danger w-100">
