@@ -17,7 +17,16 @@ use Tests\TestCase;
  *     client, réglages mémorisés pour la requête : 42 lectures de « settings »
  *     tombaient à chaque fois sur la base) ;
  *   - avec la zone « À faire » du rail : 32 requêtes (abonnement push et
- *     alerte enregistrée, une requête chacune).
+ *     alerte enregistrée, une requête chacune) ;
+ *   - avec la version des CGU en vigueur, lue à chaque page depuis le
+ *     18 novembre 2026 : 33 requêtes.
+ *
+ * Le compte dépend du jour : les prestataires affichés tournent chaque jour
+ * (HomeProviderDiscoveryService::rotatingSelection) et la rotation coûte une
+ * requête de plus quand elle revient au début de la liste, soit trois jours
+ * sur quatre avec ce jeu de données. Le budget est donc vérifié sur un cycle
+ * complet de quatre jours, à date fixée : il ne passe plus « les bons jours »
+ * seulement, comme le 18 novembre où la requête des CGU est passée inaperçue.
  */
 class FeedClientQueryBudgetTest extends TestCase
 {
@@ -25,7 +34,10 @@ class FeedClientQueryBudgetTest extends TestCase
 
     private const MESURE_AVANT = 96;
 
-    private const MESURE_APRES = 32;
+    private const MESURE_APRES = 33;
+
+    /** Un des quatre jours du cycle évite la seconde requête de rotation. */
+    private const MESURE_JOUR_FAVORABLE = 32;
 
     protected function setUp(): void
     {
@@ -54,10 +66,36 @@ class FeedClientQueryBudgetTest extends TestCase
         return $reader;
     }
 
-    public function test_client_feed_stays_within_its_measured_query_budget(): void
+    /**
+     * Quatre jours consécutifs : un cycle complet de la rotation. Chaque jour a
+     * son plafond mesuré, pour qu'une requête ajoutée ne se cache pas dans la
+     * marge du jour favorable.
+     *
+     * @return array<string, array{0: string, 1: int}>
+     */
+    public static function rotationCycle(): array
     {
-        $reader = $this->seedFeed();
-        $this->actingAs($reader);
+        return [
+            '18 novembre (jour favorable)' => ['2026-11-18 12:00:00', self::MESURE_JOUR_FAVORABLE],
+            '19 novembre' => ['2026-11-19 12:00:00', self::MESURE_APRES],
+            '20 novembre' => ['2026-11-20 12:00:00', self::MESURE_APRES],
+            '21 novembre' => ['2026-11-21 12:00:00', self::MESURE_APRES],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('rotationCycle')]
+    public function test_client_feed_stays_within_its_measured_query_budget(string $day, int $ceiling): void
+    {
+        $this->travelTo(\Illuminate\Support\Carbon::parse($day, 'UTC'));
+        $count = $this->feedQueryCount();
+
+        $this->assertLessThan(self::MESURE_AVANT, $count);
+        $this->assertLessThanOrEqual($ceiling, $count, "/feed (client) fait {$count} requêtes le {$day}.");
+    }
+
+    private function feedQueryCount(): int
+    {
+        $this->actingAs($this->seedFeed());
 
         DB::flushQueryLog();
         DB::enableQueryLog();
@@ -65,8 +103,7 @@ class FeedClientQueryBudgetTest extends TestCase
         $count = count(DB::getQueryLog());
         DB::disableQueryLog();
 
-        $this->assertLessThan(self::MESURE_AVANT, $count);
-        $this->assertLessThanOrEqual(self::MESURE_APRES, $count, "/feed (client) fait {$count} requêtes.");
+        return $count;
     }
 
     public function test_visible_zones_keep_their_data(): void
