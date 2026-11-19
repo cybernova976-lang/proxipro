@@ -30,6 +30,9 @@ final class RankingDisclosure
         if ($territory && $includesRemote) {
             $details[] = 'Les offres « À distance » d’autres territoires sont incluses.';
         }
+        if (\App\Support\AdPromotionCatalog::newRulesActive()) {
+            $details[] = 'Une offre « Remontée » a payé pour être reclassée parmi les plus récentes.';
+        }
 
         return [
             // L'ordre est énoncé dans l'ordre réel du tri : sponsorisées, puis catégories suivies, puis date.
@@ -43,7 +46,8 @@ final class RankingDisclosure
     }
 
     /**
-     * Date d'effet annoncée du futur mécanisme de places sponsorisées,
+     * Date d'effet annoncée des nouvelles règles de mise en avant (« À la une »,
+     * « Remontée automatique », Urgent pour toute la durée de la demande),
      * lue dans config('feed.sponsored.effective_at') (FEED_SPONSORED_EFFECTIVE_AT).
      * Formats acceptés : AAAA-MM-JJ ou JJ/MM/AAAA. Vide ou illisible : aucune
      * date n'est inventée.

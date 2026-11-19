@@ -51,6 +51,15 @@ Schedule::command('boosts:cleanup')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/boosts-cleanup.log'));
 
+// ─── Remontée automatique des offres ───
+// Toutes les heures : remontées achetées arrivées à échéance et remontée
+// hebdomadaire incluse dans l'abonnement Premium. Sans effet tant que les
+// nouvelles règles de mise en avant ne sont pas en vigueur.
+Schedule::command('ads:bump')
+    ->hourly()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/ads-bump.log'));
+
 // ─── Alertes d'expiration boost/urgent ───
 // Exécuté toutes les 6 heures pour notifier les utilisateurs dont les boosts/urgents expirent bientôt
 Schedule::command('boosts:send-expiring-alerts')

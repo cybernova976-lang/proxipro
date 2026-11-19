@@ -308,6 +308,11 @@
                         @if(request('location'))
                             près de <strong>{{ request('location') }}</strong>
                         @endif
+                        @if($newPromotionRules && ! $isMyAds)
+                            <a href="{{ request()->fullUrlWithQuery(['urgent' => $urgentOnly ? null : 1, 'page' => null]) }}"
+                               class="category-chip {{ $urgentOnly ? 'active' : '' }}" style="margin-left:.5rem;"
+                               aria-pressed="{{ $urgentOnly ? 'true' : 'false' }}"><i class="fas fa-fire me-1" aria-hidden="true"></i>Urgentes</a>
+                        @endif
                     </div>
                     <div class="dropdown">
                         <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
@@ -321,6 +326,9 @@
                     </div>
                 </div>
                 
+                @if($sponsoredFirst && $ads->isNotEmpty())
+                    <p class="small text-muted mb-3" id="adsRankingDisclosure"><i class="fas fa-info-circle me-1" aria-hidden="true"></i>Classement : les offres sponsorisées (payantes) passent en premier, puis les annonces les plus récentes ; une offre « Remontée » a payé pour revenir parmi les plus récentes. <a href="{{ route('legal.platform-rules') }}#classement">En savoir plus</a></p>
+                @endif
                 @if($ads->isEmpty())
                     <div class="empty-state">
                         <i class="fas fa-search"></i>
@@ -360,6 +368,10 @@
                                             <span class="ad-badge-urgent">
                                                 <i class="fas fa-fire me-1"></i>Urgent · {{ now()->diffInDays($ad->urgent_until, false) }}j
                                             </span>
+                                        @elseif($newPromotionRules && \App\Support\AdDisclosure::isSponsored($ad))
+                                            <span class="ad-badge-boosted">{{ \App\Support\AdDisclosure::SPONSORED_LABEL }}<span class="visually-hidden"> : {{ \App\Support\AdDisclosure::SPONSORED_SCREEN_READER }}</span></span>
+                                        @elseif($newPromotionRules && \App\Support\AdDisclosure::isBumped($ad))
+                                            <span class="ad-badge-boosted">{{ \App\Support\AdDisclosure::BUMPED_LABEL }}<span class="visually-hidden"> : {{ \App\Support\AdDisclosure::BUMPED_SCREEN_READER }}</span></span>
                                         @elseif($ad->is_boosted && $ad->boost_end && $ad->boost_end->isFuture())
                                             <span class="ad-badge-boosted">
                                                 <i class="fas fa-rocket me-1"></i>Boosté · {{ now()->diffInDays($ad->boost_end, false) }}j

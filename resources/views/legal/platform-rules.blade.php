@@ -8,6 +8,9 @@
     $pkRulesUpdated = config('legal.platform_rules_updated') ?: config('legal.last_updated');
     // Le masquage des comptes internes n'est annoncé que s'il est réellement actif (FEED_HIDDEN_AUTHOR_IDS).
     $pkRulesHidesInternal = \App\Models\Ad::hiddenAuthorIds() !== [];
+    // Les articles 4 et 5 décrivent les règles réellement appliquées : celles d'origine,
+    // puis les nouvelles à partir de leur date d'effet (AdPromotionCatalog::newRulesActive).
+    $pkNewRules = \App\Support\AdPromotionCatalog::newRulesActive();
 @endphp
 <div class="container py-5"><div class="row justify-content-center"><div class="col-lg-9"><div class="card border-0 shadow-sm"><div class="card-body p-4 p-md-5">
     <h1>Règles de la marketplace</h1>
@@ -31,16 +34,28 @@
                 <li>les offres sponsorisées passent en premier (voir l’article 5) ;</li>
                 <li>dans chaque groupe (offres sponsorisées, puis autres offres), deux offres au plus par prestataire passent avant ses offres suivantes ;</li>
                 <li>à égalité, les offres des catégories que le visiteur suit dans son profil passent en premier ;</li>
-                <li>enfin, les offres les plus récentes d’abord (date de publication).</li>
+                @if($pkNewRules)
+                    <li>enfin, les offres les plus récentes d’abord : la date retenue est celle de la publication ou, si elle est plus récente, celle de la dernière remontée (voir l’article 5).</li>
+                @else
+                    <li>enfin, les offres les plus récentes d’abord (date de publication).</li>
+                @endif
             </ol>
         </li>
     </ul>
     <p>Une phrase qui résume ce critère est affichée au-dessus de la liste.@if ($pkRulesHidesInternal) Les annonces des comptes internes ou de test de la plateforme ne sont pas affichées.@endif</p>
-    <p><strong>Liste des annonces.</strong> Les annonces sont classées par date de publication, les plus récentes d’abord, ou par prix ou par distance lorsque le visiteur choisit ce tri. Une option payante n’y modifie pas l’ordre.</p>
-    <p><strong>Accueil des prestataires.</strong> Les demandes qui correspondent au métier du prestataire sont classées ainsi : les demandes encore sans proposition d’abord ; à égalité, les demandes signalées « Urgent » (option payante ou urgence indiquée au dépôt) ; puis les plus récentes.</p>
+    @if($pkNewRules)
+        <p><strong>Liste des annonces.</strong> Dans le tri par défaut, les offres sponsorisées passent en premier (voir l’article 5), puis les annonces les plus récentes d’abord (publication ou dernière remontée) ; une phrase qui résume ce critère est affichée au-dessus de la liste. Lorsque le visiteur choisit un tri par prix ou cherche par distance, aucune option payante ne modifie l’ordre.</p>
+        <p><strong>Accueil des prestataires.</strong> Les demandes qui correspondent au métier du prestataire sont classées ainsi : les demandes encore sans proposition d’abord ; à égalité, les demandes dont l’option payante « Urgent » est en cours ; puis les plus récentes. Une urgence indiquée gratuitement au dépôt ne modifie pas l’ordre.</p>
+    @else
+        <p><strong>Liste des annonces.</strong> Les annonces sont classées par date de publication, les plus récentes d’abord, ou par prix ou par distance lorsque le visiteur choisit ce tri. Une option payante n’y modifie pas l’ordre.</p>
+        <p><strong>Accueil des prestataires.</strong> Les demandes qui correspondent au métier du prestataire sont classées ainsi : les demandes encore sans proposition d’abord ; à égalité, les demandes signalées « Urgent » (option payante ou urgence indiquée au dépôt) ; puis les plus récentes.</p>
+    @endif
     <p><strong>Prestataires suggérés après une demande.</strong> Les prestataires abonnés (Premium) sont présentés avant les autres prestataires.</p>
 
     <h4 class="mt-4">5. Visibilité payante</h4>
+    @if($pkNewRules)
+        @include('legal.partials.paid-visibility')
+    @else
     <p>Sur l’accueil des clients, toute offre mise en avant contre paiement porte la mention « Sponsorisé », suivie d’un lien « Pourquoi ? » vers cette page. Deux options produisent cet effet :</p>
     <ul>
         <li><strong>Boost :</strong> pendant la durée achetée, l’offre boostée rejoint le groupe des offres sponsorisées.</li>
@@ -49,7 +64,14 @@
     <p>Aucune position n’est garantie. Les offres sponsorisées sont classées entre elles selon les règles 2 à 4 de l’article 4. Leur nombre n’est pas limité aujourd’hui : lorsqu’elles sont nombreuses, une offre sponsorisée peut figurer en page 2 ou au-delà. Un boost ou un abonnement ne garantit ni contact, ni vente, ni résultat commercial. Ailleurs sur le site, une annonce boostée peut porter la mention « Boosté ».</p>
     <p><strong>Option Urgent (demandes) :</strong> une demande qui a pris l’option payante est signalée « Urgent · option payante » ; une urgence indiquée gratuitement lors du dépôt est signalée « Urgent ».</p>
     <p><strong>Remontée :</strong> la remontée payante d’une annonce n’est plus proposée pour le moment. Elle ne modifie jamais un boost en cours.</p>
-    <p><strong>Évolution annoncée :</strong> {{ $pkRulesEffective }}, un nouveau mécanisme remplacera l’ordre des offres sponsorisées décrit ci-dessus. Sur chaque page de {{ $pkRulesPageSize }} offres, 2 places au plus seront sponsorisées. Elles seront attribuées par un tirage au sort quotidien parmi les offres sponsorisées du territoire, avec une seule carte par prestataire et par page. Un abonnement Premium comptera pour une seule annonce du prestataire. Les autres offres garderont l’ordre décrit à l’article 4.</p>
+    <p id="evolution"><strong>Évolution annoncée :</strong> {{ $pkRulesEffective }}, de nouvelles règles de mise en avant s’appliqueront.</p>
+    <ul>
+        <li><strong>À la une :</strong> le boost devient « À la une » (7 ou 30 jours). L’offre porte toujours la mention « Sponsorisé » ; les offres sponsorisées passeront aussi en premier dans le tri par défaut de la liste des annonces.</li>
+        <li><strong>Remontée automatique :</strong> une option payante reclassera l’offre, chaque jour ou chaque semaine, comme si elle venait d’être publiée ; l’offre portera la mention « Remontée ». Les offres des prestataires abonnés (Premium) remonteront chaque semaine sans achat.</li>
+        <li><strong>Option Urgent (demandes) :</strong> l’option payante couvrira toute la durée de la demande. Elle seule donnera la mention « Urgent » dans les listes et la priorité sur l’accueil des prestataires ; l’urgence indiquée gratuitement au dépôt restera une information lisible dans la demande.</li>
+    </ul>
+    <p>Les prix de ces options seront affichés avant paiement sur la page de mise en avant de chaque annonce.</p>
+    @endif
 
     <h4 class="mt-4">6. Modération</h4>
     <p>Les contrôles peuvent être automatisés puis confirmés humainement. Un contenu peut être refusé, déclassé, masqué ou supprimé pour mauvaise catégorie, informations trompeuses, risque, illégalité, fraude ou violation des conditions. L’auteur peut demander un réexamen au support.</p>

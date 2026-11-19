@@ -38,8 +38,8 @@
     $pkThumb = $pkVisiblePhotos[0] ?? null;
 
     // --- statuts ---
-    $pkIsUrgent  = $ad->is_urgent && (! $ad->urgent_until || $ad->urgent_until->isFuture());
     $pkUrgentLabel = \App\Support\AdDisclosure::urgentLabel($ad);
+    $pkIsUrgent  = $pkUrgentLabel !== null;
     $pkIsBoosted = $ad->is_boosted && $ad->boost_end && $ad->boost_end->isFuture();
     // Côté client, un libellé unique pour toute mise en avant payante (boost ou Premium).
     $pkIsSponsored = $pkRole === 'client' && \App\Support\AdDisclosure::isSponsored($ad);
@@ -101,6 +101,8 @@
             @if($pkIsSponsored)
                 <span class="pk-tag pk-tag--sponsored">{{ \App\Support\AdDisclosure::SPONSORED_LABEL }}<span class="pk-sr"> : {{ \App\Support\AdDisclosure::SPONSORED_SCREEN_READER }}</span></span>
                 <a class="pk-ad__why" href="{{ route('legal.platform-rules') }}#classement" aria-label="Pourquoi ? Règles de classement des offres sponsorisées">Pourquoi ?</a>
+            @elseif($pkRole === 'client' && \App\Support\AdDisclosure::isBumped($ad))
+                <span class="pk-tag pk-tag--bumped">{{ \App\Support\AdDisclosure::BUMPED_LABEL }}<span class="pk-sr"> : {{ \App\Support\AdDisclosure::BUMPED_SCREEN_READER }}</span></span>
             @elseif($pkRole !== 'client' && $pkIsBoosted)
                 <span class="pk-tag pk-tag--boost">Boosté</span>
             @endif

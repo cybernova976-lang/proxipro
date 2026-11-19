@@ -222,16 +222,18 @@ class SponsoredDisclosureTest extends TestCase
             ->assertSee('toutes les offres actives du prestataire abonné')
             ->assertSee('Aucune position n’est garantie.')
             ->assertSee('la remontée payante d’une annonce n’est plus proposée pour le moment')
-            ->assertSee('2 places au plus seront sponsorisées')
-            ->assertSee('tirage au sort quotidien')
-            ->assertSee('une seule carte par prestataire et par page')
-            ->assertSee('Un abonnement Premium comptera pour une seule annonce du prestataire.')
-            ->assertSee('à une date annoncée au moins 15 jours à l’avance, un nouveau mécanisme', false)
+            ->assertSee('le boost devient « À la une »')
+            ->assertSee('Remontée automatique')
+            ->assertSee('l’option payante couvrira toute la durée de la demande')
+            ->assertSee('à une date annoncée au moins 15 jours à l’avance, de nouvelles règles de mise en avant', false)
+            ->assertDontSee('tirage au sort')
             ->assertDontSee('« Prioritaire »');
 
-        config(['feed.sponsored.effective_at' => '2026-11-25']);
+        // Date fixée et pas encore atteinte : elle est annoncée telle quelle.
+        $date = now()->addDays(15);
+        config(['feed.sponsored.effective_at' => $date->format('Y-m-d')]);
         $this->get(route('legal.platform-rules'))->assertOk()
-            ->assertSee('à compter du 25/11/2026, un nouveau mécanisme', false);
+            ->assertSee('à compter du '.$date->format('d/m/Y').', de nouvelles règles de mise en avant', false);
     }
 
     /** @return array<string, string> titre de l'annonce => HTML de sa carte */

@@ -1,0 +1,67 @@
+/*
+ * Page d'achat des options de mise en avant (resources/views/boost/options.blade.php).
+ * Tout est porté par .pk-boost et préfixé pk-, pour ne rien mélanger avec
+ * layouts/app.blade.php. Une seule rampe : l'indigo du site, plus le violet.
+ * Points de rupture : 640 uniquement.
+ */
+.pk-boost {
+  --pk-50: #eef2ff; --pk-100: #e0e7ff; --pk-200: #c7d2fe; --pk-600: #4f46e5;
+  --pk-700: #4338ca; --pk-800: #3730a3; --pk-950: #312e81; --pk-violet: #7c3aed;
+  --pk-ink: #172033; --pk-muted: #526176; --pk-rule: #e1e7f0;
+  max-width: 760px; margin: 0 auto; padding: 32px 20px 56px; color: var(--pk-ink);
+  font-size: 1rem; line-height: 1.55;
+}
+.pk-boost *, .pk-boost *::before, .pk-boost *::after { box-sizing: border-box; }
+
+.pk-boost__eyebrow { margin: 0 0 6px; color: var(--pk-700); font-weight: 700; font-size: .9rem; }
+.pk-boost h1 { margin: 0 0 6px; font-size: clamp(1.45rem, 3vw, 1.9rem); font-weight: 800; letter-spacing: -.01em; }
+.pk-boost__ad { margin: 0; color: var(--pk-muted); }
+.pk-boost__views { margin: 4px 0 0; color: var(--pk-muted); font-size: .9rem; }
+
+.pk-boost__current { margin: 20px 0 0; padding: 14px 18px; list-style: none; border-radius: 14px;
+  background: var(--pk-50); border: 1px solid var(--pk-200); color: var(--pk-800); font-size: .93rem; }
+.pk-boost__current li + li { margin-top: 4px; }
+
+.pk-boost__group { margin: 28px 0 0; padding: 0; border: 0; min-width: 0; }
+.pk-boost__group legend { float: none; width: auto; margin: 0 0 4px; padding: 0; font-size: 1.15rem; font-weight: 800; color: var(--pk-950); }
+.pk-boost__intro { margin: 0 0 12px; color: var(--pk-muted); font-size: .93rem; }
+
+.pk-boost__choice { display: flex; align-items: center; gap: 14px; margin: 0 0 10px; padding: 14px 16px;
+  background: #fff; border: 1.5px solid var(--pk-rule); border-radius: 14px; cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease; }
+.pk-boost__choice:hover { border-color: var(--pk-200); }
+.pk-boost__choice:has(input:checked) { border-color: var(--pk-600); background: var(--pk-50); }
+.pk-boost__choice:has(input:focus-visible) { outline: 3px solid var(--pk-200); outline-offset: 2px; }
+.pk-boost__choice input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: var(--pk-600); }
+.pk-boost__label { flex: 1; min-width: 0; font-weight: 650; }
+.pk-boost__note { display: block; font-weight: 400; font-size: .85rem; color: var(--pk-muted); }
+.pk-boost__price { flex: none; text-align: right; font-weight: 800; color: var(--pk-700); white-space: nowrap; }
+.pk-boost__price s { display: block; font-weight: 400; font-size: .82rem; color: var(--pk-muted); }
+
+.pk-boost__choice--off { cursor: default; background: #f8fafc; }
+.pk-boost__choice--off:hover { border-color: var(--pk-rule); }
+.pk-boost__choice--off .pk-boost__label { color: var(--pk-muted); }
+.pk-boost__choice--off .pk-boost__price { color: var(--pk-muted); font-weight: 600; font-size: .85rem; white-space: normal; max-width: 44%; }
+
+.pk-boost__pay { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 50px; margin: 22px 0 0;
+  padding: 12px 20px; border: 0; border-radius: 14px; background: var(--pk-600); color: #fff; font-size: 1rem; font-weight: 750; cursor: pointer; }
+.pk-boost__pay:hover { background: var(--pk-700); }
+.pk-boost__pay:focus-visible { outline: 3px solid var(--pk-200); outline-offset: 2px; }
+.pk-boost__intro--top { margin-top: 20px; }
+.pk-boost__error { margin: 12px 0 0; color: #b3321f; font-weight: 650; font-size: .9rem; }
+.pk-boost__legal { margin: 10px 0 0; color: var(--pk-muted); font-size: .84rem; }
+.pk-boost a { color: var(--pk-700); font-weight: 650; }
+
+.pk-boost__premium { margin: 28px 0 0; padding: 18px 20px; border-radius: 14px; border: 1px solid var(--pk-200);
+  background: linear-gradient(135deg, var(--pk-50), #f5f3ff); }
+.pk-boost__premium h2 { margin: 0 0 6px; font-size: 1.05rem; font-weight: 800; color: var(--pk-950); }
+.pk-boost__premium p { margin: 0 0 8px; font-size: .93rem; }
+.pk-boost__premium ul { margin: 0 0 10px; padding-left: 20px; font-size: .93rem; }
+.pk-boost__premium strong { color: var(--pk-violet); }
+
+.pk-boost__back { display: inline-block; margin: 26px 0 0; }
+
+@media (max-width: 640px) {
+  .pk-boost { padding: 22px 16px 44px; }
+  .pk-boost__choice { padding: 12px 14px; gap: 12px; }
+}

@@ -292,6 +292,9 @@
                     <div class="ad-content-section">
                         <span class="badge bg-primary mb-2">{{ $ad->category }}</span>
                         <h1 class="ad-title">{{ $ad->title }}</h1>
+                        @if(\App\Support\AdPromotionCatalog::newRulesActive() && \App\Support\AdDisclosure::declaresUrgency($ad))
+                            <p class="small text-muted mb-2" data-declared-urgency><i class="fas fa-clock me-1" aria-hidden="true"></i>Le client indique que son besoin est urgent.</p>
+                        @endif
                         <div class="ad-meta">
                             <div class="ad-meta-item"><i class="fas fa-map-marker-alt"></i><span>{{ $ad->location }}</span></div>
                             <div class="ad-meta-item"><i class="fas fa-calendar"></i><span>{{ $ad->created_at->diffForHumans() }}</span></div>
@@ -461,7 +464,9 @@
                             <!-- Smart Boost/Urgent Status for Owner -->
                             @php $bStatus = $ad->getBoostStatus(); @endphp
                             
-                            @if($bStatus['has_any_visibility'])
+                            @if(\App\Support\AdPromotionCatalog::newRulesActive())
+                                @include('ads.partials.promotion-owner', ['ad' => $ad])
+                            @elseif($bStatus['has_any_visibility'])
                                 <div class="mt-2 p-3 rounded-3" style="background: linear-gradient(135deg, #fefce8, #fef3c7); border: 2px solid #fcd34d;">
                                     {{-- Urgent active --}}
                                     @if($bStatus['is_urgent'])

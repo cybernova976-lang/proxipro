@@ -120,7 +120,21 @@ class AdController extends Controller
             $hasGeoSearch = true;
         }
 
+        // Demandes dont l'option Urgent est en cours (nouvelles règles de mise en avant).
+        $newPromotionRules = \App\Support\AdPromotionCatalog::newRulesActive();
+        $urgentOnly = $newPromotionRules && $request->boolean('urgent');
+        if ($urgentOnly) {
+            $query->promotedUrgent();
+        }
+
+        // Nouvelles règles : chaque annonce sait si elle est sponsorisée (boost acheté
+        // ou abonnement de l'auteur), quel que soit le tri, pour porter la bonne mention.
+        if ($newPromotionRules && ! $isMyAds) {
+            app(\App\Services\ClientFeedOffersService::class)->addPromotedColumn($query);
+        }
+
         // Tri
+        $sponsoredFirst = false;
         if (! $hasGeoSearch) {
             switch ($sort) {
                 case 'price_low':
@@ -131,7 +145,14 @@ class AdController extends Controller
                     break;
                 case 'newest':
                 default:
-                    $query->latest();
+                    // Nouvelles règles : dans le tri par défaut, les offres sponsorisées
+                    // passent d'abord, puis les plus récentes (dernière remontée ou
+                    // publication). Un tri choisi par le visiteur n'est jamais modifié.
+                    if ($newPromotionRules && ! $isMyAds) {
+                        $query->orderByDesc('feed_is_promoted');
+                        $sponsoredFirst = true;
+                    }
+                    $query->orderByRaw(Ad::freshnessSql().' DESC')->orderByDesc('ads.id');
                     break;
             }
         }
@@ -145,7 +166,8 @@ class AdController extends Controller
         // Catégories disponibles - depuis config/categories.php (source unique)
         $categories = array_keys(MarketplaceCategoryRegistry::enabledAll());
 
-        return view('ads.index', compact('ads', 'popularServices', 'categories', 'isMyAds'));
+        return view('ads.index', compact('ads', 'popularServices', 'categories', 'isMyAds',
+            'newPromotionRules', 'sponsoredFirst', 'urgentOnly'));
     }
 
     /**

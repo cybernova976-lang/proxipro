@@ -15,7 +15,7 @@
         default => storage_url(preg_replace('#^public/#', '', $pkFirstPhoto)),
     };
 
-    $pkIsUrgent = $ad->is_urgent && (! $ad->urgent_until || $ad->urgent_until->isFuture());
+    $pkIsUrgent = \App\Support\AdDisclosure::urgentLabel($ad) !== null;
     // Seule l'option payante renseigne urgent_until ; l'urgence choisie au dépôt est gratuite.
     $pkUrgentLabel = \App\Support\AdDisclosure::urgentLabel($ad);
     $pkIsSponsored = \App\Support\AdDisclosure::isSponsored($ad);
@@ -45,6 +45,8 @@
             @if($pkIsSponsored)
                 <span class="pk-tag pk-tag--sponsored">{{ \App\Support\AdDisclosure::SPONSORED_LABEL }}<span class="pk-sr"> : {{ \App\Support\AdDisclosure::SPONSORED_SCREEN_READER }}</span></span>
                 <a class="pk-ad-row__why" href="{{ route('legal.platform-rules') }}#classement" aria-label="Pourquoi ? Règles de classement des offres sponsorisées">Pourquoi ?</a>
+            @elseif(\App\Support\AdDisclosure::isBumped($ad))
+                <span class="pk-tag pk-tag--bumped">{{ \App\Support\AdDisclosure::BUMPED_LABEL }}<span class="pk-sr"> : {{ \App\Support\AdDisclosure::BUMPED_SCREEN_READER }}</span></span>
             @endif
         </div>
         <h3><a href="{{ $pkUrl }}">{{ $ad->title }}</a></h3>

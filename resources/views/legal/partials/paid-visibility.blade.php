@@ -1,0 +1,10 @@
+{{-- Article 5 des règles de la marketplace, nouvelles règles de mise en avant en vigueur. --}}
+<p>Toute annonce mise en avant contre paiement le signale. Pour une offre, trois options existent :</p>
+<ul>
+    <li><strong>À la une (7 ou 30 jours) :</strong> pendant la durée achetée, l’offre porte la mention « Sponsorisé » et rejoint le groupe des offres sponsorisées, sur l’accueil des clients et dans le tri par défaut de la liste des annonces. Sur l’accueil des clients, la mention est suivie d’un lien « Pourquoi ? » vers cette page.</li>
+    <li><strong>Abonnement Premium :</strong> pendant l’abonnement, toutes les offres actives du prestataire abonné rejoignent le groupe des offres sponsorisées, et chacune remonte automatiquement chaque semaine.</li>
+    <li><strong>Remontée automatique (chaque jour ou chaque semaine, pendant la durée achetée) :</strong> à chaque échéance, l’offre est reclassée comme si elle venait d’être publiée ; la date de publication affichée ne change pas. Une offre remontée qui n’est pas sponsorisée porte la mention « Remontée ».</li>
+</ul>
+<p>Aucune position n’est garantie. Les offres sponsorisées sont classées entre elles selon les règles 2 à 4 de l’article 4. Leur nombre n’est pas limité aujourd’hui : lorsqu’elles sont nombreuses, une offre sponsorisée peut figurer en page 2 ou au-delà. Aucune option ni abonnement ne garantit un contact, une vente ou un résultat commercial.</p>
+<p><strong>Option Urgent (demandes) :</strong> pendant toute la durée de la demande, celle-ci est signalée « Urgent · option payante », passe avant les autres demandes sur l’accueil des prestataires (article 4) et apparaît dans le filtre « Urgentes » de la liste des annonces. Une urgence indiquée gratuitement lors du dépôt est une information affichée dans la demande : elle ne donne ni mention dans les listes, ni priorité.</p>
+<p>Les prix sont affichés avant paiement sur la page de mise en avant de chaque annonce. Un abonnement Premium réduit de 20 % le prix des options à l’unité.</p>

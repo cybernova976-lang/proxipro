@@ -86,6 +86,9 @@ class Ad extends Model
         'urgent_until',
         'urgent_source',
         'sidebar_priority',
+        'bumped_at',
+        'bump_every_days',
+        'bump_until',
         'shares_count',
         'reply_restriction',
         'visibility',
@@ -104,6 +107,9 @@ class Ad extends Model
         'boost_end' => 'datetime',
         'is_urgent' => 'boolean',
         'urgent_until' => 'datetime',
+        'bumped_at' => 'datetime',
+        'bump_until' => 'datetime',
+        'bump_every_days' => 'integer',
         'expires_at' => 'datetime',
         'publication_terms_accepted_at' => 'datetime',
         'sidebar_priority' => 'integer',
@@ -429,6 +435,38 @@ class Ad extends Model
     public function isCurrentlyUrgent(): bool
     {
         return $this->is_urgent && (! $this->urgent_until || $this->urgent_until->isFuture());
+    }
+
+    /**
+     * Urgence mise en avant : option payante en cours, ou urgence accordée par
+     * l'administration avec une échéance. L'urgence simplement cochée au dépôt
+     * (sans échéance) reste une information et ne classe pas, avec les
+     * nouvelles règles de mise en avant.
+     */
+    public function hasPromotedUrgency(): bool
+    {
+        return $this->is_urgent && $this->urgent_until && $this->urgent_until->isFuture();
+    }
+
+    /** Portée SQL de hasPromotedUrgency(). */
+    public function scopePromotedUrgent($query)
+    {
+        return $query->where('is_urgent', true)->where('urgent_until', '>', now());
+    }
+
+    /** Une remontée automatique achetée est-elle en cours ? */
+    public function hasActiveBump(): bool
+    {
+        return $this->bump_until !== null && $this->bump_until->isFuture();
+    }
+
+    /**
+     * Expression SQL de la date qui classe « les plus récentes d'abord » : la
+     * dernière remontée quand il y en a une, sinon la publication.
+     */
+    public static function freshnessSql(string $table = 'ads'): string
+    {
+        return "COALESCE({$table}.bumped_at, {$table}.created_at)";
     }
 
     /**

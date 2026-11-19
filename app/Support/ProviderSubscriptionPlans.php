@@ -15,11 +15,31 @@ class ProviderSubscriptionPlans
             ? json_decode($stored, true)
             : (is_array($stored) ? $stored : null);
 
-        if (! is_array($decoded)) {
-            return self::defaults();
+        return self::withWeeklyBump(is_array($decoded) ? self::mergeWithDefaults($decoded) : self::defaults());
+    }
+
+    /** Avantage inclus dans l'abonnement à partir des nouvelles règles de mise en avant. */
+    public const WEEKLY_BUMP_FEATURE = 'Vos offres remontent automatiquement chaque semaine, sans achat';
+
+    /**
+     * La remontée hebdomadaire des offres des abonnés (App\Services\AdBumpService)
+     * ne s'applique qu'avec les nouvelles règles : elle n'est annoncée qu'à ce moment-là.
+     */
+    private static function withWeeklyBump(array $plans): array
+    {
+        if (! AdPromotionCatalog::newRulesActive()) {
+            return $plans;
         }
 
-        return self::mergeWithDefaults($decoded);
+        foreach ($plans as $key => $plan) {
+            $features = array_values((array) ($plan['features'] ?? []));
+            if (! in_array(self::WEEKLY_BUMP_FEATURE, $features, true)) {
+                array_splice($features, min(2, count($features)), 0, [self::WEEKLY_BUMP_FEATURE]);
+            }
+            $plans[$key]['features'] = $features;
+        }
+
+        return $plans;
     }
 
     public static function active(): array

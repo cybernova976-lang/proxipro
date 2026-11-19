@@ -30,6 +30,9 @@ class BoostController extends Controller
         if (Auth::id() !== $ad->user_id) {
             abort(403, 'Vous ne pouvez pas booster cette annonce.');
         }
+        if (AdPromotionCatalog::newRulesActive()) {
+            return $this->options($ad, false);
+        }
         if ($refusal = $this->refuseUnlessOffer($ad)) {
             return $refusal;
         }
@@ -126,9 +129,13 @@ class BoostController extends Controller
      */
     public function purchaseWithStripe(Request $request, Ad $ad)
     {
+        // Seuls les produits en vente aujourd'hui sont acceptés : packs « en tête »
+        // du jeu de règles en vigueur et, avec les nouvelles règles, remontées.
+        $newRules = AdPromotionCatalog::newRulesActive();
+        $bumps = $newRules ? AdPromotionCatalog::bumps() : [];
         $request->validate([
-            'package' => 'required|in:boost_3,boost_7,boost_15,boost_30',
-        ]);
+            'package' => ['required', \Illuminate\Validation\Rule::in([...array_keys($this->boostPackages), ...array_keys($bumps)])],
+        ], ['package.*' => 'Choisissez une option de mise en avant.']);
 
         // Vérifier que l'utilisateur est propriétaire
         if (Auth::id() !== $ad->user_id) {
@@ -137,6 +144,9 @@ class BoostController extends Controller
         if ($refusal = $this->refuseUnlessOffer($ad)) {
             return $refusal;
         }
+        if (isset($bumps[$request->package])) {
+            return $this->purchaseBump($ad, $request->package);
+        }
 
         $user = Auth::user();
         $package = $this->boostPackages[$request->package];
@@ -144,9 +154,10 @@ class BoostController extends Controller
             return $refusal;
         }
 
-        // Prevent double-boost: reject if current boost covers more than this package
+        // Règles d'origine : un boost plus court que celui en cours est refusé.
+        // Nouvelles règles : un nouvel achat prolonge la mise à la une en cours.
         $status = $ad->getBoostStatus();
-        if ($status['is_boosted'] && $status['boost_days_left'] >= $package['duration_days']) {
+        if (! $newRules && $status['is_boosted'] && $status['boost_days_left'] >= $package['duration_days']) {
             return back()->with('error', 'Votre boost actuel couvre déjà '.$status['boost_days_left'].' jours restants. Choisissez un pack plus long pour prolonger.');
         }
 
@@ -206,7 +217,8 @@ class BoostController extends Controller
         if (Auth::id() !== $ad->user_id) {
             return redirect()->route('homepage')->with('error', 'Accès non autorisé.');
         }
-        if (! is_string($packageKey) || ! isset($this->boostPackages[$packageKey])) {
+        $isBump = is_string($packageKey) && isset(AdPromotionCatalog::bumps()[$packageKey]);
+        if (! is_string($packageKey) || (! $isBump && AdPromotionCatalog::boostDefinition($packageKey) === null)) {
             return redirect()->route('boost.show', $ad)->with('error', 'Pack de boost invalide.');
         }
 
@@ -215,7 +227,7 @@ class BoostController extends Controller
             return redirect()->route('boost.show', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. Aucun boost n’a été appliqué.');
         }
         try {
-            $result = $this->promotionPayments->fulfill($session, Auth::id(), $ad->id, 'ad_boost', $packageKey);
+            $result = $this->promotionPayments->fulfill($session, Auth::id(), $ad->id, $isBump ? 'bump' : 'ad_boost', $packageKey);
         } catch (\Throwable $exception) {
             Log::warning('Boost Stripe confirmation refused.', ['ad_id' => $ad->id, 'error' => $exception->getMessage()]);
 
@@ -226,12 +238,183 @@ class BoostController extends Controller
         }
 
         $ad->refresh();
+        if ($isBump) {
+            return redirect()->route('ads.show', $ad)->with('success', 'Paiement réussi. Votre offre vient de remonter et remontera '
+                .((int) $ad->bump_every_days === 1 ? 'chaque jour' : 'chaque semaine').' jusqu’au '.$ad->bump_until->format('d/m/Y').'.');
+        }
+        if (AdPromotionCatalog::newRulesActive()) {
+            return redirect()->route('ads.show', $ad)->with('success', 'Paiement réussi. Votre offre est à la une jusqu’au '.$ad->boost_end->format('d/m/Y').'.');
+        }
         $message = '🚀 Paiement réussi ! Annonce boostée jusqu\'au '.$ad->boost_end->format('d/m/Y à H:i').' !';
         if ($ad->isCurrentlyUrgent()) {
             $message .= ' (+ mode Urgent actif)';
         }
 
         return redirect()->route('ads.show', $ad)->with('success', $message);
+    }
+
+    /** Achat d'une remontée automatique (nouvelles règles), payée par carte. */
+    private function purchaseBump(Ad $ad, string $key)
+    {
+        $user = Auth::user();
+        $pack = AdPromotionCatalog::bumps()[$key];
+        if ($this->sponsoringSubscription($ad) && (int) $pack['every_days'] >= \App\Services\AdBumpService::SUBSCRIBER_EVERY_DAYS) {
+            return back()->with('error', 'Inutile : votre abonnement Premium fait déjà remonter vos offres chaque semaine.');
+        }
+        $amount = AdPromotionCatalog::discountedCents((float) $pack['price_euros'], $user->hasActiveProSubscription());
+
+        \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+
+        try {
+            $session = \Stripe\Checkout\Session::create([
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'price_data' => [
+                        'currency' => 'eur',
+                        'product_data' => [
+                            'name' => $pack['name'].' - '.$ad->title,
+                            'description' => 'À chaque échéance, votre offre est reclassée comme si elle venait d’être publiée.',
+                        ],
+                        'unit_amount' => $amount,
+                    ],
+                    'quantity' => 1,
+                ]],
+                'mode' => 'payment',
+                'success_url' => $this->checkoutReturnUrl('boost.success', ['ad' => $ad->id, 'package' => $key]),
+                'cancel_url' => route('boost.show', $ad),
+                'customer_email' => $user->email,
+                'metadata' => [
+                    'ad_id' => $ad->id,
+                    'user_id' => $user->id,
+                    'package' => $key,
+                    'type' => 'bump',
+                    'expected_amount_cents' => $amount,
+                    'expected_currency' => 'eur',
+                ],
+            ]);
+
+            return redirect($session->url);
+        } catch (\Exception $e) {
+            Log::error('Unable to create bump Stripe checkout.', ['ad_id' => $ad->id, 'error' => $e->getMessage()]);
+
+            return back()->with('error', 'Impossible d’ouvrir le paiement sécurisé. Veuillez réessayer.');
+        }
+    }
+
+    /**
+     * Page d'achat des nouvelles règles de mise en avant : toutes les options
+     * de l'annonce sur un seul écran, un seul choix à la fois, un seul bouton
+     * de paiement. Sert aussi de page « votre annonce est publiée ».
+     */
+    private function options(Ad $ad, bool $justPublished)
+    {
+        $user = Auth::user();
+        $isPro = $user->hasActiveProSubscription();
+        $isOffer = $ad->service_type === 'offre';
+        $subscription = $this->sponsoringSubscription($ad);
+        $option = fn (string $label, float $euros, ?string $unavailable = null, ?string $note = null) => [
+            'label' => $label,
+            'price' => AdPromotionCatalog::discountedCents($euros, $isPro) / 100,
+            'full_price' => $isPro ? $euros : null,
+            'unavailable' => $unavailable,
+            'note' => $note,
+        ];
+
+        $groups = [];
+        $current = [];
+        if ($isOffer) {
+            $boostedUntil = $ad->isCurrentlyBoosted() ? $ad->boost_end : null;
+            $featured = [];
+            foreach (AdPromotionCatalog::featured() as $key => $pack) {
+                $covered = $subscription && $this->subscriptionCovers($subscription, (int) $pack['duration_days']);
+                $featured[$key] = $option($pack['label'], (float) $pack['price_euros'],
+                    $covered ? 'Déjà incluse dans votre abonnement Premium' : null,
+                    match (true) {
+                        (bool) $boostedUntil => 'Prolonge jusqu’au '.$boostedUntil->copy()->addDays((int) $pack['duration_days'])->format('d/m/Y'),
+                        // Abonnement qui s'arrête avant la fin du pack : l'achat n'agit qu'ensuite.
+                        $subscription && ! $covered => 'Votre abonnement met déjà cette offre à la une jusqu’au '.$subscription->ends_at->format('d/m/Y'),
+                        default => null,
+                    });
+            }
+            $groups[] = [
+                'key' => 'featured',
+                'title' => 'À la une',
+                'intro' => 'Votre offre passe avant les offres non sponsorisées, sur l’accueil des clients et dans la liste des annonces. Elle porte la mention « Sponsorisé ».',
+                'options' => $featured,
+            ];
+
+            $bumpUntil = $ad->hasActiveBump() ? $ad->bump_until : null;
+            $bumps = [];
+            foreach (AdPromotionCatalog::bumps() as $key => $pack) {
+                $included = $subscription && (int) $pack['every_days'] >= \App\Services\AdBumpService::SUBSCRIBER_EVERY_DAYS;
+                $bumps[$key] = $option($pack['label'], (float) $pack['price_euros'],
+                    $included ? 'Déjà incluse dans votre abonnement Premium' : null,
+                    $bumpUntil ? 'S’ajoute à la remontée en cours' : null);
+            }
+            $groups[] = [
+                'key' => 'bump',
+                'title' => 'Remontée automatique',
+                'intro' => 'À chaque échéance, votre offre est reclassée comme si elle venait d’être publiée : elle repasse devant les offres plus anciennes. Elle porte la mention « Remontée ».',
+                'options' => $bumps,
+            ];
+
+            if ($subscription) {
+                $current[] = 'Abonnement Premium : vos offres sont à la une et remontent chaque semaine'
+                    .($subscription->ends_at ? ', jusqu’au '.$subscription->ends_at->format('d/m/Y') : '').'.';
+            }
+            if ($boostedUntil) {
+                $current[] = 'À la une jusqu’au '.$boostedUntil->format('d/m/Y').'.';
+            }
+            if ($bumpUntil) {
+                $current[] = 'Remontée automatique '.((int) $ad->bump_every_days === 1 ? 'chaque jour' : 'chaque semaine')
+                    .' jusqu’au '.$bumpUntil->format('d/m/Y').'.';
+            }
+        } else {
+            $urgent = AdPromotionCatalog::urgent();
+            if ($ad->hasPromotedUrgency()) {
+                $current[] = 'Option Urgent en cours jusqu’au '.$ad->urgent_until->format('d/m/Y').'.';
+            } else {
+                $groups[] = [
+                    'key' => 'urgent',
+                    'title' => 'Option Urgent',
+                    'intro' => 'Votre demande porte la mention « Urgent · option payante », passe avant les autres demandes sur l’accueil des prestataires et apparaît dans le filtre « Urgentes » de la liste des annonces.',
+                    'options' => ['urgent' => $option('Pendant toute la durée de votre demande', (float) $urgent['price_euros'])],
+                ];
+            }
+        }
+
+        // Vues réellement comptées : aucun chiffre tant que le comptage n'a pas commencé.
+        $views = null;
+        $counter = app(\App\Services\AdViewCounter::class);
+        if ($since = $counter->countedSince($ad)) {
+            $views = ['count' => $counter->countSince($ad, $since), 'since' => $since];
+        }
+
+        // Argument de l'abonnement : seulement s'il est réellement en vente.
+        $premium = null;
+        if ($isOffer && ! $isPro && \App\Support\PlatformFeatures::proSubscriptionsEnabled()) {
+            $monthly = \App\Support\ProviderSubscriptionPlans::amount('monthly');
+            $featured30 = (float) (AdPromotionCatalog::featured()['boost_30']['price_euros'] ?? 0);
+            if ($monthly > 0) {
+                $premium = [
+                    'price' => number_format($monthly, 2, ',', ' ').' €',
+                    // La comparaison n'est écrite que si elle est vraie aux tarifs en vigueur.
+                    'cheaper_than' => $monthly < $featured30 ? $featured30 : null,
+                ];
+            }
+        }
+
+        return view('boost.options', [
+            'ad' => $ad,
+            'justPublished' => $justPublished,
+            'isOffer' => $isOffer,
+            'isPro' => $isPro,
+            'groups' => $groups,
+            'current' => $current,
+            'views' => $views,
+            'premium' => $premium,
+            'canBuy' => collect($groups)->flatMap(fn ($group) => $group['options'])->contains(fn ($choice) => $choice['unavailable'] === null),
+        ]);
     }
 
     /**
@@ -242,6 +425,9 @@ class BoostController extends Controller
         // Vérifier que l'utilisateur est propriétaire
         if (Auth::id() !== $ad->user_id) {
             return redirect()->route('homepage');
+        }
+        if (AdPromotionCatalog::newRulesActive()) {
+            return $this->options($ad, true);
         }
 
         $isPro = Auth::user()->hasActiveProSubscription();
@@ -483,8 +669,11 @@ class BoostController extends Controller
                     'price_data' => [
                         'currency' => 'eur',
                         'product_data' => [
-                            'name' => 'Publication Urgente 🔥 - '.$ad->title,
-                            'description' => 'Votre annonce sera épinglée en section Urgentes pendant '.$config['duration_days'].' jours',
+                            'name' => 'Option Urgent - '.$ad->title,
+                            'description' => ($config['duration_days'] !== null
+                                ? 'Pendant '.$config['duration_days'].' jours'
+                                : 'Pendant toute la durée de votre demande')
+                                .', elle porte la mention « Urgent · option payante » et passe avant les autres demandes sur l’accueil des prestataires.',
                         ],
                         'unit_amount' => (int) ($priceEuros * 100),
                     ],
@@ -527,7 +716,7 @@ class BoostController extends Controller
 
         $session = $this->retrieveCheckoutSession($request, $ad);
         if (! $session) {
-            return redirect()->route('boost.show', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. Le mode Urgent n’a pas été activé.');
+            return redirect()->route('boost.after-creation', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. Le mode Urgent n’a pas été activé.');
         }
         $config = self::getUrgentConfig();
         try {
@@ -535,14 +724,17 @@ class BoostController extends Controller
         } catch (\Throwable $exception) {
             Log::warning('Urgent Stripe confirmation refused.', ['ad_id' => $ad->id, 'error' => $exception->getMessage()]);
 
-            return redirect()->route('boost.show', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. Le mode Urgent n’a pas été activé.');
+            return redirect()->route('boost.after-creation', $ad)->with('error', 'Le paiement Stripe n’a pas pu être confirmé. Le mode Urgent n’a pas été activé.');
         }
         if ($result['status'] !== 'processed') {
             return redirect()->route('ads.show', $ad)->with('success', 'Ce paiement avait déjà été confirmé.');
         }
 
-        return redirect()->route('ads.show', $ad)->with('success',
-            '🔥 Paiement réussi ! Votre annonce est en mode URGENT pendant '.$config['duration_days'].' jours !'
+        $ad->refresh();
+
+        return redirect()->route('ads.show', $ad)->with('success', $config['duration_days'] !== null
+            ? '🔥 Paiement réussi ! Votre annonce est en mode URGENT pendant '.$config['duration_days'].' jours !'
+            : 'Paiement réussi. Votre demande est signalée « Urgent » jusqu’au '.$ad->urgent_until->format('d/m/Y').'.'
         );
     }
 

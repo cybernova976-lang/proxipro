@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Ad;
 use App\Models\ProSubscription;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -26,20 +27,7 @@ class ClientFeedOffersService
      */
     public function ranked(Builder $query, ?User $viewer): Builder
     {
-        $subscription = ProSubscription::query()->selectRaw('1')
-            ->whereColumn('pro_subscriptions.user_id', 'ads.user_id')
-            ->currentlyActive()
-            ->where(fn ($started) => $started->whereNull('starts_at')->orWhere('starts_at', '<=', now()));
-
-        if ($query->getQuery()->columns === null) {
-            $query->select('ads.*');
-        }
-
-        $query->selectRaw(
-            // Un boost accordé gratuitement par l'administration (boost_source = admin) n'est pas sponsorisé.
-            'CASE WHEN (ads.is_boosted = ? AND ads.boost_end > ? AND COALESCE(ads.boost_source, \'\') <> \'admin\') OR EXISTS ('.$subscription->toSql().') THEN 1 ELSE 0 END AS feed_is_promoted',
-            [true, now(), ...$subscription->getBindings()]
-        );
+        $this->addPromotedColumn($query);
 
         $categories = $this->viewerCategories($viewer);
 
@@ -54,7 +42,7 @@ class ClientFeedOffersService
         // Windowing the full visible set keeps pagination and diversity consistent.
         $ranked = $query->getModel()->newQuery()
             ->fromSub($query->reorder()->toBase(), 'ads')->select('ads.*')
-            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY ads.user_id, ads.feed_is_promoted ORDER BY ads.feed_affinity, ads.created_at DESC, ads.id DESC) AS feed_author_position');
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY ads.user_id, ads.feed_is_promoted ORDER BY ads.feed_affinity, '.Ad::freshnessSql().' DESC, ads.id DESC) AS feed_author_position');
 
         // The unique tie-breaker keeps pages stable even when timestamps match.
         return $query->getModel()->newQuery()->fromSub($ranked->toBase(), 'ads')
@@ -62,7 +50,32 @@ class ClientFeedOffersService
             ->orderByDesc('ads.feed_is_promoted')
             ->orderByRaw('CASE WHEN ads.feed_author_position <= 2 THEN 0 ELSE 1 END')
             ->orderBy('ads.feed_affinity')
-            ->orderByDesc('ads.created_at')->orderByDesc('ads.id');
+            // « Plus récentes d'abord » : la dernière remontée compte comme une publication.
+            ->orderByRaw(Ad::freshnessSql().' DESC')->orderByDesc('ads.id');
+    }
+
+    /**
+     * Ajoute la colonne feed_is_promoted : 1 pour une offre mise en avant contre
+     * paiement (boost acheté en cours, ou auteur abonné Premium), 0 sinon. Une
+     * seule définition, pour l'accueil des clients et la liste des annonces.
+     * Un boost accordé gratuitement par l'administration n'est pas sponsorisé,
+     * et seule une offre peut l'être (jamais une demande).
+     */
+    public function addPromotedColumn(Builder $query): Builder
+    {
+        $subscription = ProSubscription::query()->selectRaw('1')
+            ->whereColumn('pro_subscriptions.user_id', 'ads.user_id')
+            ->currentlyActive()
+            ->where(fn ($started) => $started->whereNull('starts_at')->orWhere('starts_at', '<=', now()));
+
+        if ($query->getQuery()->columns === null) {
+            $query->select('ads.*');
+        }
+
+        return $query->selectRaw(
+            'CASE WHEN ads.service_type = ? AND ((ads.is_boosted = ? AND ads.boost_end > ? AND COALESCE(ads.boost_source, \'\') <> \'admin\') OR EXISTS ('.$subscription->toSql().')) THEN 1 ELSE 0 END AS feed_is_promoted',
+            ['offre', true, now(), ...$subscription->getBindings()]
+        );
     }
 
     /**

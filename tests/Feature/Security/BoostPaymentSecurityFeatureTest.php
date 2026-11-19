@@ -118,8 +118,9 @@ class BoostPaymentSecurityFeatureTest extends TestCase
         config(['services.stripe.secret' => 'sk_test_simulated']);
         Mockery::mock('alias:Stripe\\Checkout\\Session')->shouldReceive('retrieve')->once()
             ->with('cs_test_unpaid')->andReturn((object) ['id' => 'cs_test_unpaid', 'payment_status' => 'unpaid']);
+        // Retour sur la page qui vend l'option Urgent d'une demande : le message d'erreur y reste lisible.
         $this->get(route('boost.urgent.success', ['ad' => $ad->id]).'?session_id=cs_test_unpaid')
-            ->assertRedirect(route('boost.show', $ad))->assertSessionHas('error');
+            ->assertRedirect(route('boost.after-creation', $ad))->assertSessionHas('error');
         $this->assertFalse($ad->fresh()->isCurrentlyUrgent());
         $this->assertDatabaseCount('transactions', 0);
     }

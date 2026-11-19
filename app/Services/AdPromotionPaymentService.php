@@ -67,6 +67,9 @@ class AdPromotionPaymentService
             if ($type === 'urgent' && $ad->service_type !== 'demande') {
                 throw new DomainException('Le mode Urgent est réservé aux demandes de services.');
             }
+            if ($type === 'bump' && $ad->service_type !== 'offre') {
+                throw new DomainException('La remontée automatique est réservée aux offres de services.');
+            }
 
             $transaction = Transaction::firstOrCreate(
                 ['stripe_session_id' => $sessionId],
@@ -75,6 +78,7 @@ class AdPromotionPaymentService
                     'amount' => StripeSessionData::amountTotal($session) / 100,
                     'type' => match ($type) {
                         'ad_boost' => 'AD_BOOST',
+                        'bump' => 'AD_BUMP',
                         'refresh' => 'AD_REFRESH',
                         'urgent' => 'AD_URGENT',
                     },
@@ -93,7 +97,7 @@ class AdPromotionPaymentService
             }
 
             if ($type === 'ad_boost') {
-                $package = AdPromotionCatalog::boosts()[$packageKey];
+                $package = AdPromotionCatalog::boostDefinition($packageKey);
                 $startsAt = $ad->isCurrentlyBoosted() && $ad->boost_end
                     ? $ad->boost_end->copy()
                     : now();
@@ -102,6 +106,17 @@ class AdPromotionPaymentService
                     'boost_end' => $startsAt->addDays($package['duration_days']),
                     'boost_type' => $packageKey,
                     'boost_source' => null,
+                ])->save();
+            } elseif ($type === 'bump') {
+                // Remontée automatique : l'offre remonte tout de suite, puis à chaque
+                // échéance (commande ads:bump). Un achat pendant une remontée en
+                // cours la prolonge.
+                $package = AdPromotionCatalog::bumps()[$packageKey];
+                $startsAt = $ad->hasActiveBump() ? $ad->bump_until->copy() : now();
+                $ad->forceFill([
+                    'bumped_at' => now(),
+                    'bump_every_days' => $package['every_days'],
+                    'bump_until' => $startsAt->addDays($package['duration_days']),
                 ])->save();
             } elseif ($type === 'refresh') {
                 // Remontée suspendue (AdPromotionCatalog::refreshAvailable) : un paiement
@@ -116,9 +131,13 @@ class AdPromotionPaymentService
                 ]);
             } else {
                 $config = AdPromotionCatalog::urgent();
+                // Nouvelles règles : l'option couvre toute la durée de la demande.
+                $until = $config['duration_days'] !== null
+                    ? now()->addDays($config['duration_days'])
+                    : ($ad->expires_at && $ad->expires_at->isFuture() ? $ad->expires_at->copy() : now()->addDays(60));
                 $ad->forceFill([
                     'is_urgent' => true,
-                    'urgent_until' => now()->addDays($config['duration_days']),
+                    'urgent_until' => $until,
                     'urgent_source' => null,
                     'sidebar_priority' => 1,
                 ])->save();
@@ -137,28 +156,38 @@ class AdPromotionPaymentService
     /** @param array<string, mixed> $metadata */
     private function expectedAmountCents(string $type, string $packageKey, User $user, array $metadata): int
     {
-        $basePrice = match ($type) {
-            'ad_boost' => AdPromotionCatalog::boosts()[$packageKey]['price_euros'] ?? null,
-            'refresh' => AdPromotionCatalog::refresh()['price_euros'],
-            'urgent' => AdPromotionCatalog::urgent()['price_euros'],
-            default => null,
+        // Tous les tarifs que ce produit a pu avoir : un paiement engagé juste
+        // avant l'entrée en vigueur des nouvelles règles reste honoré.
+        $prices = match ($type) {
+            'ad_boost' => AdPromotionCatalog::boostPrices($packageKey),
+            'bump' => array_filter([AdPromotionCatalog::bumps()[$packageKey]['price_euros'] ?? null]),
+            'refresh' => [AdPromotionCatalog::refresh()['price_euros']],
+            'urgent' => AdPromotionCatalog::urgentPrices(),
+            default => [],
         };
-        if ($basePrice === null) {
+        if ($prices === []) {
             throw new DomainException('Le produit de promotion est invalide.');
         }
 
-        $fullPrice = (int) round($basePrice * 100);
-        $proPrice = AdPromotionCatalog::discountedCents((float) $basePrice, true);
+        $accepted = [];
+        foreach ($prices as $price) {
+            $accepted[] = (int) round($price * 100);
+            $accepted[] = AdPromotionCatalog::discountedCents((float) $price, true);
+        }
         $metadataAmount = (int) ($metadata['expected_amount_cents'] ?? 0);
 
         if ($metadataAmount > 0) {
-            if (! in_array($metadataAmount, [$fullPrice, $proPrice], true)) {
+            if (! in_array($metadataAmount, $accepted, true)) {
                 throw new DomainException('Le tarif enregistré pour cette promotion est invalide.');
             }
 
             return $metadataAmount;
         }
 
-        return $user->hasActiveProSubscription() ? $proPrice : $fullPrice;
+        $current = (float) reset($prices);
+
+        return $user->hasActiveProSubscription()
+            ? AdPromotionCatalog::discountedCents($current, true)
+            : (int) round($current * 100);
     }
 }

@@ -33,7 +33,7 @@ class StripeCheckoutFulfillmentService
             return $this->pointPurchases->fulfill($session)['status'];
         }
 
-        if (in_array($type, ['ad_boost', 'refresh', 'urgent'], true) || isset($metadata['package'])) {
+        if (in_array($type, ['ad_boost', 'bump', 'refresh', 'urgent'], true) || isset($metadata['package'])) {
             return $this->adPromotions->fulfill($session)['status'];
         }
 

@@ -568,6 +568,8 @@
 .pk-save:hover, .pk-save[aria-pressed="true"] { background: var(--pk-50); color: var(--pk-700); border-color: var(--pk-300) !important; }
 .pk-save[aria-busy="true"] { opacity: .55; pointer-events: none; }
 /* Alerte sur un prestataire : même bouton que le favori, dans un formulaire. */
+/* Offre remontée contre paiement : mention discrète, distincte de « Sponsorisé ». */
+.pk-tag--bumped { background: var(--pk-50); color: var(--pk-700); border: 1px solid var(--pk-200, #c7d2fe); }
 .pk-follow { margin: 0; flex: none; }
 .pk-follow .pk-save { background: transparent; cursor: pointer; }
 .pk-follow .pk-save[aria-pressed="true"] { background: var(--pk-50); }

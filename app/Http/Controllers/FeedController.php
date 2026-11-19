@@ -446,7 +446,12 @@ class FeedController extends Controller
             $pkMatchingCount = (clone $matchingQuery)->count();
             $pkFeedAds = $matchingQuery->with('user')->withCount(['serviceProposals', 'serviceProposals as active_proposals_count' => fn ($proposals) => $proposals->comparable()])
                 ->orderByRaw('CASE WHEN NOT EXISTS (SELECT 1 FROM service_proposals WHERE service_proposals.ad_id = ads.id) THEN 0 ELSE 1 END')
-                ->orderByDesc('is_urgent')->latest('created_at')->take(6)->get();
+                // Nouvelles règles : seule l'option Urgent en cours classe ; l'urgence
+                // cochée gratuitement au dépôt reste une information.
+                ->when(\App\Support\AdPromotionCatalog::newRulesActive(),
+                    fn ($ordered) => $ordered->orderByRaw('CASE WHEN ads.is_urgent = ? AND ads.urgent_until > ? THEN 0 ELSE 1 END', [true, now()]),
+                    fn ($ordered) => $ordered->orderByDesc('is_urgent'))
+                ->latest('created_at')->take(6)->get();
             $priorityProviderRequests = $pkFeedAds->filter(fn ($ad) => $this->adLifecycle->needsFirstResponseAttention($ad))->values();
         } else {
             $pkMatchingCount = 0;

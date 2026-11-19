@@ -39,8 +39,10 @@ return [
         // (toutes les offres promues d'abord).
         'mechanism' => 'legacy',
 
-        // Date d'effet annoncée du futur mécanisme de places sponsorisées
-        // (au moins 15 jours après l'annonce). Format AAAA-MM-JJ ou
+        // Date d'effet annoncée des nouvelles règles de mise en avant
+        // (« À la une », « Remontée automatique », Urgent pour toute la durée
+        // de la demande) : au moins 15 jours après l'annonce. À partir de
+        // cette date, App\Support\AdPromotionCatalog::newRulesActive() est vrai. Format AAAA-MM-JJ ou
         // JJ/MM/AAAA ; toute autre saisie est ignorée. Vide = date non fixée.
         'effective_at' => env('FEED_SPONSORED_EFFECTIVE_AT') ?: null,
     ],

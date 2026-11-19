@@ -22,6 +22,10 @@ final class AdDisclosure
 
     public const FREE_URGENT_LABEL = 'Urgent';
 
+    public const BUMPED_LABEL = 'Remontée';
+
+    public const BUMPED_SCREEN_READER = 'le prestataire a payé pour faire remonter cette offre';
+
     /**
      * Offre mise en avant contre paiement : boost acheté actif sur l'annonce,
      * ou abonnement Premium actif de l'auteur (colonne calculée
@@ -43,11 +47,36 @@ final class AdDisclosure
      */
     public static function urgentLabel(Ad $ad): ?string
     {
+        // Nouvelles règles : seule une urgence mise en avant (option en cours, ou
+        // urgence accordée par l'administration) est signalée dans les listes.
+        // L'urgence cochée gratuitement au dépôt reste une information lisible
+        // dans la demande elle-même.
+        if (AdPromotionCatalog::newRulesActive() && ! $ad->hasPromotedUrgency()) {
+            return null;
+        }
+
         if (! $ad->isCurrentlyUrgent()) {
             return null;
         }
 
         return ($ad->urgent_until !== null && $ad->urgent_source !== 'admin') ? self::PAID_URGENT_LABEL : self::FREE_URGENT_LABEL;
+    }
+
+    /**
+     * Offre remontée contre paiement (remontée achetée, ou remontée incluse dans
+     * l'abonnement) : sa place parmi les offres récentes vient de là, donc elle
+     * le dit. Une offre déjà signalée « Sponsorisé » ne porte pas les deux
+     * mentions.
+     */
+    public static function isBumped(Ad $ad): bool
+    {
+        return $ad->bumped_at !== null && ! self::isSponsored($ad);
+    }
+
+    /** Le client a indiqué un besoin urgent au dépôt, sans option payante en cours. */
+    public static function declaresUrgency(Ad $ad): bool
+    {
+        return $ad->service_type === 'demande' && (bool) $ad->is_urgent && ! $ad->hasPromotedUrgency();
     }
 
     /**
