@@ -172,7 +172,7 @@
                     <div class="card border-0 shadow-sm h-100">
                         <div class="card-body text-center">
                             <div class="display-6 fw-bold text-info">{{ number_format($stats['total_views'], 0, ',', ' ') }}</div>
-                            <div class="text-muted">Vues totales</div>
+                            <div class="text-muted">Vues de vos annonces</div>
                         </div>
                     </div>
                 </div>

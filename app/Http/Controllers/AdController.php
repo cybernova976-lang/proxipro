@@ -577,6 +577,12 @@ class AdController extends Controller
 
         $isSaved = Auth::check() ? Auth::user()->hasSavedAd($ad) : false;
 
+        // Vue comptée une fois par visiteur et par jour, jamais pour l'auteur ni
+        // pour une annonce qui n'est plus publique.
+        if ($isVisiblePublication) {
+            app(\App\Services\AdViewCounter::class)->record($ad, Auth::user(), request());
+        }
+
         if (Auth::id() === $ad->user_id && $ad->service_type === 'demande') {
             $ad->loadCount([
                 'serviceProposals as comparable_proposals_count' => fn ($query) => $query

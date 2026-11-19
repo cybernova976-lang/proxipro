@@ -22,6 +22,10 @@ class PruneProfileViews extends Command
 
         $this->info("{$deleted} vue(s) de profil supprimee(s).");
 
+        // Même durée pour le détail des vues d'annonce ; le total de chaque annonce reste.
+        $deletedAdViews = app(\App\Services\AdViewCounter::class)->pruneBefore(today()->subMonthsNoOverflow($months));
+        $this->info("{$deletedAdViews} vue(s) d'annonce supprimée(s).");
+
         return self::SUCCESS;
     }
 }

@@ -282,7 +282,7 @@
                             </div>
                             <div>
                                 <div class="fs-4 fw-bold text-info lh-1 mb-1">{{ number_format($stats['total_views'], 0, ',', ' ') }}</div>
-                                <div class="text-muted small">Vues totales</div>
+                                <div class="text-muted small">Vues de vos annonces</div>
                             </div>
                         </div>
                     </div>
