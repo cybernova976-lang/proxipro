@@ -132,7 +132,7 @@
                 <div class="flex-grow-1">
                     <h5 class="fw-bold mb-1" style="font-size: 1rem; color: #92400e;">Documents illimit&eacute;s avec un abonnement</h5>
                     <p class="mb-2" style="font-size: 0.87rem; color: #a16207;">
-                        Souscrivez &agrave; un <strong>abonnement mensuel</strong> (9,99&euro;/mois) ou <strong>annuel</strong> (85&euro;/an) et b&eacute;n&eacute;ficiez de la <strong>g&eacute;n&eacute;ration illimit&eacute;e</strong> de devis et factures, sans avoir &agrave; acheter de cr&eacute;dits.
+                        Souscrivez &agrave; l&rsquo;<strong>abonnement Premium</strong> ({{ \App\Support\ProviderSubscriptionPlans::summaryLabel('monthly') }}) et b&eacute;n&eacute;ficiez de la <strong>g&eacute;n&eacute;ration illimit&eacute;e</strong> de devis et factures, sans avoir &agrave; acheter de cr&eacute;dits.
                     </p>
                     <a href="{{ route('pro.subscription') }}" class="btn btn-sm" style="background: #d97706; color: white; border-radius: 8px; font-weight: 600; padding: 6px 18px;">
                         <i class="fas fa-crown me-1"></i> D&eacute;couvrir les abonnements

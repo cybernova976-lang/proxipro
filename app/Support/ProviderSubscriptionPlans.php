@@ -61,6 +61,25 @@ class ProviderSubscriptionPlans
         return trim(($config['label'] ?? ucfirst($plan)).' ('.($config['price'] ?? '').($config['period'] ?? '').')');
     }
 
+    /**
+     * Libellé et montant des formules en vente, pour les récapitulatifs des
+     * parcours d'activation : « Mensuel (9,99€/mois) », « 9,99 € ».
+     *
+     * @return array<string, array{summary: string, total: string}>
+     */
+    public static function summaries(): array
+    {
+        $summaries = [];
+        foreach (array_keys(self::active()) as $plan) {
+            $summaries[$plan] = [
+                'summary' => self::summaryLabel($plan),
+                'total' => number_format(self::amount($plan), 2, ',', ' ').' €',
+            ];
+        }
+
+        return $summaries;
+    }
+
     public static function description(string $plan): string
     {
         return (string) (self::get($plan)['description'] ?? 'Accès complet aux outils professionnels.');

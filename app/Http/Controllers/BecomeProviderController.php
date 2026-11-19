@@ -131,7 +131,7 @@ class BecomeProviderController extends Controller
             'subcategory' => ['required', 'string', 'max:100', Rule::in($enabledSubcategories)],
             'country' => 'required|string|max:100',
             'city' => 'required|string|max:100',
-            'plan' => 'nullable|in:monthly,annual',
+            'plan' => 'nullable|in:monthly',
         ];
 
         $messages = [
@@ -210,7 +210,7 @@ class BecomeProviderController extends Controller
             // Si un plan est sélectionné, rediriger vers Stripe pour le paiement
             if (PlatformFeatures::proSubscriptionsEnabled()
                 && $request->filled('plan')
-                && in_array($request->plan, ['monthly', 'annual'], true)) {
+                && in_array($request->plan, ['monthly'], true)) {
                 $planType = $request->plan;
                 $planConfig = ProviderSubscriptionPlans::get($planType);
                 if (! $planConfig || empty($planConfig['enabled'])) {

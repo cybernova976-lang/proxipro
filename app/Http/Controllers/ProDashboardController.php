@@ -1569,7 +1569,7 @@ class ProDashboardController extends Controller
 
         // Full subscribe with payment via Stripe Checkout
         $validated = $request->validate([
-            'plan' => 'required|in:monthly,annual',
+            'plan' => 'required|in:monthly',
             'categories' => 'nullable|array',
             'subcategories' => 'nullable|array',
             'intervention_radius' => 'nullable|integer|min:5|max:200',

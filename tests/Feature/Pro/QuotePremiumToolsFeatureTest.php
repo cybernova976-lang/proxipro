@@ -195,8 +195,17 @@ class QuotePremiumToolsFeatureTest extends TestCase
     {
         $new = config('provider_subscriptions.plans.monthly.features');
         $this->assertContains('Modèles de devis et relance automatique des devis sans réponse (comptes professionnels)', $new);
-        $previous = array_values(array_filter($new, fn ($feature) => ! str_starts_with($feature, 'Rapport d’activité mensuel')
-            && ! str_starts_with($feature, 'Modèles de devis')));
+        // Liste par défaut d'avant le 13/11/2026, telle que la migration la reconnaît.
+        $previous = [
+            'Badge « Premium » sur votre profil public',
+            'Vos offres signalées « Sponsorisé » et affichées avant les offres non sponsorisées sur l’accueil des clients, sans place fixe',
+            'Profil présenté avant celui des prestataires non abonnés dans la liste proposée après une demande',
+            'Gestion de clientèle et Espace Pro',
+            'Historique de facturation Stripe',
+            'Jusqu\'à 4 photos par annonce',
+            'Réduction de 20 % sur les boosts et l’option Urgent',
+            'Alertes dans la plateforme',
+        ];
         $migration = require database_path('migrations/2026_11_13_100100_add_premium_services_to_stored_subscription_features.php');
 
         Setting::set('provider_subscription_plans', json_encode(['monthly' => ['amount' => 12.34, 'features' => $previous]], JSON_UNESCAPED_UNICODE), 'subscriptions');

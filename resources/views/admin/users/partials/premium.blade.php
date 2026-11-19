@@ -61,7 +61,6 @@
                         <label class="form-label small fw-semibold" for="premiumPlan">Formule</label>
                         <select name="plan" id="premiumPlan" class="form-select form-select-sm">
                             <option value="monthly">Mensuelle</option>
-                            <option value="annual">Annuelle</option>
                         </select>
                     </div>
                     <div class="col-6">

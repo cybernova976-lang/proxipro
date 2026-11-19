@@ -1,3 +1,8 @@
+@php
+    // Formules lues dans la configuration : aucun prix ni avantage écrit en dur dans cette page.
+    $obSubscriptionPlans = \App\Support\ProviderSubscriptionPlans::active();
+    $obSubscriptionPlanSummaries = \App\Support\ProviderSubscriptionPlans::summaries();
+@endphp
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -629,11 +634,8 @@
                         <i class="fas fa-shield-alt me-2"></i>Avantages d'un profil vérifié
                     </h6>
                     <div class="ob-verify-advantages">
-                        <div class="ob-verify-adv"><i class="fas fa-check-circle"></i> Badge « Profil vérifié » visible sur votre profil et annonces</div>
-                        <div class="ob-verify-adv"><i class="fas fa-check-circle"></i> Position prioritaire dans les résultats de recherche</div>
-                        <div class="ob-verify-adv"><i class="fas fa-check-circle"></i> Taux de réponse des clients 3x supérieur</div>
-                        <div class="ob-verify-adv"><i class="fas fa-check-circle"></i> Accès aux demandes de clients premium</div>
-                        <div class="ob-verify-adv"><i class="fas fa-check-circle"></i> Badge de confiance qui rassure les clients</div>
+                        <div class="ob-verify-adv"><i class="fas fa-check-circle"></i> Badge « Profil vérifié » visible sur votre profil et vos annonces</div>
+                        <div class="ob-verify-adv"><i class="fas fa-check-circle"></i> Accès aux annonces réservées aux profils vérifiés</div>
                     </div>
                     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
                         <button type="button" class="ob-btn-next" style="padding: 10px 20px; font-size: 0.85rem;" onclick="window.open('{{ route('verification.index') }}', '_blank')">
@@ -661,47 +663,25 @@
 
                 @if($proSubscriptionsEnabled)
                 <div class="ob-plan-grid">
-                    {{-- Monthly --}}
-                    <div class="ob-plan-card" id="planMonthly" onclick="selectPlan('monthly')">
-                        <div class="ob-plan-icon" style="background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(99,102,241,0.1)); color: #8b5cf6;">
-                            <i class="fas fa-calendar-alt"></i>
+                    @foreach($obSubscriptionPlans as $obPlanKey => $obPlan)
+                        <div class="ob-plan-card {{ $loop->first ? 'selected' : '' }}" data-ob-plan="{{ $obPlanKey }}" onclick="selectPlan('{{ $obPlanKey }}')">
+                            @if(!empty($obPlan['badge']))
+                                <div class="ob-plan-badge">{{ $obPlan['badge'] }}</div>
+                            @endif
+                            <div class="ob-plan-icon" style="background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(99,102,241,0.1)); color: #8b5cf6;">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <div class="ob-plan-name">{{ $obPlan['label'] }}</div>
+                            <div class="ob-plan-desc">{{ $obPlan['description'] }}</div>
+                            <div class="ob-plan-price">{{ $obPlan['price'] }}</div>
+                            <div class="ob-plan-period">{{ $obPlan['period'] }}</div>
+                            <ul class="ob-plan-features">
+                                @foreach($obPlan['features'] as $obPlanFeature)
+                                    <li><i class="fas fa-check"></i> {{ $obPlanFeature }}</li>
+                                @endforeach
+                            </ul>
                         </div>
-                        <div class="ob-plan-name">Mensuel</div>
-                        <div class="ob-plan-desc">Flexibilité totale, sans engagement</div>
-                        <div class="ob-plan-price">9,99€</div>
-                        <div class="ob-plan-period">/mois</div>
-                        <ul class="ob-plan-features">
-                            <li><i class="fas fa-check"></i> Profil professionnel complet</li>
-                            <li><i class="fas fa-check"></i> Devis & factures illimités</li>
-                            <li><i class="fas fa-check"></i> Gestion de clientèle</li>
-                            <li><i class="fas fa-check"></i> Badge Pro visible</li>
-                            <li><i class="fas fa-check"></i> Jusqu'à 4 photos par annonce</li>
-                            <li><i class="fas fa-check"></i> Notifications demandes clients</li>
-                            <li><i class="fas fa-check"></i> Support prioritaire</li>
-                        </ul>
-                    </div>
-
-                    {{-- Annual --}}
-                    <div class="ob-plan-card selected" id="planAnnual" onclick="selectPlan('annual')">
-                        <div class="ob-plan-badge">RECOMMANDÉ · -30%</div>
-                        <div class="ob-plan-icon" style="background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(239,68,68,0.1)); color: #f59e0b;">
-                            <i class="fas fa-crown"></i>
-                        </div>
-                        <div class="ob-plan-name">Annuel</div>
-                        <div class="ob-plan-desc">Meilleur rapport qualité-prix</div>
-                        <div class="ob-plan-price">85€</div>
-                        <div class="ob-plan-period">/an <span style="text-decoration: line-through; color: #94a3b8; font-size: 0.78rem;">119,88€</span></div>
-                        <div style="font-size: 0.78rem; color: var(--ob-success); font-weight: 600; margin-top: 2px;">soit 7,08€/mois</div>
-                        <ul class="ob-plan-features">
-                            <li><i class="fas fa-check"></i> Tout le plan mensuel inclus</li>
-                            <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Statistiques avancées</li>
-                            <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Position prioritaire dans les recherches</li>
-                            <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Badge « Pro Premium »</li>
-                            <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Jusqu'à 4 photos par annonce</li>
-                            <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Export comptable</li>
-                            <li><i class="fas fa-star" style="color: #f59e0b !important;"></i> Assistance via formulaire de contact</li>
-                        </ul>
-                    </div>
+                    @endforeach
                 </div>
                 @else
                 <div style="padding: 22px; border-radius: 16px; background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.2); text-align: center;">
@@ -800,7 +780,8 @@
         const totalSteps = 6;
         let selectedCats = [];
         let selectedSubs = [];
-        let selectedPlan = subscriptionsEnabled ? 'annual' : null;
+        const obPlans = {!! Illuminate\Support\Js::encode($obSubscriptionPlanSummaries) !!};
+        let selectedPlan = subscriptionsEnabled ? (Object.keys(obPlans)[0] || null) : null;
 
         // ---- STEPPER ----
         function updateStepper() {
@@ -1018,8 +999,9 @@
         // ---- PLAN ----
         window.selectPlan = function(plan) {
             selectedPlan = plan;
-            document.getElementById('planMonthly').classList.toggle('selected', plan === 'monthly');
-            document.getElementById('planAnnual').classList.toggle('selected', plan === 'annual');
+            document.querySelectorAll('[data-ob-plan]').forEach(function (card) {
+                card.classList.toggle('selected', card.dataset.obPlan === plan);
+            });
         };
 
         // ---- RECAP ----
@@ -1038,12 +1020,12 @@
             if (!subscriptionsEnabled) {
                 document.getElementById('recapPlan').textContent = 'Aucun abonnement';
                 document.getElementById('recapTotal').textContent = '0,00 €';
-            } else if (selectedPlan === 'annual') {
-                document.getElementById('recapPlan').textContent = 'Annuel (85€/an)';
-                document.getElementById('recapTotal').textContent = '85,00 €';
+            } else if (obPlans[selectedPlan]) {
+                document.getElementById('recapPlan').textContent = obPlans[selectedPlan].summary;
+                document.getElementById('recapTotal').textContent = obPlans[selectedPlan].total;
             } else {
-                document.getElementById('recapPlan').textContent = 'Mensuel (9,99€/mois)';
-                document.getElementById('recapTotal').textContent = '9,99 €';
+                document.getElementById('recapPlan').textContent = 'Aucun abonnement';
+                document.getElementById('recapTotal').textContent = '0,00 €';
             }
         }
 

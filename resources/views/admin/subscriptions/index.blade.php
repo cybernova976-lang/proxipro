@@ -45,7 +45,7 @@
             <form method="POST" action="{{ route('admin.subscriptions.provider.grant') }}" class="row g-2 align-items-end">
                 @csrf
                 <div class="col-lg-5"><label class="form-label small fw-semibold">Email utilisateur</label><input type="email" name="email" class="form-control" required></div>
-                <div class="col-lg-2"><label class="form-label small fw-semibold">Plan</label><select name="plan" class="form-select"><option value="monthly">Mensuel</option><option value="annual">Annuel</option></select></div>
+                <div class="col-lg-2"><label class="form-label small fw-semibold">Plan</label><select name="plan" class="form-select"><option value="monthly">Mensuel</option></select></div>
                 <div class="col-lg-2"><label class="form-label small fw-semibold">Durée (jours)</label><input type="number" name="duration" min="1" max="730" value="30" class="form-control" required></div>
                 <div class="col-lg-3"><button class="btn btn-primary w-100"><i class="fas fa-check me-1"></i>Accorder sans paiement</button></div>
             </form>

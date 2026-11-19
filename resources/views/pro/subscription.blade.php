@@ -12,7 +12,7 @@
             </ol>
         </nav>
         <h1>Abonnement Premium</h1>
-        <p class="text-muted mb-0" style="font-size: 0.88rem;">Choisissez votre formule Premium, mensuelle ou annuelle.</p>
+        <p class="text-muted mb-0" style="font-size: 0.88rem;">La formule Premium : mensuelle, sans engagement de durée.</p>
     </div>
 </div>
 

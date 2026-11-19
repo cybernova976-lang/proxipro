@@ -22,7 +22,7 @@ class PaidSubscriptionCheckoutTest extends TestCase
 
     public static function plans(): array
     {
-        return ['monthly' => ['monthly', 999, 'month'], 'annual' => ['annual', 8500, 'year']];
+        return ['monthly' => ['monthly', 999, 'month']];
     }
 
     private function enableSubscriptions(): void
@@ -45,7 +45,9 @@ class PaidSubscriptionCheckoutTest extends TestCase
         $user = User::factory()->create(['stripe_id' => 'cus_existing', 'is_service_provider' => true,
             'available_points' => 10000, 'account_type' => 'particulier']);
         $this->actingAs($user)->get(route('pro.subscription'))->assertOk()
-            ->assertSee('Mensuel')->assertSee('Annuel')->assertSee('9,99')->assertSee('85')
+            ->assertSee('Mensuel')->assertSee('9,99')
+            // La formule annuelle a été retirée le 19/11/2026.
+            ->assertDontSee('Annuel')->assertDontSee('119,88')
             ->assertDontSee('Acheter des points')->assertDontSee('points disponibles');
 
         $http = Mockery::mock(ClientInterface::class);
@@ -121,19 +123,23 @@ class PaidSubscriptionCheckoutTest extends TestCase
         $original = ApiRequestor::httpClient();
         ApiRequestor::setHttpClient($http);
         try {
-            foreach (['monthly', 'monthly', 'annual'] as $plan) {
+            foreach (['monthly', 'monthly'] as $plan) {
                 $this->post(route('pro.onboarding.subscribe'), ['plan' => $plan])
                     ->assertRedirect('https://checkout.example.test/cs_'.$plan);
             }
-            $this->assertSame(['cs_monthly'], $expired);
-            $this->assertSame(['cs_annual'], array_keys($open));
+            // Deux clics : une seule session de paiement, réutilisée.
+            $this->assertSame([], $expired);
+            $this->assertSame(['cs_monthly'], array_keys($open));
+            // La formule annuelle n'est plus vendue : la demande est refusée avant tout appel à Stripe.
+            $this->post(route('pro.onboarding.subscribe'), ['plan' => 'annual'])->assertSessionHasErrors('plan');
+            $this->assertSame(['cs_monthly'], $created);
             $paid = true;
             $open = [];
             $this->post(route('pro.onboarding.subscribe'), ['plan' => 'monthly'])
                 ->assertRedirect(route('pro.subscription'))->assertSessionHas('error');
             $this->postJson(route('pro.onboarding.subscribe'), ['plan' => 'monthly'])
                 ->assertStatus(422)->assertJsonPath('success', false);
-            $this->assertSame(['cs_monthly', 'cs_annual'], $created);
+            $this->assertSame(['cs_monthly'], $created);
             $this->assertDatabaseCount('pro_subscriptions', 0);
         } finally {
             ApiRequestor::setHttpClient($original);

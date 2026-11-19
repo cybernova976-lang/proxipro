@@ -1,4 +1,9 @@
 {{-- Modal Devenir Prestataire pour utilisateurs OAuth --}}
+@php
+    // Formules lues dans la configuration : aucun prix ni avantage écrit en dur ici.
+    $oauthSubscriptionPlans = \App\Support\ProviderSubscriptionPlans::active();
+    $oauthPlanLabels = array_map(fn ($summary) => $summary['summary'], \App\Support\ProviderSubscriptionPlans::summaries());
+@endphp
 <div class="modal fade" id="becomeProviderOAuthModal" tabindex="-1" aria-labelledby="becomeProviderOAuthModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content oauth-provider-modal">
@@ -178,37 +183,21 @@
 
                     @if($proSubscriptionsEnabled)
                     <div class="oauth-subscription-plans">
-                        <div class="oauth-plan-card" data-plan="monthly" onclick="selectOAuthPlan('monthly')">
-                            <div class="oauth-plan-name">Mensuel</div>
-                            <div class="oauth-plan-price">9,99€</div>
-                            <div class="oauth-plan-period">/mois</div>
-                            <ul class="oauth-plan-features">
-                                <li><i class="fas fa-check"></i> Profil professionnel vérifié</li>
-                                <li><i class="fas fa-check"></i> Devis & factures illimités</li>
-                                <li><i class="fas fa-check"></i> Gestion de clientèle</li>
-                                <li><i class="fas fa-check"></i> Badge Pro visible</li>
-                                <li><i class="fas fa-check"></i> Jusqu'à 4 photos par annonce</li>
-                                <li><i class="fas fa-check"></i> Alertes dans la plateforme</li>
-                                <li><i class="fas fa-check"></i> Support prioritaire</li>
-                            </ul>
-                        </div>
-
-                        <div class="oauth-plan-card oauth-plan-recommended" data-plan="annual" onclick="selectOAuthPlan('annual')">
-                            <div class="oauth-plan-badge">RECOMMANDÉ · -30%</div>
-                            <div class="oauth-plan-name">Annuel</div>
-                            <div class="oauth-plan-price">85€</div>
-                            <div class="oauth-plan-period">/an <span style="text-decoration:line-through;color:#94a3b8;font-size:0.78rem;">119,88€</span></div>
-                            <div style="font-size:0.78rem;color:#059669;font-weight:600;margin-top:2px;">soit 7,08€/mois</div>
-                            <ul class="oauth-plan-features">
-                                <li><i class="fas fa-check"></i> Tout le plan mensuel inclus</li>
-                                <li><i class="fas fa-star" style="color:#f59e0b!important;"></i> Statistiques avancées</li>
-                                <li><i class="fas fa-star" style="color:#f59e0b!important;"></i> Position prioritaire</li>
-                                <li><i class="fas fa-star" style="color:#f59e0b!important;"></i> Badge « Pro Premium »</li>
-                                <li><i class="fas fa-star" style="color:#f59e0b!important;"></i> Jusqu'à 4 photos par annonce</li>
-                                <li><i class="fas fa-star" style="color:#f59e0b!important;"></i> Export comptable</li>
-                                <li><i class="fas fa-star" style="color:#f59e0b!important;"></i> Assistance via formulaire</li>
-                            </ul>
-                        </div>
+                        @foreach($oauthSubscriptionPlans as $oauthPlanKey => $oauthPlan)
+                            <div class="oauth-plan-card {{ !empty($oauthPlan['recommended']) ? 'oauth-plan-recommended' : '' }}" data-plan="{{ $oauthPlanKey }}" onclick="selectOAuthPlan('{{ $oauthPlanKey }}')">
+                                @if(!empty($oauthPlan['badge']))
+                                    <div class="oauth-plan-badge">{{ $oauthPlan['badge'] }}</div>
+                                @endif
+                                <div class="oauth-plan-name">{{ $oauthPlan['label'] }}</div>
+                                <div class="oauth-plan-price">{{ $oauthPlan['price'] }}</div>
+                                <div class="oauth-plan-period">{{ $oauthPlan['period'] }}</div>
+                                <ul class="oauth-plan-features">
+                                    @foreach($oauthPlan['features'] as $oauthPlanFeature)
+                                        <li><i class="fas fa-check"></i> {{ $oauthPlanFeature }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endforeach
                     </div>
                     @else
                     <div class="alert alert-success border-0 text-center">
@@ -909,6 +898,7 @@
 </style>
 
 <script>
+var oauthPlanLabels = {!! Illuminate\Support\Js::encode($oauthPlanLabels) !!};
 document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('becomeProviderOAuthModal');
     if (!modal) return;
@@ -1187,11 +1177,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         if (planEl) {
-            if (formData.plan === 'annual') {
-                planEl.textContent = 'Annuel (85€/an)';
-                planEl.style.color = '#6366f1';
-            } else if (formData.plan === 'monthly') {
-                planEl.textContent = 'Mensuel (9,99€/mois)';
+            if (oauthPlanLabels[formData.plan]) {
+                planEl.textContent = oauthPlanLabels[formData.plan];
                 planEl.style.color = '#10b981';
             } else {
                 planEl.textContent = 'Sans abonnement';
@@ -1301,7 +1288,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${result.has_subscription ? `
                     <div style="background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(5,150,105,0.08)); border: 1px solid rgba(16,185,129,0.2); border-radius: 12px; padding: 14px; margin-bottom: 1.5rem; text-align: center;">
                         <i class="fas fa-crown" style="color: #059669; margin-right: 6px;"></i>
-                        <strong style="color: #166534;">Abonnement ${result.plan === 'annual' ? 'Annuel (85€/an)' : 'Mensuel (9,99€/mois)'} activé !</strong>
+                        <strong style="color: #166534;">Abonnement ${oauthPlanLabels[result.plan] || ''} activé !</strong>
                     </div>
                     ` : ''}
                     

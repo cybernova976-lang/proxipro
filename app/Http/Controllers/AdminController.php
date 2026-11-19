@@ -753,7 +753,7 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'email' => ['required', 'email', 'exists:users,email'],
-            'plan' => ['required', 'in:monthly,annual'],
+            'plan' => ['required', 'in:monthly'],
             'duration' => ['required', 'integer', 'min:1', 'max:730'],
         ]);
         $user = User::where('email', $validated['email'])->firstOrFail();

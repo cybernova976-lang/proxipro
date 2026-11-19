@@ -120,7 +120,7 @@ class ServiceProviderController extends Controller
             'services.*.subcategory' => ['required', 'string', 'max:100', Rule::in($enabledSubcategories)],
             'services.*.experience_years' => 'nullable|integer|min:0|max:50',
             'services.*.description' => 'nullable|string|max:500',
-            'plan' => 'nullable|in:monthly,annual',
+            'plan' => 'nullable|in:monthly',
         ], [
             'services.required' => 'Veuillez sélectionner au moins un service.',
             'services.min' => 'Veuillez sélectionner au moins un service.',
@@ -246,7 +246,7 @@ class ServiceProviderController extends Controller
             // Si un plan est sélectionné, vérifier d'abord si l'utilisateur a déjà un abonnement actif
             if (PlatformFeatures::proSubscriptionsEnabled()
                 && $request->filled('plan')
-                && in_array($request->plan, ['monthly', 'annual'], true)) {
+                && in_array($request->plan, ['monthly'], true)) {
 
                 // Vérifier si l'utilisateur a déjà un abonnement actif
                 if ($user->hasActiveProSubscription()) {

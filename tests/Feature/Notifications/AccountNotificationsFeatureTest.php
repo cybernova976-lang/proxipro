@@ -79,7 +79,7 @@ class AccountNotificationsFeatureTest extends TestCase
         $provider = $this->provider(['email_notifications' => true]);
 
         $this->actingAs($principal)->post(route('admin.subscriptions.provider.grant'), [
-            'email' => $provider->email, 'plan' => 'annual', 'duration' => '60',
+            'email' => $provider->email, 'plan' => 'monthly', 'duration' => '60',
         ])->assertSessionHas('success');
 
         $stored = $provider->notifications()->firstOrFail();

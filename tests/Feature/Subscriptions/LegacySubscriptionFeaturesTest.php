@@ -29,11 +29,12 @@ class LegacySubscriptionFeaturesTest extends TestCase
         $this->assertContains('Support prioritaire', ProviderSubscriptionPlans::get('monthly')['features']);
         $migration = require database_path('migrations/2026_11_09_113000_align_legacy_provider_subscription_features.php');
         $migration->up();
-        foreach (['monthly', 'annual'] as $key) {
-            $this->assertSame(config("provider_subscriptions.plans.{$key}.features"), ProviderSubscriptionPlans::get($key)['features']);
-            $this->assertSame($plans[$key]['amount'], ProviderSubscriptionPlans::get($key)['amount']);
-            $this->assertSame($plans[$key]['enabled'], ProviderSubscriptionPlans::get($key)['enabled']);
-        }
+        $this->assertSame(config('provider_subscriptions.plans.monthly.features'), ProviderSubscriptionPlans::get('monthly')['features']);
+        $this->assertSame($plans['monthly']['amount'], ProviderSubscriptionPlans::get('monthly')['amount']);
+        $this->assertSame($plans['monthly']['enabled'], ProviderSubscriptionPlans::get('monthly')['enabled']);
+        // La formule annuelle n'est plus au catalogue : même enregistrée en base, elle n'est plus proposée.
+        $this->assertNull(ProviderSubscriptionPlans::get('annual'));
+        $this->assertSame(['monthly'], array_keys(ProviderSubscriptionPlans::all()));
         $this->assertSame('Mon tarif', ProviderSubscriptionPlans::get('monthly')['label']);
         $before = Setting::get('provider_subscription_plans');
         $migration->up();
