@@ -35,12 +35,23 @@
 </div>
 @endif
 
-{{-- Billing remains accessible after a payment failure or a change of account status. --}}
-<div class="pro-card sub-page-card mb-4" style="padding:22px;border-left:4px solid {{ $subscription?->isActive() ? '#10b981' : '#6366f1' }};">
-    <h2 class="h5 fw-bold">{{ $subscription?->isActive() ? 'Votre abonnement est actif' : ($subscription?->hasOpenBilling() ? 'Votre facturation demande une action' : 'Votre compte gratuit') }}</h2>
+{{-- État de l'abonnement. Moyen de paiement, résiliation et factures : page Facturation. --}}
+@php
+    $pkLatePayment = (bool) $subscription?->inPaymentGrace();
+    $pkStateTitle = match (true) {
+        $pkLatePayment => 'Votre paiement est en retard',
+        (bool) $subscription?->isActive() => 'Votre abonnement est actif',
+        (bool) $subscription?->hasOpenBilling() => 'Votre facturation demande une action',
+        default => 'Votre compte gratuit',
+    };
+@endphp
+<div class="pro-card sub-page-card mb-4" style="padding:22px;border-left:4px solid {{ $pkLatePayment ? '#b91c1c' : ($subscription?->isActive() ? '#10b981' : '#6366f1') }};">
+    <h2 class="h5 fw-bold">{{ $pkStateTitle }}</h2>
     @if($subscription)
         <p class="mb-2">{{ $subscription->getPlanLabel() }}</p>
-        @if($subscription->isActive())
+        @if($pkLatePayment)
+            <div class="alert alert-warning">Votre dernier paiement a échoué. Réglez-le avant le {{ $subscription->grace_ends_at->format('d/m/Y') }} pour garder vos avantages Premium ; passé cette date, votre compte repassera en gratuit.</div>
+        @elseif($subscription->isActive())
             @if($subscription->stripe_subscription_id)
                 <p>{{ $subscription->auto_renew ? 'Prochain renouvellement' : 'Fin de vos avantages Premium' }} : <strong>{{ $subscription->ends_at?->format('d/m/Y') ?? 'date à vérifier dans Stripe' }}</strong>.</p>
                 @unless($subscription->auto_renew)<p class="text-success">Le renouvellement est arrêté. Votre accès reste actif jusqu’à cette date.</p>@endunless
@@ -54,17 +65,9 @@
         <p>{{ $proSubscriptionsEnabled ? 'Vous pouvez continuer gratuitement ou choisir Premium selon vos besoins.' : 'La souscription à Premium est momentanément indisponible. Votre espace prestataire reste accessible.' }}</p>
     @endif
     <div class="d-flex flex-wrap gap-2 subscription-management">
-        @if($user->stripe_id)
-            <form method="POST" action="{{ route('pro.subscription.billing-portal') }}">@csrf<button class="btn btn-outline-primary">Factures et carte bancaire</button></form>
+        @if($subscription || $user->stripe_id)
+            <a class="btn btn-outline-primary" href="{{ route('billing.index') }}">{{ $pkLatePayment ? 'Régler mon paiement' : 'Gérer mon abonnement et ma facturation' }}</a>
         @endif
-        @if($subscription?->hasOpenBilling())
-            @if($subscription->isActive() && ! $subscription->auto_renew)
-                <form method="POST" action="{{ route('pro.subscription.resume-renewal') }}" onsubmit="return confirm('Réactiver les prélèvements automatiques à la prochaine échéance ?');">@csrf<button class="btn btn-outline-success">Réactiver le renouvellement</button></form>
-            @else
-                <form method="POST" action="{{ route('pro.subscription.cancel-renewal') }}" onsubmit="return confirm('{{ $subscription->isActive() ? 'Arrêter le renouvellement ? Vos avantages restent actifs jusqu’à la fin de la période payée.' : 'Résilier cet abonnement ? Aucun nouveau renouvellement ne sera effectué.' }}');">@csrf<button class="btn btn-outline-danger">{{ $subscription->isActive() ? 'Résilier à la fin de la période' : 'Résilier cet abonnement' }}</button></form>
-            @endif
-        @endif
-        <a class="btn btn-outline-secondary" href="{{ route('settings.index') }}">Paramètres du compte</a>
         <a class="btn btn-link" href="{{ route('contact.index') }}">Contacter l’assistance</a>
     </div>
 </div>
@@ -154,42 +157,6 @@
     <h2 class="h5 fw-bold">Mesurer votre activité</h2>
     <p class="text-muted">Consultez vos vues de profil, vos annonces et votre activité dans vos statistiques. Ces chiffres décrivent votre audience réelle ; ils ne mesurent pas à eux seuls l’effet de Premium.</p>
     <a href="{{ route('pro.analytics') }}" class="btn btn-outline-primary">Voir mes statistiques</a>
-</div>
-@endif
-
-{{-- ===== SECTION 4: Historique ===== --}}
-@if($subscriptions->isNotEmpty())
-<div class="pro-card sub-page-card">
-    <h6 class="fw-bold mb-3"><i class="fas fa-history me-2"></i>Historique des abonnements</h6>
-    <div class="table-responsive" style="overflow: visible;">
-        <table class="table table-hover mb-0" style="font-size: 0.82rem;">
-            <thead>
-                <tr><th>Plan</th><th>Début</th><th>Fin</th><th>Montant</th><th>Statut</th><th></th></tr>
-            </thead>
-            <tbody>
-                @foreach($subscriptions as $sub)
-                <tr>
-                    <td class="fw-semibold">{{ $sub->getPlanLabel() }}</td>
-                    <td>{{ $sub->starts_at?->format('d/m/Y') ?? '—' }}</td>
-                    <td>{{ $sub->ends_at?->format('d/m/Y') ?? '—' }}</td>
-                    <td class="fw-bold">{{ number_format((float) $sub->amount, 2, ',', ' ') }} €</td>
-                    <td>
-                        <span class="pro-status pro-status-{{ $sub->isActive() ? 'success' : 'secondary' }}">
-                            {{ $sub->isActive() ? ($sub->auto_renew ? 'Actif' : 'Fin programmée / accès manuel') : ($sub->hasOpenBilling() ? 'À vérifier' : ($sub->status === 'cancelled' ? 'Résilié' : 'Expiré')) }}
-                        </span>
-                    </td>
-                    <td>
-                        @if($sub->stripe_subscription_id && $user->stripe_id)
-                            <form action="{{ route('pro.subscription.billing-portal') }}" method="POST">@csrf<button class="btn btn-sm btn-outline-secondary">Factures Stripe</button></form>
-                        @else
-                            <span class="text-muted">Accès manuel</span>
-                        @endif
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
 </div>
 @endif
 

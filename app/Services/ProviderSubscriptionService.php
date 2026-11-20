@@ -9,6 +9,7 @@ use App\Support\PlatformFeatures;
 use App\Support\ProviderSubscriptionPlans;
 use Carbon\Carbon;
 use DomainException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Stripe\Checkout\Session as StripeCheckoutSession;
 use Stripe\StripeClient;
@@ -20,6 +21,12 @@ class ProviderSubscriptionService
         'become_provider_subscription',
         'provider_subscription',
     ];
+
+    /** Session Stripe qui enregistre un nouveau moyen de paiement, sans rien débiter. */
+    public const PAYMENT_METHOD_CHECKOUT_TYPE = 'subscription_payment_method';
+
+    /** États Stripe d'un abonnement dont le dernier paiement n'a pas abouti. */
+    public const LATE_STRIPE_STATUSES = ['past_due', 'unpaid'];
 
     public function createCheckoutSession(
         User $user,
@@ -233,7 +240,20 @@ class ProviderSubscriptionService
         $stripeStatus = (string) $this->value($stripeSubscription, 'status');
         $cancelAtPeriodEnd = (bool) $this->value($stripeSubscription, 'cancel_at_period_end');
         $pauseCollection = $this->value($stripeSubscription, 'pause_collection');
-        $localStatus = $this->localStatus($stripeStatus, filled($pauseCollection));
+
+        // Paiement en retard sur un abonnement qui était ouvert : le membre garde ses
+        // avantages jusqu'à la fin du délai de régularisation, compté depuis le premier échec.
+        $failedAt = null;
+        $graceEndsAt = null;
+        if (in_array($stripeStatus, self::LATE_STRIPE_STATUSES, true) && ! filled($pauseCollection)
+            && $existing && ($existing->status === 'active' || $existing->payment_failed_at)) {
+            $failedAt = $existing->payment_failed_at ?? now();
+            $graceEndsAt = $existing->grace_ends_at
+                ?? $failedAt->copy()->addDays(ProSubscription::PAYMENT_GRACE_DAYS);
+        }
+        $localStatus = $graceEndsAt?->isFuture()
+            ? 'active'
+            : $this->localStatus($stripeStatus, filled($pauseCollection));
         $items = $this->value($this->value($stripeSubscription, 'items'), 'data');
         $firstItem = is_array($items) ? ($items[0] ?? null) : null;
         $stripePrice = $this->value($firstItem, 'price');
@@ -268,6 +288,15 @@ class ProviderSubscriptionService
             'intervention_radius' => $existing?->intervention_radius ?? $user->pro_intervention_radius ?? 30,
         ], array_filter($attributes, fn ($value): bool => $value !== null));
 
+        if ($failedAt === null) {
+            // Paiement à jour, abonnement terminé ou suspendu : plus aucun délai en cours.
+            $payload['payment_failed_at'] = null;
+            $payload['grace_ends_at'] = null;
+            $payload['payment_reminders_sent'] = 0;
+        } elseif ($existing?->payment_failed_at) {
+            $payload['grace_ends_at'] = $graceEndsAt;
+        }
+
         $subscription = DB::transaction(function () use ($stripeId, $payload, $user, $localStatus, $plan) {
             $subscription = ProSubscription::updateOrCreate(
                 ['stripe_subscription_id' => $stripeId],
@@ -292,17 +321,70 @@ class ProviderSubscriptionService
         // Notification au passage en « actif » ou à la fin de l'accès, une seule fois :
         // Stripe renvoie le même état plusieurs fois (retour de paiement, webhooks).
         $previousStatus = $existing?->status;
-        if (! $this->notifyStatusChanges) {
+        $wasLate = (bool) $existing?->payment_failed_at;
+        if ($failedAt !== null && ! $wasLate) {
+            // Premier échec : le délai démarre ici, et le membre est prévenu une seule fois.
+            $this->startPaymentGrace($subscription, $user, $failedAt, $graceEndsAt);
+        } elseif (! $this->notifyStatusChanges) {
             // Action d’un administrateur : c’est elle qui prévient le membre, avec le bon message.
+        } elseif ($wasLate && $failedAt === null && $localStatus === 'active') {
+            \App\Notifications\AccountStatusNotification::dispatch($user, 'payment_recovered', [
+                'until' => $endsAt?->format('d/m/Y'),
+            ]);
         } elseif ($localStatus === 'active' && $previousStatus !== 'active') {
             \App\Notifications\AccountStatusNotification::dispatch($user, 'premium_activated', [
                 'until' => $endsAt?->format('d/m/Y'),
             ]);
         } elseif ($previousStatus === 'active' && in_array($localStatus, ['cancelled', 'expired'], true)) {
-            \App\Notifications\AccountStatusNotification::dispatch($user, 'premium_expired');
+            \App\Notifications\AccountStatusNotification::dispatch($user, $wasLate ? 'premium_unpaid_ended' : 'premium_expired');
         }
 
         return $subscription->fresh();
+    }
+
+    /**
+     * Ouvre le délai de régularisation. La mise à jour conditionnelle garantit un seul
+     * départ, même si deux événements Stripe annoncent le même échec en même temps.
+     */
+    private function startPaymentGrace(ProSubscription $subscription, User $user, Carbon $failedAt, Carbon $graceEndsAt): void
+    {
+        $started = ProSubscription::whereKey($subscription->getKey())
+            ->whereNull('payment_failed_at')
+            ->update([
+                'payment_failed_at' => $failedAt,
+                'grace_ends_at' => $graceEndsAt,
+                'payment_reminders_sent' => 0,
+            ]);
+
+        if ($started) {
+            \App\Notifications\AccountStatusNotification::dispatch($user, 'payment_failed', [
+                'until' => $graceEndsAt->format('d/m/Y'),
+            ]);
+        }
+    }
+
+    /**
+     * Relit l'abonnement chez Stripe avant de l'enregistrer : un événement arrivé en
+     * retard ne doit pas rouvrir un incident de paiement déjà réglé.
+     */
+    public function syncLatest(string $stripeSubscriptionId): ?ProSubscription
+    {
+        $stripeSubscription = $this->client()->subscriptions->retrieve($stripeSubscriptionId);
+
+        return $this->managesStripeSubscription($stripeSubscription)
+            ? $this->syncStripeSubscription($stripeSubscription)
+            : null;
+    }
+
+    /** Événement d'abonnement reçu de Stripe. */
+    public function syncFromWebhook(object $stripeSubscription): ProSubscription
+    {
+        $stripeId = (string) $this->value($stripeSubscription, 'id');
+        if ($stripeId !== '' && in_array($this->value($stripeSubscription, 'status'), self::LATE_STRIPE_STATUSES, true)) {
+            return $this->syncLatest($stripeId) ?? $this->syncStripeSubscription($stripeSubscription);
+        }
+
+        return $this->syncStripeSubscription($stripeSubscription);
     }
 
     /** Les actions de l’administration envoient leur propre notification : la synchronisation reste muette. */
@@ -346,7 +428,6 @@ class ProviderSubscriptionService
 
         $subscription = $this->syncStripeSubscription($stripeSubscription, attributes: [
             'last_payment_at' => now(),
-            'payment_failed_at' => null,
         ]);
 
         $invoiceId = (string) $this->value($invoice, 'id');
@@ -371,31 +452,15 @@ class ProviderSubscriptionService
         return $subscription;
     }
 
+    /**
+     * Paiement refusé. L'état est relu chez Stripe : un abonnement qui était ouvert
+     * entre dans son délai de régularisation, un abonnement jamais payé reste fermé.
+     */
     public function markInvoiceFailed(object $invoice): ?ProSubscription
     {
         $subscriptionId = $this->invoiceSubscriptionId($invoice);
-        if ($subscriptionId === '') {
-            return null;
-        }
 
-        $subscription = ProSubscription::where('stripe_subscription_id', $subscriptionId)->first();
-        if (! $subscription) {
-            $stripeSubscription = $this->client()->subscriptions->retrieve($subscriptionId);
-            if (! $this->managesStripeSubscription($stripeSubscription)) {
-                return null;
-            }
-
-            $subscription = $this->syncStripeSubscription($stripeSubscription);
-        }
-
-        $subscription->update([
-            'status' => 'pending',
-            'stripe_status' => 'past_due',
-            'payment_failed_at' => now(),
-        ]);
-        $subscription->user?->update(['pro_status' => 'inactive']);
-
-        return $subscription->fresh();
+        return $subscriptionId === '' ? null : $this->syncLatest($subscriptionId);
     }
 
     public function cancelAtPeriodEnd(ProSubscription $subscription): ProSubscription
@@ -542,6 +607,337 @@ class ProviderSubscriptionService
         ]);
 
         return $subscription->fresh();
+    }
+
+    // =========================================
+    // MOYEN DE PAIEMENT
+    // =========================================
+
+    /** Moyens de paiement proposés : la carte, et le prélèvement SEPA quand il est activé chez Stripe. */
+    public function paymentMethodTypes(): array
+    {
+        return $this->sepaDebitAvailable() ? ['card', 'sepa_debit'] : ['card'];
+    }
+
+    /** Lu dans la configuration Stripe du compte : rien n'est promis qui ne soit réellement proposé. */
+    public function sepaDebitAvailable(): bool
+    {
+        if (trim((string) config('services.stripe.secret')) === '') {
+            return false;
+        }
+
+        return (bool) Cache::remember('stripe:sepa-debit-available', now()->addMinutes(15), function (): bool {
+            try {
+                foreach ($this->client()->paymentMethodConfigurations->all(['limit' => 20])->data as $configuration) {
+                    if ($configuration->is_default && $configuration->active && ! $configuration->parent) {
+                        return (bool) ($this->value($this->value($configuration, 'sepa_debit'), 'available') ?? false);
+                    }
+                }
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+
+            return false;
+        });
+    }
+
+    /**
+     * Moyen de paiement actuel de l'abonnement, tel que Stripe le connaît.
+     *
+     * @return array{type: string, label: string}|null
+     */
+    public function paymentMethodSummary(ProSubscription $subscription): ?array
+    {
+        if (! $subscription->hasOpenBilling() || trim((string) config('services.stripe.secret')) === '') {
+            return null;
+        }
+
+        $summary = Cache::remember(self::paymentMethodCacheKey($subscription), now()->addMinutes(15), function () use ($subscription): array {
+            try {
+                $remote = $this->client()->subscriptions->retrieve(
+                    $subscription->stripe_subscription_id,
+                    ['expand' => ['default_payment_method']]
+                );
+
+                return $this->describePaymentMethod($this->value($remote, 'default_payment_method'));
+            } catch (\Throwable $exception) {
+                report($exception);
+
+                return [];
+            }
+        });
+
+        return $summary === [] ? null : $summary;
+    }
+
+    private static function paymentMethodCacheKey(ProSubscription $subscription): string
+    {
+        return 'billing:payment-method:'.$subscription->getKey();
+    }
+
+    private function describePaymentMethod(mixed $method): array
+    {
+        if (! is_object($method)) {
+            return [];
+        }
+
+        $type = (string) $this->value($method, 'type');
+        if ($type === 'card') {
+            $card = $this->value($method, 'card');
+            $brand = ucfirst((string) $this->value($card, 'brand'));
+            $expires = sprintf('%02d/%d', (int) $this->value($card, 'exp_month'), (int) $this->value($card, 'exp_year'));
+
+            return ['type' => 'card', 'label' => trim('Carte '.$brand).' se terminant par '.$this->value($card, 'last4').', valable jusqu’en '.$expires];
+        }
+        if ($type === 'sepa_debit') {
+            return ['type' => 'sepa_debit', 'label' => 'Prélèvement SEPA sur le compte se terminant par '.$this->value($this->value($method, 'sepa_debit'), 'last4')];
+        }
+
+        return ['type' => $type, 'label' => 'Moyen de paiement enregistré chez Stripe'];
+    }
+
+    /** Page Stripe qui enregistre un nouveau moyen de paiement. Rien n'est débité à cette étape. */
+    public function createPaymentMethodSession(ProSubscription $subscription, string $successUrl, string $cancelUrl): StripeCheckoutSession
+    {
+        $this->requireStripeSubscription($subscription);
+        $user = $subscription->user;
+        if (! $subscription->hasOpenBilling() || ! $user?->stripe_id) {
+            throw new DomainException('Cet abonnement n’est plus prélevé : il n’y a pas de moyen de paiement à modifier.');
+        }
+
+        $metadata = [
+            'type' => self::PAYMENT_METHOD_CHECKOUT_TYPE,
+            'user_id' => (string) $user->id,
+            'pro_subscription_id' => (string) $subscription->id,
+            'stripe_subscription_id' => (string) $subscription->stripe_subscription_id,
+        ];
+
+        return $this->client()->checkout->sessions->create([
+            'mode' => 'setup',
+            'customer' => $user->stripe_id,
+            'client_reference_id' => (string) $user->id,
+            'payment_method_types' => $this->paymentMethodTypes(),
+            'success_url' => $this->publicReturnUrl($successUrl),
+            'cancel_url' => $this->publicReturnUrl($cancelUrl),
+            'metadata' => $metadata,
+            'setup_intent_data' => ['metadata' => $metadata],
+        ]);
+    }
+
+    public function completePaymentMethodCheckout(string $sessionId, User $expectedUser): array
+    {
+        $session = $this->client()->checkout->sessions->retrieve($sessionId, ['expand' => ['setup_intent']]);
+
+        return $this->completePaymentMethodSession($session, $expectedUser);
+    }
+
+    /**
+     * Le nouveau moyen de paiement devient celui de l'abonnement ; si un paiement
+     * était en retard, il est présenté de nouveau tout de suite.
+     *
+     * Résultat : saved (enregistré), paid (retard réglé), processing (prélèvement
+     * en cours), refused (nouveau refus) ou already (session déjà traitée).
+     *
+     * @return array{subscription: ProSubscription, outcome: string}
+     */
+    public function completePaymentMethodSession(object $session, ?User $expectedUser = null): array
+    {
+        $metadata = $this->metadata($session);
+        if (($metadata['type'] ?? null) !== self::PAYMENT_METHOD_CHECKOUT_TYPE || $this->value($session, 'mode') !== 'setup') {
+            throw new DomainException('Cette session Stripe ne concerne pas un moyen de paiement.');
+        }
+
+        $subscription = ProSubscription::find((int) ($metadata['pro_subscription_id'] ?? 0));
+        $user = $subscription?->user;
+        if (! $subscription || ! $user
+            || (string) $user->id !== (string) ($metadata['user_id'] ?? '')
+            || ($expectedUser && ! $expectedUser->is($user))
+            || ! filled($subscription->stripe_subscription_id)
+            || $subscription->stripe_subscription_id !== ($metadata['stripe_subscription_id'] ?? null)
+            || ! filled($user->stripe_id)
+            || $this->resourceId($this->value($session, 'customer')) !== (string) $user->stripe_id) {
+            throw new DomainException('Cette session Stripe ne correspond pas à votre abonnement.');
+        }
+        if ($this->value($session, 'status') !== 'complete') {
+            throw new DomainException('Le nouveau moyen de paiement n’a pas été enregistré.');
+        }
+
+        // Le retour du membre et l'événement Stripe arrivent tous les deux : un seul traite la session.
+        $sessionId = (string) $this->value($session, 'id');
+        $claimed = ProSubscription::whereKey($subscription->getKey())
+            ->where(function ($query) use ($sessionId) {
+                $query->whereNull('payment_method_session_id')->orWhere('payment_method_session_id', '!=', $sessionId);
+            })
+            ->update(['payment_method_session_id' => $sessionId]);
+        if (! $claimed) {
+            return ['subscription' => $subscription->fresh(), 'outcome' => 'already'];
+        }
+
+        try {
+            $client = $this->client();
+            $setupIntent = $this->value($session, 'setup_intent');
+            if (! is_object($setupIntent)) {
+                $setupIntent = $client->setupIntents->retrieve((string) $setupIntent);
+            }
+            $paymentMethodId = $this->resourceId($this->value($setupIntent, 'payment_method'));
+            if ($this->value($setupIntent, 'status') !== 'succeeded' || $paymentMethodId === '') {
+                throw new DomainException('Stripe n’a pas confirmé ce moyen de paiement.');
+            }
+
+            $client->customers->update($user->stripe_id, [
+                'invoice_settings' => ['default_payment_method' => $paymentMethodId],
+            ]);
+            $remote = $client->subscriptions->update($subscription->stripe_subscription_id, [
+                'default_payment_method' => $paymentMethodId,
+                'expand' => ['latest_invoice'],
+            ]);
+            Cache::forget(self::paymentMethodCacheKey($subscription));
+
+            $outcome = 'saved';
+            if (in_array($remote->status, self::LATE_STRIPE_STATUSES, true)) {
+                $outcome = $this->retryLatestInvoice($client, $remote, $paymentMethodId);
+                if ($outcome === 'paid') {
+                    $remote = $client->subscriptions->retrieve($subscription->stripe_subscription_id);
+                }
+            }
+
+            return [
+                'subscription' => $this->syncStripeSubscription($remote, $user, $subscription->plan),
+                'outcome' => $outcome,
+            ];
+        } catch (\Throwable $exception) {
+            // La session reste à traiter : le prochain passage (retour ou événement Stripe) recommencera.
+            ProSubscription::whereKey($subscription->getKey())
+                ->where('payment_method_session_id', $sessionId)
+                ->update(['payment_method_session_id' => null]);
+
+            throw $exception;
+        }
+    }
+
+    private function retryLatestInvoice(StripeClient $client, object $remote, string $paymentMethodId): string
+    {
+        $invoice = $this->value($remote, 'latest_invoice');
+        if (! is_object($invoice) && $this->resourceId($invoice) !== '') {
+            $invoice = $client->invoices->retrieve($this->resourceId($invoice));
+        }
+        if (! is_object($invoice) || $this->value($invoice, 'status') !== 'open') {
+            return 'saved';
+        }
+
+        try {
+            $paid = $client->invoices->pay((string) $this->value($invoice, 'id'), ['payment_method' => $paymentMethodId]);
+        } catch (\Stripe\Exception\CardException) {
+            return 'refused';
+        } catch (\Stripe\Exception\ApiErrorException $exception) {
+            // Par exemple un paiement déjà en cours sur cette facture : Stripe le mènera à son terme.
+            report($exception);
+
+            return 'saved';
+        }
+
+        return $this->value($paid, 'status') === 'paid' ? 'paid' : 'processing';
+    }
+
+    // =========================================
+    // DÉLAI DE RÉGULARISATION
+    // =========================================
+
+    /** Rappel dû pendant le délai. Un seul message par passage, même si plusieurs échéances sont dépassées. */
+    public function remindPaymentDue(ProSubscription $subscription): bool
+    {
+        if (! $subscription->inPaymentGrace()) {
+            return false;
+        }
+
+        $sent = (int) $subscription->payment_reminders_sent;
+        $due = count(array_filter(
+            ProSubscription::PAYMENT_REMINDER_DAYS,
+            fn (int $days): bool => $subscription->payment_failed_at->copy()->addDays($days)->isPast()
+        ));
+        if ($due <= $sent) {
+            return false;
+        }
+
+        $claimed = ProSubscription::whereKey($subscription->getKey())
+            ->where('payment_reminders_sent', $sent)
+            ->update(['payment_reminders_sent' => $due]);
+        if (! $claimed) {
+            return false;
+        }
+
+        \App\Notifications\AccountStatusNotification::dispatch($subscription->user, 'payment_reminder', [
+            'until' => $subscription->grace_ends_at->format('d/m/Y'),
+            'days_left' => $subscription->graceDaysLeft(),
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Abonnement resté impayé : résiliation chez Stripe, facture en attente annulée,
+     * retour au compte gratuit. Rien n'est réclamé au membre après coup.
+     *
+     * Retourne null quand un paiement est encore en cours de traitement (un
+     * prélèvement met plusieurs jours) : son résultat décidera.
+     */
+    public function endForNonPayment(ProSubscription $subscription, bool $notify = true): ?ProSubscription
+    {
+        $this->requireStripeSubscription($subscription);
+        $client = $this->client();
+        $remote = $client->subscriptions->retrieve($subscription->stripe_subscription_id, ['expand' => ['latest_invoice']]);
+
+        if (! in_array($remote->status, self::LATE_STRIPE_STATUSES, true)) {
+            // Régularisé ou déjà terminé entre-temps : on enregistre l'état réel.
+            return $this->syncStripeSubscription($remote, $subscription->user, $subscription->plan);
+        }
+
+        $invoice = $this->value($remote, 'latest_invoice');
+        $invoiceId = $this->resourceId($invoice);
+        $invoiceOpen = is_object($invoice) && $this->value($invoice, 'status') === 'open';
+        if ($invoiceOpen && $this->invoicePaymentProcessing($client, $invoiceId)) {
+            return null;
+        }
+
+        $cancelled = $client->subscriptions->cancel($subscription->stripe_subscription_id, ['invoice_now' => false, 'prorate' => false]);
+        if ($invoiceOpen) {
+            try {
+                $client->invoices->voidInvoice($invoiceId);
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        }
+
+        $ended = $this->withoutStatusNotifications(
+            fn () => $this->syncStripeSubscription($cancelled, $subscription->user, $subscription->plan)
+        );
+        // La période annoncée par Stripe n'a pas été payée : l'accès s'arrête maintenant.
+        $ended->update(['ends_at' => now(), 'auto_renew' => false]);
+        Cache::forget(self::paymentMethodCacheKey($subscription));
+
+        if ($notify) {
+            \App\Notifications\AccountStatusNotification::dispatch($subscription->user, 'premium_unpaid_ended');
+        }
+
+        return $ended->fresh();
+    }
+
+    private function invoicePaymentProcessing(StripeClient $client, string $invoiceId): bool
+    {
+        $payments = $client->invoicePayments->all([
+            'invoice' => $invoiceId,
+            'limit' => 20,
+            'expand' => ['data.payment.payment_intent'],
+        ]);
+
+        foreach ($payments->data as $payment) {
+            $intent = $this->value($this->value($payment, 'payment'), 'payment_intent');
+            if (is_object($intent) && $this->value($intent, 'status') === 'processing') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function client(): StripeClient

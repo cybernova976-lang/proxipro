@@ -36,7 +36,7 @@ class AccountTrustFeatureTest extends TestCase
             $this->actingAs($user)->get(route($route))->assertOk()
                 ->assertSee('Mon compte, mes choix')->assertSee('0 / 5 annonces actives')
                 ->assertSee('newsletter_subscribed')->assertSee('draft_reminders_enabled')
-                ->assertSee(route('pro.subscription'), false)->assertSee('Supprimer définitivement mon compte');
+                ->assertSee(route('billing.index'), false)->assertSee('Supprimer définitivement mon compte');
         }
     }
 
@@ -159,9 +159,15 @@ class AccountTrustFeatureTest extends TestCase
         $user = User::factory()->create(['stripe_id' => 'cus_test', 'is_service_provider' => false]);
         $subscription = ProSubscription::create(['user_id' => $user->id, 'plan' => 'monthly', 'amount' => 12.49,
             'status' => 'pending', 'stripe_status' => 'past_due', 'stripe_subscription_id' => 'sub_test', 'auto_renew' => false]);
+        // Aucun appel réel à Stripe pendant ce test.
+        config(['services.stripe.secret' => null]);
         $this->actingAs($user)->get(route('pro.subscription'))->assertOk()
-            ->assertSee('facturation demande une action')->assertSee('12,49 €')->assertSee('Résilier cet abonnement')
-            ->assertSee('Factures et carte bancaire')->assertDontSee('Aucun abonnement actif');
+            ->assertSee('facturation demande une action')->assertSee('12,49 €')
+            ->assertSee(route('billing.index'), false)->assertDontSee('Aucun abonnement actif');
+        // La gestion vit sur la page Facturation, ouverte même sans profil prestataire.
+        $this->get(route('billing.index'))->assertOk()
+            ->assertSee('Paiement à confirmer')->assertSee('12,49 € par mois')->assertSee('Résilier l’abonnement')
+            ->assertSee('Changer de moyen de paiement')->assertSee('Télécharger mes factures');
         $this->mock(ProviderSubscriptionService::class)->shouldReceive('cancelImmediately')->once()
             ->withArgs(fn ($sub) => $sub->is($subscription))->andReturn($subscription);
         $this->post(route('pro.subscription.cancel-renewal'))->assertSessionHas('success');

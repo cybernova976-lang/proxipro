@@ -1,0 +1,87 @@
+/* Page Facturation (resources/views/billing) et bandeau de paiement en retard
+   (partials/billing-alert). Rampe indigo de welcome.blade.php, plus le violet
+   #7c3aed ; le rouge est réservé au paiement refusé. Un seul point de rupture
+   utile ici : 640. */
+.pk-billing { max-width: 860px; margin: 0 auto; padding: 28px 16px 56px; color: #334155; line-height: 1.55; }
+.pk-billing__head { margin-bottom: 24px; }
+.pk-billing__eyebrow { margin: 0 0 4px; color: #6d28d9; font-size: .74rem; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
+.pk-billing__head h1 { margin: 0 0 6px; color: #0f172a; font-size: 1.7rem; font-weight: 750; line-height: 1.2; }
+.pk-billing__head p:last-child { margin: 0; color: #526176; font-size: .95rem; }
+
+.pk-billing__section { margin-top: 32px; }
+.pk-billing__section > h2 { margin: 0 0 14px; color: #0f172a; font-size: 1.15rem; font-weight: 700; }
+.pk-billing__subtitle { margin: 20px 0 12px; color: #312e81; font-size: .95rem; font-weight: 700; }
+.pk-billing__empty { margin: 0; color: #526176; font-size: .95rem; }
+.pk-billing__help { margin: 36px 0 0; color: #64748b; font-size: .88rem; }
+.pk-billing__help a, .pk-billing-link { color: #4338ca; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Abonnement ou formule */
+.pk-billing-card { padding: 20px 22px; border: 1px solid #e0e7ff; border-radius: 16px; background: #fff; }
+.pk-billing-card + .pk-billing-card { margin-top: 14px; }
+.pk-billing-card--offer { border-color: #c7d2fe; }
+.pk-billing-card__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.pk-billing-card__head h3 { margin: 0; color: #0f172a; font-size: 1.05rem; font-weight: 700; }
+.pk-billing-card__price { margin: 2px 0 0; color: #4338ca; font-size: .95rem; font-weight: 650; }
+
+.pk-billing-chip { flex: 0 0 auto; padding: 4px 12px; border-radius: 999px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
+.pk-billing-chip--ok { background: #eef2ff; color: #3730a3; }
+.pk-billing-chip--muted { background: #f1f5f9; color: #475569; }
+.pk-billing-chip--late { background: #fef2f2; color: #b91c1c; }
+
+.pk-billing-card__facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; margin: 18px 0 0; }
+.pk-billing-card__facts dt { color: #64748b; font-size: .78rem; font-weight: 600; }
+.pk-billing-card__facts dd { margin: 2px 0 0; color: #1e293b; font-size: .93rem; font-weight: 600; overflow-wrap: anywhere; }
+
+.pk-billing-card__features { margin: 14px 0 0; padding-left: 18px; color: #334155; font-size: .9rem; }
+.pk-billing-card__features li { margin: 5px 0; }
+.pk-billing-card__more { margin-top: 6px; font-size: .9rem; }
+.pk-billing-card__more summary { min-height: 44px; display: list-item; align-content: center; color: #4338ca; font-weight: 600; cursor: pointer; }
+
+.pk-billing-card__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 20px; }
+.pk-billing-card__actions form { margin: 0; }
+.pk-billing-card__note { margin: 12px 0 0; color: #64748b; font-size: .82rem; }
+
+/* Boutons : un seul plein par écran (--primary), les autres en contour. */
+.pk-billing-btn { min-height: 44px; padding: 10px 18px; border: 1px solid #c7d2fe; border-radius: 12px; background: #fff; color: #3730a3; font-size: .9rem; font-weight: 650; line-height: 1.3; cursor: pointer; }
+.pk-billing-btn:hover, .pk-billing-btn:focus-visible { border-color: #4338ca; background: #eef2ff; }
+.pk-billing-btn:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 2px; }
+.pk-billing-btn:disabled { opacity: .6; cursor: default; }
+.pk-billing-btn--primary { border-color: #4338ca; background: #4338ca; color: #fff; }
+.pk-billing-btn--primary:hover, .pk-billing-btn--primary:focus-visible { border-color: #312e81; background: #312e81; }
+.pk-billing-btn--quiet { border-color: #e2e8f0; color: #475569; }
+.pk-billing-btn--quiet:hover, .pk-billing-btn--quiet:focus-visible { border-color: #b91c1c; background: #fef2f2; color: #b91c1c; }
+
+/* Paiement refusé */
+.pk-billing-late { padding: 20px 22px; border: 1px solid #fecaca; border-left: 5px solid #b91c1c; border-radius: 16px; background: #fef2f2; color: #450a0a; }
+.pk-billing-late h2 { margin: 0 0 8px; color: #7f1d1d; font-size: 1.1rem; font-weight: 750; }
+.pk-billing-late p { margin: 0 0 16px; font-size: .95rem; }
+.pk-billing-late form { margin: 0; }
+.pk-billing-late .pk-billing-late__note { margin: 12px 0 0; color: #7f1d1d; font-size: .82rem; }
+
+/* Tableaux */
+.pk-billing-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid #e0e7ff; border-radius: 16px; overflow: hidden; background: #fff; font-size: .9rem; }
+.pk-billing-table th, .pk-billing-table td { padding: 12px 16px; border-top: 1px solid #e0e7ff; text-align: left; }
+.pk-billing-table thead th { border-top: 0; background: #f8fafc; color: #0f172a; font-size: .8rem; font-weight: 700; }
+.pk-billing__invoices { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 16px 0 0; }
+.pk-billing__invoices span { color: #64748b; font-size: .82rem; }
+
+/* Bandeau affiché sur les autres pages tant que le paiement est en retard. */
+.pk-pay-alert { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 16px; padding: 10px 16px; border-bottom: 1px solid #fecaca; background: #fef2f2; color: #7f1d1d; font-size: .9rem; font-weight: 600; line-height: 1.4; text-align: center; }
+.pk-pay-alert a { color: #7f1d1d; font-weight: 750; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+
+@media (max-width: 640px) {
+    .pk-billing__head h1 { font-size: 1.45rem; }
+    .pk-billing-card { padding: 18px 16px; }
+    .pk-billing-card__head { flex-direction: column-reverse; gap: 10px; }
+    .pk-billing-card__facts { grid-template-columns: minmax(0, 1fr); }
+    .pk-billing-card__actions, .pk-billing-card__actions form, .pk-billing-late form, .pk-billing__invoices { display: grid; width: 100%; }
+    .pk-billing-btn { width: 100%; }
+    /* En colonne : une ligne par information, avec son intitulé. */
+    .pk-billing-table, .pk-billing-table tbody, .pk-billing-table tr, .pk-billing-table td { display: block; width: auto; }
+    .pk-billing-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .pk-billing-table tr + tr { border-top: 1px solid #e0e7ff; }
+    .pk-billing-table td { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; padding: 6px 16px; border-top: 0; }
+    .pk-billing-table td::before { content: attr(data-label); color: #64748b; font-size: .78rem; font-weight: 650; }
+    .pk-billing-table td:first-child { padding-top: 12px; }
+    .pk-billing-table td:last-child { padding-bottom: 12px; }
+}

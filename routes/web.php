@@ -350,6 +350,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/settings/privacy', [SettingsController::class, 'updatePrivacy'])->name('settings.privacy');
     Route::post('/settings/delete-account', [SettingsController::class, 'deleteAccount'])->name('settings.delete-account');
 
+    // Facturation : abonnements du membre, moyen de paiement, résiliation.
+    Route::get('/facturation', [\App\Http\Controllers\BillingController::class, 'index'])->name('billing.index');
+    Route::post('/facturation/moyen-de-paiement', [\App\Http\Controllers\BillingController::class, 'changePaymentMethod'])
+        ->middleware('throttle:10,1,billing.payment-method:')
+        ->name('billing.payment-method');
+    Route::get('/facturation/moyen-de-paiement/retour', [\App\Http\Controllers\BillingController::class, 'paymentMethodReturn'])
+        ->name('billing.payment-method.return');
+
     Route::post('/push-notifications/subscriptions', [PushSubscriptionController::class, 'store'])
         ->middleware('throttle:30,1,push-subscriptions.store:')
         ->name('push-subscriptions.store');

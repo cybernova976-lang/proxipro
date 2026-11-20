@@ -74,6 +74,13 @@ Schedule::command('subscriptions:expire-pro')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/pro-subscriptions-cleanup.log'));
 
+// Paiements d'abonnement refusés : rappels pendant le délai de régularisation,
+// puis résiliation et retour au compte gratuit quand le délai est écoulé.
+Schedule::command('subscriptions:enforce-payment-grace')
+    ->hourly()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/pro-subscriptions-payment-grace.log'));
+
 // Retire chaque nuit les annonces arrivées au terme de leur durée de publication.
 Schedule::command('ads:expire')
     ->dailyAt('00:15')

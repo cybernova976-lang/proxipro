@@ -23,6 +23,12 @@ class StripeCheckoutFulfillmentService
             return $this->serviceOrders->markPaidFromCheckoutSession($session) ? 'processed' : 'ignored';
         }
 
+        if ($type === ProviderSubscriptionService::PAYMENT_METHOD_CHECKOUT_TYPE) {
+            $this->subscriptions->completePaymentMethodSession(is_array($session) ? (object) $session : $session);
+
+            return 'processed';
+        }
+
         if (in_array($type, ProviderSubscriptionService::CHECKOUT_TYPES, true)) {
             $this->subscriptions->completeCheckoutSession($session);
 

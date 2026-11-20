@@ -1451,6 +1451,16 @@ class ProDashboardController extends Controller
         }
 
         try {
+            // Paiement en retard : rien n'a été payé pour la période en cours, la résiliation
+            // prend donc effet tout de suite et la facture en attente est annulée.
+            if ($subscription->payment_failed_at) {
+                $ended = $this->providerSubscriptionService->endForNonPayment($subscription, notify: false);
+                if ($ended && in_array($ended->status, ['cancelled', 'expired'], true)) {
+                    return back()->with('success', 'Votre abonnement est résilié et votre compte est repassé en gratuit. Le paiement en attente est annulé : plus rien ne vous sera prélevé.');
+                }
+                // Paiement régularisé entre-temps, ou prélèvement en cours : résiliation ordinaire.
+                $subscription = $subscription->fresh();
+            }
             if (! $subscription->isActive()) {
                 $this->providerSubscriptionService->cancelImmediately($subscription);
 
@@ -1496,7 +1506,7 @@ class ProDashboardController extends Controller
         try {
             $url = $this->providerSubscriptionService->createBillingPortalSession(
                 $user,
-                route('pro.subscription')
+                route('billing.index')
             );
 
             return redirect()->away($url);

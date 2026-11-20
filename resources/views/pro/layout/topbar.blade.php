@@ -52,6 +52,7 @@
             </a>
             <ul class="dropdown-menu dropdown-menu-end mt-2">
                 <li><a class="dropdown-item" href="{{ route('profile.show') }}"><i class="fas fa-user me-2" aria-hidden="true"></i>Mon profil public</a></li>
+                <li><a class="dropdown-item" href="{{ route('billing.index') }}"><i class="fas fa-credit-card me-2" aria-hidden="true"></i>Facturation</a></li>
                 <li><a class="dropdown-item" href="{{ route('settings.index') }}"><i class="fas fa-gear me-2" aria-hidden="true"></i>Paramètres du compte</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li>

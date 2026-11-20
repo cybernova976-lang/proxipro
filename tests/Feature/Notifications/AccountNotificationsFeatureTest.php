@@ -153,7 +153,7 @@ class AccountNotificationsFeatureTest extends TestCase
 
         $stored = $member->notifications()->firstOrFail();
         $this->assertSame('Premium activé', $stored->data['title']);
-        $this->assertSame(route('pro.subscription'), $stored->data['action_url']);
+        $this->assertSame(route('billing.index'), $stored->data['action_url']);
 
         $html = (string) (new AccountStatusNotification('premium_granted', ['until' => '16/12/2026']))->toMail($member)->render();
         $this->assertStringContainsString('Connectez-vous à votre compte Prokejem', $html);

@@ -92,7 +92,7 @@ class StripeWebhookService
             'customer.subscription.resumed',
         ], true)) {
             if ($this->subscriptions->managesStripeSubscription($object)) {
-                $this->subscriptions->syncStripeSubscription($object);
+                $this->subscriptions->syncFromWebhook($object);
 
                 return 'processed';
             }

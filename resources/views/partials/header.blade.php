@@ -98,6 +98,7 @@
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('messages.index') }}"><i class="fas fa-envelope text-info"></i>Messages @if($unreadMessages > 0)<span class="badge bg-danger ms-auto" style="font-size: 0.65rem;">{{ $unreadMessages }}</span>@endif</a></li>
                         <li><hr class="dropdown-divider my-2"></li>
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('pricing.index') }}"><i class="fas fa-crown text-warning"></i>Tarifs</a></li>
+                        <li><a class="dropdown-item dropdown-item-modern" href="{{ route('billing.index') }}"><i class="fas fa-credit-card" style="color: #4f46e5;"></i>Facturation</a></li>
                         <li><a class="dropdown-item dropdown-item-modern" href="{{ route('settings.index') }}"><i class="fas fa-cog text-secondary"></i>Paramètres</a></li>
                         @if(Auth::user()->email === config('admin.principal_admin.email'))
                         <li><hr class="dropdown-divider my-2"></li>

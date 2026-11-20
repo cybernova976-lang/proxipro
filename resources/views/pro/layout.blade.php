@@ -37,6 +37,7 @@
     @endif
 
     <main class="pro-main" id="proMain">
+        @include('partials.billing-alert')
         @include('pro.layout.flash')
 
         @yield('content')

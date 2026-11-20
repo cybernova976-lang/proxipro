@@ -12,7 +12,7 @@
     @if(session('success'))<div class="alert alert-success" role="status">{{ session('success') }}</div>@endif
     @if($errors->any())<div class="alert alert-danger" role="alert"><strong>Vérifiez les informations suivantes :</strong><ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
     <div class="account-summary">
-        <a href="{{ route('pro.subscription') }}"><span>Abonnement et facturation</span><strong>{{ $managedSubscription?->isActive() ? 'Premium actif' : ($managedSubscription?->hasOpenBilling() ? 'Facturation à vérifier' : 'Compte gratuit') }}</strong><small>Formule, factures et résiliation →</small></a>
+        <a href="{{ route('billing.index') }}"><span>Abonnement et facturation</span><strong>{{ $managedSubscription?->isActive() ? 'Premium actif' : ($managedSubscription?->hasOpenBilling() ? 'Facturation à vérifier' : 'Compte gratuit') }}</strong><small>Formule, factures et résiliation →</small></a>
         <a href="{{ route('ads.myads') }}"><span>Mes publications</span><strong>{{ $activeAdsCount }} / {{ $adLimit }} annonces actives</strong><small>Retrouver mes annonces et mon brouillon →</small></a>
         <a href="#notifications"><span>Mes communications</span><strong>{{ $user->email_notifications ? 'Emails activés' : 'Emails désactivés' }}</strong><small>Choisir ce que je reçois →</small></a>
     </div>
@@ -62,7 +62,7 @@
             <section id="delete" class="account-section account-section-danger" aria-labelledby="delete-title">
                 <h2 id="delete-title">Supprimer mon compte</h2>
                 <p>Cette action retire votre profil et vos publications et supprime l’accès à votre espace personnel. Elle est irréversible.</p>
-                <div class="account-note"><strong>Vous souhaitez seulement arrêter de payer ?</strong> <a href="{{ route('pro.subscription') }}">Résilier mon abonnement</a> vous permet de conserver votre compte gratuit et l’accès Premium jusqu’à la fin de la période payée.</div>
+                <div class="account-note"><strong>Vous souhaitez seulement arrêter de payer ?</strong> <a href="{{ route('billing.index') }}">Résilier mon abonnement</a> vous permet de conserver votre compte gratuit et l’accès Premium jusqu’à la fin de la période payée.</div>
                 <p>En supprimant le compte, les abonnements Stripe associés sont arrêtés immédiatement, avant la suppression. Si cet arrêt ne peut pas être confirmé, votre compte est conservé. La suppression ne déclenche pas de remboursement automatique. <a href="{{ route('legal.privacy') }}">Consulter la politique de confidentialité</a>.</p>
                 <form action="{{ route('settings.delete-account') }}" method="POST" onsubmit="return confirm('Supprimer définitivement votre compte et arrêter ses abonnements ?');">
                     @csrf

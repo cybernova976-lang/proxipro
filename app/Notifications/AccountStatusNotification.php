@@ -24,9 +24,13 @@ class AccountStatusNotification extends Notification
      * Événements qui touchent à l'accès au compte ou à ses droits : l'e-mail part
      * même si le membre a coupé les e-mails de notification (information de sécurité).
      */
-    private const ALWAYS_EMAILED = ['account_deactivated', 'account_reactivated', 'admin_promoted', 'admin_revoked'];
+    private const ALWAYS_EMAILED = [
+        'account_deactivated', 'account_reactivated', 'admin_promoted', 'admin_revoked',
+        // Un paiement refusé met en jeu l'abonnement payé par le membre : il doit le savoir.
+        'payment_failed', 'payment_reminder', 'premium_unpaid_ended',
+    ];
 
-    /** @param array{until?: string, plan?: string, privileges?: array<int, string>} $context */
+    /** @param array{until?: string, plan?: string, days_left?: int, privileges?: array<int, string>} $context */
     public function __construct(private readonly string $event, private readonly array $context = []) {}
 
     /** Envoi qui ne doit jamais faire échouer l'action de l'administrateur ou un paiement. */
@@ -85,7 +89,10 @@ class AccountStatusNotification extends Notification
     private function content(): array
     {
         $until = filled($this->context['until'] ?? null) ? ' jusqu’au '.$this->context['until'] : '';
-        $premium = ['icon' => 'fas fa-crown', 'color' => '#7c3aed', 'url' => route('pro.subscription'), 'cta' => 'Voir mon abonnement'];
+        $premium = ['icon' => 'fas fa-crown', 'color' => '#7c3aed', 'url' => route('billing.index'), 'cta' => 'Voir mon abonnement'];
+        $payment = ['icon' => 'fas fa-credit-card', 'color' => '#b91c1c', 'url' => route('billing.index'), 'cta' => 'Régler mon paiement'];
+        $deadline = filled($this->context['until'] ?? null) ? $this->context['until'] : 'la fin du délai';
+        $graceDays = \App\Models\ProSubscription::PAYMENT_GRACE_DAYS;
         $admin = ['icon' => 'fas fa-user-shield', 'color' => '#4f46e5'];
         $profile = ['icon' => 'fas fa-id-badge', 'color' => '#4f46e5'];
 
@@ -102,6 +109,18 @@ class AccountStatusNotification extends Notification
                 'message' => 'Votre accès Premium a été arrêté. Vous gardez votre espace prestataire et vos annonces.'],
             'premium_expired' => $premium + ['title' => 'Votre accès Premium est terminé',
                 'message' => 'Votre accès Premium est arrivé à son terme. Vous pouvez le reprendre à tout moment depuis votre espace.'],
+            'payment_failed' => $payment + ['title' => 'Le paiement de votre abonnement a échoué',
+                'message' => 'Le paiement de votre abonnement Premium n’a pas abouti. Vous gardez tous vos avantages jusqu’au '.$deadline
+                    .' : mettez à jour votre moyen de paiement avant cette date. Passé ce délai de '.$graceDays.' jours, votre compte repassera en gratuit.'],
+            'payment_reminder' => $payment + ['title' => 'Votre abonnement attend toujours son paiement',
+                'message' => $this->daysLeftSentence().'Sans paiement d’ici le '.$deadline
+                    .', votre abonnement sera résilié et votre compte repassera en gratuit, sans les avantages Premium.'],
+            'payment_recovered' => $premium + ['title' => 'Votre paiement est régularisé',
+                'message' => 'Votre paiement a bien été reçu. Votre abonnement Premium se poursuit normalement.'],
+            'premium_unpaid_ended' => $premium + ['title' => 'Votre compte est repassé en gratuit',
+                'message' => 'Le paiement de votre abonnement Premium n’a pas été régularisé dans le délai de '.$graceDays
+                    .' jours. Votre abonnement est résilié et plus rien ne vous sera prélevé. Vous gardez votre compte, vos annonces et vos documents, et vous pouvez reprendre Premium à tout moment.',
+                'cta' => 'Voir les abonnements'],
             'admin_promoted' => $admin + ['title' => 'Vous êtes administrateur',
                 'message' => 'Vous avez été nommé administrateur de Prokejem.'.$this->privilegesSentence(),
                 'url' => route('admin.dashboard'), 'cta' => 'Ouvrir l’administration'],
@@ -126,6 +145,17 @@ class AccountStatusNotification extends Notification
             default => ['icon' => 'fas fa-bell', 'color' => '#4f46e5', 'title' => 'Votre compte a changé',
                 'message' => 'Une modification a été apportée à votre compte Prokejem.',
                 'url' => route('feed'), 'cta' => 'Ouvrir Prokejem'],
+        };
+    }
+
+    private function daysLeftSentence(): string
+    {
+        $days = (int) ($this->context['days_left'] ?? 0);
+
+        return match (true) {
+            $days > 1 => 'Il vous reste '.$days.' jours pour régler votre abonnement Premium. ',
+            $days === 1 => 'Il vous reste un jour pour régler votre abonnement Premium. ',
+            default => '',
         };
     }
 

@@ -7016,6 +7016,7 @@
                                 @endif
                                 <li><hr class="dropdown-divider my-2"></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('pricing.index') }}"><i class="fas fa-crown text-warning"></i>Tarifs</a></li>
+                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('billing.index') }}"><i class="fas fa-credit-card" style="color: #4f46e5;"></i>Facturation</a></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('settings.index') }}"><i class="fas fa-cog text-secondary"></i>Paramètres</a></li>
                                 @if(Auth::user()->role === 'admin')
                                 <li><hr class="dropdown-divider my-2"></li>
@@ -7058,6 +7059,7 @@
                     </button>
                 </div>
             @endif
+            @include('partials.billing-alert')
             @include('partials.flash-messages')
             @yield('content')
             {{-- Dans main : le pied de page garde le décalage de la barre latérale. --}}
