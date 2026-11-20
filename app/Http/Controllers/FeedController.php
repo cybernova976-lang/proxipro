@@ -436,6 +436,8 @@ class FeedController extends Controller
 
         // --- zone 4 : six annonces par page pour les clients ---
         $pkFeedPagination = null;
+        // Offres d'autres territoires qui complètent la grille du flux client (voir plus bas).
+        $pkFeedComplement = collect();
         $pkRankingDisclosure = null;
         if ($pkRole === 'provider') {
             $pkFeedTitle = 'Demandes qui correspondent à votre métier';
@@ -489,13 +491,35 @@ class FeedController extends Controller
                 return redirect()->to($pkFeedPagination->url($pkFeedPagination->lastPage()));
             }
             $pkFeedAds = $pkFeedPagination->getCollection();
+
+            // Dernière page d'un territoire qui ne remplit pas la grille (4 ou 5 offres) :
+            // les places libres reçoivent des offres d'autres territoires, toujours
+            // après les offres locales et signalées « Autre territoire » sur la carte.
+            $pkPageSize = (int) config('feed.client.page_size', 6);
+            $pkFreeSlots = $pkPageSize - $pkFeedAds->count();
+            if ($pkTerritoryScoped && ! $pkFeedPagination->hasMorePages()
+                && $pkFeedPagination->total() > 3 && $pkFreeSlots > 0 && $pkFreeSlots <= 2) {
+                // Exclusion par identifiant plutôt que par négation du filtre : une offre
+                // sans territoire renseigné ne doit pas disparaître (NOT sur une valeur vide).
+                $pkLocalIds = (clone $pkAllOffers)->where(function ($local) use ($pkTerritory, $pkIncludesRemote) {
+                    $local->inTerritory($pkTerritory);
+                    if ($pkIncludesRemote) {
+                        $local->orWhere(fn ($remote) => $remote->remoteOutside($pkTerritory));
+                    }
+                })->pluck('ads.id');
+                $pkFeedComplement = $pkClientOffersService->ranked(
+                    (clone $pkAllOffers)->whereNotIn('ads.id', $pkLocalIds), $user
+                )->limit($pkFreeSlots)->get();
+            }
+
             $pkRankingDisclosure = app(RankingDisclosure::class)->forClientFeed(
                 $pkTerritoryScoped ? $pkTerritory : null,
                 $pkIncludesRemote,
                 $pkClientOffersService->viewerCategories($user) !== [],
                 (! $pkTerritoryScoped && $useNearbyScope && ! $geoFallbackUsed)
                     ? ($geoCity ? 'de '.$geoCity.' et alentours' : 'proches de votre position')
-                    : null
+                    : null,
+                $pkFeedComplement->isNotEmpty()
             );
 
             // Demonstration records are restricted to the existing local-only preview.
@@ -557,7 +581,7 @@ class FeedController extends Controller
                 : null;
         }
         // Toutes les offres réellement affichées (flux local ou offres d'ailleurs).
-        $pkShownAds = $pkFeedAds->concat($pkEmptyLocal['elsewhere'] ?? []);
+        $pkShownAds = $pkFeedAds->concat($pkFeedComplement)->concat($pkEmptyLocal['elsewhere'] ?? []);
 
         // --- favoris deja enregistres parmi les annonces reellement affichees ---
         $pkSavedAdIds = collect();
@@ -778,6 +802,7 @@ class FeedController extends Controller
             'pkProviderAlerts',
             'pkHasAlerts',
             'pkAlertCount',
+            'pkFeedComplement',
             'pkPrimaryAction',
             'pkSituationTiles',
             'pkSearchConfig',

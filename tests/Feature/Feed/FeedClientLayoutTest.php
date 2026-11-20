@@ -70,6 +70,54 @@ class FeedClientLayoutTest extends TestCase
         }
     }
 
+    public function test_a_free_slot_shows_an_offer_from_another_territory_before_falling_back_to_the_filler(): void
+    {
+        $client = $this->mayotteClient();
+        $provider = User::factory()->create(['user_type' => 'professionnel', 'is_service_provider' => true]);
+        $offer = fn (string $title, string $city, string $country) => Ad::create(['user_id' => $provider->id, 'title' => $title,
+            'description' => 'Dépannage.', 'category' => 'Plombier', 'city' => $city, 'country' => $country, 'location' => $city,
+            'service_type' => 'offre', 'status' => 'active', 'visibility' => 'public']);
+        foreach (range(1, 5) as $i) {
+            $offer("Offre locale {$i}", 'Mamoudzou', 'Mayotte');
+        }
+        $elsewhere = $offer('Offre de Rennes', 'Rennes', 'France');
+
+        // 5 offres locales + 1 offre d'ailleurs : la grille est pleine, le bloc d'invitation disparaît.
+        $html = $this->actingAs($client)->get(route('feed'))->assertOk()
+            ->assertSee('Offre de Rennes')->assertSee('Autre territoire')
+            ->assertSee('complétée par des offres d’autres territoires, signalées « Autre territoire »')
+            ->assertDontSee('pk-feed-filler', false)
+            ->getContent();
+
+        // L'offre d'ailleurs vient toujours après les offres du territoire, et elle seule porte la mention.
+        $this->assertGreaterThan(strrpos($html, 'Offre locale'), strpos($html, 'Offre de Rennes'));
+        $this->assertSame(1, substr_count($html, 'pk-tag--elsewhere'));
+        $this->assertSame(6, preg_match_all('/<article class="pk-ad\b/', $html));
+
+        // 4 offres locales : une seule offre d'ailleurs existe, la dernière place garde l'invitation.
+        Ad::where('title', 'Offre locale 5')->delete();
+        $html = $this->get(route('feed'))->assertOk()->assertSee('Offre de Rennes')
+            ->assertSee('class="pk-feed-filler"', false)->getContent();
+        $this->assertSame(5, preg_match_all('/<article class="pk-ad\b/', $html));
+
+        // Grille déjà pleine d'offres locales : aucune offre d'ailleurs, aucune mention dans le classement.
+        foreach (range(5, 6) as $i) {
+            $offer("Offre locale {$i}", 'Mamoudzou', 'Mayotte');
+        }
+        $this->get(route('feed'))->assertOk()
+            ->assertDontSee('Offre de Rennes')->assertDontSee('Autre territoire')
+            ->assertDontSee('complétée par des offres d’autres territoires');
+
+        // Trois offres locales ou moins : présentation en liste, sans complément.
+        Ad::where('title', 'like', 'Offre locale%')->whereNotIn('title', ['Offre locale 1', 'Offre locale 2'])->delete();
+        $this->get(route('feed'))->assertOk()->assertDontSee('Offre de Rennes')->assertDontSee('Autre territoire');
+
+        // Les règles publiées décrivent ce complément.
+        $this->get(route('legal.platform-rules'))->assertOk()
+            ->assertSee('complétées par des offres d’autres territoires')->assertSee('signalées « Autre territoire »');
+        $this->assertNotNull($elsewhere->fresh());
+    }
+
     public function test_an_incomplete_page_gets_a_honest_filler_card(): void
     {
         $client = $this->mayotteClient();

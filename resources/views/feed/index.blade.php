@@ -99,8 +99,12 @@
                             </a>
                         </div>
                     @endforelse
-                    @if($pkRole === 'client' && $pkFeedAds->count() >= 4 && $pkFeedAds->count() < 6)
-                        @include('feed.partials.feed-filler', ['pkFillerWide' => $pkFeedAds->count() === 4])
+                    @foreach($pkFeedComplement as $ad)
+                        @include('feed.partials.ad-card', ['ad' => $ad, 'pkSaved' => $pkSavedAdIds, 'pkElsewhereAd' => true])
+                    @endforeach
+                    @php $pkShownInGrid = $pkFeedAds->count() + $pkFeedComplement->count(); @endphp
+                    @if($pkRole === 'client' && $pkFeedAds->count() >= 4 && $pkShownInGrid < 6)
+                        @include('feed.partials.feed-filler', ['pkFillerWide' => $pkShownInGrid === 4])
                     @endif
                 </div>
                 @endif

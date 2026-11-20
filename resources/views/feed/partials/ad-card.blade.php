@@ -118,6 +118,9 @@
                 @if($ad->isRemoteIntervention())
                     <span class="pk-tag pk-tag--remote"><i class="fas fa-laptop-house" aria-hidden="true"></i> À distance</span>
                 @endif
+                @if($pkElsewhereAd ?? false)
+                    <span class="pk-tag pk-tag--elsewhere"><i class="fas fa-globe-europe" aria-hidden="true"></i> Autre territoire</span>
+                @endif
             </span>
             <strong class="pk-ad__price">{{ $ad->formatted_price }}</strong>
         </div>

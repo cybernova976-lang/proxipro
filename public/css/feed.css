@@ -1109,6 +1109,8 @@
 .pk-feed-selection a { color: #4338ca; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
 
 .pk-tag--remote { background: #eef2ff; color: #3730a3; }
+/* Offre d'un autre territoire qui complète la grille du flux local. */
+.pk-tag--elsewhere { background: #ede9fe; color: #5b21b6; }
 .pk-tag--sponsored { background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; }
 
 /* lignes de liste */

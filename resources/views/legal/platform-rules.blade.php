@@ -28,7 +28,7 @@
     <h4 class="mt-4" id="classement">4. Classement et recommandations</h4>
     <p><strong>Accueil des clients.</strong> Les offres de services présentées sur l’accueil connecté sont choisies et classées ainsi :</p>
     <ul>
-        <li><strong>Périmètre :</strong> les offres actives du territoire du visiteur (son département, ou Mayotte, la Guyane, La Réunion, la Guadeloupe, la Martinique), déterminé d’après le lieu indiqué dans son profil (commune, code postal ou territoire) ou, à défaut, d’après sa position détectée automatiquement, ainsi que les offres d’autres territoires déclarées « À distance ». Si le territoire n’est pas connu, toutes les zones sont affichées et la page l’indique. Le lien « Voir les autres territoires » affiche toutes les zones.</li>
+        <li><strong>Périmètre :</strong> les offres actives du territoire du visiteur (son département, ou Mayotte, la Guyane, La Réunion, la Guadeloupe, la Martinique), déterminé d’après le lieu indiqué dans son profil (commune, code postal ou territoire) ou, à défaut, d’après sa position détectée automatiquement, ainsi que les offres d’autres territoires déclarées « À distance ». Si le territoire n’est pas connu, toutes les zones sont affichées et la page l’indique. Le lien « Voir les autres territoires » affiche toutes les zones. Lorsque la dernière page d’un territoire ne compte que quatre ou cinq offres, les places restantes sont complétées par des offres d’autres territoires : elles sont toujours placées après les offres du territoire, classées entre elles selon le même ordre, et signalées « Autre territoire ».</li>
         <li><strong>Ordre</strong>, appliqué dans cette suite :
             <ol>
                 <li>les offres sponsorisées passent en premier (voir l’article 5) ;</li>

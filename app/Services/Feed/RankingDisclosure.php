@@ -21,7 +21,7 @@ final class RankingDisclosure
     /**
      * @return array{text: string, details: string, link_label: string, url: string}
      */
-    public function forClientFeed(?Territory $territory, bool $includesRemote = false, bool $viewerHasCategories = false, ?string $nearbyLabel = null): array
+    public function forClientFeed(?Territory $territory, bool $includesRemote = false, bool $viewerHasCategories = false, ?string $nearbyLabel = null, bool $completedElsewhere = false): array
     {
         // $nearbyLabel : portée « autour de vous » réellement appliquée (?scope=nearby), par exemple « de Mamoudzou et alentours ».
         $scope = $territory ? 'offres '.$territory->withDe() : ($nearbyLabel !== null ? 'offres '.$nearbyLabel : 'offres de toutes les zones');
@@ -32,6 +32,10 @@ final class RankingDisclosure
         }
         if (\App\Support\AdPromotionCatalog::newRulesActive()) {
             $details[] = 'Une offre « Remontée » a payé pour être reclassée parmi les plus récentes.';
+        }
+        // $completedElsewhere : la grille de cette page est réellement complétée par des offres d'ailleurs.
+        if ($territory && $completedElsewhere) {
+            $details[] = 'La fin de la liste est complétée par des offres d’autres territoires, signalées « Autre territoire ».';
         }
 
         return [
