@@ -249,6 +249,8 @@ class AdminController extends Controller
                 ?? $user->proSubscriptions()->latest('id')->first(),
             'adminPrivilegeCatalog' => config('admin.privileges', []),
             'viewerIsPrincipalAdmin' => $this->isPrincipalAdmin(),
+            // Entreprise, profil prestataire, localisation, compte : seules les valeurs enregistrées.
+            'profileSections' => \App\Support\AdminUserProfile::sections($user),
             // Abonnements et achats du compte : tout vient des tables, rien n’est estimé.
             'subscriptionHistory' => $user->proSubscriptions()->latest('id')->take(10)->get(),
             'userTransactions' => $user->transactions()->latest('id')->take(15)->get(),

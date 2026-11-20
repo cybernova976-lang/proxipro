@@ -165,7 +165,8 @@
         </div>
         @endif
 
-        <!-- Abonnements, paiements et commandes du compte -->
+        @include('admin.users.partials.profile-facts')
+
         @include('admin.users.partials.purchases')
 
         <!-- Annonces de l'utilisateur -->
