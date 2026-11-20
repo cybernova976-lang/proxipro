@@ -202,9 +202,14 @@
                 </tr>
             </thead>
             <tbody>
+@php
+    $pkDefaultRate = (float) ($invoice->tax_rate ?? 0);
+    $pkSeveralRates = \App\Support\DocumentTotals::hasSeveralRates($invoice->items, $pkDefaultRate);
+    $pkVatLines = \App\Support\DocumentTotals::vatLines($invoice->items, $pkDefaultRate, (float) $invoice->tax_amount);
+@endphp
                 @foreach($invoice->items as $item)
                 <tr>
-                    <td>{{ $item['description'] }}</td>
+                    <td>{{ $item['description'] }}@include('pro.partials.document-line-note')</td>
                     <td>{{ $item['quantity'] }}</td>
                     <td>{{ number_format($item['unit_price'], 2, ',', ' ') }} €</td>
                     <td style="font-weight: 600;">{{ number_format($item['total'] ?? ($item['quantity'] * $item['unit_price']), 2, ',', ' ') }} €</td>
@@ -222,10 +227,12 @@
                         <span class="label">Sous-total HT</span>
                         <span class="value">{{ number_format($invoice->subtotal, 2, ',', ' ') }} €</span>
                     </div>
+                    @foreach($pkVatLines as $pkVat)
                     <div class="total-row">
-                        <span class="label">TVA ({{ number_format($invoice->tax_rate, 2, ',', ' ') }}%)</span>
-                        <span class="value">{{ number_format($invoice->tax_amount, 2, ',', ' ') }} €</span>
+                        <span class="label">TVA ({{ number_format($pkVat['rate'], 2, ',', ' ') }}%)@if($pkSeveralRates) sur {{ number_format($pkVat['base'], 2, ',', ' ') }} €@endif</span>
+                        <span class="value">{{ number_format($pkVat['tax'], 2, ',', ' ') }} €</span>
                     </div>
+                    @endforeach
                     <div class="total-row grand">
                         <span class="label">{{ $invoice->isCreditNote() ? 'Total TTC de l’avoir' : 'Total TTC' }}</span>
                         <span class="value">{{ number_format($invoice->total, 2, ',', ' ') }} €</span>
@@ -264,13 +271,13 @@
 
         @if($invoice->isCreditNote())
         <div class="legal-box">
-            @if((float) $invoice->tax_rate === 0.0 && $invoice->vat_exemption_reason)<strong>{{ $invoice->vat_exemption_reason }}</strong><br>@endif
+            @if(\App\Support\DocumentTotals::hasZeroRate($invoice->items, (float) $invoice->tax_rate) && $invoice->vat_exemption_reason)<strong>{{ $invoice->vat_exemption_reason }}</strong><br>@endif
             <strong>Motif de l’avoir :</strong> {{ $invoice->credit_reason ?: 'Non précisé' }}<br>
             Le montant de cet avoir vient en déduction de la facture citée ci-dessus. S’il a déjà été réglé, il est à rembourser au client ou à déduire d’une prochaine facture.
         </div>
         @else
         <div class="legal-box">
-            @if((float) $invoice->tax_rate === 0.0 && $invoice->vat_exemption_reason)<strong>{{ $invoice->vat_exemption_reason }}</strong><br>@endif
+            @if(\App\Support\DocumentTotals::hasZeroRate($invoice->items, (float) $invoice->tax_rate) && $invoice->vat_exemption_reason)<strong>{{ $invoice->vat_exemption_reason }}</strong><br>@endif
             <strong>Conditions de paiement :</strong> {{ $invoice->payment_terms ?: 'À convenir' }}@if($invoice->due_date) — échéance au {{ $invoice->due_date->format('d/m/Y') }}@endif<br>
             <strong>Escompte pour paiement anticipé :</strong> {{ $invoice->early_payment_discount ?: 'Néant' }}.<br>
             @if($invoice->client_type === 'business')<strong>Retard :</strong> pénalités au taux annuel de {{ number_format($invoice->late_penalty_rate ?? 0, 2, ',', ' ') }} % et indemnité forfaitaire de 40 € pour frais de recouvrement.@endif

@@ -32,11 +32,14 @@ class ProQuoteToolsController extends Controller
             'name' => $validated['name'],
             'subject' => $quote->subject,
             'operation_type' => $quote->operation_type ?: 'services',
-            'items' => collect($quote->items)->map(fn ($item) => [
+            // La remise et le taux d'une ligne ne sont repris que s'ils existent.
+            'items' => collect($quote->items)->map(fn ($item) => array_filter([
                 'description' => (string) ($item['description'] ?? ''),
                 'quantity' => (float) ($item['quantity'] ?? 1),
                 'unit_price' => (float) ($item['unit_price'] ?? 0),
-            ])->values()->all(),
+                'discount_percent' => isset($item['discount_percent']) ? (float) $item['discount_percent'] : null,
+                'tax_rate' => isset($item['tax_rate']) ? (float) $item['tax_rate'] : null,
+            ], fn ($value) => $value !== null))->values()->all(),
             'tax_rate' => $quote->tax_rate ?? 20,
             'deposit_percentage' => $quote->deposit_percentage,
             'is_free' => $quote->is_free ?? true,

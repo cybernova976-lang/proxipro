@@ -42,11 +42,14 @@ class ProQuoteTemplate extends Model
             'is_free' => $this->is_free ? '1' : '0',
             'notes' => (string) $this->notes,
             'conditions' => (string) $this->conditions,
-            'items' => collect($this->items)->map(fn ($item) => [
+            // La remise et le taux d'une ligne ne sont repris que s'ils existent.
+            'items' => collect($this->items)->map(fn ($item) => array_filter([
                 'description' => (string) ($item['description'] ?? ''),
                 'quantity' => (float) ($item['quantity'] ?? 1),
                 'unit_price' => (float) ($item['unit_price'] ?? 0),
-            ])->values()->all(),
+                'discount_percent' => isset($item['discount_percent']) ? (float) $item['discount_percent'] : null,
+                'tax_rate' => isset($item['tax_rate']) ? (float) $item['tax_rate'] : null,
+            ], fn ($value) => $value !== null))->values()->all(),
         ];
     }
 }

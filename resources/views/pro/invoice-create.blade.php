@@ -142,39 +142,7 @@
 
             <div class="pro-card">
                 <div class="pro-card-title"><i class="fas fa-file-invoice-dollar text-danger"></i> Lignes de facture</div>
-                <div class="row g-2 mb-2 px-3" style="font-size: 0.8rem; font-weight: 600; color: var(--pro-text-secondary);">
-                    <div class="col-md-6">Description</div>
-                    <div class="col-md-2">Quantité</div>
-                    <div class="col-md-2">Prix unitaire €</div>
-                    <div class="col-md-2 text-end">Total</div>
-                </div>
-                <div id="invoiceItems">
-                    @if($quote && is_array($quote->items))
-                        @foreach($quote->items as $i => $item)
-                        <div class="invoice-item-row" data-index="{{ $i }}">
-                            @if($i > 0)<button type="button" class="remove-item" onclick="removeItem(this)"><i class="fas fa-times-circle"></i></button>@endif
-                            <div class="row g-2">
-                                <div class="col-md-6"><input type="text" name="items[{{ $i }}][description]" class="form-control" value="{{ $item['description'] }}" required style="border-radius: 10px; font-size: 0.9rem;"></div>
-                                <div class="col-md-2"><input type="number" name="items[{{ $i }}][quantity]" class="form-control item-qty" value="{{ $item['quantity'] }}" min="0.01" step="0.01" required style="border-radius: 10px; font-size: 0.9rem;" oninput="recalculate()"></div>
-                                <div class="col-md-2"><input type="number" name="items[{{ $i }}][unit_price]" class="form-control item-price" value="{{ $item['unit_price'] }}" min="0" step="0.01" required style="border-radius: 10px; font-size: 0.9rem;" oninput="recalculate()"></div>
-                                <div class="col-md-2"><div class="form-control-plaintext text-end fw-bold item-total" style="font-size: 0.9rem;">{{ number_format($item['total'] ?? 0, 2, ',', '') }}€</div></div>
-                            </div>
-                        </div>
-                        @endforeach
-                    @else
-                        <div class="invoice-item-row" data-index="0">
-                            <div class="row g-2">
-                                <div class="col-md-6"><input type="text" name="items[0][description]" class="form-control" placeholder="Description" required style="border-radius: 10px; font-size: 0.9rem;"></div>
-                                <div class="col-md-2"><input type="number" name="items[0][quantity]" class="form-control item-qty" value="1" min="0.01" step="0.01" required style="border-radius: 10px; font-size: 0.9rem;" placeholder="Qté" oninput="recalculate()"></div>
-                                <div class="col-md-2"><input type="number" name="items[0][unit_price]" class="form-control item-price" value="0" min="0" step="0.01" required style="border-radius: 10px; font-size: 0.9rem;" placeholder="Prix €" oninput="recalculate()"></div>
-                                <div class="col-md-2"><div class="form-control-plaintext text-end fw-bold item-total" style="font-size: 0.9rem;">0,00€</div></div>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-                <button type="button" class="btn btn-light btn-sm mt-2" onclick="addItem()" style="border-radius: 10px;">
-                    <i class="fas fa-plus me-1"></i> Ajouter une ligne
-                </button>
+                @include('pro.partials.document-lines', ['pkLines' => $quote && is_array($quote->items) ? $quote->items : [], 'pkRowClass' => 'invoice-item-row', 'pkContainerId' => 'invoiceItems'])
             </div>
 
             <div class="pro-card">
@@ -249,39 +217,7 @@
 
 @section('scripts')
 <script>
-let itemIndex = {{ $quote && is_array($quote->items) ? count($quote->items) : 1 }};
-
-function addItem() {
-    const container = document.getElementById('invoiceItems');
-    const row = document.createElement('div');
-    row.className = 'invoice-item-row';
-    row.innerHTML = `<button type="button" class="remove-item" onclick="removeItem(this)"><i class="fas fa-times-circle"></i></button><div class="row g-2"><div class="col-md-6"><input type="text" name="items[${itemIndex}][description]" class="form-control" placeholder="Description" required style="border-radius: 10px; font-size: 0.9rem;"></div><div class="col-md-2"><input type="number" name="items[${itemIndex}][quantity]" class="form-control item-qty" value="1" min="0.01" step="0.01" required style="border-radius: 10px; font-size: 0.9rem;" placeholder="Qté" oninput="recalculate()"></div><div class="col-md-2"><input type="number" name="items[${itemIndex}][unit_price]" class="form-control item-price" value="0" min="0" step="0.01" required style="border-radius: 10px; font-size: 0.9rem;" placeholder="Prix €" oninput="recalculate()"></div><div class="col-md-2"><div class="form-control-plaintext text-end fw-bold item-total" style="font-size: 0.9rem;">0,00€</div></div></div>`;
-    container.appendChild(row);
-    itemIndex++;
-}
-
-function removeItem(btn) {
-    if (document.querySelectorAll('.invoice-item-row').length <= 1) return;
-    btn.closest('.invoice-item-row').remove();
-    recalculate();
-}
-
-function recalculate() {
-    let subtotal = 0;
-    document.querySelectorAll('.invoice-item-row').forEach(row => {
-        const qty = parseFloat(row.querySelector('.item-qty')?.value || 0);
-        const price = parseFloat(row.querySelector('.item-price')?.value || 0);
-        const total = qty * price;
-        subtotal += total;
-        row.querySelector('.item-total').textContent = total.toFixed(2).replace('.', ',') + '€';
-    });
-    const taxRate = parseFloat(document.getElementById('taxRate').value || 0);
-    const tax = subtotal * taxRate / 100;
-    document.getElementById('subtotal').textContent = subtotal.toFixed(2).replace('.', ',') + '€';
-    document.getElementById('taxAmount').textContent = tax.toFixed(2).replace('.', ',') + '€';
-    document.getElementById('totalTTC').textContent = (subtotal + tax).toFixed(2).replace('.', ',') + '€';
-}
-
+// Lignes et totaux : js/pro-document-lines.js (partials/document-lines).
 function fillClientInfo(select) {
     const o = select.selectedOptions[0];
     document.getElementById('clientName').value = o.dataset.name || '';

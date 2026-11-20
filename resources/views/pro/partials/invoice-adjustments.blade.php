@@ -58,7 +58,7 @@
                     <input class="form-check-input" type="radio" name="scope" id="pkCreditPartial" value="partial" @checked(old('scope') === 'partial')>
                     <label class="form-check-label" for="pkCreditPartial">Annuler une partie seulement</label>
                 </div>
-                <label class="form-label mt-2" for="pkCreditAmount">Montant HT de l’avoir partiel (TVA de {{ number_format($invoice->tax_rate, 2, ',', ' ') }} % ajoutée)</label>
+                <label class="form-label mt-2" for="pkCreditAmount">Montant HT de l’avoir partiel ({{ \App\Support\DocumentTotals::hasSeveralRates($invoice->items, (float) $invoice->tax_rate) ? 'réparti entre les taux de TVA de la facture' : 'TVA de '.number_format($invoice->tax_rate, 2, ',', ' ').' % ajoutée' }})</label>
                 <input type="number" name="amount_ht" id="pkCreditAmount" class="form-control pk-doc-input pk-adjust__amount" min="0.01" step="0.01" value="{{ old('amount_ht') }}">
 
                 <div class="form-check mt-3">

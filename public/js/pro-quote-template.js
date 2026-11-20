@@ -40,6 +40,14 @@
     if (description) description.value = item.description || '';
     if (quantity) quantity.value = item.quantity;
     if (price) price.value = item.unit_price;
+    // Remise et TVA propres à la ligne, si le modèle en porte.
+    var discount = row.querySelector('.item-discount');
+    var lineRate = row.querySelector('.item-tax');
+    var hasOptions = (item.discount_percent !== null && item.discount_percent !== undefined)
+      || (item.tax_rate !== null && item.tax_rate !== undefined);
+    if (hasOptions && typeof window.pkShowLineOptions === 'function') window.pkShowLineOptions();
+    if (discount && item.discount_percent !== null && item.discount_percent !== undefined) discount.value = item.discount_percent;
+    if (lineRate && item.tax_rate !== null && item.tax_rate !== undefined) lineRate.value = item.tax_rate;
   });
 
   if (typeof window.recalculate === 'function') window.recalculate();

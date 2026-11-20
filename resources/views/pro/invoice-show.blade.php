@@ -189,9 +189,14 @@
                 </tr>
             </thead>
             <tbody>
+@php
+    $pkDefaultRate = (float) ($invoice->tax_rate ?? 0);
+    $pkSeveralRates = \App\Support\DocumentTotals::hasSeveralRates($invoice->items, $pkDefaultRate);
+    $pkVatLines = \App\Support\DocumentTotals::vatLines($invoice->items, $pkDefaultRate, (float) $invoice->tax_amount);
+@endphp
                 @foreach($invoice->items as $item)
                 <tr>
-                    <td>{{ $item['description'] }}</td>
+                    <td>{{ $item['description'] }}@include('pro.partials.document-line-note')</td>
                     <td class="text-center">{{ $item['quantity'] }}</td>
                     <td class="text-end">{{ number_format($item['unit_price'], 2, ',', ' ') }} €</td>
                     <td class="text-end fw-semibold">{{ number_format($item['total'] ?? ($item['quantity'] * $item['unit_price']), 2, ',', ' ') }} €</td>
@@ -208,10 +213,12 @@
                 <span>Sous-total HT</span>
                 <strong>{{ number_format($invoice->subtotal, 2, ',', ' ') }} €</strong>
             </div>
+            @foreach($pkVatLines as $pkVat)
             <div class="total-line" style="border-top: 1px solid #e2e8f0;">
-                <span>TVA ({{ number_format($invoice->tax_rate, 2, ',', ' ') }}%)</span>
-                <strong>{{ number_format($invoice->tax_amount, 2, ',', ' ') }} €</strong>
+                <span>TVA ({{ number_format($pkVat['rate'], 2, ',', ' ') }}%)@if($pkSeveralRates) sur {{ number_format($pkVat['base'], 2, ',', ' ') }} €@endif</span>
+                <strong>{{ number_format($pkVat['tax'], 2, ',', ' ') }} €</strong>
             </div>
+            @endforeach
             <div class="total-line-grand">
                 <span>Total TTC</span>
                 <span>{{ number_format($invoice->total, 2, ',', ' ') }} €</span>
@@ -241,7 +248,7 @@
     @endif
 
     <div class="p-3 mb-3" style="background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; font-size: .83rem; color: #475569;">
-        @if((float) $invoice->tax_rate === 0.0 && $invoice->vat_exemption_reason)<div class="fw-bold mb-1">{{ $invoice->vat_exemption_reason }}</div>@endif
+        @if(\App\Support\DocumentTotals::hasZeroRate($invoice->items, (float) $invoice->tax_rate) && $invoice->vat_exemption_reason)<div class="fw-bold mb-1">{{ $invoice->vat_exemption_reason }}</div>@endif
         @if($invoice->isCreditNote())
         <div><strong>Motif de l’avoir :</strong> {{ $invoice->credit_reason ?: 'Non précisé' }}</div>
         <div>Le montant de cet avoir vient en déduction de la facture qu’il corrige.</div>

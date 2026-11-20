@@ -79,6 +79,16 @@ class ProDashboardController extends Controller
         }
     }
 
+    /** Une facture dont une ligne est sans TVA doit porter la mention d'exonération. */
+    private function requireVatExemptionReason(array $items, float $taxRate, ?string $reason): void
+    {
+        if (\App\Support\DocumentTotals::hasZeroRate($items, $taxRate) && blank($reason)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'vat_exemption_reason' => 'Indiquez la mention d’exonération de TVA : une partie de cette facture est sans TVA.',
+            ]);
+        }
+    }
+
     private function proClientRule(int $userId)
     {
         return Rule::exists('pro_clients', 'id')->where(
@@ -549,6 +559,8 @@ class ProDashboardController extends Controller
             'items.*.description' => 'required|string|max:500',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.discount_percent' => 'nullable|numeric|min:0|max:100',
+            'items.*.tax_rate' => 'nullable|numeric|min:0|max:100',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
             'valid_until' => 'nullable|date|after:today',
             'is_free' => 'required|boolean',
@@ -557,16 +569,13 @@ class ProDashboardController extends Controller
             'conditions' => 'nullable|string|max:2000',
         ]);
 
-        $items = collect($validated['items'])->map(function ($item) {
-            $item['total'] = round($item['quantity'] * $item['unit_price'], 2);
-
-            return $item;
-        });
-
-        $subtotal = $items->sum('total');
-        $taxRate = $validated['tax_rate'] ?? $user->defaultVatRate();
-        $tax = round($subtotal * $taxRate / 100, 2);
-        $total = $subtotal + $tax;
+        // Totaux : remise et TVA par ligne (App\Support\DocumentTotals).
+        $taxRate = (float) ($validated['tax_rate'] ?? $user->defaultVatRate());
+        $totals = \App\Support\DocumentTotals::compute($validated['items'], $taxRate);
+        $items = collect($totals['items']);
+        $subtotal = $totals['subtotal'];
+        $tax = $totals['tax_amount'];
+        $total = $totals['total'];
 
         $client = $this->resolveProClient($user, $validated);
 
@@ -681,6 +690,8 @@ class ProDashboardController extends Controller
             'items.*.description' => 'required|string|max:500',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.discount_percent' => 'nullable|numeric|min:0|max:100',
+            'items.*.tax_rate' => 'nullable|numeric|min:0|max:100',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
             'valid_until' => 'nullable|date',
             'is_free' => 'sometimes|required|boolean',
@@ -689,16 +700,13 @@ class ProDashboardController extends Controller
             'conditions' => 'nullable|string|max:2000',
         ]);
 
-        $items = collect($validated['items'])->map(function ($item) {
-            $item['total'] = round($item['quantity'] * $item['unit_price'], 2);
-
-            return $item;
-        });
-
-        $subtotal = $items->sum('total');
-        $taxRate = $validated['tax_rate'] ?? $user->defaultVatRate();
-        $tax = round($subtotal * $taxRate / 100, 2);
-        $total = $subtotal + $tax;
+        // Totaux : remise et TVA par ligne (App\Support\DocumentTotals).
+        $taxRate = (float) ($validated['tax_rate'] ?? $user->defaultVatRate());
+        $totals = \App\Support\DocumentTotals::compute($validated['items'], $taxRate);
+        $items = collect($totals['items']);
+        $subtotal = $totals['subtotal'];
+        $tax = $totals['tax_amount'];
+        $total = $totals['total'];
 
         // Champs repris de la création : enregistrés seulement s'ils ont été envoyés.
         $extra = collect($validated)->only([
@@ -957,6 +965,8 @@ class ProDashboardController extends Controller
             'items.*.description' => 'required|string|max:500',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.discount_percent' => 'nullable|numeric|min:0|max:100',
+            'items.*.tax_rate' => 'nullable|numeric|min:0|max:100',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
             'due_date' => 'nullable|date',
             'notes' => 'nullable|string|max:2000',
@@ -972,16 +982,15 @@ class ProDashboardController extends Controller
             return back()->withInput()->withErrors(['quote_id' => 'Une facture existe déjà pour ce devis.']);
         }
 
-        $items = collect($validated['items'])->map(function ($item) {
-            $item['total'] = round($item['quantity'] * $item['unit_price'], 2);
+        // Totaux : remise et TVA par ligne (App\Support\DocumentTotals).
+        $taxRate = (float) ($validated['tax_rate'] ?? $user->defaultVatRate());
+        $totals = \App\Support\DocumentTotals::compute($validated['items'], $taxRate);
+        $items = collect($totals['items']);
+        $subtotal = $totals['subtotal'];
+        $tax = $totals['tax_amount'];
+        $total = $totals['total'];
 
-            return $item;
-        });
-
-        $subtotal = $items->sum('total');
-        $taxRate = $validated['tax_rate'] ?? $user->defaultVatRate();
-        $tax = round($subtotal * $taxRate / 100, 2);
-        $total = $subtotal + $tax;
+        $this->requireVatExemptionReason($totals['items'], $taxRate, $validated['vat_exemption_reason'] ?? null);
 
         $client = $this->resolveProClient($user, $validated);
 
@@ -1199,6 +1208,8 @@ class ProDashboardController extends Controller
             'items.*.description' => 'required|string|max:500',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.discount_percent' => 'nullable|numeric|min:0|max:100',
+            'items.*.tax_rate' => 'nullable|numeric|min:0|max:100',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
             'due_date' => 'nullable|date',
             'notes' => 'nullable|string|max:2000',
@@ -1210,16 +1221,13 @@ class ProDashboardController extends Controller
             'late_penalty_rate' => 'sometimes|nullable|required_if:client_type,business|numeric|min:0|max:100',
         ]);
 
-        $items = collect($validated['items'])->map(function ($item) {
-            $item['total'] = round($item['quantity'] * $item['unit_price'], 2);
-
-            return $item;
-        });
-
-        $subtotal = $items->sum('total');
-        $taxRate = $validated['tax_rate'] ?? $user->defaultVatRate();
-        $tax = round($subtotal * $taxRate / 100, 2);
-        $total = $subtotal + $tax;
+        // Totaux : remise et TVA par ligne (App\Support\DocumentTotals).
+        $taxRate = (float) ($validated['tax_rate'] ?? $user->defaultVatRate());
+        $totals = \App\Support\DocumentTotals::compute($validated['items'], $taxRate);
+        $items = collect($totals['items']);
+        $subtotal = $totals['subtotal'];
+        $tax = $totals['tax_amount'];
+        $total = $totals['total'];
 
         // Champs repris de la création : enregistrés seulement s'ils ont été envoyés.
         $extra = collect($validated)->only([
@@ -1227,6 +1235,9 @@ class ProDashboardController extends Controller
             'operation_type', 'service_date', 'purchase_order_number', 'delivery_address',
             'payment_terms', 'vat_exemption_reason', 'early_payment_discount', 'late_penalty_rate',
         ])->all();
+
+        $this->requireVatExemptionReason($totals['items'], $taxRate,
+            array_key_exists('vat_exemption_reason', $extra) ? $extra['vat_exemption_reason'] : $invoice->vat_exemption_reason);
 
         $invoice->update($extra + [
             'pro_client_id' => $this->resolveProClient($user, $validated)?->id,

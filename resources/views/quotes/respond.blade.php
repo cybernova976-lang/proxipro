@@ -31,9 +31,14 @@
                 <tr><th scope="col">Description</th><th scope="col" class="pk-num">Quantité</th><th scope="col" class="pk-num">Prix unitaire HT</th><th scope="col" class="pk-num">Total HT</th></tr>
             </thead>
             <tbody>
+@php
+    $pkDefaultRate = (float) ($quote->tax_rate ?? 0);
+    $pkSeveralRates = \App\Support\DocumentTotals::hasSeveralRates($quote->items, $pkDefaultRate);
+    $pkVatLines = \App\Support\DocumentTotals::vatLines($quote->items, $pkDefaultRate, (float) $quote->tax_amount);
+@endphp
                 @foreach((array) $quote->items as $item)
                     <tr>
-                        <td>{{ $item['description'] ?? '' }}</td>
+                        <td>{{ $item['description'] ?? '' }}@include('pro.partials.document-line-note')</td>
                         <td class="pk-num">{{ $item['quantity'] ?? '' }}</td>
                         <td class="pk-num">{{ number_format((float) ($item['unit_price'] ?? 0), 2, ',', ' ') }} €</td>
                         <td class="pk-num">{{ number_format((float) ($item['total'] ?? ((float) ($item['quantity'] ?? 0) * (float) ($item['unit_price'] ?? 0))), 2, ',', ' ') }} €</td>
@@ -43,7 +48,9 @@
         </table>
         <div class="pk-quote__totals">
             <div><span>Sous-total HT</span><span>{{ number_format((float) $quote->subtotal, 2, ',', ' ') }} €</span></div>
-            <div><span>TVA ({{ rtrim(rtrim(number_format((float) $quote->tax_rate, 2, ',', ' '), '0'), ',') }} %)</span><span>{{ number_format((float) $quote->tax_amount, 2, ',', ' ') }} €</span></div>
+            @foreach($pkVatLines as $pkVat)
+            <div><span>TVA ({{ \App\Support\DocumentTotals::formatRate($pkVat['rate']) }} %)@if($pkSeveralRates) sur {{ number_format($pkVat['base'], 2, ',', ' ') }} €@endif</span><span>{{ number_format($pkVat['tax'], 2, ',', ' ') }} €</span></div>
+            @endforeach
             <div class="pk-quote__total"><span>Total TTC</span><span>{{ number_format((float) $quote->total, 2, ',', ' ') }} €</span></div>
             @if($quote->deposit_percentage !== null)
                 <div><span>Acompte demandé</span><span>{{ rtrim(rtrim(number_format((float) $quote->deposit_percentage, 2, ',', ' '), '0'), ',') }} %</span></div>

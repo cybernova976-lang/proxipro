@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ProInvoice;
 use App\Models\ProQuote;
 use App\Models\User;
+use App\Support\DocumentTotals;
 use App\Support\ProDocumentNumber;
 use DomainException;
 use Illuminate\Support\Collection;
@@ -42,21 +43,30 @@ class InvoiceAdjustments
 
             $rate = (float) $invoice->tax_rate;
             $remaining = $invoice->creditableTotal();
+            // Ce qui reste à annuler, hors taxes, pour chaque taux de TVA de la facture.
+            $bases = $this->remainingBases($invoice);
+            $remainingHt = round(array_sum($bases), 2);
 
             if ($amountHt === null) {
                 // Avoir total. Sans avoir antérieur, il reprend les lignes de la facture.
                 $untouched = (float) $invoice->credited_total === 0.0;
                 $total = $remaining;
-                $subtotal = $untouched ? (float) $invoice->subtotal : round($remaining / (1 + $rate / 100), 2);
-                $items = $untouched ? $invoice->items : [$this->line('Solde de la facture '.$invoice->invoice_number, $subtotal)];
+                $items = $untouched ? $invoice->items
+                    : $this->linesByRate('Solde de la facture '.$invoice->invoice_number, $bases, $rate);
+                $subtotal = $untouched ? (float) $invoice->subtotal : round(array_sum(array_column($items, 'total')), 2);
             } else {
                 $subtotal = round($amountHt, 2);
-                $total = round($subtotal + round($subtotal * $rate / 100, 2), 2);
-                if ($subtotal <= 0 || $total > $remaining + 0.001) {
+                if ($subtotal <= 0 || $subtotal > $remainingHt + 0.001) {
                     throw new DomainException('Le montant de l’avoir dépasse ce qui reste à annuler sur cette facture ('
-                        .number_format(round($remaining / (1 + $rate / 100), 2), 2, ',', ' ').' € HT).');
+                        .number_format($remainingHt, 2, ',', ' ').' € HT).');
                 }
-                $items = [$this->line('Avoir partiel sur la facture '.$invoice->invoice_number, $subtotal)];
+                // Avoir partiel : réparti entre les taux au prorata de ce qui reste sur chacun.
+                $items = $this->linesByRate('Avoir partiel sur la facture '.$invoice->invoice_number,
+                    $this->share($bases, $subtotal), $rate);
+                $totals = DocumentTotals::compute($items, $rate);
+                $items = $totals['items'];
+                // Un avoir ne dépasse jamais le reste de la facture, même d'un centime d'arrondi.
+                $total = min($totals['total'], $remaining);
             }
 
             $creditNote = ProInvoice::create([
@@ -129,9 +139,17 @@ class InvoiceAdjustments
             throw new DomainException('La facture de ce devis existe déjà : l’acompte ne peut plus être facturé à part.');
         }
 
-        $subtotal = round((float) $quote->subtotal * $percentage / 100, 2);
+        // Un acompte par taux de TVA du devis, pour que la facture d'acompte détaille la TVA comme lui.
         $rate = (float) $quote->tax_rate;
-        $tax = round($subtotal * $rate / 100, 2);
+        $label = 'Acompte de '.$this->percent($percentage).' % sur le devis '.$quote->quote_number
+            .($quote->issued_at ? ' du '.$quote->issued_at->format('d/m/Y') : '');
+        $bases = [];
+        foreach (DocumentTotals::breakdown($quote->items, $rate) as $group) {
+            $bases[number_format($group['rate'], 2, '.', '')] = round($group['base'] * $percentage / 100, 2);
+        }
+        $totals = DocumentTotals::compute($this->linesByRate($label, $bases, $rate), $rate);
+        $subtotal = $totals['subtotal'];
+        $tax = $totals['tax_amount'];
         $business = filled($quote->client_company);
 
         return ProInvoice::create([
@@ -153,8 +171,7 @@ class InvoiceAdjustments
             'operation_type' => $quote->operation_type ?: 'services',
             'service_date' => now(),
             'currency' => 'EUR',
-            'items' => [$this->line('Acompte de '.$this->percent($percentage).' % sur le devis '.$quote->quote_number
-                .($quote->issued_at ? ' du '.$quote->issued_at->format('d/m/Y') : ''), $subtotal)],
+            'items' => $totals['items'],
             'subtotal' => $subtotal,
             'tax_rate' => $rate,
             'tax_amount' => $tax,
@@ -164,7 +181,7 @@ class InvoiceAdjustments
             'payment_terms' => 'Acompte payable à la commande.',
             'early_payment_discount' => 'Néant',
             'late_penalty_rate' => $business ? 12 : null,
-            'vat_exemption_reason' => $rate === 0.0 ? 'TVA non applicable, art. 293 B du CGI' : null,
+            'vat_exemption_reason' => DocumentTotals::hasZeroRate($totals['items'], $rate) ? 'TVA non applicable, art. 293 B du CGI' : null,
         ]);
     }
 
@@ -240,6 +257,74 @@ class InvoiceAdjustments
             'net' => round((float) $invoice->total - (float) $invoice->credited_total - $deposits, 2),
             'net_label' => $invoice->status === 'paid' ? 'Net réglé' : 'Net à payer',
         ];
+    }
+
+    /**
+     * Montant HT restant à annuler sur une facture, par taux de TVA : ses
+     * bases, moins celles des avoirs déjà émis.
+     *
+     * @return array<string, float> taux (« 20.00 ») => montant HT
+     */
+    private function remainingBases(ProInvoice $invoice): array
+    {
+        $rate = (float) $invoice->tax_rate;
+        $bases = [];
+        foreach (DocumentTotals::breakdown($invoice->items, $rate) as $group) {
+            $bases[number_format($group['rate'], 2, '.', '')] = $group['base'];
+        }
+        foreach ($invoice->creditNotes()->get() as $creditNote) {
+            foreach (DocumentTotals::breakdown($creditNote->items, (float) $creditNote->tax_rate) as $group) {
+                $key = number_format($group['rate'], 2, '.', '');
+                $bases[$key] = round(($bases[$key] ?? 0) - $group['base'], 2);
+            }
+        }
+
+        return array_filter($bases, fn (float $base) => $base > 0);
+    }
+
+    /**
+     * Répartit un montant HT entre les taux, au prorata des bases ; le dernier
+     * taux porte l'arrondi, pour que la somme soit exactement le montant.
+     *
+     * @param  array<string, float>  $bases
+     * @return array<string, float>
+     */
+    private function share(array $bases, float $amount): array
+    {
+        $whole = array_sum($bases);
+        $shares = [];
+        $given = 0.0;
+        $last = array_key_last($bases);
+        foreach ($bases as $rate => $base) {
+            $part = $rate === $last ? round($amount - $given, 2) : round($amount * $base / $whole, 2);
+            $given += $part;
+            if ($part > 0) {
+                $shares[$rate] = $part;
+            }
+        }
+
+        return $shares;
+    }
+
+    /**
+     * Une ligne par taux de TVA. Avec un seul taux, la ligne porte le libellé
+     * seul ; avec plusieurs, chaque ligne précise son taux.
+     *
+     * @param  array<string, float>  $bases
+     * @return list<array<string, mixed>>
+     */
+    private function linesByRate(string $label, array $bases, float $defaultRate): array
+    {
+        $lines = [];
+        foreach ($bases as $rate => $base) {
+            $line = $this->line($label.(count($bases) > 1 ? ' — part à TVA '.DocumentTotals::formatRate((float) $rate).' %' : ''), $base);
+            if (round((float) $rate, 2) !== round($defaultRate, 2)) {
+                $line['tax_rate'] = (float) $rate;
+            }
+            $lines[] = $line;
+        }
+
+        return $lines;
     }
 
     private function line(string $description, float $amount): array

@@ -147,9 +147,14 @@
                 </tr>
             </thead>
             <tbody>
+@php
+    $pkDefaultRate = (float) ($quote->tax_rate ?? 0);
+    $pkSeveralRates = \App\Support\DocumentTotals::hasSeveralRates($quote->items, $pkDefaultRate);
+    $pkVatLines = \App\Support\DocumentTotals::vatLines($quote->items, $pkDefaultRate, (float) $quote->tax_amount);
+@endphp
                 @foreach($quote->items as $item)
                 <tr>
-                    <td>{{ $item['description'] }}</td>
+                    <td>{{ $item['description'] }}@include('pro.partials.document-line-note')</td>
                     <td style="text-align: center;">{{ $item['quantity'] }}</td>
                     <td>{{ number_format($item['unit_price'], 2, ',', ' ') }} €</td>
                     <td>{{ number_format($item['total'] ?? ($item['quantity'] * $item['unit_price']), 2, ',', ' ') }} €</td>
@@ -167,10 +172,12 @@
                         <span class="label">Sous-total HT</span>
                         <span class="value">{{ number_format($quote->subtotal, 2, ',', ' ') }} €</span>
                     </div>
+                    @foreach($pkVatLines as $pkVat)
                     <div class="total-row">
-                        <span class="label">TVA ({{ $quote->tax_rate ?? 20 }}%)</span>
-                        <span class="value">{{ number_format($quote->tax ?? $quote->tax_amount ?? 0, 2, ',', ' ') }} €</span>
+                        <span class="label">TVA ({{ number_format($pkVat['rate'], 2, ',', ' ') }}%)@if($pkSeveralRates) sur {{ number_format($pkVat['base'], 2, ',', ' ') }} €@endif</span>
+                        <span class="value">{{ number_format($pkVat['tax'], 2, ',', ' ') }} €</span>
                     </div>
+                    @endforeach
                     <div class="total-row grand">
                         <span class="label">Total TTC</span>
                         <span class="value">{{ number_format($quote->total, 2, ',', ' ') }} €</span>

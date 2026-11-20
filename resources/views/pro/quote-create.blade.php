@@ -155,35 +155,7 @@
                 </div>
 
                 <label class="form-label fw-semibold">Lignes du devis</label>
-                {{-- En-tête des colonnes --}}
-                <div class="row g-2 mb-2 d-none d-md-flex" style="padding: 0 1rem;">
-                    <div class="col-md-6"><small class="text-muted fw-semibold">Description</small></div>
-                    <div class="col-md-2"><small class="text-muted fw-semibold">Quantité</small></div>
-                    <div class="col-md-2"><small class="text-muted fw-semibold">Prix unitaire (€)</small></div>
-                    <div class="col-md-2 text-end"><small class="text-muted fw-semibold">Total</small></div>
-                </div>
-                <div id="quoteItems">
-                    <div class="quote-item-row" data-index="0">
-                        <button type="button" class="remove-item" onclick="removeItem(this)" style="display: none;"><i class="fas fa-times-circle"></i></button>
-                        <div class="row g-2">
-                            <div class="col-md-6">
-                                <input type="text" name="items[0][description]" class="form-control" placeholder="Description de la prestation" required style="border-radius: 10px; font-size: 0.9rem;">
-                            </div>
-                            <div class="col-md-2">
-                                <input type="number" name="items[0][quantity]" class="form-control item-qty" value="1" min="0.01" step="0.01" required style="border-radius: 10px; font-size: 0.9rem;" placeholder="Qté" oninput="recalculate()">
-                            </div>
-                            <div class="col-md-2">
-                                <input type="number" name="items[0][unit_price]" class="form-control item-price" value="0" min="0" step="0.01" required style="border-radius: 10px; font-size: 0.9rem;" placeholder="Prix €" oninput="recalculate()">
-                            </div>
-                            <div class="col-md-2">
-                                <div class="form-control-plaintext text-end fw-bold item-total" style="font-size: 0.9rem;">0,00€</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button type="button" class="btn btn-light btn-sm mt-2" onclick="addItem()" style="border-radius: 10px;">
-                    <i class="fas fa-plus me-1"></i> Ajouter une ligne
-                </button>
+                @include('pro.partials.document-lines', ['pkLines' => [], 'pkRowClass' => 'quote-item-row', 'pkContainerId' => 'quoteItems'])
             </div>
 
             {{-- Notes --}}
@@ -254,69 +226,7 @@
 
 @section('scripts')
 <script>
-let itemIndex = 1;
-
-function addItem() {
-    const container = document.getElementById('quoteItems');
-    const row = document.createElement('div');
-    row.className = 'quote-item-row';
-    row.dataset.index = itemIndex;
-    row.innerHTML = `
-        <button type="button" class="remove-item" onclick="removeItem(this)"><i class="fas fa-times-circle"></i></button>
-        <div class="row g-2">
-            <div class="col-md-6">
-                <input type="text" name="items[${itemIndex}][description]" class="form-control" placeholder="Description" required style="border-radius: 10px; font-size: 0.9rem;">
-            </div>
-            <div class="col-md-2">
-                <input type="number" name="items[${itemIndex}][quantity]" class="form-control item-qty" value="1" min="0.01" step="0.01" required style="border-radius: 10px; font-size: 0.9rem;" placeholder="Qté" oninput="recalculate()">
-            </div>
-            <div class="col-md-2">
-                <input type="number" name="items[${itemIndex}][unit_price]" class="form-control item-price" value="0" min="0" step="0.01" required style="border-radius: 10px; font-size: 0.9rem;" placeholder="Prix €" oninput="recalculate()">
-            </div>
-            <div class="col-md-2">
-                <div class="form-control-plaintext text-end fw-bold item-total" style="font-size: 0.9rem;">0,00€</div>
-            </div>
-        </div>
-    `;
-    container.appendChild(row);
-    // Show remove button on first item if more than one
-    document.querySelectorAll('.remove-item').forEach(btn => btn.style.display = 'block');
-    itemIndex++;
-}
-
-function removeItem(btn) {
-    const rows = document.querySelectorAll('.quote-item-row');
-    if (rows.length <= 1) return;
-    btn.closest('.quote-item-row').remove();
-    if (document.querySelectorAll('.quote-item-row').length === 1) {
-        document.querySelector('.remove-item').style.display = 'none';
-    }
-    recalculate();
-}
-
-function recalculate() {
-    let subtotal = 0;
-    document.querySelectorAll('.quote-item-row').forEach(row => {
-        const qty = parseFloat(row.querySelector('.item-qty')?.value || 0);
-        const price = parseFloat(row.querySelector('.item-price')?.value || 0);
-        const total = qty * price;
-        subtotal += total;
-        row.querySelector('.item-total').textContent = total.toFixed(2).replace('.', ',') + '€';
-    });
-
-    const taxRate = parseFloat(document.getElementById('taxRate').value || 0);
-    const tax = subtotal * taxRate / 100;
-    const totalTTC = subtotal + tax;
-
-    document.getElementById('subtotal').textContent = subtotal.toFixed(2).replace('.', ',') + '€';
-    document.getElementById('taxLabel').textContent = taxRate;
-    document.getElementById('taxAmount').textContent = tax.toFixed(2).replace('.', ',') + '€';
-    document.getElementById('totalTTC').textContent = totalTTC.toFixed(2).replace('.', ',') + '€';
-}
-
-// Also listen for tax rate changes in real-time
-document.getElementById('taxRate').addEventListener('input', recalculate);
-
+// Lignes et totaux : js/pro-document-lines.js (partials/document-lines).
 function fillClientInfo(select) {
     const option = select.selectedOptions[0];
     document.getElementById('clientIdHidden').value = option.value || '';
