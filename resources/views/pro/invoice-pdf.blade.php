@@ -146,7 +146,7 @@
                 </div>
             </div>
             <div class="header-right">
-                <div class="doc-title">FACTURE</div>
+                <div class="doc-title">{{ mb_strtoupper($invoice->documentLabel()) }}</div>
                 <div class="doc-info">
                     <strong>N° :</strong> {{ $invoice->invoice_number }}<br>
                     <strong>Date d’émission :</strong> {{ ($invoice->finalized_at ?? $invoice->created_at)->format('d/m/Y') }}<br>
@@ -156,6 +156,9 @@
                     @endif
                     @if($invoice->quote)
                     <strong>Réf. devis :</strong> {{ $invoice->quote->quote_number }}<br>
+                    @endif
+                    @if($invoice->isCreditNote() && $invoice->parentInvoice)
+                    <strong>Avoir sur la facture :</strong> {{ $invoice->parentInvoice->invoice_number }} du {{ ($invoice->parentInvoice->finalized_at ?? $invoice->parentInvoice->created_at)->format('d/m/Y') }}<br>
                     @endif
                     @if($invoice->purchase_order_number)<strong>Bon de commande :</strong> {{ $invoice->purchase_order_number }}<br>@endif
                     <span class="status-badge status-{{ $invoice->status }}">{{ $statusLabel ?? $invoice->getStatusLabel() }}</span>
@@ -224,9 +227,21 @@
                         <span class="value">{{ number_format($invoice->tax_amount, 2, ',', ' ') }} €</span>
                     </div>
                     <div class="total-row grand">
-                        <span class="label">Total TTC</span>
+                        <span class="label">{{ $invoice->isCreditNote() ? 'Total TTC de l’avoir' : 'Total TTC' }}</span>
                         <span class="value">{{ number_format($invoice->total, 2, ',', ' ') }} €</span>
                     </div>
+                    @if($pkDeductions = app(\App\Services\InvoiceAdjustments::class)->deductionLines($invoice))
+                        @foreach($pkDeductions['lines'] as $pkLine)
+                        <div class="total-row">
+                            <span class="label">{{ $pkLine['label'] }}</span>
+                            <span class="value">{{ number_format($pkLine['amount'], 2, ',', ' ') }} €</span>
+                        </div>
+                        @endforeach
+                        <div class="total-row grand">
+                            <span class="label">{{ $pkDeductions['net_label'] }}</span>
+                            <span class="value">{{ number_format($pkDeductions['net'], 2, ',', ' ') }} €</span>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -247,12 +262,20 @@
         </div>
         @endif
 
+        @if($invoice->isCreditNote())
+        <div class="legal-box">
+            @if((float) $invoice->tax_rate === 0.0 && $invoice->vat_exemption_reason)<strong>{{ $invoice->vat_exemption_reason }}</strong><br>@endif
+            <strong>Motif de l’avoir :</strong> {{ $invoice->credit_reason ?: 'Non précisé' }}<br>
+            Le montant de cet avoir vient en déduction de la facture citée ci-dessus. S’il a déjà été réglé, il est à rembourser au client ou à déduire d’une prochaine facture.
+        </div>
+        @else
         <div class="legal-box">
             @if((float) $invoice->tax_rate === 0.0 && $invoice->vat_exemption_reason)<strong>{{ $invoice->vat_exemption_reason }}</strong><br>@endif
             <strong>Conditions de paiement :</strong> {{ $invoice->payment_terms ?: 'À convenir' }}@if($invoice->due_date) — échéance au {{ $invoice->due_date->format('d/m/Y') }}@endif<br>
             <strong>Escompte pour paiement anticipé :</strong> {{ $invoice->early_payment_discount ?: 'Néant' }}.<br>
             @if($invoice->client_type === 'business')<strong>Retard :</strong> pénalités au taux annuel de {{ number_format($invoice->late_penalty_rate ?? 0, 2, ',', ' ') }} % et indemnité forfaitaire de 40 € pour frais de recouvrement.@endif
         </div>
+        @endif
 
         {{-- Notes --}}
         @if($invoice->notes)

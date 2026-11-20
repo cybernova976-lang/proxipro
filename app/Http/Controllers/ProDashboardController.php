@@ -135,6 +135,8 @@ class ProDashboardController extends Controller
                 'invoice_number' => ProInvoice::generateNumber($user->id),
                 'seller_snapshot' => $user->commercialIdentitySnapshot(),
                 'finalized_at' => now(),
+                // Acomptes déjà facturés sur le même devis : déduits une fois pour toutes.
+                'deposit_deducted' => app(\App\Services\InvoiceAdjustments::class)->deductibleDeposits($invoice),
             ]);
         }
     }
@@ -189,7 +191,7 @@ class ProDashboardController extends Controller
                 ])
                 ->count(),
             'monthly_revenue' => (float) $user->proInvoices()->where('status', 'paid')
-                ->whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()])->sum('total'),
+                ->whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()])->sum(DB::raw(ProInvoice::NET_TOTAL_SQL)),
             'reviews_count' => $reviewsCount,
             'average_rating' => $reviewsCount > 0 ? round((float) $user->reviewsReceived()->avg('rating'), 1) : null,
         ];
@@ -965,7 +967,8 @@ class ProDashboardController extends Controller
             'late_penalty_rate' => 'nullable|required_if:client_type,business|numeric|min:0|max:100',
         ]);
 
-        if (! empty($validated['quote_id']) && $user->proInvoices()->where('quote_id', $validated['quote_id'])->exists()) {
+        if (! empty($validated['quote_id']) && $user->proInvoices()->where('quote_id', $validated['quote_id'])
+            ->where('kind', ProInvoice::KIND_INVOICE)->where('status', '!=', 'cancelled')->exists()) {
             return back()->withInput()->withErrors(['quote_id' => 'Une facture existe déjà pour ce devis.']);
         }
 
@@ -1035,21 +1038,23 @@ class ProDashboardController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pro.invoice-pdf', compact('user', 'invoice'));
         $pdf->setPaper('a4');
 
-        return $pdf->download('Facture_'.$invoice->invoice_number.'.pdf');
+        return $pdf->download(($invoice->isCreditNote() ? 'Avoir_' : 'Facture_').$invoice->invoice_number.'.pdf');
     }
 
     public function sendInvoiceEmail(Request $request, $id)
     {
         $user = $this->ensureCommercialProfessional();
         $invoice = $user->proInvoices()->with('client', 'quote')->findOrFail($id);
-        if (! in_array($invoice->status, ['draft', 'sent', 'overdue'], true)) {
-            return back()->with('error', 'Cette facture ne peut plus être envoyée dans son état actuel.');
+        $sendable = $invoice->isCreditNote() ? [ProInvoice::STATUS_ISSUED] : ['draft', 'sent', 'overdue'];
+        if (! in_array($invoice->status, $sendable, true)) {
+            return back()->with('error', 'Ce document ne peut plus être envoyé dans son état actuel.');
         }
 
         $validated = $request->validate([
             'email' => 'required|email|max:255',
             'message' => 'nullable|string|max:2000',
         ]);
+        $label = $invoice->documentLabel();
 
         $this->finalizeInvoice($invoice, $user);
         $invoice->refresh();
@@ -1067,10 +1072,10 @@ class ProDashboardController extends Controller
                 'invoice' => $invoice,
                 'user' => $user,
                 'customMessage' => $validated['message'] ?? null,
-            ], function ($mail) use ($validated, $invoice, $user, $pdf) {
+            ], function ($mail) use ($validated, $invoice, $user, $pdf, $label) {
                 $mail->to($validated['email'])
-                    ->subject('Facture '.$invoice->invoice_number.' - '.($user->company_name ?? $user->name))
-                    ->attachData($pdf->output(), 'Facture_'.$invoice->invoice_number.'.pdf', [
+                    ->subject($label.' '.$invoice->invoice_number.' - '.($user->company_name ?? $user->name))
+                    ->attachData($pdf->output(), ($invoice->isCreditNote() ? 'Avoir_' : 'Facture_').$invoice->invoice_number.'.pdf', [
                         'mime' => 'application/pdf',
                     ]);
             });
@@ -1083,11 +1088,11 @@ class ProDashboardController extends Controller
         }
 
         // Rappel unique d'une facture impayée (Premium), à l'adresse réellement utilisée.
-        $reminder = $request->boolean('auto_reminder') && $user->hasActiveProSubscription()
+        $reminder = ! $invoice->isCreditNote() && $request->boolean('auto_reminder') && $user->hasActiveProSubscription()
             && $invoice->due_date !== null && $invoice->reminder_sent_at === null;
         $invoice->update(['sent_to_email' => $validated['email'], 'reminder_enabled' => $reminder]);
 
-        return back()->with('success', 'Facture envoyée par email à '.$validated['email']
+        return back()->with('success', $label.' envoyé'.($invoice->isCreditNote() ? '' : 'e').' par email à '.$validated['email']
             .($reminder ? '. Un rappel partira '.\App\Services\InvoiceFollowUpService::DELAY_DAYS.' jours après l’échéance si elle reste impayée.' : '.'));
     }
 
@@ -1115,9 +1120,13 @@ class ProDashboardController extends Controller
         $target = $request->string('status')->toString();
         $allowedTransitions = [
             'draft' => ['sent', 'paid'],
-            'sent' => ['paid', 'overdue', 'cancelled'],
-            'overdue' => ['paid', 'cancelled'],
+            'sent' => ['paid', 'overdue'],
+            'overdue' => ['paid'],
         ];
+        if ($target === 'cancelled' && $invoice->canBeCredited()) {
+            return redirect()->route('pro.invoices.show', $invoice->id)
+                ->with('error', 'Une facture émise ne s’annule pas : elle se corrige par un avoir, depuis cette page.');
+        }
         if (! in_array($target, $allowedTransitions[$invoice->status] ?? [], true)) {
             return back()->with('error', 'Cette transition est impossible : une facture finalisée conserve son historique.');
         }
@@ -1138,7 +1147,8 @@ class ProDashboardController extends Controller
             if ($invoice->pro_client_id) {
                 $client = $user->proClients()->find($invoice->pro_client_id);
                 if ($client) {
-                    $client->increment('total_revenue', $invoice->total);
+                    // Montant net : avoirs et acomptes déjà facturés déduits.
+                    $client->increment('total_revenue', $invoice->fresh()->netTotal());
                     $client->increment('total_projects');
                     $client->update(['last_interaction_at' => now()]);
                 }
@@ -1945,7 +1955,7 @@ class ProDashboardController extends Controller
             $revenue = $user->proInvoices()->where('status', 'paid')
                 ->whereMonth('paid_at', $date->month)
                 ->whereYear('paid_at', $date->year)
-                ->sum('total');
+                ->sum(DB::raw(ProInvoice::NET_TOTAL_SQL));
             $revenueData[] = [
                 'month' => $date->translatedFormat('M'),
                 'year' => $date->year,
@@ -1994,13 +2004,13 @@ class ProDashboardController extends Controller
 
         // Summary stats
         $stats = [
-            'total_revenue' => $user->proInvoices()->where('status', 'paid')->sum('total'),
+            'total_revenue' => $user->proInvoices()->where('status', 'paid')->sum(DB::raw(ProInvoice::NET_TOTAL_SQL)),
             'monthly_revenue' => $user->proInvoices()->where('status', 'paid')
                 ->whereMonth('paid_at', now()->month)
                 ->whereYear('paid_at', now()->year)
-                ->sum('total'),
+                ->sum(DB::raw(ProInvoice::NET_TOTAL_SQL)),
             'avg_quote_value' => round($user->proQuotes()->where('status', '!=', 'draft')->avg('total') ?? 0, 2),
-            'avg_invoice_value' => round($user->proInvoices()->where('status', 'paid')->avg('total') ?? 0, 2),
+            'avg_invoice_value' => round($user->proInvoices()->where('status', 'paid')->avg(DB::raw(ProInvoice::NET_TOTAL_SQL)) ?? 0, 2),
             'total_clients' => $user->proClients()->count(),
             'active_clients' => $user->proClients()->where('status', 'active')->count(),
             'total_quotes' => $totalQuotes,
@@ -2009,7 +2019,7 @@ class ProDashboardController extends Controller
             'total_invoices' => $totalInvoices,
             'paid_invoices' => $paidInvoices,
             'payment_rate' => $paymentRate,
-            'pending_amount' => $user->proInvoices()->whereIn('status', ['sent', 'overdue'])->sum('total'),
+            'pending_amount' => $user->proInvoices()->whereIn('status', ['sent', 'overdue'])->sum(DB::raw(ProInvoice::NET_TOTAL_SQL)),
             'reviews_count' => $user->reviewsReceived()->count(),
             'average_rating' => round($user->reviewsReceived()->avg('rating') ?? 0, 1),
             'active_ads' => $user->ads()->where('status', 'active')->count(),
@@ -2125,7 +2135,7 @@ class ProDashboardController extends Controller
                 'revenue' => $user->proInvoices()->where('status', 'paid')
                     ->whereMonth('paid_at', $date->month)
                     ->whereYear('paid_at', $date->year)
-                    ->sum('total'),
+                    ->sum(DB::raw(ProInvoice::NET_TOTAL_SQL)),
                 'clients' => $user->proClients()
                     ->whereMonth('created_at', $date->month)
                     ->whereYear('created_at', $date->year)

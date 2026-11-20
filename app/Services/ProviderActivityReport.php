@@ -155,7 +155,7 @@ class ProviderActivityReport
             'quotes_sent' => ProQuote::where('user_id', $id)->whereBetween('sent_at', $between)->count(),
             'quotes_accepted' => ProQuote::where('user_id', $id)->whereBetween('accepted_at', $between)->count(),
             'invoices_paid' => round((float) ProInvoice::where('user_id', $id)->where('status', 'paid')
-                ->whereBetween('paid_at', $between)->sum('total'), 2),
+                ->whereBetween('paid_at', $between)->sum(\Illuminate\Support\Facades\DB::raw(ProInvoice::NET_TOTAL_SQL)), 2),
         ];
     }
 

@@ -46,9 +46,18 @@ class ProQuote extends Model
         return $this->belongsTo(ProClient::class, 'pro_client_id');
     }
 
+    /** Facture du devis (hors acompte). Une facture annulée par un avoir ne compte plus. */
     public function invoice()
     {
-        return $this->hasOne(ProInvoice::class, 'quote_id');
+        return $this->hasOne(ProInvoice::class, 'quote_id')
+            ->where('kind', ProInvoice::KIND_INVOICE)->where('status', '!=', 'cancelled');
+    }
+
+    /** Factures d'acompte du devis, hors acomptes annulés par un avoir. */
+    public function depositInvoices()
+    {
+        return $this->hasMany(ProInvoice::class, 'quote_id')
+            ->where('kind', ProInvoice::KIND_DEPOSIT)->where('status', '!=', 'cancelled');
     }
 
     public static function generateNumber($userId): string

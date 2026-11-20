@@ -73,9 +73,9 @@
                 <tbody>
                     @foreach($invoices as $invoice)
                     <tr>
-                        <td><a href="{{ route('pro.invoices.show', $invoice->id) }}" class="fw-bold" style="color: var(--pro-primary);">{{ $invoice->invoice_number }}</a></td>
+                        <td><a href="{{ route('pro.invoices.show', $invoice->id) }}" class="fw-bold" style="color: var(--pro-primary);">{{ $invoice->invoice_number }}</a>@if($invoice->kind !== \App\Models\ProInvoice::KIND_INVOICE) <span class="badge bg-light text-dark border">{{ $invoice->isCreditNote() ? 'Avoir' : 'Acompte' }}</span>@endif</td>
                         <td>{{ Str::limit($invoice->client_name, 25) }}</td>
-                        <td class="fw-bold">{{ number_format($invoice->total, 2, ',', ' ') }}€</td>
+                        <td class="fw-bold">{{ $invoice->isCreditNote() ? '−' : '' }}{{ number_format($invoice->total, 2, ',', ' ') }}€</td>
                         <td>{{ $invoice->created_at->format('d/m/Y') }}</td>
                         <td>{{ $invoice->due_date ? $invoice->due_date->format('d/m/Y') : '-' }}</td>
                         <td><span class="pro-status pro-status-{{ $invoice->getStatusColor() }}">{{ $invoice->getStatusLabel() }}</span></td>

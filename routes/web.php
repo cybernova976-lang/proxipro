@@ -602,6 +602,11 @@ Route::middleware(['auth'])->prefix('pro')->name('pro.')->group(function () {
     Route::get('/invoices/{id}/download', [$ctrl, 'downloadInvoice'])->name('invoices.download');
     Route::post('/invoices/{id}/send-email', [$ctrl, 'sendInvoiceEmail'])->name('invoices.sendEmail');
     Route::delete('/invoices/{id}', [$ctrl, 'destroyInvoice'])->name('invoices.destroy');
+    // Avoirs et factures d'acompte.
+    Route::post('/invoices/{id}/credit-note', [\App\Http\Controllers\ProInvoiceAdjustmentsController::class, 'storeCreditNote'])
+        ->whereNumber('id')->name('invoices.credit-note');
+    Route::post('/quotes/{id}/deposit-invoice', [\App\Http\Controllers\ProInvoiceAdjustmentsController::class, 'storeDepositInvoice'])
+        ->whereNumber('id')->name('quotes.deposit-invoice');
     Route::put('/invoices/{id}/reminder', [\App\Http\Controllers\ProQuoteToolsController::class, 'updateInvoiceReminder'])
         ->whereNumber('id')->name('invoices.reminder');
 

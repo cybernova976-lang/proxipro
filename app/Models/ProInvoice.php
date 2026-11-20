@@ -6,6 +6,23 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProInvoice extends Model
 {
+    public const KIND_INVOICE = 'invoice';
+
+    public const KIND_DEPOSIT = 'deposit';
+
+    public const KIND_CREDIT_NOTE = 'credit_note';
+
+    /** Statut d'un avoir émis : il n'est ni « envoyé », ni « payé », ni « en retard ». */
+    public const STATUS_ISSUED = 'issued';
+
+    /**
+     * Montant réellement dû ou encaissé d'une facture : son total, moins les
+     * avoirs émis sur elle, moins les acomptes déjà facturés. Toute somme de
+     * factures (chiffre d'affaires, en attente) doit porter sur cette expression,
+     * sinon un acompte et sa facture de solde seraient comptés deux fois.
+     */
+    public const NET_TOTAL_SQL = '(total - credited_total - deposit_deducted)';
+
     protected $fillable = [
         'user_id', 'client_id', 'pro_client_id', 'quote_id', 'invoice_number', 'client_name',
         'client_email', 'client_phone', 'client_address', 'subject', 'description',
@@ -17,6 +34,14 @@ class ProInvoice extends Model
         'early_payment_discount', 'late_penalty_rate', 'seller_snapshot',
         'finalized_at', 'sent_at',
         'sent_to_email', 'reminder_enabled', 'reminder_sent_at',
+        'kind', 'parent_invoice_id', 'credit_reason', 'credited_total',
+        'deposit_deducted', 'deposit_percentage',
+    ];
+
+    protected $attributes = [
+        'kind' => self::KIND_INVOICE,
+        'credited_total' => 0,
+        'deposit_deducted' => 0,
     ];
 
     protected $casts = [
@@ -34,6 +59,9 @@ class ProInvoice extends Model
         'sent_at' => 'datetime',
         'reminder_enabled' => 'boolean',
         'reminder_sent_at' => 'datetime',
+        'credited_total' => 'decimal:2',
+        'deposit_deducted' => 'decimal:2',
+        'deposit_percentage' => 'decimal:2',
     ];
 
     public function user()
@@ -51,9 +79,67 @@ class ProInvoice extends Model
         return $this->belongsTo(ProQuote::class, 'quote_id');
     }
 
+    /** Pour un avoir : la facture qu'il corrige. */
+    public function parentInvoice()
+    {
+        return $this->belongsTo(self::class, 'parent_invoice_id');
+    }
+
+    /** Avoirs émis sur cette facture. */
+    public function creditNotes()
+    {
+        return $this->hasMany(self::class, 'parent_invoice_id')->where('kind', self::KIND_CREDIT_NOTE);
+    }
+
     public static function generateNumber($userId): string
     {
         return \App\Support\ProDocumentNumber::next((int) $userId, 'invoice');
+    }
+
+    public function isCreditNote(): bool
+    {
+        return $this->kind === self::KIND_CREDIT_NOTE;
+    }
+
+    public function isDeposit(): bool
+    {
+        return $this->kind === self::KIND_DEPOSIT;
+    }
+
+    /** « Facture », « Facture d'acompte » ou « Avoir ». */
+    public function documentLabel(): string
+    {
+        return match ($this->kind) {
+            self::KIND_CREDIT_NOTE => 'Avoir',
+            self::KIND_DEPOSIT => 'Facture d’acompte',
+            default => 'Facture',
+        };
+    }
+
+    /** Document émis : numéroté et figé. */
+    public function isIssued(): bool
+    {
+        return $this->finalized_at !== null && $this->status !== 'draft';
+    }
+
+    /** Montant TTC encore dû ou encaissé : total, moins avoirs, moins acomptes déduits. */
+    public function netTotal(): float
+    {
+        return round((float) $this->total - (float) $this->credited_total - (float) $this->deposit_deducted, 2);
+    }
+
+    /** Part TTC de la facture qu'un avoir peut encore annuler. */
+    public function creditableTotal(): float
+    {
+        return round((float) $this->total - (float) $this->credited_total, 2);
+    }
+
+    /** Une facture émise, non annulée, peut recevoir un avoir tant qu'il reste un montant à annuler. */
+    public function canBeCredited(): bool
+    {
+        return ! $this->isCreditNote()
+            && in_array($this->status, ['sent', 'overdue', 'paid'], true)
+            && $this->creditableTotal() > 0;
     }
 
     public function isEditable(): bool
@@ -69,6 +155,7 @@ class ProInvoice extends Model
             'paid' => 'bg-success',
             'overdue' => 'bg-danger',
             'cancelled' => 'bg-warning',
+            self::STATUS_ISSUED => 'bg-primary',
             default => 'bg-secondary',
         };
     }
@@ -80,7 +167,8 @@ class ProInvoice extends Model
             'sent' => 'Envoyée',
             'paid' => 'Payée',
             'overdue' => 'En retard',
-            'cancelled' => 'Annulée',
+            'cancelled' => (float) $this->credited_total > 0 ? 'Annulée par avoir' : 'Annulée',
+            self::STATUS_ISSUED => 'Émis',
             default => 'Inconnu',
         };
     }
@@ -98,6 +186,7 @@ class ProInvoice extends Model
             'paid' => 'success',
             'overdue' => 'danger',
             'cancelled' => 'secondary',
+            self::STATUS_ISSUED => 'info',
             default => 'secondary',
         };
     }

@@ -16,6 +16,12 @@
     <div class="d-flex gap-2 flex-wrap">
         <span class="pro-status pro-status-{{ $quote->getStatusColor() }}" style="font-size: 0.88rem; padding: 8px 16px;">{{ $quote->getStatusLabel() }}</span>
         @if($quote->status === 'accepted')
+            @if((float) $quote->deposit_percentage > 0 && (float) $quote->deposit_percentage < 100 && ! $quote->depositInvoices()->exists() && ! $quote->invoice()->exists())
+            <form method="POST" action="{{ route('pro.quotes.deposit-invoice', $quote->id) }}">
+                @csrf
+                <button type="submit" class="btn btn-pro-outline"><i class="fas fa-percent me-1" aria-hidden="true"></i> Facturer l’acompte</button>
+            </form>
+            @endif
             <a href="{{ route('pro.invoices.create', ['quoteId' => $quote->id]) }}" class="btn btn-pro-primary">
                 <i class="fas fa-file-invoice me-1"></i> Créer facture
             </a>

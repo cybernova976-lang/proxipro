@@ -1,5 +1,5 @@
 @extends('pro.layout')
-@section('title', 'Facture ' . $invoice->invoice_number . ' - Espace Pro')
+@section('title', $invoice->documentLabel() . ' ' . $invoice->invoice_number . ' - Espace Pro')
 
 @section('content')
 <style>
@@ -112,7 +112,7 @@
                 <li class="breadcrumb-item active">{{ $invoice->invoice_number }}</li>
             </ol>
         </nav>
-        <h1>Facture {{ $invoice->invoice_number }}</h1>
+        <h1>{{ $invoice->documentLabel() }} {{ $invoice->invoice_number }}</h1>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <span class="pro-status pro-status-{{ $invoice->getStatusColor() }}" style="font-size: 0.88rem; padding: 8px 16px;">{{ $invoice->getStatusLabel() }}</span>
@@ -149,7 +149,7 @@
             </div>
         </div>
         <div class="text-end pro-mobile-text-start">
-            <div class="invoice-doc-title">FACTURE</div>
+            <div class="invoice-doc-title">{{ mb_strtoupper($invoice->documentLabel()) }}</div>
             <div style="font-size: 0.88rem; color: #475569; line-height: 1.8; margin-top: 4px;">
                 <div><strong>N° :</strong> {{ $invoice->invoice_number }}</div>
                 <div><strong>Date d’émission :</strong> {{ ($invoice->finalized_at ?? $invoice->created_at)->format('d/m/Y') }}</div>
@@ -216,6 +216,18 @@
                 <span>Total TTC</span>
                 <span>{{ number_format($invoice->total, 2, ',', ' ') }} €</span>
             </div>
+            @if($pkDeductions = app(\App\Services\InvoiceAdjustments::class)->deductionLines($invoice))
+                @foreach($pkDeductions['lines'] as $pkLine)
+                <div class="total-line">
+                    <span>{{ $pkLine['label'] }}</span>
+                    <strong>{{ number_format($pkLine['amount'], 2, ',', ' ') }} €</strong>
+                </div>
+                @endforeach
+                <div class="total-line-grand">
+                    <span>{{ $pkDeductions['net_label'] }}</span>
+                    <span>{{ number_format($pkDeductions['net'], 2, ',', ' ') }} €</span>
+                </div>
+            @endif
         </div>
     </div>
 
@@ -230,9 +242,14 @@
 
     <div class="p-3 mb-3" style="background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; font-size: .83rem; color: #475569;">
         @if((float) $invoice->tax_rate === 0.0 && $invoice->vat_exemption_reason)<div class="fw-bold mb-1">{{ $invoice->vat_exemption_reason }}</div>@endif
+        @if($invoice->isCreditNote())
+        <div><strong>Motif de l’avoir :</strong> {{ $invoice->credit_reason ?: 'Non précisé' }}</div>
+        <div>Le montant de cet avoir vient en déduction de la facture qu’il corrige.</div>
+        @else
         <div><strong>Conditions de paiement :</strong> {{ $invoice->payment_terms ?: 'À convenir' }}</div>
         <div><strong>Escompte :</strong> {{ $invoice->early_payment_discount ?: 'Néant' }}</div>
         @if($invoice->client_type === 'business')<div><strong>Retard :</strong> {{ number_format($invoice->late_penalty_rate ?? 0, 2, ',', ' ') }} % par an + indemnité forfaitaire de recouvrement de 40 €.</div>@endif
+        @endif
     </div>
 
     {{-- Notes --}}
@@ -263,10 +280,11 @@
 </div>
 
 @include('pro.partials.invoice-reminder')
+@include('pro.partials.invoice-adjustments')
 
-@if(in_array($invoice->status, ['draft', 'sent', 'overdue']))
+@if(in_array($invoice->status, ['draft', 'sent', 'overdue', \App\Models\ProInvoice::STATUS_ISSUED]))
 <div class="pro-card mt-3" style="max-width: 720px;">
-    <div class="pro-card-title"><i class="fas fa-envelope text-primary"></i> Envoyer la facture par email</div>
+    <div class="pro-card-title"><i class="fas fa-envelope text-primary"></i> Envoyer {{ $invoice->isCreditNote() ? 'l’avoir' : 'la facture' }} par email</div>
     <form method="POST" action="{{ route('pro.invoices.sendEmail', $invoice->id) }}" class="row g-3">
         @csrf
         <div class="col-md-5">
@@ -275,9 +293,9 @@
         </div>
         <div class="col-md-7">
             <label class="form-label fw-semibold">Message (facultatif)</label>
-            <input type="text" name="message" class="form-control" placeholder="Veuillez trouver votre facture en pièce jointe.">
+            <input type="text" name="message" class="form-control" placeholder="{{ $invoice->isCreditNote() ? 'Veuillez trouver votre avoir en pièce jointe.' : 'Veuillez trouver votre facture en pièce jointe.' }}">
         </div>
-        @if($user->hasActiveProSubscription() && $invoice->due_date && ! $invoice->reminder_sent_at)
+        @if(! $invoice->isCreditNote() && $user->hasActiveProSubscription() && $invoice->due_date && ! $invoice->reminder_sent_at)
         <div class="col-12">
             <div class="form-check">
                 <input type="hidden" name="auto_reminder" value="0">

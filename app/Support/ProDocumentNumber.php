@@ -11,6 +11,8 @@ class ProDocumentNumber
         $type = match ($documentType) {
             'quote' => 'DEV',
             'invoice' => 'FAC',
+            // Les avoirs ont leur propre suite continue, distincte de celle des factures.
+            'credit_note' => 'AV',
             default => throw new \InvalidArgumentException('Type de document commercial inconnu.'),
         };
         $year = (int) now()->format('Y');

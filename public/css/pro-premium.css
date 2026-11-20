@@ -68,6 +68,17 @@
 .pk-templates__list strong { color: var(--pk-900); font-size: .92rem; }
 .pk-templates__list small { display: block; color: var(--pk-muted); font-size: .78rem; }
 .pk-templates__actions { display: flex; align-items: center; gap: 8px; }
+/* Avoirs et acomptes liés à une facture (pro/partials/invoice-adjustments). */
+.pk-adjust { max-width: 720px; padding: 18px 20px; border: 1px solid #e0e7ff; border-radius: 14px; background: #fff; }
+.pk-adjust__title { margin: 0 0 10px; color: #0f172a; font-size: 1rem; font-weight: 700; }
+.pk-adjust__line { margin: 0 0 8px; color: #334155; font-size: .9rem; overflow-wrap: anywhere; }
+.pk-adjust__line a { color: #4338ca; font-weight: 650; }
+.pk-adjust__credit { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e0e7ff; }
+.pk-adjust__credit summary { min-height: 44px; display: flex; align-items: center; color: #4338ca; font-weight: 650; cursor: pointer; }
+.pk-adjust__hint { margin: 6px 0 14px; color: #526176; font-size: .86rem; }
+.pk-adjust__errors { margin: 0 0 12px; padding: 10px 14px 10px 30px; border-radius: 10px; background: #fef2f2; color: #991b1b; font-size: .86rem; }
+.pk-adjust__amount { max-width: 220px; }
+
 /* Champs ajoutés aux écrans de modification des devis et factures. */
 .pk-doc-input { border-radius: 10px; }
 .pk-templates__field { flex: 1; min-width: 0; min-height: 44px; border-radius: 10px; font-size: .85rem; }
