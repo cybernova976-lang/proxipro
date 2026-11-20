@@ -11,6 +11,12 @@
                 <i class="fas fa-bell" aria-hidden="true"></i> Alerte active : vous serez prévenu de la première offre
             </a>
         @else
+            <span class="pk-alert-slot" data-pk-alert>
+            <template data-pk-alert-done>
+                <a class="pk-empty-local__active" href="{{ route('saved-searches.index') }}">
+                    <i class="fas fa-bell" aria-hidden="true"></i> Alerte active : vous serez prévenu de la première offre
+                </a>
+            </template>
             <form method="POST" action="{{ route('saved-searches.store') }}" class="pk-empty-local__alert">
                 @csrf
                 @foreach($pkEmptyLocal['alert'] as $pkAlertField => $pkAlertValue)
@@ -20,6 +26,7 @@
                     <i class="far fa-bell" aria-hidden="true"></i> Me prévenir
                 </button>
             </form>
+            </span>
         @endif
         <a class="pk-empty-local__invite" href="{{ $pkEmptyLocal['invite_url'] }}" target="_blank" rel="noopener">
             <i class="fab fa-whatsapp" aria-hidden="true"></i> Vous connaissez un artisan ? Invitez-le

@@ -6,6 +6,7 @@ use App\Models\SavedSearch;
 use App\Models\User;
 use App\Services\SavedSearchService;
 use App\Support\TerritoryResolver;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -36,16 +37,43 @@ class SavedSearchController extends Controller
         return view('saved-searches.index', compact('savedSearches', 'territory', 'territoryAlert'));
     }
 
-    public function store(Request $request): RedirectResponse
+    /**
+     * Crée une alerte. Envoyé par un script (boutons d'alerte du flux et des
+     * fiches), le formulaire reçoit une réponse JSON : le bouton change d'état
+     * sur place et un message confirme l'action, sans recharger la page.
+     */
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
-        if ($request->filled('provider')) {
-            return $this->storeProviderAlert($request);
+        $result = match (true) {
+            $request->filled('provider') => $this->storeProviderAlert($request),
+            $request->filled('territory') => $this->storeTerritoryAlert($request),
+            default => $this->storeSearchAlert($request),
+        };
+
+        if ($request->expectsJson()) {
+            $alert = $result['alert'] ?? null;
+
+            return response()->json([
+                'ok' => $result['ok'],
+                'message' => $result['message'],
+                'active' => (bool) $alert?->is_active,
+                'count' => Auth::user()->savedSearches()->where('is_active', true)->count(),
+                'stop_url' => $alert ? route('saved-searches.destroy', $alert) : null,
+            ], $result['ok'] ? 200 : 422);
         }
 
-        if ($request->filled('territory')) {
-            return $this->storeTerritoryAlert($request);
-        }
+        $response = back()->with($result['flash'], $result['message']);
 
+        return empty($result['errors']) ? $response : $response->withErrors($result['errors']);
+    }
+
+    /**
+     * Alerte sur une recherche enregistrée (filtres de la liste des annonces).
+     *
+     * @return array{ok: bool, flash: string, message: string, alert?: ?SavedSearch, errors?: array<string, string>}
+     */
+    private function storeSearchAlert(Request $request): array
+    {
         $snapshot = $this->savedSearchService->buildSnapshot($request->all(), Auth::user(), [
             'city' => $request->input('geo_city'),
             'country' => $request->input('geo_country'),
@@ -57,12 +85,13 @@ class SavedSearchController extends Controller
         $existing = $this->savedSearchService->findExistingSearch(Auth::user(), $snapshot);
 
         if ($existing) {
-            return back()->with('success', 'Cette alerte existe déjà dans votre espace.');
+            return ['ok' => true, 'flash' => 'success', 'alert' => $existing, 'message' => 'Cette alerte existe déjà dans votre espace.'];
         }
 
-        $this->savedSearchService->saveFromSnapshot(Auth::user(), $snapshot);
+        $alert = $this->savedSearchService->saveFromSnapshot(Auth::user(), $snapshot);
 
-        return back()->with('success', 'Alerte enregistrée. Vous serez prévenu des nouvelles annonces correspondantes.');
+        return ['ok' => true, 'flash' => 'success', 'alert' => $alert,
+            'message' => 'Alerte enregistrée. Vous serez prévenu des nouvelles annonces correspondantes.'];
     }
 
     /**
@@ -70,14 +99,14 @@ class SavedSearchController extends Controller
      * publiées dans le territoire. Le message passe par « info », affiché
      * sur toutes les pages par layouts/app (le flux n'affiche pas « success »).
      */
-    private function storeTerritoryAlert(Request $request): RedirectResponse
+    private function storeTerritoryAlert(Request $request): array
     {
         $territory = $this->savedSearchService->territoryFromInput($request->all());
 
         if ($territory === null) {
             $message = 'Ce territoire n’est pas reconnu : l’alerte n’a pas été créée. Indiquez votre commune dans votre profil.';
 
-            return back()->withErrors(['territory' => $message])->with('info', $message);
+            return ['ok' => false, 'flash' => 'info', 'message' => $message, 'errors' => ['territory' => $message]];
         }
 
         $user = Auth::user();
@@ -85,10 +114,10 @@ class SavedSearchController extends Controller
         $existing = $this->savedSearchService->findExistingSearch($user, $snapshot);
 
         if ($existing?->is_active) {
-            return back()->with('info', 'Votre alerte « '.$existing->name.' » est déjà active.');
+            return ['ok' => true, 'flash' => 'info', 'alert' => $existing, 'message' => 'Votre alerte « '.$existing->name.' » est déjà active.'];
         }
 
-        $this->savedSearchService->saveFromSnapshot($user, $snapshot);
+        $alert = $this->savedSearchService->saveFromSnapshot($user, $snapshot);
 
         $subject = match ($snapshot['service_type']) {
             'demandes' => 'une demande',
@@ -96,29 +125,33 @@ class SavedSearchController extends Controller
             default => 'une offre',
         };
 
-        return back()->with('info', 'Alerte enregistrée : vous recevrez une notification dès qu’'.$subject.' sera publiée '.$territory->withPreposition().'.');
+        return ['ok' => true, 'flash' => 'info', 'alert' => $alert,
+            'message' => 'Alerte enregistrée : vous recevrez une notification dès qu’'.$subject.' sera publiée '.$territory->withPreposition().'.'];
     }
 
     /**
      * Alerte sur un prestataire choisi (cartes d'offres, fiche d'une offre) :
      * le membre est prévenu de chacune de ses nouvelles offres.
      */
-    private function storeProviderAlert(Request $request): RedirectResponse
+    private function storeProviderAlert(Request $request): array
     {
         $user = Auth::user();
         $provider = is_numeric($request->input('provider')) ? User::find((int) $request->input('provider')) : null;
 
         if ($provider === null || ! $this->savedSearchService->canFollowProvider($user, $provider)) {
-            return back()->with('error', 'Cette alerte ne peut pas être créée pour ce compte.');
+            return ['ok' => false, 'flash' => 'error', 'message' => 'Cette alerte ne peut pas être créée pour ce compte.'];
         }
 
-        if ($this->savedSearchService->findProviderAlert($user, $provider)?->is_active) {
-            return back()->with('info', 'Vous êtes déjà prévenu des nouvelles offres de '.$provider->name.'.');
+        $existing = $this->savedSearchService->findProviderAlert($user, $provider);
+        if ($existing?->is_active) {
+            return ['ok' => true, 'flash' => 'info', 'alert' => $existing,
+                'message' => 'Vous êtes déjà prévenu des nouvelles offres de '.$provider->name.'.'];
         }
 
-        $this->savedSearchService->saveProviderAlert($user, $provider);
+        $alert = $this->savedSearchService->saveProviderAlert($user, $provider);
 
-        return back()->with('info', 'Alerte enregistrée : vous recevrez une notification dès que '.$provider->name.' publiera une nouvelle offre.');
+        return ['ok' => true, 'flash' => 'info', 'alert' => $alert,
+            'message' => 'Alerte enregistrée : vous recevrez une notification dès que '.$provider->name.' publiera une nouvelle offre.'];
     }
 
     public function destroy(SavedSearch $savedSearch): RedirectResponse

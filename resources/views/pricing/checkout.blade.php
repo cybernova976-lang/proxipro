@@ -512,8 +512,8 @@
                         </tr>
                         <tr>
                             <td><i class="fas fa-user-check text-primary me-2"></i>Vérification de profil</td>
-                            <td>{{ number_format(\App\Models\IdentityVerification::getVerificationPrice('profile_verification'), 2, ',', ' ') }} €</td>
-                            <td><span class="pts-tag blue"><i class="fas fa-credit-card me-1"></i>Carte uniquement</span></td>
+                            <td>Gratuite</td>
+                            <td><span class="pts-tag blue">Sans frais</span></td>
                         </tr>
                     </tbody>
                 </table>

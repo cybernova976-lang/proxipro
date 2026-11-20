@@ -39,9 +39,12 @@ class IdentityVerificationPaymentService
             throw new DomainException('La demande de vérification est introuvable.');
         }
 
-        $expectedAmount = (int) round(IdentityVerification::getVerificationPrice($verification->type) * 100);
+        // La vérification est gratuite depuis le 20/11/2026. Ce service ne sert plus
+        // qu'à honorer un paiement ouvert avant cette date : le montant attendu est
+        // celui enregistré sur la demande à l'époque, jamais le tarif du jour.
+        $expectedAmount = (int) round((float) $verification->payment_amount * 100);
         $metadataAmount = (int) ($metadata['expected_amount_cents'] ?? $expectedAmount);
-        if ($metadataAmount !== $expectedAmount
+        if ($expectedAmount < 1 || $metadataAmount !== $expectedAmount
             || StripeSessionData::amountTotal($session) !== $expectedAmount
             || StripeSessionData::currency($session) !== 'eur'
             || (string) StripeSessionData::value($session, 'client_reference_id', '') !== (string) $verificationId) {

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\IdentityVerification;
 use App\Models\Setting;
 use App\Support\PlatformFeatures;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,8 +19,9 @@ class PublicProviderOffersTest extends TestCase
         $response = $this->get(route('public.provider-offers'))->assertOk()
             ->assertSee('Les coûts, avant de vous lancer.')
             ->assertSee('Gratuit')
-            ->assertSee(number_format(IdentityVerification::getVerificationPrice('profile_verification'), 2, ',', ' ').' €')
-            ->assertSee('Le contrôle d’identité se règle par carte')
+            ->assertSee('contrôle d’identité compris')
+            ->assertSee('le badge n’est attribué qu’après cet examen')
+            ->assertDontSee('se règle par carte')
             ->assertDontSee('points')
             ->assertSee('7,50 %')
             ->assertSee('Elle est déduite du montant versé au prestataire.')

@@ -10218,6 +10218,8 @@
 
     {{-- Confirmation avant tout formulaire marqué « data-pk-confirm » (suppression, engagement), sur toutes les pages. --}}
     <script defer src="{{ asset('js/confirm-submit.js') }}?v={{ @filemtime(public_path('js/confirm-submit.js')) ?: 1 }}"></script>
+    <link rel="stylesheet" href="{{ asset('css/alert-forms.css') }}?v={{ @filemtime(public_path('css/alert-forms.css')) ?: 1 }}">
+    <script defer src="{{ asset('js/alert-forms.js') }}?v={{ @filemtime(public_path('js/alert-forms.js')) ?: 1 }}"></script>
     @auth
         {{-- Navigation entre les rubriques de « Mes demandes » : nécessaire avec ou sans le menu latéral. --}}
         <script src="{{ asset('js/dashboard-nav.js') }}?v={{ @filemtime(public_path('js/dashboard-nav.js')) ?: 1 }}"></script>

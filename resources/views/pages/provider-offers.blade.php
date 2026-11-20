@@ -87,9 +87,9 @@
         </section>
         <section class="offers-card" aria-labelledby="offers-identity">
             <h2 id="offers-identity">Activer votre profil prestataire</h2>
-            <span class="offers-price">{{ number_format((float) $verificationPrice, 2, ',', ' ') }} € <small>pour le contrôle d’identité du profil</small></span>
+            <span class="offers-price">Gratuit <small>contrôle d’identité compris</small></span>
             <p>Le parcours d’activation prestataire demande un profil complété et le badge « Profil vérifié ».</p>
-            <p class="offers-small">Le contrôle d’identité se règle par carte, séparément des abonnements. Le paiement ne remplace pas la vérification des pièces.</p>
+            <p class="offers-small">Pour obtenir le badge, vous envoyez une pièce d’identité, et un justificatif d’entreprise si vous êtes professionnel. Notre équipe les examine : le badge n’est attribué qu’après cet examen.</p>
         </section>
     </div>
 

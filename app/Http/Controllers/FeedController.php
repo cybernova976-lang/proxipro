@@ -524,6 +524,8 @@ class FeedController extends Controller
             ? $user->savedSearches()->get(['id', 'provider_id', 'territory_code', 'service_type', 'is_active'])
             : collect();
         $pkHasAlerts = $pkUserAlerts->isNotEmpty();
+        // Nombre affiché sur « Mes alertes » : les alertes actives, comptées, jamais estimées.
+        $pkAlertCount = $pkUserAlerts->where('is_active', true)->count();
         $pkTerritoryAlertActive = $pkTerritory !== null && $pkUserAlerts->contains(
             fn ($alert) => $alert->is_active && $alert->provider_id === null
                 && $alert->territory_code === $pkTerritory->code
@@ -775,6 +777,7 @@ class FeedController extends Controller
             'pkTerritoryAlert',
             'pkProviderAlerts',
             'pkHasAlerts',
+            'pkAlertCount',
             'pkPrimaryAction',
             'pkSituationTiles',
             'pkSearchConfig',

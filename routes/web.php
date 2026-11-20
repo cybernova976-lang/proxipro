@@ -426,7 +426,7 @@ Route::middleware(['auth'])->group(function () {
     // Routes AJAX pour vérification avec paiement
     Route::get('/verification/status', [VerificationController::class, 'getStatus'])->name('verification.status');
     Route::post('/verification/submit-ajax', [VerificationController::class, 'storeAjax'])->name('verification.submit.ajax');
-    Route::post('/verification/create-payment', [VerificationController::class, 'createPaymentSession'])->name('verification.create.payment');
+    Route::post('/verification/submit', [VerificationController::class, 'submitAwaiting'])->name('verification.submit');
     Route::post('/verification/pay-with-points', [VerificationController::class, 'payWithPoints'])->name('verification.pay.points');
     Route::get('/verification/payment/success/{id}', [VerificationController::class, 'paymentSuccess'])->name('verification.payment.success');
     Route::get('/verification/payment/cancel/{id}', [VerificationController::class, 'paymentCancel'])->name('verification.payment.cancel');

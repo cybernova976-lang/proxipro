@@ -597,36 +597,6 @@
                         </div>
                         @endif
 
-                        {{-- Selfie --}}
-                        <div class="doc-status-card {{ $verification->selfie_status === 'approved' ? 'doc-approved' : ($verification->selfie_status === 'rejected' ? 'doc-rejected' : 'doc-pending') }}">
-                            <span class="doc-status-icon">
-                                @if($verification->selfie_status === 'approved')
-                                    <i class="fas fa-check-circle"></i>
-                                @elseif($verification->selfie_status === 'rejected')
-                                    <i class="fas fa-times-circle"></i>
-                                @else
-                                    <i class="fas fa-clock"></i>
-                                @endif
-                            </span>
-                            <div class="d-flex align-items-center gap-3">
-                                @if($verification->selfie && $verification->selfie_status === 'approved')
-                                    <img src="{{ storage_url($verification->selfie) }}" class="existing-doc-preview" alt="Selfie">
-                                @endif
-                                <div>
-                                    <h6 class="fw-bold mb-1">Selfie avec document</h6>
-                                    <span class="badge {{ $verification->selfie_status === 'approved' ? 'bg-success' : ($verification->selfie_status === 'rejected' ? 'bg-danger' : 'bg-warning') }}">
-                                        {{ $verification->selfie_status === 'approved' ? 'Approuvé' : ($verification->selfie_status === 'rejected' ? 'Refusé' : 'En attente') }}
-                                    </span>
-                                </div>
-                            </div>
-                            @if($verification->selfie_status === 'rejected' && $verification->selfie_rejection_reason)
-                                <div class="rejection-reason">
-                                    <i class="fas fa-exclamation-triangle me-1"></i>
-                                    {{ $verification->selfie_rejection_reason }}
-                                </div>
-                            @endif
-                        </div>
-
                         {{-- Professional Document --}}
                         @if($verification->professional_document)
                         <div class="doc-status-card {{ $verification->professional_document_status === 'approved' ? 'doc-approved' : ($verification->professional_document_status === 'rejected' ? 'doc-rejected' : 'doc-pending') }}">
@@ -696,21 +666,6 @@
                         </div>
                         @endif
 
-                        @if($verification->selfie_status === 'rejected')
-                        <div class="mb-3">
-                            <label class="upload-zone w-100" id="resubSelfieZone">
-                                <input type="file" name="selfie" accept="image/*" class="d-none" id="resub_selfie" required>
-                                <i class="fas fa-user-circle d-block"></i>
-                                <h5 class="mb-1">Nouveau selfie avec document</h5>
-                                <p class="text-danger small mb-0">Ce document a été refusé - veuillez le remplacer</p>
-                                <img id="resubSelfiePreview" class="upload-preview">
-                            </label>
-                            @error('selfie')
-                                <div class="text-danger small mt-2">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        @endif
-
                         @if($verification->professional_document_status === 'rejected')
                         <div class="mb-3">
                             <label class="upload-zone w-100" id="resubProDocZone">
@@ -758,19 +713,6 @@
                             @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label class="upload-zone w-100" id="resubSelfieZoneAll">
-                                <input type="file" name="selfie" accept="image/*" class="d-none" id="resub_all_selfie" required>
-                                <i class="fas fa-user-circle d-block"></i>
-                                <h5 class="mb-1">Selfie avec document</h5>
-                                <p class="text-muted small mb-0">Photo de vous tenant votre document d'identité</p>
-                                <img id="resubAllSelfiePreview" class="upload-preview">
-                            </label>
-                            @error('selfie')
-                                <div class="text-danger small mt-2">{{ $message }}</div>
-                            @enderror
-                        </div>
-
                         <div class="verification-form-actions">
                             <a href="{{ route('home') }}" class="btn btn-outline-secondary verification-back-btn">
                                 <i class="fas fa-arrow-left"></i><span>Retour</span>
@@ -785,7 +727,7 @@
                 </div>
 
             {{-- ===============================
-                 AWAITING PAYMENT
+                 Demande enregistrée avant la gratuité, jamais envoyée
                  =============================== --}}
             @elseif($verification && $verification->status === 'awaiting_payment')
             <div class="verification-card">
@@ -793,28 +735,19 @@
                     <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 78px; height: 78px; background: rgba(37, 99, 235, 0.12);">
                         <i class="fas fa-shield-alt fa-2x" style="color: #2563eb;"></i>
                     </div>
-                    <h4 class="fw-bold mb-2">Confirmer votre demande</h4>
+                    <h4 class="fw-bold mb-2">Envoyer votre demande</h4>
                     <p class="text-muted mb-0">
-                        Vos documents ont bien été enregistrés. Confirmez cette dernière étape pour les transmettre à l’administration.
+                        Vos documents sont enregistrés. La vérification de profil est désormais gratuite : il ne reste qu’à transmettre votre demande à l’administration.
                     </p>
                 </div>
 
-                <div class="p-4 mb-4" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                        <div>
-                            <div class="fw-bold mb-1">Frais de vérification</div>
-                            <div class="text-muted small">Badge public “Profil vérifié” après validation administrateur.</div>
-                        </div>
-                        <div class="fs-4 fw-bold text-primary">
-                            {{ number_format((float) $verification->payment_amount, 2, ',', ' ') }} €
-                        </div>
-                    </div>
-                </div>
-
                 <div class="d-grid gap-2">
-                    <button type="button" class="btn btn-primary btn-lg" onclick="startVerificationStripePayment({{ $verification->id }}, this)">
-                        <i class="fas fa-lock me-2"></i>Continuer par carte
-                    </button>
+                    <form action="{{ route('verification.submit') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-paper-plane me-2"></i>Envoyer ma demande
+                        </button>
+                    </form>
                     <form action="{{ route('verification.cancel') }}" method="POST" class="mt-2">
                         @csrf
                         <button type="submit" class="btn btn-outline-secondary w-100">
@@ -846,7 +779,7 @@
                 </div>
 
                 <div class="verification-price-note">
-                    <span><i class="fas fa-lock me-2"></i>Vos documents seront transmis à l’administration uniquement après le paiement sécurisé de <strong>5,00 €</strong>.</span>
+                    <span><i class="fas fa-lock me-2"></i>La vérification de profil est <strong>gratuite</strong>. Vos documents sont transmis à l’administration dès l’envoi de ce formulaire.</span>
                 </div>
 
                 <form id="pageVerificationForm" action="{{ route('verification.store') }}" method="POST" enctype="multipart/form-data" novalidate>
@@ -943,50 +876,11 @@
                         </div>
                     </div>
 
-                    <!-- Step 3: Selfie -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold mb-3">3. Photo selfie avec le document *</label>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="upload-zone w-100" id="pageSelfieZone">
-                                    <i class="fas fa-user-circle d-block"></i>
-                                    <h5 class="mb-1">Selfie avec document</h5>
-                                    <p class="text-muted small mb-0">Tenez le document à côté de votre visage</p>
-                                    <div class="verification-upload-actions">
-                                        <label class="verification-file-action verification-native-control">
-                                            <i class="fas fa-folder-open"></i><span>Fichiers</span>
-                                            <input type="file" name="selfie" accept="image/*" class="verification-native-input" id="page_selfie" aria-label="Choisir le selfie avec le document">
-                                        </label>
-                                        <label class="verification-file-action is-camera verification-native-control">
-                                            <i class="fas fa-camera"></i><span>Prendre une photo</span>
-                                            <input type="file" name="selfie_camera" accept="image/*" capture="user" class="verification-native-input" id="page_selfie_camera" aria-label="Prendre un selfie avec le document">
-                                        </label>
-                                    </div>
-                                    <img id="pageSelfiePreview" class="upload-preview">
-                                </div>
-                                @error('selfie')
-                                    <div class="text-danger small mt-2">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="col-md-6 d-flex align-items-center">
-                                <div class="p-3">
-                                    <h6 class="fw-bold mb-2"><i class="fas fa-lightbulb text-warning me-2"></i>Conseils</h6>
-                                    <ul class="small text-muted mb-0">
-                                        <li>Assurez-vous que le document est lisible</li>
-                                        <li>Bonne luminosité sans reflets</li>
-                                        <li>Votre visage doit être visible</li>
-                                        <li>Format accepté : JPEG, PNG, PDF (max 15 Mo)</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Step 4: Professional Document (conditional) -->
+                    <!-- Étape 3 : document professionnel (selon le statut) -->
                     @if(isset($requiresProDoc) && $requiresProDoc)
                     <div class="mb-4">
                         <label class="form-label fw-bold mb-3">
-                            4. Document professionnel *
+                            3. Document professionnel *
                             <span class="text-muted fw-normal ms-2" style="font-size: 0.85rem;">
                                 @if(isset($proDocType) && $proDocType === 'kbis')
                                     (Extrait Kbis - requis pour les entreprises)
@@ -1048,8 +942,8 @@
                                 </div>
                             @endif
                             <button type="submit" class="btn-verify verification-submit-btn" id="submitVerificationBtn" {{ (isset($missingFields) && count($missingFields) > 0) ? 'disabled' : '' }}>
-                                <i class="fas fa-lock"></i>
-                                <span>Continuer vers le paiement · 5 €</span>
+                                <i class="fas fa-paper-plane"></i>
+                                <span>Envoyer ma demande de vérification</span>
                             </button>
                         </div>
                     </div>
@@ -1119,13 +1013,6 @@
                             </div>
                         </div>
                         @endif
-                        <div class="col-6 col-md-3">
-                            <div class="text-center p-2" style="background: white; border-radius: 8px; border: 1px solid #e2e8f0;">
-                                <i class="fas fa-camera d-block mb-1" style="color: #6366f1;"></i>
-                                <small class="text-muted d-block">Selfie</small>
-                                <i class="fas fa-check-circle text-success" style="font-size: 0.75rem;"></i>
-                            </div>
-                        </div>
                         @if($verification->professional_document)
                         <div class="col-6 col-md-3">
                             <div class="text-center p-2" style="background: white; border-radius: 8px; border: 1px solid #e2e8f0;">
@@ -1365,66 +1252,15 @@
     setupFilePreview('page_document_front_camera', 'pageFrontPreview', 'pageFrontZone');
     setupFilePreview('page_document_back', 'pageBackPreview', 'pageBackZone');
     setupFilePreview('page_document_back_camera', 'pageBackPreview', 'pageBackZone');
-    setupFilePreview('page_selfie', 'pageSelfiePreview', 'pageSelfieZone');
-    setupFilePreview('page_selfie_camera', 'pageSelfiePreview', 'pageSelfieZone');
     setupFilePreview('page_professional_document', 'pageProDocPreview', 'pageProDocZone');
 
     // Resubmission form
     setupFilePreview('resub_document_front', 'resubFrontPreview', 'resubFrontZone');
     setupFilePreview('resub_document_back', 'resubBackPreview', 'resubBackZone');
-    setupFilePreview('resub_selfie', 'resubSelfiePreview', 'resubSelfieZone');
     setupFilePreview('resub_professional_document', 'resubProDocPreview', 'resubProDocZone');
 
     // Fallback full resubmission form
     setupFilePreview('resub_all_document_front', 'resubAllFrontPreview', 'resubFrontZoneAll');
-    setupFilePreview('resub_all_selfie', 'resubAllSelfiePreview', 'resubSelfieZoneAll');
-
-    function setVerificationPaymentButtonLoading(button, loadingText) {
-        if (!button) return;
-        button.disabled = true;
-        button.dataset.originalHtml = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>' + loadingText;
-    }
-
-    function restoreVerificationPaymentButton(button) {
-        if (!button) return;
-        button.disabled = false;
-        if (button.dataset.originalHtml) {
-            button.innerHTML = button.dataset.originalHtml;
-        }
-    }
-
-    function showVerificationPaymentError(message) {
-        alert(message || 'Impossible de lancer le paiement. Veuillez réessayer.');
-    }
-
-    function startVerificationStripePayment(verificationId, button) {
-        setVerificationPaymentButtonLoading(button, 'Redirection sécurisée...');
-
-        fetch('{{ route("verification.create.payment") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify({ verification_id: verificationId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.checkout_url) {
-                window.location.href = data.checkout_url;
-                return;
-            }
-
-            restoreVerificationPaymentButton(button);
-            showVerificationPaymentError(data.message);
-        })
-        .catch(() => {
-            restoreVerificationPaymentButton(button);
-            showVerificationPaymentError('Erreur de connexion au service de paiement.');
-        });
-    }
 
     // Custom form validation — browser native validation fails silently on hidden inputs
     document.querySelectorAll('form[action*="verification"]').forEach(function(form) {
@@ -1461,7 +1297,6 @@
                 if (!input.files || input.files.length === 0) {
                     const zone = input.closest('.upload-zone');
                     const label = input.name === 'document_front' ? 'le recto du document' 
-                                : input.name === 'selfie' ? 'votre selfie avec le document'
                                 : input.name === 'professional_document' ? 'le document professionnel'
                                 : input.name === 'document_back' ? 'le verso du document'
                                 : input.name;
@@ -1481,11 +1316,6 @@
                         inputs: ['page_document_front', 'page_document_front_camera'],
                         label: frontLabel,
                         zone: document.getElementById('pageFrontZone')
-                    },
-                    {
-                        inputs: ['page_selfie', 'page_selfie_camera'],
-                        label: 'votre selfie avec le document',
-                        zone: document.getElementById('pageSelfieZone')
                     }
                 ];
 

@@ -245,6 +245,12 @@
                         {{ $docTypes[$verification->document_type] ?? $verification->document_type }}
                     </span>
                 </div>
+                @if($verification->isFree())
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Frais</span>
+                    <span><span class="badge bg-success">Vérification gratuite</span></span>
+                </div>
+                @else
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Montant payé</span>
                     <span class="fw-semibold text-success">{{ number_format($verification->payment_amount, 2) }}€</span>
@@ -259,6 +265,7 @@
                         @endif
                     </span>
                 </div>
+                @endif
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Soumis le</span>
                     <span class="fw-semibold">{{ $verification->submitted_at ? $verification->submitted_at->format('d/m/Y H:i') : ($verification->created_at ? $verification->created_at->format('d/m/Y H:i') : '-') }}</span>
@@ -399,7 +406,8 @@
                         </div>
                     </div>
 
-                    {{-- SELFIE --}}
+                    {{-- SELFIE : plus demandé depuis le 20/11/2026, affiché pour les demandes anciennes --}}
+                    @if($verification->selfie)
                     @php $ss = $verification->selfie_status ?? 'pending'; @endphp
                     <div class="col-md-6">
                         <div class="doc-review-card status-{{ $ss }}">
@@ -449,6 +457,8 @@
                             @endif
                         </div>
                     </div>
+
+                    @endif
 
                     {{-- DOCUMENT PROFESSIONNEL (Kbis / SIRENE) --}}
                     @if($verification->professional_document || ($verification->user && $verification->user->isProfessionnel()))
@@ -571,7 +581,6 @@
                     </div>
                     <div class="col-md-6">
                         <ul class="list-unstyled mb-0 small">
-                            <li class="mb-2"><i class="fas fa-check-circle text-muted me-2"></i>Le selfie correspond à la photo du document</li>
                             <li class="mb-2"><i class="fas fa-check-circle text-muted me-2"></i>Aucune modification ou falsification visible</li>
                             <li class="mb-2"><i class="fas fa-check-circle text-muted me-2"></i>Kbis/SIRENE valide pour les professionnels</li>
                         </ul>
@@ -598,8 +607,6 @@
                 <input type="hidden" name="document_front_rejection_reason" id="return_document_front_rejection_reason">
                 <input type="hidden" name="document_back_status" id="return_document_back_status">
                 <input type="hidden" name="document_back_rejection_reason" id="return_document_back_rejection_reason">
-                <input type="hidden" name="selfie_status" id="return_selfie_status">
-                <input type="hidden" name="selfie_rejection_reason" id="return_selfie_rejection_reason">
                 <input type="hidden" name="professional_document_status" id="return_professional_document_status">
                 <input type="hidden" name="professional_document_rejection_reason" id="return_professional_document_rejection_reason">
                 <div class="modal-body">
@@ -618,7 +625,6 @@
 
                     <div class="d-flex flex-wrap gap-2">
                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('return_admin_message').value = 'Certains de vos documents ne sont pas conformes. Veuillez les remplacer par des versions lisibles et valides.'">Documents non conformes</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('return_admin_message').value = 'Votre selfie de vérification n\'est pas assez clair. Veuillez reprendre la photo dans de bonnes conditions de luminosité.'">Selfie à refaire</button>
                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('return_admin_message').value = 'Veuillez fournir votre document professionnel (Kbis ou avis SIRENE) pour compléter votre vérification.'">Doc pro requis</button>
                     </div>
                 </div>
@@ -656,7 +662,6 @@
 
                     <div class="d-flex flex-wrap gap-2">
                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('rejection_reason').value = 'Document illisible ou trop flou. Veuillez soumettre des images de meilleure qualité.'">Document illisible</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('rejection_reason').value = 'Le selfie ne correspond pas à la photo du document d\'identité.'">Selfie non concordant</button>
                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('rejection_reason').value = 'Document expiré. Veuillez fournir un document d\'identité valide.'">Document expiré</button>
                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('rejection_reason').value = 'Les informations du document ne correspondent pas aux informations du profil.'">Infos incorrectes</button>
                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('rejection_reason').value = 'Document professionnel (Kbis/SIRENE) manquant ou invalide.'">Doc pro manquant</button>
@@ -716,8 +721,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var returnModal = document.getElementById('returnModal');
     if (returnModal) {
         returnModal.addEventListener('show.bs.modal', function() {
-            var fields = ['document_front_status', 'document_back_status', 'selfie_status', 'professional_document_status'];
-            var reasonFields = ['document_front_rejection_reason', 'document_back_rejection_reason', 'selfie_rejection_reason', 'professional_document_rejection_reason'];
+            var fields = ['document_front_status', 'document_back_status', 'professional_document_status'];
+            var reasonFields = ['document_front_rejection_reason', 'document_back_rejection_reason', 'professional_document_rejection_reason'];
             
             var approvedCount = 0;
             var rejectedCount = 0;

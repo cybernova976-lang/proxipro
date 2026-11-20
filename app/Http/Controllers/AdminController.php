@@ -1585,9 +1585,8 @@ class AdminController extends Controller
                 'status' => 'approved',
                 'document_front_status' => 'approved',
                 'document_back_status' => $verification->document_back ? 'approved' : $verification->document_back_status,
-                'selfie_status' => 'approved',
+                'selfie_status' => $verification->selfie ? 'approved' : $verification->selfie_status,
                 'professional_document_status' => $verification->professional_document ? 'approved' : $verification->professional_document_status,
-                'payment_status' => 'paid',
                 'reviewed_at' => now(),
                 'reviewed_by' => \Auth::id(),
             ]);
@@ -1636,7 +1635,7 @@ class AdminController extends Controller
             'rejection_reason' => $request->rejection_reason,
             'document_front_status' => 'rejected',
             'document_back_status' => $verification->document_back ? 'rejected' : $verification->document_back_status,
-            'selfie_status' => 'rejected',
+            'selfie_status' => $verification->selfie ? 'rejected' : $verification->selfie_status,
             'professional_document_status' => $verification->professional_document ? 'rejected' : $verification->professional_document_status,
             'reviewed_at' => now(),
             'reviewed_by' => \Auth::id(),
@@ -1677,7 +1676,8 @@ class AdminController extends Controller
             'document_front_rejection_reason' => 'nullable|string|max:500',
             'document_back_status' => 'nullable|in:approved,rejected,pending',
             'document_back_rejection_reason' => 'nullable|string|max:500',
-            'selfie_status' => 'required|in:approved,rejected,pending',
+            // Le selfie n'est plus demandé : il n'existe que sur les demandes anciennes.
+            'selfie_status' => 'nullable|in:approved,rejected,pending',
             'selfie_rejection_reason' => 'nullable|string|max:500',
             'professional_document_status' => 'nullable|in:approved,rejected,pending',
             'professional_document_rejection_reason' => 'nullable|string|max:500',
@@ -1689,8 +1689,6 @@ class AdminController extends Controller
             $updateData = [
                 'document_front_status' => $request->document_front_status,
                 'document_front_rejection_reason' => $request->document_front_status === 'rejected' ? $request->document_front_rejection_reason : null,
-                'selfie_status' => $request->selfie_status,
-                'selfie_rejection_reason' => $request->selfie_status === 'rejected' ? $request->selfie_rejection_reason : null,
                 'admin_message' => $request->admin_message,
                 'reviewed_at' => now(),
                 'reviewed_by' => \Auth::id(),
@@ -1715,10 +1713,7 @@ class AdminController extends Controller
                     $this->moveVerificationDocsToPerma($verification);
                 }
 
-                $verification->update([
-                    'status' => 'approved',
-                    'payment_status' => 'paid',
-                ]);
+                $verification->update(['status' => 'approved']);
 
                 $user = $verification->user;
                 $user->update([
@@ -1806,16 +1801,6 @@ class AdminController extends Controller
                 $updateData['document_back_status'] = 'rejected';
                 $updateData['document_back_rejection_reason'] = $request->input('document_back_rejection_reason') ?: $request->admin_message;
             }
-        }
-
-        // Selfie
-        $selfieStatus = $request->input('selfie_status', $verification->selfie_status);
-        if ($selfieStatus === 'approved') {
-            $updateData['selfie_status'] = 'approved';
-            $updateData['selfie_rejection_reason'] = null;
-        } else {
-            $updateData['selfie_status'] = 'rejected';
-            $updateData['selfie_rejection_reason'] = $request->input('selfie_rejection_reason') ?: $request->admin_message;
         }
 
         // Document professionnel

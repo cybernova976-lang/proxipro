@@ -13,11 +13,11 @@ class CommercialPolicyConsistencyFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_profile_verification_has_one_price_and_card_only_payment(): void
+    public function test_profile_verification_is_free_everywhere_it_is_announced(): void
     {
-        $this->assertSame(5.0, IdentityVerification::getVerificationPrice('profile_verification'));
-        $this->assertSame(5.0, VerificationRequest::getVerificationPrice('profile_verification'));
-        $this->assertSame(500, config('admin.pricing.profile_verification.price_eur'));
+        $this->assertSame(0.0, IdentityVerification::getVerificationPrice('profile_verification'));
+        $this->assertSame(0.0, VerificationRequest::getVerificationPrice('profile_verification'));
+        $this->assertSame(0, config('admin.pricing.profile_verification.price_eur'));
         $this->assertNull(config('admin.pricing.profile_verification.price_points'));
         $this->assertFalse(IdentityVerification::supportsPointsPayment('profile_verification'));
 
@@ -26,16 +26,17 @@ class CommercialPolicyConsistencyFeatureTest extends TestCase
         $this->actingAs($user)
             ->get(route('public.provider-offers'))
             ->assertOk()
-            ->assertSee('5,00 €')
-            ->assertSee('Le contrôle d’identité se règle par carte')
+            ->assertSee('contrôle d’identité compris')
+            ->assertDontSee('pour le contrôle d’identité du profil')
+            ->assertDontSee('se règle par carte')
             ->assertDontSee('Satisfait ou remboursé');
 
         $this->actingAs($user)
             ->getJson(route('verification.status'))
             ->assertOk()
-            ->assertJsonPath('profile_verification_price', 5)
+            ->assertJsonPath('profile_verification_price', 0)
             ->assertJsonMissingPath('profile_verification_points')
-            ->assertJsonPath('profile_verification_payment_methods.0', 'card');
+            ->assertJsonPath('profile_verification_payment_methods', []);
     }
 
     public function test_messaging_does_not_claim_unimplemented_end_to_end_encryption(): void

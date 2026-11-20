@@ -15,10 +15,18 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Stripe\Checkout\Session;
 use Stripe\Stripe;
+
+/**
+ * Vérification de profil. Depuis le 20/11/2026 elle est gratuite et ne demande
+ * plus de selfie : les documents envoyés partent directement en examen. Le
+ * retour de paiement Stripe ne sert plus qu'aux paiements ouverts avant cette date.
+ */
 use Throwable;
 
 class VerificationController extends Controller
 {
+    private const SUBMITTED_MESSAGE = 'Votre demande de vérification a été envoyée. Vous serez notifié dès qu’elle aura été examinée.';
+
     public function __construct(private readonly IdentityVerificationPaymentService $verificationPayments)
     {
         $this->middleware('auth');
@@ -89,8 +97,7 @@ class VerificationController extends Controller
             'has_pending_payment' => (bool) $pendingPayment,
             'pending_verification_id' => $pendingPayment?->id,
             'profile_verification_price' => IdentityVerification::getVerificationPrice('profile_verification'),
-            'profile_verification_payment_methods' => ['card'],
-            'service_provider_price' => IdentityVerification::getVerificationPrice('service_provider'),
+            'profile_verification_payment_methods' => [],
         ]);
     }
 
@@ -147,23 +154,12 @@ class VerificationController extends Controller
             ], 400);
         }
 
-        // Pour service_provider, vérifier que le profil est vérifié
-        if ($request->type === 'service_provider' && ! $user->is_verified) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vous devez d\'abord vérifier votre profil.',
-                'need_profile_verification' => true,
-            ], 400);
-        }
-
-        $price = IdentityVerification::getVerificationPrice($request->type);
         try {
-            $verification = $this->createAwaitingPaymentVerification(
+            $verification = $this->createSubmittedVerification(
                 $user,
                 $request->type,
                 $request->document_type,
-                $files,
-                $price
+                $files
             );
         } catch (Throwable $e) {
             Log::error('Unable to prepare identity verification.', [
@@ -182,8 +178,9 @@ class VerificationController extends Controller
         return response()->json([
             'success' => true,
             'verification_id' => $verification->id,
-            'message' => 'Vos documents ont bien été enregistrés.',
-            'price' => $price,
+            'message' => self::SUBMITTED_MESSAGE,
+            'submitted' => true,
+            'price' => 0,
         ]);
     }
 
@@ -210,7 +207,7 @@ class VerificationController extends Controller
 
         // If no specific documents are rejected (fallback full resubmit), allow all main docs
         if (empty($rejectedFields)) {
-            $rejectedFields = ['document_front', 'selfie'];
+            $rejectedFields = ['document_front'];
             if ($verification->document_back) {
                 $rejectedFields[] = 'document_back';
             }
@@ -222,11 +219,7 @@ class VerificationController extends Controller
         // Build validation rules only for rejected documents
         $rules = [];
         foreach ($rejectedFields as $field) {
-            if ($field === 'selfie') {
-                $rules[$field] = 'required|image|max:8192';
-            } else {
-                $rules[$field] = 'required|file|mimes:jpeg,png,jpg,pdf|max:8192';
-            }
+            $rules[$field] = 'required|file|mimes:jpeg,png,jpg,pdf|max:8192';
         }
 
         $request->validate($rules);
@@ -262,96 +255,31 @@ class VerificationController extends Controller
     }
 
     /**
-     * Create Stripe payment session
+     * Demande enregistrée avant la gratuité et restée « en attente de paiement » :
+     * son auteur l'envoie à l'administration, sans frais.
      */
-    public function createPaymentSession(Request $request)
+    public function submitAwaiting()
     {
-        $request->validate([
-            'verification_id' => 'required|exists:identity_verifications,id',
-        ]);
-
         $user = Auth::user();
-        $missingFields = $this->getProfileMissingFields($user);
-
-        if ($missingFields !== []) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Votre profil doit être entièrement complété avant le paiement et l’envoi de la demande.',
-                'missing_profile_fields' => array_column($missingFields, 'label'),
-                'redirect' => route('profile.edit'),
-            ], 422);
+        if ($this->getProfileMissingFields($user) !== []) {
+            return redirect()->route('verification.index')
+                ->with('error', 'Complétez toutes les informations de votre profil avant d’envoyer votre demande.');
         }
 
-        $verification = IdentityVerification::where('id', $request->verification_id)
-            ->where('user_id', $user->id)
-            ->where('payment_status', 'pending')
-            ->firstOrFail();
-
-        $stripeSecret = config('services.stripe.secret');
-        if (! $stripeSecret) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Le paiement est momentanément indisponible. Veuillez réessayer plus tard.',
-            ], 503);
+        $verification = IdentityVerification::where('user_id', $user->id)
+            ->where('status', 'awaiting_payment')->latest()->first();
+        if (! $verification) {
+            return redirect()->route('verification.index')->with('error', 'Aucune demande n’attend d’être envoyée.');
         }
 
-        Stripe::setApiKey($stripeSecret);
+        $verification->forceFill([
+            'payment_amount' => 0,
+            'payment_status' => 'paid',
+            'status' => 'pending',
+            'submitted_at' => now(),
+        ])->save();
 
-        $amount = IdentityVerification::getVerificationPrice($verification->type);
-        if ((float) $verification->payment_amount !== (float) $amount) {
-            $verification->update(['payment_amount' => $amount]);
-        }
-
-        $priceLabel = number_format((float) $amount, 2, ',', ' ').'€';
-        $productName = $verification->type === 'profile_verification'
-            ? "Vérification de profil Prokejem ({$priceLabel})"
-            : "Badge Prestataire Vérifié Prokejem ({$priceLabel})";
-
-        try {
-            $session = Session::create([
-                'payment_method_types' => ['card'],
-                'line_items' => [[
-                    'price_data' => [
-                        'currency' => 'eur',
-                        'product_data' => [
-                            'name' => $productName,
-                            'description' => 'Frais de vérification pour '.$user->name,
-                        ],
-                        'unit_amount' => (int) round($amount * 100),
-                    ],
-                    'quantity' => 1,
-                ]],
-                'mode' => 'payment',
-                'success_url' => route('verification.payment.success', ['id' => $verification->id]).'?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url' => route('verification.payment.cancel', ['id' => $verification->id]),
-                'customer_email' => $user->email,
-                'client_reference_id' => (string) $verification->id,
-                'metadata' => [
-                    'verification_id' => $verification->id,
-                    'user_id' => $user->id,
-                    'type' => 'identity_verification',
-                    'verification_type' => $verification->type,
-                    'expected_amount_cents' => (int) round($amount * 100),
-                    'expected_currency' => 'eur',
-                ],
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'checkout_url' => $session->url,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Unable to create verification Stripe checkout.', [
-                'verification_id' => $verification->id,
-                'user_id' => $user->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Impossible d’ouvrir le paiement sécurisé. Veuillez réessayer.',
-            ], 500);
-        }
+        return redirect()->route('verification.index')->with('success', self::SUBMITTED_MESSAGE);
     }
 
     /**
@@ -395,11 +323,8 @@ class VerificationController extends Controller
             return redirect()->route('profile.show')->with('error', 'Le paiement n\'a pas pu être validé. Votre demande n\'a pas été envoyée à l\'administration.');
         }
 
-        $message = $verification->type === 'profile_verification'
-            ? 'Paiement reçu ! Votre demande de vérification de profil a été envoyée. Vous serez notifié une fois validée.'
-            : 'Paiement reçu ! Votre demande de badge Prestataire Particulier Vérifié a été envoyée. Vous serez notifié une fois validée.';
-
-        return redirect()->route('profile.show')->with('success', $message);
+        return redirect()->route('profile.show')
+            ->with('success', 'Paiement reçu ! Votre demande de vérification de profil a été envoyée. Vous serez notifié une fois validée.');
     }
 
     /**
@@ -415,11 +340,11 @@ class VerificationController extends Controller
 
         if ($verification->payment_status === 'paid') {
             return redirect()->route('profile.show')
-                ->with('error', 'Cette demande a déjà été payée et transmise à l’administration.');
+                ->with('error', 'Cette demande a déjà été transmise à l’administration.');
         }
 
         return redirect()->route('verification.index')
-            ->with('error', 'Paiement annulé. Vos documents sont conservés afin que vous puissiez reprendre le paiement.');
+            ->with('success', 'Paiement annulé. La vérification est désormais gratuite : envoyez votre demande sans rien payer.');
     }
 
     /**
@@ -449,13 +374,7 @@ class VerificationController extends Controller
         }
 
         try {
-            $this->createAwaitingPaymentVerification(
-                $user,
-                'profile_verification',
-                $request->document_type,
-                $files,
-                IdentityVerification::getVerificationPrice('profile_verification')
-            );
+            $this->createSubmittedVerification($user, 'profile_verification', $request->document_type, $files);
         } catch (Throwable $e) {
             Log::error('Unable to prepare identity verification.', [
                 'user_id' => $user->id,
@@ -469,7 +388,7 @@ class VerificationController extends Controller
                 ->with('error', 'Impossible d’enregistrer vos documents. Veuillez réessayer.');
         }
 
-        return redirect()->route('verification.index')->with('success', 'Vos documents ont bien été enregistrés.');
+        return redirect()->route('verification.index')->with('success', self::SUBMITTED_MESSAGE);
     }
 
     /**
@@ -486,7 +405,7 @@ class VerificationController extends Controller
         if ($verification) {
             if ($verification->payment_status === 'paid') {
                 return redirect()->route('verification.index')
-                    ->with('error', 'Une demande payée et transmise ne peut plus être annulée.');
+                    ->with('error', 'Une demande transmise à l’administration ne peut plus être annulée.');
             }
 
             $this->deleteVerificationFiles($verification);
@@ -506,12 +425,10 @@ class VerificationController extends Controller
             'document_front_camera' => $image,
             'document_back' => $imageOrPdf,
             'document_back_camera' => $image,
-            'selfie' => $image,
-            'selfie_camera' => $image,
         ];
 
         if ($includeType) {
-            $rules['type'] = 'required|in:profile_verification,service_provider';
+            $rules['type'] = 'required|in:profile_verification';
         }
 
         if (IdentityVerification::requiresProfessionalDocument($user)) {
@@ -529,14 +446,10 @@ class VerificationController extends Controller
         $back = $request->document_type === 'passport'
             ? null
             : ($request->file('document_back') ?: $request->file('document_back_camera'));
-        $selfie = $request->file('selfie') ?: $request->file('selfie_camera');
 
         $errors = [];
         if (! $front) {
             $errors['document_front'] = 'Ajoutez la page d’identité ou le recto de votre document.';
-        }
-        if (! $selfie) {
-            $errors['selfie'] = 'Ajoutez une photo de vous tenant votre document.';
         }
         if ($errors) {
             throw ValidationException::withMessages($errors);
@@ -545,22 +458,25 @@ class VerificationController extends Controller
         return [
             'document_front' => $front,
             'document_back' => $back,
-            'selfie' => $selfie,
             'professional_document' => $request->file('professional_document'),
             'professional_document_type' => IdentityVerification::getRequiredProfessionalDocumentType($user),
         ];
     }
 
-    private function createAwaitingPaymentVerification($user, string $type, string $documentType, array $files, float $price): IdentityVerification
+    /**
+     * Enregistre la demande et la transmet aussitôt à l'administration : gratuite,
+     * sans étape de paiement, sans selfie.
+     */
+    private function createSubmittedVerification($user, string $type, string $documentType, array $files): IdentityVerification
     {
         $preparedDocuments = [];
-        foreach (['document_front', 'document_back', 'selfie', 'professional_document'] as $field) {
+        foreach (['document_front', 'document_back', 'professional_document'] as $field) {
             if ($files[$field]) {
                 $preparedDocuments[$field] = $this->prepareDatabaseDocument($files[$field], $field);
             }
         }
 
-        return DB::transaction(function () use ($user, $type, $documentType, $files, $price, $preparedDocuments) {
+        return DB::transaction(function () use ($user, $type, $documentType, $files, $preparedDocuments) {
             $verification = IdentityVerification::create([
                 'user_id' => $user->id,
                 'type' => $type,
@@ -569,15 +485,14 @@ class VerificationController extends Controller
                 'document_front_status' => 'pending',
                 'document_back' => $preparedDocuments['document_back']['path'] ?? null,
                 'document_back_status' => 'pending',
-                'selfie' => $preparedDocuments['selfie']['path'],
-                'selfie_status' => 'pending',
                 'professional_document' => $preparedDocuments['professional_document']['path'] ?? null,
                 'professional_document_type' => $files['professional_document_type'],
                 'professional_document_status' => 'pending',
-                'payment_amount' => $price,
-                'payment_status' => 'pending',
-                'status' => 'awaiting_payment',
-                'submitted_at' => null,
+                // Rien à régler : la demande entre directement dans la file d'examen.
+                'payment_amount' => 0,
+                'payment_status' => 'paid',
+                'status' => 'pending',
+                'submitted_at' => now(),
             ]);
 
             foreach ($preparedDocuments as $field => $prepared) {

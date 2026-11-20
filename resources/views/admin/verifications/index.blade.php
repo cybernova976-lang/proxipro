@@ -162,8 +162,13 @@
                                 <small>{{ $docTypes[$v->document_type] ?? $v->document_type }}</small>
                             </td>
                             <td>
+                                @if($v->isFree() && $v->isPaid())
+                                    <span class="badge bg-success bg-opacity-10 text-success"><i class="fas fa-check-circle me-1"></i>Gratuit</span>
+                                @else
                                 <span class="fw-semibold">{{ number_format($v->payment_amount, 2) }}€</span>
-                                @if($v->isPaid())
+                                @endif
+                                @if($v->isFree() && $v->isPaid())
+                                @elseif($v->isPaid())
                                     <span class="badge bg-success bg-opacity-10 text-success"><i class="fas fa-check-circle me-1"></i>Payé</span>
                                 @else
                                     <span class="badge bg-warning bg-opacity-10 text-warning"><i class="fas fa-clock me-1"></i>Non payé</span>

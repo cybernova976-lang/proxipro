@@ -16,6 +16,19 @@
         </button>
     </form>
 @elseif($pkCanFollow)
+    <span class="pk-alert-slot" data-pk-alert>
+    <template data-pk-alert-done>
+        <form method="POST" action="__STOP_URL__" class="pk-follow"
+              data-pk-confirm="Ne plus être prévenu des nouvelles offres de {{ $pkName }} ?">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="pk-save" aria-pressed="true"
+                    aria-label="Ne plus être prévenu des nouvelles offres de {{ $pkName }}"
+                    title="Alerte active. Cliquez pour ne plus être prévenu des offres de {{ $pkName }}">
+                <i class="fas fa-bell" aria-hidden="true"></i>
+            </button>
+        </form>
+    </template>
     <form method="POST" action="{{ route('saved-searches.store') }}" class="pk-follow">
         @csrf
         <input type="hidden" name="provider" value="{{ $pkAuthor->id }}">
@@ -25,4 +38,5 @@
             <i class="far fa-bell" aria-hidden="true"></i>
         </button>
     </form>
+    </span>
 @endif

@@ -95,13 +95,23 @@ class IdentityVerification extends Model
     }
 
     /**
+     * Demande sans frais. La vérification de profil est gratuite depuis le
+     * 20/11/2026 : une demande gratuite porte un montant nul et le statut de
+     * paiement « paid » (rien à régler), ce qui la place dans la file de l'administration.
+     */
+    public function isFree(): bool
+    {
+        return (float) $this->payment_amount === 0.0;
+    }
+
+    /**
      * Check if any document was rejected
      */
     public function hasRejectedDocuments(): bool
     {
+        // Le selfie n'est plus demandé (20/11/2026) : il ne bloque plus aucune demande.
         return $this->document_front_status === 'rejected'
             || $this->document_back_status === 'rejected'
-            || $this->selfie_status === 'rejected'
             || $this->professional_document_status === 'rejected';
     }
 
@@ -110,8 +120,8 @@ class IdentityVerification extends Model
      */
     public function allDocumentsApproved(): bool
     {
-        $allGood = $this->document_front_status === 'approved'
-            && $this->selfie_status === 'approved';
+        // Le selfie n'est plus demandé (20/11/2026) : il ne conditionne plus rien.
+        $allGood = $this->document_front_status === 'approved';
         
         if ($this->document_back) {
             $allGood = $allGood && $this->document_back_status === 'approved';
@@ -133,11 +143,10 @@ class IdentityVerification extends Model
         $labels = [
             'document_front' => 'Recto du document d\'identité',
             'document_back' => 'Verso du document d\'identité',
-            'selfie' => 'Selfie de vérification',
             'professional_document' => $this->getProfessionalDocumentLabel(),
         ];
         
-        foreach (['document_front', 'document_back', 'selfie', 'professional_document'] as $field) {
+        foreach (['document_front', 'document_back', 'professional_document'] as $field) {
             if ($this->{$field . '_status'} === 'rejected') {
                 $rejected[] = [
                     'field' => $field,
@@ -183,14 +192,13 @@ class IdentityVerification extends Model
         return null;
     }
 
-    // Prix de vérification selon le type (en euros)
+    /**
+     * Prix de la vérification, en euros : gratuite depuis le 20/11/2026
+     * (décision du fondateur). Aucun paiement n'est demandé ni proposé.
+     */
     public static function getVerificationPrice($type)
     {
-        return match($type) {
-            'profile_verification' => 5.00,
-            'service_provider' => 10.00,
-            default => 5.00,
-        };
+        return 0.00;
     }
 
     // Coût en points pour la vérification
@@ -200,8 +208,7 @@ class IdentityVerification extends Model
     }
 
     /**
-     * La verification d'identite du profil se regle uniquement par carte.
-     * Le programme de points est supprimé pour tous les types de vérification.
+     * La vérification de profil est gratuite ; le programme de points est supprimé.
      */
     public static function supportsPointsPayment($type): bool
     {

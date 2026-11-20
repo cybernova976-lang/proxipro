@@ -67,12 +67,23 @@ class FeedLandmarksTest extends TestCase
         $this->assertStringContainsString('Mes favoris', $zone);
     }
 
-    public function test_zone_has_no_counter_and_no_inline_style(): void
+    public function test_zone_shows_no_number_except_the_count_of_active_alerts_and_no_inline_style(): void
     {
-        $zone = $this->landmarks($this->client());
+        $user = $this->client();
+        $zone = $this->landmarks($user);
         $visible = preg_replace('/<details class="pk-landmarks__how".*$/s', '', $zone);
 
+        // Sans alerte : aucun chiffre dans la zone, le compteur de « Mes alertes » est masqué et vide.
         $this->assertDoesNotMatchRegularExpression('/>[^<]*\d[^<]*</', strip_tags($visible, '<a><span><li><h3><summary><button>'));
+        $this->assertStringNotContainsString('style=', $zone);
+        $this->assertMatchesRegularExpression('/data-pk-alert-count\s+hidden/', $zone);
+
+        // Demandé par le fondateur le 20/11/2026 : « Mes alertes » affiche le nombre d'alertes actives.
+        SavedSearch::create(['user_id' => $user->id, 'name' => 'Offres à Mayotte', 'service_type' => 'offres', 'country' => 'Mayotte', 'territory_code' => '976', 'is_active' => true]);
+        SavedSearch::create(['user_id' => $user->id, 'name' => 'Alerte arrêtée', 'is_active' => false]);
+        $zone = $this->landmarks($user->fresh());
+        $this->assertStringContainsString('<span data-pk-alert-count-value>1</span>', $zone);
+        $this->assertDoesNotMatchRegularExpression('/data-pk-alert-count\s+hidden/', $zone);
         $this->assertStringNotContainsString('style=', $zone);
     }
 }

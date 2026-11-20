@@ -1,0 +1,35 @@
+/* Confirmation visible d'une alerte activée (public/js/alert-forms.js).
+   Chargé par le gabarit principal : sert au flux comme aux fiches d'offres. */
+
+/* L'enveloppe d'un bouton d'alerte ne doit pas changer la mise en page. */
+.pk-alert-slot { display: contents; }
+
+/* Le bouton qui vient de passer à l'état « alerte active » se signale un instant. */
+.pk-alert-confirmed button,
+.pk-alert-confirmed a,
+.pk-alert-confirmed .pk-landmarks__done { animation: pk-alert-pulse 1s ease-out 1; }
+
+@keyframes pk-alert-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(67, 56, 202, .5); }
+    100% { box-shadow: 0 0 0 14px rgba(67, 56, 202, 0); }
+}
+
+/* Message de confirmation des pages qui n'ont pas celui du flux. */
+.pk-alert-toast {
+    position: fixed; left: 50%; bottom: 24px; z-index: 2000;
+    max-width: min(92vw, 520px); padding: 12px 18px; border-radius: 12px;
+    background: #312e81; color: #fff; font-size: .92rem; line-height: 1.45; text-align: center;
+    box-shadow: 0 12px 30px rgba(49, 46, 129, .28);
+    opacity: 0; transform: translate(-50%, 12px); pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+}
+.pk-alert-toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+.pk-alert-toast[data-type="error"] { background: #b91c1c; }
+
+@media (max-width: 640px) {
+    .pk-alert-toast { bottom: 88px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .pk-alert-confirmed button, .pk-alert-confirmed a, .pk-alert-confirmed .pk-landmarks__done { animation: none; }
+    .pk-alert-toast { transition: none; }
+}

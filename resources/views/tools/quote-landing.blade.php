@@ -48,7 +48,7 @@
         @else
             <a class="pk-docs__button" href="{{ route('pro.dashboard') }}">Ouvrir mon espace Pro</a>
         @endguest
-        <p class="pk-docs__note">L’activation d’un profil prestataire comprend un contrôle d’identité payant. <a href="{{ route('public.provider-offers') }}">Voir les offres et tarifs</a>.</p>
+        <p class="pk-docs__note">L’activation d’un profil prestataire comprend un contrôle d’identité, gratuit. <a href="{{ route('public.provider-offers') }}">Voir les offres et tarifs</a>.</p>
     </section>
 
     <section aria-labelledby="pk-docs-included">

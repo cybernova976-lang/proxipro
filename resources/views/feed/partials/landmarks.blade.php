@@ -1,7 +1,8 @@
 {{--
     Zone 7 · repères du rail client.
     « À faire » n'apparaît que si une ligne est réellement due (données du
-    compte préparées par FeedController dans $pkTodo). Aucun compteur.
+    compte préparées par FeedController dans $pkTodo). Un seul compteur, demandé
+    par le fondateur : le nombre d'alertes actives sur « Mes alertes ».
 --}}
 @php
     $pkIdentityLine = match (true) {
@@ -30,7 +31,10 @@
                 </li>
             @endif
             @if(! empty($pkTodo['alert']))
-                <li>
+                <li data-pk-alert>
+                    <template data-pk-alert-done>
+                        <span class="pk-landmarks__item pk-landmarks__done"><i class="fas fa-check-circle" aria-hidden="true"></i><span>Alerte activée {{ $pkTerritory->withPreposition() }}</span></span>
+                    </template>
                     <form method="POST" action="{{ route('saved-searches.store') }}" class="pk-landmarks__form">
                         @csrf
                         @foreach($pkTerritoryAlert as $pkAlertField => $pkAlertValue)
@@ -53,9 +57,7 @@
 
     <ul class="pk-landmarks__list pk-landmarks__list--links">
         <li><a class="pk-landmarks__item" href="{{ route('saved-ads.index') }}"><i class="far fa-heart" aria-hidden="true"></i><span>Mes favoris</span></a></li>
-        @if($pkHasAlerts)
-            <li><a class="pk-landmarks__item" href="{{ route('saved-searches.index') }}"><i class="far fa-bell" aria-hidden="true"></i><span>Mes alertes</span></a></li>
-        @endif
+        <li><a class="pk-landmarks__item" href="{{ route('saved-searches.index') }}"><i class="far fa-bell" aria-hidden="true"></i><span>Mes alertes</span><span class="pk-landmarks__count" data-pk-alert-count @if($pkAlertCount < 1) hidden @endif><span class="visually-hidden">Alertes actives : </span><span data-pk-alert-count-value>{{ $pkAlertCount > 0 ? $pkAlertCount : '' }}</span></span></a></li>
         <li><a class="pk-landmarks__item" href="{{ route('legal.platform-rules') }}#classement"><i class="fas fa-sort-amount-down" aria-hidden="true"></i><span>Comment les offres sont classées</span></a></li>
     </ul>
 

@@ -1083,6 +1083,12 @@
 .pk-landmarks__list--links { border-top: 1px solid var(--pk-100); padding-top: 8px; }
 .pk-landmarks__item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 8px 10px; border: 0; border-radius: 10px; background: transparent; color: var(--pk-950); font: inherit; font-size: .82rem; font-weight: 600; text-align: left; cursor: pointer; }
 .pk-landmarks__item > i { width: 18px; color: var(--pk-600); text-align: center; }
+/* Nombre d'alertes actives, sur « Mes alertes ». */
+.pk-landmarks__count { min-width: 24px; margin-left: auto; padding: 2px 8px; border-radius: 999px; background: var(--pk-600); color: #fff; font-size: .76rem; font-weight: 700; line-height: 1.5; text-align: center; }
+.pk-landmarks__count[hidden] { display: none; }
+/* Ligne « À faire » d'une alerte, une fois activée. */
+.pk-landmarks__done { color: var(--pk-700); font-weight: 650; cursor: default; }
+.pk-landmarks__done:hover { background: transparent; }
 .pk-landmarks__item:hover { background: var(--pk-50); color: var(--pk-950); }
 .pk-landmarks__item:focus-visible { outline: 3px solid var(--pk-600); outline-offset: 1px; }
 .pk-landmarks__tone--warn > i, .pk-landmarks__tone--warn { color: var(--pk-warn); }

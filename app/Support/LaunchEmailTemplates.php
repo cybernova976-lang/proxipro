@@ -42,7 +42,7 @@ class LaunchEmailTemplates
                     ),
                     self::text(
                         "VOUS PROPOSEZ VOS SERVICES\n\n"
-                        ."1. Complétez votre profil, puis activez votre profil prestataire. L’activation comprend un contrôle d’identité payant, dont le prix est indiqué sur la page « Offres et tarifs ».\n"
+                        ."1. Complétez votre profil, puis activez votre profil prestataire. L’activation comprend un contrôle d’identité, sans frais.\n"
                         ."2. Publiez vos offres. La publication est gratuite, dans la limite d’annonces actives prévue pour votre compte.\n"
                         ."3. Répondez aux demandes des clients et suivez vos échanges dans la messagerie.\n"
                         .'4. Si vous êtes un professionnel, l’espace Pro vous permet de créer vos devis et vos factures. Votre client peut accepter un devis en ligne, sans créer de compte.'
