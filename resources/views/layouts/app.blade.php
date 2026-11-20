@@ -3560,6 +3560,18 @@
             font-size: 0.875rem;
             color: var(--text-main);
             line-height: 1.2;
+            /* Nom entier tant qu'il tient ; au-delà, coupé proprement par des points de suspension. */
+            display: block;
+            max-width: 240px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        @media (max-width: 1180px) {
+            .user-name-text { max-width: 170px; }
+        }
+        @media (max-width: 1024px) {
+            .user-name-text { max-width: 130px; }
         }
         .user-type-badge {
             font-size: 0.65rem;
@@ -6704,9 +6716,9 @@
     /* Dimensions disponibles avant le rendu du header, même pendant le chargement de la page. */
     .header-user-avatar-frame {
         display: inline-flex;
-        width: 38px;
-        height: 38px;
-        flex: 0 0 38px;
+        width: 42px;
+        height: 42px;
+        flex: 0 0 42px;
         overflow: hidden;
         border-radius: 50%;
     }
@@ -6959,15 +6971,15 @@
                             <button class="user-menu-btn d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 @if(Auth::user()->avatar)
                                     <span class="header-user-avatar-frame">
-                                        <img src="{{ storage_url(Auth::user()->avatar) }}" alt="Photo de profil de {{ Auth::user()->name }}" class="header-user-avatar" width="38" height="38">
+                                        <img src="{{ storage_url(Auth::user()->avatar) }}" alt="Photo de profil de {{ Auth::user()->name }}" class="header-user-avatar" width="42" height="42">
                                     </span>
                                 @else
-                                    <div class="user-avatar-placeholder" style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #9333ea); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 700; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                    <div class="user-avatar-placeholder" style="width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #9333ea); color: white; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                         {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                                     </div>
                                 @endif
                                 <div class="d-none d-md-flex flex-column align-items-start">
-                                    <span class="user-name-text">{{ Str::limit(Auth::user()->name, 15) }}</span>
+                                    <span class="user-name-text" title="{{ Auth::user()->name }}">{{ Auth::user()->name }}</span>
                                     <span class="user-type-badge">{{ Auth::user()->getAccountTypeLabel() }}</span>
                                 </div>
                                 <i class="fas fa-chevron-down dropdown-chevron"></i>
@@ -10021,9 +10033,9 @@
             display: inline-flex;
             align-items: stretch;
             justify-content: stretch;
-            width: 38px;
-            height: 38px;
-            flex: 0 0 38px;
+            width: 42px;
+            height: 42px;
+            flex: 0 0 42px;
             aspect-ratio: 1 / 1;
             overflow: hidden;
             border: 2px solid #fff;

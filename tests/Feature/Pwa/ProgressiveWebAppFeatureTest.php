@@ -29,6 +29,23 @@ class ProgressiveWebAppFeatureTest extends TestCase
             ->assertSee('id="pwaInstallButton"', false);
     }
 
+    public function test_the_install_button_can_be_dismissed_and_the_refusal_is_remembered(): void
+    {
+        $html = $this->get(route('homepage'))->assertOk()->getContent();
+
+        // Deux actions distinctes : installer, ou ne plus proposer.
+        $this->assertMatchesRegularExpression('/<div id="pwaInstallButton" class="pwa-install-button" hidden>\s*<button type="button" id="pwaInstallAction"/', $html);
+        $this->assertStringContainsString('id="pwaInstallDismiss"', $html);
+        $this->assertStringContainsString('aria-label="Ne plus proposer l’installation de l’application"', $html);
+
+        // Le refus est retenu sur l'appareil, et lu avant d'afficher le bouton.
+        $script = (string) file_get_contents(resource_path('views/partials/pwa-install.blade.php'));
+        $this->assertStringContainsString("const DISMISS_KEY = 'pkInstallDismissedUntil';", $script);
+        $this->assertStringContainsString('window.localStorage.setItem(DISMISS_KEY', $script);
+        $this->assertStringContainsString('if (standalone || !installSurfaceAllowed || installDismissed()) return;', $script);
+        $this->assertStringContainsString("installDismiss.addEventListener('click'", $script);
+    }
+
     public function test_manifest_service_worker_offline_page_and_icons_are_production_ready(): void
     {
         $manifestPath = public_path('manifest.webmanifest');

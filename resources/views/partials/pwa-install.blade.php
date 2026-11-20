@@ -7,17 +7,56 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: .6rem;
+        gap: 0;
         min-height: 48px;
-        padding: .75rem 1rem;
+        padding: 0;
         border: 0;
         border-radius: 999px;
         color: #fff;
         background: linear-gradient(135deg, #4f46e5, #7c3aed);
         box-shadow: 0 12px 30px rgba(79, 70, 229, .32);
         font: 700 .9rem/1.2 Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
-        cursor: pointer;
         transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    /* Le bouton porte deux actions : installer, ou ne plus proposer. */
+    .pwa-install-action,
+    .pwa-install-dismiss {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 48px;
+        border: 0;
+        color: inherit;
+        background: transparent;
+        font: inherit;
+        cursor: pointer;
+    }
+
+    .pwa-install-action {
+        gap: .6rem;
+        padding: .75rem .6rem .75rem 1rem;
+        border-radius: 999px 0 0 999px;
+    }
+
+    .pwa-install-dismiss {
+        min-width: 44px;
+        padding: 0 .85rem 0 .6rem;
+        border-left: 1px solid rgba(255, 255, 255, .28);
+        border-radius: 0 999px 999px 0;
+    }
+
+    .pwa-install-dismiss:hover { background: rgba(255, 255, 255, .14); }
+
+    .pwa-install-action:focus-visible,
+    .pwa-install-dismiss:focus-visible {
+        outline: 3px solid rgba(255, 255, 255, .75);
+        outline-offset: -4px;
+    }
+
+    .pwa-install-button .pwa-install-dismiss svg {
+        width: 16px;
+        height: 16px;
     }
 
     .pwa-install-button:hover {
@@ -115,18 +154,19 @@
     }
 </style>
 
-<button
-    type="button"
-    id="pwaInstallButton"
-    class="pwa-install-button"
-    aria-label="Installer l’application Prokejem"
-    hidden
->
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <span>Installer Prokejem</span>
-</button>
+<div id="pwaInstallButton" class="pwa-install-button" hidden>
+    <button type="button" id="pwaInstallAction" class="pwa-install-action" aria-label="Installer l’application Prokejem">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Installer Prokejem</span>
+    </button>
+    <button type="button" id="pwaInstallDismiss" class="pwa-install-dismiss" aria-label="Ne plus proposer l’installation de l’application" title="Ne plus proposer">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        </svg>
+    </button>
+</div>
 
 <div
     id="pwaIosDialog"
@@ -159,6 +199,8 @@
     }
 
     const installButton = document.getElementById('pwaInstallButton');
+    const installAction = document.getElementById('pwaInstallAction');
+    const installDismiss = document.getElementById('pwaInstallDismiss');
     const iosDialog = document.getElementById('pwaIosDialog');
     const iosDialogClose = document.getElementById('pwaIosDialogClose');
     @php
@@ -168,14 +210,25 @@
     @endphp
     const installSurfaceAllowed = @json($installSurfaceAllowed);
 
-    if (!installButton || !iosDialog || !iosDialogClose) return;
+    if (!installButton || !installAction || !installDismiss || !iosDialog || !iosDialogClose) return;
+
+    // « Ne plus proposer » : le refus est retenu sur cet appareil pendant 30 jours.
+    const DISMISS_KEY = 'pkInstallDismissedUntil';
+    const DISMISS_DAYS = 30;
+    const installDismissed = () => {
+        try {
+            return Number(window.localStorage.getItem(DISMISS_KEY) || 0) > Date.now();
+        } catch (error) {
+            return false;
+        }
+    };
 
     const standalone = window.matchMedia('(display-mode: standalone)').matches
         || window.navigator.standalone === true;
     const iosDevice = /iphone|ipad|ipod/i.test(window.navigator.userAgent)
         || (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
 
-    if (standalone || !installSurfaceAllowed) return;
+    if (standalone || !installSurfaceAllowed || installDismissed()) return;
 
     let deferredInstallPrompt = null;
 
@@ -192,7 +245,7 @@
     const hideIosDialog = () => {
         iosDialog.hidden = true;
         document.body.style.overflow = '';
-        installButton.focus();
+        if (!installButton.hidden) installAction.focus();
     };
 
     window.addEventListener('beforeinstallprompt', (event) => {
@@ -203,7 +256,17 @@
 
     if (iosDevice) showInstallButton();
 
-    installButton.addEventListener('click', async () => {
+    installDismiss.addEventListener('click', () => {
+        try {
+            window.localStorage.setItem(DISMISS_KEY, String(Date.now() + DISMISS_DAYS * 24 * 60 * 60 * 1000));
+        } catch (error) {
+            // Stockage indisponible (navigation privée) : le bouton disparaît au moins pour cette page.
+        }
+        deferredInstallPrompt = null;
+        hideInstallButton();
+    });
+
+    installAction.addEventListener('click', async () => {
         if (deferredInstallPrompt) {
             deferredInstallPrompt.prompt();
             await deferredInstallPrompt.userChoice;
