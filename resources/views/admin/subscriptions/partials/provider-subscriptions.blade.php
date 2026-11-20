@@ -73,7 +73,7 @@
             <tbody>
                 @forelse($providerSubscriptions as $providerSubscription)
                     <tr>
-                        <td class="ps-4"><a href="{{ route('admin.users.show', $providerSubscription->user_id) }}" class="fw-semibold text-decoration-none">{{ $providerSubscription->user?->name ?: 'Compte supprimé' }}</a><div class="small text-muted">{{ $providerSubscription->user?->email }}</div></td>
+                        <td class="ps-4"><x-admin.user-link :user="$providerSubscription->user" class="fw-semibold" :fiche="true" /><div class="small text-muted">{{ $providerSubscription->user?->email }}</div></td>
                         <td>{{ $providerSubscription->getPlanLabel() }}<div class="small text-muted">{{ number_format((float) $providerSubscription->amount, 2, ',', ' ') }} €</div></td>
                         <td>@include('admin.subscriptions.partials.provider-state', ['subscription' => $providerSubscription])</td>
                         <td class="small">{{ optional($providerSubscription->starts_at)->format('d/m/Y') ?: '—' }} → {{ optional($providerSubscription->ends_at)->format('d/m/Y') ?: '—' }}</td>

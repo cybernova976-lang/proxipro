@@ -191,7 +191,7 @@
                                             </div>
                                         @endif
                                         <div>
-                                            <div class="fw-semibold small">{{ $pv->user->name ?? 'Utilisateur supprimé' }}</div>
+                                            <div class="fw-semibold small"><x-admin.user-link :user="$pv->user" fallback="Utilisateur supprimé" :fiche="true" /></div>
                                             <small class="text-muted">{{ $pv->user->email ?? '-' }}</small>
                                         </div>
                                     </div>
@@ -249,9 +249,7 @@
                             @foreach($latestUsers as $user)
                             <tr>
                                 <td>
-                                    <a href="{{ route('admin.users.show', $user->id) }}" class="text-decoration-none">
-                                        {{ $user->name }}
-                                    </a>
+                                    <x-admin.user-link :user="$user" :fiche="true" />
                                 </td>
                                 <td>{{ $user->email }}</td>
                                 <td>{{ $user->created_at->format('d/m/Y') }}</td>
@@ -304,7 +302,7 @@
                                 <td>
                                     <span class="badge bg-light text-dark">{{ $ad->category }}</span>
                                 </td>
-                                <td>{{ $ad->user?->name ?? 'Anonyme' }}</td>
+                                <td><x-admin.user-link :user="$ad->user" fallback="Anonyme" :fiche="true" /></td>
                                 <td>
                                     <span class="badge bg-{{ $ad->status == 'active' ? 'success' : 'warning' }}">
                                         {{ $ad->status }}

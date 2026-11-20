@@ -133,7 +133,7 @@
                                 {{ strtoupper(substr($verification->user->name, 0, 1)) }}
                             </div>
                         @endif
-                        <h6 class="mb-0">{{ $verification->user->name }}</h6>
+                        <h6 class="mb-0"><x-admin.user-link :user="$verification->user" fallback="Utilisateur supprimé" :fiche="true" /></h6>
                         <small class="text-muted">{{ $verification->user->email }}</small>
                     </div>
 

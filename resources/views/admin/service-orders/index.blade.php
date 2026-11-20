@@ -87,13 +87,13 @@
                         </td>
                         <td>
                             <div>
-                                <strong>A:</strong> {{ $order->buyer?->name ?? 'Compte supprimé' }}
+                                <strong>A:</strong> <x-admin.user-link :user="$order->buyer" :fiche="true" />
                                 @if($order->buyer?->trashed())
                                     <span class="badge text-bg-secondary ms-1">Compte supprimé</span>
                                 @endif
                             </div>
                             <div>
-                                <strong>V:</strong> {{ $order->seller?->name ?? 'Compte supprimé' }}
+                                <strong>V:</strong> <x-admin.user-link :user="$order->seller" :fiche="true" />
                                 @if($order->seller?->trashed())
                                     <span class="badge text-bg-secondary ms-1">Compte supprimé</span>
                                 @endif

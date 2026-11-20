@@ -122,7 +122,7 @@
                                             @endif
                                             <div>
                                                 <div class="fw-semibold" style="font-size:0.88rem;">{{ Str::limit($report->ad->title, 40) }}</div>
-                                                <small class="text-muted">par {{ $report->ad->user->name ?? 'Inconnu' }}</small>
+                                                <small class="text-muted">par <x-admin.user-link :user="$report->ad->user" fallback="Inconnu" :fiche="true" /></small>
                                             </div>
                                         </div>
                                     @else
@@ -131,7 +131,7 @@
                                 </td>
                                 <td class="align-middle">
                                     @if($report->reporter)
-                                        <div class="fw-semibold" style="font-size:0.88rem;">{{ $report->reporter->name }}</div>
+                                        <div class="fw-semibold" style="font-size:0.88rem;"><x-admin.user-link :user="$report->reporter" fallback="Inconnu" :fiche="true" /></div>
                                         <small class="text-muted">{{ $report->reporter->email }}</small>
                                     @else
                                         <span class="text-muted">Utilisateur supprimé</span>

@@ -24,7 +24,7 @@
                                     <a href="{{ route('admin.ads.show', $pkBoost->id) }}">#{{ $pkBoost->id }} {{ \Illuminate\Support\Str::limit($pkBoost->title, 60) }}</a>
                                     <span class="text-muted small">· {{ $pkBoost->service_type === 'demande' ? 'demande' : 'offre' }} · {{ $pkBoost->status }}</span>
                                 </td>
-                                <td>{{ $pkBoost->user?->name ?? '—' }} <span class="text-muted small">#{{ $pkBoost->user_id }}</span></td>
+                                <td><x-admin.user-link :user="$pkBoost->user" fallback="—" :fiche="true" /> <span class="text-muted small">#{{ $pkBoost->user_id }}</span></td>
                                 <td>{{ $pkBoost->pk_territory?->label ?? 'Inconnu' }}</td>
                                 <td>{{ $pkBoost->boost_type ?: '—' }}</td>
                                 <td>{{ $pkBoost->boost_end?->format('d/m/Y H:i') }}</td>

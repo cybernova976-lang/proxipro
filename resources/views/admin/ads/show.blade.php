@@ -110,7 +110,7 @@
                             {{ strtoupper(substr($ad->user->name, 0, 1)) }}
                         </div>
                         <div>
-                            <strong>{{ $ad->user->name }}</strong>
+                            <strong><x-admin.user-link :user="$ad->user" :fiche="true" /></strong>
                             <br>
                             <small class="text-muted">{{ $ad->user->email }}</small>
                         </div>

@@ -207,9 +207,7 @@
                                 @endif
                             </td>
                             <td>
-                                <a href="{{ route('admin.users.show', $user->id) }}" class="text-decoration-none">
-                                    {{ $user->name }}
-                                </a>
+                                <x-admin.user-link :user="$user" :fiche="true" />
                             </td>
                             <td class="text-end pe-4">
                                 <span class="badge bg-primary">{{ $user->ads_count }}</span>

@@ -148,7 +148,7 @@
                                     {{ strtoupper(substr($user->name, 0, 1)) }}
                                 </div>
                                 <div>
-                                    <strong>{{ $user->name }}</strong>
+                                    <strong><x-admin.user-link :user="$user" /></strong>
                                     @if($isPrincipalAdmin)
                                         <i class="fas fa-shield-alt text-warning ms-1" title="Admin Principal"></i>
                                     @endif

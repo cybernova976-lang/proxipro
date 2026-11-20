@@ -55,7 +55,7 @@
             @forelse($transactions as $transaction)
                 <tr>
                     <td class="text-nowrap">{{ $transaction->created_at?->format('d/m/Y H:i:s') }}</td>
-                    <td>{{ $transaction->user?->name ?: 'Compte supprimé' }}<div class="small text-muted">{{ $transaction->user?->email }}</div></td>
+                    <td><x-admin.user-link :user="$transaction->user" :fiche="true" /><div class="small text-muted">{{ $transaction->user?->email }}</div></td>
                     <td><code>{{ $transaction->type }}</code></td>
                     <td>{{ number_format((float) $transaction->amount, 2, ',', ' ') }} €</td>
                     <td><code class="small">{{ $transaction->stripe_session_id ?: '—' }}</code></td>

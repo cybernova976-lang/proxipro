@@ -391,7 +391,7 @@ class ProfileController extends Controller
         ])->where('id', $id)->firstOrFail();
 
         $canViewPrivateProfile = Auth::check()
-            && (Auth::id() === $user->id || (bool) (Auth::user()->is_admin ?? false));
+            && (Auth::id() === $user->id || Auth::user()->isAdmin());
         abort_if(! $user->profile_public && ! $canViewPrivateProfile, 404);
 
         // Compter la vue du profil. Le service ecarte l'auteur du profil, les

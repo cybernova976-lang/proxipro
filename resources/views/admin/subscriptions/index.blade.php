@@ -262,9 +262,7 @@
                                     {{ strtoupper(substr($user->name, 0, 1)) }}
                                 </div>
                                 <div>
-                                    <a href="{{ route('admin.users.show', $user->id) }}" class="text-decoration-none fw-bold">
-                                        {{ $user->name }}
-                                    </a>
+                                    <x-admin.user-link :user="$user" class="fw-bold" :fiche="true" />
                                     <br><small class="text-muted">{{ $user->email }}</small>
                                 </div>
                             </div>

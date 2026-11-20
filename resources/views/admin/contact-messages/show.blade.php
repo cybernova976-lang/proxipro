@@ -113,7 +113,7 @@
                 <div class="mb-3">
                     <label class="text-muted small d-block">Utilisateur inscrit</label>
                     @if($contactMessage->user)
-                        <a href="{{ route('admin.users.show', $contactMessage->user->id) }}" class="text-decoration-none">{{ $contactMessage->user->name }}</a>
+                        <x-admin.user-link :user="$contactMessage->user" :fiche="true" />
                     @else
                         <span class="text-muted">Non inscrit / Anonyme</span>
                     @endif

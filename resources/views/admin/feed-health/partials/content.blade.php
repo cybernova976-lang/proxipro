@@ -10,7 +10,7 @@
                 @foreach($pkHealth['misfiled_requests'] as $pkMisfiled)
                     <li class="py-1">
                         <a href="{{ route('ads.show', $pkMisfiled->id) }}">#{{ $pkMisfiled->id }} {{ \Illuminate\Support\Str::limit($pkMisfiled->title, 80) }}</a>
-                        <span class="text-muted small">· {{ $pkMisfiled->user?->name ?? 'auteur inconnu' }} #{{ $pkMisfiled->user_id }} · {{ $pkMisfiled->created_at?->format('d/m/Y') }}</span>
+                        <span class="text-muted small">· <x-admin.user-link :user="$pkMisfiled->user" fallback="auteur inconnu" :fiche="true" /> #{{ $pkMisfiled->user_id }} · {{ $pkMisfiled->created_at?->format('d/m/Y') }}</span>
                     </li>
                 @endforeach
             </ul>

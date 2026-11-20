@@ -51,7 +51,7 @@
                                             {{ strtoupper(substr($admin->name, 0, 1)) }}
                                         </div>
                                         <div>
-                                            <strong>{{ $admin->name }}</strong>
+                                            <strong><x-admin.user-link :user="$admin" /></strong>
                                             @if($isPrincipal)
                                                 <span class="badge bg-warning text-dark ms-1">Principal</span>
                                             @endif

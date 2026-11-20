@@ -78,7 +78,7 @@
                                 @endif
                                 <div class="flex-1">
                                     <h5 class="mb-1">{{ $report->ad->title }}</h5>
-                                    <p class="text-muted mb-2" style="font-size:0.88rem;">par <strong>{{ $report->ad->user->name ?? 'Inconnu' }}</strong> · {{ $report->ad->created_at->diffForHumans() }} · {{ $report->ad->location ?? 'N/A' }}</p>
+                                    <p class="text-muted mb-2" style="font-size:0.88rem;">par <strong><x-admin.user-link :user="$report->ad?->user" fallback="Inconnu" :fiche="true" /></strong> · {{ $report->ad->created_at->diffForHumans() }} · {{ $report->ad->location ?? 'N/A' }}</p>
                                     <p class="mb-2">{{ Str::limit($report->ad->description, 500) }}</p>
                                     <div class="d-flex gap-2 flex-wrap">
                                         @if($report->ad->price)
@@ -140,7 +140,7 @@
                         @foreach($otherReports as $other)
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
-                                <strong>{{ $other->reporter->name ?? 'Inconnu' }}</strong> —
+                                <strong><x-admin.user-link :user="$other->reporter" fallback="Inconnu" :fiche="true" /></strong> —
                                 {{ $reasonLabels[$other->reason][0] ?? $other->reason }}
                                 <small class="text-muted ms-2">{{ $other->created_at->diffForHumans() }}</small>
                             </div>
@@ -169,7 +169,7 @@
                         @else
                             <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-2" style="width:64px;height:64px;font-size:1.3rem;font-weight:700;">{{ strtoupper(substr($report->reporter->name, 0, 1)) }}</div>
                         @endif
-                        <h6 class="mb-0">{{ $report->reporter->name }}</h6>
+                        <h6 class="mb-0"><x-admin.user-link :user="$report->reporter" fallback="Inconnu" :fiche="true" /></h6>
                         <small class="text-muted">{{ $report->reporter->email }}</small>
                         <div class="mt-2">
                             <a href="{{ route('admin.users.show', $report->reporter->id) }}" class="btn btn-sm btn-outline-primary">

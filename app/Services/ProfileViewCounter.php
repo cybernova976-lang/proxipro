@@ -14,8 +14,9 @@ use Illuminate\Support\Facades\DB;
  *
  * Regles, dans l'ordre ou elles s'appliquent :
  *   1. on ne compte jamais un utilisateur qui regarde son propre profil ;
- *   2. on ne compte jamais un robot d'indexation ;
- *   3. un meme visiteur ne compte qu'une fois par profil et par jour.
+ *   2. on ne compte jamais un administrateur : il contrôle, il ne prospecte pas ;
+ *   3. on ne compte jamais un robot d'indexation ;
+ *   4. un meme visiteur ne compte qu'une fois par profil et par jour.
  *
  * L'objectif est qu'un chiffre affiche a un prestataire soit un chiffre
  * qu'il puisse croire : recharger la page ne le fait pas monter.
@@ -40,7 +41,12 @@ class ProfileViewCounter
             return false;
         }
 
-        // 2. Les robots ne comptent pas.
+        // 2. Les administrateurs ne comptent pas (ils ouvrent les profils depuis l'administration).
+        if ($viewer && $viewer->isAdmin()) {
+            return false;
+        }
+
+        // 3. Les robots ne comptent pas.
         $userAgent = (string) $request->userAgent();
         if ($userAgent === '' || preg_match(self::BOT_PATTERN, $userAgent) === 1) {
             return false;
@@ -48,7 +54,7 @@ class ProfileViewCounter
 
         $today = Carbon::today();
 
-        // 3. Une vue par visiteur, par profil et par jour.
+        // 4. Une vue par visiteur, par profil et par jour.
         //    insertOrIgnore s'appuie sur l'index unique : pas de course possible
         //    entre deux requetes simultanees, et une seule requete SQL.
         $inserted = DB::table('profile_views')->insertOrIgnore([

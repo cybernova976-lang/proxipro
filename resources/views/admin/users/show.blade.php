@@ -32,7 +32,7 @@
                 <div class="avatar-large bg-primary text-white mx-auto mb-3">
                     {{ strtoupper(substr($user->name, 0, 2)) }}
                 </div>
-                <h5 class="fw-bold mb-1">{{ $user->name }}</h5>
+                <h5 class="fw-bold mb-1"><x-admin.user-link :user="$user" /></h5>
                 <p class="text-muted mb-3">{{ $user->email }}</p>
                 
                 <div class="d-flex justify-content-center flex-wrap gap-2 mb-2">

@@ -143,7 +143,7 @@
                                         </div>
                                     @endif
                                     <div>
-                                        <div class="fw-semibold">{{ $v->user->name ?? 'Utilisateur supprimé' }}</div>
+                                        <div class="fw-semibold"><x-admin.user-link :user="$v->user" fallback="Utilisateur supprimé" :fiche="true" /></div>
                                         <small class="text-muted">{{ $v->user->email ?? '-' }}</small>
                                     </div>
                                 </div>

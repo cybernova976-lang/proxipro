@@ -155,9 +155,7 @@
                         </td>
                         <td>
                             @if($ad->user)
-                                <a href="{{ route('admin.users.show', $ad->user->id) }}" class="text-decoration-none">
-                                    {{ $ad->user->name }}
-                                </a>
+                                <x-admin.user-link :user="$ad->user" :fiche="true" />
                             @else
                                 <span class="text-muted">Anonyme</span>
                             @endif
