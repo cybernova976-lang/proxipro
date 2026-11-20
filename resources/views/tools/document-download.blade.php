@@ -54,7 +54,7 @@
                 {{ $type === 'quote' ? 'Devis' : 'Facture' }} {{ $type === 'quote' ? $document->quote_number : $document->invoice_number }}
             </h1>
             <p style="opacity: 0.8; font-size: 0.9rem; margin: 0;">
-                Votre document est pret a etre telecharge.
+                Votre document est prêt à être téléchargé.
             </p>
         </div>
         <div class="dl-body">
@@ -73,7 +73,7 @@
                 <span class="dl-info-value" style="font-size: 1.1rem; color: #4f46e5;">{{ number_format($document->total, 2, ',', ' ') }} &euro;</span>
             </div>
             <div class="dl-info-row">
-                <span class="dl-info-label">Date de creation</span>
+                <span class="dl-info-label">Date de création</span>
                 <span class="dl-info-value">{{ $document->created_at->format('d/m/Y') }}</span>
             </div>
             @if($type === 'quote' && $document->valid_until)
@@ -84,7 +84,7 @@
             @endif
             @if($type === 'invoice' && $document->due_date)
                 <div class="dl-info-row">
-                    <span class="dl-info-label">Echeance</span>
+                    <span class="dl-info-label">Échéance</span>
                     <span class="dl-info-value">{{ \Carbon\Carbon::parse($document->due_date)->format('d/m/Y') }}</span>
                 </div>
             @endif
@@ -97,74 +97,12 @@
 
             <div class="mt-4">
                 <a href="{{ route('quote-tool.download', ['token' => $token]) }}?pdf=1" class="btn-download">
-                    <i class="fas fa-download"></i> Telecharger le PDF
+                    <i class="fas fa-download"></i> Télécharger le PDF
                 </a>
             </div>
         </div>
     </div>
 
-    <h6 class="fw-bold text-muted mb-3" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">Que souhaitez-vous faire ensuite ?</h6>
-
-    <div class="row g-3">
-        @if($creditsRemaining > 0 || $creditsRemaining === -1)
-            <div class="col-md-6">
-                <a href="{{ route('quote-tool.quote.create') }}" class="action-card bg-white">
-                    <div class="action-icon" style="background: #eef2ff; color: #6366f1;">
-                        <i class="fas fa-file-alt"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold" style="font-size: 0.92rem;">Creer un devis</div>
-                        <div class="text-muted" style="font-size: 0.8rem;">
-                            @if($creditsRemaining === -1)
-                                Inclus dans votre abonnement
-                            @else
-                                {{ $creditsRemaining }} credit(s) restant(s)
-                            @endif
-                        </div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-6">
-                <a href="{{ route('quote-tool.invoice.create') }}" class="action-card bg-white">
-                    <div class="action-icon" style="background: #f0fdf4; color: #16a34a;">
-                        <i class="fas fa-file-invoice"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold" style="font-size: 0.92rem;">Creer une facture</div>
-                        <div class="text-muted" style="font-size: 0.8rem;">
-                            @if($creditsRemaining === -1)
-                                Inclus dans votre abonnement
-                            @else
-                                {{ $creditsRemaining }} credit(s) restant(s)
-                            @endif
-                        </div>
-                    </div>
-                </a>
-            </div>
-        @else
-            <div class="col-12">
-                <a href="{{ route('quote-tool.credits') }}" class="action-card bg-white">
-                    <div class="action-icon" style="background: #fef3c7; color: #d97706;">
-                        <i class="fas fa-coins"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold" style="font-size: 0.92rem;">Acheter des credits</div>
-                        <div class="text-muted" style="font-size: 0.8rem;">A partir de 4,99 EUR pour 5 documents</div>
-                    </div>
-                </a>
-            </div>
-        @endif
-        <div class="col-md-6">
-            <a href="{{ route('quote-tool.landing') }}" class="action-card bg-white">
-                <div class="action-icon" style="background: #f8f8fc; color: #64748b;">
-                    <i class="fas fa-arrow-left"></i>
-                </div>
-                <div>
-                    <div class="fw-bold" style="font-size: 0.92rem;">Retour a l'accueil</div>
-                    <div class="text-muted" style="font-size: 0.8rem;">Page de l'outil devis/facture</div>
-                </div>
-            </a>
-        </div>
-    </div>
+    <p class="text-muted mb-0" style="font-size: 0.88rem;">Ce document a été créé avec l’ancien outil de devis et factures, qui n’est plus proposé. Les devis et les factures se créent maintenant dans <a href="{{ route('pro.dashboard') }}">l’espace Pro</a>.</p>
 </div>
 @endsection

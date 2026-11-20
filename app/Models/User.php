@@ -926,49 +926,6 @@ class User extends Authenticatable
     // RELATIONS PRO DASHBOARD
     // =========================================
 
-    // =========================================
-    // OUTIL DEVIS/FACTURE (Quote Tool)
-    // =========================================
-
-    public function canCreateFreeQuote(): bool
-    {
-        return ($this->free_quotes_used ?? 0) < 1;
-    }
-
-    public function canCreateDocument(): bool
-    {
-        // Abonnés pro : génération illimitée gratuite
-        if ($this->hasActiveProSubscription()) {
-            return true;
-        }
-
-        return $this->canCreateFreeQuote() || ($this->paid_quotes_remaining ?? 0) > 0;
-    }
-
-    public function useDocumentCredit(): void
-    {
-        // Abonnés pro : pas de déduction de crédits
-        if ($this->hasActiveProSubscription()) {
-            return;
-        }
-        if ($this->canCreateFreeQuote()) {
-            $this->increment('free_quotes_used');
-        } elseif ($this->paid_quotes_remaining > 0) {
-            $this->decrement('paid_quotes_remaining');
-        }
-    }
-
-    public function getDocumentCreditsRemaining(): int
-    {
-        // Abonnés pro : illimité (on retourne -1 pour signaler "illimité")
-        if ($this->hasActiveProSubscription()) {
-            return -1;
-        }
-        $free = $this->canCreateFreeQuote() ? 1 : 0;
-
-        return $free + ($this->paid_quotes_remaining ?? 0);
-    }
-
     /**
      * Clients du professionnel
      */

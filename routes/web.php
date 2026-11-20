@@ -382,7 +382,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/tools/qr-generator', [ToolController::class, 'generateQr'])->name('tools.generate-qr');
 });
 
-// Outil Devis/Facture - Landing SEO publique
+// Devis et factures : page publique de présentation de l'espace Pro (ancienne adresse conservée).
 Route::get('/creer-devis-facture-gratuit', [QuoteToolController::class, 'landing'])->name('quote-tool.landing');
 
 // Réponse du client à un devis, par son lien personnel, sans compte.
@@ -394,15 +394,14 @@ Route::controller(\App\Http\Controllers\QuoteResponseController::class)->prefix(
 
 // Outil Devis/Facture - Routes protégées
 Route::middleware(['auth'])->prefix('outils')->name('quote-tool.')->group(function () {
-    Route::get('/devis/creer', [QuoteToolController::class, 'createQuote'])->name('quote.create');
-    Route::post('/devis/creer', [QuoteToolController::class, 'storeQuote'])->name('quote.store');
-    Route::get('/facture/creer', [QuoteToolController::class, 'createInvoice'])->name('invoice.create');
-    Route::post('/facture/creer', [QuoteToolController::class, 'storeInvoice'])->name('invoice.store');
+    // Outil à crédits retiré le 20/11/2026 : la création et l'achat renvoient vers
+    // l'espace Pro. Seul le téléchargement des documents déjà créés subsiste.
+    Route::get('/devis/creer', [QuoteToolController::class, 'retired'])->name('quote.create');
+    Route::get('/facture/creer', [QuoteToolController::class, 'retired'])->name('invoice.create');
+    Route::get('/acheter-credits', [QuoteToolController::class, 'retired'])->name('credits');
+    Route::get('/achat-succes', [QuoteToolController::class, 'retired'])->name('credits.success');
+    Route::get('/achat-annule', [QuoteToolController::class, 'retired'])->name('credits.cancel');
     Route::get('/document/{token}/telecharger', [QuoteToolController::class, 'downloadDocument'])->name('download');
-    Route::get('/acheter-credits', [QuoteToolController::class, 'purchaseCredits'])->name('credits');
-    Route::post('/acheter-credits', [QuoteToolController::class, 'processPurchase'])->name('credits.purchase');
-    Route::get('/achat-succes', [QuoteToolController::class, 'purchaseSuccess'])->name('credits.success');
-    Route::get('/achat-annule', [QuoteToolController::class, 'purchaseCancel'])->name('credits.cancel');
 });
 
 // Routes de contact
