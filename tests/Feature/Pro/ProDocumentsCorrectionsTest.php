@@ -86,11 +86,24 @@ class ProDocumentsCorrectionsTest extends TestCase
             ->assertViewHas('agendaStats', fn (array $stats) => $stats['active_quotes'] === 2
                 && $stats['overdue_invoices'] === 1 && $stats['upcoming_deadlines'] === 1);
 
+        \Illuminate\Support\Facades\DB::enableQueryLog();
         $this->get(route('pro.analytics'))->assertOk()
             ->assertViewHas('stats', fn (array $stats) => $stats['total_quotes'] === 3 && $stats['accepted_quotes'] === 1
                 && (float) $stats['conversion_rate'] === 33.3
                 && $stats['total_invoices'] === 3 && $stats['paid_invoices'] === 1
                 && (float) $stats['pending_amount'] === 240.0);
+
+        // PostgreSQL refuse un tri sur un alias qui porte le nom d'une colonne de
+        // la table lue (erreur 500 en production le 20/11/2026). SQLite le tolère :
+        // on vérifie donc la requête elle-même.
+        $columns = \Illuminate\Support\Facades\Schema::getColumnListing('pro_clients');
+        foreach (\Illuminate\Support\Facades\DB::getQueryLog() as $entry) {
+            $sql = $entry['query'];
+            if (! str_contains($sql, '"pro_clients".*') || ! preg_match_all('/\) as "(\w+)"/', $sql, $aliases)) {
+                continue;
+            }
+            $this->assertSame([], array_values(array_intersect($aliases[1], $columns)), 'Alias en conflit avec une colonne : '.$sql);
+        }
     }
 
     private function professional(array $overrides = []): User

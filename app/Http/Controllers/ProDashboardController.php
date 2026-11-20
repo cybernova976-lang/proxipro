@@ -1943,14 +1943,16 @@ class ProDashboardController extends Controller
         $paidInvoices = $user->proInvoices()->where('status', 'paid')->count();
         $paymentRate = $totalInvoices > 0 ? round(($paidInvoices / $totalInvoices) * 100, 1) : 0;
 
-        // Top clients by revenue
+        // Clients classés par montant de devis facturés et payés. L'alias ne doit
+        // pas porter le nom d'une colonne de pro_clients : avec « total_revenue »,
+        // PostgreSQL refusait le tri (colonne ambiguë) et la page répondait 500.
         $topClients = $user->proClients()
-            ->withSum(['quotes as total_revenue' => function ($q) {
+            ->withSum(['quotes as paid_quotes_total' => function ($q) {
                 $q->whereHas('invoice', function ($iq) {
                     $iq->where('status', 'paid');
                 });
             }], 'total')
-            ->orderByDesc('total_revenue')
+            ->orderByDesc('paid_quotes_total')
             ->take(5)
             ->get();
 
