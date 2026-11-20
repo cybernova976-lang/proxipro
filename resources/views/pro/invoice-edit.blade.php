@@ -49,6 +49,7 @@
 </div>
 @endif
 
+<link rel="stylesheet" href="{{ asset('css/pro-premium.css') }}?v={{ @filemtime(public_path('css/pro-premium.css')) }}">
 <form method="POST" action="{{ route('pro.invoices.update', $invoice->id) }}">
     @csrf
     @method('PUT')
@@ -62,7 +63,7 @@
                     <select name="client_id" id="clientSelect" class="form-select" style="border-radius: 10px;" onchange="fillClientInfo(this)">
                         <option value="">-- Client personnalisé --</option>
                         @foreach($clients as $client)
-                            <option value="{{ $client->id }}" data-name="{{ $client->name }}" data-email="{{ $client->email }}" data-phone="{{ $client->phone }}" data-address="{{ $client->address }}" {{ $invoice->client_id == $client->id ? 'selected' : '' }}>{{ $client->name }}{{ $client->company ? ' (' . $client->company . ')' : '' }}</option>
+                            <option value="{{ $client->id }}" data-name="{{ $client->name }}" data-email="{{ $client->email }}" data-phone="{{ $client->phone }}" data-address="{{ $client->address }}" {{ (string) old('client_id', $invoice->pro_client_id) === (string) $client->id ? 'selected' : '' }}>{{ $client->name }}{{ $client->company ? ' (' . $client->company . ')' : '' }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -84,6 +85,7 @@
                         <label class="form-label fw-semibold">Adresse</label>
                         <input type="text" name="client_address" id="clientAddress" class="form-control" style="border-radius: 10px;" value="{{ old('client_address', $invoice->client_address) }}">
                     </div>
+                    @include('pro.partials.invoice-edit-fields', ['part' => 'client'])
                 </div>
             </div>
 
@@ -93,6 +95,7 @@
                     <label class="form-label fw-semibold">Objet / Sujet *</label>
                     <input type="text" name="subject" class="form-control" required style="border-radius: 10px;" value="{{ old('subject', $invoice->subject) }}" placeholder="Ex: Prestation de service, Vente de matériel...">
                 </div>
+                @include('pro.partials.invoice-edit-fields', ['part' => 'details'])
             </div>
 
             <div class="pro-card">
@@ -140,6 +143,7 @@
                         <option value="other" {{ ($invoice->payment_method ?? '') === 'other' ? 'selected' : '' }}>Autre</option>
                     </select>
                 </div>
+                @include('pro.partials.invoice-edit-fields', ['part' => 'payment'])
             </div>
         </div>
 

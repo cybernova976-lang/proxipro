@@ -669,13 +669,20 @@ class ProDashboardController extends Controller
             'client_email' => 'nullable|email|max:255',
             'client_phone' => 'nullable|string|max:20',
             'client_address' => 'nullable|string|max:500',
+            'client_company' => 'sometimes|nullable|string|max:255',
+            'client_registration_number' => 'sometimes|nullable|string|max:64',
+            'client_vat_number' => 'sometimes|nullable|string|max:64',
             'subject' => 'required|string|max:255',
+            'operation_type' => 'sometimes|required|in:services,goods,mixed',
+            'execution_location' => 'sometimes|nullable|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.description' => 'required|string|max:500',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
             'valid_until' => 'nullable|date',
+            'is_free' => 'sometimes|required|boolean',
+            'deposit_percentage' => 'sometimes|nullable|numeric|min:0|max:100',
             'notes' => 'nullable|string|max:2000',
             'conditions' => 'nullable|string|max:2000',
         ]);
@@ -687,11 +694,20 @@ class ProDashboardController extends Controller
         });
 
         $subtotal = $items->sum('total');
-        $taxRate = $validated['tax_rate'] ?? 20;
+        $taxRate = $validated['tax_rate'] ?? $user->defaultVatRate();
         $tax = round($subtotal * $taxRate / 100, 2);
         $total = $subtotal + $tax;
 
-        $quote->update([
+        // Champs repris de la création : enregistrés seulement s'ils ont été envoyés.
+        $extra = collect($validated)->only([
+            'client_company', 'client_registration_number', 'client_vat_number',
+            'operation_type', 'execution_location', 'deposit_percentage',
+        ])->all();
+        if (array_key_exists('is_free', $validated)) {
+            $extra['is_free'] = (bool) $validated['is_free'];
+        }
+
+        $quote->update($extra + [
             'pro_client_id' => $this->resolveProClient($user, $validated)?->id,
             'client_name' => $validated['client_name'],
             'client_email' => $validated['client_email'] ?? null,
@@ -1160,7 +1176,15 @@ class ProDashboardController extends Controller
             'client_email' => 'nullable|email|max:255',
             'client_phone' => 'nullable|string|max:20',
             'client_address' => 'nullable|string|max:500',
+            'client_company' => 'sometimes|nullable|string|max:255',
+            'client_registration_number' => 'sometimes|nullable|string|max:64',
+            'client_vat_number' => 'sometimes|nullable|string|max:64',
+            'client_type' => 'sometimes|required|in:individual,business',
             'subject' => 'required|string|max:255',
+            'operation_type' => 'sometimes|required|in:services,goods,mixed',
+            'service_date' => 'sometimes|required|date',
+            'purchase_order_number' => 'sometimes|nullable|string|max:100',
+            'delivery_address' => 'sometimes|nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.description' => 'required|string|max:500',
             'items.*.quantity' => 'required|numeric|min:0.01',
@@ -1169,6 +1193,11 @@ class ProDashboardController extends Controller
             'due_date' => 'nullable|date',
             'notes' => 'nullable|string|max:2000',
             'payment_method' => 'nullable|string|max:50',
+            'payment_terms' => 'sometimes|required|string|max:1000',
+            // Mêmes exigences qu'à la création pour les mentions de facture.
+            'vat_exemption_reason' => 'sometimes|nullable|required_if:tax_rate,0|string|max:255',
+            'early_payment_discount' => 'sometimes|required|string|max:255',
+            'late_penalty_rate' => 'sometimes|nullable|required_if:client_type,business|numeric|min:0|max:100',
         ]);
 
         $items = collect($validated['items'])->map(function ($item) {
@@ -1178,11 +1207,18 @@ class ProDashboardController extends Controller
         });
 
         $subtotal = $items->sum('total');
-        $taxRate = $validated['tax_rate'] ?? 20;
+        $taxRate = $validated['tax_rate'] ?? $user->defaultVatRate();
         $tax = round($subtotal * $taxRate / 100, 2);
         $total = $subtotal + $tax;
 
-        $invoice->update([
+        // Champs repris de la création : enregistrés seulement s'ils ont été envoyés.
+        $extra = collect($validated)->only([
+            'client_company', 'client_registration_number', 'client_vat_number', 'client_type',
+            'operation_type', 'service_date', 'purchase_order_number', 'delivery_address',
+            'payment_terms', 'vat_exemption_reason', 'early_payment_discount', 'late_penalty_rate',
+        ])->all();
+
+        $invoice->update($extra + [
             'pro_client_id' => $this->resolveProClient($user, $validated)?->id,
             'client_name' => $validated['client_name'],
             'client_email' => $validated['client_email'] ?? null,

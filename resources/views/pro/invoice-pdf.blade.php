@@ -172,6 +172,7 @@
                     <div class="info-box-name">{{ $invoice->client_name }}</div>
                     @if($invoice->client_company)<div class="info-box-detail"><strong>{{ $invoice->client_company }}</strong></div>@endif
                     @if($invoice->client_address)<div class="info-box-detail">{{ $invoice->client_address }}</div>@endif
+                    @if($invoice->delivery_address && $invoice->delivery_address !== $invoice->client_address)<div class="info-box-detail">Adresse de livraison : {{ $invoice->delivery_address }}</div>@endif
                     @if($invoice->client_registration_number)<div class="info-box-detail">Immatriculation : {{ $invoice->client_registration_number }}</div>@endif
                     @if($invoice->client_vat_number)<div class="info-box-detail">TVA : {{ $invoice->client_vat_number }}</div>@endif
                     @if($invoice->client_email)<div class="info-box-detail">{{ $invoice->client_email }}</div>@endif

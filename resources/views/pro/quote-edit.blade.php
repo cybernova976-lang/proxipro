@@ -68,6 +68,7 @@
 </div>
 @endif
 
+<link rel="stylesheet" href="{{ asset('css/pro-premium.css') }}?v={{ @filemtime(public_path('css/pro-premium.css')) }}">
 <form method="POST" action="{{ route('pro.quotes.update', $quote->id) }}">
     @csrf
     @method('PUT')
@@ -78,7 +79,7 @@
             <div class="pro-card">
                 <div class="pro-card-title"><i class="fas fa-user text-primary"></i> Informations client</div>
                 
-                <input type="hidden" name="client_id" id="clientIdHidden" value="{{ $quote->client_id }}">
+                <input type="hidden" name="client_id" id="clientIdHidden" value="{{ old('client_id', $quote->pro_client_id) }}">
                 @if($clients->isNotEmpty())
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Sélectionner un client existant</label>
@@ -90,7 +91,7 @@
                                 data-email="{{ $client->email }}" 
                                 data-phone="{{ $client->phone }}" 
                                 data-address="{{ $client->address }}"
-                                {{ $quote->client_id == $client->id ? 'selected' : '' }}>
+                                {{ (string) old('client_id', $quote->pro_client_id) === (string) $client->id ? 'selected' : '' }}>
                                 {{ $client->name }}{{ $client->company ? ' (' . $client->company . ')' : '' }}
                             </option>
                         @endforeach
@@ -115,6 +116,7 @@
                         <label class="form-label fw-semibold">Adresse</label>
                         <input type="text" name="client_address" id="clientAddress" class="form-control" style="border-radius: 10px;" value="{{ old('client_address', $quote->client_address) }}">
                     </div>
+                    @include('pro.partials.quote-edit-fields', ['part' => 'client'])
                 </div>
             </div>
 
@@ -125,6 +127,7 @@
                     <label class="form-label fw-semibold">Objet du devis *</label>
                     <input type="text" name="subject" class="form-control" required style="border-radius: 10px;" placeholder="Ex: Rénovation salle de bain" value="{{ old('subject', $quote->subject) }}">
                 </div>
+                @include('pro.partials.quote-edit-fields', ['part' => 'details'])
 
                 <label class="form-label fw-semibold">Lignes du devis</label>
                 <div class="row g-2 mb-2 d-none d-md-flex" style="padding: 0 1rem;">
@@ -186,6 +189,7 @@
                     <label class="form-label fw-semibold">Validité jusqu'au</label>
                     <input type="date" name="valid_until" class="form-control" value="{{ old('valid_until', $quote->valid_until ? $quote->valid_until->format('Y-m-d') : '') }}" style="border-radius: 10px;">
                 </div>
+                @include('pro.partials.quote-edit-fields', ['part' => 'settings'])
 
                 <div class="quote-totals mt-4">
                     <div class="total-line">

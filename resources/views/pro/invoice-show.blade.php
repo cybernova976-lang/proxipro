@@ -168,6 +168,7 @@
             <div class="invoice-info-detail">
                 @if($invoice->client_company)<div><strong>{{ $invoice->client_company }}</strong></div>@endif
                 @if($invoice->client_address)<div>{{ $invoice->client_address }}</div>@endif
+                @if($invoice->delivery_address && $invoice->delivery_address !== $invoice->client_address)<div>Adresse de livraison : {{ $invoice->delivery_address }}</div>@endif
                 @if($invoice->client_registration_number)<div>Immatriculation : {{ $invoice->client_registration_number }}</div>@endif
                 @if($invoice->client_vat_number)<div>TVA : {{ $invoice->client_vat_number }}</div>@endif
                 @if($invoice->client_email)<div>{{ $invoice->client_email }}</div>@endif
