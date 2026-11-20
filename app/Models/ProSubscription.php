@@ -67,6 +67,12 @@ class ProSubscription extends Model
         return $this->payment_failed_at !== null && $this->isActive();
     }
 
+    /** Un paiement refusé attend toujours d'être réglé, que le délai coure encore ou non. */
+    public function isPaymentLate(): bool
+    {
+        return $this->payment_failed_at !== null && in_array($this->status, ['active', 'pending'], true);
+    }
+
     /** Jours pleins ou entamés avant le retour au compte gratuit. */
     public function graceDaysLeft(): int
     {
@@ -127,6 +133,12 @@ class ProSubscription extends Model
         return $query->where('status', 'active')
             ->whereNotNull('payment_failed_at')
             ->where('grace_ends_at', '>', now());
+    }
+
+    /** Même règle que isPaymentLate(), côté requête. */
+    public function scopePaymentLate($query)
+    {
+        return $query->whereNotNull('payment_failed_at')->whereIn('status', ['active', 'pending']);
     }
 
     public function daysRemaining(): int

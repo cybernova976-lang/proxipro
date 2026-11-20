@@ -14,85 +14,7 @@
 
 @include('admin.partials.pro-subscription-control')
 
-<div class="row g-3 mb-4">
-    @foreach([
-        ['Actifs', $providerStats['active'], 'success', 'fa-circle-check'],
-        ['En attente / suspendus', $providerStats['pending'], 'warning', 'fa-pause-circle'],
-        ['Fin programmée', $providerStats['ending'], 'info', 'fa-calendar-xmark'],
-        ['Gérés par Stripe', $providerStats['stripe'], 'primary', 'fa-credit-card'],
-    ] as [$label, $value, $color, $icon])
-        <div class="col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100"><div class="card-body d-flex align-items-center justify-content-between">
-                <div><div class="small text-muted">{{ $label }}</div><div class="h4 fw-bold mb-0">{{ $value }}</div></div>
-                <i class="fas {{ $icon }} fa-2x text-{{ $color }} opacity-75"></i>
-            </div></div>
-        </div>
-    @endforeach
-</div>
-
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white border-0 pt-4 px-4 d-flex flex-wrap justify-content-between align-items-start gap-3">
-        <div>
-            <h5 class="fw-bold mb-1"><i class="fas fa-repeat text-primary me-2"></i>Abonnements prestataires</h5>
-            <p class="text-muted mb-0">État local synchronisé avec Stripe. Un accès manuel ne crée aucun prélèvement.</p>
-        </div>
-        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#manualProviderGrant">
-            <i class="fas fa-gift me-1"></i>Accorder un accès manuel
-        </button>
-    </div>
-    <div class="collapse" id="manualProviderGrant">
-        <div class="card-body border-top mx-4 px-0">
-            <form method="POST" action="{{ route('admin.subscriptions.provider.grant') }}" class="row g-2 align-items-end">
-                @csrf
-                <div class="col-lg-5"><label class="form-label small fw-semibold">Email utilisateur</label><input type="email" name="email" class="form-control" required></div>
-                <div class="col-lg-2"><label class="form-label small fw-semibold">Plan</label><select name="plan" class="form-select"><option value="monthly">Mensuel</option></select></div>
-                <div class="col-lg-2"><label class="form-label small fw-semibold">Durée (jours)</label><input type="number" name="duration" min="1" max="730" value="30" class="form-control" required></div>
-                <div class="col-lg-3"><button class="btn btn-primary w-100"><i class="fas fa-check me-1"></i>Accorder sans paiement</button></div>
-            </form>
-        </div>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="bg-light"><tr><th class="ps-4">Utilisateur</th><th>Plan</th><th>État</th><th>Période</th><th>Origine</th><th class="text-end pe-4">Actions</th></tr></thead>
-            <tbody>
-                @forelse($providerSubscriptions as $providerSubscription)
-                    <tr>
-                        <td class="ps-4"><a href="{{ route('admin.users.show', $providerSubscription->user_id) }}" class="fw-semibold text-decoration-none">{{ $providerSubscription->user?->name ?: 'Compte supprimé' }}</a><div class="small text-muted">{{ $providerSubscription->user?->email }}</div></td>
-                        <td>{{ $providerSubscription->getPlanLabel() }}<div class="small text-muted">{{ number_format((float) $providerSubscription->amount, 2, ',', ' ') }} €</div></td>
-                        <td>
-                            @php $providerStatusColor = ['active' => 'success', 'pending' => 'warning', 'cancelled' => 'secondary', 'expired' => 'danger'][$providerSubscription->status] ?? 'secondary'; @endphp
-                            <span class="badge bg-{{ $providerStatusColor }}">{{ \App\Support\StatusLabels::providerSubscription($providerSubscription->status) }}</span>
-                            @if($providerSubscription->status === 'active' && ! $providerSubscription->auto_renew)<div class="small text-warning mt-1">Fin à l’échéance</div>@endif
-                        </td>
-                        <td class="small">{{ optional($providerSubscription->starts_at)->format('d/m/Y') ?: '—' }} → {{ optional($providerSubscription->ends_at)->format('d/m/Y') ?: '—' }}</td>
-                        <td>
-                            @if($providerSubscription->stripe_subscription_id)
-                                <span class="badge bg-primary-subtle text-primary border">Stripe</span><div class="small text-muted">{{ \App\Support\StatusLabels::stripeSubscription($providerSubscription->stripe_status) }}</div>
-                            @else
-                                <span class="badge bg-light text-dark border">Manuel</span>
-                            @endif
-                        </td>
-                        <td class="text-end pe-4">
-                            <div class="d-inline-flex gap-1">
-                                @if($providerSubscription->status === 'active')
-                                    <form method="POST" action="{{ route('admin.subscriptions.provider.suspend', $providerSubscription) }}" onsubmit="return confirm('Suspendre cet abonnement et les prochains prélèvements ?');">@csrf<button class="btn btn-sm btn-outline-warning" title="Suspendre"><i class="fas fa-pause"></i></button></form>
-                                @elseif($providerSubscription->status === 'pending')
-                                    <form method="POST" action="{{ route('admin.subscriptions.provider.resume', $providerSubscription) }}">@csrf<button class="btn btn-sm btn-outline-success" title="Réactiver"><i class="fas fa-play"></i></button></form>
-                                @endif
-                                @if(!in_array($providerSubscription->status, ['cancelled', 'expired'], true))
-                                    <form method="POST" action="{{ route('admin.subscriptions.provider.cancel', $providerSubscription) }}" onsubmit="return confirm('Annuler immédiatement cet abonnement ? Cette action coupe aussi Stripe.');">@csrf<button class="btn btn-sm btn-outline-danger" title="Annuler immédiatement"><i class="fas fa-ban"></i></button></form>
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr><td colspan="6" class="text-center text-muted py-4">Aucun abonnement prestataire enregistré.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-    @if($providerSubscriptions->hasPages())<div class="card-footer bg-white">{{ $providerSubscriptions->links('admin.partials.pagination') }}</div>@endif
-</div>
+@include('admin.subscriptions.partials.provider-subscriptions')
 
 <!-- Statistiques -->
 <div class="mb-2"><h5 class="fw-bold mb-0">Anciens plans de visibilité (STARTER / PRO / BUSINESS)</h5><p class="text-muted small mb-0">Ancien système, distinct du Premium prestataire ci-dessus : ces compteurs ne comptent pas les abonnements Premium.</p></div>
@@ -393,11 +315,11 @@
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 
-                                <!-- Accorder Premium -->
+                                <!-- Attribuer un ancien plan -->
                                 <button class="btn btn-sm btn-outline-warning" 
                                         data-bs-toggle="modal" 
                                         data-bs-target="#grantModal{{ $user->id }}"
-                                        title="Accorder Premium">
+                                        title="Attribuer un ancien plan">
                                     <i class="fas fa-crown"></i>
                                 </button>
                                 
@@ -464,14 +386,14 @@
                         </div>
                     </div>
 
-                    <!-- Modal Accorder Premium -->
+                    <!-- Modal : attribuer un ancien plan -->
                     <div class="modal fade" id="grantModal{{ $user->id }}" tabindex="-1">
                         <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header bg-warning bg-opacity-25">
                                     <h5 class="modal-title">
                                         <i class="fas fa-crown text-warning me-2"></i>
-                                        Accorder Premium à {{ $user->name }}
+                                        Attribuer un ancien plan à {{ $user->name }}
                                     </h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
@@ -480,7 +402,7 @@
                                     <div class="modal-body">
                                         <div class="alert alert-info">
                                             <i class="fas fa-info-circle me-2"></i>
-                                            Cette action accorde le statut premium gratuitement à l'utilisateur.
+                                            Cette action attribue un ancien plan de visibilité, sans paiement. Ce n’est pas l’abonnement Premium : pour l’offrir, utilisez « Accorder un accès manuel » en haut de cette page.
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label fw-bold">Plan à accorder</label>
@@ -509,7 +431,7 @@
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                                         <button type="submit" class="btn btn-warning">
-                                            <i class="fas fa-crown me-2"></i>Accorder Premium
+                                            <i class="fas fa-crown me-2"></i>Attribuer ce plan
                                         </button>
                                     </div>
                                 </form>

@@ -704,12 +704,32 @@ class AdminController extends Controller
 
         $providerSubscriptionPlans = ProviderSubscriptionPlans::all();
         $proSubscriptionReadiness = PlatformFeatures::proSubscriptionReadiness();
-        $providerSubscriptions = ProSubscription::with('user')
+        // Abonnements Premium : filtre par état et recherche par membre.
+        $providerState = (string) $request->query('provider_state', '');
+        $providerQuery = ProSubscription::with('user');
+        match ($providerState) {
+            'late' => $providerQuery->paymentLate()->orderBy('grace_ends_at'),
+            'active' => $providerQuery->currentlyActive(),
+            'pending' => $providerQuery->where('status', 'pending'),
+            'ending' => $providerQuery->currentlyActive()->where('auto_renew', false),
+            'stripe' => $providerQuery->whereNotNull('stripe_subscription_id'),
+            'ended' => $providerQuery->whereIn('status', ['cancelled', 'expired']),
+            default => $providerState = '',
+        };
+        $providerSearch = trim((string) $request->query('provider_search', ''));
+        if ($providerSearch !== '') {
+            $providerQuery->whereHas('user', function ($q) use ($providerSearch) {
+                $q->where('name', 'like', '%'.$providerSearch.'%')
+                    ->orWhere('email', 'like', '%'.$providerSearch.'%');
+            });
+        }
+        $providerSubscriptions = $providerQuery
             ->latest()
             ->paginate(12, ['*'], 'provider_page')
             ->withQueryString();
         $providerStats = [
             'total' => ProSubscription::count(),
+            'late' => ProSubscription::paymentLate()->count(),
             'active' => ProSubscription::currentlyActive()->count(),
             'pending' => ProSubscription::where('status', 'pending')->count(),
             'ending' => ProSubscription::currentlyActive()->where('auto_renew', false)->count(),
@@ -723,7 +743,9 @@ class AdminController extends Controller
             'providerSubscriptionPlans',
             'proSubscriptionReadiness',
             'providerSubscriptions',
-            'providerStats'
+            'providerStats',
+            'providerState',
+            'providerSearch'
         ));
     }
 
@@ -823,6 +845,78 @@ class AdminController extends Controller
             AccountStatusNotification::dispatch($proSubscription->user, 'premium_cancelled');
 
             return back()->with('success', 'Abonnement prestataire annulé immédiatement.');
+        } catch (\Throwable $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+    }
+
+    public function endProviderSubscriptionAtPeriodEnd(ProSubscription $proSubscription)
+    {
+        if ($proSubscription->isPaymentLate()) {
+            return back()->with('error', 'Un paiement est en retard sur cet abonnement : prolongez le délai ou annulez-le immédiatement.');
+        }
+
+        try {
+            $ending = $this->providerSubscriptionService->cancelAtPeriodEnd($proSubscription);
+            AccountStatusNotification::dispatch($proSubscription->user, 'premium_end_scheduled', [
+                'until' => optional($ending->ends_at)->format('d/m/Y'),
+            ]);
+
+            return back()->with('success', 'L’abonnement s’arrêtera à la fin de la période payée, sans nouveau prélèvement.');
+        } catch (\Throwable $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+    }
+
+    public function resumeProviderSubscriptionRenewal(ProSubscription $proSubscription)
+    {
+        try {
+            $resumed = $this->providerSubscriptionService->resumeRenewal($proSubscription);
+            AccountStatusNotification::dispatch($proSubscription->user, 'premium_renewal_resumed', [
+                'until' => optional($resumed->ends_at)->format('d/m/Y'),
+            ]);
+
+            return back()->with('success', 'Le renouvellement automatique est rétabli.');
+        } catch (\Throwable $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+    }
+
+    public function extendProviderSubscriptionGrace(Request $request, ProSubscription $proSubscription)
+    {
+        $validated = $request->validate([
+            'days' => ['required', 'integer', 'min:1', 'max:'.ProviderSubscriptionService::MAX_GRACE_EXTENSION_DAYS],
+        ]);
+
+        try {
+            $extended = $this->providerSubscriptionService->extendPaymentGrace($proSubscription, (int) $validated['days']);
+            if (! $extended->isPaymentLate()) {
+                return back()->with('success', 'Stripe indique que le paiement a été régularisé entre-temps : plus aucun délai n’est nécessaire.');
+            }
+            AccountStatusNotification::dispatch($proSubscription->user, 'payment_grace_extended', [
+                'until' => $extended->grace_ends_at->format('d/m/Y'),
+            ]);
+
+            return back()->with('success', 'Délai prolongé jusqu’au '.$extended->grace_ends_at->format('d/m/Y').'. Le membre est prévenu.');
+        } catch (\Throwable $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+    }
+
+    public function retryProviderSubscriptionPayment(ProSubscription $proSubscription)
+    {
+        if (! $proSubscription->isPaymentLate()) {
+            return back()->with('error', 'Cet abonnement n’a aucun paiement en retard.');
+        }
+
+        try {
+            return match ($this->providerSubscriptionService->retryLatePayment($proSubscription)) {
+                'paid' => back()->with('success', 'Paiement accepté : l’abonnement est à jour. Le membre est prévenu.'),
+                'settled' => back()->with('success', 'Stripe ne voit plus de retard sur cet abonnement : son état a été mis à jour.'),
+                'processing' => back()->with('success', 'Prélèvement lancé. Sa confirmation par la banque prend quelques jours.'),
+                'refused' => back()->with('error', 'Le moyen de paiement du membre a de nouveau été refusé. Le délai en cours n’est pas modifié.'),
+                default => back()->with('error', 'Stripe n’a pas pu présenter la facture (aucune facture ouverte, ou paiement déjà en cours).'),
+            };
         } catch (\Throwable $exception) {
             return back()->with('error', $exception->getMessage());
         }

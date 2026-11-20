@@ -13,8 +13,6 @@
         'SERVICE_ORDER_REFUND' => 'Remboursement d’une commande',
     ];
     $transactionStatusLabels = ['completed' => 'Payé', 'pending' => 'En attente', 'failed' => 'Échoué', 'refunded' => 'Remboursé'];
-    $subscriptionStatusLabels = ['active' => 'Actif', 'pending' => 'Suspendu ou en attente', 'cancelled' => 'Annulé', 'expired' => 'Expiré'];
-    $subscriptionStatusColors = ['active' => 'success', 'pending' => 'warning', 'cancelled' => 'secondary', 'expired' => 'danger'];
 @endphp
 <div class="card border-0 shadow-sm mb-4" id="adminUserPurchases">
     <div class="card-header bg-white border-0 py-3">
@@ -59,7 +57,7 @@
                         @foreach($subscriptionHistory as $subscription)
                             <tr>
                                 <td>{{ $subscription->getPlanLabel() }}</td>
-                                <td><span class="badge bg-{{ $subscriptionStatusColors[$subscription->status] ?? 'secondary' }}">{{ $subscriptionStatusLabels[$subscription->status] ?? ucfirst($subscription->status) }}</span></td>
+                                <td>@include('admin.subscriptions.partials.provider-state', ['subscription' => $subscription])</td>
                                 <td class="text-nowrap">{{ optional($subscription->starts_at)->format('d/m/Y') ?: '—' }}</td>
                                 <td class="text-nowrap">{{ optional($subscription->ends_at)->format('d/m/Y') ?: '—' }}</td>
                                 <td>{{ $subscription->stripe_subscription_id ? 'Paiement Stripe' : 'Accordé par un administrateur' }}</td>

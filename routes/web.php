@@ -713,6 +713,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/subscriptions/provider/{proSubscription}/suspend', [AdminController::class, 'suspendProviderSubscription'])->name('admin.subscriptions.provider.suspend');
     Route::post('/subscriptions/provider/{proSubscription}/resume', [AdminController::class, 'resumeProviderSubscription'])->name('admin.subscriptions.provider.resume');
     Route::post('/subscriptions/provider/{proSubscription}/cancel', [AdminController::class, 'cancelProviderSubscription'])->name('admin.subscriptions.provider.cancel');
+    Route::post('/subscriptions/provider/{proSubscription}/end-at-period-end', [AdminController::class, 'endProviderSubscriptionAtPeriodEnd'])->name('admin.subscriptions.provider.end-at-period-end');
+    Route::post('/subscriptions/provider/{proSubscription}/resume-renewal', [AdminController::class, 'resumeProviderSubscriptionRenewal'])->name('admin.subscriptions.provider.resume-renewal');
+    Route::post('/subscriptions/provider/{proSubscription}/extend-grace', [AdminController::class, 'extendProviderSubscriptionGrace'])->name('admin.subscriptions.provider.extend-grace');
+    Route::post('/subscriptions/provider/{proSubscription}/retry-payment', [AdminController::class, 'retryProviderSubscriptionPayment'])->name('admin.subscriptions.provider.retry-payment');
     Route::put('/subscriptions/{id}', [AdminController::class, 'updateSubscription'])->name('admin.subscriptions.update');
     Route::post('/subscriptions/{id}/grant-premium', [AdminController::class, 'grantPremium'])->name('admin.subscriptions.grant-premium');
     Route::post('/subscriptions/{id}/suspend', [AdminController::class, 'suspendSubscription'])->name('admin.subscriptions.suspend');

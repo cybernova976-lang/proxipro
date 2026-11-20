@@ -27,7 +27,7 @@ class AccountStatusNotification extends Notification
     private const ALWAYS_EMAILED = [
         'account_deactivated', 'account_reactivated', 'admin_promoted', 'admin_revoked',
         // Un paiement refusé met en jeu l'abonnement payé par le membre : il doit le savoir.
-        'payment_failed', 'payment_reminder', 'premium_unpaid_ended',
+        'payment_failed', 'payment_reminder', 'payment_grace_extended', 'premium_unpaid_ended',
     ];
 
     /** @param array{until?: string, plan?: string, days_left?: int, privileges?: array<int, string>} $context */
@@ -115,6 +115,15 @@ class AccountStatusNotification extends Notification
             'payment_reminder' => $payment + ['title' => 'Votre abonnement attend toujours son paiement',
                 'message' => $this->daysLeftSentence().'Sans paiement d’ici le '.$deadline
                     .', votre abonnement sera résilié et votre compte repassera en gratuit, sans les avantages Premium.'],
+            'payment_grace_extended' => $payment + ['title' => 'Vous avez plus de temps pour régler votre abonnement',
+                'message' => 'Un administrateur a prolongé votre délai : vous gardez tous vos avantages Premium jusqu’au '.$deadline
+                    .'. Mettez à jour votre moyen de paiement avant cette date pour conserver votre abonnement.'],
+            'premium_end_scheduled' => $premium + ['title' => 'Votre abonnement Premium ne sera pas renouvelé',
+                'message' => 'Un administrateur a programmé la fin de votre abonnement Premium. Vous gardez vos avantages'.$until
+                    .', puis plus rien ne vous sera prélevé.'],
+            'premium_renewal_resumed' => $premium + ['title' => 'Votre abonnement Premium se renouvelle de nouveau',
+                'message' => 'Un administrateur a rétabli le renouvellement automatique de votre abonnement Premium. Prochaine échéance : '
+                    .(filled($this->context['until'] ?? null) ? 'le '.$this->context['until'] : 'à la fin de la période en cours').'.'],
             'payment_recovered' => $premium + ['title' => 'Votre paiement est régularisé',
                 'message' => 'Votre paiement a bien été reçu. Votre abonnement Premium se poursuit normalement.'],
             'premium_unpaid_ended' => $premium + ['title' => 'Votre compte est repassé en gratuit',

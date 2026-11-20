@@ -1,7 +1,5 @@
 @php
     $premiumActive = $user->hasActiveProSubscription();
-    $premiumStatusLabels = ['active' => 'Actif', 'pending' => 'Suspendu ou en attente', 'cancelled' => 'Annulé', 'expired' => 'Expiré'];
-    $premiumStatusColors = ['active' => 'success', 'pending' => 'warning', 'cancelled' => 'secondary', 'expired' => 'danger'];
 @endphp
 <div class="card border-0 shadow-sm h-100" id="adminUserPremium">
     <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
@@ -18,30 +16,14 @@
                 <li class="mb-1"><span class="text-muted">Formule :</span> {{ $providerSubscription->getPlanLabel() }}</li>
                 <li class="mb-1">
                     <span class="text-muted">État :</span>
-                    <span class="badge bg-{{ $premiumStatusColors[$providerSubscription->status] ?? 'secondary' }}">{{ $premiumStatusLabels[$providerSubscription->status] ?? ucfirst($providerSubscription->status) }}</span>
+                    @include('admin.subscriptions.partials.provider-state', ['subscription' => $providerSubscription])
                 </li>
                 <li class="mb-1"><span class="text-muted">Période :</span> {{ optional($providerSubscription->starts_at)->format('d/m/Y') ?: '—' }} → {{ optional($providerSubscription->ends_at)->format('d/m/Y') ?: '—' }}</li>
                 <li><span class="text-muted">Origine :</span> {{ $providerSubscription->stripe_subscription_id ? 'Paiement Stripe' : 'Accès accordé par un administrateur' }}</li>
             </ul>
 
             <div class="d-flex flex-wrap gap-2 mb-3">
-                @if($providerSubscription->status === 'active')
-                    <form method="POST" action="{{ route('admin.subscriptions.provider.suspend', $providerSubscription) }}" onsubmit="return confirm('Suspendre cet abonnement et les prochains prélèvements ?');">
-                        @csrf
-                        <button class="btn btn-sm btn-outline-warning"><i class="fas fa-pause me-1"></i>Suspendre</button>
-                    </form>
-                @elseif($providerSubscription->status === 'pending')
-                    <form method="POST" action="{{ route('admin.subscriptions.provider.resume', $providerSubscription) }}">
-                        @csrf
-                        <button class="btn btn-sm btn-outline-success"><i class="fas fa-play me-1"></i>Réactiver</button>
-                    </form>
-                @endif
-                @if(! in_array($providerSubscription->status, ['cancelled', 'expired'], true))
-                    <form method="POST" action="{{ route('admin.subscriptions.provider.cancel', $providerSubscription) }}" onsubmit="return confirm('Annuler immédiatement cet abonnement ? Cette action coupe aussi Stripe.');">
-                        @csrf
-                        <button class="btn btn-sm btn-outline-danger"><i class="fas fa-ban me-1"></i>Annuler immédiatement</button>
-                    </form>
-                @endif
+                @include('admin.subscriptions.partials.provider-actions', ['subscription' => $providerSubscription, 'compact' => false])
             </div>
         @else
             <p class="text-muted small">Aucun abonnement Premium enregistré pour ce compte.</p>

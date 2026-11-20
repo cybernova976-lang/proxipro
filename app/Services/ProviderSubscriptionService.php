@@ -28,6 +28,9 @@ class ProviderSubscriptionService
     /** États Stripe d'un abonnement dont le dernier paiement n'a pas abouti. */
     public const LATE_STRIPE_STATUSES = ['past_due', 'unpaid'];
 
+    /** Plafond d'une prolongation du délai accordée par un administrateur, en jours. */
+    public const MAX_GRACE_EXTENSION_DAYS = 30;
+
     public function createCheckoutSession(
         User $user,
         string $plan,
@@ -557,11 +560,38 @@ class ProviderSubscriptionService
             return $subscription->fresh();
         }
 
-        $stripeSubscription = $this->client()->subscriptions->cancel($subscription->stripe_subscription_id);
+        $wasLate = $subscription->isPaymentLate();
+        $client = $this->client();
+        $stripeSubscription = $client->subscriptions->cancel($subscription->stripe_subscription_id);
 
-        return $this->withoutStatusNotifications(
+        $cancelled = $this->withoutStatusNotifications(
             fn () => $this->syncStripeSubscription($stripeSubscription, $subscription->user, $subscription->plan)
         );
+
+        if ($wasLate) {
+            // Même issue que la fin automatique du délai : la facture restée impayée
+            // est annulée, et la période qu'elle couvrait n'est pas due.
+            $this->voidOpenInvoice($client, $this->value($stripeSubscription, 'latest_invoice'));
+            $cancelled->update(['ends_at' => now(), 'auto_renew' => false]);
+            Cache::forget(self::paymentMethodCacheKey($subscription));
+        }
+
+        return $cancelled->fresh();
+    }
+
+    private function voidOpenInvoice(StripeClient $client, mixed $invoice): void
+    {
+        try {
+            if (! is_object($invoice) && $this->resourceId($invoice) !== '') {
+                $invoice = $client->invoices->retrieve($this->resourceId($invoice));
+            }
+            if (is_object($invoice) && $this->value($invoice, 'status') === 'open') {
+                $client->invoices->voidInvoice((string) $this->value($invoice, 'id'));
+            }
+        } catch (\Throwable $exception) {
+            // L'abonnement est bien résilié ; une facture restée ouverte se règle depuis Stripe.
+            report($exception);
+        }
     }
 
     public function suspend(ProSubscription $subscription): ProSubscription
@@ -815,7 +845,55 @@ class ProviderSubscriptionService
         }
     }
 
-    private function retryLatestInvoice(StripeClient $client, object $remote, string $paymentMethodId): string
+    /**
+     * Relance demandée par un administrateur : la facture en retard est présentée de
+     * nouveau au moyen de paiement déjà enregistré par le membre.
+     *
+     * Résultat : paid (réglé), processing (prélèvement en cours), refused (nouveau refus),
+     * saved (rien n'a pu être présenté) ou settled (Stripe ne voit plus de retard).
+     */
+    public function retryLatePayment(ProSubscription $subscription): string
+    {
+        $this->requireStripeSubscription($subscription);
+        $client = $this->client();
+        $remote = $client->subscriptions->retrieve($subscription->stripe_subscription_id, ['expand' => ['latest_invoice']]);
+
+        $outcome = 'settled';
+        if (in_array($remote->status, self::LATE_STRIPE_STATUSES, true)) {
+            $outcome = $this->retryLatestInvoice($client, $remote);
+            if ($outcome === 'paid') {
+                $remote = $client->subscriptions->retrieve($subscription->stripe_subscription_id);
+            }
+        }
+        $this->syncStripeSubscription($remote, $subscription->user, $subscription->plan);
+
+        return $outcome;
+    }
+
+    /**
+     * Délai supplémentaire accordé par un administrateur, compté depuis la fin du
+     * délai en cours (ou depuis maintenant s'il est déjà écoulé).
+     */
+    public function extendPaymentGrace(ProSubscription $subscription, int $days): ProSubscription
+    {
+        if (! $subscription->isPaymentLate()) {
+            throw new DomainException('Cet abonnement n’a aucun paiement en retard : il n’y a pas de délai à prolonger.');
+        }
+
+        $days = max(1, min(self::MAX_GRACE_EXTENSION_DAYS, $days));
+        $from = $subscription->grace_ends_at?->isFuture() ? $subscription->grace_ends_at->copy() : now();
+        $subscription->update(['grace_ends_at' => $from->addDays($days)]);
+
+        if ($subscription->status !== 'active' && $subscription->hasOpenBilling()) {
+            // Le délai était écoulé : l'état est relu chez Stripe, qui rouvre les avantages
+            // si le paiement est toujours attendu.
+            $this->withoutStatusNotifications(fn () => $this->syncLatest($subscription->stripe_subscription_id));
+        }
+
+        return $subscription->fresh();
+    }
+
+    private function retryLatestInvoice(StripeClient $client, object $remote, ?string $paymentMethodId = null): string
     {
         $invoice = $this->value($remote, 'latest_invoice');
         if (! is_object($invoice) && $this->resourceId($invoice) !== '') {
@@ -826,7 +904,10 @@ class ProviderSubscriptionService
         }
 
         try {
-            $paid = $client->invoices->pay((string) $this->value($invoice, 'id'), ['payment_method' => $paymentMethodId]);
+            $paid = $client->invoices->pay(
+                (string) $this->value($invoice, 'id'),
+                $paymentMethodId !== null ? ['payment_method' => $paymentMethodId] : []
+            );
         } catch (\Stripe\Exception\CardException) {
             return 'refused';
         } catch (\Stripe\Exception\ApiErrorException $exception) {
@@ -901,11 +982,7 @@ class ProviderSubscriptionService
 
         $cancelled = $client->subscriptions->cancel($subscription->stripe_subscription_id, ['invoice_now' => false, 'prorate' => false]);
         if ($invoiceOpen) {
-            try {
-                $client->invoices->voidInvoice($invoiceId);
-            } catch (\Throwable $exception) {
-                report($exception);
-            }
+            $this->voidOpenInvoice($client, $invoice);
         }
 
         $ended = $this->withoutStatusNotifications(
