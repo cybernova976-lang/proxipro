@@ -140,6 +140,29 @@ class ProfilePresentationFeatureTest extends TestCase
             ->assertSee('Avis vérifiés');
     }
 
+    public function test_the_profile_photo_is_never_cropped_and_opens_in_full_size(): void
+    {
+        $user = User::factory()->create(['name' => 'Logo Large', 'avatar' => 'avatars/logo-large.jpg', 'profile_public' => true]);
+
+        $html = $this->get(route('profile.public', $user))->assertOk()->getContent();
+
+        // Un logo allongé s'affiche en entier dans le cadre carré, sans être rogné.
+        $this->assertMatchesRegularExpression('/\.profile-portrait \{[^}]*object-fit: contain;[^}]*\}/', $html);
+        $this->assertDoesNotMatchRegularExpression('/\.profile-portrait \{[^}]*object-fit: cover;/', $html);
+
+        // Un clic sur la photo l'ouvre en grand.
+        $this->assertStringContainsString('data-bs-target="#profilePhotoModal"', $html);
+        $this->assertStringContainsString('aria-label="Agrandir la photo de profil de Logo Large"', $html);
+        $this->assertStringContainsString('id="profilePhotoModal"', $html);
+        $this->assertMatchesRegularExpression('/id="profilePhotoModal".*?<img src="[^"]*avatars\/logo-large\.jpg"/s', $html);
+
+        // Sans photo : ni bouton ni fenêtre d'agrandissement.
+        $user->forceFill(['avatar' => null])->save();
+        $this->get(route('profile.public', $user))->assertOk()
+            ->assertDontSee('profilePhotoModal', false)
+            ->assertSee('id="profileAvatarPlaceholder"', false);
+    }
+
     public function test_public_provider_profile_only_surfaces_active_services_and_real_marketplace_proofs(): void
     {
         $provider = User::factory()->create([

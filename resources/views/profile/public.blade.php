@@ -68,8 +68,11 @@
                     <!-- Avatar en format carte -->
                     <div class="position-relative profile-photo-shell mb-4">
                         @if($user->avatar)
-                            <img src="{{ storage_url($user->avatar) }}" alt="Photo de profil de {{ $user->name }}" id="profileAvatarImg"
-                                class="profile-portrait">
+                            <button type="button" class="d-block w-100 h-100 p-0 border-0 bg-transparent" data-bs-toggle="modal" data-bs-target="#profilePhotoModal"
+                                    title="Agrandir la photo" aria-label="Agrandir la photo de profil de {{ $user->name }}">
+                                <img src="{{ storage_url($user->avatar) }}" alt="Photo de profil de {{ $user->name }}" id="profileAvatarImg"
+                                    class="profile-portrait">
+                            </button>
                         @else
                             <div class="bg-primary text-white d-flex align-items-center justify-content-center profile-portrait profile-portrait-placeholder" id="profileAvatarPlaceholder">
                                 {{ strtoupper(substr($user->name, 0, 1)) }}
@@ -556,6 +559,10 @@
     </div>
 </div>
 
+@if($user->avatar)
+    @include('profile.partials.photo-modal')
+@endif
+
 @if($isProviderProfile && $user->professionalRealizations->isNotEmpty())
 <div class="modal fade" id="professionalRealizationModal" tabindex="-1" aria-labelledby="professionalRealizationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -780,8 +787,10 @@
         width: 100%;
         height: 100%;
         display: block;
-        object-fit: cover;
+        /* Photo entière, jamais rognée : un logo allongé garde ses marges blanches. */
+        object-fit: contain;
         object-position: center;
+        background: #fff;
         border-radius: 18px;
         border: 1px solid #dfe6ef;
         box-shadow: 0 16px 30px rgba(15, 23, 42, 0.13);

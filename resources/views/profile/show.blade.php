@@ -452,8 +452,10 @@
         width: 100%;
         height: 100%;
         display: block;
-        object-fit: cover;
+        /* Même règle que le profil public : la photo entière, jamais rognée. */
+        object-fit: contain;
         object-position: center;
+        background: #fff;
         border: 1px solid #dfe6ef;
         border-radius: 18px;
         box-shadow: 0 16px 30px rgba(15, 23, 42, .13);
