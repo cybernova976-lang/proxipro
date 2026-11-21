@@ -41,16 +41,16 @@ class ProviderAlertAndElsewhereOffersTest extends TestCase
             ->assertSee('Aucun prestataire n\'a encore publié d\'offre à La Réunion.', false)
             ->assertSee('Me prévenir')
             // …et les offres d'ailleurs sont montrées, annoncées comme telles.
-            ->assertSee('Offres publiées dans d’autres territoires')
+            ->assertSee('Annonces publiées dans d’autres territoires')
             ->assertSee('Dépannage plomberie à Mamoudzou')
-            ->assertSee('offres de toutes les zones');
+            ->assertSee('annonces de toutes les zones');
     }
 
     public function test_no_elsewhere_block_when_no_offer_exists_anywhere(): void
     {
         $this->actingAs($this->reunionReader())->get(route('feed'))->assertOk()
             ->assertSee('Aucun prestataire n\'a encore publié d\'offre à La Réunion.', false)
-            ->assertDontSee('Offres publiées dans d’autres territoires')
+            ->assertDontSee('Annonces publiées dans d’autres territoires')
             ->assertDontSee('pkElsewhere', false);
     }
 

@@ -16,7 +16,7 @@ final class AdDisclosure
 {
     public const SPONSORED_LABEL = 'Sponsorisé';
 
-    public const SPONSORED_SCREEN_READER = 'le prestataire a payé pour être affiché ici';
+    public const SPONSORED_SCREEN_READER = 'l’auteur de l’annonce a payé pour être affiché ici';
 
     public const PAID_URGENT_LABEL = 'Urgent · option payante';
 

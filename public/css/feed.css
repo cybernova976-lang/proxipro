@@ -1037,7 +1037,7 @@
 .pk-problem__actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
 .pk-problem__job { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--pk-700); font-size: .8rem; font-weight: 700; }
 
-/* Z3 · offres : 1, 2 puis 3 colonnes */
+/* Z3 · annonces : 1 puis 2 colonnes */
 .pk-feed-filler { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 8px; min-height: 100%; padding: 22px; border: 1px dashed var(--pk-300); border-radius: var(--pk-r-lg, 16px); background: var(--pk-50); color: var(--pk-950); }
 .pk-feed-filler h3 { margin: 4px 0 0; font-size: 1rem; font-weight: 800; }
 .pk-feed-filler p { margin: 0 0 6px; color: var(--pk-ink-2); font-size: .84rem; line-height: 1.55; }
@@ -1045,7 +1045,9 @@
 .pk-feed--client .pk-listings { min-width: 0; }
 .pk-feed--client .pk-feed-list { grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .pk-feed--client .pk-empty { grid-column: 1 / -1; }
-.pk-feed--client .pk-ad__media { height: 166px; }
+.pk-feed--client .pk-ad__media { height: 180px; }
+.pk-tag--mine { background: #ede9fe; color: #5b21b6; }
+.pk-tag--request { background: #eef2ff; color: #3730a3; }
 .pk-feed-selection { display: flex; align-items: flex-start; gap: 7px; margin: 10px 0 0; color: var(--pk-ink-3); font-size: .7rem; line-height: 1.55; }
 .pk-feed-selection i { margin-top: 3px; }
 .pk-feed-pagination { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; }
@@ -1061,8 +1063,8 @@
   .pk-feed--client .pk-feed-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pk-feed--client .pk-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+/* Deux colonnes : les cartes ont la taille de celles des Favoris (environ 370 px de large). */
 @media (min-width: 1024px) {
-  .pk-feed--client .pk-feed-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .pk-feed-filler--wide { display: flex; grid-column: span 2; }
 }
 @media (min-width: 1180px) {

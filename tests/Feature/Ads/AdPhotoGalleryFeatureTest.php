@@ -94,6 +94,9 @@ class AdPhotoGalleryFeatureTest extends TestCase
         $html = $this->get(route('ads.show', $ad))->assertOk()
             ->assertSee('ad-photo-gallery--single', false)
             ->assertSee('data-photo-fit', false)
+            // Une petite photo n'est pas agrandie au-delà d'une fois et demie : elle reste nette.
+            ->assertSee('data-photo-max-upscale="1.5"', false)
+            ->assertSee('.ad-photo.is-limited', false)
             ->assertSee('js/profile-photo.js', false)
             ->assertDontSee('ad-gallery-count" onclick', false)
             ->getContent();

@@ -66,13 +66,14 @@ class FeedPromotedOffersFeatureTest extends TestCase
         $author = User::factory()->create();
         $ordinary = $this->offer($author);
         $boost = ['is_boosted' => true, 'boost_end' => now()->addDay()];
-        $this->offer($viewer, $boost);
+        // L'offre boostée du lecteur lui est montrée, en tête comme pour les autres membres.
+        $own = $this->offer($viewer, $boost);
         foreach ([['visibility' => 'pro_targeted'], ['status' => 'inactive'], ['expires_at' => now()],
             ['city' => 'Paris', 'country' => 'France', 'location' => 'Paris']] as $attributes) {
             $this->offer($author, array_merge($boost, $attributes));
         }
         $this->actingAs($viewer)->get(route('feed', ['scope' => 'nearby']))->assertOk()
-            ->assertViewHas('pkFeedAds', fn ($ads) => $ads->pluck('id')->all() === [$ordinary->id]);
+            ->assertViewHas('pkFeedAds', fn ($ads) => $ads->pluck('id')->all() === [$own->id, $ordinary->id]);
     }
 
     public function test_old_promoted_offer_is_found_before_candidate_limit_and_list_is_capped_at_six(): void
@@ -98,6 +99,44 @@ class FeedPromotedOffersFeatureTest extends TestCase
             ->assertViewHas('pkFeedAds', fn ($ads) => $ads->pluck('id')->all() === [$request->id]);
         $this->get(route('feed', ['mode' => 'client']))->assertOk()
             ->assertViewHas('pkFeedAds', fn ($ads) => $ads->count() >= 2 && $ads->first()->id === $boost->id);
+    }
+
+    public function test_requests_reach_the_client_home_only_when_boosted_or_published_by_a_subscriber(): void
+    {
+        $viewer = User::factory()->create();
+        $author = User::factory()->create();
+        $subscriber = User::factory()->create();
+        $this->subscribe($subscriber);
+
+        $freeOffer = $this->offer($author, ['title' => 'Offre gratuite']);
+        $freeRequest = $this->offer($author, ['title' => 'Demande gratuite', 'service_type' => 'demande']);
+        $premiumRequest = $this->offer($subscriber, ['title' => 'Demande d’un abonné', 'service_type' => 'demande']);
+        $boostedRequest = $this->offer($author, ['title' => 'Demande boostée', 'service_type' => 'demande',
+            'is_boosted' => true, 'boost_end' => now()->addDay()]);
+        $expiredBoost = $this->offer($author, ['title' => 'Demande au boost terminé', 'service_type' => 'demande',
+            'is_boosted' => true, 'boost_end' => now()->subMinute()]);
+
+        $response = $this->actingAs($viewer)->get(route('feed'))->assertOk()
+            ->assertSee('Demande d’un abonné')->assertSee('Demande boostée')->assertSee('Offre gratuite')
+            ->assertDontSee('Demande gratuite')->assertDontSee('Demande au boost terminé')
+            ->assertSee('Demande de service');
+        $ids = $response->viewData('pkFeedAds')->pluck('id')->all();
+
+        // Les annonces sponsorisées d'abord, les annonces gratuites complètent.
+        $this->assertEqualsCanonicalizing([$premiumRequest->id, $boostedRequest->id], array_slice($ids, 0, 2));
+        $this->assertSame([$freeOffer->id], array_slice($ids, 2));
+        $this->assertNotContains($freeRequest->id, $ids);
+        $this->assertNotContains($expiredBoost->id, $ids);
+        $this->assertTrue($response->viewData('pkFeedAds')->firstWhere('id', $premiumRequest->id)->feed_is_promoted == 1);
+
+        // L'abonné voit sa propre demande sur son accueil, signalée comme la sienne.
+        $this->actingAs($subscriber)->get(route('feed'))->assertOk()
+            ->assertSee('Demande d’un abonné')->assertSee('Votre annonce')
+            ->assertViewHas('pkFeedAds', fn ($ads) => $ads->contains('id', $premiumRequest->id));
+
+        // L'abonnement s'arrête : sa demande quitte l'accueil.
+        $subscriber->proSubscriptions()->update(['status' => 'cancelled', 'ends_at' => now()->subDay()]);
+        $this->actingAs($viewer)->get(route('feed'))->assertOk()->assertDontSee('Demande d’un abonné');
     }
 
     private function offer(User $author, array $attributes = []): Ad

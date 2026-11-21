@@ -2,8 +2,8 @@
 <div class="pk-elsewhere" id="pkElsewhere">
     <div class="pk-elsewhere__head">
         <div>
-            <h3 id="pkElsewhereTitle">Offres publiées dans d’autres territoires</h3>
-            <p>En attendant une première offre {{ $pkTerritory->withPreposition() }}. Vérifiez le lieu indiqué sur chaque offre.</p>
+            <h3 id="pkElsewhereTitle">Annonces publiées dans d’autres territoires</h3>
+            <p>En attendant une première annonce {{ $pkTerritory->withPreposition() }}. Vérifiez le lieu indiqué sur chaque annonce.</p>
         </div>
         <a href="{{ $pkTerritoryLinks['all'] }}" class="pk-sechead__more">Tout voir <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
     </div>

@@ -29,6 +29,11 @@
     /* Un bouton ne s'étire pas tout seul hors d'une grille : sans ces dimensions,
        la photo unique gardait sa taille d'origine, en haut à gauche du cadre. */
     .ad-photo-gallery--single .ad-photo { width: 100%; height: 100%; }
+    /* Petite photo : jamais agrandie au point d'être floue (js/profile-photo.js).
+       Elle est centrée, nette, sur un fond flou tiré de la photo elle-même. */
+    .ad-photo-gallery--single .ad-photo.is-limited { display: flex; align-items: center; justify-content: center; }
+    .ad-photo-gallery--single .ad-photo.is-limited::before { content: ''; position: absolute; inset: -28px; background: var(--photo-backdrop) center / cover no-repeat; filter: blur(24px) brightness(.92); }
+    .ad-photo-gallery--single .ad-photo.is-limited img { position: relative; max-width: 100%; max-height: 100%; border-radius: 10px; box-shadow: 0 8px 26px rgba(15,23,42,.28); }
     .ad-photo-gallery--double { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .ad-photo-gallery--multiple { grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr); grid-template-rows: repeat(2, minmax(0, 1fr)); }
     .ad-photo-gallery--multiple .ad-photo--main { grid-row: 1 / 3; }
@@ -194,7 +199,7 @@
                         @if($photoCount === 1)
                             <div class="ad-photo-gallery ad-photo-gallery--single">
                                 <button type="button" class="ad-photo ad-photo--main" onclick="openLightbox(0)" aria-label="Agrandir la photo de l'annonce">
-                                    <img src="{{ storage_url($photos[0]) }}" alt="Photo de l'annonce : {{ $ad->title }}" data-photo-fit>
+                                    <img src="{{ storage_url($photos[0]) }}" alt="Photo de l'annonce : {{ $ad->title }}" data-photo-fit data-photo-max-upscale="1.5">
                                 </button>
                             </div>
                         @elseif($photoCount === 2)

@@ -18,10 +18,10 @@ class RankingDisclosureTest extends TestCase
         $line = (new RankingDisclosure())->forClientFeed(app(TerritoryResolver::class)->find('976'));
 
         $this->assertSame(
-            'Classement : offres de Mayotte. Les offres sponsorisées (payantes) passent en premier, puis les plus récentes.',
+            'Classement : annonces de Mayotte. Les annonces sponsorisées (payantes) passent en premier, puis les plus récentes.',
             $line['text']
         );
-        $this->assertStringContainsString('Deux offres au plus par prestataire', $line['details']);
+        $this->assertStringContainsString('Deux annonces au plus par auteur', $line['details']);
     }
 
     public function test_followed_categories_are_stated_before_the_date_criterion(): void
@@ -29,7 +29,7 @@ class RankingDisclosureTest extends TestCase
         $line = (new RankingDisclosure())->forClientFeed(null, false, true);
 
         $this->assertSame(
-            'Classement : offres de toutes les zones. Les offres sponsorisées (payantes) passent en premier, puis celles des catégories que vous suivez, puis les plus récentes.',
+            'Classement : annonces de toutes les zones. Les annonces sponsorisées (payantes) passent en premier, puis celles des catégories que vous suivez, puis les plus récentes.',
             $line['text']
         );
         $this->assertStringNotContainsString('À égalité', $line['details']);

@@ -39,12 +39,18 @@
     <div class="pk-ad-row__body">
         <div class="pk-ad-row__top">
             <span class="pk-ad-row__cat">{{ $pkCategoryLabel }}</span>
+            @if($ad->service_type === 'demande')
+                <span class="pk-tag pk-tag--request">Demande de service</span>
+            @endif
+            @if(auth()->check() && (int) auth()->id() === (int) $ad->user_id)
+                <span class="pk-tag pk-tag--mine">Votre annonce</span>
+            @endif
             @if($pkUrgentLabel)
                 <span class="pk-tag pk-tag--urgent"><i class="fas fa-bolt" aria-hidden="true"></i> {{ $pkUrgentLabel }}</span>
             @endif
             @if($pkIsSponsored)
                 <span class="pk-tag pk-tag--sponsored">{{ \App\Support\AdDisclosure::SPONSORED_LABEL }}<span class="pk-sr"> : {{ \App\Support\AdDisclosure::SPONSORED_SCREEN_READER }}</span></span>
-                <a class="pk-ad-row__why" href="{{ route('legal.platform-rules') }}#classement" aria-label="Pourquoi ? Règles de classement des offres sponsorisées">Pourquoi ?</a>
+                <a class="pk-ad-row__why" href="{{ route('legal.platform-rules') }}#classement" aria-label="Pourquoi ? Règles de classement des annonces sponsorisées">Pourquoi ?</a>
             @elseif(\App\Support\AdDisclosure::isBumped($ad))
                 <span class="pk-tag pk-tag--bumped">{{ \App\Support\AdDisclosure::BUMPED_LABEL }}<span class="pk-sr"> : {{ \App\Support\AdDisclosure::BUMPED_SCREEN_READER }}</span></span>
             @endif
@@ -68,7 +74,7 @@
         </p>
     </div>
     <div class="pk-ad-row__actions">
-        <a href="{{ $pkUrl }}" class="pk-btn-sm">Voir l'offre <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+        <a href="{{ $pkUrl }}" class="pk-btn-sm">{{ $ad->service_type === 'demande' ? 'Voir la demande' : "Voir l'offre" }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
         @auth
             <button type="button" class="pk-save" data-pk-save="{{ $ad->id }}"
                     aria-pressed="{{ $pkIsSaved ? 'true' : 'false' }}"

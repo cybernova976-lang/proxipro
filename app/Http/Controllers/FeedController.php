@@ -462,12 +462,12 @@ class FeedController extends Controller
                 $useNearbyScope && ! $geoFallbackUsed => 'Services disponibles près de vous',
                 default => 'Services à découvrir',
             };
+            // Règle du 21/11/2026 : les offres, plus les demandes boostées ou d'un auteur abonné.
+            // Un membre voit ses propres annonces à la place où les autres les voient.
             $clientOffers = Ad::marketplaceActive()->with('user')
-                ->where('service_type', 'offre')
                 ->where(fn ($domain) => $domain->whereNull('publication_domain')->orWhere('publication_domain', 'service'));
-            if ($user?->exists) {
-                $clientOffers->where('user_id', '!=', $user->id);
-            }
+            app(ClientFeedOffersService::class)->homeEligible($clientOffers);
+            $clientOffers->withCount(['serviceProposals', 'serviceProposals as active_proposals_count' => fn ($proposals) => $proposals->comparable()]);
             $this->applyHomeShowcaseVisibility($clientOffers, $user);
             $clientOffers->excludingHiddenAuthors();
             // Copie avant le filtre de territoire : sert à montrer les offres d'ailleurs si le territoire est vide.

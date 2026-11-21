@@ -116,6 +116,14 @@ il répond à « où en suis-je et que dois-je faire maintenant ? ».
   uniquement par `/demande` (clients) et `/ads/create` (prestataires) :
   pas de modale de publication dans le feed.
 - La recherche, les filtres et la carte géographique vivent sur `/annonces`.
+- **Ce que montre le flux d'un particulier** (décision du fondateur, 21/11/2026) :
+  toutes les offres, plus les demandes **boostées ou publiées par un abonné
+  Premium**. Les annonces sponsorisées passent en premier, les annonces
+  gratuites complètent. Un membre voit ses propres annonces admises. La règle
+  vit dans `App\Services\ClientFeedOffersService` ; tout changement doit aussi
+  être écrit dans `RankingDisclosure` et dans les « Règles de la marketplace ».
+- Les cartes du flux client sont sur **deux colonnes** (taille des cartes de
+  l'onglet Favoris, photo de 180 px de haut). Ne reviens pas à trois colonnes.
 
 ---
 

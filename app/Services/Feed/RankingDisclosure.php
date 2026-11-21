@@ -9,10 +9,12 @@ use Carbon\CarbonImmutable;
  * Ligne de critère de classement du flux client (article D111-6 II du code
  * de la consommation). Elle décrit l'ordre réellement appliqué par
  * App\Services\ClientFeedOffersService, sans rien y ajouter :
- *  1. les offres promues (boost actif ou abonnement Premium actif de
+ *  0. le flux réunit les offres, et les demandes boostées ou publiées par
+ *     un abonné Premium (règle du 21/11/2026) ;
+ *  1. les annonces promues (boost actif ou abonnement Premium actif de
  *     l'auteur) passent en premier ;
- *  2. dans chaque groupe, deux offres au plus par prestataire avant ses
- *     offres suivantes ;
+ *  2. dans chaque groupe, deux annonces au plus par auteur avant ses
+ *     annonces suivantes ;
  *  3. les catégories suivies par le lecteur, s'il en a ;
  *  4. puis les plus récentes d'abord.
  */
@@ -24,23 +26,26 @@ final class RankingDisclosure
     public function forClientFeed(?Territory $territory, bool $includesRemote = false, bool $viewerHasCategories = false, ?string $nearbyLabel = null, bool $completedElsewhere = false): array
     {
         // $nearbyLabel : portée « autour de vous » réellement appliquée (?scope=nearby), par exemple « de Mamoudzou et alentours ».
-        $scope = $territory ? 'offres '.$territory->withDe() : ($nearbyLabel !== null ? 'offres '.$nearbyLabel : 'offres de toutes les zones');
+        $scope = $territory ? 'annonces '.$territory->withDe() : ($nearbyLabel !== null ? 'annonces '.$nearbyLabel : 'annonces de toutes les zones');
 
-        $details = ['Deux offres au plus par prestataire passent avant ses offres suivantes.'];
+        $details = [
+            'Une demande n’apparaît ici que si elle est sponsorisée (boost, ou abonnement Premium de son auteur).',
+            'Deux annonces au plus par auteur passent avant ses annonces suivantes.',
+        ];
         if ($territory && $includesRemote) {
-            $details[] = 'Les offres « À distance » d’autres territoires sont incluses.';
+            $details[] = 'Les annonces « À distance » d’autres territoires sont incluses.';
         }
         if (\App\Support\AdPromotionCatalog::newRulesActive()) {
             $details[] = 'Une offre « Remontée » a payé pour être reclassée parmi les plus récentes.';
         }
         // $completedElsewhere : la grille de cette page est réellement complétée par des offres d'ailleurs.
         if ($territory && $completedElsewhere) {
-            $details[] = 'La fin de la liste est complétée par des offres d’autres territoires, signalées « Autre territoire ».';
+            $details[] = 'La fin de la liste est complétée par des annonces d’autres territoires, signalées « Autre territoire ».';
         }
 
         return [
             // L'ordre est énoncé dans l'ordre réel du tri : sponsorisées, puis catégories suivies, puis date.
-            'text' => 'Classement : '.$scope.'. Les offres sponsorisées (payantes) passent en premier, puis '
+            'text' => 'Classement : '.$scope.'. Les annonces sponsorisées (payantes) passent en premier, puis '
                 .($viewerHasCategories ? 'celles des catégories que vous suivez, puis ' : '')
                 .'les plus récentes.',
             'details' => implode(' ', $details),

@@ -16,7 +16,7 @@ class FeedClientTerritoryScopeTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const RANKING_LINE = "Classement : offres de Mayotte. Les offres sponsorisées (payantes) passent en premier, puis les plus récentes.";
+    private const RANKING_LINE = "Classement : annonces de Mayotte. Les annonces sponsorisées (payantes) passent en premier, puis les plus récentes.";
 
     protected function setUp(): void
     {
@@ -37,7 +37,7 @@ class FeedClientTerritoryScopeTest extends TestCase
             ->assertViewHas('pkTerritoryScoped', true)
             ->assertViewHas('pkFeedAds', fn ($ads) => $ads->pluck('id')->all() === [$local->id])
             ->assertSee('Services à Mayotte')
-            ->assertSee('Offres de Mayotte')
+            ->assertSee('Annonces de Mayotte')
             ->assertSee(e(route('feed', ['scope' => 'all'])), false)
             ->assertSee('Voir les autres territoires')
             ->assertDontSee('Plomberie à Paris')
@@ -78,8 +78,8 @@ class FeedClientTerritoryScopeTest extends TestCase
             ->assertViewHas('pkFeedAds', fn ($ads) => $ads->count() === 2)
             ->assertSee('Plomberie à Paris')
             ->assertSee('Toutes les zones')
-            ->assertSee('Revenir aux offres de Mayotte')
-            ->assertSee("Classement : offres de toutes les zones. Les offres sponsorisées (payantes) passent en premier");
+            ->assertSee('Revenir aux annonces de Mayotte')
+            ->assertSee("Classement : annonces de toutes les zones. Les annonces sponsorisées (payantes) passent en premier");
     }
 
     public function test_unknown_territory_shows_every_zone_and_says_so(): void
@@ -176,7 +176,7 @@ class FeedClientTerritoryScopeTest extends TestCase
         $this->offer($viewer, ['title' => 'Ma propre offre locale']);
 
         $this->actingAs($viewer)->get(route('feed', ['mode' => 'client']))->assertOk()
-            ->assertViewHas('pkFeedAds', fn ($ads) => $ads->isEmpty())
+            ->assertViewHas('pkFeedAds', fn ($ads) => $ads->count() === 1 && $ads->first()->title === 'Ma propre offre locale')
             ->assertViewHas('pkEmptyLocal', fn ($v) => $v === null)
             ->assertDontSee("Aucun prestataire n'a encore publié d'offre", false);
     }
@@ -193,8 +193,8 @@ class FeedClientTerritoryScopeTest extends TestCase
         $this->actingAs($viewer)->get(route('feed', ['scope' => 'nearby']))->assertOk()
             ->assertViewHas('pkTerritoryScoped', false)
             ->assertSee('Mamoudzou et alentours')
-            ->assertSee("Classement : offres de Mamoudzou et alentours. Les offres sponsorisées (payantes) passent en premier")
-            ->assertDontSee('Classement : offres de toutes les zones');
+            ->assertSee("Classement : annonces de Mamoudzou et alentours. Les annonces sponsorisées (payantes) passent en premier")
+            ->assertDontSee('Classement : annonces de toutes les zones');
     }
 
     public function test_department_reader_sees_offers_of_the_department(): void
@@ -208,7 +208,7 @@ class FeedClientTerritoryScopeTest extends TestCase
         $this->actingAs($viewer)->get(route('feed'))->assertOk()
             ->assertViewHas('pkFeedAds', fn ($ads) => $ads->pluck('id')->all() === [$paris->id])
             ->assertSee('Services dans le département 75')
-            ->assertSee("Classement : offres du département 75. Les offres sponsorisées (payantes) passent en premier");
+            ->assertSee("Classement : annonces du département 75. Les annonces sponsorisées (payantes) passent en premier");
     }
 
     public function test_empty_territory_offers_alert_invitation_and_other_territories_without_false_promise(): void
@@ -234,9 +234,9 @@ class FeedClientTerritoryScopeTest extends TestCase
             ->assertDontSee('les prestataires de votre zone la recevront')
             // Depuis le 18/11/2026 : un territoire vide montre les offres d'ailleurs,
             // annoncées comme telles, avec la mention de classement de cette liste.
-            ->assertSee('Offres publiées dans d’autres territoires')
+            ->assertSee('Annonces publiées dans d’autres territoires')
             ->assertSee('Plomberie à Paris')
-            ->assertSee('Classement : offres de toutes les zones.');
+            ->assertSee('Classement : annonces de toutes les zones.');
         // Aucun compteur dans l'état vide.
         $this->assertDoesNotMatchRegularExpression('/\d+ (prestataires?|artisans?|alertes?)/u', strip_tags(
             (string) str($response->getContent())->between('id="pkEmptyLocal"', 'id="pkElsewhere"')
