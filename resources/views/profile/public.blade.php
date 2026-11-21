@@ -776,11 +776,11 @@
     .profile-identity-body {
         padding: 1.15rem 1.15rem 1.35rem;
     }
+    /* Même cadre que sur la page « Mon profil » : le membre et ses visiteurs voient la photo à la même taille. */
     .profile-photo-shell {
-        width: 176px;
-        max-width: 100%;
+        width: 100%;
         margin-inline: auto;
-        aspect-ratio: 1;
+        aspect-ratio: 4 / 4.25;
         overflow: visible;
     }
     .profile-portrait {
@@ -1193,9 +1193,9 @@
             position: static;
         }
         .profile-photo-shell {
-            max-width: 176px;
+            max-width: 420px;
             margin-inline: auto;
-            aspect-ratio: 1;
+            aspect-ratio: 4 / 3.7;
         }
     }
     @media (max-width: 575.98px) {
@@ -1223,8 +1223,7 @@
             border-radius: 16px;
         }
         .profile-photo-shell {
-            width: 112px;
-            aspect-ratio: 1;
+            aspect-ratio: 1 / 1.02;
         }
         .profile-metric {
             min-height: 102px;

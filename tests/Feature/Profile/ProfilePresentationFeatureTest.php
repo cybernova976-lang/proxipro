@@ -167,6 +167,13 @@ class ProfilePresentationFeatureTest extends TestCase
         $this->assertStringContainsString('js/profile-photo.js?v=', $own);
         auth()->logout();
 
+        // Le membre et ses visiteurs voient la photo à la même taille : même cadre sur les deux pages.
+        foreach (['width: 100%;', 'aspect-ratio: 4 / 4.25;', 'max-width: 420px;', 'aspect-ratio: 4 / 3.7;', 'aspect-ratio: 1 / 1.02;'] as $rule) {
+            $this->assertMatchesRegularExpression('/\.profile-photo-shell \{[^}]*'.preg_quote($rule, '/').'/', $html, 'Profil public : '.$rule);
+            $this->assertMatchesRegularExpression('/\.own-profile-photo-shell \{[^}]*'.preg_quote($rule, '/').'/', $own, 'Mon profil : '.$rule);
+        }
+        $this->assertStringNotContainsString('width: 176px', $html);
+
         // Sans photo : ni bouton ni fenêtre d'agrandissement.
         $user->forceFill(['avatar' => null])->save();
         $this->get(route('profile.public', $user))->assertOk()
