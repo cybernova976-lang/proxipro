@@ -30,7 +30,8 @@
     @endif
 
     @if($canBuy)
-        <form method="POST" action="{{ $isOffer ? route('boost.purchase.stripe', $ad) : route('ads.make-urgent.stripe', $ad) }}">
+        @php $pkSingleChoice = collect($groups)->flatMap(fn ($group) => $group['options'])->where('unavailable', null)->count() === 1; @endphp
+        <form method="POST" action="{{ route('boost.purchase.stripe', $ad) }}">
             @csrf
             @if($isPro)
                 <p class="pk-boost__intro pk-boost__intro--top">Votre abonnement Premium réduit de 20 % le prix des options ci-dessous.</p>
@@ -47,7 +48,7 @@
                             </div>
                         @else
                             <label class="pk-boost__choice">
-                                <input type="radio" name="package" value="{{ $key }}" required @checked(! $isOffer || old('package') === $key)>
+                                <input type="radio" name="package" value="{{ $key }}" required @checked($pkSingleChoice || old('package') === $key)>
                                 <span class="pk-boost__label">{{ $choice['label'] }}
                                     @if($choice['note'])<span class="pk-boost__note">{{ $choice['note'] }}</span>@endif
                                 </span>

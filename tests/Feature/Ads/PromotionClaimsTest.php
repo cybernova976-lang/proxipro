@@ -99,7 +99,7 @@ class PromotionClaimsTest extends TestCase
         $this->assertStringContainsString('Sponsorisé', $content);
     }
 
-    public function test_request_is_never_promised_the_client_home_effect_of_a_boost(): void
+    public function test_request_boost_promises_only_the_home_placement_that_is_applied(): void
     {
         $owner = User::factory()->create(['available_points' => 50]);
         $demand = Ad::create(['user_id' => $owner->id, 'title' => 'Cherche un plombier',
@@ -107,12 +107,16 @@ class PromotionClaimsTest extends TestCase
             'city' => 'Mamoudzou', 'country' => 'Mayotte', 'location' => 'Mamoudzou', 'postal_code' => '97600',
             'service_type' => 'demande', 'status' => 'active', 'visibility' => 'public']);
 
-        $this->actingAs($owner)->get(route('boost.show', $demand))->assertRedirect(route('ads.show', $demand));
+        // Depuis le 21/11/2026, une demande boostée est affichée sur l'accueil des particuliers.
+        $this->actingAs($owner)->get(route('boost.show', $demand))->assertOk()
+            ->assertSee('votre demande est affichée sur l’accueil des particuliers');
         $response = $this->get(route('boost.after-creation', $demand))->assertOk();
         $content = $this->between($response->getContent(), '<div class="success-container">', '<footer class="pk-legal-footer">');
 
-        $this->assertStringNotContainsString('accueil des clients', $content);
-        $this->assertStringNotContainsString('Sponsorisé', $content);
+        $this->assertStringContainsString('accueil des particuliers', $content);
+        $this->assertStringContainsString('Sponsorisé', $content);
+        $this->assertStringContainsString('Aucune place n’est fixe', $content);
+        $this->assertNoForbiddenClaim($content, 'la page « annonce publiée » d’une demande');
     }
 
     private function assertNoForbiddenClaim(string $text, string $where): void

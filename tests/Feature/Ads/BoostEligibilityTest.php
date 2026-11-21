@@ -23,7 +23,7 @@ class BoostEligibilityTest extends TestCase
         Http::fake();
     }
 
-    public function test_boost_is_refused_for_a_request_and_no_point_is_spent(): void
+    public function test_a_request_can_be_boosted_to_reach_the_client_home_and_no_point_is_spent(): void
     {
         $owner = User::factory()->create(['available_points' => 50]);
         $demand = $this->ad($owner, ['service_type' => 'demande', 'title' => 'Cherche un plombier']);
@@ -33,15 +33,29 @@ class BoostEligibilityTest extends TestCase
         $this->assertSame(50, (int) $owner->fresh()->available_points);
         $this->assertFalse((bool) $demand->fresh()->is_boosted);
 
-        $this->get(route('boost.show', $demand))->assertRedirect(route('ads.show', $demand));
-        $this->post(route('boost.purchase.stripe', $demand), ['package' => 'boost_3'])
-            ->assertRedirect(route('ads.show', $demand));
+        // La page d'achat est ouverte à une demande, avec l'effet réellement appliqué.
+        $this->get(route('boost.show', $demand))->assertOk()
+            ->assertSee('votre demande est affichée sur l’accueil des particuliers')
+            ->assertDontSee('votre offre porte la mention');
+        $this->get(route('ads.show', $demand))->assertOk()->assertSee(route('boost.show', $demand), false);
 
-        // Après publication : l'Urgent reste proposé, aucun forfait de boost.
+        // Après publication : l'option Urgent et les forfaits de boost sont proposés.
         $this->get(route('boost.after-creation', $demand))->assertOk()
             ->assertSee('data-type="urgent"', false)
-            ->assertDontSee('data-type="boost"', false)
+            ->assertSee('data-type="boost"', false)
+            ->assertSee('data-request-boost', false)
             ->assertDontSee('votre offre porte la mention');
+
+        // Un pack inconnu reste refusé, et la demande d'un abonné n'a pas besoin de boost.
+        $this->from(route('boost.show', $demand))->post(route('boost.purchase.stripe', $demand), ['package' => 'boost_999'])
+            ->assertRedirect(route('boost.show', $demand))->assertSessionHasErrors('package');
+        $owner->proSubscriptions()->create(['plan' => 'monthly', 'amount' => 9.99, 'status' => 'active',
+            'starts_at' => now()->subDay(), 'ends_at' => now()->addMonths(2)]);
+        $this->from(route('boost.show', $demand))->post(route('boost.purchase.stripe', $demand), ['package' => 'boost_3'])
+            ->assertRedirect(route('boost.show', $demand))
+            ->assertSessionHas('error', fn ($message) => str_contains($message, 'cette demande parmi les annonces sponsorisées'));
+        $this->get(route('boost.after-creation', $demand))->assertOk()
+            ->assertSee('data-request-covered', false)->assertDontSee('data-type="boost"', false);
     }
 
     public function test_boost_fully_covered_by_an_active_premium_subscription_is_refused(): void

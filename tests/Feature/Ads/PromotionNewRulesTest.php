@@ -242,10 +242,23 @@ class PromotionNewRulesTest extends TestCase
         $paid = $this->ad($client, ['service_type' => 'demande', 'title' => 'Demande urgente payée', 'expires_at' => $expires]);
         $free = $this->ad($client, ['service_type' => 'demande', 'title' => 'Demande urgence déclarée', 'is_urgent' => true]);
 
+        // Une demande peut prendre l'option Urgent ou « À la une », dans un seul formulaire.
         $this->actingAs($client)->get(route('boost.show', $paid))->assertOk()
             ->assertSee('Option Urgent')->assertSee('2,50 €')
-            ->assertSee(route('ads.make-urgent.stripe', $paid), false)
-            ->assertDontSee('À la une');
+            ->assertSee(route('boost.purchase.stripe', $paid), false)
+            ->assertSee('name="package" value="urgent"', false)
+            ->assertSee('À la une')
+            ->assertSee('Votre demande est affichée sur l’accueil des particuliers');
+
+        // « À la une » payé pour une demande : elle rejoint l'accueil des particuliers.
+        $featured = $this->ad($client, ['service_type' => 'demande', 'title' => 'Demande à la une']);
+        $boostSession = $this->paidSession($client, $featured, 'cs_test_request_featured', 'ad_boost', 590, 'boost_7');
+        $this->assertSame('processed', app(StripeCheckoutFulfillmentService::class)->fulfill($boostSession));
+        $this->assertTrue($featured->fresh()->isCurrentlyBoosted());
+        $reader = User::factory()->create(['city' => 'Mamoudzou', 'country' => 'Mayotte', 'postal_code' => '97600']);
+        $this->actingAs($reader)->get(route('feed'))->assertOk()
+            ->assertSee('Demande à la une')->assertDontSee('Demande urgence déclarée');
+        $this->actingAs($client);
 
         $session = $this->paidSession($client, $paid, 'cs_test_urgent', 'urgent', 250);
         $this->assertSame('processed', app(StripeCheckoutFulfillmentService::class)->fulfill($session));

@@ -513,7 +513,6 @@
                                     </div>
                                     @endif
                                     
-                                    @if($ad->service_type === 'offre')
                                     <a href="{{ route('boost.show', $ad) }}" class="btn btn-sm btn-warning w-100 mt-1" style="font-weight: 600;">
                                         <i class="fas fa-plus me-1"></i>
                                         @if($bStatus['is_expiring_soon'])
@@ -522,9 +521,8 @@
                                             Gérer le boost
                                         @endif
                                     </a>
-                                    @endif
                                 </div>
-                            @elseif($ad->service_type === 'offre')
+                            @else
                                 <a href="{{ route('boost.show', $ad) }}" class="btn btn-contact mt-2" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none;">
                                     <i class="fas fa-rocket me-2"></i>Booster cette annonce
                                 </a>
