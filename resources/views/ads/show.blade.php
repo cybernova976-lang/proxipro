@@ -26,6 +26,9 @@
     .ad-image-section { position: relative; overflow: hidden; min-height: 300px; background: #e8eef6; }
     .ad-photo-gallery { display: grid; width: 100%; height: clamp(300px, 28vw, 390px); gap: 4px; background: #dbe4ef; }
     .ad-photo-gallery--single { display: block; }
+    /* Un bouton ne s'étire pas tout seul hors d'une grille : sans ces dimensions,
+       la photo unique gardait sa taille d'origine, en haut à gauche du cadre. */
+    .ad-photo-gallery--single .ad-photo { width: 100%; height: 100%; }
     .ad-photo-gallery--double { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .ad-photo-gallery--multiple { grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr); grid-template-rows: repeat(2, minmax(0, 1fr)); }
     .ad-photo-gallery--multiple .ad-photo--main { grid-row: 1 / 3; }
@@ -191,7 +194,7 @@
                         @if($photoCount === 1)
                             <div class="ad-photo-gallery ad-photo-gallery--single">
                                 <button type="button" class="ad-photo ad-photo--main" onclick="openLightbox(0)" aria-label="Agrandir la photo de l'annonce">
-                                    <img src="{{ storage_url($photos[0]) }}" alt="Photo de l'annonce : {{ $ad->title }}">
+                                    <img src="{{ storage_url($photos[0]) }}" alt="Photo de l'annonce : {{ $ad->title }}" data-photo-fit>
                                 </button>
                             </div>
                         @elseif($photoCount === 2)
@@ -839,6 +842,10 @@ Cordialement,
     </div>
     @endauth
 @endsection
+
+@push('scripts')
+<script src="{{ asset('js/profile-photo.js') }}?v={{ filemtime(public_path('js/profile-photo.js')) }}" defer></script>
+@endpush
 
 @section('scripts')
 <script>

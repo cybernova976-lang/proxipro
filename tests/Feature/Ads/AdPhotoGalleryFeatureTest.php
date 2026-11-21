@@ -75,4 +75,33 @@ class AdPhotoGalleryFeatureTest extends TestCase
             ->assertSee('2 photos')
             ->assertDontSee('<span class="badge-type', false);
     }
+
+    public function test_a_single_photo_fills_its_frame_instead_of_staying_small_in_a_corner(): void
+    {
+        $owner = User::factory()->create();
+        $ad = Ad::create([
+            'title' => 'Cherche un moniteur de fitness',
+            'description' => 'Une demande illustrée par une seule photo.',
+            'category' => 'Coach bien-être',
+            'location' => 'Fort-de-France',
+            'service_type' => 'demande',
+            'status' => 'active',
+            'visibility' => 'public',
+            'photos' => ['ads/photo-1.webp'],
+            'user_id' => $owner->id,
+        ]);
+
+        $html = $this->get(route('ads.show', $ad))->assertOk()
+            ->assertSee('ad-photo-gallery--single', false)
+            ->assertSee('data-photo-fit', false)
+            ->assertSee('js/profile-photo.js', false)
+            ->assertDontSee('ad-gallery-count" onclick', false)
+            ->getContent();
+
+        // Le bouton qui porte la photo occupe tout le cadre (hors grille, il ne s'étire pas seul).
+        $this->assertMatchesRegularExpression(
+            '/\.ad-photo-gallery--single \.ad-photo\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;/',
+            $html
+        );
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Cadrage de la photo de profil.
+ * Cadrage de la photo de profil, et de la photo unique d'une annonce.
  *
  * Par défaut (CSS), la photo s'affiche en entier dans son cadre : un logo
  * allongé n'est jamais coupé. Quand la photo a presque le format du cadre,
