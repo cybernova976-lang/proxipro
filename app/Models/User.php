@@ -990,6 +990,19 @@ class User extends Authenticatable
         return $this->proSubscriptions()->currentlyActive()->exists();
     }
 
+    public const FREE_PHOTOS_PER_AD = 2;
+
+    public const PREMIUM_PHOTOS_PER_AD = 4;
+
+    /**
+     * Nombre de photos autorisées par annonce (offre ou demande) : la même
+     * règle pour tous les formulaires de publication et de modification.
+     */
+    public function maxPhotosPerAd(): int
+    {
+        return $this->hasActiveProSubscription() ? self::PREMIUM_PHOTOS_PER_AD : self::FREE_PHOTOS_PER_AD;
+    }
+
     public function subscriptionForManagement(): ?ProSubscription
     {
         return $this->proSubscriptions()->billingOpen()->latest('id')->first()

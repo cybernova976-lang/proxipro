@@ -196,6 +196,13 @@ body { background: #f0f2f5; }
 .demand-writing-preview p { margin: 0 0 12px; color: #334155; font-size: .9rem; line-height: 1.6; }
 .demand-writing-use { min-height: 44px; padding: 9px 14px; border: 0; border-radius: 9px; background: #4f46e5; color: #fff; font-weight: 600; }
 .demand-writing-status:not(:empty) { margin: 10px 0 0; font-size: .85rem; color: #3730a3; }
+.demand-photo-note { margin: 8px 0 0; padding: 9px 12px; border-radius: 10px; background: #eef2ff; color: #312e81; font-size: .85rem; line-height: 1.45; }
+.demand-photo-note[hidden] { display: none; }
+.demand-photo-area[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
+.demand-terms { margin-top: 16px; padding: 14px 16px; border: 1px solid #e0e7ff; border-radius: 12px; background: #f8fafc; }
+.demand-terms strong { display: block; margin-bottom: 6px; color: #312e81; font-size: .9rem; }
+.demand-terms ul { margin: 0; padding-left: 18px; color: #475569; font-size: .84rem; line-height: 1.55; }
+.demand-terms a { color: #4338ca; font-weight: 600; }
 .demand-confirm {
     display: grid; grid-template-columns: 18px minmax(0, 1fr); align-items: start; gap: 8px 11px; padding: 14px 16px; margin-top: 16px;
     border: 1px solid #cbd5e1; border-radius: 12px; background: #fff;
@@ -543,10 +550,11 @@ body { background: #f0f2f5; }
                         <label><i class="fas fa-camera me-1"></i> Photos <span style="color:#9ca3af; font-weight:400;">(facultatif)</span></label>
                         <div class="demand-photo-area" role="button" tabindex="0" id="demandPhotoArea">
                             <i class="fas fa-cloud-upload-alt"></i>
-                            <p>Ajoutez jusqu’à 2 photos pour aider le prestataire à comprendre.</p>
+                            <p>Ajoutez jusqu’à {{ $maxPhotos }} photos pour aider le prestataire à comprendre.</p>
                         </div>
-                        <input type="file" id="demandPhotoInput" name="photos[]" multiple accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleDemandPhotos(this)">
+                        <input type="file" id="demandPhotoInput" name="photos[]" multiple accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleDemandPhotos(this)" data-max-photos="{{ $maxPhotos }}">
                         <div class="demand-photo-previews" id="demandPhotoPreviews"></div>
+                        <p class="demand-photo-note" id="demandPhotoNote" role="status" aria-live="polite" hidden></p>
                         <p class="hint">Les photos ne sont jamais enregistrées dans le brouillon local.</p>
                     </div>
 
@@ -631,9 +639,19 @@ body { background: #f0f2f5; }
                         </div>
                     </div>
 
+                    <div class="demand-terms" aria-labelledby="demandTermsTitle">
+                        <strong id="demandTermsTitle"><i class="fas fa-file-contract me-1" aria-hidden="true"></i> Conditions de publication</strong>
+                        <ul>
+                            <li>Vous êtes responsable du contenu de votre demande : texte, photos, prix et toute autre information.</li>
+                            <li>En cas de plainte ou de litige lié à ce contenu, vous en assumez la responsabilité.</li>
+                            <li>Prokejem peut retirer toute demande contraire à ces conditions ou aux <a href="{{ route('legal.platform-rules') }}" target="_blank" rel="noopener">règles de la plateforme</a>.</li>
+                            <li>Votre demande est publique pendant 30 jours.</li>
+                        </ul>
+                    </div>
+
                     <div class="demand-confirm">
                         <input type="checkbox" name="publication_confirmed" id="publicationConfirmed" value="1" aria-describedby="step5Error" @checked(old('publication_confirmed')) required>
-                        <label for="publicationConfirmed">Je confirme que les informations de cette demande sont exactes et j’accepte sa publication publique pendant 30 jours.</label>
+                        <label for="publicationConfirmed">Je confirme que les informations de cette demande sont exactes et <strong>j’accepte les conditions de publication</strong> ci-dessus.</label>
                     </div>
 
                     @guest
@@ -1108,16 +1126,39 @@ function selectPriceType(type) {
     scheduleDraftSave();
 }
 
+// Chaque photo refusée est expliquée : rien ne se passe jamais en silence.
 function handleDemandPhotos(input) {
-    const files = Array.from(input.files);
-    const remaining = 2 - demandPhotos.length;
-    files.slice(0, remaining).forEach(file => {
-        if (file.size <= 5 * 1024 * 1024 && ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    const max = parseInt(input.dataset.maxPhotos, 10) || 2;
+    const problems = [];
+    Array.from(input.files).forEach(file => {
+        if (demandPhotos.length >= max) {
+            if (!problems.includes('max')) problems.push('max');
+        } else if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+            if (!problems.includes('format')) problems.push('format');
+        } else if (file.size > 5 * 1024 * 1024) {
+            if (!problems.includes('size')) problems.push('size');
+        } else {
             demandPhotos.push(file);
         }
     });
     input.value = '';
     renderDemandPhotos();
+    const messages = {
+        max: 'Vous avez atteint la limite de ' + max + ' photos pour cette demande. Retirez une photo pour en ajouter une autre.',
+        format: 'Ce format de photo n’est pas accepté. Utilisez une photo JPEG, PNG ou WebP (les photos HEIC de l’iPhone ne sont pas lues).',
+        size: 'Une photo dépasse 5 Mo. Choisissez une photo plus légère.',
+    };
+    showDemandPhotoNote(problems.map(key => messages[key]).join(' '));
+}
+
+function showDemandPhotoNote(text) {
+    const note = document.getElementById('demandPhotoNote');
+    const max = parseInt(document.getElementById('demandPhotoInput').dataset.maxPhotos, 10) || 2;
+    if (!text && demandPhotos.length >= max) {
+        text = 'Limite atteinte : ' + max + ' photos sur ' + max + '.';
+    }
+    note.textContent = text || '';
+    note.hidden = !text;
 }
 
 function renderDemandPhotos() {
@@ -1131,7 +1172,8 @@ function renderDemandPhotos() {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.innerHTML = '&times;';
-        btn.onclick = () => { demandPhotos.splice(idx, 1); renderDemandPhotos(); updatePhotoInput(); };
+        btn.setAttribute('aria-label', 'Retirer cette photo');
+        btn.onclick = () => { demandPhotos.splice(idx, 1); renderDemandPhotos(); updatePhotoInput(); showDemandPhotoNote(''); };
         div.appendChild(img);
         div.appendChild(btn);
         container.appendChild(div);

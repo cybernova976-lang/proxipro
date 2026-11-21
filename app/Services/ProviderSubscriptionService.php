@@ -435,7 +435,8 @@ class ProviderSubscriptionService
 
         $invoiceId = (string) $this->value($invoice, 'id');
         if ($invoiceId !== '') {
-            Transaction::firstOrCreate(
+            $invoiceNumber = (string) $this->value($invoice, 'number');
+            $payment = Transaction::firstOrCreate(
                 ['stripe_session_id' => $invoiceId],
                 [
                     'user_id' => $subscription->user_id,
@@ -446,13 +447,44 @@ class ProviderSubscriptionService
                     'metadata' => [
                         'stripe_subscription_id' => $subscriptionId,
                         'stripe_invoice_id' => $invoiceId,
+                        'invoice_number' => $invoiceNumber !== '' ? $invoiceNumber : null,
                         'billing_reason' => $this->value($invoice, 'billing_reason'),
                     ],
                 ]
             );
+            // Une seule fois par facture : Stripe peut renvoyer le même événement.
+            if ($payment->wasRecentlyCreated) {
+                \App\Notifications\SubscriptionInvoiceNotification::dispatch(
+                    $subscription->user,
+                    $payment,
+                    $invoiceNumber !== '' ? $invoiceNumber : null,
+                    ((string) $this->value($invoice, 'invoice_pdf')) ?: null,
+                );
+            }
         }
 
         return $subscription;
+    }
+
+    /**
+     * Adresse du PDF d'une facture d'abonnement, relue chez Stripe (le lien
+     * a une durée de vie limitée) et rendue seulement si la facture appartient
+     * bien à ce membre.
+     */
+    public function invoicePdfUrl(User $user, string $invoiceId): ?string
+    {
+        if (! $user->stripe_id || ! str_starts_with($invoiceId, 'in_')) {
+            return null;
+        }
+
+        $invoice = $this->client()->invoices->retrieve($invoiceId);
+        if ($this->resourceId($this->value($invoice, 'customer')) !== $user->stripe_id) {
+            return null;
+        }
+
+        $url = (string) $this->value($invoice, 'invoice_pdf');
+
+        return str_starts_with($url, 'https://') ? $url : null;
     }
 
     /**

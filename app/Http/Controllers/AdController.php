@@ -213,7 +213,7 @@ class AdController extends Controller
                     ->withInput();
             }
 
-            $maxPhotos = Auth::user() && Auth::user()->hasActiveProSubscription() ? 4 : 2;
+            $maxPhotos = Auth::user()?->maxPhotosPerAd() ?? \App\Models\User::FREE_PHOTOS_PER_AD;
             $publicationContext = $this->publicationSchema->resolve(
                 $request->input('main_category'),
                 $request->input('category')
@@ -408,7 +408,7 @@ class AdController extends Controller
             ], 422);
         }
 
-        $maxPhotos = Auth::user()->hasActiveProSubscription() ? 4 : 2;
+        $maxPhotos = Auth::user()->maxPhotosPerAd();
         $publicationContext = $this->publicationSchema->resolve(
             $request->input('main_category'),
             $request->input('category')
@@ -651,7 +651,7 @@ class AdController extends Controller
                 abort(403);
             }
 
-            $maxPhotos = Auth::user() && Auth::user()->hasActiveProSubscription() ? 4 : 2;
+            $maxPhotos = Auth::user()?->maxPhotosPerAd() ?? \App\Models\User::FREE_PHOTOS_PER_AD;
             $publicationContext = $this->publicationSchema->resolve(
                 $request->input('main_category'),
                 $request->input('category')

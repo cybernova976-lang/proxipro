@@ -12,7 +12,7 @@
             'country' => 'Choisissez votre pays ou département.',
             'price' => 'Indiquez un prix en euros, ou choisissez « À discuter ».',
             'price_type' => 'Choisissez « À discuter » ou proposez un prix.',
-            'publication_confirmed' => 'Cochez la case « Ma demande sera visible pendant 30 jours » avant de publier.',
+            'publication_confirmed' => 'Cochez la case « J’accepte les conditions de publication » avant de publier.',
             'title' => 'Une demande identique a déjà été publiée aujourd’hui.',
         ];
         foreach ($errors->getMessages() as $pkField => $pkMessages) {

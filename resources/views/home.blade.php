@@ -572,3 +572,7 @@
     @include('dashboard.partials.overview')
 </div>
 @endsection
+
+@push('scripts')
+<script src="{{ asset('js/activity-dashboard.js') }}?v={{ filemtime(public_path('js/activity-dashboard.js')) }}" defer></script>
+@endpush

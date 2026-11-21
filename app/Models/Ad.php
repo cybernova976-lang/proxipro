@@ -448,6 +448,22 @@ class Ad extends Model
         return $this->is_urgent && $this->urgent_until && $this->urgent_until->isFuture();
     }
 
+    /**
+     * L'option payante « Urgent » apporterait-elle quelque chose à cette demande ?
+     * Avec les règles en vigueur, une urgence indiquée gratuitement au dépôt
+     * donne déjà la mention « Urgent » et la priorité sur l'accueil des
+     * prestataires : la vendre en plus ne changerait rien. Avec les nouvelles
+     * règles, seule l'option classe, donc elle reste proposée.
+     */
+    public function canBuyUrgentOption(): bool
+    {
+        if ($this->service_type !== 'demande' || $this->hasPromotedUrgency()) {
+            return false;
+        }
+
+        return \App\Support\AdPromotionCatalog::newRulesActive() || ! $this->isCurrentlyUrgent();
+    }
+
     /** Portée SQL de hasPromotedUrgency(). */
     public function scopePromotedUrgent($query)
     {

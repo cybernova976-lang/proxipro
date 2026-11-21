@@ -47,6 +47,23 @@ class BillingController extends Controller
         ]);
     }
 
+    /** Télécharge la facture d'un paiement d'abonnement : le PDF émis par Stripe. */
+    public function invoice(Transaction $transaction)
+    {
+        abort_unless($transaction->user_id === Auth::id() && $transaction->type === 'SUBSCRIPTION', 404);
+
+        try {
+            $url = $this->subscriptions->invoicePdfUrl(Auth::user(), (string) $transaction->stripe_session_id);
+        } catch (\Throwable $exception) {
+            report($exception);
+            $url = null;
+        }
+
+        return $url !== null
+            ? redirect()->away($url)
+            : redirect()->route('billing.index')->with('error', 'Cette facture n’a pas pu être récupérée pour le moment. Réessayez dans quelques minutes ou contactez l’assistance.');
+    }
+
     /** Ouvre la page Stripe où le membre saisit sa nouvelle carte ou son compte à prélever. */
     public function changePaymentMethod()
     {

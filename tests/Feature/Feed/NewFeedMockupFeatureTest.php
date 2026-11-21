@@ -173,10 +173,13 @@ class NewFeedMockupFeatureTest extends TestCase
             ->assertOk()
             ->assertDontSee('Toujours aucune réponse')
             ->assertDontSee('Améliorer ma demande')
-            ->assertSee('1 demande ou mission en cours')
+            ->assertSee('Mes demandes en cours')
+            ->assertSee('Réparer une fuite restée sans réponse')
+            ->assertSee('En attente de propositions')
             ->assertSee('Voir mes demandes')
             ->assertSee(route('home'), false)
-            ->assertDontSee('data-activity-key="request-'.$requestAd->id.'"', false);
+            ->assertSee('data-activity-key="request-'.$requestAd->id.'"', false)
+            ->assertDontSee('pk-resume', false);
         $this->get(route('home'))->assertOk()->assertSee('En attente de propositions')
             ->assertSee('Réparer une fuite restée sans réponse')->assertSee(route('ads.edit', $requestAd), false);
     }

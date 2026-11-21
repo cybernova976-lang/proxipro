@@ -29,7 +29,7 @@
 
     <label class="pk-guided__confirm">
         <input type="checkbox" name="publication_confirmed" value="1" @checked(old('publication_confirmed'))>
-        <span>Ma demande sera visible pendant 30 jours. <a href="{{ route('legal.platform-rules') }}" target="_blank" rel="noopener">Les règles</a></span>
+        <span>J’accepte les conditions de publication : je suis responsable du contenu de ma demande, visible pendant 30 jours. <a href="{{ route('legal.platform-rules') }}" target="_blank" rel="noopener">Lire les conditions</a></span>
     </label>
 
     <div class="pk-guided__bar pk-guided__bar--publish">

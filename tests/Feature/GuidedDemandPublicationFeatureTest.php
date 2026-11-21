@@ -207,7 +207,7 @@ class GuidedDemandPublicationFeatureTest extends TestCase
 
         $response->assertRedirect(route('demand.create'))
             ->assertSessionHasErrors([
-                'publication_confirmed' => 'Confirmez les informations et acceptez la publication publique de votre demande pendant 30 jours.',
+                'publication_confirmed' => 'Acceptez les conditions de publication pour publier votre demande.',
             ]);
         $this->assertSame(['publication_confirmed'], array_keys(session('errors')->getMessages()));
         $this->assertDatabaseCount('ads', 0);

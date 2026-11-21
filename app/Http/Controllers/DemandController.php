@@ -37,6 +37,9 @@ class DemandController extends Controller
     {
         // Parcours guidé : seulement pour une situation valide et disponible ici.
         // Sinon (clé absente, inconnue ou univers désactivé) : formulaire habituel.
+        // Même limite de photos que partout ailleurs : 2, ou 4 avec Premium.
+        $maxPhotos = $request->user()?->maxPhotosPerAd() ?? User::FREE_PHOTOS_PER_AD;
+
         $situationKey = $request->query('situation');
         if (is_string($situationKey) && $situationKey !== '') {
             $territory = app(TerritoryResolver::class)->forUser(
@@ -46,7 +49,7 @@ class DemandController extends Controller
             $situation = app(ServiceSituationCatalog::class)->find($situationKey, $territory);
 
             if ($situation !== null) {
-                return view('demands.guided', app(GuidedDemandPage::class)->build($request, $situation, $territory));
+                return view('demands.guided', app(GuidedDemandPage::class)->build($request, $situation, $territory) + ['maxPhotos' => $maxPhotos]);
             }
         }
 
@@ -93,7 +96,7 @@ class DemandController extends Controller
         }
         $defaultCity = $request->user()?->city;
 
-        return view('demands.create', compact('categoriesData', 'preCategory', 'preSubcategory', 'intakeSchemas', 'serverDraft', 'defaultCountry', 'defaultCity'));
+        return view('demands.create', compact('categoriesData', 'preCategory', 'preSubcategory', 'intakeSchemas', 'serverDraft', 'defaultCountry', 'defaultCity', 'maxPhotos'));
     }
 
     /**
@@ -157,6 +160,8 @@ class DemandController extends Controller
             $request->merge($guided['fields']);
         }
 
+        $maxPhotos = $request->user()->maxPhotosPerAd();
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:2000',
@@ -175,17 +180,17 @@ class DemandController extends Controller
                 'min:1',
             ],
             'urgency' => 'nullable|in:normal,urgent,tres_urgent',
-            'photos' => 'nullable|array|max:2',
+            'photos' => 'nullable|array|max:'.$maxPhotos,
             'photos.*' => 'image|mimes:jpeg,png,webp|max:5120',
             'publication_confirmed' => ['required', 'accepted'],
             ...ServiceDemandIntakeSchema::validationRules($request->input('main_category')),
         ], [
-            'publication_confirmed.required' => 'Confirmez les informations et acceptez la publication publique de votre demande pendant 30 jours.',
-            'publication_confirmed.accepted' => 'Confirmez les informations et acceptez la publication publique de votre demande pendant 30 jours.',
+            'publication_confirmed.required' => 'Acceptez les conditions de publication pour publier votre demande.',
+            'publication_confirmed.accepted' => 'Acceptez les conditions de publication pour publier votre demande.',
             'photos.*.image' => 'Ce format de photo n’est pas accepté. Utilisez une photo JPEG, PNG ou WebP (les photos HEIC de l’iPhone ne sont pas lues).',
             'photos.*.mimes' => 'Ce format de photo n’est pas accepté. Utilisez une photo JPEG, PNG ou WebP (les photos HEIC de l’iPhone ne sont pas lues).',
             'photos.*.max' => 'Une photo dépasse 5 Mo. Choisissez une photo plus légère.',
-            'photos.max' => 'Deux photos au plus.',
+            'photos.max' => $maxPhotos.' photos au plus.',
         ], ServiceDemandIntakeSchema::validationAttributes($request->input('main_category')));
 
         if (! in_array($request->category, $services[$request->main_category]['subcategories'] ?? [], true)) {

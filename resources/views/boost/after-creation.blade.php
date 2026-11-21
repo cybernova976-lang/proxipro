@@ -33,13 +33,18 @@
     <div class="promotion-grid">
         @if($ad->service_type === 'demande')
             <article class="promotion-card" data-type="urgent">
-                <h2>Option Urgent</h2>
-                <p>Pendant {{ $urgent['duration_days'] }} jours, votre demande passe avant les autres demandes du même métier dans l’accueil des prestataires et porte la mention « Urgent · option payante ».</p>
-                <strong>{{ number_format($urgent['price_euros'], 2, ',', ' ') }} €</strong>
-                @if($ad->isCurrentlyUrgent())
-                    <p>Option déjà active jusqu’au {{ $ad->urgent_until->format('d/m/Y') }}.</p>
+                @if(! $ad->hasPromotedUrgency() && ! $ad->canBuyUrgentOption())
+                    <h2>Votre demande est déjà signalée « Urgent »</h2>
+                    <p data-urgent-already-free>Vous l’avez indiqué en la publiant, sans frais : elle passe déjà avant les autres demandes du même métier dans l’accueil des prestataires. L’option payante n’apporterait rien de plus, elle ne vous est donc pas proposée.</p>
                 @else
-                    <form method="POST" action="{{ route('ads.make-urgent.stripe', $ad) }}">@csrf<button class="btn btn-primary" type="submit">Payer par carte via Stripe</button></form>
+                    <h2>Option Urgent</h2>
+                    <p>Pendant {{ $urgent['duration_days'] }} jours, votre demande passe avant les autres demandes du même métier dans l’accueil des prestataires et porte la mention « Urgent · option payante ».</p>
+                    <strong>{{ number_format($urgent['price_euros'], 2, ',', ' ') }} €</strong>
+                    @if($ad->hasPromotedUrgency())
+                        <p>Option déjà active jusqu’au {{ $ad->urgent_until->format('d/m/Y') }}.</p>
+                    @else
+                        <form method="POST" action="{{ route('ads.make-urgent.stripe', $ad) }}">@csrf<button class="btn btn-primary" type="submit">Payer par carte via Stripe</button></form>
+                    @endif
                 @endif
             </article>
         @else

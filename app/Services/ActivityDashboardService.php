@@ -74,7 +74,9 @@ class ActivityDashboardService
             }
 
             return $item + ['stage' => $row->stage, 'date' => $model->created_at,
-                'editable' => $row->kind === 'request' && $row->stage !== 'closed' ? route('ads.edit', $model) : null];
+                'editable' => $row->kind === 'request' && $row->stage !== 'closed' ? route('ads.edit', $model) : null,
+                // Une demande se supprime depuis la liste ; AdController::destroy protège celles qui portent une commande.
+                'deletable' => $row->kind === 'request' ? route('ads.destroy', $model) : null];
         });
 
         return ['activityItems' => $rows, 'activityCounts' => $counts, 'activityFilter' => $filter,

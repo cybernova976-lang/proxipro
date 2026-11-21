@@ -5,7 +5,7 @@
         @if($payments->isNotEmpty())
             <table class="pk-billing-table">
                 <thead>
-                    <tr><th scope="col">Date</th><th scope="col">Objet</th><th scope="col">Montant</th></tr>
+                    <tr><th scope="col">Date</th><th scope="col">Objet</th><th scope="col">Montant</th><th scope="col">Facture</th></tr>
                 </thead>
                 <tbody>
                     @foreach($payments as $pkPayment)
@@ -13,6 +13,16 @@
                             <td data-label="Date">{{ $pkPayment->created_at->format('d/m/Y') }}</td>
                             <td data-label="Objet">{{ $pkPayment->description }}</td>
                             <td data-label="Montant">{{ number_format((float) $pkPayment->amount, 2, ',', ' ') }} €</td>
+                            <td data-label="Facture">
+                                @if(str_starts_with((string) $pkPayment->stripe_session_id, 'in_'))
+                                    <a class="pk-billing-invoice" href="{{ route('billing.invoice', $pkPayment) }}" target="_blank" rel="noopener"
+                                       aria-label="Télécharger la facture du {{ $pkPayment->created_at->format('d/m/Y') }}">
+                                        <i class="fas fa-file-pdf" aria-hidden="true"></i> Télécharger
+                                    </a>
+                                @else
+                                    <span aria-label="Aucune facture">—</span>
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -20,12 +30,8 @@
         @else
             <p class="pk-billing__empty">Aucun paiement d’abonnement enregistré pour le moment.</p>
         @endif
-        @if($user->stripe_id)
-            <form method="POST" action="{{ route('pro.subscription.billing-portal') }}" class="pk-billing__invoices">
-                @csrf
-                <button type="submit" class="pk-billing-btn">Télécharger mes factures</button>
-                <span>Vos factures sont conservées par Stripe, notre prestataire de paiement.</span>
-            </form>
+        @if($payments->isNotEmpty())
+            <p class="pk-billing__invoices">Chaque facture vous est aussi envoyée par e-mail dès que le paiement est reçu.</p>
         @endif
     </section>
 @endif

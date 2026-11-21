@@ -352,6 +352,9 @@ Route::middleware(['auth'])->group(function () {
 
     // Facturation : abonnements du membre, moyen de paiement, résiliation.
     Route::get('/facturation', [\App\Http\Controllers\BillingController::class, 'index'])->name('billing.index');
+    Route::get('/facturation/factures/{transaction}', [\App\Http\Controllers\BillingController::class, 'invoice'])
+        ->middleware('throttle:20,1,billing.invoice:')
+        ->name('billing.invoice');
     Route::post('/facturation/moyen-de-paiement', [\App\Http\Controllers\BillingController::class, 'changePaymentMethod'])
         ->middleware('throttle:10,1,billing.payment-method:')
         ->name('billing.payment-method');

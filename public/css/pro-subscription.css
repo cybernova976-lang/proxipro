@@ -1,0 +1,91 @@
+/* Page « Abonnement Premium » de l'espace Pro (resources/views/pro/subscription.blade.php).
+   Rampe indigo de welcome.blade.php (#eef2ff → #312e81) et violet #7c3aed ;
+   le rouge est réservé au paiement refusé. Points de rupture : 640 / 1024 / 1180. */
+
+/* La page garde la largeur des autres pages de l'espace Pro. */
+.subscription-page-header,
+.subscription-page-alert,
+.sub-page-card {
+    width: 100%;
+    max-width: none;
+}
+.subscription-page-alert { border-radius: 12px; }
+
+.pk-sub__crumbs { font-size: .8rem; }
+.pk-sub__crumbs a { color: #4338ca; }
+.pk-sub__lead { margin: 0; color: #526176; font-size: .95rem; line-height: 1.5; }
+
+.pk-sub { display: grid; gap: 20px; color: #334155; line-height: 1.55; }
+.pk-sub > .pro-card, .pk-sub__top > .pro-card { margin-bottom: 0; }
+.pk-sub__top { display: grid; gap: 20px; align-items: start; }
+.pk-sub__h2 { margin: 0 0 14px; color: #0f172a; font-size: 1.1rem; font-weight: 750; line-height: 1.3; }
+
+/* Zone 1 · état de l'abonnement */
+.pk-sub-state { border-left: 4px solid #4f46e5; }
+.pk-sub-state--muted { border-left-color: #94a3b8; }
+.pk-sub-state--late { border-left-color: #b91c1c; }
+.pk-sub-state__head { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; }
+.pk-sub-state__head h2 { margin: 0; color: #0f172a; font-size: 1.25rem; font-weight: 750; line-height: 1.3; }
+.pk-sub-chip { flex: 0 0 auto; padding: 4px 12px; border-radius: 999px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
+.pk-sub-chip--ok { background: #eef2ff; color: #3730a3; }
+.pk-sub-chip--muted { background: #f1f5f9; color: #475569; }
+.pk-sub-chip--late { background: #fef2f2; color: #b91c1c; }
+
+.pk-sub-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; margin: 18px 0 0; }
+.pk-sub-facts dt { color: #64748b; font-size: .78rem; font-weight: 600; }
+.pk-sub-facts dd { margin: 2px 0 0; color: #1e293b; font-size: 1rem; font-weight: 650; overflow-wrap: anywhere; }
+.pk-sub-state__note { margin: 16px 0 0; color: #475569; font-size: .92rem; }
+.pk-sub-state__note--late { padding: 12px 14px; border: 1px solid #fecaca; border-radius: 12px; background: #fef2f2; color: #7f1d1d; }
+
+.pk-sub-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 20px; }
+.pk-sub-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 18px; border: 1px solid #c7d2fe; border-radius: 12px; background: #fff; color: #4338ca; font-size: .92rem; font-weight: 700; line-height: 1.3; text-align: center; text-decoration: none; cursor: pointer; }
+.pk-sub-btn:hover, .pk-sub-btn:focus-visible { background: #eef2ff; color: #312e81; }
+.pk-sub-btn--primary { border-color: #4338ca; background: #4338ca; color: #fff; }
+.pk-sub-btn--primary:hover, .pk-sub-btn--primary:focus-visible { border-color: #312e81; background: #312e81; color: #fff; }
+.pk-sub-link { display: inline-flex; align-items: center; min-height: 44px; color: #4338ca; font-size: .9rem; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.pk-sub-link:hover { color: #312e81; }
+.pk-sub a:focus-visible, .pk-sub button:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 2px; }
+
+/* Bon à savoir */
+.pk-sub-notes .subscription-transparency { margin: 0 !important; }
+
+/* Zone 2 · la formule */
+.pk-sub-offer { display: grid; gap: 20px; border-color: #c7d2fe; }
+.pk-sub-offer h2 { margin: 0 0 6px; color: #0f172a; font-size: 1.15rem; font-weight: 750; }
+.pk-sub-offer__desc { margin: 0 0 12px; color: #526176; font-size: .92rem; }
+.pk-sub-offer__buy { display: grid; gap: 10px; align-content: start; padding: 18px; border-radius: 14px; background: #eef2ff; }
+.pk-sub-offer__buy form { margin: 0; }
+.pk-sub-offer__buy .pk-sub-btn { width: 100%; }
+.pk-sub-offer__terms { margin: 0; color: #475569; font-size: .82rem; }
+.pk-sub-price { margin: 0; color: #312e81; }
+.pk-sub-price strong { font-size: 1.9rem; font-weight: 800; line-height: 1.1; }
+.pk-sub-price span { color: #4338ca; font-size: .9rem; font-weight: 600; }
+
+.pk-sub-features { display: grid; gap: 8px 24px; margin: 0; padding: 0; list-style: none; color: #334155; font-size: .92rem; }
+.pk-sub-features li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; align-items: start; }
+.pk-sub-features i { margin-top: 4px; color: #7c3aed; font-size: .8rem; }
+
+.pk-sub-closed p { margin: 0; color: #526176; font-size: .92rem; }
+.pk-sub__stats { margin: 0; color: #64748b; font-size: .86rem; }
+
+@media (min-width: 640px) {
+    .pk-sub-features--columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+    .pk-sub__top { grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr); }
+    .pk-sub-offer { grid-template-columns: minmax(0, 1fr) minmax(240px, 320px); align-items: start; }
+}
+
+@media (min-width: 1180px) {
+    .subscription-page-header { margin-bottom: 2rem; }
+    .sub-page-card { padding: 1.75rem; }
+    .pk-sub-features--columns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 639.98px) {
+    .sub-page-card { padding: 16px !important; }
+    .pk-sub-facts { grid-template-columns: minmax(0, 1fr); }
+    .pk-sub-actions { display: grid; }
+    .pk-sub-btn { width: 100%; }
+}

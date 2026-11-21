@@ -650,6 +650,10 @@ class BoostController extends Controller
         if ($ad->is_urgent && $ad->urgent_until && $ad->urgent_until->isFuture()) {
             return back()->with('error', 'Cette annonce est déjà en mode URGENT.');
         }
+        // Urgence déjà indiquée gratuitement au dépôt : l'option n'ajouterait rien, on ne la vend pas.
+        if (! $ad->canBuyUrgentOption()) {
+            return back()->with('error', 'Votre demande est déjà signalée « Urgent » sans frais : cette option n’apporterait rien de plus.');
+        }
 
         $user = Auth::user();
         $config = self::getUrgentConfig();

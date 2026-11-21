@@ -24,7 +24,6 @@
         heic: 'Cette photo est au format HEIC, que nous ne savons pas lire. Choisissez une autre photo, ou prenez-la avec le bouton « Prendre une photo ».',
         unreadable: 'Cette photo ne peut pas être lue. Essayez une autre photo.',
         tooHeavy: 'Cette photo est trop lourde. Essayez une autre photo.',
-        tooMany: 'Deux photos au plus.',
         added: 'Photo ajoutée.',
         city: 'Choisissez votre commune.',
         country: 'Choisissez votre pays ou département.',
@@ -520,6 +519,9 @@
         var message = step.querySelector('[data-pk-photo-msg]');
         var photos = [];
         var canTransfer = false;
+        // Limite donnée par le serveur : 2 photos, ou 4 avec l'abonnement Premium.
+        var maxPhotos = parseInt(step.getAttribute('data-pk-photo-max'), 10) || MAX_PHOTOS;
+        var tooMany = maxPhotos + ' photos au plus.';
 
         try {
             canTransfer = typeof window.DataTransfer === 'function' && !!new window.DataTransfer().items;
@@ -540,7 +542,7 @@
                 submitInput.addEventListener('change', function () {
                     var files = Array.prototype.slice.call(submitInput.files || []);
                     var problem = '';
-                    if (files.length > MAX_PHOTOS) problem = MESSAGES.tooMany;
+                    if (files.length > maxPhotos) problem = tooMany;
                     files.forEach(function (file) {
                         if (problem) return;
                         if (isHeic(file)) problem = MESSAGES.heic;
@@ -627,8 +629,8 @@
         }
 
         function add(file) {
-            if (photos.length >= MAX_PHOTOS) {
-                reject(MESSAGES.tooMany);
+            if (photos.length >= maxPhotos) {
+                reject(tooMany);
                 return Promise.resolve();
             }
             if (isHeic(file)) {
@@ -640,8 +642,8 @@
                     reject(MESSAGES.tooHeavy);
                     return;
                 }
-                if (photos.length >= MAX_PHOTOS) {
-                    reject(MESSAGES.tooMany);
+                if (photos.length >= maxPhotos) {
+                    reject(tooMany);
                     return;
                 }
                 var name = String(file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';

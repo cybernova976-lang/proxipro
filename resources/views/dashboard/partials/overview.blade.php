@@ -22,6 +22,13 @@
                     <div class="pk-follow-copy"><h2>{{ $item['title'] }}</h2><p>{{ $item['description'] }}</p></div>
                     <div class="pk-follow-card__actions">
                         @if($item['editable'])<a class="pk-follow-edit" href="{{ $item['editable'] }}" aria-label="Modifier {{ $item['title'] }}" title="Modifier la demande"><i class="fas fa-pen" aria-hidden="true"></i></a>@endif
+                        @if($item['deletable'] ?? null)
+                            <form method="POST" action="{{ $item['deletable'] }}" data-pk-confirm="Supprimer définitivement la demande « {{ $item['title'] }} » ? Cette action ne peut pas être annulée.">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="pk-follow-edit pk-follow-delete" aria-label="Supprimer {{ $item['title'] }}" title="Supprimer la demande"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
+                            </form>
+                        @endif
                         <a href="{{ $item['action_url'] }}" class="{{ $item['stage'] === 'action' ? 'pk-dash-primary' : 'pk-dash-link' }}">{{ $item['action_label'] }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
                     </div>
                 </div>

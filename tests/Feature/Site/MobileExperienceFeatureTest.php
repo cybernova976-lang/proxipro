@@ -150,10 +150,14 @@ class MobileExperienceFeatureTest extends TestCase
         $this->assertStringContainsString("event.key === 'Escape'", $script);
         $this->assertStringContainsString('pro-content-header subscription-page-header', $subscription);
         $this->assertStringContainsString("@section('topbar_title', 'Abonnement Premium')", $subscription);
-        $this->assertStringContainsString('.subscription-page-header,', $subscription);
-        $this->assertStringContainsString('max-width: none;', $subscription);
-        $this->assertStringContainsString('@media (min-width: 1200px)', $subscription);
-        $this->assertStringNotContainsString('max-width: 960px', $subscription);
+        // Les styles de la page vivent dans leur feuille, plus dans la vue.
+        $this->assertStringNotContainsString('<style', $subscription);
+        $this->assertStringContainsString('css/pro-subscription.css', $subscription);
+        $subscriptionStyles = file_get_contents(public_path('css/pro-subscription.css'));
+        $this->assertStringContainsString('.subscription-page-header,', $subscriptionStyles);
+        $this->assertStringContainsString('max-width: none;', $subscriptionStyles);
+        $this->assertStringContainsString('@media (min-width: 1180px)', $subscriptionStyles);
+        $this->assertStringNotContainsString('max-width: 960px', $subscriptionStyles);
 
         $provider = User::factory()->create(['is_service_provider' => true]);
 

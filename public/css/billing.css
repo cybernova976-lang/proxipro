@@ -62,8 +62,10 @@
 .pk-billing-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid #e0e7ff; border-radius: 16px; overflow: hidden; background: #fff; font-size: .9rem; }
 .pk-billing-table th, .pk-billing-table td { padding: 12px 16px; border-top: 1px solid #e0e7ff; text-align: left; }
 .pk-billing-table thead th { border-top: 0; background: #f8fafc; color: #0f172a; font-size: .8rem; font-weight: 700; }
-.pk-billing__invoices { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 16px 0 0; }
-.pk-billing__invoices span { color: #64748b; font-size: .82rem; }
+.pk-billing__invoices { margin: 12px 0 0; color: #64748b; font-size: .82rem; }
+.pk-billing-invoice { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 12px; border: 1px solid #c7d2fe; border-radius: 10px; color: #4338ca; font-size: .85rem; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.pk-billing-invoice:hover, .pk-billing-invoice:focus-visible { background: #eef2ff; color: #312e81; }
+.pk-billing-table td:last-child, .pk-billing-table th:last-child { text-align: right; }
 
 /* Bandeau affiché sur les autres pages tant que le paiement est en retard. */
 .pk-pay-alert { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 16px; padding: 10px 16px; border-bottom: 1px solid #fecaca; background: #fef2f2; color: #7f1d1d; font-size: .9rem; font-weight: 600; line-height: 1.4; text-align: center; }
@@ -74,7 +76,8 @@
     .pk-billing-card { padding: 18px 16px; }
     .pk-billing-card__head { flex-direction: column-reverse; gap: 10px; }
     .pk-billing-card__facts { grid-template-columns: minmax(0, 1fr); }
-    .pk-billing-card__actions, .pk-billing-card__actions form, .pk-billing-late form, .pk-billing__invoices { display: grid; width: 100%; }
+    .pk-billing-card__actions, .pk-billing-card__actions form, .pk-billing-late form { display: grid; width: 100%; }
+    .pk-billing-table td:last-child { text-align: left; align-items: center; }
     .pk-billing-btn { width: 100%; }
     /* En colonne : une ligne par information, avec son intitulé. */
     .pk-billing-table, .pk-billing-table tbody, .pk-billing-table tr, .pk-billing-table td { display: block; width: auto; }

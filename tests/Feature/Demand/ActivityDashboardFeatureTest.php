@@ -98,7 +98,10 @@ class ActivityDashboardFeatureTest extends TestCase
         $summary = app(\App\Services\ClientActivityService::class)->summary($client);
         $html = view('feed.partials.client-activity', ['pkClientActivity' => $summary])->render();
         $this->assertStringContainsString('Voir mes demandes', $html);
-        $this->assertStringNotContainsString('Besoin déjà bien décrit', $html);
+        // L'accueil nomme la demande en attente, sans la présenter comme une action à faire.
+        $this->assertStringContainsString('Besoin déjà bien décrit', $html);
+        $this->assertStringContainsString('En attente de propositions', $html);
+        $this->assertStringNotContainsString('pk-resume', $html);
         $this->assertStringNotContainsString('Toujours aucune', $html);
         $order = $this->booking($client, $seller, $this->demand($client, 'Mission à régler'), ServiceOrder::STATUS_AWAITING_PAYMENT);
         $initial = app(\App\Services\ClientActivityService::class)->summary($client);
@@ -125,6 +128,37 @@ class ActivityDashboardFeatureTest extends TestCase
         $this->get(route('home', ['etat' => 'closed']))->assertOk()->assertSee('Demande archivée')->assertSee('Demande désactivée');
         $focused = $this->get(route('home', ['demande' => $ad->id]))->assertOk()->assertSee('Ancien besoin attribué');
         $this->assertSame('order-'.$order->id, $focused->viewData('activityItems')->first()['key']);
+    }
+
+    public function test_a_request_is_deleted_from_the_list_without_opening_it(): void
+    {
+        $client = User::factory()->create();
+        $neighbour = User::factory()->create();
+        $mine = $this->demand($client, 'Besoin à supprimer');
+        $kept = $this->demand($client, 'Besoin réservé');
+        $this->booking($client, $neighbour, $kept, ServiceOrder::STATUS_FUNDED);
+        $foreign = $this->demand($neighbour, 'Besoin du voisin');
+
+        // Le bouton est sur la carte de la demande, avec une confirmation avant l'envoi.
+        $html = $this->actingAs($client)->get(route('home'))->assertOk()
+            ->assertSee(route('ads.destroy', $mine), false)
+            ->assertSee('aria-label="Supprimer Besoin à supprimer"', false)
+            ->assertSee('data-pk-confirm="Supprimer définitivement la demande', false)
+            ->assertSee('js/activity-dashboard.js', false)->getContent();
+        $this->assertStringNotContainsString(route('ads.destroy', $foreign), $html);
+
+        $this->from(route('home'))->delete(route('ads.destroy', $mine))
+            ->assertRedirect(route('home'))->assertSessionHas('success', 'Annonce supprimée avec succès.');
+        $this->assertNull(Ad::find($mine->id));
+        $this->get(route('home'))->assertOk()->assertDontSee('Besoin à supprimer');
+
+        // Une demande qui porte une commande en cours n'est jamais supprimée.
+        $this->from(route('home'))->delete(route('ads.destroy', $kept))->assertRedirect(route('home'));
+        $this->assertNotNull(Ad::find($kept->id));
+
+        // La demande d'un autre membre non plus.
+        $this->withExceptionHandling()->delete(route('ads.destroy', $foreign))->assertForbidden();
+        $this->assertNotNull(Ad::find($foreign->id));
     }
 
     private function demand(User $user, string $title): Ad

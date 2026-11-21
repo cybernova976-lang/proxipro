@@ -123,7 +123,9 @@ class BillingPageTest extends TestCase
             ->assertSee('Prochain prélèvement')->assertSee($subscription->ends_at->format('d/m/Y'))
             ->assertSee('Changer de moyen de paiement')->assertSee('Résilier l’abonnement')
             ->assertSee('Le paiement se fait par carte bancaire.')
-            ->assertSee('Mes paiements')->assertSee('Paiement Premium mensuel')->assertSee('Télécharger mes factures')
+            ->assertSee('Mes paiements')->assertSee('Paiement Premium mensuel')
+            ->assertSee(route('billing.invoice', Transaction::firstWhere('stripe_session_id', 'in_paid')), false)
+            ->assertSee('envoyée par e-mail')->assertDontSee('Télécharger mes factures')
             ->assertSee('Abonnements terminés')->assertSee('Résilié')
             ->assertDontSee('Choisir cette formule')->assertDontSee('Votre dernier paiement a échoué')
             ->assertDontSee('pk-pay-alert', false)->getContent();

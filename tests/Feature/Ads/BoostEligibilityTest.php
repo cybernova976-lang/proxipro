@@ -84,6 +84,38 @@ class BoostEligibilityTest extends TestCase
         $this->assertSame(50, (int) $owner->fresh()->available_points);
     }
 
+    public function test_urgent_option_is_not_sold_when_the_request_is_already_flagged_urgent_for_free(): void
+    {
+        $owner = User::factory()->create();
+        // Urgence choisie gratuitement au dépôt : is_urgent sans date de fin.
+        $demand = $this->ad($owner, ['service_type' => 'demande', 'title' => 'Cherche un plombier',
+            'is_urgent' => true, 'urgent_until' => null]);
+        $this->assertFalse($demand->canBuyUrgentOption());
+
+        // Cette page répondait par une erreur 500 (date de fin absente).
+        $this->actingAs($owner)->get(route('boost.after-creation', $demand))->assertOk()
+            ->assertSee('data-urgent-already-free', false)
+            ->assertDontSee(route('ads.make-urgent.stripe', $demand), false);
+
+        $this->from(route('boost.after-creation', $demand))
+            ->post(route('ads.make-urgent.stripe', $demand))
+            ->assertRedirect(route('boost.after-creation', $demand))
+            ->assertSessionHas('error');
+
+        // Écran « Demande publiée » : l'encart payant n'est plus proposé.
+        $this->withSession(['demand_published' => true])
+            ->get(route('demand.matching', $demand))->assertOk()
+            ->assertSee('Demande publiée')
+            ->assertDontSee('Choisir l’option Urgent');
+
+        // Demande sans urgence déclarée : l'option reste proposée.
+        $plain = $this->ad($owner, ['service_type' => 'demande', 'title' => 'Cherche un jardinier']);
+        $this->assertTrue($plain->canBuyUrgentOption());
+        $this->withSession(['demand_published' => true])
+            ->get(route('demand.matching', $plain))->assertOk()
+            ->assertSee('Choisir l’option Urgent');
+    }
+
     private function ad(User $owner, array $attributes = []): Ad
     {
         return Ad::create(array_merge(['user_id' => $owner->id, 'title' => 'Service de plomberie',

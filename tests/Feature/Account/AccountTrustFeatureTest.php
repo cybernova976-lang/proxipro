@@ -167,7 +167,7 @@ class AccountTrustFeatureTest extends TestCase
         // La gestion vit sur la page Facturation, ouverte même sans profil prestataire.
         $this->get(route('billing.index'))->assertOk()
             ->assertSee('Paiement à confirmer')->assertSee('12,49 € par mois')->assertSee('Résilier l’abonnement')
-            ->assertSee('Changer de moyen de paiement')->assertSee('Télécharger mes factures');
+            ->assertSee('Changer de moyen de paiement')->assertDontSee('Télécharger mes factures');
         $this->mock(ProviderSubscriptionService::class)->shouldReceive('cancelImmediately')->once()
             ->withArgs(fn ($sub) => $sub->is($subscription))->andReturn($subscription);
         $this->post(route('pro.subscription.cancel-renewal'))->assertSessionHas('success');

@@ -10,5 +10,16 @@
         <a class="pk-resume__all" href="{{ route('home') }}">Mes demandes <span>({{ $pkClientActivity['total'] }})</span></a>
     </section>
 @elseif($pkClientActivity['total'] > 0)
-    <a class="pk-waiting-summary" href="{{ route('home') }}"><i class="far fa-clock" aria-hidden="true"></i><span>{{ $pkClientActivity['total'] }} demande{{ $pkClientActivity['total'] > 1 ? 's' : '' }} ou mission{{ $pkClientActivity['total'] > 1 ? 's' : '' }} en cours</span><strong>Voir mes demandes <i class="fas fa-arrow-right" aria-hidden="true"></i></strong></a>
+    {{-- Rien à traiter : le membre retrouve quand même ses demandes publiées, nommées une à une (3 au plus). --}}
+    <section class="pk-mine" aria-labelledby="pkMineTitle">
+        <div class="pk-mine__head">
+            <h2 id="pkMineTitle">Mes demandes en cours <span class="pk-activity__count">{{ $pkClientActivity['total'] }}</span></h2>
+            <a href="{{ route('home') }}">Voir mes demandes <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+        </div>
+        <ul class="pk-activity__list">
+            @foreach(collect([$primary])->concat($pkClientActivity['others'])->filter()->take(3) as $item)
+                @include('feed.partials.client-activity-row', ['item' => $item])
+            @endforeach
+        </ul>
+    </section>
 @endif
