@@ -57,8 +57,7 @@ class FeedActionHierarchyFeatureTest extends TestCase
         $response = $this->actingAs($client)->get(route('feed'))->assertOk();
         $this->assertSame(0, (int) $response->viewData('activeClientRequest')->pending_proposals_count);
         $response->assertDontSee('Comparer les propositions')->assertSee('Voir mes demandes')
-            ->assertSee('data-activity-key="request-'.$ad->id.'"', false)
-            ->assertSee('En attente de propositions')->assertDontSee('proposition à examiner');
+            ->assertDontSee('data-activity-key="request-'.$ad->id.'"', false);
     }
 
     public function test_compatible_count_covers_all_results_but_only_six_cards_are_rendered(): void
@@ -135,9 +134,8 @@ class FeedActionHierarchyFeatureTest extends TestCase
             'order_number' => 'CMD-FEED-QA', 'amount' => 80, 'commission_amount' => 8, 'seller_amount' => 72,
             'status' => ServiceOrder::STATUS_FUNDED, 'payment_status' => ServiceOrder::PAYMENT_PAID]);
         $this->actingAs($client)->get(route('feed'))->assertOk()
-            ->assertViewHas('pkActiveRequestCount', 0)
-            ->assertSee('Mes demandes en cours')->assertSee('Mission déjà financée')->assertSee('Mission en cours')
-            ->assertSee('Voir mes demandes')
+            ->assertViewHas('pkActiveRequestCount', 0)->assertDontSee('Mission déjà financée')
+            ->assertSee('1 demande ou mission en cours')->assertSee('Voir mes demandes')
             ->assertSee(route('home'), false);
         $this->get(route('home'))->assertOk()->assertSee('Mission déjà financée')
             ->assertSee('Voir ma commande')->assertViewHas('activityCounts', fn ($counts) => $counts['ongoing'] === 1);

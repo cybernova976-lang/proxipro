@@ -98,10 +98,7 @@ class ActivityDashboardFeatureTest extends TestCase
         $summary = app(\App\Services\ClientActivityService::class)->summary($client);
         $html = view('feed.partials.client-activity', ['pkClientActivity' => $summary])->render();
         $this->assertStringContainsString('Voir mes demandes', $html);
-        // L'accueil nomme la demande en attente, sans la présenter comme une action à faire.
-        $this->assertStringContainsString('Besoin déjà bien décrit', $html);
-        $this->assertStringContainsString('En attente de propositions', $html);
-        $this->assertStringNotContainsString('pk-resume', $html);
+        $this->assertStringNotContainsString('Besoin déjà bien décrit', $html);
         $this->assertStringNotContainsString('Toujours aucune', $html);
         $order = $this->booking($client, $seller, $this->demand($client, 'Mission à régler'), ServiceOrder::STATUS_AWAITING_PAYMENT);
         $initial = app(\App\Services\ClientActivityService::class)->summary($client);
