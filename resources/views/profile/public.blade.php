@@ -71,7 +71,7 @@
                             <button type="button" class="d-block w-100 h-100 p-0 border-0 bg-transparent" data-bs-toggle="modal" data-bs-target="#profilePhotoModal"
                                     title="Agrandir la photo" aria-label="Agrandir la photo de profil de {{ $user->name }}">
                                 <img src="{{ storage_url($user->avatar) }}" alt="Photo de profil de {{ $user->name }}" id="profileAvatarImg"
-                                    class="profile-portrait">
+                                    class="profile-portrait" data-photo-fit>
                             </button>
                         @else
                             <div class="bg-primary text-white d-flex align-items-center justify-content-center profile-portrait profile-portrait-placeholder" id="profileAvatarPlaceholder">
@@ -787,7 +787,7 @@
         width: 100%;
         height: 100%;
         display: block;
-        /* Photo entière, jamais rognée : un logo allongé garde ses marges blanches. */
+        /* Photo entière par défaut ; js/profile-photo.js remplit le cadre quand la photo en a presque le format. */
         object-fit: contain;
         object-position: center;
         background: #fff;
@@ -1459,5 +1459,8 @@ function saveCategories() {
 })();
 </script>
 @endif
+@endpush
+@push('scripts')
+<script src="{{ asset('js/profile-photo.js') }}?v={{ filemtime(public_path('js/profile-photo.js')) }}" defer></script>
 @endpush
 @endsection

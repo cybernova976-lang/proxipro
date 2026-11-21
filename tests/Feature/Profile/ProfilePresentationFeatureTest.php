@@ -156,6 +156,17 @@ class ProfilePresentationFeatureTest extends TestCase
         $this->assertStringContainsString('id="profilePhotoModal"', $html);
         $this->assertMatchesRegularExpression('/id="profilePhotoModal".*?<img src="[^"]*avatars\/logo-large\.jpg"/s', $html);
 
+        // Une photo qui a presque le format du cadre le remplit (pas de bandes blanches) : réglé par le script.
+        $this->assertMatchesRegularExpression('/class="profile-portrait" data-photo-fit/', $html);
+        $this->assertStringContainsString('js/profile-photo.js?v=', $html);
+
+        // Même règle sur la page « Mon profil » du membre.
+        $own = $this->actingAs($user)->get(route('profile.show'))->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/class="own-profile-portrait" data-photo-fit/', $own);
+        $this->assertMatchesRegularExpression('/\.own-profile-portrait \{[^}]*object-fit: contain;[^}]*\}/', $own);
+        $this->assertStringContainsString('js/profile-photo.js?v=', $own);
+        auth()->logout();
+
         // Sans photo : ni bouton ni fenêtre d'agrandissement.
         $user->forceFill(['avatar' => null])->save();
         $this->get(route('profile.public', $user))->assertOk()

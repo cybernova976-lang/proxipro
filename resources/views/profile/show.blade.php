@@ -63,7 +63,7 @@
                     <div class="position-relative own-profile-photo-shell mb-4">
                     @if($user->avatar)
                             <img src="{{ storage_url($user->avatar) }}" alt="Ma photo de profil" id="profileAvatarImg"
-                                class="own-profile-portrait">
+                                class="own-profile-portrait" data-photo-fit>
                     @else
                             <div class="bg-primary text-white d-flex align-items-center justify-content-center own-profile-portrait own-profile-placeholder" id="profileAvatarPlaceholder">
                             {{ strtoupper(substr($user->name, 0, 1)) }}
@@ -452,7 +452,7 @@
         width: 100%;
         height: 100%;
         display: block;
-        /* Même règle que le profil public : la photo entière, jamais rognée. */
+        /* Même règle que le profil public : photo entière par défaut, cadre rempli par js/profile-photo.js si elle en a presque le format. */
         object-fit: contain;
         object-position: center;
         background: #fff;
@@ -771,4 +771,7 @@ document.getElementById('ownRealizationModal')?.addEventListener('show.bs.modal'
 });
 </script>
 @endif
+@push('scripts')
+<script src="{{ asset('js/profile-photo.js') }}?v={{ filemtime(public_path('js/profile-photo.js')) }}" defer></script>
+@endpush
 @endsection
