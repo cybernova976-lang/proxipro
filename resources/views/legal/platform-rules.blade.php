@@ -26,13 +26,12 @@
     <p>Le nombre d’annonces actives dépend du statut et, le cas échéant, du forfait affiché dans le compte. L’accueil des clients affiche {{ $pkRulesPageSize }} offres par page : les offres suivantes restent accessibles par les pages suivantes et par la <a href="{{ route('ads.index') }}">liste des annonces</a>. Aujourd’hui, aucun nombre maximal d’offres sponsorisées par page n’est appliqué. Un paiement ne supprime pas les contrôles de conformité.</p>
 
     <h4 class="mt-4" id="classement">4. Classement et recommandations</h4>
-    <p><strong>Accueil des clients.</strong> Les annonces présentées sur l’accueil connecté sont choisies et classées ainsi :</p>
+    <p><strong>Accueil des clients.</strong> Les offres de services présentées sur l’accueil connecté sont choisies et classées ainsi :</p>
     <ul>
-        <li><strong>Annonces admises :</strong> toutes les offres de services, ainsi que les demandes boostées ou publiées par un membre abonné (Premium). Une demande sans boost, publiée par un membre non abonné, n’y figure pas : elle reste visible dans la <a href="{{ route('ads.index') }}">liste des annonces</a> et sur l’accueil des prestataires de son métier. Chaque membre y voit aussi ses propres annonces admises, à la place où les autres membres les voient.</li>
         <li><strong>Périmètre :</strong> les offres actives du territoire du visiteur (son département, ou Mayotte, la Guyane, La Réunion, la Guadeloupe, la Martinique), déterminé d’après le lieu indiqué dans son profil (commune, code postal ou territoire) ou, à défaut, d’après sa position détectée automatiquement, ainsi que les offres d’autres territoires déclarées « À distance ». Si le territoire n’est pas connu, toutes les zones sont affichées et la page l’indique. Le lien « Voir les autres territoires » affiche toutes les zones. Lorsque la dernière page d’un territoire ne compte que quatre ou cinq offres, les places restantes sont complétées par des offres d’autres territoires : elles sont toujours placées après les offres du territoire, classées entre elles selon le même ordre, et signalées « Autre territoire ».</li>
         <li><strong>Ordre</strong>, appliqué dans cette suite :
             <ol>
-                <li>les annonces sponsorisées, offres ou demandes, passent en premier (voir l’article 5) ;</li>
+                <li>les offres sponsorisées passent en premier (voir l’article 5) ;</li>
                 <li>dans chaque groupe (offres sponsorisées, puis autres offres), deux offres au plus par prestataire passent avant ses offres suivantes ;</li>
                 <li>à égalité, les offres des catégories que le visiteur suit dans son profil passent en premier ;</li>
                 @if($pkNewRules)
@@ -61,7 +60,6 @@
     <ul>
         <li><strong>Boost :</strong> pendant la durée achetée, l’offre boostée rejoint le groupe des offres sponsorisées.</li>
         <li><strong>Abonnement Premium :</strong> pendant l’abonnement, toutes les offres actives du prestataire abonné rejoignent le groupe des offres sponsorisées.</li>
-        <li><strong>Demandes :</strong> pendant l’abonnement de leur auteur, ou pendant la durée d’un boost acheté, les demandes sont affichées sur l’accueil des clients dans le groupe sponsorisé, avec la même mention.</li>
     </ul>
     <p>Aucune position n’est garantie. Les offres sponsorisées sont classées entre elles selon les règles 2 à 4 de l’article 4. Leur nombre n’est pas limité aujourd’hui : lorsqu’elles sont nombreuses, une offre sponsorisée peut figurer en page 2 ou au-delà. Un boost ou un abonnement ne garantit ni contact, ni vente, ni résultat commercial. Ailleurs sur le site, une annonce boostée peut porter la mention « Boosté ».</p>
     <p><strong>Option Urgent (demandes) :</strong> une demande qui a pris l’option payante est signalée « Urgent · option payante » ; une urgence indiquée gratuitement lors du dépôt est signalée « Urgent ».</p>

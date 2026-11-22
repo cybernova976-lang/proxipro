@@ -85,7 +85,7 @@ class FeedClientLayoutTest extends TestCase
         // 5 offres locales + 1 offre d'ailleurs : la grille est pleine, le bloc d'invitation disparaît.
         $html = $this->actingAs($client)->get(route('feed'))->assertOk()
             ->assertSee('Offre de Rennes')->assertSee('Autre territoire')
-            ->assertSee('complétée par des annonces d’autres territoires, signalées « Autre territoire »')
+            ->assertSee('complétée par des offres d’autres territoires, signalées « Autre territoire »')
             ->assertDontSee('pk-feed-filler', false)
             ->getContent();
 
@@ -106,7 +106,7 @@ class FeedClientLayoutTest extends TestCase
         }
         $this->get(route('feed'))->assertOk()
             ->assertDontSee('Offre de Rennes')->assertDontSee('Autre territoire')
-            ->assertDontSee('complétée par des annonces d’autres territoires');
+            ->assertDontSee('complétée par des offres d’autres territoires');
 
         // Trois offres locales ou moins : présentation en liste, sans complément.
         Ad::where('title', 'like', 'Offre locale%')->whereNotIn('title', ['Offre locale 1', 'Offre locale 2'])->delete();

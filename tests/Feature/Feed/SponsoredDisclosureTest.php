@@ -51,7 +51,7 @@ class SponsoredDisclosureTest extends TestCase
             $card = $cards[$ad->title];
             $this->assertStringContainsString('pk-tag--sponsored', $card);
             $this->assertStringContainsString('Sponsorisé', $card);
-            $this->assertStringContainsString('l’auteur de l’annonce a payé pour être affiché ici', $card);
+            $this->assertStringContainsString('le prestataire a payé pour être affiché ici', $card);
             $this->assertStringContainsString('href="'.route('legal.platform-rules').'#classement"', $card);
             $this->assertStringContainsString('Pourquoi ?', $card);
         }
@@ -91,7 +91,7 @@ class SponsoredDisclosureTest extends TestCase
 
         $this->actingAs($viewer)->get(route('feed'))->assertOk()
             ->assertSee('id="pkRankingDisclosure"', false)
-            ->assertSee("Classement : annonces de Mayotte. Les annonces sponsorisées (payantes) passent en premier, puis les plus récentes.")
+            ->assertSee("Classement : offres de Mayotte. Les offres sponsorisées (payantes) passent en premier, puis les plus récentes.")
             ->assertSee(route('legal.platform-rules').'#classement', false);
     }
 
@@ -216,8 +216,7 @@ class SponsoredDisclosureTest extends TestCase
         config(['feed.sponsored.effective_at' => null]);
         $this->get(route('legal.platform-rules'))->assertOk()
             ->assertSee('id="classement"', false)
-            ->assertSee('les annonces sponsorisées, offres ou demandes, passent en premier')
-            ->assertSee('les demandes boostées ou publiées par un membre abonné (Premium)')
+            ->assertSee('les offres sponsorisées passent en premier')
             ->assertSee('deux offres au plus par prestataire passent avant ses offres suivantes')
             ->assertSee('les offres les plus récentes d’abord')
             ->assertSee('toutes les offres actives du prestataire abonné')

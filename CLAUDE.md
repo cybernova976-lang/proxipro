@@ -116,14 +116,15 @@ il répond à « où en suis-je et que dois-je faire maintenant ? ».
   uniquement par `/demande` (clients) et `/ads/create` (prestataires) :
   pas de modale de publication dans le feed.
 - La recherche, les filtres et la carte géographique vivent sur `/annonces`.
-- **Ce que montre le flux d'un particulier** (décision du fondateur, 21/11/2026) :
-  toutes les offres, plus les demandes **boostées ou publiées par un abonné
-  Premium**. Les annonces sponsorisées passent en premier, les annonces
-  gratuites complètent. Un membre voit ses propres annonces admises. La règle
-  vit dans `App\Services\ClientFeedOffersService` ; tout changement doit aussi
-  être écrit dans `RankingDisclosure` et dans les « Règles de la marketplace ».
-- Les cartes du flux client sont sur **deux colonnes** (taille des cartes de
-  l'onglet Favoris, photo de 180 px de haut). Ne reviens pas à trois colonnes.
+- **Ce que montre le flux d'un particulier** (confirmé par le fondateur le 22/11/2026,
+  après un essai contraire d'un jour) : uniquement des **offres de service**, jamais
+  des demandes, et jamais les annonces du lecteur lui-même. La priorité Premium ne
+  porte que sur les offres, vues par les autres membres. Pour une demande, la seule
+  mise en avant est l'option Urgent : le boost ne lui est pas vendu. Ne rouvre pas
+  ces règles sans une demande explicite du fondateur.
+- L'accueil du particulier tient sur **une seule colonne** : les offres occupent
+  toute la largeur, **trois cartes par ligne** à partir de 1024 px ; prestataires,
+  emploi et repères suivent, côte à côte, sous les offres.
 
 ---
 

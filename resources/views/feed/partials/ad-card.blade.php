@@ -45,8 +45,6 @@
     $pkIsSponsored = $pkRole === 'client' && \App\Support\AdDisclosure::isSponsored($ad);
     $pkIsFresh   = $ad->created_at && $ad->created_at->greaterThan(now()->subHours(24)) && ! $pkIsUrgent;
     $pkIsDemande = $ad->service_type === 'demande';
-    // Sur l'accueil des clients, un membre voit aussi ses propres annonces : elles sont signalées.
-    $pkIsMine = $pkRole === 'client' && auth()->check() && (int) auth()->id() === (int) $ad->user_id;
 
     // --- auteur ---
     $pkAuthor   = $ad->user;
@@ -95,17 +93,14 @@
     <div class="pk-ad__body">
         <div class="pk-ad__top">
             <span class="pk-ad__cat">{{ $pkCategoryLabel }}</span>
-            @if($pkIsMine)
-                <span class="pk-tag pk-tag--mine">Votre annonce</span>
-            @endif
             @if($pkUrgentLabel)
                 <span class="pk-tag pk-tag--urgent"><i class="fas fa-bolt" aria-hidden="true"></i> {{ $pkUrgentLabel }}</span>
-            @elseif($pkIsFresh && ! $pkIsMine)
+            @elseif($pkIsFresh)
                 <span class="pk-tag pk-tag--new">Nouveau</span>
             @endif
             @if($pkIsSponsored)
                 <span class="pk-tag pk-tag--sponsored">{{ \App\Support\AdDisclosure::SPONSORED_LABEL }}<span class="pk-sr"> : {{ \App\Support\AdDisclosure::SPONSORED_SCREEN_READER }}</span></span>
-                <a class="pk-ad__why" href="{{ route('legal.platform-rules') }}#classement" aria-label="Pourquoi ? Règles de classement des annonces sponsorisées">Pourquoi ?</a>
+                <a class="pk-ad__why" href="{{ route('legal.platform-rules') }}#classement" aria-label="Pourquoi ? Règles de classement des offres sponsorisées">Pourquoi ?</a>
             @elseif($pkRole === 'client' && \App\Support\AdDisclosure::isBumped($ad))
                 <span class="pk-tag pk-tag--bumped">{{ \App\Support\AdDisclosure::BUMPED_LABEL }}<span class="pk-sr"> : {{ \App\Support\AdDisclosure::BUMPED_SCREEN_READER }}</span></span>
             @elseif($pkRole !== 'client' && $pkIsBoosted)

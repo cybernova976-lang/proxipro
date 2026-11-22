@@ -81,10 +81,8 @@ class FeedClientPaginationFeatureTest extends TestCase
         $this->offer($viewer);
         $viewer->savedAds()->attach($oldest->id);
         $response = $this->actingAs($viewer)->get(route('feed', ['scope' => 'nearby', 'offers_page' => 2]))->assertOk();
-        // 7 offres de l'auteur, plus celle du lecteur : il voit aussi sa propre annonce.
-        $this->assertSame(8, $response->viewData('pkFeedPagination')->total());
-        $this->assertCount(2, $response->viewData('pkFeedAds'));
-        $this->assertSame($oldest->id, $response->viewData('pkFeedAds')->last()->id);
+        $this->assertSame(7, $response->viewData('pkFeedPagination')->total());
+        $this->assertSame([$oldest->id], $response->viewData('pkFeedAds')->pluck('id')->all());
         $this->assertTrue($response->viewData('pkSavedAdIds')->contains($oldest->id));
         $this->assertStringContainsString('scope=nearby', $response->viewData('pkFeedPagination')->previousPageUrl());
     }

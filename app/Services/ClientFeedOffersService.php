@@ -55,55 +55,27 @@ class ClientFeedOffersService
     }
 
     /**
-     * Annonces admises sur l'accueil des particuliers (règle du 21/11/2026) :
-     * toutes les offres, et les demandes dont l'annonce est boostée ou dont
-     * l'auteur a un abonnement Premium en cours. Une demande gratuite d'un
-     * membre non abonné reste dans « Annonces » et sur l'accueil des prestataires.
-     */
-    public function homeEligible(Builder $query): Builder
-    {
-        $subscription = $this->activeSubscriptionOfAuthor();
-
-        return $query->where(function (Builder $eligible) use ($subscription) {
-            $eligible->where('ads.service_type', 'offre')
-                ->orWhere(function (Builder $request) use ($subscription) {
-                    $request->where('ads.service_type', 'demande')
-                        ->where(function (Builder $promoted) use ($subscription) {
-                            $promoted->where(fn (Builder $boost) => $boost->where('ads.is_boosted', true)->where('ads.boost_end', '>', now()))
-                                ->orWhereRaw('EXISTS ('.$subscription->toSql().')', $subscription->getBindings());
-                        });
-                });
-        });
-    }
-
-    /**
-     * Ajoute la colonne feed_is_promoted : 1 pour une annonce (offre ou demande)
-     * mise en avant contre paiement (boost acheté en cours, ou auteur abonné
-     * Premium), 0 sinon. Une seule définition, pour l'accueil des clients et la
-     * liste des annonces. Un boost accordé gratuitement par l'administration
-     * n'est pas sponsorisé.
+     * Ajoute la colonne feed_is_promoted : 1 pour une offre mise en avant contre
+     * paiement (boost acheté en cours, ou auteur abonné Premium), 0 sinon. Une
+     * seule définition, pour l'accueil des clients et la liste des annonces.
+     * Un boost accordé gratuitement par l'administration n'est pas sponsorisé,
+     * et seule une offre peut l'être (jamais une demande).
      */
     public function addPromotedColumn(Builder $query): Builder
     {
-        $subscription = $this->activeSubscriptionOfAuthor();
+        $subscription = ProSubscription::query()->selectRaw('1')
+            ->whereColumn('pro_subscriptions.user_id', 'ads.user_id')
+            ->currentlyActive()
+            ->where(fn ($started) => $started->whereNull('starts_at')->orWhere('starts_at', '<=', now()));
 
         if ($query->getQuery()->columns === null) {
             $query->select('ads.*');
         }
 
         return $query->selectRaw(
-            'CASE WHEN (ads.is_boosted = ? AND ads.boost_end > ? AND COALESCE(ads.boost_source, \'\') <> \'admin\') OR EXISTS ('.$subscription->toSql().') THEN 1 ELSE 0 END AS feed_is_promoted',
-            [true, now(), ...$subscription->getBindings()]
+            'CASE WHEN ads.service_type = ? AND ((ads.is_boosted = ? AND ads.boost_end > ? AND COALESCE(ads.boost_source, \'\') <> \'admin\') OR EXISTS ('.$subscription->toSql().')) THEN 1 ELSE 0 END AS feed_is_promoted',
+            ['offre', true, now(), ...$subscription->getBindings()]
         );
-    }
-
-    /** Sous-requête : l'auteur de l'annonce a un abonnement Premium en cours. */
-    private function activeSubscriptionOfAuthor(): Builder
-    {
-        return ProSubscription::query()->selectRaw('1')
-            ->whereColumn('pro_subscriptions.user_id', 'ads.user_id')
-            ->currentlyActive()
-            ->where(fn ($started) => $started->whereNull('starts_at')->orWhere('starts_at', '<=', now()));
     }
 
     /**

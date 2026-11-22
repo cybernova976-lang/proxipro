@@ -29,22 +29,9 @@
     @if($ad->service_type === 'offre' && count($packages))
         <h2 class="h5 mt-4">Choisissez la durée de votre boost</h2>
         <p>Votre offre porte la mention « Sponsorisé » et passe avant les offres non sponsorisées sur l’accueil des clients de son territoire. Aucune place n’est fixe. <a href="{{ route('legal.platform-rules') }}#classement">Voir les règles de classement</a>.</p>
-    @elseif($ad->service_type === 'demande' && count($packages))
-        <h2 class="h5 mt-4">Boost : votre demande sur l’accueil des particuliers</h2>
-        <p data-request-boost>Sans boost ni abonnement Premium, une demande n’est pas affichée sur l’accueil des particuliers. Pendant la durée du boost, elle y figure parmi les annonces sponsorisées, avec la mention « Sponsorisé ». Aucune place n’est fixe. <a href="{{ route('legal.platform-rules') }}#classement">Voir les règles de classement</a>.</p>
-    @elseif($ad->service_type === 'demande' && ($coveredBySubscription ?? false))
-        <p data-request-covered>Votre abonnement Premium affiche déjà cette demande sur l’accueil des particuliers, parmi les annonces sponsorisées. Aucun boost n’est nécessaire.</p>
     @endif
     <div class="promotion-grid">
         @if($ad->service_type === 'demande')
-            @foreach($packages as $key => $package)
-                <article class="promotion-card" data-type="boost">
-                    <h2>{{ $package['name'] }}</h2>
-                    <p>{{ $package['duration_days'] }} jours sur l’accueil des particuliers</p>
-                    <strong>{{ number_format($package['price_euros'], 2, ',', ' ') }} €</strong>
-                    <form method="POST" action="{{ route('boost.purchase.stripe', $ad) }}">@csrf<input type="hidden" name="package" value="{{ $key }}"><button class="btn btn-primary" type="submit">Payer par carte via Stripe</button></form>
-                </article>
-            @endforeach
             <article class="promotion-card" data-type="urgent">
                 @if(! $ad->hasPromotedUrgency() && ! $ad->canBuyUrgentOption())
                     <h2>Votre demande est déjà signalée « Urgent »</h2>

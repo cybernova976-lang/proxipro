@@ -588,11 +588,7 @@
     <!-- Header -->
     <div class="boost-header">
         <h1><i class="fas fa-rocket me-2"></i>Boostez votre annonce</h1>
-        @if($ad->service_type === 'demande')
-            <p>Pendant la durée choisie, votre demande est affichée sur l’accueil des particuliers, parmi les annonces sponsorisées, avec la mention « Sponsorisé ». Sans boost ni abonnement, une demande n’y figure pas.</p>
-        @else
-            <p>Pendant la durée choisie, votre offre porte la mention « Sponsorisé » et passe avant les offres non sponsorisées sur l’accueil des clients.</p>
-        @endif
+        <p>Pendant la durée choisie, votre offre porte la mention « Sponsorisé » et passe avant les offres non sponsorisées sur l’accueil des clients.</p>
     </div>
     
     <!-- Ad Preview -->
@@ -830,17 +826,17 @@
             <div class="benefit-item">
                 <div class="benefit-icon" style="background: #dbeafe; color: #3b82f6;"><i class="fas fa-tag"></i></div>
                 <h4>Mention « Sponsorisé »</h4>
-                <p>Votre {{ $ad->service_type === 'demande' ? 'demande' : 'offre' }} est signalée comme sponsorisée, avec un lien « Pourquoi ? » vers les règles de classement.</p>
+                <p>Votre offre est signalée comme sponsorisée, avec un lien « Pourquoi ? » vers les règles de classement.</p>
             </div>
             <div class="benefit-item">
                 <div class="benefit-icon" style="background: #f3e8ff; color: #8b5cf6;"><i class="fas fa-list-ol"></i></div>
-                <h4>{{ $ad->service_type === 'demande' ? 'Sur l’accueil des particuliers' : 'Avant les offres non sponsorisées' }}</h4>
-                <p>Sur l’accueil des {{ $ad->service_type === 'demande' ? 'particuliers' : 'clients' }} de votre territoire, pendant toute la durée du boost.</p>
+                <h4>Avant les offres non sponsorisées</h4>
+                <p>Sur l’accueil des clients de votre territoire, pendant toute la durée du boost.</p>
             </div>
             <div class="benefit-item">
                 <div class="benefit-icon" style="background: #dcfce7; color: #10b981;"><i class="fas fa-scale-balanced"></i></div>
                 <h4>Pas de place fixe</h4>
-                <p>Les annonces sponsorisées sont classées entre elles. Aucun nombre de contacts n’est promis.</p>
+                <p>Les offres sponsorisées sont classées entre elles. Aucun nombre de contacts n’est promis.</p>
             </div>
             <div class="benefit-item">
                 <div class="benefit-icon" style="background: #dbeafe; color: #3b82f6;"><i class="fas fa-bolt"></i></div>

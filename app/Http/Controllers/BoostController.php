@@ -33,15 +33,14 @@ class BoostController extends Controller
         if (AdPromotionCatalog::newRulesActive()) {
             return $this->options($ad, false);
         }
+        if ($refusal = $this->refuseUnlessOffer($ad)) {
+            return $refusal;
+        }
 
         $user = Auth::user();
         $isPro = $user->hasActiveProSubscription();
         $status = $ad->getBoostStatus();
         $subscription = $this->sponsoringSubscription($ad);
-        // Depuis le 21/11/2026, une demande boostée est affichée sur l'accueil des particuliers.
-        // Pour elle, l'option Urgent (priorité sur l'accueil des prestataires) ne remplace pas le boost.
-        $isOffer = $ad->service_type === 'offre';
-        $what = $this->adNoun($ad);
 
         // Build smart recommendations for each package
         $smartPackages = [];
@@ -51,14 +50,6 @@ class BoostController extends Controller
             $pkg['is_useful'] = true;
             $pkg['warning'] = null;
             $pkg['recommendation'] = null;
-            if (! $isOffer) {
-                $pkg['description'] = $this->requestBoostDescription((int) $package['duration_days']);
-                $pkg['features'] = [
-                    'Votre demande sur l’accueil des particuliers pendant '.$package['duration_days'].' jours',
-                    'Mention « Sponsorisé », parmi les annonces sponsorisées',
-                    'Pas de place fixe : les annonces sponsorisées sont classées entre elles selon les règles de classement publiées',
-                ];
-            }
 
             // Premium discount: -20% on card payments.
             if ($isPro) {
@@ -67,7 +58,7 @@ class BoostController extends Controller
             }
 
             // If urgent is active and covers more days than this package → useless
-            if ($isOffer && $status['is_urgent'] && $status['urgent_days_left'] >= $package['duration_days'] && ! $status['is_boosted']) {
+            if ($status['is_urgent'] && $status['urgent_days_left'] >= $package['duration_days'] && ! $status['is_boosted']) {
                 $pkg['is_useful'] = false;
                 $pkg['warning'] = "Inutile : votre mode Urgent couvre déjà {$status['urgent_days_left']} jours restants.";
             }
@@ -79,7 +70,7 @@ class BoostController extends Controller
             }
 
             // If has any visibility and this package is shorter → caution
-            if ($isOffer && $status['has_any_visibility'] && $status['best_days_left'] > $package['duration_days']) {
+            if ($status['has_any_visibility'] && $status['best_days_left'] > $package['duration_days']) {
                 $pkg['is_useful'] = false;
                 $pkg['warning'] = "Vous avez déjà {$status['best_days_left']} jours de visibilité restants.";
             }
@@ -88,16 +79,16 @@ class BoostController extends Controller
             if ($subscription) {
                 if ($this->subscriptionCovers($subscription, $package['duration_days'])) {
                     $pkg['is_useful'] = false;
-                    $pkg['warning'] = 'Inutile : votre abonnement Premium affiche déjà cette '.$what.' parmi les '.($isOffer ? 'offres' : 'annonces').' sponsorisées'
+                    $pkg['warning'] = 'Inutile : votre abonnement Premium affiche déjà cette offre parmi les offres sponsorisées'
                         .($subscription->ends_at ? ' jusqu’au '.$subscription->ends_at->format('d/m/Y') : '').'.';
                 } else {
-                    $pkg['warning'] = 'Votre abonnement place déjà cette '.$what.' parmi les '.($isOffer ? 'offres' : 'annonces').' sponsorisées jusqu’au '
+                    $pkg['warning'] = 'Votre abonnement place déjà cette offre parmi les offres sponsorisées jusqu’au '
                         .$subscription->ends_at->format('d/m/Y').' : le boost ne change l’affichage qu’après cette date.';
                 }
             }
 
             // Smart recommendation for packages that add value when urgent is expiring
-            if ($isOffer && $status['is_urgent'] && $status['is_expiring_soon'] && $package['duration_days'] >= 7) {
+            if ($status['is_urgent'] && $status['is_expiring_soon'] && $package['duration_days'] >= 7) {
                 $pkg['recommendation'] = "Idéal pour prolonger après l'expiration de votre Urgent !";
             }
 
@@ -108,7 +99,7 @@ class BoostController extends Controller
         $recommendedKey = null;
         if ($status['is_expiring_soon']) {
             $recommendedKey = 'boost_7'; // Best value when expiring
-        } elseif (! $status['has_any_visibility'] || (! $isOffer && ! $status['is_boosted'])) {
+        } elseif (! $status['has_any_visibility']) {
             $recommendedKey = 'boost_7'; // Best value for new boost
         }
 
@@ -142,10 +133,6 @@ class BoostController extends Controller
         // du jeu de règles en vigueur et, avec les nouvelles règles, remontées.
         $newRules = AdPromotionCatalog::newRulesActive();
         $bumps = $newRules ? AdPromotionCatalog::bumps() : [];
-        // Nouvelles règles : la page d'une demande propose « À la une » et l'option Urgent dans le même formulaire.
-        if ($newRules && $ad->service_type === 'demande' && $request->input('package') === 'urgent') {
-            return $this->makeUrgentStripe($ad);
-        }
         $request->validate([
             'package' => ['required', \Illuminate\Validation\Rule::in([...array_keys($this->boostPackages), ...array_keys($bumps)])],
         ], ['package.*' => 'Choisissez une option de mise en avant.']);
@@ -154,11 +141,10 @@ class BoostController extends Controller
         if (Auth::id() !== $ad->user_id) {
             return back()->with('error', 'Vous ne pouvez pas booster cette annonce.');
         }
+        if ($refusal = $this->refuseUnlessOffer($ad)) {
+            return $refusal;
+        }
         if (isset($bumps[$request->package])) {
-            if ($refusal = $this->refuseUnlessOffer($ad)) {
-                return $refusal;
-            }
-
             return $this->purchaseBump($ad, $request->package);
         }
 
@@ -192,8 +178,7 @@ class BoostController extends Controller
                         'currency' => 'eur',
                         'product_data' => [
                             'name' => $package['name'].' - '.$ad->title,
-                            'description' => $ad->service_type === 'offre' ? $package['description']
-                                : $this->requestBoostDescription((int) $package['duration_days']),
+                            'description' => $package['description'],
                         ],
                         'unit_amount' => (int) ($priceEuros * 100),
                     ],
@@ -258,7 +243,7 @@ class BoostController extends Controller
                 .((int) $ad->bump_every_days === 1 ? 'chaque jour' : 'chaque semaine').' jusqu’au '.$ad->bump_until->format('d/m/Y').'.');
         }
         if (AdPromotionCatalog::newRulesActive()) {
-            return redirect()->route('ads.show', $ad)->with('success', 'Paiement réussi. Votre '.$this->adNoun($ad).' est à la une jusqu’au '.$ad->boost_end->format('d/m/Y').'.');
+            return redirect()->route('ads.show', $ad)->with('success', 'Paiement réussi. Votre offre est à la une jusqu’au '.$ad->boost_end->format('d/m/Y').'.');
         }
         $message = '🚀 Paiement réussi ! Annonce boostée jusqu\'au '.$ad->boost_end->format('d/m/Y à H:i').' !';
         if ($ad->isCurrentlyUrgent()) {
@@ -337,8 +322,7 @@ class BoostController extends Controller
 
         $groups = [];
         $current = [];
-        $what = $this->adNoun($ad);
-        {
+        if ($isOffer) {
             $boostedUntil = $ad->isCurrentlyBoosted() ? $ad->boost_end : null;
             $featured = [];
             foreach (AdPromotionCatalog::featured() as $key => $pack) {
@@ -348,20 +332,17 @@ class BoostController extends Controller
                     match (true) {
                         (bool) $boostedUntil => 'Prolonge jusqu’au '.$boostedUntil->copy()->addDays((int) $pack['duration_days'])->format('d/m/Y'),
                         // Abonnement qui s'arrête avant la fin du pack : l'achat n'agit qu'ensuite.
-                        $subscription && ! $covered => 'Votre abonnement met déjà cette '.$what.' à la une jusqu’au '.$subscription->ends_at->format('d/m/Y'),
+                        $subscription && ! $covered => 'Votre abonnement met déjà cette offre à la une jusqu’au '.$subscription->ends_at->format('d/m/Y'),
                         default => null,
                     });
             }
             $groups[] = [
                 'key' => 'featured',
                 'title' => 'À la une',
-                'intro' => $isOffer
-                    ? 'Votre offre passe avant les offres non sponsorisées, sur l’accueil des clients et dans la liste des annonces. Elle porte la mention « Sponsorisé ».'
-                    : 'Votre demande est affichée sur l’accueil des particuliers, parmi les annonces sponsorisées, et passe en premier dans la liste des annonces. Elle porte la mention « Sponsorisé ».',
+                'intro' => 'Votre offre passe avant les offres non sponsorisées, sur l’accueil des clients et dans la liste des annonces. Elle porte la mention « Sponsorisé ».',
                 'options' => $featured,
             ];
-        }
-        if ($isOffer) {
+
             $bumpUntil = $ad->hasActiveBump() ? $ad->bump_until : null;
             $bumps = [];
             foreach (AdPromotionCatalog::bumps() as $key => $pack) {
@@ -381,15 +362,14 @@ class BoostController extends Controller
                 $current[] = 'Abonnement Premium : vos offres sont à la une et remontent chaque semaine'
                     .($subscription->ends_at ? ', jusqu’au '.$subscription->ends_at->format('d/m/Y') : '').'.';
             }
+            if ($boostedUntil) {
+                $current[] = 'À la une jusqu’au '.$boostedUntil->format('d/m/Y').'.';
+            }
             if ($bumpUntil) {
                 $current[] = 'Remontée automatique '.((int) $ad->bump_every_days === 1 ? 'chaque jour' : 'chaque semaine')
                     .' jusqu’au '.$bumpUntil->format('d/m/Y').'.';
             }
         } else {
-            if ($subscription) {
-                $current[] = 'Abonnement Premium : vos demandes sont à la une'
-                    .($subscription->ends_at ? ', jusqu’au '.$subscription->ends_at->format('d/m/Y') : '').'.';
-            }
             $urgent = AdPromotionCatalog::urgent();
             if ($ad->hasPromotedUrgency()) {
                 $current[] = 'Option Urgent en cours jusqu’au '.$ad->urgent_until->format('d/m/Y').'.';
@@ -401,10 +381,6 @@ class BoostController extends Controller
                     'options' => ['urgent' => $option('Pendant toute la durée de votre demande', (float) $urgent['price_euros'])],
                 ];
             }
-        }
-
-        if ($boostedUntil) {
-            $current[] = 'À la une jusqu’au '.$boostedUntil->format('d/m/Y').'.';
         }
 
         // Vues réellement comptées : aucun chiffre tant que le comptage n'a pas commencé.
@@ -457,12 +433,14 @@ class BoostController extends Controller
         $isPro = Auth::user()->hasActiveProSubscription();
         $subscription = $this->sponsoringSubscription($ad);
         $packages = [];
-        foreach ($this->boostPackages as $key => $package) {
-            if ($subscription && $this->subscriptionCovers($subscription, $package['duration_days'])) {
-                continue;
+        if ($ad->service_type === 'offre') {
+            foreach ($this->boostPackages as $key => $package) {
+                if ($subscription && $this->subscriptionCovers($subscription, $package['duration_days'])) {
+                    continue;
+                }
+                $package['price_euros'] = AdPromotionCatalog::discountedCents($package['price_euros'], $isPro) / 100;
+                $packages[$key] = $package;
             }
-            $package['price_euros'] = AdPromotionCatalog::discountedCents($package['price_euros'], $isPro) / 100;
-            $packages[$key] = $package;
         }
         $urgent = AdPromotionCatalog::urgent();
         $urgent['price_euros'] = AdPromotionCatalog::discountedCents($urgent['price_euros'], $isPro) / 100;
@@ -472,14 +450,12 @@ class BoostController extends Controller
             'packages' => $packages,
             'isPro' => $isPro,
             'urgent' => $urgent,
-            'coveredBySubscription' => (bool) $subscription,
         ]);
     }
 
     /**
-     * La remontée automatique reclasse une offre parmi les offres récentes :
-     * elle n'a pas d'effet sur une demande et ne lui est pas vendue. Le boost,
-     * lui, est vendu pour toute annonce depuis le 21/11/2026.
+     * Le boost n'agit que sur le flux des clients, qui ne montre que des
+     * offres : il n'est pas vendu pour une demande.
      */
     private function refuseUnlessOffer(Ad $ad): ?\Illuminate\Http\RedirectResponse
     {
@@ -487,29 +463,17 @@ class BoostController extends Controller
             return null;
         }
 
-        return redirect()->route('ads.show', $ad)->with('error', 'La remontée automatique est réservée aux offres de services.');
-    }
-
-    /** Effet réel du boost d'une demande : sa place sur l'accueil des particuliers. */
-    private function requestBoostDescription(int $days): string
-    {
-        return 'Pendant '.$days.' jours, votre demande est affichée sur l’accueil des particuliers, parmi les annonces sponsorisées, avec la mention « Sponsorisé ».';
-    }
-
-    /** « offre » ou « demande », pour les phrases adressées à l'auteur. */
-    private function adNoun(Ad $ad): string
-    {
-        return $ad->service_type === 'demande' ? 'demande' : 'offre';
+        return redirect()->route('ads.show', $ad)->with('error', 'Le boost est réservé aux offres de services.');
     }
 
     /**
-     * Abonnement Premium en cours de l'auteur (même condition que
-     * App\Services\ClientFeedOffersService) : toutes ses annonces, offres et
-     * demandes, sont déjà dans le groupe sponsorisé.
+     * Abonnement Premium en cours de l'auteur d'une offre (même condition que
+     * App\Services\ClientFeedOffersService) : toutes ses offres sont déjà
+     * dans le groupe sponsorisé.
      */
     private function sponsoringSubscription(Ad $ad): ?\App\Models\ProSubscription
     {
-        if (! $ad->user) {
+        if ($ad->service_type !== 'offre' || ! $ad->user) {
             return null;
         }
 
@@ -533,8 +497,7 @@ class BoostController extends Controller
             return null;
         }
 
-        return back()->with('error', 'Inutile : votre abonnement Premium affiche déjà cette '.$this->adNoun($ad).' parmi les '
-            .($ad->service_type === 'offre' ? 'offres' : 'annonces').' sponsorisées'
+        return back()->with('error', 'Inutile : votre abonnement Premium affiche déjà cette offre parmi les offres sponsorisées'
             .($subscription->ends_at ? ' jusqu’au '.$subscription->ends_at->format('d/m/Y') : '').'.');
     }
 
