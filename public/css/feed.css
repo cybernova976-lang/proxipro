@@ -1045,7 +1045,7 @@
 .pk-feed--client .pk-listings { min-width: 0; }
 .pk-feed--client .pk-feed-list { grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .pk-feed--client .pk-empty { grid-column: 1 / -1; }
-.pk-feed--client .pk-ad__media { height: 166px; }
+.pk-feed--client .pk-ad__media { height: 180px; }
 .pk-feed-selection { display: flex; align-items: flex-start; gap: 7px; margin: 10px 0 0; color: var(--pk-ink-3); font-size: .7rem; line-height: 1.55; }
 .pk-feed-selection i { margin-top: 3px; }
 .pk-feed-pagination { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; }
@@ -1061,18 +1061,22 @@
   .pk-feed--client .pk-feed-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pk-feed--client .pk-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-/* Accueil du particulier : trois offres par ligne, et la colonne Emploi / Repères / prestataires
-   à droite des offres sur grand écran (elle passe sous les offres en dessous de 1180 px).
-   La page garde 1180 px de large, comme la barre d'onglets et les autres pages de l'espace. */
+/* Accueil du particulier (22/11/2026) : trois offres par ligne, à la taille des cartes de
+   l'onglet Favoris (environ 370 px de large, photo de 180 px), et la colonne prestataires /
+   Emploi / Repères à GAUCHE des offres à partir de 1180 px (dessous sur écran plus étroit).
+   Pour que trois cartes de cette taille tiennent à côté de la colonne, la page de l'accueil
+   et sa barre d'onglets s'élargissent à 1500 px. */
 @media (min-width: 1024px) {
   .pk-feed--client .pk-feed-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .pk-feed-filler--wide { display: flex; grid-column: span 2; }
 }
 @media (min-width: 1180px) {
-  .pk-feed--client .pk-body { grid-template-columns: minmax(0, 1fr) 280px; column-gap: 24px; padding-top: 28px; }
-  .pk-feed--client .pk-welcome { grid-column: 1; grid-row: 1; }
-  .pk-feed--client .pk-main { grid-column: 1; grid-row: 2; }
-  .pk-feed--client .pk-rail { grid-template-columns: minmax(0, 1fr); grid-column: 2; grid-row: 1 / span 2; position: sticky; top: 88px; align-self: start; max-height: calc(100dvh - 104px); overflow: auto; }
+  .pk-feed--client .pk-body { max-width: 1500px; grid-template-columns: 280px minmax(0, 1fr); column-gap: 24px; padding-top: 28px; }
+  .pk-feed--client .pk-welcome { grid-column: 2; grid-row: 1; }
+  .pk-feed--client .pk-main { grid-column: 2; grid-row: 2; }
+  .pk-feed--client .pk-rail { grid-template-columns: minmax(0, 1fr); grid-column: 1; grid-row: 1 / span 2; position: sticky; top: 88px; align-self: start; max-height: calc(100dvh - 104px); overflow: auto; }
+  /* La barre d'onglets « Mon espace particulier » suit la largeur de l'accueil (feed.css n'est chargé que sur l'accueil). */
+  .pk-client-space .pk-client-space__inner { max-width: 1500px; padding-inline: 24px; }
 }
 /* Cartes d'offres compactes : la hauteur suit le contenu, sans ligne vide réservée. */
 .pk-feed--client .pk-ad__body { gap: 8px; padding: 14px 16px 16px; }
