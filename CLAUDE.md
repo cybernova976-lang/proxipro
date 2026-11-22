@@ -122,9 +122,11 @@ il répond à « où en suis-je et que dois-je faire maintenant ? ».
   porte que sur les offres, vues par les autres membres. Pour une demande, la seule
   mise en avant est l'option Urgent : le boost ne lui est pas vendu. Ne rouvre pas
   ces règles sans une demande explicite du fondateur.
-- L'accueil du particulier tient sur **une seule colonne** : les offres occupent
-  toute la largeur, **trois cartes par ligne** à partir de 1024 px ; prestataires,
-  emploi et repères suivent, côte à côte, sous les offres.
+- Accueil du particulier : **trois cartes d'offre par ligne** à partir de 1024 px,
+  et la colonne Emploi / Repères / prestataires **à droite des offres** à partir
+  de 1180 px (dessous sur les écrans plus étroits). Ne déplace jamais cette
+  colonne sous les offres sur grand écran : le fondateur l'a refusé le 22/11/2026.
+  La page garde 1180 px de large, comme la barre d'onglets de l'espace.
 
 ---
 

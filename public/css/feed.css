@@ -1061,23 +1061,24 @@
   .pk-feed--client .pk-feed-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pk-feed--client .pk-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-/* Accueil du particulier sur une seule colonne (22/11/2026) : les offres occupent toute la
-   largeur, trois par ligne ; prestataires, emploi et repères suivent, côte à côte. */
+/* Accueil du particulier : trois offres par ligne, et la colonne Emploi / Repères / prestataires
+   à droite des offres sur grand écran (elle passe sous les offres en dessous de 1180 px).
+   La page garde 1180 px de large, comme la barre d'onglets et les autres pages de l'espace. */
 @media (min-width: 1024px) {
   .pk-feed--client .pk-feed-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .pk-feed-filler--wide { display: flex; grid-column: span 2; }
-  .pk-feed--client .pk-rail { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
+}
+@media (min-width: 1180px) {
+  .pk-feed--client .pk-body { grid-template-columns: minmax(0, 1fr) 280px; column-gap: 24px; padding-top: 28px; }
+  .pk-feed--client .pk-welcome { grid-column: 1; grid-row: 1; }
+  .pk-feed--client .pk-main { grid-column: 1; grid-row: 2; }
+  .pk-feed--client .pk-rail { grid-template-columns: minmax(0, 1fr); grid-column: 2; grid-row: 1 / span 2; position: sticky; top: 88px; align-self: start; max-height: calc(100dvh - 104px); overflow: auto; }
 }
 /* Cartes d'offres compactes : la hauteur suit le contenu, sans ligne vide réservée. */
 .pk-feed--client .pk-ad__body { gap: 8px; padding: 14px 16px 16px; }
 .pk-feed--client .pk-ad h3, .pk-feed--client .pk-ad__desc { min-height: 0; }
 .pk-feed--client .pk-tiles > li { display: flex; }
 .pk-feed--client .pk-tiles > li > .pk-tile { flex: 1; }
-@media (min-width: 1180px) {
-  .pk-feed--client .pk-body { padding-top: 28px; }
-  /* Les huit situations tiennent sur une seule ligne. */
-  .pk-feed--client .pk-tiles { grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); }
-}
 /* Z7 · repères du rail client : « À faire » (données réelles), favoris, classement, aide. */
 .pk-landmarks { padding: 0; overflow: hidden; }
 .pk-landmarks > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; padding: 12px 16px; cursor: pointer; list-style: none; color: var(--pk-950); font-size: .92rem; font-weight: 800; }
