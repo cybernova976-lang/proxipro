@@ -22,7 +22,7 @@
     </section>
     @endif
     @if(!$pkIsProvider)
-        @include('feed.partials.providers')
+        {{-- Les prestataires sont dans la colonne centrale, juste avant les offres (index.blade.php). --}}
         @include('feed.partials.employment-card')
     @else
         <section class="pk-rcard pk-matching" aria-labelledby="pkMatchingTitle">

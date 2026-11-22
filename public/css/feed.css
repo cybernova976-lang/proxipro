@@ -1046,6 +1046,19 @@
 .pk-feed--client .pk-feed-list { grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .pk-feed--client .pk-empty { grid-column: 1 / -1; }
 .pk-feed--client .pk-ad__media { height: 180px; }
+/* Prestataires dans la colonne centrale, avant les offres : même rampe indigo que le reste de la page. */
+.pk-feed--client .pk-main .pk-provider-eyebrow { color: var(--pk-violet); text-transform: uppercase; letter-spacing: .06em; font-size: .68rem; }
+/* Les cartes prestataires se partagent toute la largeur, quel que soit leur nombre (1 à 4) :
+   photo à gauche, identité à droite, bouton « Voir le profil » dessous. */
+@media (min-width: 640px) {
+  .pk-feed--client .pk-main .pk-provider-discovery .pk-pros { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .pk-feed--client .pk-main .pk-provider-discovery .pk-pro__identity { flex-direction: row; align-items: flex-start; gap: 14px; padding: 16px 16px 12px; }
+  .pk-feed--client .pk-main .pk-provider-discovery .pk-pro__visual,
+  .pk-feed--client .pk-main .pk-provider-discovery .pk-pro__visual img { width: 64px; height: 64px; min-height: 64px; border-radius: 16px; }
+  .pk-feed--client .pk-main .pk-provider-discovery .pk-pro__visual { flex: none; margin: 0; }
+  .pk-feed--client .pk-main .pk-provider-discovery .pk-pro__body { padding: 0; gap: 6px; }
+  .pk-feed--client .pk-main .pk-provider-discovery .pk-pro__actions { padding: 0 16px 16px; }
+}
 .pk-feed-selection { display: flex; align-items: flex-start; gap: 7px; margin: 10px 0 0; color: var(--pk-ink-3); font-size: .7rem; line-height: 1.55; }
 .pk-feed-selection i { margin-top: 3px; }
 .pk-feed-pagination { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; }

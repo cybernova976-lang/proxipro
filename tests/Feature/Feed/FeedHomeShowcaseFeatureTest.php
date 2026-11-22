@@ -110,8 +110,11 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             ->assertDontSee('adsFeedMap', false);
 
         $html = $response->getContent();
-        $this->assertGreaterThan(strpos($html, 'id="pkFeedList"'), strpos($html, 'id="pkProviderList"'),
-            'Les profils complètent les annonces, sans repousser le flux principal.');
+        // Décision du 22/11/2026 : les prestataires viennent juste avant les offres, dans la colonne centrale.
+        $this->assertLessThan(strpos($html, 'id="pkFeedList"'), strpos($html, 'id="pkProviderList"'),
+            'Les prestataires précèdent les offres.');
+        $rail = substr($html, strpos($html, '<aside class="pk-rail"'));
+        $this->assertStringNotContainsString('id="pkProviderList"', substr($rail, 0, strpos($rail, '</aside>')));
         $this->assertSame(1, substr_count($html, 'id="pkSearchForm"'));
         $this->assertStringContainsString('aria-label="Mon espace particulier"', $html);
 

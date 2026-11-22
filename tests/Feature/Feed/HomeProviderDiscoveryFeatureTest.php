@@ -23,7 +23,7 @@ class HomeProviderDiscoveryFeatureTest extends TestCase
         $response = $this->actingAs($client)->get(route('feed'))->assertOk()
             ->assertViewHas('homeProfessionalProfiles', fn ($profiles) => $profiles->modelKeys() === [$provider->id])
             ->assertViewHas('pkProviderCategory', null)->assertSee('Prestataires à Mamoudzou');
-        $this->assertGreaterThan(strpos($response->getContent(), 'id="pkFeedList"'),
+        $this->assertLessThan(strpos($response->getContent(), 'id="pkFeedList"'),
             strpos($response->getContent(), 'id="pkProviderList"'));
     }
 

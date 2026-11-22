@@ -76,8 +76,14 @@
 .pk-employment-next__list a:focus-visible,
 .pk-employment-territories a:focus-visible { outline: 3px solid #4f46e5; outline-offset: 2px; border-radius: 6px; }
 
+@media (min-width: 640px) {
+    /* Titre et onglets centrés : la barre garde la même place sur chaque page de l'espace,
+       quelle que soit la largeur de la page qui suit (l'accueil est plus large). */
+    .pk-client-space__heading { justify-content: center; text-align: center; }
+}
 @media (min-width: 1180px) {
     .pk-client-space__inner { padding-inline: 24px; }
+    .pk-client-space__tabs { justify-content: center; }
 }
 @media (max-width: 1179px) {
     .pk-client-space__inner { padding: 20px 20px 0; }

@@ -40,6 +40,8 @@
                     @include('feed.partials.client-activity')
                 </div>
                 @include('feed.partials.problem-picker')
+                {{-- Les personnes d'abord, puis leurs offres (décision du 22/11/2026). --}}
+                @include('feed.partials.providers')
             @endif
 
             {{-- Zone 4 · le flux adapte au role --}}

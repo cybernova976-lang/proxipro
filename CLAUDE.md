@@ -111,7 +111,8 @@ il répond à « où en suis-je et que dois-je faire maintenant ? ».
   l'en-tête et l'orange `#E76F51` sont des accidents à ne pas propager.
 - Trois points de rupture : **640 / 1024 / 1180**. Pas d'autres.
 - Six zones, dans cet ordre : intention · carte d'état · progression ·
-  flux (6 annonces max) · prestataires · réassurance.
+  prestataires · flux (6 annonces max) · réassurance. (Côté particulier, depuis le
+  22/11/2026, les prestataires sont dans la colonne centrale, juste avant les offres.)
 - **Un seul bouton d'action dominant par écran.** La publication passe
   uniquement par `/demande` (clients) et `/ads/create` (prestataires) :
   pas de modale de publication dans le feed.
@@ -124,10 +125,15 @@ il répond à « où en suis-je et que dois-je faire maintenant ? ».
   ces règles sans une demande explicite du fondateur.
 - Accueil du particulier (décision du 22/11/2026) : **trois cartes d'offre par ligne**,
   à la taille des cartes de l'onglet Favoris (environ 370 px, photo de 180 px), et
-  la colonne prestataires / Emploi / Repères **à gauche des offres** à partir de
-  1180 px (dessous sur les écrans plus étroits). La page de l'accueil et sa barre
-  d'onglets font 1500 px de large. Ne déplace jamais cette colonne sous les offres
-  sur grand écran : le fondateur l'a refusé.
+  la colonne Emploi / Repères **à gauche des offres** à partir de 1180 px (dessous
+  sur les écrans plus étroits). La page de l'accueil fait 1500 px de large. Ne
+  déplace jamais cette colonne sous les offres sur grand écran : le fondateur l'a
+  refusé.
+- La barre d'onglets « Mon espace particulier » est **centrée** (titre et onglets),
+  sur toutes les pages de l'espace : elle ne bouge pas d'une page à l'autre.
+- **Esthétique d'abord** : le fondateur juge le rendu, pas seulement la fonction.
+  Avant de proposer un déploiement de mise en page, regarde la page à sa largeur
+  d'écran (1920 px dans son Chrome) et envoie-lui une capture.
 
 ---
 
