@@ -6,7 +6,8 @@
     manque. La verification reste visible sous la forme d'un signe discret.
 --}}
 @php
-    $pkProviders = collect($homeProfessionalProfiles ?? [])->take(4);
+    // Trois au plus : une rangée, alignée sur les trois cartes d'offres qui suivent.
+    $pkProviders = collect($homeProfessionalProfiles ?? [])->take(3);
 @endphp
 
 @php
