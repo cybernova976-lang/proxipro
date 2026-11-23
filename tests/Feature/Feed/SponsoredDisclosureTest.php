@@ -66,7 +66,7 @@ class SponsoredDisclosureTest extends TestCase
         $this->assertStringNotContainsString('pk-tag--boost', $list);
     }
 
-    public function test_promoted_offer_shown_as_a_list_row_is_labelled_sponsored(): void
+    public function test_a_small_selection_still_identifies_its_sponsored_offer(): void
     {
         $viewer = $this->mayotteReader();
         $author = User::factory()->create();
@@ -75,12 +75,12 @@ class SponsoredDisclosureTest extends TestCase
         $ordinary = $this->offer($author, ['title' => 'Offre ordinaire seule']);
 
         $response = $this->actingAs($viewer)->get(route('feed'))->assertOk();
-        $rows = $this->cards($response, '<article class="pk-ad-row');
+        $cards = $this->cards($response, '<article class="pk-ad');
 
-        $this->assertCount(2, $rows, 'Deux offres : les lignes de liste sont utilisées.');
-        $this->assertStringContainsString('Sponsorisé', $rows[$boosted->title]);
-        $this->assertStringContainsString('href="'.route('legal.platform-rules').'#classement"', $rows[$boosted->title]);
-        $this->assertStringNotContainsString('Sponsorisé', $rows[$ordinary->title]);
+        $this->assertCount(2, $cards, 'La sélection contient les deux offres.');
+        $this->assertStringContainsString('Sponsorisé', $cards[$boosted->title]);
+        $this->assertStringContainsString('href="'.route('legal.platform-rules').'#classement"', $cards[$boosted->title]);
+        $this->assertStringNotContainsString('Sponsorisé', $cards[$ordinary->title]);
         $this->assertStringNotContainsString('Boosté', $this->feedList($response));
     }
 
@@ -104,10 +104,10 @@ class SponsoredDisclosureTest extends TestCase
         $pro = $this->offer($professional, ['title' => 'Offre d’un professionnel']);
         $individual = $this->offer($private, ['title' => 'Offre d’un particulier']);
 
-        $rows = $this->cards($this->actingAs($viewer)->get(route('feed'))->assertOk(), '<article class="pk-ad-row');
-        $this->assertStringContainsString('>Professionnel</span>', $rows[$pro->title]);
-        $this->assertStringNotContainsString('>Particulier</span>', $rows[$pro->title]);
-        $this->assertStringContainsString('>Particulier</span>', $rows[$individual->title]);
+        $cards = $this->cards($this->actingAs($viewer)->get(route('feed'))->assertOk(), '<article class="pk-ad');
+        $this->assertStringContainsString('>Professionnel</span>', $cards[$pro->title]);
+        $this->assertStringNotContainsString('>Particulier</span>', $cards[$pro->title]);
+        $this->assertStringContainsString('>Particulier</span>', $cards[$individual->title]);
 
         $this->assertSame('Professionnel', AdDisclosure::advertiserStatus($professional));
         $this->assertSame('Particulier', AdDisclosure::advertiserStatus($private));

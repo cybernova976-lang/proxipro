@@ -67,20 +67,11 @@
                 @if($pkRole === 'client' && $pkFeedAds->isNotEmpty())
                     @include('feed.partials.ranking-disclosure')
                 @endif
-                @php
-                    $pkOfferTotal = $pkFeedPagination?->total() ?? $pkFeedAds->count();
-                @endphp
                 @if($pkRole === 'client' && $pkFeedAds->isEmpty() && $pkEmptyLocal)
                     <div class="pk-feed-list" id="pkFeedList">@include('feed.partials.empty-local')</div>
                     @if($pkEmptyLocal['elsewhere']->isNotEmpty())
                         @include('feed.partials.elsewhere-offers')
                     @endif
-                @elseif($pkRole === 'client' && $pkFeedAds->isNotEmpty() && $pkOfferTotal <= 3)
-                    <ul class="pk-feed-rows" id="pkFeedList">
-                        @foreach($pkFeedAds as $ad)
-                            <li>@include('feed.partials.ad-row', ['ad' => $ad, 'pkSaved' => $pkSavedAdIds])</li>
-                        @endforeach
-                    </ul>
                 @else
                 <div class="pk-feed-list" id="pkFeedList">
                     @forelse($pkFeedAds as $ad)

@@ -987,7 +987,7 @@
   --pk-500: #6366f1; --pk-600: #4f46e5; --pk-700: #4338ca; --pk-800: #3730a3; --pk-950: #312e81;
   --pk-violet: #7c3aed;
 }
-.pk-feed--client .pk-body { max-width: 1180px; padding: 20px 16px 40px; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+.pk-feed--client .pk-body { max-width: 1200px; padding: 20px 20px 40px; gap: 20px; grid-template-columns: minmax(0, 1fr); }
 .pk-feed--client #services, .pk-feed--client #pkProblemPicker { scroll-margin-top: 100px; }
 
 /* Z1 · bonjour et commune */
@@ -1043,7 +1043,7 @@
 .pk-feed-filler p { margin: 0 0 6px; color: var(--pk-ink-2); font-size: .84rem; line-height: 1.55; }
 .pk-feed-filler--wide { display: none; }
 .pk-feed--client .pk-listings { min-width: 0; }
-.pk-feed--client .pk-feed-list { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.pk-feed--client .pk-feed-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 24px; }
 .pk-feed--client .pk-empty { grid-column: 1 / -1; }
 .pk-feed--client .pk-ad__media { height: 180px; }
 /* Prestataires dans la colonne centrale, avant les offres : même rampe indigo que le reste de la page. */
@@ -1068,26 +1068,23 @@
 .pk-feed-pagination > span:first-child, .pk-feed-pagination > span:last-child { min-width: 70px; }
 
 @media (min-width: 640px) {
-  .pk-feed--client .pk-body { padding-inline: 24px; }
   .pk-problem { padding: 24px; }
   .pk-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .pk-feed--client .pk-feed-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pk-feed--client .pk-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-/* Accueil du particulier (22/11/2026) : trois offres par ligne, à la taille des cartes de
-   l'onglet Favoris (environ 370 px de large, photo de 180 px), et la colonne prestataires /
-   Emploi / Repères à GAUCHE des offres à partir de 1180 px (dessous sur écran plus étroit).
-   Pour que trois cartes de cette taille tiennent à côté de la colonne, la page de l'accueil
-   et sa barre d'onglets s'élargissent à 1500 px. */
-@media (min-width: 1024px) {
-  .pk-feed--client .pk-feed-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* Trois cartes comme dans les Favoris. À largeur intermédiaire, la colonne latérale
+   occupe la première piste ; à grande largeur, elle s'ajoute à la grille entière. */
+@media (min-width: 988px) and (max-width: 1179.98px), (min-width: 1512px) {
   .pk-feed-filler--wide { display: flex; grid-column: span 2; }
 }
 @media (min-width: 1180px) {
-  .pk-feed--client .pk-body { max-width: 1500px; grid-template-columns: 280px minmax(0, 1fr); column-gap: 24px; padding-top: 28px; }
-  .pk-feed--client .pk-welcome { grid-column: 2; grid-row: 1; }
-  .pk-feed--client .pk-main { grid-column: 2; grid-row: 2; }
+  .pk-feed--client .pk-body { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 24px; padding-top: 28px; }
+  .pk-feed--client .pk-welcome { grid-column: 2 / -1; grid-row: 1; }
+  .pk-feed--client .pk-main { grid-column: 2 / -1; grid-row: 2; }
   .pk-feed--client .pk-rail { grid-template-columns: minmax(0, 1fr); grid-column: 1; grid-row: 1 / span 2; position: sticky; top: 88px; align-self: start; max-height: calc(100dvh - 104px); overflow: auto; }
+}
+@media (min-width: 1512px) {
+  .pk-feed--client .pk-body { max-width: 1504px; grid-template-columns: 280px minmax(0, 1fr); }
 }
 /* En dessous de 1180 px, la colonne Emploi / Repères ne passe plus sous les offres : ces
    blocs sont rangés dans le tableau de bord (bouton de l'en-tête). */
@@ -1151,30 +1148,6 @@
 .pk-tag--elsewhere { background: #ede9fe; color: #5b21b6; }
 .pk-tag--sponsored { background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; }
 
-/* lignes de liste */
-.pk-feed-rows { display: grid; gap: 12px; margin: 18px 0 0; padding: 0; list-style: none; }
-.pk-ad-row { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px 14px; align-items: start; padding: 14px; border: 1px solid var(--pk-rule); border-radius: 14px; background: #fff; box-shadow: var(--pk-sh-1); }
-.pk-ad-row.is-urgent { border-color: #e8b5a9; }
-.pk-ad-row__thumb { position: relative; display: grid; place-items: center; width: 72px; height: 72px; border-radius: 12px; overflow: hidden; background: #eef2ff; color: #4338ca; font-size: 1.4rem; }
-.pk-ad-row__thumb img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
-.pk-ad-row__thumb img[hidden] { display: none; }
-.pk-ad-row__body { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.pk-ad-row__top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.pk-ad-row__cat { min-width: 0; color: var(--pk-ink-2); font-size: .73rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pk-ad-row__why { color: #4338ca; font-size: .68rem; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
-.pk-ad-row h3 { margin: 0; font-size: 1rem; line-height: 1.35; font-weight: 800; overflow-wrap: anywhere; }
-.pk-ad-row h3 a:hover { color: #3730a3; }
-.pk-ad-row__facts, .pk-ad-row__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0; color: var(--pk-ink-2); font-size: .78rem; }
-.pk-ad-row__facts i { color: #7a8da6; margin-right: 3px; }
-.pk-ad-row__facts strong { color: var(--pk-ink); font-size: .85rem; }
-.pk-ad-row__meta { color: var(--pk-ink-3); font-size: .72rem; }
-.pk-ad-row__actions { grid-column: 1 / -1; display: flex; gap: 8px; }
-@media (min-width: 640px) {
-  .pk-ad-row { grid-template-columns: 72px minmax(0, 1fr) auto; align-items: center; }
-  .pk-ad-row__actions { grid-column: auto; }
-  .pk-ad-row__actions .pk-btn-sm { flex: none; }
-}
-
 /* bouton en contour, secondaire par construction */
 .pk-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 18px; border: 1px solid #a5b4fc; border-radius: 10px; background: #fff; color: #4338ca; font-weight: 700; font-size: .86rem; cursor: pointer; }
 .pk-btn-outline:hover { background: #eef2ff; color: #312e81; }
@@ -1203,9 +1176,6 @@
    déclaré de l'annonceur. Indigo neutre, jamais doré : l'or suggère une
    qualité que le paiement n'atteste pas.
    ========================================================================== */
-.pk-ad__why,
-.pk-ad-row__why { display: inline-flex; align-items: center; min-height: 24px; padding: 0 2px; color: #4338ca; font-size: .68rem; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
-.pk-ad__why:hover,
-.pk-ad-row__why:hover { color: #312e81; }
-.pk-ad__status,
-.pk-ad-row__status { flex: none; padding: 1px 6px; border: 1px solid var(--pk-rule); border-radius: 5px; background: #fff; color: var(--pk-ink-2); font-size: .62rem; font-weight: 600; line-height: 1.5; white-space: nowrap; }
+.pk-ad__why { display: inline-flex; align-items: center; min-height: 24px; padding: 0 2px; color: #4338ca; font-size: .68rem; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.pk-ad__why:hover { color: #312e81; }
+.pk-ad__status { flex: none; padding: 1px 6px; border: 1px solid var(--pk-rule); border-radius: 5px; background: #fff; color: var(--pk-ink-2); font-size: .62rem; font-weight: 600; line-height: 1.5; white-space: nowrap; }

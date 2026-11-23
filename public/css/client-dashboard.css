@@ -73,9 +73,9 @@ a.pk-board-row:hover { background: #f6f7fb; color: var(--board-accent); }
     .pk-board-row--static > .pk-board-row__icon { display: none; }
 }
 @media (min-width: 760px) {
-    .pk-board { grid-template-columns: 208px minmax(0, 1fr); gap: 24px 32px; padding: 32px 24px 48px; align-items: start; }
+    .pk-board { grid-template-columns: 232px minmax(0, 1fr); gap: 24px 32px; padding: 32px 24px 48px; align-items: start; }
     .pk-board h1 { grid-column: 1 / -1; }
     .pk-board__nav { grid-template-columns: 1fr; position: sticky; top: 94px; padding: 6px; }
-    .pk-board__nav a { justify-content: flex-start; padding-inline: 14px; gap: 12px; font-size: .95rem; }
+    .pk-board__nav a { justify-content: flex-start; padding-inline: 14px; gap: 12px; font-size: .95rem; text-align: left; }
     .pk-board-card { padding: 20px 24px; }
 }

@@ -8,22 +8,13 @@
         <a href="{{ $pkTerritoryLinks['all'] }}" class="pk-sechead__more">Tout voir <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
     </div>
     @include('feed.partials.ranking-disclosure', ['pkRankingDisclosure' => $pkEmptyLocal['elsewhere_disclosure']])
-    @if($pkEmptyLocal['elsewhere']->count() <= 3)
-        <ul class="pk-feed-rows" aria-labelledby="pkElsewhereTitle">
-            @foreach($pkEmptyLocal['elsewhere'] as $ad)
-                <li>@include('feed.partials.ad-row', ['ad' => $ad, 'pkSaved' => $pkSavedAdIds])</li>
-            @endforeach
-        </ul>
-    @else
-        <div class="pk-feed-list" aria-labelledby="pkElsewhereTitle">
-            @foreach($pkEmptyLocal['elsewhere'] as $ad)
-                @include('feed.partials.ad-card', ['ad' => $ad, 'pkSaved' => $pkSavedAdIds])
-            @endforeach
-            {{-- Quatre ou cinq offres : la place libre de la grille propose de décrire son besoin, au lieu de rester vide. --}}
-            @php $pkElsewhereCount = $pkEmptyLocal['elsewhere']->count(); @endphp
-            @if($pkElsewhereCount < 6)
-                @include('feed.partials.feed-filler', ['pkFillerWide' => $pkElsewhereCount === 4])
-            @endif
-        </div>
-    @endif
+    <div class="pk-feed-list" aria-labelledby="pkElsewhereTitle">
+        @foreach($pkEmptyLocal['elsewhere'] as $ad)
+            @include('feed.partials.ad-card', ['ad' => $ad, 'pkSaved' => $pkSavedAdIds])
+        @endforeach
+        @php $pkElsewhereCount = $pkEmptyLocal['elsewhere']->count(); @endphp
+        @if(in_array($pkElsewhereCount, [4, 5], true))
+            @include('feed.partials.feed-filler', ['pkFillerWide' => $pkElsewhereCount === 4])
+        @endif
+    </div>
 </div>

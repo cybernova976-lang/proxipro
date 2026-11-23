@@ -248,7 +248,7 @@ class FeedClientTerritoryScopeTest extends TestCase
             ->where('country', 'Mayotte')->exists());
     }
 
-    public function test_one_to_three_offers_are_list_rows_and_four_or_more_use_the_grid(): void
+    public function test_small_and_large_selections_use_the_same_offer_cards(): void
     {
         $viewer = $this->mayotteReader();
         $author = User::factory()->create();
@@ -256,10 +256,10 @@ class FeedClientTerritoryScopeTest extends TestCase
         $this->offer($author, ['title' => 'Deuxième offre locale']);
 
         $this->actingAs($viewer)->get(route('feed'))->assertOk()
-            ->assertSee('class="pk-feed-rows" id="pkFeedList"', false)
-            ->assertSee('class="pk-ad-row', false)
-            ->assertSee('width="72" height="72"', false)
-            ->assertDontSee('<article class="pk-ad pk-ad', false);
+            ->assertSee('class="pk-feed-list" id="pkFeedList"', false)
+            ->assertSee('class="pk-ad__media"', false)
+            ->assertSee('ads/plomberie.jpg', false)
+            ->assertDontSee('class="pk-ad-row', false);
 
         $this->offer($author, ['title' => 'Troisième offre locale']);
         $this->offer($author, ['title' => 'Quatrième offre locale']);
