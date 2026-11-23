@@ -6828,7 +6828,7 @@
                         <!-- Groupe icônes : Espace Pro (mobile), Alertes boost, Notifications -->
                         <div class="d-flex align-items-center gap-2">
                             @if($pkDashboardEntry)
-                            <a href="{{ $pkDashboardEntry['url'] }}" class="mobile-header-item d-lg-none" data-header-dashboard-mobile @if($pkDashboardEntry['active']) aria-current="page" @endif>
+                            <a href="{{ $pkDashboardEntry['url'] }}" class="mobile-header-item mobile-header-item--dashboard d-lg-none" data-header-dashboard-mobile @if($pkDashboardEntry['active']) aria-current="page" @endif>
                                 <span class="header-alert-btn header-mobile-action position-relative">
                                     <i class="fas fa-table-columns" aria-hidden="true"></i>
                                 </span>
@@ -10285,11 +10285,11 @@
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 3px;
+                gap: 2px;
                 min-width: 40px;
             }
             .mobile-header-item .header-mobile-action {
-                height: 32px !important;
+                height: 36px !important;
             }
             a.mobile-header-item .header-mobile-action {
                 border: 1px solid #e2e8f0 !important;
@@ -10304,7 +10304,7 @@
                 color: #475569;
                 font-size: 0.625rem;
                 font-weight: 600;
-                line-height: 1.15;
+                line-height: 1.1;
                 text-align: center;
                 white-space: nowrap;
             }
@@ -10342,15 +10342,62 @@
             .header-modern .user-menu-btn .dropdown-chevron {
                 display: none;
             }
+            .header-modern .user-menu-btn {
+                margin-top: -2px;
+            }
             .header-modern .user-menu-btn .header-user-avatar-frame {
-                width: 32px;
-                height: 32px;
-                flex-basis: 32px;
+                width: 40px;
+                height: 40px;
+                flex-basis: 40px;
             }
             .header-modern .user-menu-btn .user-avatar-placeholder {
-                width: 32px !important;
-                height: 32px !important;
-                font-size: 0.85rem !important;
+                width: 40px !important;
+                height: 40px !important;
+                font-size: 1rem !important;
+            }
+            /* Répartition (demande du fondateur, 23/11/2026 : « mauvaise répartition »).
+               - La rangée occupe toute la place à droite du logo ; l'enveloppe des icônes
+                 s'efface (display: contents) pour placer chaque élément.
+               - Groupe de droite fixe : « Espace Pro / Devenir pro », cloche, photo, avec
+                 28 px entre les carrés. Il ne bouge pas quand on change de parcours.
+               - « Tableau de bord » se centre dans la place restante, à égale distance
+                 du logo et du nom suivant.
+               - Le logo s'aligne sur la ligne des icônes (même centre vertical). */
+            body:has(.pk-tabbar) .header-modern .header-actions-area {
+                grid-column: 2 / -1;
+                justify-self: stretch;
+                justify-content: flex-end;
+                gap: 0 !important;
+                margin-left: -10px;
+                padding-left: 0;
+            }
+            body:has(.pk-tabbar) .header-modern .header-actions-area > .d-flex {
+                display: contents !important;
+            }
+            body:has(.pk-tabbar) .header-modern .mobile-header-item--dashboard {
+                margin-inline: auto;
+            }
+            /* Le nom dépasse de 7 px de chaque côté de son carré : 21 + 7 = 28 px entre carrés. */
+            body:has(.pk-tabbar) .header-modern [data-header-pro-mobile] {
+                margin-right: 21px;
+            }
+            body:has(.pk-tabbar) .header-modern .mobile-boost-alert,
+            body:has(.pk-tabbar) .header-modern #notificationDropdown {
+                margin-right: 28px;
+            }
+            body:has(.pk-tabbar) .header-modern .header-brand-area {
+                align-self: start;
+                margin-top: 7px;
+            }
+            /* Menu du compte : un peu plus large, l'adresse sur une ligne (coupée par « … »). */
+            .header-modern .user-menu-btn + .dropdown-menu {
+                min-width: 260px !important;
+            }
+            .account-menu-identity small {
+                max-width: 170px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
             }
             .account-menu-identity {
                 display: flex;
