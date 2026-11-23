@@ -51,7 +51,7 @@ class FeedEmploymentCardTest extends TestCase
 
         $this->assertSame(1, $tab->length);
         $this->assertSame(route('employment.territory', ['territoire' => 'mayotte']), $tab->item(0)->getAttribute('href'));
-        $this->get(route('client.dashboard'))->assertOk()
+        $this->get(route('client.dashboard', ['rubrique' => 'compte']))->assertOk()
             ->assertSee(route('employment.territory', ['territoire' => 'mayotte']), false);
     }
 
