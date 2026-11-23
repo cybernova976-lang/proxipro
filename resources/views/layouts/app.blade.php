@@ -21,9 +21,10 @@
         $openGraphType = $metaSection('og_type') ?: 'website';
         $openGraphUrl = $metaSection('og_url') ?: url()->current();
         $openGraphImage = $metaSection('og_image') ?: asset('images/social-card.png');
-        $pkClientSpaceTabs = \App\Support\ClientSpaceNavigation::forRequest(request(), auth()->user(), $pkRole ?? null);
-        $pkClientSpaceVisible = count($pkClientSpaceTabs) > 0;
-        // Accueil et tableau de bord : pages du parcours particulier sans onglets.
+        // Pages du tableau de bord du particulier : elles partagent le même cadre (panneau latéral + contenu).
+        $pkSpaceMenu = \App\Support\ClientSpaceNavigation::menu(request(), auth()->user(), $pkRole ?? null);
+        $pkClientSpaceVisible = count($pkSpaceMenu) > 0;
+        // L'accueil reste hors du tableau de bord, avec le même fond et la même barre du bas.
         $pkClientSurface = $pkClientSpaceVisible
             || \App\Support\ClientSpaceNavigation::isClientSurface(request(), auth()->user(), $pkRole ?? null);
         // Bouton « Tableau de bord » de l'en-tête (parcours particulier seulement).
@@ -6745,7 +6746,7 @@
     <link rel="stylesheet" href="{{ asset('css/client-space.css') }}?v={{ filemtime(public_path('css/client-space.css')) }}">
 @endif
 </head>
-<body class="device-{{ $deviceType ?? 'desktop' }}{{ ($isMobile ?? false) ? ' is-mobile' : '' }}{{ ($isTablet ?? false) ? ' is-tablet' : '' }}{{ request()->routeIs('feed.mockup', 'feed.mockup.preview') ? ' feed-mockup-route' : '' }}{{ $pkClientSurface ? ' has-client-space' : '' }}{{ request()->routeIs('feed') ? ' pk-route-feed' : '' }}">
+<body class="device-{{ $deviceType ?? 'desktop' }}{{ ($isMobile ?? false) ? ' is-mobile' : '' }}{{ ($isTablet ?? false) ? ' is-tablet' : '' }}{{ request()->routeIs('feed.mockup', 'feed.mockup.preview') ? ' feed-mockup-route' : '' }}{{ $pkClientSurface ? ' has-client-space' : '' }}{{ $pkClientSpaceVisible ? ' has-space-menu' : '' }}{{ request()->routeIs('feed') ? ' pk-route-feed' : '' }}">
     {{-- Variables JS pour détection appareil côté client --}}
     <script>
         window.__device = {
@@ -7060,7 +7061,7 @@
         </header>
 
         @if($pkClientSpaceVisible)
-            @include('partials.client-space-navigation')
+            @include('partials.client-space-menu')
         @endif
 
         {{-- Sidebar de navigation --}}
@@ -10343,8 +10344,8 @@
     @include('partials.pwa-install')
     @include('partials.user-presence')
 
-    {{-- Barre du bas sur toutes les pages connectées. Dans l'espace particulier, elle remplace
-         les onglets « Mon espace » sous 640 px et reste masquée au-dessus (client-space.css). --}}
+    {{-- Barre du bas sur toutes les pages connectées. Dans l'espace particulier, elle
+         s'affiche sous 640 px et reste masquée au-dessus (client-space.css). --}}
     @include('feed.partials.mobile-tabbar')
     <style>
         .header-nav-center .header-nav-btn { white-space: nowrap; }

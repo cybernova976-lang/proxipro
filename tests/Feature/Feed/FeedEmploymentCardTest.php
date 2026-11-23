@@ -45,13 +45,13 @@ class FeedEmploymentCardTest extends TestCase
     {
         $reader = User::factory()->create(['city' => 'Mamoudzou', 'country' => 'Mayotte', 'postal_code' => '97600']);
 
-        // L'onglet vit sur les pages de l'espace ; le tableau de bord mène à la même page.
+        // L'entrée « Offres d'emploi » du panneau latéral mène à la page du territoire.
         $html = $this->actingAs($reader)->get(route('home'))->assertOk()->getContent();
         $tab = $this->xpath($html)->query('//a[@data-space-section="employment"]');
 
         $this->assertSame(1, $tab->length);
         $this->assertSame(route('employment.territory', ['territoire' => 'mayotte']), $tab->item(0)->getAttribute('href'));
-        $this->get(route('client.dashboard', ['rubrique' => 'compte']))->assertOk()
+        $this->get(route('client.dashboard'))->assertOk()
             ->assertSee(route('employment.territory', ['territoire' => 'mayotte']), false);
     }
 

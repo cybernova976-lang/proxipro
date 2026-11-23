@@ -12,12 +12,18 @@ class ClientSpaceNavigationFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** Les seize pages du panneau latéral, dans l'ordre, groupe par groupe. */
+    private const MENU_LABELS = ['Vue d’ensemble', 'Mes demandes', 'Mes commandes', 'Messages', 'Favoris',
+        'Mes alertes', 'Notifications', 'Offres d’emploi', 'Proposer mes services', 'Mon profil',
+        'Vérification d’identité', 'Abonnement et factures', 'Paramètres', 'Conseils pratiques',
+        'Classement des offres', 'Assistance'];
+
     public function test_client_can_open_every_section_with_one_current_tab_and_no_duplicate_navigation(): void
     {
         $this->actingAs(User::factory()->create());
 
-        // Depuis le 23/11/2026, l'accueil n'a plus d'onglets : ils sont rangés derrière le
-        // bouton « Tableau de bord » de l'en-tête, présent sur toutes les pages du parcours.
+        // Depuis le 23/11/2026, l'accueil n'a ni onglets ni panneau : tout l'espace est rangé derrière
+        // le bouton « Tableau de bord » de l'en-tête, présent sur toutes les pages du parcours.
         $home = $this->xpath($this->get(route('feed'))->assertOk()->getContent());
         $this->assertSame(0, $home->query('//nav[@aria-label="Mon espace particulier"]')->length);
         $this->assertSame(route('client.dashboard'), $home->query('//a[@data-header-dashboard]')->item(0)->getAttribute('href'));
@@ -25,18 +31,21 @@ class ClientSpaceNavigationFeatureTest extends TestCase
         $this->assertSame(1, $home->query('//nav[@class="pk-tabbar"]')->length);
         $this->assertSame(0, $home->query('//main[contains(@class,"main-content-with-sidebar")]')->length);
 
-        // L'onglet Emploi reste l'onglet actif sur la page emploi d'un territoire.
-        foreach (['home' => 'requests', 'messages.index' => 'messages',
+        // Chaque page de l'espace s'affiche dans le cadre du tableau de bord : le même panneau
+        // latéral, une seule entrée active. « Offres d'emploi » reste active sur la page d'un territoire.
+        foreach (['client.dashboard' => 'overview', 'home' => 'requests', 'messages.index' => 'messages',
             'saved-ads.index' => 'saved', 'employment.territory' => 'employment'] as $route => $key) {
             $response = $this->get(route($route, $route === 'employment.territory' ? ['territoire' => 'departement-75'] : []))->assertOk();
             $xpath = $this->xpath($response->getContent());
-            $this->assertSame(4, $xpath->query('//nav[@aria-label="Mon espace particulier"]/a')->length, $route);
-            $this->assertSame(1, $xpath->query('//a[@data-header-dashboard]')->length, $route);
+            $this->assertSame(16, $xpath->query('//aside[@data-space-menu]//nav[@aria-label="Mon espace particulier"]//a[@data-space-section]')->length, $route);
+            $this->assertSame(1, $xpath->query('//button[@data-space-menu-open][@aria-controls="pkSpaceMenu"]')->length, $route);
+            // Le bouton de l'en-tête est actif sur toutes les pages du tableau de bord.
+            $this->assertSame(1, $xpath->query('//a[@data-header-dashboard][contains(@class,"active")]')->length, $route);
             $current = $xpath->query('//a[@data-space-section][@aria-current="page"]');
             $this->assertSame(1, $current->length, $route);
             $this->assertSame($key, $current->item(0)->getAttribute('data-space-section'));
-            // La barre du bas est rendue partout ; client-space.css l'affiche sous 640 px,
-            // à la place des onglets « Mon espace », et la masque au-dessus.
+            // La barre du bas est rendue partout ; client-space.css l'affiche sous 640 px
+            // et la masque au-dessus.
             $this->assertSame(1, $xpath->query('//nav[@class="pk-tabbar"]')->length, $route);
             $this->assertSame(0, $xpath->query('//main[contains(@class,"main-content-with-sidebar")]')->length, $route);
         }
@@ -46,15 +55,15 @@ class ClientSpaceNavigationFeatureTest extends TestCase
     {
         $this->actingAs(User::factory()->create(['user_type' => 'particulier', 'is_service_provider' => false]));
 
-        foreach (['service-orders.index' => 'requests', 'saved-searches.index' => 'saved',
-            'settings.index' => null, 'profile.show' => null] as $route => $key) {
+        foreach (['service-orders.index' => 'orders', 'saved-searches.index' => 'alerts',
+            'notifications.index' => 'notifications', 'settings.index' => 'settings', 'profile.show' => 'profile',
+            'verification.index' => 'identity', 'billing.index' => 'billing', 'guides.index' => 'guides',
+            'legal.platform-rules' => 'ranking', 'contact.index' => 'contact'] as $route => $key) {
             $xpath = $this->xpath($this->get(route($route))->assertOk()->getContent());
-            $this->assertSame(4, $xpath->query('//nav[@aria-label="Mon espace particulier"]/a')->length, $route);
+            $this->assertSame(16, $xpath->query('//nav[@aria-label="Mon espace particulier"]//a[@data-space-section]')->length, $route);
             $current = $xpath->query('//a[@data-space-section][@aria-current="page"]');
-            $this->assertSame($key === null ? 0 : 1, $current->length, $route);
-            if ($key !== null) {
-                $this->assertSame($key, $current->item(0)->getAttribute('data-space-section'), $route);
-            }
+            $this->assertSame(1, $current->length, $route);
+            $this->assertSame($key, $current->item(0)->getAttribute('data-space-section'), $route);
             $this->assertSame(0, $xpath->query('//aside[@id="sidebarNav"]')->length, "{$route} : ancienne barre latérale.");
             $this->assertSame(1, $xpath->query('//nav[@class="pk-tabbar"]')->length, $route);
         }
@@ -63,7 +72,7 @@ class ClientSpaceNavigationFeatureTest extends TestCase
     public function test_each_page_has_one_name_and_the_publish_button_one_label_and_one_address(): void
     {
         $this->actingAs(User::factory()->create(['user_type' => 'particulier', 'is_service_provider' => false]));
-        $labels = ['Mes demandes', 'Messages', 'Favoris', 'Emploi'];
+        $labels = self::MENU_LABELS;
 
         foreach (['feed', 'client.dashboard', 'home', 'messages.index', 'saved-ads.index', 'settings.index', 'ads.index'] as $route) {
             $html = $this->get(route($route))->assertOk()->getContent();
@@ -73,9 +82,9 @@ class ClientSpaceNavigationFeatureTest extends TestCase
             $xpath = $this->xpath($html);
             // Un seul nom pour le tableau de bord, dans l'en-tête de chaque page.
             $this->assertSame('Tableau de bord', trim($xpath->query('//a[@data-header-dashboard]/span')->item(0)->textContent), $route);
-            if (! in_array($route, ['ads.index', 'feed', 'client.dashboard'], true)) {
+            if (! in_array($route, ['ads.index', 'feed'], true)) {
                 $tabs = [];
-                foreach ($xpath->query('//nav[@aria-label="Mon espace particulier"]/a/span[1]') as $span) {
+                foreach ($xpath->query('//nav[@aria-label="Mon espace particulier"]//a[@data-space-section]/span[1]') as $span) {
                     $tabs[] = trim($span->textContent);
                 }
                 $this->assertSame($labels, $tabs, $route);
@@ -126,15 +135,17 @@ class ClientSpaceNavigationFeatureTest extends TestCase
         $provider = User::factory()->create(['user_type' => 'professionnel', 'is_service_provider' => true]);
         $this->actingAs($provider)->get(route('feed'))->assertOk()
             ->assertDontSee('data-client-space', false)->assertDontSee('data-header-dashboard', false);
-        // Parcours particulier : le bouton « Tableau de bord » dans l'en-tête, les onglets sur les pages de l'espace.
+        // Parcours particulier : le bouton « Tableau de bord » dans l'en-tête, le panneau latéral sur les pages de l'espace.
         $this->get(route('feed', ['mode' => 'client']))->assertOk()
             ->assertDontSee('data-client-space', false)->assertSee('data-header-dashboard', false);
         $this->get(route('saved-ads.index'))->assertOk()->assertSee('data-client-space', false);
-        $this->get(route('client.dashboard'))->assertOk()->assertSee('data-client-dashboard', false);
+        $this->get(route('client.dashboard'))->assertOk()
+            ->assertSee('data-client-dashboard', false)->assertSee('data-client-space', false);
         // Parcours prestataire : son poste de pilotage est l'espace Pro.
         $this->get(route('feed', ['mode' => 'provider']))->assertOk()
             ->assertDontSee('data-client-space', false)->assertDontSee('data-header-dashboard', false);
         $this->get(route('saved-ads.index'))->assertOk()->assertDontSee('data-client-space', false);
+        $this->get(route('contact.index'))->assertOk()->assertDontSee('data-client-space', false);
         $this->get(route('client.dashboard'))->assertRedirect(route('pro.dashboard'));
         $this->assertTrue($provider->fresh()->is_service_provider);
     }
@@ -166,6 +177,10 @@ class ClientSpaceNavigationFeatureTest extends TestCase
     public function test_public_home_and_focused_publication_form_do_not_gain_client_tabs(): void
     {
         $this->get('/')->assertOk()->assertDontSee('data-client-space', false);
+        // Les pages d'aide et d'emploi restent des pages publiques ordinaires pour un visiteur.
+        foreach (['guides.index', 'contact.index', 'legal.platform-rules', 'employment.index'] as $route) {
+            $this->get(route($route))->assertOk()->assertDontSee('data-client-space', false);
+        }
         $this->actingAs(User::factory()->create())->get(route('demand.create'))
             ->assertOk()->assertDontSee('data-client-space', false);
     }

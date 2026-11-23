@@ -129,7 +129,9 @@ class ActionFeedbackAndDashboardLinksTest extends TestCase
 
     public function test_side_menu_entries_lead_to_real_pages(): void
     {
-        $html = $this->actingAs($this->member())->get(route('contact.index'))->assertOk()->getContent();
+        // L'ancienne barre latérale ne concerne plus que les pages hors du tableau de bord du particulier
+        // (la page Contact s'affiche désormais dans le cadre du tableau de bord, avec son panneau).
+        $html = $this->actingAs($this->member())->get(route('points.dashboard'))->assertOk()->getContent();
 
         $this->assertStringContainsString('id="sidebarNav"', $html);
         $menu = substr($html, strpos($html, 'id="sidebarNav"'));

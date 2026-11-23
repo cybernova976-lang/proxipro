@@ -129,13 +129,23 @@ il répond à « où en suis-je et que dois-je faire maintenant ? ».
   sur les écrans plus étroits). La page de l'accueil fait 1500 px de large. Ne
   déplace jamais cette colonne sous les offres sur grand écran : le fondateur l'a
   refusé.
-- **Tableau de bord du particulier** (`/tableau-de-bord`, décision du 23/11/2026) : tout
+- **Tableau de bord du particulier** (`/tableau-de-bord`, décisions du 23/11/2026) : tout
   ce qui n'est pas la découverte des services y est rangé, regroupé par nature (mon
   espace, alertes et notifications, emploi, compte, aide). Le bouton « Tableau de bord »
-  est dans l'en-tête, sur ordinateur comme sur téléphone. Vue :
-  `resources/views/client-dashboard`, styles : `public/css/client-dashboard.css`.
-- **Plus d'onglets sur l'accueil.** La barre « Mon espace particulier » (Mes demandes,
-  Messages, Favoris, Emploi), centrée, ne s'affiche que sur les pages de l'espace.
+  est dans l'en-tête, sur ordinateur comme sur téléphone.
+  - **Le menu est un panneau latéral porté par le gabarit**, pas par la page :
+    `partials/client-space-menu`, liste dans `ClientSpaceNavigation::menuGroups()`,
+    styles dans `public/css/client-space.css`, script `public/js/client-space-menu.js`.
+    Colonne à gauche à partir de 1180 px ; **tiroir rétractable à gauche en dessous**
+    (bouton « Menu », ou icône « Tableau de bord » de l'en-tête).
+  - **Toutes les pages du menu s'affichent dans ce même cadre** (panneau + contenu).
+    Pour ajouter une page à l'espace, ajoute-la à `menuGroups()` : rien d'autre.
+  - **La page `/tableau-de-bord` n'affiche que du contenu** (compteurs mesurés,
+    demandes en cours, alertes et notifications). N'y remets jamais une liste de
+    liens : le fondateur l'a refusé (« la page est devenue un menu »).
+    Vue : `resources/views/client-dashboard`, styles : `public/css/client-dashboard.css`.
+- **Plus d'onglets, nulle part.** L'ancienne barre « Mon espace particulier » a été
+  remplacée par le panneau latéral ; l'accueil n'a ni onglets ni panneau.
 - **Sur téléphone et tablette (moins de 1180 px), l'accueil n'affiche pas les blocs
   Emploi et Repères** : ils ne doivent jamais passer sous les offres ; ils sont dans
   le tableau de bord. Sur ordinateur, ils restent dans la colonne de gauche.

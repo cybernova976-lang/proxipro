@@ -8,13 +8,13 @@ use Illuminate\Http\Request;
 /**
  * Navigation unique de l'espace particulier.
  *
- * Une page = un nom, partout : onglets « Mon espace » (tablette et ordinateur),
- * barre du bas (téléphone), en-tête, menu du compte. Depuis le 23/11/2026, les
- * onglets ne sont plus sur l'accueil : ils sont rangés derrière le bouton
- * « Tableau de bord » de l'en-tête, et restent en haut des pages de l'espace
- * (Mes demandes, Messages, Favoris, Emploi). Le bouton de publication
- * suit le parcours : une demande pour un particulier, une offre pour un
- * prestataire, avec la même adresse dans l'en-tête et dans la barre du bas.
+ * Une page = un nom, partout : panneau latéral du tableau de bord, barre du bas
+ * (téléphone), en-tête, menu du compte. Depuis le 23/11/2026, il n'y a plus
+ * d'onglets : toutes les pages de l'espace sont rangées dans le panneau latéral
+ * du tableau de bord (colonne à gauche sur ordinateur, tiroir rétractable en
+ * dessous de 1180 px) et s'affichent dans le même cadre. Le bouton de
+ * publication suit le parcours : une demande pour un particulier, une offre
+ * pour un prestataire, avec la même adresse dans l'en-tête et la barre du bas.
  */
 class ClientSpaceNavigation
 {
@@ -26,9 +26,6 @@ class ClientSpaceNavigation
 
     /** Forme courte pour la barre du bas : « Mes demandes » passe sur deux lignes à 375 px. */
     public const REQUESTS_SHORT_LABEL = 'Demandes';
-
-    /** Pages du compte qui gardent les onglets, sans qu'aucun soit actif. */
-    private const ACCOUNT_ROUTES = ['profile.show', 'profile.edit', 'settings.index'];
 
     /** The chosen journey changes navigation, never account permissions. */
     public static function role(Request $request, ?User $user, ?string $feedRole = null): string
@@ -56,24 +53,96 @@ class ClientSpaceNavigation
         ];
     }
 
-    public static function forRequest(Request $request, ?User $user, ?string $feedRole = null): array
+    /**
+     * Pages rangées dans le tableau de bord, groupées par nature. Chacune s'affiche
+     * dans le même cadre : ce menu à gauche, le contenu à côté.
+     *
+     * @return array<int, array{title: string, items: array<int, array{key: string, label: string, icon: string, route: string, matches: array<int, string>, fragment?: string}>}>
+     */
+    public static function menuGroups(): array
     {
-        if (! $user || self::role($request, $user, $feedRole) !== 'client') {
+        $sections = collect(self::sections())->keyBy('key');
+
+        return [
+            ['title' => 'Mon espace', 'items' => [
+                ['key' => 'overview', 'label' => 'Vue d’ensemble', 'icon' => 'fas fa-table-columns',
+                    'route' => 'client.dashboard', 'matches' => ['client.dashboard']],
+                ['key' => 'requests', 'label' => self::REQUESTS_LABEL, 'icon' => 'far fa-clipboard', 'route' => 'home',
+                    'matches' => array_values(array_diff($sections['requests']['matches'], ['service-orders.index']))],
+                ['key' => 'orders', 'label' => 'Mes commandes', 'icon' => 'fas fa-receipt',
+                    'route' => 'service-orders.index', 'matches' => ['service-orders.index']],
+                ['key' => 'messages', 'label' => 'Messages', 'icon' => 'far fa-comments',
+                    'route' => 'messages.index', 'matches' => $sections['messages']['matches']],
+                ['key' => 'saved', 'label' => 'Favoris', 'icon' => 'far fa-bookmark',
+                    'route' => 'saved-ads.index', 'matches' => ['saved-ads.index']],
+            ]],
+            ['title' => 'Alertes et notifications', 'items' => [
+                ['key' => 'alerts', 'label' => 'Mes alertes', 'icon' => 'far fa-bell',
+                    'route' => 'saved-searches.index', 'matches' => ['saved-searches.index']],
+                ['key' => 'notifications', 'label' => 'Notifications', 'icon' => 'far fa-envelope-open',
+                    'route' => 'notifications.index', 'matches' => ['notifications.index']],
+            ]],
+            ['title' => 'Emploi', 'items' => [
+                ['key' => 'employment', 'label' => 'Offres d’emploi', 'icon' => 'fas fa-briefcase',
+                    'route' => 'employment.index', 'matches' => $sections['employment']['matches']],
+                ['key' => 'offer', 'label' => 'Proposer mes services', 'icon' => 'fas fa-screwdriver-wrench',
+                    'route' => 'service-provider.start', 'matches' => ['service-provider.start']],
+            ]],
+            ['title' => 'Mon compte', 'items' => [
+                ['key' => 'profile', 'label' => 'Mon profil', 'icon' => 'far fa-user',
+                    'route' => 'profile.show', 'matches' => ['profile.show', 'profile.edit']],
+                ['key' => 'identity', 'label' => 'Vérification d’identité', 'icon' => 'fas fa-shield-halved',
+                    'route' => 'verification.index', 'matches' => ['verification.index']],
+                ['key' => 'billing', 'label' => 'Abonnement et factures', 'icon' => 'far fa-credit-card',
+                    'route' => 'billing.index', 'matches' => ['billing.index']],
+                ['key' => 'settings', 'label' => 'Paramètres', 'icon' => 'fas fa-gear',
+                    'route' => 'settings.index', 'matches' => ['settings.index']],
+            ]],
+            ['title' => 'Aide', 'items' => [
+                ['key' => 'guides', 'label' => 'Conseils pratiques', 'icon' => 'far fa-compass',
+                    'route' => 'guides.index', 'matches' => ['guides.index', 'guides.show']],
+                ['key' => 'ranking', 'label' => 'Classement des offres', 'icon' => 'fas fa-arrow-down-wide-short',
+                    'route' => 'legal.platform-rules', 'matches' => ['legal.platform-rules'], 'fragment' => 'classement'],
+                ['key' => 'contact', 'label' => 'Assistance', 'icon' => 'fas fa-headset',
+                    'route' => 'contact.index', 'matches' => ['contact.index', 'contact.my-messages']],
+            ]],
+        ];
+    }
+
+    /**
+     * Panneau latéral du tableau de bord pour la page demandée. Vide hors du
+     * parcours particulier et hors des pages rangées dans le tableau de bord.
+     *
+     * @return array<int, array{title: string, items: array<int, array{key: string, label: string, icon: string, url: string, active: bool}>}>
+     */
+    public static function menu(Request $request, ?User $user, ?string $feedRole = null): array
+    {
+        if (! $user || self::role($request, $user, $feedRole) !== 'client' || ! self::inDashboard($request)) {
             return [];
         }
 
-        $sections = self::sections();
-        $inSpace = $request->routeIs(...self::ACCOUNT_ROUTES)
-            || collect($sections)->contains(fn ($section) => $request->routeIs(...$section['matches']));
-        if (! $inSpace) {
-            return [];
+        return array_map(fn (array $group) => [
+            'title' => $group['title'],
+            'items' => array_map(fn (array $item) => [
+                'key' => $item['key'], 'label' => $item['label'], 'icon' => $item['icon'],
+                'url' => self::itemUrl($item, $request, $user),
+                'active' => $request->routeIs(...$item['matches']),
+            ], $group['items']),
+        ], self::menuGroups());
+    }
+
+    /** La page demandée fait-elle partie du tableau de bord ? */
+    public static function inDashboard(Request $request): bool
+    {
+        foreach (self::menuGroups() as $group) {
+            foreach ($group['items'] as $item) {
+                if ($request->routeIs(...$item['matches'])) {
+                    return true;
+                }
+            }
         }
 
-        return array_map(fn ($section) => [
-            ...$section,
-            'url' => self::sectionUrl($section, $request, $user),
-            'active' => $request->routeIs(...$section['matches']),
-        ], $sections);
+        return false;
     }
 
     /**
@@ -88,18 +157,19 @@ class ClientSpaceNavigation
             return null;
         }
 
+        // Actif sur toutes les pages du tableau de bord : elles partagent le même cadre.
         return ['url' => route('client.dashboard'), 'label' => self::DASHBOARD_LABEL,
-            'active' => $request->routeIs('client.dashboard')];
+            'active' => self::inDashboard($request)];
     }
 
     /**
-     * Pages du parcours particulier sans onglets (accueil, tableau de bord) : elles
-     * gardent le fond, la barre du bas et le bouton de publication en contour.
+     * Accueil du parcours particulier : hors du tableau de bord, il garde le fond,
+     * la barre du bas et le bouton de publication en contour.
      */
     public static function isClientSurface(Request $request, ?User $user, ?string $feedRole = null): bool
     {
         return $user !== null && self::role($request, $user, $feedRole) === 'client'
-            && $request->routeIs('feed', 'feed.professionals', 'feed.mockup.preview', 'client.dashboard');
+            && $request->routeIs('feed', 'feed.professionals', 'feed.mockup.preview');
     }
 
     /**
@@ -129,7 +199,7 @@ class ClientSpaceNavigation
     }
 
     /**
-     * Barre du bas (téléphone), avec les mêmes noms que les onglets.
+     * Barre du bas (téléphone), avec les mêmes noms que le panneau latéral.
      *
      * @return array<int, array{url: string, icon: string, label: string, active: bool, class: string}>
      */
@@ -155,10 +225,10 @@ class ClientSpaceNavigation
         ];
     }
 
-    /** L'onglet Emploi mène directement à la page du territoire quand il est connu. */
-    private static function sectionUrl(array $section, Request $request, User $user): string
+    /** « Offres d'emploi » mène directement à la page du territoire quand il est connu. */
+    private static function itemUrl(array $item, Request $request, User $user): string
     {
-        if ($section['key'] === 'employment') {
+        if ($item['key'] === 'employment') {
             $territory = app(TerritoryResolver::class)->forUser($user, (array) ($request->attributes->get('user_geo') ?? []));
 
             return $territory !== null
@@ -166,6 +236,6 @@ class ClientSpaceNavigation
                 : route('employment.index');
         }
 
-        return route($section['route']);
+        return route($item['route']).(isset($item['fragment']) ? '#'.$item['fragment'] : '');
     }
 }

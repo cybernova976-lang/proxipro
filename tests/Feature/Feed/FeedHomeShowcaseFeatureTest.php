@@ -365,8 +365,8 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $this->actingAs($client)->get(route('demands.tracking'))->assertRedirect(route('home'));
         $clientHtml = $this->get(route('home'))->assertOk()->getContent();
 
-        preg_match('#<nav class="pk-client-space__tabs".*?</nav>#s', $clientHtml, $clientNav);
-        $this->assertNotEmpty($clientNav, 'Les onglets sont absents de la page de suivi.');
+        preg_match('#<nav aria-label="Mon espace particulier".*?</nav>#s', $clientHtml, $clientNav);
+        $this->assertNotEmpty($clientNav, 'Le panneau du tableau de bord est absent de la page de suivi.');
         $this->assertSame(1, substr_count($clientNav[0], 'aria-current="page"'));
         $this->assertMatchesRegularExpression('/data-space-section="requests"\s+aria-current="page"/', $clientNav[0]);
 

@@ -32,21 +32,27 @@ class FeedClientLayoutTest extends TestCase
     {
         $client = $this->mayotteClient();
 
-        // L'accueil garde la barre du bas et le fond de l'espace, sans les onglets (rangés dans le tableau de bord).
+        // L'accueil garde la barre du bas et le fond de l'espace, sans le panneau du tableau de bord.
         $this->actingAs($client)->get(route('feed'))->assertOk()
             ->assertSee('class="pk-tabbar"', false)
             ->assertSee('pk-route-feed', false)
             ->assertSee('has-client-space', false)
             ->assertDontSee('aria-label="Mon espace particulier"', false);
 
-        // Même modèle hors du feed : les deux navigations sont rendues, la feuille choisit.
+        // Hors de l'accueil : le panneau latéral et la barre du bas sont rendus, la feuille choisit.
         $this->actingAs($client)->get(route('messages.index'))->assertOk()
             ->assertSee('class="pk-tabbar"', false)
             ->assertSee('aria-label="Mon espace particulier"', false)
             ->assertDontSee('pk-route-feed', false);
 
         $css = preg_replace('/\s+/', ' ', file_get_contents(public_path('css/client-space.css')));
-        $this->assertStringContainsString('@media (max-width: 639px) { .has-client-space .pk-client-space { display: none; }', $css);
+        // Panneau latéral : tiroir fermé par défaut, colonne toujours visible à partir de 1180 px.
+        $this->assertStringContainsString('transform: translateX(-104%); visibility: hidden;', $css);
+        $this->assertStringContainsString('.pk-space-menu.is-open { transform: none; visibility: visible;', $css);
+        $this->assertMatchesRegularExpression('/@media \(min-width: 1180px\) \{.*?\.pk-space-bar, \.pk-space-menu__head \{ display: none; \}.*?\.pk-space-menu \{[^}]*transform: none; visibility: visible;/', $css);
+        // Sur téléphone, la messagerie garde tout l'écran : pas de barre de repère au-dessus.
+        $this->assertStringContainsString('.pk-messaging-page .pk-space-bar { display: none; }', $css);
+        $this->assertStringNotContainsString('pk-client-space', $css);
         $this->assertStringContainsString('@media (min-width: 640px) { .has-client-space .pk-tabbar, .has-client-space .pk-tabbar-spacer { display: none; } }', $css);
         $this->assertStringContainsString('.has-client-space .pk-messaging { height: calc(100dvh - 68px); padding: 0 0 calc(80px + env(safe-area-inset-bottom)); }', $css,
             'Sur téléphone, la zone de saisie des messages doit rester au-dessus de la barre du bas.');

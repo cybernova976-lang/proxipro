@@ -8,8 +8,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * Tableau de bord du particulier : les pages de l'espace regroupées par nature,
- * des compteurs réellement mesurés, et les alertes que l'on arrête d'un clic.
+ * Tableau de bord du particulier : la page n'affiche que du contenu (compteurs
+ * mesurés, demandes en cours, alertes que l'on arrête d'un clic) ; les pages de
+ * l'espace sont dans le panneau latéral, commun à toutes ces pages.
  */
 class ClientDashboardTest extends TestCase
 {
@@ -26,35 +27,45 @@ class ClientDashboardTest extends TestCase
         $this->get(route('client.dashboard'))->assertRedirect(route('login'));
 
         $member = $this->member();
-        $this->actingAs($member)->get(route('client.dashboard'))->assertOk()
+        $response = $this->actingAs($member)->get(route('client.dashboard'))->assertOk()
             ->assertSee('Tableau de bord')
-            ->assertViewHas('section', 'activite')
-            ->assertSee(route('home'), false)->assertSee(route('messages.index'), false)
-            ->assertSee(route('saved-ads.index'), false)->assertSee(route('service-orders.index'), false)
-            ->assertDontSee('pkBoardAlertsTitle')->assertDontSee('data-client-space', false)
+            ->assertSee('pkBoardRequestsTitle', false)->assertSee('pkBoardAlertsTitle', false)
+            ->assertSee('js/client-space-menu.js', false)
             ->assertDontSee('id="sidebarNav"', false)->assertSee('class="pk-tabbar"', false);
-        $this->get(route('client.dashboard', ['rubrique' => 'compte']))->assertOk()
-            ->assertSee(route('employment.territory', ['territoire' => 'mayotte']), false)
-            ->assertSee('Proposer mes services')->assertSee('Comment les offres sont classées')
-            ->assertSee(route('billing.index'), false)->assertSee(route('profile.show'), false);
-        $this->get(route('client.dashboard', ['rubrique' => 'alertes']))->assertOk()
-            ->assertSee(route('saved-searches.index'), false)->assertSee(route('notifications.index'), false)
-            ->assertSee(route('settings.index').'#notifications', false);
-        $this->get(route('client.dashboard', ['rubrique' => 'inconnue']))->assertOk()->assertViewHas('section', 'activite');
 
-        foreach (['activite', 'alertes', 'compte'] as $section) {
-            $url = route('client.dashboard', $section === 'activite' ? [] : ['rubrique' => $section]);
-            $response = $this->get($url)->assertOk();
-            $dom = new \DOMDocument;
-            @$dom->loadHTML($response->getContent());
-            $xpath = new \DOMXPath($dom);
-            $links = $xpath->query('//*[@data-client-dashboard]//a/@href');
-            $urls = array_map(fn ($attr) => $attr->value, iterator_to_array($links));
-            $this->assertSame($urls, array_values(array_unique($urls)));
-            $current = $xpath->query('//*[@data-client-dashboard]//nav//a[@aria-current="page"]');
-            $this->assertCount(1, $current);
-            $this->assertSame($url, $current->item(0)->getAttribute('href'));
+        $dom = new \DOMDocument;
+        @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+        $xpath = new \DOMXPath($dom);
+
+        // La page elle-même n'est plus un menu : aucune navigation à l'intérieur, du contenu seulement.
+        $this->assertSame(0, $xpath->query('//*[@data-client-dashboard]//nav')->length);
+        $this->assertSame(4, $xpath->query('//*[@data-client-dashboard]//a[contains(@class,"pk-board-tile")]')->length);
+        $this->assertSame(0, $xpath->query('//*[@data-client-dashboard]//style')->length);
+
+        // Le menu est le panneau latéral du gabarit : rétractable, cinq groupes, la page en cours seule active.
+        $this->assertSame(1, $xpath->query('//aside[@id="pkSpaceMenu"][@data-space-menu]')->length);
+        $this->assertSame(1, $xpath->query('//button[@data-space-menu-open][@aria-expanded="false"]')->length);
+        $this->assertSame(1, $xpath->query('//aside[@data-space-menu]//button[@data-space-menu-close]')->length);
+        $titles = array_map(fn ($node) => trim($node->textContent),
+            iterator_to_array($xpath->query('//aside[@data-space-menu]//p[contains(@class,"pk-space-menu__title")]')));
+        $this->assertSame(['Mon espace', 'Alertes et notifications', 'Emploi', 'Mon compte', 'Aide'], $titles);
+        $current = $xpath->query('//aside[@data-space-menu]//a[@aria-current="page"]');
+        $this->assertSame(1, $current->length);
+        $this->assertSame(route('client.dashboard'), $current->item(0)->getAttribute('href'));
+
+        // Toutes les pages de l'espace y sont, chacune une seule fois.
+        $urls = array_map(fn ($attr) => $attr->value, iterator_to_array($xpath->query('//aside[@data-space-menu]//a/@href')));
+        $this->assertSame($urls, array_values(array_unique($urls)));
+        foreach ([route('home'), route('service-orders.index'), route('messages.index'), route('saved-ads.index'),
+            route('saved-searches.index'), route('notifications.index'),
+            route('employment.territory', ['territoire' => 'mayotte']), route('service-provider.start'),
+            route('profile.show'), route('verification.index'), route('billing.index'), route('settings.index'),
+            route('guides.index'), route('legal.platform-rules').'#classement', route('contact.index')] as $url) {
+            $this->assertContains($url, $urls);
         }
+
+        // Les anciennes rubriques (?rubrique=…) ne changent plus la page.
+        $this->get(route('client.dashboard', ['rubrique' => 'compte']))->assertOk()->assertSee('pkBoardRequestsTitle', false);
     }
 
     public function test_every_counter_is_measured_on_the_account(): void
@@ -71,11 +82,13 @@ class ClientDashboardTest extends TestCase
             'is_active' => true, 'territory_code' => '976', 'filters' => []]);
         $member->savedSearches()->create(['name' => 'Alerte en pause', 'service_type' => 'offres', 'is_active' => false, 'filters' => []]);
 
-        $this->actingAs($member)->get(route('client.dashboard'))->assertOk()
-            ->assertViewHas('requestsTotal', 1)->assertViewHas('unreadMessages', 0)->assertViewHas('favoritesCount', 1)
-            ->assertSee('Réparer une fuite')->assertSee('En attente de propositions');
-        $alertsUrl = route('client.dashboard', ['rubrique' => 'alertes']);
-        $this->get($alertsUrl)->assertOk()->assertViewHas('activeAlertCount', 1)
+        $alertsUrl = route('client.dashboard');
+        $this->actingAs($member)->get($alertsUrl)->assertOk()
+            ->assertViewHas('tiles', fn (array $tiles) => array_column($tiles, 'value', 'label') === [
+                'Demandes en cours' => 1, 'Messages non lus' => 0, 'Favoris' => 1, 'Alertes actives' => 1,
+            ])
+            ->assertViewHas('requestsTotal', 1)->assertViewHas('activeAlertCount', 1)
+            ->assertSee('Réparer une fuite')->assertSee('En attente de propositions')
             ->assertSee('Nouvelles offres à Mayotte')->assertSee('Alerte en pause')->assertSee('En pause');
 
         // Le nombre total reste exact quand seules trois alertes sont affichées.
@@ -84,10 +97,10 @@ class ClientDashboardTest extends TestCase
         }
         $this->get($alertsUrl)->assertViewHas('activeAlertCount', 5)
             ->assertViewHas('savedSearches', fn ($searches) => $searches->count() === 3);
+        // Compte neuf : des zéros réels, et l'invitation à créer une alerte.
         $this->actingAs($this->member())->get(route('client.dashboard'))->assertOk()
-            ->assertViewHas('requestsTotal', 0)->assertViewHas('favoritesCount', 0)
-            ->assertSee('Aucune demande en cours.');
-        $this->get($alertsUrl)->assertOk()->assertSee('Aucune alerte pour le moment')
+            ->assertViewHas('tiles', fn (array $tiles) => array_sum(array_column($tiles, 'value')) === 0)
+            ->assertSee('Aucune demande en cours.')->assertSee('Aucune alerte pour le moment')
             ->assertSee('Me prévenir des nouvelles offres à Mayotte');
     }
 
@@ -99,7 +112,7 @@ class ClientDashboardTest extends TestCase
         $foreign = User::factory()->create()->savedSearches()->create(['name' => 'Alerte du voisin',
             'service_type' => 'offres', 'is_active' => true, 'filters' => []]);
 
-        $alertsUrl = route('client.dashboard', ['rubrique' => 'alertes']);
+        $alertsUrl = route('client.dashboard');
         $this->actingAs($member)->get($alertsUrl)->assertOk()
             ->assertSee(route('saved-searches.destroy', $alert), false)
             ->assertSee('aria-label="Arrêter l’alerte Plombier à Mamoudzou"', false)

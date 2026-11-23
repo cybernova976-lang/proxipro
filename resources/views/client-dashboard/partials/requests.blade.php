@@ -2,7 +2,7 @@
 <section class="pk-board-card" aria-labelledby="pkBoardRequestsTitle">
     <div class="pk-board-card__head">
         <h2 id="pkBoardRequestsTitle">Demandes en cours <span class="pk-board-count">{{ $requestsTotal }}</span></h2>
-        <a class="pk-board-card__more pk-board-in-tabbar" href="{{ route('home') }}">Toutes mes demandes <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+        <a class="pk-board-card__more" href="{{ route('home') }}">Toutes mes demandes <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
     </div>
 
     @if($requests->isNotEmpty())

@@ -1,81 +1,95 @@
+/* Vue d'ensemble du tableau de bord du particulier (resources/views/client-dashboard).
+   La page n'affiche que du contenu ; le menu est le panneau latéral du gabarit
+   (public/css/client-space.css). Rampe indigo de welcome.blade.php ; le rouge est
+   réservé à l'arrêt d'une alerte. Points de rupture : 640 / 1180. */
+
 .pk-board {
     --board-ink: #18223a;
     --board-accent: #4338ca;
-    --board-line: #dfe4ed;
-    display: grid;
-    align-content: start;
-    gap: 16px;
-    max-width: 1080px;
-    margin: 0 auto;
-    padding: 24px 16px 40px;
-    color: var(--board-ink);
+    --board-line: #e0e7ff;
+    display: grid; align-content: start; gap: 16px;
+    max-width: 1180px; margin: 0 auto; padding: 20px 16px 40px;
+    color: var(--board-ink); font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.5;
 }
 .pk-board *, .pk-board *::before, .pk-board *::after { box-sizing: border-box; }
 .pk-board [hidden] { display: none !important; }
 .pk-board h1, .pk-board h2, .pk-board h3, .pk-board p { margin: 0; }
-.pk-board h1 { font-size: clamp(1.6rem, 3vw, 2.15rem); font-weight: 760; line-height: 1.2; letter-spacing: -.035em; }
-.pk-board h2 { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.13rem; line-height: 1.35; }
 .pk-board a { color: inherit; text-decoration: none; }
-.pk-board :is(a, button):focus-visible { outline: 3px solid #4338ca; outline-offset: 2px; }
-.pk-board__nav {
-    display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-self: start;
-    gap: 3px; padding: 4px; background: #eaedf5; border: 1px solid var(--board-line); border-radius: 14px;
+.pk-board :is(a, button):focus-visible { outline: 3px solid #4f46e5; outline-offset: 2px; }
+
+.pk-board__head h1 { color: #312e81; font-size: clamp(1.5rem, 2.6vw, 2rem); font-weight: 800; line-height: 1.2; letter-spacing: -.03em; }
+.pk-board__head p { margin-top: 4px; color: #55647a; font-size: .95rem; }
+
+/* Compteurs : deux par ligne sur téléphone, quatre au-delà. */
+.pk-board__tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.pk-board-tile {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 12px; height: 100%;
+    padding: 16px; border: 1px solid var(--board-line); border-radius: 16px; background: #fff;
+    transition: border-color .15s, box-shadow .15s;
 }
-.pk-board__nav a {
-    display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px;
-    padding: 6px 9px; border-radius: 10px; color: #43516a;
-    font-size: .86rem; font-weight: 650; line-height: 1.2; text-align: center;
-}
-.pk-board__nav a:hover { background: #f6f7fb; }
-.pk-board__nav [aria-current] { color: var(--board-accent); background: white; box-shadow: 0 1px 5px #27345520; }
-.pk-board__sections { display: grid; align-content: start; gap: 16px; min-width: 0; }
-.pk-board-card { min-width: 0; padding: 16px; border: 1px solid var(--board-line); border-radius: 16px; background: white; }
+.pk-board-tile:hover { border-color: #a5b4fc; box-shadow: 0 6px 18px rgba(49, 46, 129, .08); }
+.pk-board-tile strong { grid-column: 1; grid-row: 1; color: #312e81; font-size: 1.7rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.pk-board-tile__label { grid-column: 1; grid-row: 2; color: #55647a; font-size: .84rem; font-weight: 600; line-height: 1.3; }
+.pk-board-tile__icon { grid-column: 2; grid-row: 1 / span 2; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: #eef2ff; color: #4f46e5; font-size: 1.05rem; }
+
+/* Cartes de contenu */
+.pk-board-card { min-width: 0; padding: 16px; border: 1px solid var(--board-line); border-radius: 16px; background: #fff; scroll-margin-top: 100px; }
+.pk-board-card h2 { display: flex; align-items: center; gap: 8px; color: #0f172a; font-size: 1.1rem; font-weight: 750; line-height: 1.35; }
+.pk-board-card h2 > i { color: #4f46e5; font-size: .95rem; }
 .pk-board-card__head, .pk-board-actions, .pk-board-push {
     display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 4px 14px;
 }
 .pk-board-card a:is(.pk-board-card__more, .pk-board-textlink) {
     display: inline-flex; align-items: center; gap: 6px; min-height: 44px;
-    color: var(--board-accent); font-size: .875rem; font-weight: 650;
+    color: var(--board-accent); font-size: .875rem; font-weight: 700;
 }
 .pk-board-card a:is(.pk-board-card__more, .pk-board-textlink):hover { text-decoration: underline; }
-.pk-board-count { display: inline-grid; place-items: center; min-width: 24px; padding: 3px 7px; background: #eef1ff; color: var(--board-accent); border-radius: 20px; font-size: .82rem; font-variant-numeric: tabular-nums; }
+.pk-board-count { display: inline-grid; place-items: center; min-width: 24px; padding: 3px 7px; border-radius: 20px; background: #eef2ff; color: var(--board-accent); font-size: .82rem; font-variant-numeric: tabular-nums; }
 .pk-board .pk-board-empty { margin-top: 12px; color: #55647a; font-size: .95rem; }
+.pk-board .pk-board-sub { margin: 18px 0 5px; padding-top: 18px; border-top: 1px solid #eef2ff; font-size: 1rem; font-weight: 700; }
+
 .pk-board-rows { margin: 8px 0 0; padding: 0; list-style: none; }
-.pk-board-rows li + li { border-top: 1px solid #edf0f5; }
-.pk-board-row { display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 8px 3px; border-radius: 7px; }
-a.pk-board-row:hover { background: #f6f7fb; color: var(--board-accent); }
-.pk-board-row__icon { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; background: #f0f2fc; color: var(--board-accent); }
+.pk-board-rows li + li { border-top: 1px solid #eef2ff; }
+.pk-board-row { display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 9px 4px; border-radius: 10px; }
+a.pk-board-row:hover { background: #f8fafc; }
+.pk-board-row--static { border-radius: 0; }
+.pk-board-row__icon { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: #eef2ff; color: #4f46e5; font-size: .9rem; }
 .pk-board-row__text { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.pk-board-row strong { flex: 1; color: var(--board-ink); overflow-wrap: anywhere; font-weight: 650; font-size: .94rem; }
+.pk-board-row strong { flex: 1; color: var(--board-ink); font-size: .94rem; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
 .pk-board-row small, .pk-board-meta { color: #55647a; font-size: .83rem; font-weight: 500; }
-.pk-board-row__action, .pk-board-link__arrow { color: var(--board-accent); font-size: .8rem; }
-.pk-board-row__action { font-weight: 650; }
-.pk-board-status--action { color: var(--board-accent) !important; font-weight: 650; }
-.pk-board-status--attention { color: #92400e !important; font-weight: 650; }
-.pk-board .pk-board-sub { margin: 18px 0 5px; border-top: 1px solid var(--board-line); padding-top: 18px; font-size: 1rem; font-weight: 680; }
+.pk-board-row__action, .pk-board-link__arrow { flex: none; color: var(--board-accent); font-size: .82rem; }
+.pk-board-row__action { font-weight: 700; white-space: nowrap; }
+.pk-board-status--action { color: var(--board-accent) !important; font-weight: 700; }
+.pk-board-status--attention { color: #92400e !important; font-weight: 700; }
+
+/* Boutons : contour indigo ; l'arrêt d'une alerte passe au rouge au survol. */
 .pk-board-btn, .pk-board-stop {
-    display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px;
-    padding: 8px 12px; border: 1px solid #c7cfe1; border-radius: 10px;
-    color: var(--board-accent); background: white; font-size: .88rem; font-weight: 650; line-height: 1.3;
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 8px 14px;
+    border: 1px solid #c7d2fe; border-radius: 12px; background: #fff; color: var(--board-accent);
+    font: inherit; font-size: .88rem; font-weight: 700; line-height: 1.3; cursor: pointer; white-space: nowrap;
 }
-.pk-board-btn:hover { background: #eef1ff; }
-.pk-board-stop:hover { background: #fff4f2; color: #9f3122; }
+.pk-board-btn:hover { background: #eef2ff; }
+.pk-board-stop { border-color: #e2e8f0; color: #475569; }
+.pk-board-stop:hover { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
 .pk-board-actions { justify-content: flex-start; margin-top: 12px; }
-.pk-board-actions form, .pk-board-row form { margin: 0; }
+.pk-board-actions form, .pk-board-row form { flex: none; margin: 0; }
 .pk-board-push__lead { font-size: .94rem; }
-@media (max-width: 639px) {
-    .has-client-space:has(.pk-tabbar) .pk-board .pk-board-in-tabbar,
-    body:has(.pk-board) .mobile-header-item:has([data-header-dashboard-mobile]) { display: none; }
-}
-@media (max-width: 420px) {
-    .pk-board__nav a { flex-direction: column; gap: 3px; padding-inline: 8px; }
-    .pk-board__nav { grid-template-columns: 1fr 1fr 1.4fr; }
-    .pk-board-row--static > .pk-board-row__icon { display: none; }
-}
-@media (min-width: 760px) {
-    .pk-board { grid-template-columns: 232px minmax(0, 1fr); gap: 24px 32px; padding: 32px 24px 48px; align-items: start; }
-    .pk-board h1 { grid-column: 1 / -1; }
-    .pk-board__nav { grid-template-columns: 1fr; position: sticky; top: 94px; padding: 6px; }
-    .pk-board__nav a { justify-content: flex-start; padding-inline: 14px; gap: 12px; font-size: .95rem; text-align: left; }
+.pk-board-push__buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+
+@media (min-width: 640px) {
+    .pk-board { gap: 18px; padding: 24px 24px 48px; }
+    .pk-board__tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .pk-board-card { padding: 20px 24px; }
+}
+
+@media (min-width: 1180px) {
+    /* À côté du panneau latéral : le contenu commence là où l'accueil place sa colonne centrale. */
+    .pk-board { margin: 0; padding: 22px 24px 48px 16px; }
+}
+
+@media (max-width: 639.98px) {
+    .pk-board-row__action { display: none; }
+    .pk-board-row--static > .pk-board-row__icon { display: none; }
+    .pk-board-push__buttons, .pk-board-push__buttons > button { width: 100%; }
+    .pk-board-actions form, .pk-board-actions .pk-board-btn { width: 100%; }
 }
