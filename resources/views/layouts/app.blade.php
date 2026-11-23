@@ -6828,30 +6828,32 @@
                         <!-- Groupe icônes : Espace Pro (mobile), Alertes boost, Notifications -->
                         <div class="d-flex align-items-center gap-2">
                             @if($pkDashboardEntry)
-                            <div class="mobile-header-item d-lg-none">
-                                <a href="{{ $pkDashboardEntry['url'] }}" class="header-alert-btn header-mobile-action position-relative" aria-label="{{ $pkDashboardEntry['label'] }}" data-header-dashboard-mobile @if($pkDashboardEntry['active']) aria-current="page" @endif>
-                                    <i class="fas fa-table-columns"></i>
-                                </a>
-                                <span class="mobile-header-label d-md-none">Tableau</span>
-                            </div>
+                            <a href="{{ $pkDashboardEntry['url'] }}" class="mobile-header-item d-lg-none" data-header-dashboard-mobile @if($pkDashboardEntry['active']) aria-current="page" @endif>
+                                <span class="header-alert-btn header-mobile-action position-relative">
+                                    <i class="fas fa-table-columns" aria-hidden="true"></i>
+                                </span>
+                                <span class="mobile-header-label">{{ $pkDashboardEntry['label'] }}</span>
+                            </a>
                             @endif
-                            <div class="mobile-header-item d-lg-none">
-                                <a href="{{ route('pro.dashboard') }}" class="header-alert-btn header-mobile-action position-relative" aria-label="{{ $pkProEntry['label'] }}" data-header-pro-mobile>
-                                    <i class="fas fa-briefcase"></i>
-                                </a>
-                                <span class="mobile-header-label d-md-none">Pro</span>
-                            </div>
+                            <a href="{{ route('pro.dashboard') }}" class="mobile-header-item d-lg-none" data-header-pro-mobile>
+                                <span class="header-alert-btn header-mobile-action position-relative">
+                                    <i class="fas fa-briefcase" aria-hidden="true"></i>
+                                </span>
+                                <span class="mobile-header-label">{{ $pkProEntry['label'] }}</span>
+                            </a>
                             <!-- Boost Expiration Alerts -->
                             @php
                                 $boostAlerts = \App\Http\Controllers\BoostController::getExpiringAlerts(Auth::user());
                             @endphp
                             @if(count($boostAlerts) > 0)
-                            <div class="dropdown mobile-header-item mobile-boost-alert">
-                                <button class="header-alert-btn header-mobile-action position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Alertes boost">
-                                    <i class="fas fa-bell"></i>
-                                    <span class="alert-counter">{{ count($boostAlerts) }}</span>
+                            <div class="dropdown mobile-boost-alert">
+                                <button class="mobile-header-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Alertes boost">
+                                    <span class="header-alert-btn header-mobile-action position-relative">
+                                        <i class="fas fa-bell" aria-hidden="true"></i>
+                                        <span class="alert-counter">{{ count($boostAlerts) }}</span>
+                                    </span>
+                                    <span class="mobile-header-label">Alertes</span>
                                 </button>
-                                <span class="mobile-header-label d-md-none">Alertes</span>
                                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-modern mt-2" style="min-width: 320px; max-height: 400px; overflow-y: auto;">
                                     <li class="px-3 py-2 border-bottom">
                                         <strong style="color: #1e293b; font-size: 0.9rem;"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Alertes d'expiration</strong>
@@ -6929,14 +6931,16 @@
                                 $liveUnread = $navNotifications->filter(fn($n) => $n->is_live && !$n->is_read)->count();
                                 $totalUnread = $liveUnread + $unreadNotifCount;
                             @endphp
-                            <div class="dropdown mobile-header-item" id="notificationDropdown">
-                                <button class="header-notif-btn header-mobile-action position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
-                                    <i class="fas fa-bell"></i>
-                                    @if($totalUnread > 0)
-                                        <span class="notif-counter">{{ $totalUnread > 99 ? '99+' : $totalUnread }}</span>
-                                    @endif
+                            <div class="dropdown" id="notificationDropdown">
+                                {{-- La cloche reste une icône seule (demande du fondateur) : son nom est donné aux lecteurs d'écran. --}}
+                                <button class="mobile-header-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications" aria-label="Notifications">
+                                    <span class="header-notif-btn header-mobile-action position-relative">
+                                        <i class="fas fa-bell" aria-hidden="true"></i>
+                                        @if($totalUnread > 0)
+                                            <span class="notif-counter">{{ $totalUnread > 99 ? '99+' : $totalUnread }}</span>
+                                        @endif
+                                    </span>
                                 </button>
-                                <span class="mobile-header-label d-md-none">Notif</span>
                                 <div class="dropdown-menu dropdown-menu-end notif-dropdown-menu mt-2">
                                     <div class="notif-dropdown-header">
                                         <span class="notif-dropdown-title">
@@ -7002,6 +7006,8 @@
                                     <span class="user-name-text" title="{{ Auth::user()->name }}">{{ Auth::user()->name }}</span>
                                     <span class="user-type-badge">{{ Auth::user()->getAccountTypeLabel() }}</span>
                                 </div>
+                                {{-- Téléphone : le nom ne tient pas, le statut du membre est écrit sous sa photo. --}}
+                                <span class="mobile-header-label mobile-header-status d-md-none" data-header-status>{{ Auth::user()->getAccountTypeLabel() }}</span>
                                 <i class="fas fa-chevron-down dropdown-chevron"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end dropdown-menu-modern mt-2" style="min-width: 240px;">
@@ -10249,6 +10255,109 @@
 
             .user-menu-btn .dropdown-chevron {
                 display: none;
+            }
+        }
+
+        /* Demande du fondateur (23/11/2026) : sous 992 px, là où le menu de l'en-tête
+           n'est pas affiché, les liens portent leur nom sous l'icône (« Tableau de
+           bord », « Devenir pro ») et, sur téléphone, le statut du membre est écrit
+           sous sa photo. La cloche reste une icône seule, pour gagner de la place.
+           Le lien enveloppe l'icône et son nom : toucher le nom fait la même chose. */
+        .mobile-header-item {
+            padding: 0;
+            border: 0;
+            background: none;
+            color: inherit;
+            font: inherit;
+            text-decoration: none;
+        }
+        .mobile-header-label {
+            display: none;
+        }
+        @media (max-width: 991.98px) {
+            .header-modern .mobile-actions-group,
+            .header-modern .mobile-actions-group > .d-flex {
+                align-items: flex-start !important;
+            }
+            .mobile-header-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 3px;
+                min-width: 40px;
+            }
+            .mobile-header-item .header-mobile-action {
+                height: 36px !important;
+            }
+            a.mobile-header-item .header-mobile-action {
+                border: 1px solid #e2e8f0 !important;
+                background: #f8fafc !important;
+                color: #334155 !important;
+                border-radius: 12px !important;
+                box-shadow: none !important;
+            }
+            .mobile-header-label {
+                display: block !important;
+                margin: 0;
+                color: #475569;
+                font-size: 0.625rem;
+                font-weight: 600;
+                line-height: 1.15;
+                text-align: center;
+                white-space: nowrap;
+            }
+            .mobile-header-item:hover .mobile-header-label,
+            .mobile-header-item[aria-current="page"] .mobile-header-label {
+                color: #4338ca;
+            }
+            a.mobile-header-item[aria-current="page"] .header-mobile-action {
+                border-color: #a5b4fc !important;
+                background: #eef2ff !important;
+                color: #4338ca !important;
+            }
+            .mobile-header-item:focus-visible {
+                outline: 3px solid #4f46e5;
+                outline-offset: 2px;
+                border-radius: 10px;
+            }
+        }
+        @media (max-width: 767.98px) {
+            /* La photo du compte, puis le statut du membre : même gabarit que les autres icônes. */
+            .header-modern .user-menu-btn {
+                flex-direction: column;
+                gap: 3px !important;
+                min-height: 0 !important;
+                padding: 0 !important;
+                border: 0 !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                transform: none !important;
+            }
+            .header-modern .user-menu-btn .dropdown-chevron {
+                display: none;
+            }
+            .header-modern .user-menu-btn .header-user-avatar-frame {
+                width: 36px;
+                height: 36px;
+                flex-basis: 36px;
+            }
+            .mobile-header-status {
+                max-width: 72px;
+                color: #4338ca;
+                font-weight: 700;
+                white-space: normal;
+            }
+        }
+        @media (min-width: 768px) {
+            /* À partir de la tablette, le nom et le statut sont déjà écrits à côté de la photo. */
+            .mobile-header-status {
+                display: none !important;
+            }
+        }
+        @media (max-width: 349.98px) {
+            /* Très petits téléphones : les noms restent, en plus petit. */
+            .mobile-header-label {
+                font-size: 0.56rem;
             }
         }
     </style>

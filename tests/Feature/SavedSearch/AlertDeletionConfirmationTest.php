@@ -85,6 +85,15 @@ class AlertDeletionConfirmationTest extends TestCase
             ->filter(fn ($file) => str_ends_with($file->getFilename(), '.blade.php') && str_contains($file->getContents(), 'confirm-submit.js'))
             ->map(fn ($file) => str_replace('\\', '/', $file->getRelativePathname()))->values()->all();
         $this->assertSame(['layouts/app.blade.php'], $views);
+
+        // Aucun autre script ne pose la question pour un formulaire « data-pk-confirm » : un second
+        // écouteur l'afficherait deux fois (c'est arrivé sur « Mes demandes » et sur la page Facturation).
+        $scripts = collect(File::allFiles(public_path('js')))
+            ->filter(fn ($file) => str_ends_with($file->getFilename(), '.js')
+                && preg_match('/pk-confirm|pkConfirm/', $file->getContents()) === 1
+                && preg_match('/\bconfirm\s*\(/', $file->getContents()) === 1)
+            ->map(fn ($file) => $file->getFilename())->values()->all();
+        $this->assertSame(['confirm-submit.js'], $scripts);
     }
 
     private function reader(): User

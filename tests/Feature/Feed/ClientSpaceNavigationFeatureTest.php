@@ -69,6 +69,43 @@ class ClientSpaceNavigationFeatureTest extends TestCase
         }
     }
 
+    /**
+     * Demande du fondateur du 23/11/2026 : sur téléphone, l'en-tête écrit le nom de chaque
+     * icône au lieu de ne montrer que des pictogrammes, et le statut du membre sous sa photo.
+     */
+    public function test_phone_header_names_its_icons_and_shows_the_member_status(): void
+    {
+        $member = User::factory()->create(['user_type' => 'particulier', 'is_service_provider' => false]);
+        $xpath = $this->xpath($this->actingAs($member)->get(route('feed'))->assertOk()->getContent());
+        $text = fn (string $query) => trim($xpath->query($query)->item(0)?->textContent ?? '');
+
+        // Le lien (ou le bouton) enveloppe l'icône et son nom : toucher le nom fait la même chose.
+        $this->assertSame('Tableau de bord', $text('//a[@data-header-dashboard-mobile]/span[contains(@class,"mobile-header-label")]'));
+        $this->assertSame('Devenir pro', $text('//a[@data-header-pro-mobile]/span[contains(@class,"mobile-header-label")]'));
+        // La cloche reste une icône seule, pour gagner de la place : son nom est porté par le bouton.
+        $this->assertSame(0, $xpath->query('//div[@id="notificationDropdown"]//span[contains(@class,"mobile-header-label")]')->length);
+        $this->assertSame(1, $xpath->query('//div[@id="notificationDropdown"]/button[@data-bs-toggle="dropdown"][@aria-label="Notifications"]/span[contains(@class,"header-notif-btn")]')->length);
+        $this->assertSame(1, $xpath->query('//a[@data-header-dashboard-mobile]/span[contains(@class,"header-mobile-action")]')->length);
+        // Le statut est le même que sur ordinateur, écrit dans le bouton du compte.
+        $this->assertSame('Particulier', $text('//button[contains(@class,"user-menu-btn")]/span[@data-header-status]'));
+        $this->assertSame('Particulier', $text('//span[contains(@class,"user-type-badge")]'));
+        // Les anciens libellés tronqués ont disparu.
+        foreach (['Tableau', 'Pro', 'Notif', 'Notifications'] as $old) {
+            $this->assertSame(0, $xpath->query('//span[contains(@class,"mobile-header-label")][normalize-space()="'.$old.'"]')->length, $old);
+        }
+
+        $provider = User::factory()->create(['user_type' => 'professionnel', 'is_service_provider' => true]);
+        $pro = $this->xpath($this->actingAs($provider)->get(route('feed', ['mode' => 'provider']))->assertOk()->getContent());
+        $this->assertSame('Espace Pro', trim($pro->query('//a[@data-header-pro-mobile]/span[contains(@class,"mobile-header-label")]')->item(0)->textContent));
+        $this->assertSame($provider->getAccountTypeLabel(), trim($pro->query('//span[@data-header-status]')->item(0)->textContent));
+        $this->assertSame(0, $pro->query('//a[@data-header-dashboard-mobile]')->length);
+
+        // Les noms s'affichent sous 992 px ; le statut sous la photo seulement sur téléphone.
+        $layout = preg_replace('/\s+/', ' ', file_get_contents(resource_path('views/layouts/app.blade.php')));
+        $this->assertMatchesRegularExpression('/@media \(max-width: 991\.98px\) \{.*?\.mobile-header-label \{ display: block !important;/', $layout);
+        $this->assertStringContainsString('@media (min-width: 768px) { /* À partir de la tablette, le nom et le statut sont déjà écrits à côté de la photo. */ .mobile-header-status { display: none !important; } }', $layout);
+    }
+
     /** Décision du fondateur du 23/11/2026 : ces deux pages ne font pas partie du tableau de bord. */
     public function test_notifications_and_profile_stay_outside_the_dashboard_frame(): void
     {

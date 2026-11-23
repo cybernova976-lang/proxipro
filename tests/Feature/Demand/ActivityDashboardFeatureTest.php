@@ -141,7 +141,8 @@ class ActivityDashboardFeatureTest extends TestCase
             ->assertSee(route('ads.destroy', $mine), false)
             ->assertSee('aria-label="Supprimer Besoin à supprimer"', false)
             ->assertSee('data-pk-confirm="Supprimer définitivement la demande', false)
-            ->assertSee('js/activity-dashboard.js', false)->getContent();
+            // La confirmation vient du script commun du gabarit ; un second script poserait la question deux fois.
+            ->assertSee('js/confirm-submit.js', false)->assertDontSee('js/activity-dashboard.js', false)->getContent();
         $this->assertStringNotContainsString(route('ads.destroy', $foreign), $html);
 
         $this->from(route('home'))->delete(route('ads.destroy', $mine))

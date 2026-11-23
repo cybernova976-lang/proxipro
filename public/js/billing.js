@@ -1,4 +1,8 @@
-/* Page Facturation : confirmation avant une résiliation ou une reprise d'abonnement. */
+/*
+ * Page Facturation : un seul envoi pour une résiliation ou une reprise d'abonnement.
+ * La question de confirmation (attribut data-pk-confirm) est posée par le script
+ * commun du gabarit ; la poser ici aussi l'affichait deux fois.
+ */
 (function () {
     'use strict';
 
@@ -7,14 +11,16 @@
         if (!(form instanceof HTMLFormElement) || !form.hasAttribute('data-pk-confirm')) {
             return;
         }
-        if (!window.confirm(form.getAttribute('data-pk-confirm'))) {
-            event.preventDefault();
-            return;
-        }
-        // Un seul envoi : la demande part chez Stripe, un double clic ne doit pas la répéter.
-        var button = form.querySelector('button[type="submit"]');
-        if (button) {
-            button.disabled = true;
-        }
+        // Après tous les écouteurs : si l'envoi n'a pas été annulé, la demande part chez
+        // Stripe, et un double clic ne doit pas la répéter.
+        window.setTimeout(function () {
+            if (event.defaultPrevented) {
+                return;
+            }
+            var button = form.querySelector('button[type="submit"]');
+            if (button) {
+                button.disabled = true;
+            }
+        }, 0);
     });
 })();

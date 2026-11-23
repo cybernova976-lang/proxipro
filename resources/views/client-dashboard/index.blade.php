@@ -38,6 +38,4 @@
 </div>
 @endsection
 
-@push('scripts')
-<script src="{{ asset('js/activity-dashboard.js') }}?v={{ filemtime(public_path('js/activity-dashboard.js')) }}" defer></script>
-@endpush
+{{-- La confirmation avant envoi (attribut data-pk-confirm) est gérée par le gabarit, pour toutes les pages. --}}

@@ -46,7 +46,8 @@ class SavedAdsAndStaleNotificationsTest extends TestCase
             ->assertSee('action="'.route('saved-ads.destroy', $offer).'"', false)
             ->assertSee('data-pk-confirm="Retirer « Peinture intérieure » de vos favoris ?"', false)
             ->assertSee('title="Retirer des favoris" aria-label="Retirer Peinture intérieure de mes favoris"', false)
-            ->assertSee('js/activity-dashboard.js', false)
+            // Une seule question de confirmation : le script commun du gabarit, pas un second script de page.
+            ->assertSee('js/confirm-submit.js', false)->assertDontSee('js/activity-dashboard.js', false)
             // La carte garde son étiquette de catégorie.
             ->assertSee('<span class="saved-ad-badge">Plombier</span>', false)
             // L'ancienne icône sans libellé et son script en ligne ont disparu.
