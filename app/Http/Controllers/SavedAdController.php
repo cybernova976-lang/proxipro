@@ -29,6 +29,18 @@ class SavedAdController extends Controller
     }
 
     /**
+     * Retire une annonce des favoris depuis la page « Favoris ».
+     * Sans effet si elle n'y est déjà plus : contrairement à toggle(), un second
+     * envoi ne la remet jamais dans la liste.
+     */
+    public function destroy(Ad $ad)
+    {
+        Auth::user()->savedAds()->detach($ad->id);
+
+        return redirect()->route('saved-ads.index')->with('success', 'Annonce retirée de vos favoris.');
+    }
+
+    /**
      * Get user's saved ads
      */
     public function index()

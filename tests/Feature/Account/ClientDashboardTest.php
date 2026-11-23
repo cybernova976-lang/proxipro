@@ -42,13 +42,13 @@ class ClientDashboardTest extends TestCase
         $this->assertSame(4, $xpath->query('//*[@data-client-dashboard]//a[contains(@class,"pk-board-tile")]')->length);
         $this->assertSame(0, $xpath->query('//*[@data-client-dashboard]//style')->length);
 
-        // Le menu est le panneau latéral du gabarit : rétractable, cinq groupes, la page en cours seule active.
+        // Le menu est le panneau latéral du gabarit : rétractable, quatre groupes, la page en cours seule active.
         $this->assertSame(1, $xpath->query('//aside[@id="pkSpaceMenu"][@data-space-menu]')->length);
         $this->assertSame(1, $xpath->query('//button[@data-space-menu-open][@aria-expanded="false"]')->length);
         $this->assertSame(1, $xpath->query('//aside[@data-space-menu]//button[@data-space-menu-close]')->length);
         $titles = array_map(fn ($node) => trim($node->textContent),
             iterator_to_array($xpath->query('//aside[@data-space-menu]//p[contains(@class,"pk-space-menu__title")]')));
-        $this->assertSame(['Mon espace', 'Alertes et notifications', 'Emploi', 'Mon compte', 'Aide'], $titles);
+        $this->assertSame(['Mon espace', 'Emploi', 'Mon compte', 'Aide'], $titles);
         $current = $xpath->query('//aside[@data-space-menu]//a[@aria-current="page"]');
         $this->assertSame(1, $current->length);
         $this->assertSame(route('client.dashboard'), $current->item(0)->getAttribute('href'));
@@ -57,9 +57,9 @@ class ClientDashboardTest extends TestCase
         $urls = array_map(fn ($attr) => $attr->value, iterator_to_array($xpath->query('//aside[@data-space-menu]//a/@href')));
         $this->assertSame($urls, array_values(array_unique($urls)));
         foreach ([route('home'), route('service-orders.index'), route('messages.index'), route('saved-ads.index'),
-            route('saved-searches.index'), route('notifications.index'),
+            route('saved-searches.index'),
             route('employment.territory', ['territoire' => 'mayotte']), route('service-provider.start'),
-            route('profile.show'), route('verification.index'), route('billing.index'), route('settings.index'),
+            route('verification.index'), route('billing.index'), route('settings.index'),
             route('guides.index'), route('legal.platform-rules').'#classement', route('contact.index')] as $url) {
             $this->assertContains($url, $urls);
         }

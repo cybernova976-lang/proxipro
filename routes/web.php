@@ -258,6 +258,7 @@ if (app()->environment('local')) {
 Route::middleware(['auth'])->group(function () {
     Route::get('/saved-ads', [SavedAdController::class, 'index'])->name('saved-ads.index');
     Route::post('/ads/{ad}/toggle-save', [SavedAdController::class, 'toggle'])->name('ads.toggle-save');
+    Route::delete('/saved-ads/{ad}', [SavedAdController::class, 'destroy'])->name('saved-ads.destroy');
     Route::get('/ads/{ad}/check-saved', [SavedAdController::class, 'check'])->name('ads.check-saved');
     Route::get('/saved-searches', [SavedSearchController::class, 'index'])->name('saved-searches.index');
     Route::post('/saved-searches', [SavedSearchController::class, 'store'])->name('saved-searches.store');

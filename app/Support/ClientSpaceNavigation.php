@@ -57,6 +57,10 @@ class ClientSpaceNavigation
      * Pages rangées dans le tableau de bord, groupées par nature. Chacune s'affiche
      * dans le même cadre : ce menu à gauche, le contenu à côté.
      *
+     * Deux pages n'en font pas partie, à la demande du fondateur (23/11/2026) :
+     * les notifications (on y vient par la cloche de l'en-tête) et le profil, qui
+     * s'affiche en pleine page et s'ouvre depuis le menu du compte.
+     *
      * @return array<int, array{title: string, items: array<int, array{key: string, label: string, icon: string, route: string, matches: array<int, string>, fragment?: string}>}>
      */
     public static function menuGroups(): array
@@ -75,12 +79,8 @@ class ClientSpaceNavigation
                     'route' => 'messages.index', 'matches' => $sections['messages']['matches']],
                 ['key' => 'saved', 'label' => 'Favoris', 'icon' => 'far fa-bookmark',
                     'route' => 'saved-ads.index', 'matches' => ['saved-ads.index']],
-            ]],
-            ['title' => 'Alertes et notifications', 'items' => [
                 ['key' => 'alerts', 'label' => 'Mes alertes', 'icon' => 'far fa-bell',
                     'route' => 'saved-searches.index', 'matches' => ['saved-searches.index']],
-                ['key' => 'notifications', 'label' => 'Notifications', 'icon' => 'far fa-envelope-open',
-                    'route' => 'notifications.index', 'matches' => ['notifications.index']],
             ]],
             ['title' => 'Emploi', 'items' => [
                 ['key' => 'employment', 'label' => 'Offres d’emploi', 'icon' => 'fas fa-briefcase',
@@ -89,8 +89,6 @@ class ClientSpaceNavigation
                     'route' => 'service-provider.start', 'matches' => ['service-provider.start']],
             ]],
             ['title' => 'Mon compte', 'items' => [
-                ['key' => 'profile', 'label' => 'Mon profil', 'icon' => 'far fa-user',
-                    'route' => 'profile.show', 'matches' => ['profile.show', 'profile.edit']],
                 ['key' => 'identity', 'label' => 'Vérification d’identité', 'icon' => 'fas fa-shield-halved',
                     'route' => 'verification.index', 'matches' => ['verification.index']],
                 ['key' => 'billing', 'label' => 'Abonnement et factures', 'icon' => 'far fa-credit-card',
@@ -163,13 +161,14 @@ class ClientSpaceNavigation
     }
 
     /**
-     * Accueil du parcours particulier : hors du tableau de bord, il garde le fond,
-     * la barre du bas et le bouton de publication en contour.
+     * Accueil et profil du parcours particulier : hors du tableau de bord (pleine
+     * page, sans panneau), ils gardent le fond, la barre du bas et le bouton de
+     * publication en contour.
      */
     public static function isClientSurface(Request $request, ?User $user, ?string $feedRole = null): bool
     {
         return $user !== null && self::role($request, $user, $feedRole) === 'client'
-            && $request->routeIs('feed', 'feed.professionals', 'feed.mockup.preview');
+            && $request->routeIs('feed', 'feed.professionals', 'feed.mockup.preview', 'profile.show', 'profile.edit');
     }
 
     /**

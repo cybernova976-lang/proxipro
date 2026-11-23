@@ -131,7 +131,7 @@ il répond à « où en suis-je et que dois-je faire maintenant ? ».
   refusé.
 - **Tableau de bord du particulier** (`/tableau-de-bord`, décisions du 23/11/2026) : tout
   ce qui n'est pas la découverte des services y est rangé, regroupé par nature (mon
-  espace, alertes et notifications, emploi, compte, aide). Le bouton « Tableau de bord »
+  espace, emploi, compte, aide). Le bouton « Tableau de bord »
   est dans l'en-tête, sur ordinateur comme sur téléphone.
   - **Le menu est un panneau latéral porté par le gabarit**, pas par la page :
     `partials/client-space-menu`, liste dans `ClientSpaceNavigation::menuGroups()`,
@@ -140,6 +140,9 @@ il répond à « où en suis-je et que dois-je faire maintenant ? ».
     (bouton « Menu », ou icône « Tableau de bord » de l'en-tête).
   - **Toutes les pages du menu s'affichent dans ce même cadre** (panneau + contenu).
     Pour ajouter une page à l'espace, ajoute-la à `menuGroups()` : rien d'autre.
+  - **Notifications et Profil n'en font pas partie** (refus du fondateur) : les
+    notifications s'ouvrent par la cloche de l'en-tête, le profil s'affiche en pleine
+    page et s'ouvre depuis le menu du compte. Ne les remets pas dans le panneau.
   - **La page `/tableau-de-bord` n'affiche que du contenu** (compteurs mesurés,
     demandes en cours, alertes et notifications). N'y remets jamais une liste de
     liens : le fondateur l'a refusé (« la page est devenue un menu »).

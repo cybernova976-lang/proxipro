@@ -50,7 +50,6 @@ class ClientDashboardController extends Controller
                 ? $alerts->territoryOfferAlertFields($territory) : null,
             'savedSearches' => $user->savedSearches()->orderByDesc('is_active')->latest()->orderByDesc('id')->limit(3)->get(),
             'activeAlertCount' => $activeAlertCount,
-            'unreadNotifications' => $user->unreadNotifications()->count(),
         ]);
     }
 }

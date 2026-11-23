@@ -88,31 +88,6 @@
         font-weight: 600;
     }
 
-    .saved-ad-remove {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: rgba(255,255,255,0.95);
-        border: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #ef4444;
-        font-size: 1rem;
-        transition: all 0.2s;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    .saved-ad-remove:hover {
-        background: #ef4444;
-        color: white;
-        transform: scale(1.1);
-    }
-
     .saved-ad-content {
         padding: 20px;
     }
@@ -201,7 +176,8 @@
         box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
 
-    .empty-state i {
+    /* La grande icône de l'écran vide seulement : celle du bouton garde la taille du texte. */
+    .empty-state > i {
         font-size: 4rem;
         color: #d1d5db;
         margin-bottom: 20px;
@@ -236,10 +212,52 @@
         box-shadow: 0 10px 30px rgba(79, 70, 229, 0.3);
     }
 
+    /* Pied de carte : la date à gauche, le retrait des favoris à droite, écrit en toutes lettres. */
+    .saved-ad-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 4px 12px;
+        margin-top: 10px;
+        padding-top: 8px;
+        border-top: 1px solid #eef2ff;
+    }
+
+    .saved-ad-foot form {
+        margin: 0;
+    }
+
     .saved-date {
         font-size: 0.8rem;
-        color: #9ca3af;
-        margin-top: 8px;
+        color: #6b7280;
+    }
+
+    .saved-ad-remove {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 40px;
+        padding: 6px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #fff;
+        color: #475569;
+        font: inherit;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .saved-ad-remove:hover {
+        border-color: #fecaca;
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+    .saved-ad-remove:focus-visible {
+        outline: 3px solid #4f46e5;
+        outline-offset: 2px;
     }
 </style>
 @endpush
@@ -270,10 +288,6 @@
                         @endif
                         
                         <span class="saved-ad-badge">{{ $ad->category }}</span>
-                        
-                        <button class="saved-ad-remove" onclick="removeSavedAd({{ $ad->id }}, this)" title="Retirer des favoris">
-                            <i class="fas fa-heart-broken"></i>
-                        </button>
                     </div>
                     
                     <div class="saved-ad-content">
@@ -303,8 +317,18 @@
                             </a>
                         </div>
                         
-                        <div class="saved-date">
-                            <i class="fas fa-bookmark"></i> Sauvegardée {{ $ad->pivot->created_at->locale('fr')->diffForHumans() }}
+                        <div class="saved-ad-foot">
+                            <span class="saved-date">
+                                <i class="fas fa-bookmark" aria-hidden="true"></i> Sauvegardée {{ $ad->pivot->created_at->locale('fr')->diffForHumans() }}
+                            </span>
+                            <form method="POST" action="{{ route('saved-ads.destroy', $ad) }}"
+                                  data-pk-confirm="Retirer « {{ $ad->title }} » de vos favoris ?">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="saved-ad-remove" title="Retirer des favoris" aria-label="Retirer {{ $ad->title }} de mes favoris">
+                                    <i class="far fa-trash-can" aria-hidden="true"></i> Retirer
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -328,33 +352,7 @@
 </div>
 @endsection
 
-@section('scripts')
-<script>
-function removeSavedAd(adId, btn) {
-    if (!confirm('Voulez-vous retirer cette annonce de vos favoris ?')) return;
-    
-    fetch(`/ads/${adId}/toggle-save`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success && !data.saved) {
-            const card = btn.closest('.saved-ad-card');
-            card.style.transition = 'all 0.3s ease';
-            card.style.opacity = '0';
-            card.style.transform = 'scale(0.9)';
-            setTimeout(() => card.remove(), 300);
-        }
-    })
-    .catch(error => {
-        console.error('Erreur:', error);
-        alert('Une erreur est survenue');
-    });
-}
-</script>
-@endsection
+{{-- La confirmation avant retrait est portée par le formulaire (attribut data-pk-confirm). --}}
+@push('scripts')
+<script src="{{ asset('js/activity-dashboard.js') }}?v={{ filemtime(public_path('js/activity-dashboard.js')) }}" defer></script>
+@endpush

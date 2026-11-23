@@ -12,9 +12,9 @@ class ClientSpaceNavigationFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** Les seize pages du panneau latéral, dans l'ordre, groupe par groupe. */
+    /** Les quatorze pages du panneau latéral, dans l'ordre, groupe par groupe. */
     private const MENU_LABELS = ['Vue d’ensemble', 'Mes demandes', 'Mes commandes', 'Messages', 'Favoris',
-        'Mes alertes', 'Notifications', 'Offres d’emploi', 'Proposer mes services', 'Mon profil',
+        'Mes alertes', 'Offres d’emploi', 'Proposer mes services',
         'Vérification d’identité', 'Abonnement et factures', 'Paramètres', 'Conseils pratiques',
         'Classement des offres', 'Assistance'];
 
@@ -37,7 +37,7 @@ class ClientSpaceNavigationFeatureTest extends TestCase
             'saved-ads.index' => 'saved', 'employment.territory' => 'employment'] as $route => $key) {
             $response = $this->get(route($route, $route === 'employment.territory' ? ['territoire' => 'departement-75'] : []))->assertOk();
             $xpath = $this->xpath($response->getContent());
-            $this->assertSame(16, $xpath->query('//aside[@data-space-menu]//nav[@aria-label="Mon espace particulier"]//a[@data-space-section]')->length, $route);
+            $this->assertSame(14, $xpath->query('//aside[@data-space-menu]//nav[@aria-label="Mon espace particulier"]//a[@data-space-section]')->length, $route);
             $this->assertSame(1, $xpath->query('//button[@data-space-menu-open][@aria-controls="pkSpaceMenu"]')->length, $route);
             // Le bouton de l'en-tête est actif sur toutes les pages du tableau de bord.
             $this->assertSame(1, $xpath->query('//a[@data-header-dashboard][contains(@class,"active")]')->length, $route);
@@ -56,16 +56,43 @@ class ClientSpaceNavigationFeatureTest extends TestCase
         $this->actingAs(User::factory()->create(['user_type' => 'particulier', 'is_service_provider' => false]));
 
         foreach (['service-orders.index' => 'orders', 'saved-searches.index' => 'alerts',
-            'notifications.index' => 'notifications', 'settings.index' => 'settings', 'profile.show' => 'profile',
+            'settings.index' => 'settings',
             'verification.index' => 'identity', 'billing.index' => 'billing', 'guides.index' => 'guides',
             'legal.platform-rules' => 'ranking', 'contact.index' => 'contact'] as $route => $key) {
             $xpath = $this->xpath($this->get(route($route))->assertOk()->getContent());
-            $this->assertSame(16, $xpath->query('//nav[@aria-label="Mon espace particulier"]//a[@data-space-section]')->length, $route);
+            $this->assertSame(14, $xpath->query('//nav[@aria-label="Mon espace particulier"]//a[@data-space-section]')->length, $route);
             $current = $xpath->query('//a[@data-space-section][@aria-current="page"]');
             $this->assertSame(1, $current->length, $route);
             $this->assertSame($key, $current->item(0)->getAttribute('data-space-section'), $route);
             $this->assertSame(0, $xpath->query('//aside[@id="sidebarNav"]')->length, "{$route} : ancienne barre latérale.");
             $this->assertSame(1, $xpath->query('//nav[@class="pk-tabbar"]')->length, $route);
+        }
+    }
+
+    /** Décision du fondateur du 23/11/2026 : ces deux pages ne font pas partie du tableau de bord. */
+    public function test_notifications_and_profile_stay_outside_the_dashboard_frame(): void
+    {
+        $this->actingAs(User::factory()->create(['user_type' => 'particulier', 'is_service_provider' => false]));
+
+        foreach (['notifications.index', 'profile.show', 'profile.edit'] as $route) {
+            $xpath = $this->xpath($this->get(route($route))->assertOk()->getContent());
+            // Pleine page : ni panneau latéral, ni bouton « Menu », ni ancienne barre latérale.
+            $this->assertSame(0, $xpath->query('//aside[@data-space-menu]')->length, $route);
+            $this->assertSame(0, $xpath->query('//button[@data-space-menu-open]')->length, $route);
+            $this->assertSame(0, $xpath->query('//aside[@id="sidebarNav"]')->length, $route);
+            $this->assertSame(0, $xpath->query('//body[contains(@class,"has-space-menu")]')->length, $route);
+            $this->assertSame(0, $xpath->query('//a[@data-header-dashboard][contains(@class,"active")]')->length, $route);
+            // Le profil s'ouvre depuis le menu du compte, les notifications depuis la cloche.
+            $this->assertSame(1, $xpath->query('//a[contains(@class,"dropdown-item")][@href="'.route('profile.show').'"]')->length, $route);
+            $this->assertGreaterThanOrEqual(1, $xpath->query('//a[@href="'.route('notifications.index').'"]')->length, $route);
+            $this->assertSame(1, $xpath->query('//nav[@class="pk-tabbar"]')->length, $route);
+        }
+
+        // Le panneau ne les propose plus, et la vue d'ensemble n'y renvoie plus.
+        $board = $this->xpath($this->get(route('client.dashboard'))->assertOk()->getContent());
+        foreach ([route('notifications.index'), route('profile.show')] as $url) {
+            $this->assertSame(0, $board->query('//aside[@data-space-menu]//a[@href="'.$url.'"]')->length, $url);
+            $this->assertSame(0, $board->query('//*[@data-client-dashboard]//a[@href="'.$url.'"]')->length, $url);
         }
     }
 

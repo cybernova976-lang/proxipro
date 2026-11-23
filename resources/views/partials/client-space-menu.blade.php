@@ -18,10 +18,9 @@
             }
         }
     }
-    // Compteurs déjà mesurés par l'en-tête : messages et notifications non lus.
+    // Compteur déjà mesuré par l'en-tête : messages non lus.
     $pkSpaceBadges = [
         'messages' => [(int) ($unreadCount ?? 0), 'messages non lus'],
-        'notifications' => [(int) ($unreadNotifCount ?? 0), 'notifications non lues'],
     ];
 @endphp
 <div class="pk-space-bar" data-space-bar>

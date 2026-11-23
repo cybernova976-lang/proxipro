@@ -6921,7 +6921,8 @@
                                         'bg' => ($notif->read_at ? '#f8fafc' : '#eff6ff'),
                                         'title' => $data['title'] ?? 'Notification',
                                         'message' => \Illuminate\Support\Str::limit($data['message'] ?? '', 80),
-                                        'url' => $data['action_url'] ?? '#', 'time' => $notif->created_at,
+                                        // Par la page d'ouverture : elle vérifie que la cible existe encore avant d'y mener.
+                                        'url' => route('notifications.open', $notif->id), 'time' => $notif->created_at,
                                         'is_read' => !is_null($notif->read_at), 'is_live' => false, 'db_id' => $notif->id,
                                     ]);
                                 }

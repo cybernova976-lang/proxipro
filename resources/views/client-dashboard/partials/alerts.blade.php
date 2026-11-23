@@ -1,15 +1,10 @@
 {{--
     Alertes et notifications, au même endroit : les alertes du compte (chacune
     s'arrête d'un clic), les notifications de l'appareil, puis les réglages.
+    La liste des notifications reçues n'est pas ici : elle s'ouvre par la cloche de l'en-tête.
 --}}
 <section class="pk-board-card" id="alertes" aria-labelledby="pkBoardAlertsTitle">
-    <div class="pk-board-card__head">
-        <h2 id="pkBoardAlertsTitle"><i class="far fa-bell" aria-hidden="true"></i> Alertes et notifications</h2>
-        <a class="pk-board-card__more" href="{{ route('notifications.index') }}">
-            Mes notifications @if($unreadNotifications > 0)<b class="pk-board-count">{{ $unreadNotifications > 99 ? '99+' : $unreadNotifications }}</b>@endif
-            <i class="fas fa-arrow-right" aria-hidden="true"></i>
-        </a>
-    </div>
+    <h2 id="pkBoardAlertsTitle"><i class="far fa-bell" aria-hidden="true"></i> Alertes et notifications</h2>
 
     <h3 class="pk-board-sub">Mes alertes <span class="pk-board-meta">({{ $activeAlertCount }} {{ $activeAlertCount > 1 ? 'actives' : 'active' }})</span></h3>
     @if($savedSearches->isNotEmpty())

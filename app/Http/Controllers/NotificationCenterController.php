@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Ad;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -25,6 +26,16 @@ class NotificationCenterController extends Controller
     public function open(Request $request, string $id)
     {
         $notification = $request->user()->notifications()->findOrFail($id);
+
+        // L'annonce concernée a été supprimée depuis : la page visée n'existe plus.
+        // Plutôt qu'une « Page introuvable », on le dit et on retire la notification.
+        if ($this->adIsGone($notification->data)) {
+            $notification->delete();
+
+            return redirect()->route('notifications.index')
+                ->with('success', 'Cette notification concernait une annonce qui a été supprimée : elle a été retirée de la liste.');
+        }
+
         $notification->markAsRead();
 
         return redirect()->to($this->safeTarget((string) ($notification->data['action_url'] ?? '')));
@@ -35,6 +46,14 @@ class NotificationCenterController extends Controller
         $request->user()->unreadNotifications()->update(['read_at' => now()]);
 
         return redirect()->route('notifications.index')->with('success', 'Toutes vos notifications sont marquées comme lues.');
+    }
+
+    /** La notification porte-t-elle sur une annonce qui n'existe plus ? */
+    private function adIsGone(array $data): bool
+    {
+        $adId = $data['ad_id'] ?? null;
+
+        return is_numeric($adId) && ! Ad::whereKey((int) $adId)->exists();
     }
 
     /** Une notification ne peut mener qu'à une page de Prokejem, jamais à un site extérieur. */
