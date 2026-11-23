@@ -7006,8 +7006,6 @@
                                     <span class="user-name-text" title="{{ Auth::user()->name }}">{{ Auth::user()->name }}</span>
                                     <span class="user-type-badge">{{ Auth::user()->getAccountTypeLabel() }}</span>
                                 </div>
-                                {{-- Téléphone : le nom ne tient pas, le statut du membre est écrit sous sa photo. --}}
-                                <span class="mobile-header-label mobile-header-status d-md-none" data-header-status>{{ Auth::user()->getAccountTypeLabel() }}</span>
                                 <i class="fas fa-chevron-down dropdown-chevron"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end dropdown-menu-modern mt-2" style="min-width: 240px;">
@@ -7018,8 +7016,10 @@
                                         @else
                                             <div class="user-avatar-placeholder me-3" style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #9333ea); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; border: 2px solid #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</div>
                                         @endif
-                                        <div>
+                                        <div class="account-menu-identity">
                                             <div style="font-weight: 600; color: #1e293b;">{{ Auth::user()->name }}</div>
+                                            {{-- Téléphone : le statut du membre, juste sous son nom (il n'est plus dans l'en-tête). --}}
+                                            <span class="user-type-badge account-menu-status d-md-none" data-account-status>{{ Auth::user()->getAccountTypeLabel() }}</span>
                                             <small style="color: #64748b;">{{ Auth::user()->email }}</small>
                                         </div>
                                     </div>
@@ -10260,8 +10260,10 @@
 
         /* Demande du fondateur (23/11/2026) : sous 992 px, là où le menu de l'en-tête
            n'est pas affiché, les liens portent leur nom sous l'icône (« Tableau de
-           bord », « Devenir pro ») et, sur téléphone, le statut du membre est écrit
-           sous sa photo. La cloche reste une icône seule, pour gagner de la place.
+           bord », « Devenir pro »). La cloche et la photo du compte restent seules.
+           Le statut du membre n'est pas dans l'en-tête : sur téléphone, il est écrit
+           sous son nom, dans le menu du compte. Rien ne doit passer sur deux lignes
+           ici : la rangée remonterait contre le bord de l'en-tête.
            Le lien enveloppe l'icône et son nom : toucher le nom fait la même chose. */
         .mobile-header-item {
             padding: 0;
@@ -10287,7 +10289,7 @@
                 min-width: 40px;
             }
             .mobile-header-item .header-mobile-action {
-                height: 36px !important;
+                height: 32px !important;
             }
             a.mobile-header-item .header-mobile-action {
                 border: 1px solid #e2e8f0 !important;
@@ -10320,6 +10322,10 @@
                 outline-offset: 2px;
                 border-radius: 10px;
             }
+            /* Les menus de la cloche et du compte s'ouvrent sous l'en-tête, pas sur les noms des icônes. */
+            .header-modern .mobile-actions-group .dropdown-menu {
+                margin-top: 30px !important;
+            }
         }
         @media (max-width: 767.98px) {
             /* La photo du compte, puis le statut du membre : même gabarit que les autres icônes. */
@@ -10337,22 +10343,31 @@
                 display: none;
             }
             .header-modern .user-menu-btn .header-user-avatar-frame {
-                width: 36px;
-                height: 36px;
-                flex-basis: 36px;
+                width: 32px;
+                height: 32px;
+                flex-basis: 32px;
             }
-            .mobile-header-status {
-                max-width: 72px;
-                color: #4338ca;
-                font-weight: 700;
-                white-space: normal;
+            .header-modern .user-menu-btn .user-avatar-placeholder {
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 0.85rem !important;
+            }
+            .account-menu-identity {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 2px;
+                min-width: 0;
+            }
+            .account-menu-status {
+                margin-top: 0;
             }
         }
-        @media (min-width: 768px) {
-            /* À partir de la tablette, le nom et le statut sont déjà écrits à côté de la photo. */
-            .mobile-header-status {
-                display: none !important;
-            }
+        /* Menus de l'en-tête : barre de défilement fine et indigo, pas l'orange du navigateur. */
+        .header-modern .dropdown-menu-modern,
+        .header-modern .notif-dropdown-body {
+            scrollbar-width: thin;
+            scrollbar-color: #c7d2fe transparent;
         }
         @media (max-width: 349.98px) {
             /* Très petits téléphones : les noms restent, en plus petit. */

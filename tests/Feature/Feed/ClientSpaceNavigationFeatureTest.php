@@ -70,8 +70,9 @@ class ClientSpaceNavigationFeatureTest extends TestCase
     }
 
     /**
-     * Demande du fondateur du 23/11/2026 : sur téléphone, l'en-tête écrit le nom de chaque
-     * icône au lieu de ne montrer que des pictogrammes, et le statut du membre sous sa photo.
+     * Demandes du fondateur du 23/11/2026 : sur téléphone, l'en-tête écrit « Tableau de bord »
+     * et « Devenir pro » sous leur icône. Le statut du membre n'est pas dans l'en-tête (sur deux
+     * lignes, il collait la rangée au bord) : il est écrit sous son nom, dans le menu du compte.
      */
     public function test_phone_header_names_its_icons_and_shows_the_member_status(): void
     {
@@ -86,9 +87,13 @@ class ClientSpaceNavigationFeatureTest extends TestCase
         $this->assertSame(0, $xpath->query('//div[@id="notificationDropdown"]//span[contains(@class,"mobile-header-label")]')->length);
         $this->assertSame(1, $xpath->query('//div[@id="notificationDropdown"]/button[@data-bs-toggle="dropdown"][@aria-label="Notifications"]/span[contains(@class,"header-notif-btn")]')->length);
         $this->assertSame(1, $xpath->query('//a[@data-header-dashboard-mobile]/span[contains(@class,"header-mobile-action")]')->length);
-        // Le statut est le même que sur ordinateur, écrit dans le bouton du compte.
-        $this->assertSame('Particulier', $text('//button[contains(@class,"user-menu-btn")]/span[@data-header-status]'));
-        $this->assertSame('Particulier', $text('//span[contains(@class,"user-type-badge")]'));
+        // Aucun statut dans l'en-tête sur téléphone : il est sous le nom, dans le menu du compte.
+        $this->assertSame(0, $xpath->query('//*[@data-header-status]')->length);
+        $this->assertSame(0, $xpath->query('//button[contains(@class,"user-menu-btn")]//span[contains(@class,"mobile-header-label")]')->length);
+        $this->assertSame('Particulier', $text('//ul[contains(@class,"dropdown-menu")]//span[@data-account-status][contains(@class,"d-md-none")]'));
+        $this->assertSame($member->name, $text('//span[@data-account-status]/preceding-sibling::div[1]'));
+        // Sur tablette et ordinateur, il reste à côté du nom, dans le bouton.
+        $this->assertSame('Particulier', $text('//button[contains(@class,"user-menu-btn")]//span[contains(@class,"user-type-badge")]'));
         // Les anciens libellés tronqués ont disparu.
         foreach (['Tableau', 'Pro', 'Notif', 'Notifications'] as $old) {
             $this->assertSame(0, $xpath->query('//span[contains(@class,"mobile-header-label")][normalize-space()="'.$old.'"]')->length, $old);
@@ -97,13 +102,13 @@ class ClientSpaceNavigationFeatureTest extends TestCase
         $provider = User::factory()->create(['user_type' => 'professionnel', 'is_service_provider' => true]);
         $pro = $this->xpath($this->actingAs($provider)->get(route('feed', ['mode' => 'provider']))->assertOk()->getContent());
         $this->assertSame('Espace Pro', trim($pro->query('//a[@data-header-pro-mobile]/span[contains(@class,"mobile-header-label")]')->item(0)->textContent));
-        $this->assertSame($provider->getAccountTypeLabel(), trim($pro->query('//span[@data-header-status]')->item(0)->textContent));
+        $this->assertSame($provider->getAccountTypeLabel(), trim($pro->query('//span[@data-account-status]')->item(0)->textContent));
         $this->assertSame(0, $pro->query('//a[@data-header-dashboard-mobile]')->length);
 
-        // Les noms s'affichent sous 992 px ; le statut sous la photo seulement sur téléphone.
+        // Les noms s'affichent sous 992 px, sur une seule ligne.
         $layout = preg_replace('/\s+/', ' ', file_get_contents(resource_path('views/layouts/app.blade.php')));
-        $this->assertMatchesRegularExpression('/@media \(max-width: 991\.98px\) \{.*?\.mobile-header-label \{ display: block !important;/', $layout);
-        $this->assertStringContainsString('@media (min-width: 768px) { /* À partir de la tablette, le nom et le statut sont déjà écrits à côté de la photo. */ .mobile-header-status { display: none !important; } }', $layout);
+        $this->assertMatchesRegularExpression('/@media \(max-width: 991\.98px\) \{.*?\.mobile-header-label \{ display: block !important;[^}]*white-space: nowrap;/', $layout);
+        $this->assertStringNotContainsString('mobile-header-status', $layout);
     }
 
     /** Décision du fondateur du 23/11/2026 : ces deux pages ne font pas partie du tableau de bord. */
