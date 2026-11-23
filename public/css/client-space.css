@@ -122,12 +122,14 @@ body.pk-space-menu-open { overflow: hidden; }
     .pk-space-backdrop { display: none !important; }
     .pk-space-menu {
         top: 112px; bottom: auto; left: var(--pk-space-gutter); z-index: 5; width: 280px;
-        max-height: calc(100dvh - 128px); padding-bottom: 0; border: 1px solid #e0e7ff; border-radius: 18px; box-shadow: none;
+        max-height: calc(100dvh - 124px); padding-bottom: 0; border: 1px solid #e0e7ff; border-radius: 18px; box-shadow: none;
         transform: none; visibility: visible; transition: none;
     }
     .pk-space-menu nav { padding: 2px 8px 10px; }
-    .pk-space-menu__title { padding-top: 12px; }
-    .pk-space-link { min-height: 40px; padding-block: 6px; font-size: .88rem; }
+    /* Lignes resserrées : les seize entrées tiennent sans défiler dans une fenêtre de 900 px de haut. */
+    .pk-space-menu__title { padding-top: 10px; }
+    .pk-space-menu ul + .pk-space-menu__title { margin-top: 6px; }
+    .pk-space-link { min-height: 36px; padding-block: 5px; font-size: .88rem; }
     .has-space-menu #app > main {
         padding-left: calc(var(--pk-space-gutter) + 280px + 8px);
         padding-right: max(0px, calc((100vw - 1500px) / 2));
