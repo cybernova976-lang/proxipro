@@ -16,12 +16,22 @@ class ClientSpaceNavigationFeatureTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
 
+        // Depuis le 23/11/2026, l'accueil n'a plus d'onglets : ils sont rangés derrière le
+        // bouton « Tableau de bord » de l'en-tête, présent sur toutes les pages du parcours.
+        $home = $this->xpath($this->get(route('feed'))->assertOk()->getContent());
+        $this->assertSame(0, $home->query('//nav[@aria-label="Mon espace particulier"]')->length);
+        $this->assertSame(route('client.dashboard'), $home->query('//a[@data-header-dashboard]')->item(0)->getAttribute('href'));
+        $this->assertSame(1, $home->query('//a[@data-header-dashboard-mobile]')->length);
+        $this->assertSame(1, $home->query('//nav[@class="pk-tabbar"]')->length);
+        $this->assertSame(0, $home->query('//main[contains(@class,"main-content-with-sidebar")]')->length);
+
         // L'onglet Emploi reste l'onglet actif sur la page emploi d'un territoire.
-        foreach (['feed' => 'discover', 'home' => 'requests', 'messages.index' => 'messages',
+        foreach (['home' => 'requests', 'messages.index' => 'messages',
             'saved-ads.index' => 'saved', 'employment.territory' => 'employment'] as $route => $key) {
             $response = $this->get(route($route, $route === 'employment.territory' ? ['territoire' => 'departement-75'] : []))->assertOk();
             $xpath = $this->xpath($response->getContent());
-            $this->assertSame(5, $xpath->query('//nav[@aria-label="Mon espace particulier"]/a')->length, $route);
+            $this->assertSame(4, $xpath->query('//nav[@aria-label="Mon espace particulier"]/a')->length, $route);
+            $this->assertSame(1, $xpath->query('//a[@data-header-dashboard]')->length, $route);
             $current = $xpath->query('//a[@data-space-section][@aria-current="page"]');
             $this->assertSame(1, $current->length, $route);
             $this->assertSame($key, $current->item(0)->getAttribute('data-space-section'));
@@ -39,7 +49,7 @@ class ClientSpaceNavigationFeatureTest extends TestCase
         foreach (['service-orders.index' => 'requests', 'saved-searches.index' => 'saved',
             'settings.index' => null, 'profile.show' => null] as $route => $key) {
             $xpath = $this->xpath($this->get(route($route))->assertOk()->getContent());
-            $this->assertSame(5, $xpath->query('//nav[@aria-label="Mon espace particulier"]/a')->length, $route);
+            $this->assertSame(4, $xpath->query('//nav[@aria-label="Mon espace particulier"]/a')->length, $route);
             $current = $xpath->query('//a[@data-space-section][@aria-current="page"]');
             $this->assertSame($key === null ? 0 : 1, $current->length, $route);
             if ($key !== null) {
@@ -53,15 +63,17 @@ class ClientSpaceNavigationFeatureTest extends TestCase
     public function test_each_page_has_one_name_and_the_publish_button_one_label_and_one_address(): void
     {
         $this->actingAs(User::factory()->create(['user_type' => 'particulier', 'is_service_provider' => false]));
-        $labels = ['Accueil', 'Mes demandes', 'Messages', 'Favoris', 'Emploi'];
+        $labels = ['Mes demandes', 'Messages', 'Favoris', 'Emploi'];
 
-        foreach (['feed', 'home', 'messages.index', 'saved-ads.index', 'settings.index', 'ads.index'] as $route) {
+        foreach (['feed', 'client.dashboard', 'home', 'messages.index', 'saved-ads.index', 'settings.index', 'ads.index'] as $route) {
             $html = $this->get(route($route))->assertOk()->getContent();
             foreach (['Demander un service', 'Publier un besoin', 'Mon suivi', 'Suivi de mes demandes', 'Découvrir</span>'] as $old) {
                 $this->assertStringNotContainsString($old, $html, "{$route} affiche encore « {$old} ».");
             }
             $xpath = $this->xpath($html);
-            if ($route !== 'ads.index') {
+            // Un seul nom pour le tableau de bord, dans l'en-tête de chaque page.
+            $this->assertSame('Tableau de bord', trim($xpath->query('//a[@data-header-dashboard]/span')->item(0)->textContent), $route);
+            if (! in_array($route, ['ads.index', 'feed', 'client.dashboard'], true)) {
                 $tabs = [];
                 foreach ($xpath->query('//nav[@aria-label="Mon espace particulier"]/a/span[1]') as $span) {
                     $tabs[] = trim($span->textContent);
@@ -112,11 +124,18 @@ class ClientSpaceNavigationFeatureTest extends TestCase
     public function test_provider_only_sees_client_tabs_when_using_the_client_journey(): void
     {
         $provider = User::factory()->create(['user_type' => 'professionnel', 'is_service_provider' => true]);
-        $this->actingAs($provider)->get(route('feed'))->assertOk()->assertDontSee('data-client-space', false);
-        $this->get(route('feed', ['mode' => 'client']))->assertOk()->assertSee('data-client-space', false);
+        $this->actingAs($provider)->get(route('feed'))->assertOk()
+            ->assertDontSee('data-client-space', false)->assertDontSee('data-header-dashboard', false);
+        // Parcours particulier : le bouton « Tableau de bord » dans l'en-tête, les onglets sur les pages de l'espace.
+        $this->get(route('feed', ['mode' => 'client']))->assertOk()
+            ->assertDontSee('data-client-space', false)->assertSee('data-header-dashboard', false);
         $this->get(route('saved-ads.index'))->assertOk()->assertSee('data-client-space', false);
-        $this->get(route('feed', ['mode' => 'provider']))->assertOk()->assertDontSee('data-client-space', false);
+        $this->get(route('client.dashboard'))->assertOk()->assertSee('data-client-dashboard', false);
+        // Parcours prestataire : son poste de pilotage est l'espace Pro.
+        $this->get(route('feed', ['mode' => 'provider']))->assertOk()
+            ->assertDontSee('data-client-space', false)->assertDontSee('data-header-dashboard', false);
         $this->get(route('saved-ads.index'))->assertOk()->assertDontSee('data-client-space', false);
+        $this->get(route('client.dashboard'))->assertRedirect(route('pro.dashboard'));
         $this->assertTrue($provider->fresh()->is_service_provider);
     }
 

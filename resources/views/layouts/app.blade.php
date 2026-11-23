@@ -23,9 +23,14 @@
         $openGraphImage = $metaSection('og_image') ?: asset('images/social-card.png');
         $pkClientSpaceTabs = \App\Support\ClientSpaceNavigation::forRequest(request(), auth()->user(), $pkRole ?? null);
         $pkClientSpaceVisible = count($pkClientSpaceTabs) > 0;
+        // Accueil et tableau de bord : pages du parcours particulier sans onglets.
+        $pkClientSurface = $pkClientSpaceVisible
+            || \App\Support\ClientSpaceNavigation::isClientSurface(request(), auth()->user(), $pkRole ?? null);
+        // Bouton « Tableau de bord » de l'en-tête (parcours particulier seulement).
+        $pkDashboardEntry = \App\Support\ClientSpaceNavigation::dashboardEntry(request(), auth()->user(), $pkRole ?? null);
         // Dans l'espace particulier, chaque page porte sa propre action principale :
         // le bouton de l'en-tête passe en contour (un seul bouton plein par écran).
-        $pkHeaderPublishSecondary = $pkClientSpaceVisible;
+        $pkHeaderPublishSecondary = $pkClientSurface;
         // Un seul bouton de publication par parcours, identique dans l'en-tête et la barre du bas.
         $pkNavRole = \App\Support\ClientSpaceNavigation::role(request(), auth()->user(), $pkRole ?? null);
         $pkPublish = \App\Support\ClientSpaceNavigation::publishAction($pkNavRole);
@@ -6736,11 +6741,11 @@
         border-radius: 50%;
     }
 </style>
-@if($pkClientSpaceVisible && !request()->routeIs('employment.*'))
+@if($pkClientSurface && !request()->routeIs('employment.*'))
     <link rel="stylesheet" href="{{ asset('css/client-space.css') }}?v={{ filemtime(public_path('css/client-space.css')) }}">
 @endif
 </head>
-<body class="device-{{ $deviceType ?? 'desktop' }}{{ ($isMobile ?? false) ? ' is-mobile' : '' }}{{ ($isTablet ?? false) ? ' is-tablet' : '' }}{{ request()->routeIs('feed.mockup', 'feed.mockup.preview') ? ' feed-mockup-route' : '' }}{{ $pkClientSpaceVisible ? ' has-client-space' : '' }}{{ request()->routeIs('feed') ? ' pk-route-feed' : '' }}">
+<body class="device-{{ $deviceType ?? 'desktop' }}{{ ($isMobile ?? false) ? ' is-mobile' : '' }}{{ ($isTablet ?? false) ? ' is-tablet' : '' }}{{ request()->routeIs('feed.mockup', 'feed.mockup.preview') ? ' feed-mockup-route' : '' }}{{ $pkClientSurface ? ' has-client-space' : '' }}{{ request()->routeIs('feed') ? ' pk-route-feed' : '' }}">
     {{-- Variables JS pour détection appareil côté client --}}
     <script>
         window.__device = {
@@ -6782,14 +6787,19 @@
                     @endphp
                     <!-- Navigation principale desktop -->
                     <nav class="header-nav-center d-none d-lg-flex align-items-center gap-1" aria-label="Navigation principale">
-                        @unless($pkClientSpaceVisible)
                         <a href="{{ request()->routeIs('feed.mockup.preview') ? route('feed.mockup.preview') : (request()->routeIs('feed.mockup') ? route('feed.mockup') : route('feed')) }}" class="header-nav-btn {{ request()->routeIs('feed', 'feed.mockup', 'feed.mockup.preview') ? 'active' : '' }}">
                             <i class="fas fa-home"></i><span>Accueil</span>
                         </a>
+                        @if($pkDashboardEntry)
+                        {{-- Parcours particulier : tout l'espace (demandes, messages, favoris, emploi, alertes) est rangé derrière ce bouton. --}}
+                        <a href="{{ $pkDashboardEntry['url'] }}" class="header-nav-btn {{ $pkDashboardEntry['active'] ? 'active' : '' }}" data-header-dashboard>
+                            <i class="fas fa-table-columns"></i><span>{{ $pkDashboardEntry['label'] }}</span>
+                        </a>
+                        @else
                         <a href="{{ route('home') }}" class="header-nav-btn {{ request()->routeIs('home') ? 'active' : '' }}">
                             <i class="fas fa-clipboard-list"></i><span>{{ \App\Support\ClientSpaceNavigation::REQUESTS_LABEL }}</span>
                         </a>
-                        @endunless
+                        @endif
                         <a href="{{ route('pro.dashboard') }}" class="header-nav-btn {{ request()->routeIs('pro.*') ? 'active' : '' }}" data-header-pro>
                             <i class="fas fa-briefcase"></i><span>{{ $pkProEntry['label'] }}</span>
                         </a>
@@ -6816,6 +6826,14 @@
 
                         <!-- Groupe icônes : Espace Pro (mobile), Alertes boost, Notifications -->
                         <div class="d-flex align-items-center gap-2">
+                            @if($pkDashboardEntry)
+                            <div class="mobile-header-item d-lg-none">
+                                <a href="{{ $pkDashboardEntry['url'] }}" class="header-alert-btn header-mobile-action position-relative" aria-label="{{ $pkDashboardEntry['label'] }}" data-header-dashboard-mobile @if($pkDashboardEntry['active']) aria-current="page" @endif>
+                                    <i class="fas fa-table-columns"></i>
+                                </a>
+                                <span class="mobile-header-label d-md-none">Tableau</span>
+                            </div>
+                            @endif
                             <div class="mobile-header-item d-lg-none">
                                 <a href="{{ route('pro.dashboard') }}" class="header-alert-btn header-mobile-action position-relative" aria-label="{{ $pkProEntry['label'] }}" data-header-pro-mobile>
                                     <i class="fas fa-briefcase"></i>
@@ -6998,6 +7016,9 @@
                                         </div>
                                     </div>
                                 </li>
+                                @if($pkDashboardEntry)
+                                <li><a class="dropdown-item dropdown-item-modern" href="{{ $pkDashboardEntry['url'] }}" data-menu="dashboard"><i class="fas fa-table-columns" style="color: #4f46e5;"></i>{{ $pkDashboardEntry['label'] }}</a></li>
+                                @endif
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('profile.show') }}"><i class="fas fa-user" style="color: var(--primary);"></i>Mon Profil</a></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('home') }}"><i class="fas fa-clipboard-list text-secondary"></i>{{ \App\Support\ClientSpaceNavigation::REQUESTS_LABEL }}</a></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('service-orders.index') }}" data-menu="orders"><i class="fas fa-receipt" style="color: #4f46e5;"></i>Mes commandes</a></li>
@@ -7044,12 +7065,12 @@
 
         {{-- Sidebar de navigation --}}
         @auth
-            @if(!$pkClientSpaceVisible && !request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*', 'employment.*', 'notifications.*') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*'))
+            @if(!$pkClientSpaceVisible && !request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*', 'employment.*', 'notifications.*', 'client.dashboard') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*'))
                 @include('partials.sidebar')
             @endif
         @endauth
 
-        <main class="@auth @if(!$pkClientSpaceVisible && !request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*', 'employment.*', 'notifications.*') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*')) main-content-with-sidebar @endif @endauth">
+        <main class="@auth @if(!$pkClientSpaceVisible && !request()->routeIs('feed', 'feed.professionals', 'demand.*', 'demands.*', 'client-activity.*', 'messages.*', 'employment.*', 'notifications.*', 'client.dashboard') && !request()->routeIs('feed.mockup') && !request()->routeIs('feed.mockup.preview') && !request()->routeIs('profile.*') && !request()->is('/') && !request()->is('ads*')) main-content-with-sidebar @endif @endauth">
             @if(session('info'))
                 <div class="pk-flash-info" role="status">
                     <i class="fas fa-circle-info"></i>

@@ -9,13 +9,18 @@ use Illuminate\Http\Request;
  * Navigation unique de l'espace particulier.
  *
  * Une page = un nom, partout : onglets « Mon espace » (tablette et ordinateur),
- * barre du bas (téléphone), en-tête, menu du compte. Le bouton de publication
+ * barre du bas (téléphone), en-tête, menu du compte. Depuis le 23/11/2026, les
+ * onglets ne sont plus sur l'accueil : ils sont rangés derrière le bouton
+ * « Tableau de bord » de l'en-tête, et restent en haut des pages de l'espace
+ * (Mes demandes, Messages, Favoris, Emploi). Le bouton de publication
  * suit le parcours : une demande pour un particulier, une offre pour un
  * prestataire, avec la même adresse dans l'en-tête et dans la barre du bas.
  */
 class ClientSpaceNavigation
 {
     public const HOME_LABEL = 'Accueil';
+
+    public const DASHBOARD_LABEL = 'Tableau de bord';
 
     public const REQUESTS_LABEL = 'Mes demandes';
 
@@ -39,8 +44,6 @@ class ClientSpaceNavigation
     public static function sections(): array
     {
         return [
-            ['key' => 'discover', 'label' => self::HOME_LABEL, 'icon' => 'far fa-compass', 'route' => 'feed',
-                'matches' => ['feed', 'feed.professionals', 'feed.mockup.preview']],
             ['key' => 'requests', 'label' => self::REQUESTS_LABEL, 'icon' => 'far fa-clipboard', 'route' => 'home',
                 'matches' => ['home', 'demands.tracking', 'client-activity.index', 'service-orders.index',
                     'demand.matching', 'proposals.compare']],
@@ -71,6 +74,32 @@ class ClientSpaceNavigation
             'url' => self::sectionUrl($section, $request, $user),
             'active' => $request->routeIs(...$section['matches']),
         ], $sections);
+    }
+
+    /**
+     * Entrée « Tableau de bord » de l'en-tête et du menu du compte : réservée au
+     * parcours particulier (un prestataire a son espace Pro).
+     *
+     * @return array{url: string, label: string, active: bool}|null
+     */
+    public static function dashboardEntry(Request $request, ?User $user, ?string $feedRole = null): ?array
+    {
+        if (! $user || self::role($request, $user, $feedRole) !== 'client') {
+            return null;
+        }
+
+        return ['url' => route('client.dashboard'), 'label' => self::DASHBOARD_LABEL,
+            'active' => $request->routeIs('client.dashboard')];
+    }
+
+    /**
+     * Pages du parcours particulier sans onglets (accueil, tableau de bord) : elles
+     * gardent le fond, la barre du bas et le bouton de publication en contour.
+     */
+    public static function isClientSurface(Request $request, ?User $user, ?string $feedRole = null): bool
+    {
+        return $user !== null && self::role($request, $user, $feedRole) === 'client'
+            && $request->routeIs('feed', 'feed.professionals', 'feed.mockup.preview', 'client.dashboard');
     }
 
     /**
@@ -137,6 +166,6 @@ class ClientSpaceNavigation
                 : route('employment.index');
         }
 
-        return route($section['route'], $section['key'] === 'discover' ? ['mode' => 'client'] : []);
+        return route($section['route']);
     }
 }

@@ -45,11 +45,14 @@ class FeedEmploymentCardTest extends TestCase
     {
         $reader = User::factory()->create(['city' => 'Mamoudzou', 'country' => 'Mayotte', 'postal_code' => '97600']);
 
-        $html = $this->actingAs($reader)->get(route('feed'))->assertOk()->getContent();
+        // L'onglet vit sur les pages de l'espace ; le tableau de bord mène à la même page.
+        $html = $this->actingAs($reader)->get(route('home'))->assertOk()->getContent();
         $tab = $this->xpath($html)->query('//a[@data-space-section="employment"]');
 
         $this->assertSame(1, $tab->length);
         $this->assertSame(route('employment.territory', ['territoire' => 'mayotte']), $tab->item(0)->getAttribute('href'));
+        $this->get(route('client.dashboard'))->assertOk()
+            ->assertSee(route('employment.territory', ['territoire' => 'mayotte']), false);
     }
 
     public function test_unknown_territory_links_to_the_general_job_page(): void
@@ -62,8 +65,9 @@ class FeedEmploymentCardTest extends TestCase
 
         $this->assertContains(route('employment.index'), $links);
         $this->assertStringNotContainsString('francetravail', implode(' ', $links));
+        $space = $this->get(route('home'))->assertOk()->getContent();
         $this->assertSame(route('employment.index'),
-            $this->xpath($html)->query('//a[@data-space-section="employment"]')->item(0)->getAttribute('href'));
+            $this->xpath($space)->query('//a[@data-space-section="employment"]')->item(0)->getAttribute('href'));
     }
 
     public function test_provider_feed_has_no_employment_card(): void

@@ -169,6 +169,8 @@ Route::middleware('auth')->group(function () {
 
 // Routes pour les annonces
 Route::middleware(['auth'])->group(function () {
+    // Tableau de bord du particulier : demandes, messages, favoris, emploi, alertes, compte.
+    Route::get('/tableau-de-bord', \App\Http\Controllers\ClientDashboardController::class)->name('client.dashboard');
     Route::get('/mes-demandes', DemandTrackingController::class)->name('demands.tracking');
     Route::get('/mes-demandes-et-missions', [ClientActivityController::class, 'index'])->name('client-activity.index');
     Route::get('/feed/client-activity', [ClientActivityController::class, 'refresh'])->name('client-activity.refresh');

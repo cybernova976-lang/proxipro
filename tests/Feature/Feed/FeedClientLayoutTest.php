@@ -32,10 +32,12 @@ class FeedClientLayoutTest extends TestCase
     {
         $client = $this->mayotteClient();
 
+        // L'accueil garde la barre du bas et le fond de l'espace, sans les onglets (rangés dans le tableau de bord).
         $this->actingAs($client)->get(route('feed'))->assertOk()
             ->assertSee('class="pk-tabbar"', false)
             ->assertSee('pk-route-feed', false)
-            ->assertSee('aria-label="Mon espace particulier"', false);
+            ->assertSee('has-client-space', false)
+            ->assertDontSee('aria-label="Mon espace particulier"', false);
 
         // Même modèle hors du feed : les deux navigations sont rendues, la feuille choisit.
         $this->actingAs($client)->get(route('messages.index'))->assertOk()

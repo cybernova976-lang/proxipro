@@ -116,7 +116,9 @@ class FeedHomeShowcaseFeatureTest extends TestCase
         $rail = substr($html, strpos($html, '<aside class="pk-rail"'));
         $this->assertStringNotContainsString('id="pkProviderList"', substr($rail, 0, strpos($rail, '</aside>')));
         $this->assertSame(1, substr_count($html, 'id="pkSearchForm"'));
-        $this->assertStringContainsString('aria-label="Mon espace particulier"', $html);
+        // Les onglets de l'espace ne sont plus sur l'accueil : le bouton « Tableau de bord » y mène.
+        $this->assertStringNotContainsString('aria-label="Mon espace particulier"', $html);
+        $this->assertStringContainsString('data-header-dashboard', $html);
 
     }
 

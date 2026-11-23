@@ -129,8 +129,16 @@ il répond à « où en suis-je et que dois-je faire maintenant ? ».
   sur les écrans plus étroits). La page de l'accueil fait 1500 px de large. Ne
   déplace jamais cette colonne sous les offres sur grand écran : le fondateur l'a
   refusé.
-- La barre d'onglets « Mon espace particulier » est **centrée** (titre et onglets),
-  sur toutes les pages de l'espace : elle ne bouge pas d'une page à l'autre.
+- **Tableau de bord du particulier** (`/tableau-de-bord`, décision du 23/11/2026) : tout
+  ce qui n'est pas la découverte des services y est rangé, regroupé par nature (mon
+  espace, alertes et notifications, emploi, compte, aide). Le bouton « Tableau de bord »
+  est dans l'en-tête, sur ordinateur comme sur téléphone. Vue :
+  `resources/views/client-dashboard`, styles : `public/css/client-dashboard.css`.
+- **Plus d'onglets sur l'accueil.** La barre « Mon espace particulier » (Mes demandes,
+  Messages, Favoris, Emploi), centrée, ne s'affiche que sur les pages de l'espace.
+- **Sur téléphone et tablette (moins de 1180 px), l'accueil n'affiche pas les blocs
+  Emploi et Repères** : ils ne doivent jamais passer sous les offres ; ils sont dans
+  le tableau de bord. Sur ordinateur, ils restent dans la colonne de gauche.
 - **Esthétique d'abord** : le fondateur juge le rendu, pas seulement la fonction.
   Avant de proposer un déploiement de mise en page, regarde la page à sa largeur
   d'écran (1920 px dans son Chrome) et envoie-lui une capture.

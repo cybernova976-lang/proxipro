@@ -1088,8 +1088,21 @@
   .pk-feed--client .pk-welcome { grid-column: 2; grid-row: 1; }
   .pk-feed--client .pk-main { grid-column: 2; grid-row: 2; }
   .pk-feed--client .pk-rail { grid-template-columns: minmax(0, 1fr); grid-column: 1; grid-row: 1 / span 2; position: sticky; top: 88px; align-self: start; max-height: calc(100dvh - 104px); overflow: auto; }
-  /* La barre d'onglets « Mon espace particulier » suit la largeur de l'accueil (feed.css n'est chargé que sur l'accueil). */
-  .pk-client-space .pk-client-space__inner { max-width: 1500px; padding-inline: 24px; }
+}
+/* En dessous de 1180 px, la colonne Emploi / Repères ne passe plus sous les offres : ces
+   blocs sont rangés dans le tableau de bord (bouton de l'en-tête). */
+@media (max-width: 1179.98px) {
+  .pk-feed--client .pk-rail { display: none; }
+}
+/* Téléphone : le titre des prestataires prend toute la largeur (le lien passe dessous),
+   et la photo garde les proportions de la version ordinateur. */
+@media (max-width: 639.98px) {
+  .pk-feed--client .pk-main .pk-provider-discovery .pk-sechead { flex-direction: column; align-items: stretch; gap: 4px; }
+  .pk-feed--client .pk-main .pk-provider-discovery .pk-sechead__more { align-self: flex-start; margin-left: 0; }
+  .pk-feed--client .pk-main .pk-provider-discovery .pk-pro { flex-basis: 86%; }
+  .pk-feed--client .pk-main .pk-provider-discovery .pk-pro__identity { grid-template-columns: 96px minmax(0, 1fr); gap: 14px; }
+  .pk-feed--client .pk-main .pk-provider-discovery .pk-pro__visual,
+  .pk-feed--client .pk-main .pk-provider-discovery .pk-pro__visual img { width: 96px; height: 96px; min-height: 96px; border-radius: 20px; }
 }
 /* Cartes d'offres compactes : la hauteur suit le contenu, sans ligne vide réservée. */
 .pk-feed--client .pk-ad__body { gap: 8px; padding: 14px 16px 16px; }
