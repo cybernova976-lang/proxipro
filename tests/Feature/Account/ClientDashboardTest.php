@@ -26,28 +26,35 @@ class ClientDashboardTest extends TestCase
         $this->get(route('client.dashboard'))->assertRedirect(route('login'));
 
         $member = $this->member();
-        $response = $this->actingAs($member)->get(route('client.dashboard'))->assertOk()
+        $this->actingAs($member)->get(route('client.dashboard'))->assertOk()
             ->assertSee('Tableau de bord')
-            // Les cinq groupes, dans l'ordre.
-            ->assertSeeInOrder(['Mon espace', 'Alertes et notifications', 'Emploi', 'Mon compte', 'Aide'])
-            // Les anciens onglets de l'accueil y sont rangés.
+            ->assertViewHas('section', 'activite')
             ->assertSee(route('home'), false)->assertSee(route('messages.index'), false)
             ->assertSee(route('saved-ads.index'), false)->assertSee(route('service-orders.index'), false)
+            ->assertDontSee('pkBoardAlertsTitle')->assertDontSee('data-client-space', false)
+            ->assertDontSee('id="sidebarNav"', false)->assertSee('class="pk-tabbar"', false);
+        $this->get(route('client.dashboard', ['rubrique' => 'compte']))->assertOk()
             ->assertSee(route('employment.territory', ['territoire' => 'mayotte']), false)
-            // Les blocs « Emploi » et « Repères » de l'accueil aussi.
             ->assertSee('Proposer mes services')->assertSee('Comment les offres sont classées')
+            ->assertSee(route('billing.index'), false)->assertSee(route('profile.show'), false);
+        $this->get(route('client.dashboard', ['rubrique' => 'alertes']))->assertOk()
             ->assertSee(route('saved-searches.index'), false)->assertSee(route('notifications.index'), false)
-            ->assertSee(route('settings.index').'#notifications', false)
-            ->assertSee(route('billing.index'), false)->assertSee(route('profile.show'), false)
-            // Ni onglets, ni ancienne barre latérale : le sommaire les remplace.
-            ->assertDontSee('data-client-space', false)->assertDontSee('id="sidebarNav"', false)
-            ->assertSee('has-client-space', false)->assertSee('class="pk-tabbar"', false);
+            ->assertSee(route('settings.index').'#notifications', false);
+        $this->get(route('client.dashboard', ['rubrique' => 'inconnue']))->assertOk()->assertViewHas('section', 'activite');
 
-        // Aucune feuille de style ni script dans la vue.
-        $content = $response->getContent();
-        $start = strpos($content, 'data-client-dashboard');
-        $end = strpos($content, 'pk-legal-footer', $start) ?: strlen($content);
-        $this->assertStringNotContainsString('<style', substr($content, $start, $end - $start));
+        foreach (['activite', 'alertes', 'compte'] as $section) {
+            $url = route('client.dashboard', $section === 'activite' ? [] : ['rubrique' => $section]);
+            $response = $this->get($url)->assertOk();
+            $dom = new \DOMDocument;
+            @$dom->loadHTML($response->getContent());
+            $xpath = new \DOMXPath($dom);
+            $links = $xpath->query('//*[@data-client-dashboard]//a/@href');
+            $urls = array_map(fn ($attr) => $attr->value, iterator_to_array($links));
+            $this->assertSame($urls, array_values(array_unique($urls)));
+            $current = $xpath->query('//*[@data-client-dashboard]//nav//a[@aria-current="page"]');
+            $this->assertCount(1, $current);
+            $this->assertSame($url, $current->item(0)->getAttribute('href'));
+        }
     }
 
     public function test_every_counter_is_measured_on_the_account(): void
@@ -65,16 +72,22 @@ class ClientDashboardTest extends TestCase
         $member->savedSearches()->create(['name' => 'Alerte en pause', 'service_type' => 'offres', 'is_active' => false, 'filters' => []]);
 
         $this->actingAs($member)->get(route('client.dashboard'))->assertOk()
-            ->assertViewHas('tiles', fn (array $tiles) => array_column($tiles, 'value', 'label') === [
-                'Demandes en cours' => 1, 'Messages non lus' => 0, 'Favoris' => 1, 'Alertes actives' => 1,
-            ])
-            ->assertSee('Réparer une fuite')->assertSee('En attente de propositions')
+            ->assertViewHas('requestsTotal', 1)->assertViewHas('unreadMessages', 0)->assertViewHas('favoritesCount', 1)
+            ->assertSee('Réparer une fuite')->assertSee('En attente de propositions');
+        $alertsUrl = route('client.dashboard', ['rubrique' => 'alertes']);
+        $this->get($alertsUrl)->assertOk()->assertViewHas('activeAlertCount', 1)
             ->assertSee('Nouvelles offres à Mayotte')->assertSee('Alerte en pause')->assertSee('En pause');
 
-        // Compte neuf : des zéros réels, et l'invitation à publier.
+        // Le nombre total reste exact quand seules trois alertes sont affichées.
+        foreach (range(1, 4) as $i) {
+            $member->savedSearches()->create(['name' => 'Recherche '.$i, 'is_active' => true, 'service_type' => 'offres', 'filters' => []]);
+        }
+        $this->get($alertsUrl)->assertViewHas('activeAlertCount', 5)
+            ->assertViewHas('savedSearches', fn ($searches) => $searches->count() === 3);
         $this->actingAs($this->member())->get(route('client.dashboard'))->assertOk()
-            ->assertViewHas('tiles', fn (array $tiles) => array_sum(array_column($tiles, 'value')) === 0)
-            ->assertSee('Aucune demande en cours.')->assertSee('Aucune alerte pour le moment')
+            ->assertViewHas('requestsTotal', 0)->assertViewHas('favoritesCount', 0)
+            ->assertSee('Aucune demande en cours.');
+        $this->get($alertsUrl)->assertOk()->assertSee('Aucune alerte pour le moment')
             ->assertSee('Me prévenir des nouvelles offres à Mayotte');
     }
 
@@ -86,7 +99,8 @@ class ClientDashboardTest extends TestCase
         $foreign = User::factory()->create()->savedSearches()->create(['name' => 'Alerte du voisin',
             'service_type' => 'offres', 'is_active' => true, 'filters' => []]);
 
-        $this->actingAs($member)->get(route('client.dashboard'))->assertOk()
+        $alertsUrl = route('client.dashboard', ['rubrique' => 'alertes']);
+        $this->actingAs($member)->get($alertsUrl)->assertOk()
             ->assertSee(route('saved-searches.destroy', $alert), false)
             ->assertSee('aria-label="Arrêter l’alerte Plombier à Mamoudzou"', false)
             ->assertSee('data-pk-confirm="Arrêter l’alerte', false)
@@ -94,10 +108,10 @@ class ClientDashboardTest extends TestCase
             ->assertSee('data-push-disable', false)
             ->assertDontSee('Alerte du voisin');
 
-        $this->from(route('client.dashboard'))->delete(route('saved-searches.destroy', $alert))
-            ->assertRedirect(route('client.dashboard'))->assertSessionHas('success', 'Alerte supprimée.');
+        $this->from($alertsUrl)->delete(route('saved-searches.destroy', $alert))
+            ->assertRedirect($alertsUrl)->assertSessionHas('success', 'Alerte supprimée.');
         $this->assertNull($alert->fresh());
-        $this->get(route('client.dashboard'))->assertOk()->assertDontSee('Plombier à Mamoudzou');
+        $this->get($alertsUrl)->assertOk()->assertDontSee('Plombier à Mamoudzou');
 
         // L'alerte d'un autre membre ne s'arrête pas d'ici.
         $this->delete(route('saved-searches.destroy', $foreign))->assertForbidden();

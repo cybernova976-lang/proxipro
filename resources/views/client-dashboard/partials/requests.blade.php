@@ -1,10 +1,8 @@
 {{-- Les demandes et missions en cours (trois au plus), avec leur état réel. --}}
 <section class="pk-board-card" aria-labelledby="pkBoardRequestsTitle">
     <div class="pk-board-card__head">
-        <h2 id="pkBoardRequestsTitle"><i class="far fa-clipboard" aria-hidden="true"></i> Mes demandes en cours</h2>
-        @if($requestsTotal > 0)
-            <a class="pk-board-card__more" href="{{ route('home') }}">Tout voir <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
-        @endif
+        <h2 id="pkBoardRequestsTitle">Demandes en cours <span class="pk-board-count">{{ $requestsTotal }}</span></h2>
+        <a class="pk-board-card__more pk-board-in-tabbar" href="{{ route('home') }}">Toutes mes demandes <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
     </div>
 
     @if($requests->isNotEmpty())
@@ -24,6 +22,5 @@
         </ul>
     @else
         <p class="pk-board-empty">Aucune demande en cours.</p>
-        <a class="pk-board-btn" href="{{ route('demand.create') }}"><i class="fas fa-plus" aria-hidden="true"></i> Publier une demande</a>
     @endif
 </section>

@@ -11,7 +11,7 @@
         </a>
     </div>
 
-    <h3 class="pk-board-sub">Mes alertes</h3>
+    <h3 class="pk-board-sub">Mes alertes <span class="pk-board-meta">({{ $activeAlertCount }} {{ $activeAlertCount > 1 ? 'actives' : 'active' }})</span></h3>
     @if($savedSearches->isNotEmpty())
         <ul class="pk-board-rows" data-board-alerts>
             @foreach($savedSearches as $alert)
@@ -33,7 +33,7 @@
             @endforeach
         </ul>
     @else
-        <p class="pk-board-empty">Aucune alerte pour le moment : vous n’êtes prévenu d’aucune nouvelle annonce.</p>
+        <p class="pk-board-empty">Aucune alerte pour le moment.</p>
     @endif
 
     <div class="pk-board-actions">
@@ -46,9 +46,7 @@
                 <button type="submit" class="pk-board-btn"><i class="far fa-bell" aria-hidden="true"></i> Me prévenir des nouvelles offres {{ $territory->withPreposition() }}</button>
             </form>
         @endif
-        @if($savedSearches->isNotEmpty())
-            <a class="pk-board-textlink" href="{{ route('saved-searches.index') }}">Gérer toutes mes alertes</a>
-        @endif
+        <a class="pk-board-textlink" href="{{ route('saved-searches.index') }}">Gérer mes alertes</a>
     </div>
 
     <h3 class="pk-board-sub">Notifications sur cet appareil</h3>
