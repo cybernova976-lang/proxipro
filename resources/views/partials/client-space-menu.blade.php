@@ -24,8 +24,15 @@
     ];
 @endphp
 <div class="pk-space-bar" data-space-bar>
-    <button type="button" class="pk-space-bar__toggle" data-space-menu-open aria-controls="pkSpaceMenu" aria-expanded="false">
-        <i class="fas fa-bars" aria-hidden="true"></i><span>Menu</span>
+    {{-- Languette accrochée au bord gauche de l'écran : elle montre le bord du panneau caché,
+         avec l'icône « ouvrir le panneau » (un cadre, sa colonne de gauche et une flèche). --}}
+    <button type="button" class="pk-space-bar__toggle" data-space-menu-open aria-controls="pkSpaceMenu" aria-expanded="false" title="Ouvrir le menu du tableau de bord">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+            <path d="M9 3v18"></path>
+            <path d="m13.5 8.5 3.5 3.5-3.5 3.5"></path>
+        </svg>
+        <span>Menu</span>
     </button>
     <p class="pk-space-bar__where">
         @if($pkSpaceGroupTitle)
