@@ -24,6 +24,31 @@ return [
         ['Une serrure bloque', 'Réparer une serrure', 'Ma serrure bloque. Je cherche un serrurier pour la vérifier et la réparer.'],
         ['Changer une serrure', 'Changer une serrure', 'Je souhaite faire remplacer une serrure et connaître le coût de l’intervention.'],
     ],
+    'Maçon' => [
+        ['Petits travaux de maçonnerie', 'Petits travaux de maçonnerie', 'Je cherche un maçon pour des petits travaux. Je préciserai le chantier dans ma demande.'],
+    ],
+    'Bétonnage / Coulage de dalle' => [
+        ['Couler une dalle', 'Couler la dalle de ma maison', 'Je cherche des personnes pour couler la dalle de ma maison. Je préciserai la surface et la date dans ma demande.'],
+        ['Renfort le jour du bétonnage', 'Main-d’œuvre pour le jour du bétonnage', 'Je prépare le bétonnage de ma dalle et j’ai besoin de main-d’œuvre pour la journée.'],
+    ],
+    'Montée de matériaux sur le toit' => [
+        ['Monter les matériaux', 'Monter les matériaux sur le toit', 'J’ai besoin d’aide pour monter le sable, le gravier, le ciment, le fer et le bois sur le toit avant le bétonnage.'],
+    ],
+    'Coffrage' => [
+        ['Préparer le coffrage', 'Préparer le coffrage de ma dalle', 'Je cherche une personne pour poser le coffrage et les étais avant de couler la dalle.'],
+    ],
+    'Ferraillage' => [
+        ['Poser le ferraillage', 'Poser le ferraillage avant le bétonnage', 'Je cherche une personne pour préparer et attacher le ferraillage avant le bétonnage.'],
+    ],
+    'Crépissage / Enduit' => [
+        ['Crépir des murs', 'Crépir les murs de ma maison', 'Je souhaite faire crépir les murs de ma maison. Je préciserai s’il s’agit de l’intérieur ou de l’extérieur.'],
+    ],
+    'Montage de murs en parpaings' => [
+        ['Monter des murs', 'Monter des murs en parpaings', 'Je cherche un maçon pour monter des murs en parpaings.'],
+    ],
+    'Mur de clôture' => [
+        ['Construire un mur de clôture', 'Construire un mur de clôture', 'Je souhaite faire construire un mur de clôture autour de mon terrain.'],
+    ],
     'Jardinier' => [
         ['Tondre la pelouse', 'Tondre ma pelouse', 'J’ai besoin d’aide pour tondre la pelouse de mon jardin.'],
         ['Tailler une haie', 'Tailler une haie', 'Je cherche une personne pour tailler une haie.'],

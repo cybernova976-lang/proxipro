@@ -227,7 +227,11 @@
     const catsData = {
         'Bricolage & Travaux': {
             icon: '🔧',
-            subs: ['Plombier','Électricien','Peintre en bâtiment','Menuisier','Carreleur','Maçon','Serrurier','Climaticien','Chauffagiste','Couvreur / Zingueur','Plaquiste','Installateur panneaux solaires','Spécialiste rénovation','Poseur de parquet','Façadier','Vitrier','Charpentier','Isolation thermique','Domoticien','Installateur alarmes','Plâtrier','Ferronnier','Terrassier']
+            subs: ['Plombier','Électricien','Peintre en bâtiment','Menuisier','Carreleur','Serrurier','Climaticien','Chauffagiste','Couvreur / Zingueur','Plaquiste','Installateur panneaux solaires','Spécialiste rénovation','Poseur de parquet','Façadier','Vitrier','Charpentier','Isolation thermique','Domoticien','Installateur alarmes','Plâtrier','Ferronnier','Terrassier']
+        },
+        'Maçonnerie & Gros œuvre': {
+            icon: '🧱',
+            subs: {!! \Illuminate\Support\Js::encode(config('categories.services')['Maçonnerie & Gros œuvre']['subcategories']) !!}
         },
         'Jardinage': {
             icon: '🌿',

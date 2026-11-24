@@ -29,12 +29,27 @@ return [
             'description' => 'Plomberie, électricité, peinture...',
             'subcategories' => [
                 'Plombier', 'Électricien', 'Peintre en bâtiment', 'Menuisier', 'Carreleur',
-                'Maçon', 'Serrurier', 'Climaticien', 'Chauffagiste',
+                'Serrurier', 'Climaticien', 'Chauffagiste',
                 'Installateur panneaux solaires', 'Spécialiste rénovation', 'Plaquiste',
                 'Façadier', 'Couvreur / Zingueur', 'Charpentier',
                 'Poseur de fenêtres / Vitrier', 'Installateur domotique',
                 'Poseur de cuisine', 'Poseur de parquet', 'Terrassier',
                 'Ferronnier', 'Étanchéiste',
+            ],
+        ],
+        // Demande du fondateur (24/11/2026) : à Mayotte, les maisons sont construites en
+        // béton et la maçonnerie est très demandée, du transport des matériaux sur le toit
+        // jusqu'au coulage de la dalle et au crépissage des murs.
+        'Maçonnerie & Gros œuvre' => [
+            'icon' => '🧱',
+            'fa_icon' => 'fas fa-trowel-bricks',
+            'color' => '#78716c',
+            'description' => 'Bétonnage, coffrage, ferraillage, crépissage...',
+            'subcategories' => [
+                'Maçon', 'Bétonnage / Coulage de dalle', 'Montée de matériaux sur le toit',
+                'Coffrage', 'Ferraillage', 'Montage de murs en parpaings',
+                'Crépissage / Enduit', 'Fondations', 'Chape béton', 'Mur de clôture',
+                'Escalier en béton', 'Démolition', 'Aide-maçon / Manœuvre',
             ],
         ],
         'Jardinage & Extérieur' => [

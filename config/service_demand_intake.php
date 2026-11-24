@@ -3,6 +3,7 @@
 return [
     'category_profiles' => [
         'Bricolage & Travaux' => 'property_work',
+        'Maçonnerie & Gros œuvre' => 'masonry_work',
         'Jardinage & Extérieur' => 'outdoor_work',
         'Nettoyage & Entretien' => 'recurring_help',
         'Aide à domicile' => 'recurring_help',
@@ -49,6 +50,35 @@ return [
                         'business' => 'Local professionnel',
                         'outdoor' => 'Terrain ou extérieur',
                         'unknown' => 'À préciser avec le prestataire',
+                    ],
+                ],
+            ],
+        ],
+        'masonry_work' => [
+            'introduction' => 'Le type de chantier et les matériaux déjà sur place aident les maçons à prévoir la main-d’œuvre et la durée.',
+            'fields' => [
+                'project_type' => [
+                    'label' => 'De quel chantier s’agit-il ?',
+                    'type' => 'select',
+                    'required' => true,
+                    'placeholder' => 'Choisir le type de chantier',
+                    'options' => [
+                        'new_build' => 'Construction neuve',
+                        'extension' => 'Agrandissement ou étage supplémentaire',
+                        'repair' => 'Réparation ou reprise',
+                        'unknown' => 'À préciser avec le prestataire',
+                    ],
+                ],
+                'materials_on_site' => [
+                    'label' => 'Les matériaux sont-ils déjà sur place ?',
+                    'type' => 'select',
+                    'required' => true,
+                    'placeholder' => 'Choisir une réponse',
+                    'options' => [
+                        'yes' => 'Oui, tout est sur place',
+                        'partial' => 'En partie',
+                        'no' => 'Non, le prestataire doit les fournir',
+                        'unknown' => 'À déterminer avec le prestataire',
                     ],
                 ],
             ],
