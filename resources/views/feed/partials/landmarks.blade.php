@@ -1,8 +1,8 @@
 {{--
     Zone 7 · repères du rail client.
     « À faire » n'apparaît que si une ligne est réellement due (données du
-    compte préparées par FeedController dans $pkTodo). Un seul compteur, demandé
-    par le fondateur : le nombre d'alertes actives sur « Mes alertes ».
+    compte préparées par FeedController dans $pkTodo). Les raccourcis donnent
+    accès au profil du membre et à la gestion de ses annonces.
 --}}
 @php
     $pkIdentityLine = match (true) {
@@ -16,7 +16,7 @@
     // Promotion de l'Espace Pro (demande du fondateur, 24/11/2026), pour les membres qui
     // ne sont pas encore prestataires. Ce qu'elle annonce est vrai dans le code : 2 devis et
     // 2 factures offerts à tout membre, sans justificatif (App\Services\CommercialDocumentAllowance).
-    // Écrit en lettres : la zone n'affiche aucun chiffre hors du compteur des alertes.
+    // Écrit en lettres pour garder la zone sans compteur.
     $pkShowProPromo = ! \App\Support\ClientSpaceNavigation::proEntry(auth()->user())['is_provider'];
 @endphp
 <details class="pk-rcard pk-landmarks" open>
@@ -61,9 +61,8 @@
     @endif
 
     <ul class="pk-landmarks__list pk-landmarks__list--links">
-        <li><a class="pk-landmarks__item" href="{{ route('saved-ads.index') }}"><i class="far fa-heart" aria-hidden="true"></i><span>Mes favoris</span></a></li>
-        <li><a class="pk-landmarks__item" href="{{ route('saved-searches.index') }}"><i class="far fa-bell" aria-hidden="true"></i><span>Mes alertes</span><span class="pk-landmarks__count" data-pk-alert-count @if($pkAlertCount < 1) hidden @endif><span class="visually-hidden">Alertes actives : </span><span data-pk-alert-count-value>{{ $pkAlertCount > 0 ? $pkAlertCount : '' }}</span></span></a></li>
-        <li><a class="pk-landmarks__item" href="{{ route('legal.platform-rules') }}#classement"><i class="fas fa-sort-amount-down" aria-hidden="true"></i><span>Comment les offres sont classées</span></a></li>
+        <li><a class="pk-landmarks__item" href="{{ route('profile.show') }}"><i class="far fa-user" aria-hidden="true"></i><span>Profil</span></a></li>
+        <li><a class="pk-landmarks__item" href="{{ route('ads.myads') }}"><i class="fas fa-bullhorn" aria-hidden="true"></i><span>Mes annonces</span></a></li>
     </ul>
 
     @if($pkShowProPromo)
