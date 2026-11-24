@@ -1132,6 +1132,16 @@
 .pk-landmarks__item:focus-visible { outline: 3px solid var(--pk-600); outline-offset: 1px; }
 .pk-landmarks__tone--warn > i, .pk-landmarks__tone--warn { color: var(--pk-warn); }
 .pk-landmarks__tone--info > i { color: var(--pk-violet); }
+/* Promotion de l'Espace Pro, dans les repères d'un membre qui n'est pas prestataire. */
+.pk-landmarks__pro { display: grid; gap: 8px; margin: 4px 16px 14px; padding: 14px; border: 1px solid var(--pk-200); border-radius: 14px; background: linear-gradient(135deg, var(--pk-50), #f5f3ff); color: var(--pk-950); text-decoration: none; transition: border-color .15s, box-shadow .15s; }
+.pk-landmarks__pro:hover { border-color: var(--pk-300); box-shadow: 0 6px 16px rgba(49, 46, 129, .10); color: var(--pk-950); text-decoration: none; }
+.pk-landmarks__pro:focus-visible { outline: 3px solid var(--pk-600); outline-offset: 2px; }
+.pk-landmarks__pro-icon { flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 7px; background: #fff; color: var(--pk-violet); font-size: .7rem; letter-spacing: 0; }
+.pk-landmarks__pro-body { display: grid; gap: 4px; min-width: 0; }
+.pk-landmarks__pro-eyebrow { display: flex; align-items: center; gap: 8px; color: var(--pk-violet); font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.pk-landmarks__pro strong { font-size: .95rem; font-weight: 800; line-height: 1.3; text-wrap: balance; }
+.pk-landmarks__pro-text { color: var(--pk-ink-2); font-size: .78rem; line-height: 1.45; }
+.pk-landmarks__pro-cta { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; color: var(--pk-700); font-size: .8rem; font-weight: 750; }
 .pk-landmarks__how { margin: 0 16px 14px; border-top: 1px solid var(--pk-100); }
 .pk-landmarks__how > summary { min-height: 44px; padding: 12px 0 4px; cursor: pointer; color: var(--pk-700); font-size: .82rem; font-weight: 700; }
 .pk-landmarks__how .pk-trust, .pk-landmarks__how .pk-guides { margin-top: 10px; box-shadow: none; }

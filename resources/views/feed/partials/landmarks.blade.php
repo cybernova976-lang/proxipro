@@ -13,6 +13,10 @@
         default => null,
     };
     $pkHasTodo = ! empty($pkTodo) || $pkIdentityLine !== null;
+    // Promotion de l'Espace Pro (demande du fondateur, 24/11/2026), pour les membres qui
+    // ne sont pas encore prestataires. Ce qu'elle annonce est vrai dans le code : devis et
+    // factures sans abonnement ni crédits, sans nombre limité (page quote-tool.landing).
+    $pkShowProPromo = ! \App\Support\ClientSpaceNavigation::proEntry(auth()->user())['is_provider'];
 @endphp
 <details class="pk-rcard pk-landmarks" open>
     <summary>
@@ -60,6 +64,20 @@
         <li><a class="pk-landmarks__item" href="{{ route('saved-searches.index') }}"><i class="far fa-bell" aria-hidden="true"></i><span>Mes alertes</span><span class="pk-landmarks__count" data-pk-alert-count @if($pkAlertCount < 1) hidden @endif><span class="visually-hidden">Alertes actives : </span><span data-pk-alert-count-value>{{ $pkAlertCount > 0 ? $pkAlertCount : '' }}</span></span></a></li>
         <li><a class="pk-landmarks__item" href="{{ route('legal.platform-rules') }}#classement"><i class="fas fa-sort-amount-down" aria-hidden="true"></i><span>Comment les offres sont classées</span></a></li>
     </ul>
+
+    @if($pkShowProPromo)
+        <a class="pk-landmarks__pro" href="{{ route('quote-tool.landing') }}" data-pk-pro-promo>
+            <span class="pk-landmarks__pro-eyebrow">
+                <span class="pk-landmarks__pro-icon" aria-hidden="true"><i class="fas fa-file-invoice"></i></span>
+                Espace Pro
+            </span>
+            <span class="pk-landmarks__pro-body">
+                <strong>Éditez vos devis et factures gratuitement</strong>
+                <span class="pk-landmarks__pro-text">Sans abonnement ni crédits. Il suffit d’activer votre profil prestataire.</span>
+                <span class="pk-landmarks__pro-cta">Découvrir l’Espace Pro <i class="fas fa-arrow-right" aria-hidden="true"></i></span>
+            </span>
+        </a>
+    @endif
 
     <details class="pk-landmarks__how">
         <summary>Comment ça marche ?</summary>

@@ -2,12 +2,13 @@
 
 return [
     'countries' => [
+        // Ordre des listes de localisation (décision du fondateur, 24/11/2026) : France, Mayotte, La Réunion, puis les autres territoires d'outre-mer.
         'France' => '🇫🇷',
+        'Mayotte' => '🇾🇹',
+        'La Réunion' => '🇷🇪',
         'Guadeloupe' => '🇬🇵',
         'Martinique' => '🇲🇶',
         'Guyane' => '🇬🇫',
-        'La Réunion' => '🇷🇪',
-        'Mayotte' => '🇾🇹',
         'Allemagne' => '🇩🇪',
         'Autriche' => '🇦🇹',
         'Belgique' => '🇧🇪',
