@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ad;
+use App\Models\ServiceOrder;
 use App\Models\ServiceProposal;
 use App\Models\User;
 use App\Models\UserService;
@@ -871,7 +872,21 @@ class AdController extends Controller
         // Supprimer l'annonce effacerait ses commandes : on ne le fait jamais
         // tant qu'une commande est en cours ou doit être conservée.
         if ($ad->hasOpenOrders()) {
-            return redirect()->back()->with('info', 'Cette annonce porte une commande en cours : elle ne peut pas être supprimée. Terminez ou annulez d’abord la commande.');
+            // On mène directement à la commande, dans « Mes commandes » : ses boutons n'existent que là.
+            $openOrder = $ad->serviceOrders()->whereIn('status', ServiceOrder::OPEN_STATUSES)
+                ->where(fn ($orders) => $orders->where('buyer_id', Auth::id())->orWhere('seller_id', Auth::id()))
+                ->oldest('id')->first();
+            if (! $openOrder) {
+                return redirect()->back()->with('info', 'Cette annonce porte une commande en cours : elle ne peut pas être supprimée. Terminez ou annulez d’abord la commande.');
+            }
+
+            $openOrder->setRelation('ad', $ad);
+            $undo = $openOrder->status === ServiceOrder::STATUS_PENDING_ACCEPTANCE ? 'Refusez' : 'Annulez';
+            $message = $openOrder->isReservationOnDemand()
+                ? 'Cette demande a été réservée par erreur, comme si c’était une offre. '.$undo.' cette réservation ci-dessous : vous pourrez ensuite supprimer la demande.'
+                : 'Cette annonce porte une commande en cours. Terminez-la ou annulez-la ci-dessous : vous pourrez ensuite supprimer l’annonce.';
+
+            return redirect()->to(route('service-orders.index').'#order-'.$openOrder->id)->with('info', $message);
         }
         if ($ad->hasKeptOrders()) {
             $ad->update(['status' => 'inactive']);

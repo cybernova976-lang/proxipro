@@ -19,6 +19,7 @@ class ActivityDashboardService
             ->whereDoesntHave('serviceOrders', fn ($query) => $query->where('buyer_id', $user->id)
                 ->whereIn('status', [...ClientActivityService::ACTIVE_ORDER_STATUSES, ServiceOrder::STATUS_COMPLETED, ServiceOrder::STATUS_REFUNDED]))
             ->selectRaw("id, 'request' as kind, created_at as sort_at, CASE
+                WHEN EXISTS (SELECT 1 FROM service_orders WHERE service_orders.ad_id = ads.id AND service_orders.seller_id = ads.user_id AND service_orders.status IN ('pending_acceptance', 'awaiting_payment')) THEN 'action'
                 WHEN status NOT IN ('active', 'pending') OR expires_at < ? THEN 'closed'
                 WHEN status = 'active' AND EXISTS (SELECT 1 FROM service_proposals WHERE service_proposals.ad_id = ads.id AND service_proposals.status = 'pending') THEN 'action'
                 ELSE 'waiting' END as stage", [now()]);
@@ -56,7 +57,11 @@ class ActivityDashboardService
             ->orderByDesc('sort_at')->orderBy('kind')->orderByDesc('id')
             ->paginate(10, ['*'], 'page', $focused ? 1 : null)->withPath(route('home'))->appends(['etat' => $filter]);
         $ads = Ad::where('user_id', $user->id)->whereIn('id', $rows->getCollection()->where('kind', 'request')->pluck('id'))
-            ->withCount(['serviceProposals', 'serviceProposals as pending_proposals_count' => fn ($query) => $query->where('status', 'pending')])->get()->keyBy('id');
+            ->withCount(['serviceProposals', 'serviceProposals as pending_proposals_count' => fn ($query) => $query->where('status', 'pending')])
+            // Réservation faite par erreur sur la demande (ancienne version du site) : son auteur doit la refuser.
+            ->with(['serviceOrders' => fn ($query) => $query->with('buyer')->where('seller_id', $user->id)
+                ->whereIn('status', [ServiceOrder::STATUS_PENDING_ACCEPTANCE, ServiceOrder::STATUS_AWAITING_PAYMENT])->oldest('id')])
+            ->get()->keyBy('id');
         $bookings = ServiceOrder::where('buyer_id', $user->id)->whereIn('id', $rows->getCollection()->where('kind', 'order')->pluck('id'))->with('ad')->get()->keyBy('id');
         $rows->through(function ($row) use ($ads, $bookings) {
             $model = $row->kind === 'request' ? $ads[$row->id] : $bookings[$row->id];
@@ -73,10 +78,20 @@ class ActivityDashboardService
                 }
             }
 
+            $misdirected = $row->kind === 'request' ? $model->serviceOrders->first() : null;
+            if ($misdirected) {
+                [$undo, $order] = $misdirected->status === ServiceOrder::STATUS_PENDING_ACCEPTANCE ? ['refuser', 'Refusez'] : ['annuler', 'Annulez'];
+                $item['status'] = 'Réservation à '.$undo;
+                $item['description'] = ($misdirected->buyer?->name ?? 'Un membre').' a réservé cette demande par erreur, comme si c’était une offre. '
+                    .$order.' cette réservation : vous pourrez ensuite supprimer la demande si vous le souhaitez.';
+                $item['action_url'] = route('service-orders.index').'#order-'.$misdirected->id;
+                $item['action_label'] = ucfirst($undo).' la réservation';
+            }
+
             return $item + ['stage' => $row->stage, 'date' => $model->created_at,
                 'editable' => $row->kind === 'request' && $row->stage !== 'closed' ? route('ads.edit', $model) : null,
                 // Une demande se supprime depuis la liste ; AdController::destroy protège celles qui portent une commande.
-                'deletable' => $row->kind === 'request' ? route('ads.destroy', $model) : null];
+                'deletable' => $row->kind === 'request' && ! $misdirected ? route('ads.destroy', $model) : null];
         });
 
         return ['activityItems' => $rows, 'activityCounts' => $counts, 'activityFilter' => $filter,

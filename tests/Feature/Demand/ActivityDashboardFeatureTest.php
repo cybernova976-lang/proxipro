@@ -150,8 +150,10 @@ class ActivityDashboardFeatureTest extends TestCase
         $this->assertNull(Ad::find($mine->id));
         $this->get(route('home'))->assertOk()->assertDontSee('Besoin à supprimer');
 
-        // Une demande qui porte une commande en cours n'est jamais supprimée.
-        $this->from(route('home'))->delete(route('ads.destroy', $kept))->assertRedirect(route('home'));
+        // Une demande qui porte une commande en cours n'est jamais supprimée : on mène à cette commande.
+        $keptOrder = ServiceOrder::where('ad_id', $kept->id)->sole();
+        $this->from(route('home'))->delete(route('ads.destroy', $kept))
+            ->assertRedirect(route('service-orders.index').'#order-'.$keptOrder->id);
         $this->assertNotNull(Ad::find($kept->id));
 
         // La demande d'un autre membre non plus.

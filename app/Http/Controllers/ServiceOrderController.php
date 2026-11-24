@@ -38,7 +38,8 @@ class ServiceOrderController extends Controller
             ->get();
 
         // Rappel utile seulement s'il y a une commande en cours à encaisser.
-        $needsStripeConnectOnboarding = $ordersAsSeller->whereIn('status', ServiceOrder::OPEN_STATUSES)->isNotEmpty()
+        $needsStripeConnectOnboarding = $ordersAsSeller->whereIn('status', ServiceOrder::OPEN_STATUSES)
+            ->reject(fn (ServiceOrder $order) => $order->isReservationOnDemand())->isNotEmpty()
             && (! $user->stripe_connect_account_id || ! $user->stripe_connect_payouts_enabled);
 
         return view('service-orders.index', compact('ordersAsBuyer', 'ordersAsSeller', 'needsStripeConnectOnboarding'));
