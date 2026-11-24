@@ -39,6 +39,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Ces paramètres d'adresse désignent un enregistrement par son numéro. Sans cette
+        // règle, /ads/mine interrogeait PostgreSQL avec « mine » et répondait par une
+        // erreur 500 au lieu de « Page introuvable » (constaté le 24/11/2026).
+        \Illuminate\Support\Facades\Route::patterns(array_fill_keys([
+            'ad', 'serviceOrder', 'proSubscription', 'managedEmail', 'user', 'proposal', 'serviceReminder',
+            'professionalRealization', 'blockedEmail', 'stripeWebhookEvent', 'comment', 'transaction', 'savedSearch',
+        ], '[0-9]+'));
+
         // Cloche de l'en-tête : une notification d'une catégorie que le membre a coupée
         // n'y entre pas (App\Support\BellNotifications). Les autres canaux ne changent pas.
         Event::listen(\Illuminate\Notifications\Events\NotificationSending::class, function ($event) {
