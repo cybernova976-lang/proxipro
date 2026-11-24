@@ -76,6 +76,70 @@ class SubscriptionBillingSafetyTest extends TestCase
         $this->assertNotNull(User::find($user->id));
     }
 
+    public function test_account_deletion_ignores_a_customer_unknown_to_the_current_stripe_keys(): void
+    {
+        // Client et abonnement créés avec les clés de test, avant le passage en mode réel.
+        config(['services.stripe.secret' => 'sk_test_simulated']);
+        $user = User::factory()->create(['stripe_id' => 'cus_from_test_keys']);
+        $local = ProSubscription::create(['user_id' => $user->id, 'plan' => 'monthly', 'amount' => 9.99,
+            'status' => 'cancelled', 'stripe_status' => 'canceled', 'stripe_subscription_id' => 'sub_from_test_keys']);
+        $methods = [];
+        $http = Mockery::mock(ClientInterface::class);
+        $http->shouldReceive('request')->andReturnUsing(function ($method, $url) use (&$methods) {
+            $methods[] = strtolower($method);
+            $param = str_contains($url, '/subscriptions/') ? 'id' : 'customer';
+
+            return [json_encode(['error' => ['type' => 'invalid_request_error', 'code' => 'resource_missing',
+                'param' => $param, 'message' => 'No such resource']]), 404, []];
+        });
+        $original = ApiRequestor::httpClient();
+        ApiRequestor::setHttpClient($http);
+        try {
+            app(ProviderSubscriptionService::class)->cancelForAccountDeletion($user);
+        } finally {
+            ApiRequestor::setHttpClient($original);
+        }
+        // Lecture seule : aucune résiliation n'est tentée sur un client introuvable.
+        $this->assertNotContains('delete', $methods);
+        $this->assertSame('cancelled', $local->fresh()->status);
+        $this->assertFalse($local->fresh()->auto_renew);
+    }
+
+    public function test_account_deletion_still_stops_when_stripe_fails_for_another_reason(): void
+    {
+        config(['services.stripe.secret' => 'sk_test_simulated']);
+        $user = User::factory()->create(['stripe_id' => 'cus_account']);
+        $http = Mockery::mock(ClientInterface::class);
+        $http->shouldReceive('request')->andReturn([json_encode(['error' => ['type' => 'api_error',
+            'message' => 'Stripe indisponible']]), 500, []]);
+        $original = ApiRequestor::httpClient();
+        ApiRequestor::setHttpClient($http);
+        try {
+            $this->expectException(\Stripe\Exception\ApiErrorException::class);
+            app(ProviderSubscriptionService::class)->cancelForAccountDeletion($user);
+        } finally {
+            ApiRequestor::setHttpClient($original);
+        }
+    }
+
+    public function test_a_member_whose_stripe_customer_no_longer_exists_can_delete_the_account(): void
+    {
+        config(['services.stripe.secret' => 'sk_test_simulated']);
+        $user = User::factory()->create(['stripe_id' => 'cus_from_test_keys']);
+        $http = Mockery::mock(ClientInterface::class);
+        $http->shouldReceive('request')->andReturn([json_encode(['error' => ['type' => 'invalid_request_error',
+            'code' => 'resource_missing', 'param' => 'customer', 'message' => 'No such customer']]), 404, []]);
+        $original = ApiRequestor::httpClient();
+        ApiRequestor::setHttpClient($http);
+        try {
+            $this->actingAs($user)->post(route('settings.delete-account'), ['password' => 'password', 'confirm_delete' => '1'])
+                ->assertSessionDoesntHaveErrors();
+        } finally {
+            ApiRequestor::setHttpClient($original);
+        }
+        $this->assertNull(User::find($user->id));
+    }
+
     public function test_active_cancellation_keeps_paid_access_and_prevents_further_renewal(): void
     {
         config(['services.stripe.secret' => 'sk_test_simulated']);

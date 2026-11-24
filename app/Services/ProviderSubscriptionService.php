@@ -12,6 +12,7 @@ use DomainException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Stripe\Checkout\Session as StripeCheckoutSession;
+use Stripe\Exception\InvalidRequestException;
 use Stripe\StripeClient;
 
 class ProviderSubscriptionService
@@ -549,19 +550,40 @@ class ProviderSubscriptionService
         $client = $this->client();
         $remoteSubscriptions = [];
         if ($user->stripe_id) {
-            foreach ($this->openProviderCheckouts($client, $user->stripe_id, $user) as $session) {
-                $client->checkout->sessions->expire($session->id);
-            }
-            // Include a checkout whose webhook has not reached our database yet.
-            foreach ($client->subscriptions->all(['customer' => $user->stripe_id, 'status' => 'all', 'limit' => 100])->autoPagingIterator() as $remote) {
-                if ($this->managesStripeSubscription($remote)) {
-                    $remoteSubscriptions[$remote->id] = $remote;
+            try {
+                foreach ($this->openProviderCheckouts($client, $user->stripe_id, $user) as $session) {
+                    $client->checkout->sessions->expire($session->id);
                 }
+                // Include a checkout whose webhook has not reached our database yet.
+                foreach ($client->subscriptions->all(['customer' => $user->stripe_id, 'status' => 'all', 'limit' => 100])->autoPagingIterator() as $remote) {
+                    if ($this->managesStripeSubscription($remote)) {
+                        $remoteSubscriptions[$remote->id] = $remote;
+                    }
+                }
+            } catch (InvalidRequestException $exception) {
+                // Client créé avec d'autres clés (les clés de test d'avant le passage
+                // en mode réel) : Stripe répond « resource_missing ». Ce client n'a donc
+                // aucun abonnement à résilier avec les clés actuelles. Toute autre
+                // erreur bloque toujours la suppression.
+                if ($exception->getStripeCode() !== 'resource_missing') {
+                    throw $exception;
+                }
+                $remoteSubscriptions = [];
             }
         }
         foreach ($localSubscriptions as $local) {
-            if (! isset($remoteSubscriptions[$local->stripe_subscription_id])) {
+            if (isset($remoteSubscriptions[$local->stripe_subscription_id])) {
+                continue;
+            }
+            try {
                 $remoteSubscriptions[$local->stripe_subscription_id] = $client->subscriptions->retrieve($local->stripe_subscription_id);
+            } catch (InvalidRequestException $exception) {
+                if ($exception->getStripeCode() !== 'resource_missing') {
+                    throw $exception;
+                }
+                // Inconnu des clés actuelles : rien n'y sera jamais prélevé.
+                $local->update(['status' => 'cancelled', 'auto_renew' => false,
+                    'cancelled_at' => $local->cancelled_at ?? now(), 'ends_at' => now()]);
             }
         }
 
