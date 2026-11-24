@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\BellNotifications;
 use App\Models\Conversation;
 use App\Models\ManagedEmail;
 use App\Models\User;
@@ -77,6 +78,27 @@ class SettingsController extends Controller
 
         return redirect()->to(route('settings.index').'#notifications')
             ->with('success', 'Préférences enregistrées. Les communications désactivées en attente ont été annulées.');
+    }
+
+    /**
+     * Interrupteurs de la cloche : chaque catégorie proposée et non cochée est coupée.
+     * Une catégorie qui n'est pas proposée à ce membre garde son réglage.
+     */
+    public function updateBell(Request $request)
+    {
+        $user = Auth::user();
+        $offered = array_keys(BellNotifications::categoriesFor($user));
+        $request->validate(['bell' => ['sometimes', 'array'], 'bell.*' => ['in:1']]);
+        $kept = array_keys((array) $request->input('bell', []));
+
+        $muted = array_values(array_unique(array_merge(
+            array_diff((array) ($user->muted_bell_categories ?? []), $offered),
+            array_diff($offered, $kept),
+        )));
+        $user->forceFill(['muted_bell_categories' => $muted === [] ? null : $muted])->save();
+
+        return redirect()->to(route('settings.index').'#cloche')
+            ->with('success', 'Préférences de la cloche enregistrées.');
     }
 
     /**

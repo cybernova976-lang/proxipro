@@ -56,6 +56,13 @@
         </div>
     </div>
 
+    <h3 class="pk-board-sub">Dans la cloche</h3>
+    <a class="pk-board-row" href="{{ route('settings.index') }}#cloche">
+        <span class="pk-board-row__icon" aria-hidden="true"><i class="far fa-bell"></i></span>
+        <span class="pk-board-row__text"><strong>Choisir ce qui s’affiche dans la cloche</strong><small>Nouvelles annonces, propositions, mise en avant… Tout est activé au départ.</small></span>
+        <i class="fas fa-chevron-right pk-board-link__arrow" aria-hidden="true"></i>
+    </a>
+
     <h3 class="pk-board-sub">E-mails</h3>
     <a class="pk-board-row" href="{{ route('settings.index') }}#notifications">
         <span class="pk-board-row__icon" aria-hidden="true"><i class="far fa-envelope"></i></span>

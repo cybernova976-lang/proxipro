@@ -30,7 +30,7 @@
                     <button type="submit" class="pk-notifs__btn">Tout marquer comme lu</button>
                 </form>
             @endif
-            <a href="{{ route('settings.index') }}#notifications" class="pk-notifs__link">Régler mes notifications</a>
+            <a href="{{ route('settings.index') }}#cloche" class="pk-notifs__link">Régler mes notifications</a>
         </div>
     </header>
 

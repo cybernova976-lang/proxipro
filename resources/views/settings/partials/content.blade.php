@@ -23,13 +23,24 @@
         <div class="account-sections">
             <section id="notifications" class="account-section" aria-labelledby="notifications-title">
                 <h2 id="notifications-title">Choisir mes notifications</h2><p>Vous gardez la main. Ces préférences sont gratuites, quelle que soit votre formule.</p>
+                <h3 id="cloche" class="account-subtitle"><i class="fas fa-bell" aria-hidden="true"></i> Dans la cloche</h3>
+                <p class="account-lead">Ce qui s’affiche quand vous cliquez sur la cloche, en haut de chaque page. Tout est activé au départ.</p>
+                <form action="{{ route('settings.bell') }}" method="POST" data-bell-preferences>
+                    @csrf
+                    @foreach(\App\Support\BellNotifications::categoriesFor($user) as $pkBellKey => $pkBellCategory)
+                        <label class="account-choice" for="bell_{{ $pkBellKey }}"><span><strong>{{ $pkBellCategory['label'] }}</strong><small>{{ $pkBellCategory['hint'] }}</small></span><input type="checkbox" id="bell_{{ $pkBellKey }}" name="bell[{{ $pkBellKey }}]" value="1" @checked(! \App\Support\BellNotifications::isMuted($user, $pkBellKey))></label>
+                    @endforeach
+                    <p class="account-note">Toujours affichées dans la cloche : {{ \App\Support\BellNotifications::ALWAYS_SHOWN }}.</p>
+                    <button type="submit" class="btn btn-primary">Enregistrer la cloche</button>
+                </form>
+                <h3 class="account-subtitle"><i class="far fa-envelope" aria-hidden="true"></i> Par e-mail</h3>
                 <form action="{{ route('settings.notifications') }}" method="POST">
                     @csrf
                     <label class="account-choice" for="email_notifications"><span><strong>Notifications par email</strong><small>Messages, candidatures et suivi de votre activité. Ce réglage suspend aussi les newsletters et rappels ci-dessous.</small></span><input type="checkbox" id="email_notifications" name="email_notifications" value="1" @checked(old('email_notifications', $user->email_notifications))></label>
                     <label class="account-choice" for="draft_reminders_enabled"><span><strong>Rappel de demande inachevée</strong><small>Au maximum un rappel par brouillon, après 24 heures sans modification. Aucune publication automatique.</small></span><input type="checkbox" id="draft_reminders_enabled" name="draft_reminders_enabled" value="1" @checked(old('draft_reminders_enabled', $user->draft_reminders_enabled))></label>
                     <label class="account-choice" for="pro_notifications_email"><span><strong>Alertes de recherche et opportunités</strong><small>Les nouvelles annonces correspondant à mes recherches enregistrées ou à mes services.</small></span><input type="checkbox" id="pro_notifications_email" name="pro_notifications_email" value="1" @checked(old('pro_notifications_email', $user->pro_notifications_email))></label>
                     <label class="account-choice" for="newsletter_subscribed"><span><strong>Newsletters et nouveautés PROKEJEM</strong><small>Je souhaite recevoir les actualités, conseils et offres de la plateforme. Je peux me désinscrire depuis chaque newsletter.</small></span><input type="checkbox" id="newsletter_subscribed" name="newsletter_subscribed" value="1" @checked(old('newsletter_subscribed', $user->newsletter_subscribed))></label>
-                    <p class="account-note">Les messages nécessaires à la sécurité du compte et les communications de facturation restent distincts. Les notifications dans votre espace personnel restent disponibles.</p>
+                    <p class="account-note">Les messages nécessaires à la sécurité du compte et les communications de facturation restent distincts. La cloche se règle au-dessus.</p>
                     <button type="submit" class="btn btn-primary">Enregistrer mes préférences</button>
                 </form>
                 <div class="account-device">@include('partials.push-notification-controls')</div>

@@ -39,6 +39,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Cloche de l'en-tête : une notification d'une catégorie que le membre a coupée
+        // n'y entre pas (App\Support\BellNotifications). Les autres canaux ne changent pas.
+        Event::listen(\Illuminate\Notifications\Events\NotificationSending::class, function ($event) {
+            if ($event->channel === 'database' && ! \App\Support\BellNotifications::allows($event->notifiable, $event->notification)) {
+                return false;
+            }
+
+            return null;
+        });
+
         // Sessions en base : un signal d'arrière-plan qui n'a rien changé ne
         // réécrit pas la session (sinon il efface ce qu'une action vient d'y écrire).
         \Illuminate\Support\Facades\Session::extend('database', fn ($app) => new \App\Session\SignalAwareDatabaseSessionHandler(

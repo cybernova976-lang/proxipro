@@ -3905,8 +3905,13 @@
             margin: 0;
         }
         .notif-dropdown-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px 16px;
+            flex-wrap: wrap;
             text-align: center;
-            padding: 10px;
+            padding: 10px 14px;
             border-top: 1px solid #e2e8f0;
             background: #f8fafc;
         }
@@ -6982,6 +6987,7 @@
                                     </div>
                                     <div class="notif-dropdown-footer">
                                         <a href="{{ route('notifications.index') }}">Voir toutes mes notifications</a>
+                                        <a href="{{ route('settings.index') }}#cloche" data-bell-settings><i class="fas fa-sliders" aria-hidden="true"></i> Régler la cloche</a>
                                     </div>
                                 </div>
                             </div>

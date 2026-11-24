@@ -131,6 +131,21 @@
     margin: 0 0 12px;
 }
 
+/* Sous-titres de la section notifications : « Dans la cloche », « Par e-mail ». */
+.account-subtitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 22px 0 4px;
+    padding-top: 18px;
+    border-top: 1px solid #e0e7ff;
+    color: #312e81;
+    font-size: 1rem;
+    font-weight: 750;
+}
+.account-subtitle i { color: #4f46e5; font-size: .9rem; }
+.account-lead { margin: 0 0 8px; color: #64748b; font-size: .88rem; }
+
 .account-choice {
     display: flex;
     align-items: center;
