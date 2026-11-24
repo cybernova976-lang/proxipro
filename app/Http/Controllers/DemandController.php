@@ -220,7 +220,7 @@ class DemandController extends Controller
 
         if (! $request->user()->canPublishNewAd()) {
             return back()->withErrors([
-                'publication' => 'Vous avez atteint la limite de '.$request->user()->getMaxActiveAds().' annonces actives de votre compte. Archivez une annonce depuis Mes annonces et brouillons pour libérer une place. Votre brouillon est conservé.',
+                'publication' => 'Vous avez atteint la limite de '.$request->user()->getMaxActiveAds().' annonces actives de votre compte. Mettez une annonce hors ligne depuis Mes annonces pour libérer une place. Votre brouillon est conservé.',
             ])->withInput();
         }
 

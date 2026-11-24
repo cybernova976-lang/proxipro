@@ -22,8 +22,8 @@ class AdPublicationArchitectureFeatureTest extends TestCase
         $response = $this->actingAs($user)->get(route('ads.create'));
 
         $response->assertOk();
-        $response->assertSee('Demande de particulier');
-        $response->assertDontSee('Offre professionnelle');
+        $response->assertSee('Demande · je cherche un prestataire');
+        $response->assertDontSee('Offre · je présente mon activité');
         $response->assertDontSee('Vous proposez un service, une location de matériel, une promotion ou un recrutement.');
     }
 
@@ -37,8 +37,8 @@ class AdPublicationArchitectureFeatureTest extends TestCase
         $response = $this->actingAs($user)->get(route('ads.create'));
 
         $response->assertOk();
-        $response->assertSee('Demande de particulier');
-        $response->assertSee('Offre professionnelle');
+        $response->assertSee('Demande · je cherche un prestataire');
+        $response->assertSee('Offre · je présente mon activité');
     }
 
     public function test_mobile_category_grid_uses_columns_that_fit_the_viewport(): void

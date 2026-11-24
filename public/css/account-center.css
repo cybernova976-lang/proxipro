@@ -353,9 +353,22 @@
         padding: 18px;
     }
     .publication-actions>.btn,.publication-actions>form {
-        flex: 1;
+        flex: 1 1 auto;
     }
-    .publication-actions button {
+    .publication-actions .btn {
         width: 100%;
+        white-space: nowrap;
     }
+}
+
+/* Type d'annonce (offres / demandes) : sélection discrète, l'état garde la couleur pleine. */
+.publication-types {
+    margin-bottom: 0;
+}
+
+.publication-types [aria-current=page] {
+    background: #eef2ff;
+    color: #312e81;
+    border-color: #a5b4fc;
+    font-weight: 600;
 }

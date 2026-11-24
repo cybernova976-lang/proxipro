@@ -187,12 +187,18 @@
             </div>
             
             <!-- Compétences Prestataire -->
-            @if($user->is_service_provider && $user->services && $user->services->count() > 0)
-            <div class="card border-0 shadow-sm mt-4 own-profile-detail-card">
-                <div class="card-header bg-transparent">
-                    <h6 class="mb-0"><i class="fas fa-tools me-2 text-success"></i>Mes autres compétences</h6>
+            @if($user->is_service_provider)
+            <div class="card border-0 shadow-sm mt-4 own-profile-detail-card" id="own-profile-skills">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-tools me-2 text-success"></i>Mes compétences</h6>
+                    <a href="{{ route('service-provider.mes-services') }}" class="btn btn-sm btn-outline-primary">
+                        {{ $user->services->isEmpty() ? 'Ajouter' : 'Modifier' }}
+                    </a>
                 </div>
                 <div class="card-body">
+                    @if($user->services->isEmpty())
+                        <p class="text-muted small mb-0">Aucune compétence enregistrée : sans elle, aucune demande ne peut vous être proposée.</p>
+                    @endif
                     <div class="d-flex flex-wrap gap-2">
                         @foreach($user->services as $service)
                             <span class="competence-badge">
@@ -333,7 +339,7 @@
                 <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                     <h6 class="mb-0"><i class="fas fa-images me-2 text-primary"></i>Mes réalisations</h6>
                     <a href="{{ route('profile.edit') }}#profile-realizations" class="btn btn-sm btn-outline-primary">
-                        {{ $user->professionalRealizations->isEmpty() ? 'Ajouter des photos' : 'Gérer' }}
+                        {{ $user->professionalRealizations->isEmpty() ? 'Ajouter des photos' : 'Modifier les photos' }}
                     </a>
                 </div>
                 <div class="card-body">
@@ -374,8 +380,8 @@
             <div class="card border-0 shadow-sm own-profile-section-card">
                 <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                     <h6 class="mb-0"><i class="fas fa-bullhorn me-2"></i>Mes dernières annonces</h6>
-                    <a href="{{ route('ads.index') }}?user={{ $user->id }}" class="btn btn-sm btn-outline-primary">
-                        Voir tout
+                    <a href="{{ route('ads.myads') }}" class="btn btn-sm btn-outline-primary">
+                        Gérer mes annonces
                     </a>
                 </div>
                 <div class="card-body">
@@ -400,7 +406,7 @@
                                             <div class="d-flex justify-content-between align-items-center mt-2">
                                                 <small class="text-muted">{{ $ad->created_at->diffForHumans() }}</small>
                                                 <span class="badge {{ $ad->status == 'active' ? 'bg-success' : 'bg-secondary' }}">
-                                                    {{ $ad->status == 'active' ? 'Actif' : 'Inactif' }}
+                                                    {{ $ad->status == 'active' ? 'En ligne' : 'Hors ligne' }}
                                                 </span>
                                             </div>
                                         </div>
@@ -412,8 +418,9 @@
                         <div class="text-center py-5 text-muted">
                             <i class="fas fa-bullhorn fa-3x mb-3 opacity-50"></i>
                             <p class="mb-3">Vous n'avez pas encore publié d'annonce</p>
-                            <a href="{{ route('ads.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-2"></i>Publier une annonce
+                            @php $ownPublish = \App\Support\ClientSpaceNavigation::publishAction($user->isServiceProvider() || $user->isProfessionnel() ? 'provider' : 'client'); @endphp
+                            <a href="{{ $ownPublish['url'] }}" class="btn btn-outline-primary">
+                                <i class="fas fa-plus me-2"></i>{{ $ownPublish['label'] }}
                             </a>
                         </div>
                     @endif
@@ -713,7 +720,7 @@ function showAdDetail(ad) {
     document.getElementById('adDetailLink').href = ad.url;
 
     const statusEl = document.getElementById('adDetailStatus');
-    statusEl.textContent = ad.status === 'active' ? 'Actif' : 'Inactif';
+    statusEl.textContent = ad.status === 'active' ? 'En ligne' : 'Hors ligne';
     statusEl.className = 'badge ' + (ad.status === 'active' ? 'bg-success' : 'bg-secondary');
 
     const priceRow = document.getElementById('adDetailPriceRow');

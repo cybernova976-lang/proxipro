@@ -103,9 +103,12 @@
 
 {{-- Services --}}
 <div class="pro-card">
-    <div class="pro-card-title"><i class="fas fa-briefcase text-primary"></i> Mes services</div>
+    <div class="pro-card-title d-flex align-items-center justify-content-between gap-2">
+        <span><i class="fas fa-tools text-primary"></i> Mes compétences</span>
+        <a href="{{ route('service-provider.mes-services') }}" class="btn btn-sm btn-outline-primary">{{ $services->isEmpty() ? 'Ajouter' : 'Modifier' }}</a>
+    </div>
     @if($services->isEmpty())
-        <p class="text-muted">Aucun service renseigné.</p>
+        <p class="text-muted">Aucune compétence renseignée.</p>
     @else
         <div class="d-flex flex-wrap gap-2">
             @foreach($services as $service)

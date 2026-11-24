@@ -49,11 +49,13 @@
                 @endif
             </a>
 
-            <a href="{{ route('demand.create') }}" class="menu-item menu-item-highlight">
+            {{-- Même bouton que l'en-tête : une offre pour un prestataire, une demande sinon. --}}
+            @php $sidebarPublish = \App\Support\ClientSpaceNavigation::publishAction(\App\Support\ClientSpaceNavigation::role(request(), Auth::user())); @endphp
+            <a href="{{ $sidebarPublish['url'] }}" class="menu-item menu-item-highlight">
                 <div class="menu-icon highlight">
                     <i class="fas fa-plus-circle"></i>
                 </div>
-                <span class="menu-text">Publier une demande</span>
+                <span class="menu-text">{{ $sidebarPublish['label'] }}</span>
             </a>
         </div>
 

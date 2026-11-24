@@ -12,8 +12,8 @@ class ClientSpaceNavigationFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** Les quatorze pages du panneau latéral, dans l'ordre, groupe par groupe. */
-    private const MENU_LABELS = ['Vue d’ensemble', 'Mes demandes', 'Mes commandes', 'Messages', 'Favoris',
+    /** Les quinze pages du panneau latéral, dans l'ordre, groupe par groupe. */
+    private const MENU_LABELS = ['Vue d’ensemble', 'Mes demandes', 'Gérer mes annonces', 'Mes commandes', 'Messages', 'Favoris',
         'Mes alertes', 'Offres d’emploi', 'Proposer mes services',
         'Vérification d’identité', 'Abonnement et factures', 'Paramètres', 'Conseils pratiques',
         'Classement des offres', 'Assistance'];
@@ -37,7 +37,7 @@ class ClientSpaceNavigationFeatureTest extends TestCase
             'saved-ads.index' => 'saved', 'employment.territory' => 'employment'] as $route => $key) {
             $response = $this->get(route($route, $route === 'employment.territory' ? ['territoire' => 'departement-75'] : []))->assertOk();
             $xpath = $this->xpath($response->getContent());
-            $this->assertSame(14, $xpath->query('//aside[@data-space-menu]//nav[@aria-label="Mon espace particulier"]//a[@data-space-section]')->length, $route);
+            $this->assertSame(15, $xpath->query('//aside[@data-space-menu]//nav[@aria-label="Mon espace particulier"]//a[@data-space-section]')->length, $route);
             $this->assertSame(1, $xpath->query('//button[@data-space-menu-open][@aria-controls="pkSpaceMenu"]')->length, $route);
             // Le bouton de l'en-tête est actif sur toutes les pages du tableau de bord.
             $this->assertSame(1, $xpath->query('//a[@data-header-dashboard][contains(@class,"active")]')->length, $route);
@@ -55,12 +55,12 @@ class ClientSpaceNavigationFeatureTest extends TestCase
     {
         $this->actingAs(User::factory()->create(['user_type' => 'particulier', 'is_service_provider' => false]));
 
-        foreach (['service-orders.index' => 'orders', 'saved-searches.index' => 'alerts',
+        foreach (['service-orders.index' => 'orders', 'ads.myads' => 'ads', 'saved-searches.index' => 'alerts',
             'settings.index' => 'settings',
             'verification.index' => 'identity', 'billing.index' => 'billing', 'guides.index' => 'guides',
             'legal.platform-rules' => 'ranking', 'contact.index' => 'contact'] as $route => $key) {
             $xpath = $this->xpath($this->get(route($route))->assertOk()->getContent());
-            $this->assertSame(14, $xpath->query('//nav[@aria-label="Mon espace particulier"]//a[@data-space-section]')->length, $route);
+            $this->assertSame(15, $xpath->query('//nav[@aria-label="Mon espace particulier"]//a[@data-space-section]')->length, $route);
             $current = $xpath->query('//a[@data-space-section][@aria-current="page"]');
             $this->assertSame(1, $current->length, $route);
             $this->assertSame($key, $current->item(0)->getAttribute('data-space-section'), $route);

@@ -26,7 +26,7 @@ class MemberPublicationsFeatureTest extends TestCase
         $this->ad($other, 'Annonce privée autre compte', ['status' => 'pending']);
         DemandDraft::create(['user_id' => $owner->id, 'payload' => ['title' => 'Demande à terminer'], 'current_step' => 2, 'last_activity_at' => now()]);
         $response = $this->actingAs($owner)->get(route('ads.myads'));
-        $response->assertOk()->assertSee('Demande à terminer')->assertSee('13 / 5 annonces actives')->assertDontSee('Annonce privée autre compte');
+        $response->assertOk()->assertSee('Demande à terminer')->assertSee('13 / 5 annonces en ligne')->assertDontSee('Annonce privée autre compte');
         $this->assertCount(12, $response->viewData('ads'));
         $this->assertSame(16, $response->viewData('ads')->total());
         $this->get(route('ads.myads', ['state' => 'pending', 'user' => $other->id]))->assertOk()->assertSee('Annonce en validation')->assertDontSee('Annonce privée autre compte')->assertDontSee('Annonce archivée');
@@ -35,7 +35,7 @@ class MemberPublicationsFeatureTest extends TestCase
         $this->get(route('dashboard.my-ads'))->assertOk()->assertSee('Reprendre ma demande');
         MarketplaceCategoryRegistry::storeEnabledIds([]);
         $this->get(route('ads.myads', ['state' => 'closed']))->assertOk()->assertSee('Catégorie suspendue');
-        $this->get(route('ads.myads', ['state' => 'active']))->assertOk()->assertSee('Aucune publication dans cette rubrique');
+        $this->get(route('ads.myads', ['state' => 'active']))->assertOk()->assertSee('Aucune annonce dans cette rubrique');
     }
 
     public function test_the_draft_and_management_pages_are_not_public(): void

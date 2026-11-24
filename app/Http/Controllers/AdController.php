@@ -915,7 +915,7 @@ class AdController extends Controller
 
         $ad->update(['status' => 'inactive']);
 
-        return redirect()->back()->with('success', 'Annonce archivée. Elle n’apparaît plus dans les résultats.');
+        return redirect()->back()->with('success', 'Annonce mise hors ligne. Elle n’apparaît plus dans les résultats.');
     }
 
     public function republish(Ad $ad)

@@ -295,6 +295,48 @@ class ProfileController extends Controller
     }
 
     /**
+     * Remplacer la photo d'une réalisation, en gardant sa place et sa légende.
+     */
+    public function replaceProfessionalRealization(Request $request, ProfessionalRealization $professionalRealization)
+    {
+        abort_unless((int) $professionalRealization->user_id === (int) Auth::id(), 403);
+
+        $request->validate([
+            'photo' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+        ], [
+            'photo.required' => 'Choisissez la nouvelle photo.',
+            'photo.image' => 'Le fichier choisi n’est pas une image.',
+            'photo.mimes' => 'Formats acceptés : JPG, PNG ou WebP.',
+            'photo.max' => 'La photo dépasse 5 Mo.',
+        ]);
+
+        $disk = config('filesystems.default', 'public');
+        $path = $request->file('photo')->store('professional-realizations/'.Auth::id(), $disk);
+        if (! $path) {
+            return back()->withErrors(['professional_realization_photos' => 'Impossible de remplacer la photo. Veuillez réessayer.']);
+        }
+
+        $previousPath = $professionalRealization->photo_path;
+        $professionalRealization->update(['photo_path' => $path]);
+        $this->deleteRealizationFile($disk, $previousPath);
+
+        return redirect()->to(route('profile.edit').'#profile-realizations')
+            ->with('success', 'La photo de réalisation a été remplacée.');
+    }
+
+    private function deleteRealizationFile(string $disk, ?string $path): void
+    {
+        if (! $path) {
+            return;
+        }
+        try {
+            Storage::disk($disk)->delete($path);
+        } catch (\Throwable $e) {
+            Log::warning('Impossible de supprimer une ancienne photo de réalisation : '.$e->getMessage());
+        }
+    }
+
+    /**
      * Retirer une photo de réalisation du profil du prestataire.
      */
     public function destroyProfessionalRealization(ProfessionalRealization $professionalRealization)

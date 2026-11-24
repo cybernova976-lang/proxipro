@@ -24,6 +24,14 @@ class ClientSpaceNavigation
 
     public const REQUESTS_LABEL = 'Mes demandes';
 
+    /**
+     * Vocabulaire (24/11/2026) : une demande = « je cherche un prestataire » ;
+     * une offre = « je présente mon activité » ; une annonce = l'une ou l'autre.
+     */
+    public const ADS_LABEL = 'Gérer mes annonces';
+
+    public const OFFERS_LABEL = 'Mes offres';
+
     /** Forme courte pour la barre du bas : « Mes demandes » passe sur deux lignes à 375 px. */
     public const REQUESTS_SHORT_LABEL = 'Demandes';
 
@@ -73,6 +81,10 @@ class ClientSpaceNavigation
                     'route' => 'client.dashboard', 'matches' => ['client.dashboard']],
                 ['key' => 'requests', 'label' => self::REQUESTS_LABEL, 'icon' => 'far fa-clipboard', 'route' => 'home',
                     'matches' => array_values(array_diff($sections['requests']['matches'], ['service-orders.index']))],
+                // Gestion des publications (modifier, mettre hors ligne, supprimer) ;
+                // « Mes demandes » reste le suivi des réponses et des réservations.
+                ['key' => 'ads', 'label' => self::ADS_LABEL, 'icon' => 'fas fa-bullhorn',
+                    'route' => 'ads.myads', 'matches' => ['ads.myads']],
                 ['key' => 'orders', 'label' => 'Mes commandes', 'icon' => 'fas fa-receipt',
                     'route' => 'service-orders.index', 'matches' => ['service-orders.index']],
                 ['key' => 'messages', 'label' => 'Messages', 'icon' => 'far fa-comments',

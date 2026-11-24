@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Mes Services - Prestataire')
+@section('title', 'Mes compétences - Prokejem')
 
 @section('content')
 <div class="container py-4" style="max-width: 960px;">
@@ -8,16 +8,16 @@
     <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div>
             <h2 class="fw-bold mb-1" style="color: #1e293b;">
-                <i class="fas fa-briefcase text-success me-2"></i>Mes Services
+                <i class="fas fa-tools text-success me-2"></i>Mes compétences
             </h2>
-            <p class="text-muted mb-0">Gérez vos services et votre profil prestataire</p>
+            <p class="text-muted mb-0">Les métiers affichés sur votre profil. Ce sont eux qui vous font proposer les demandes des clients.</p>
         </div>
         <div class="d-flex gap-2">
             <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#becomeProviderModal" style="border-radius: 10px; padding: 8px 18px; background: linear-gradient(135deg, #10b981, #059669); border: none;">
-                <i class="fas fa-plus me-1"></i> Ajouter des services
+                <i class="fas fa-plus me-1"></i> Ajouter une compétence
             </button>
-            <a href="{{ route('feed') }}" class="btn btn-outline-secondary" style="border-radius: 10px; padding: 8px 18px;">
-                <i class="fas fa-arrow-left me-1"></i> Retour
+            <a href="{{ route('profile.show') }}" class="btn btn-outline-secondary" style="border-radius: 10px; padding: 8px 18px;">
+                <i class="fas fa-arrow-left me-1"></i> Mon profil
             </a>
         </div>
     </div>
@@ -82,8 +82,8 @@
         <div class="col-md-3 col-6">
             <div class="card border-0 shadow-sm h-100" style="border-radius: 14px;">
                 <div class="card-body text-center py-3">
-                    <div class="h3 fw-bold mb-0" style="color: #10b981;">{{ $services->count() }}</div>
-                    <div class="text-muted small">Services actifs</div>
+                    <div class="h3 fw-bold mb-0" style="color: #10b981;">{{ $services->where('is_active', true)->count() }}</div>
+                    <div class="text-muted small">Compétences actives</div>
                 </div>
             </div>
         </div>
@@ -124,15 +124,15 @@
     {{-- Services List --}}
     <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
         <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between" style="padding: 18px 24px;">
-            <h5 class="fw-bold mb-0"><i class="fas fa-list-check text-primary me-2"></i>Mes services enregistrés</h5>
+            <h5 class="fw-bold mb-0"><i class="fas fa-list-check text-primary me-2"></i>Mes compétences enregistrées</h5>
         </div>
         <div class="card-body" style="padding: 0 24px 24px;">
             @if($services->isEmpty())
                 <div class="text-center py-5">
                     <i class="fas fa-briefcase fa-3x text-muted mb-3 d-block" style="opacity: 0.3;"></i>
-                    <p class="text-muted mb-3">Vous n'avez pas encore de services enregistrés.</p>
+                    <p class="text-muted mb-3">Vous n’avez pas encore de compétence enregistrée.</p>
                     <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#becomeProviderModal" style="border-radius: 10px; background: linear-gradient(135deg, #10b981, #059669); border: none;">
-                        <i class="fas fa-plus me-1"></i> Ajouter des services
+                        <i class="fas fa-plus me-1"></i> Ajouter une compétence
                     </button>
                 </div>
             @else
@@ -153,7 +153,7 @@
                                 <i class="{{ $catIcon }}"></i>
                             </div>
                             <h6 class="fw-bold mb-0">{{ $categoryName }}</h6>
-                            <span class="badge bg-secondary ms-auto">{{ $categoryServices->count() }} service(s)</span>
+                            <span class="badge bg-secondary ms-auto">{{ $categoryServices->count() }} compétence{{ $categoryServices->count() > 1 ? 's' : '' }}</span>
                         </div>
                         
                         <div class="d-flex flex-column gap-2">
@@ -173,21 +173,36 @@
                                             @endif
                                         </div>
                                     </div>
-                                    <div class="d-flex gap-1">
+                                    <div class="skill-actions">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" data-skill-edit="{{ $service->id }}" aria-expanded="false" aria-controls="skill-edit-{{ $service->id }}">
+                                            <i class="fas fa-pen me-1" aria-hidden="true"></i>Modifier
+                                        </button>
                                         @if($service->is_active)
-                                            <button class="btn btn-sm btn-outline-warning" onclick="toggleServiceStatus({{ $service->id }}, false)" title="Désactiver" style="border-radius: 8px;">
-                                                <i class="fas fa-pause"></i>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleServiceStatus({{ $service->id }}, false)">
+                                                <i class="fas fa-pause me-1" aria-hidden="true"></i>Mettre en pause
                                             </button>
                                         @else
-                                            <button class="btn btn-sm btn-outline-success" onclick="toggleServiceStatus({{ $service->id }}, true)" title="Activer" style="border-radius: 8px;">
-                                                <i class="fas fa-play"></i>
+                                            <button type="button" class="btn btn-sm btn-outline-success" onclick="toggleServiceStatus({{ $service->id }}, true)">
+                                                <i class="fas fa-play me-1" aria-hidden="true"></i>Réactiver
                                             </button>
                                         @endif
-                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteService({{ $service->id }})" title="Supprimer" style="border-radius: 8px;">
-                                            <i class="fas fa-trash"></i>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteService({{ $service->id }})">
+                                            <i class="fas fa-trash me-1" aria-hidden="true"></i>Supprimer
                                         </button>
                                     </div>
                                 </div>
+                                <form class="skill-edit" id="skill-edit-{{ $service->id }}" data-skill-form="{{ $service->id }}" hidden>
+                                    <label>Années d’expérience
+                                        <input type="number" name="experience_years" min="0" max="50" value="{{ (int) $service->experience_years }}">
+                                    </label>
+                                    <label>Présentation (facultative)
+                                        <textarea name="description" maxlength="500" rows="2" placeholder="Ex. Dépannage et mise aux normes de tableaux électriques">{{ $service->description }}</textarea>
+                                    </label>
+                                    <div class="skill-edit__buttons">
+                                        <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
+                                        <button type="button" class="btn btn-sm btn-light" data-skill-edit="{{ $service->id }}">Annuler</button>
+                                    </div>
+                                </form>
                             @endforeach
                         </div>
                     </div>
@@ -281,7 +296,7 @@
     }
     
     async function toggleServiceStatus(serviceId, activate) {
-        if (!confirm(activate ? 'Réactiver ce service ?' : 'Désactiver ce service ?')) return;
+        if (!confirm(activate ? 'Réactiver cette compétence ?' : 'Mettre cette compétence en pause ? Elle ne vous fera plus proposer de demandes.')) return;
         
         try {
             const response = await fetch(`/service-provider/service/${serviceId}`, {
@@ -295,7 +310,7 @@
             });
             const data = await response.json();
             if (data.success) {
-                showToast(activate ? 'Service réactivé !' : 'Service désactivé.');
+                showToast(activate ? 'Compétence réactivée.' : 'Compétence mise en pause.');
                 setTimeout(() => location.reload(), 800);
             } else {
                 showToast(data.message || 'Erreur', 'danger');
@@ -306,7 +321,7 @@
     }
     
     async function deleteService(serviceId) {
-        if (!confirm('Supprimer définitivement ce service ?')) return;
+        if (!confirm('Supprimer cette compétence de votre profil ?')) return;
         
         try {
             const response = await fetch(`/service-provider/service/${serviceId}`, {
@@ -325,7 +340,7 @@
                     el.style.transform = 'translateX(30px)';
                     setTimeout(() => el.remove(), 300);
                 }
-                showToast('Service supprimé.');
+                showToast('Compétence supprimée.');
                 setTimeout(() => location.reload(), 1200);
             } else {
                 showToast(data.message || 'Erreur', 'danger');
@@ -335,6 +350,40 @@
         }
     }
     
+    document.querySelectorAll('[data-skill-edit]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const form = document.getElementById(`skill-edit-${button.dataset.skillEdit}`);
+            form.hidden = !form.hidden;
+            document.querySelectorAll(`[data-skill-edit="${button.dataset.skillEdit}"][aria-expanded]`)
+                .forEach((toggle) => toggle.setAttribute('aria-expanded', String(!form.hidden)));
+        });
+    });
+
+    document.querySelectorAll('[data-skill-form]').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            try {
+                const response = await fetch(`/service-provider/service/${form.dataset.skillForm}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        experience_years: form.experience_years.value === '' ? null : Number(form.experience_years.value),
+                        description: form.description.value.trim() || null,
+                    }),
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    showToast('Compétence mise à jour.');
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    showToast(data.message || 'Vérifiez les valeurs saisies.', 'danger');
+                }
+            } catch (e) {
+                showToast('Erreur réseau', 'danger');
+            }
+        });
+    });
+
     async function deactivateProvider() {
         if (!confirm('Désactiver votre statut prestataire ? Vous ne serez plus visible dans les recherches.')) return;
         
@@ -361,6 +410,16 @@
 </script>
 
 <style>
+    .skill-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+    .skill-edit { display: grid; gap: 10px; margin: -2px 0 6px; padding: 14px; border: 1px solid #c7d2fe; border-radius: 12px; background: #fff; }
+    .skill-edit label { display: grid; gap: 4px; font-size: .82rem; font-weight: 600; color: #334155; }
+    .skill-edit input, .skill-edit textarea { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; font-weight: 400; }
+    .skill-edit input { max-width: 140px; }
+    .skill-edit__buttons { display: flex; gap: 8px; }
+    @media (max-width: 640px) {
+        .service-item { flex-direction: column; align-items: stretch !important; gap: 10px; }
+        .skill-actions { justify-content: flex-start; }
+    }
     .service-item:hover {
         background: #f0fdf4 !important;
         border-color: #a7f3d0 !important;

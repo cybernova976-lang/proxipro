@@ -199,13 +199,20 @@
                                         <img src="{{ storage_url($realization->photo_path) }}"
                                              alt="Réalisation professionnelle {{ $loop->iteration }}"
                                              loading="lazy">
-                                        <button type="submit"
-                                                class="professional-gallery-editor__delete"
-                                                form="deleteProfessionalRealization{{ $realization->id }}"
-                                                aria-label="Supprimer cette réalisation"
-                                                title="Supprimer cette réalisation">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
+                                        <div class="professional-gallery-editor__actions">
+                                            <label class="professional-gallery-editor__action" for="realizationReplace{{ $realization->id }}">
+                                                <i class="fas fa-arrows-rotate" aria-hidden="true"></i> Remplacer
+                                            </label>
+                                            <input type="file" class="visually-hidden" id="realizationReplace{{ $realization->id }}"
+                                                   name="photo" form="replaceProfessionalRealization{{ $realization->id }}"
+                                                   accept="image/jpeg,image/png,image/webp" data-realization-replace>
+                                            <button type="submit"
+                                                    class="professional-gallery-editor__action is-danger"
+                                                    form="deleteProfessionalRealization{{ $realization->id }}"
+                                                    aria-label="Supprimer la réalisation {{ $loop->iteration }}">
+                                                <i class="fas fa-trash-alt" aria-hidden="true"></i> Supprimer
+                                            </button>
+                                        </div>
                                         <label class="professional-gallery-caption" for="realizationCaption{{ $realization->id }}">
                                             Légende (facultative)
                                             <input id="realizationCaption{{ $realization->id }}" name="realization_captions[{{ $realization->id }}]" value="{{ old('realization_captions.'.$realization->id, $realization->caption) }}" maxlength="140" placeholder="Ex. Rénovation d’une salle de bain">
@@ -258,9 +265,17 @@
                         <form id="deleteProfessionalRealization{{ $realization->id }}"
                               action="{{ route('profile.realizations.destroy', $realization) }}"
                               method="POST"
-                              class="d-none">
+                              class="d-none"
+                              data-confirm="Supprimer cette photo de vos réalisations ? Elle disparaîtra de votre profil public.">
                             @csrf
                             @method('DELETE')
+                        </form>
+                        <form id="replaceProfessionalRealization{{ $realization->id }}"
+                              action="{{ route('profile.realizations.replace', $realization) }}"
+                              method="POST"
+                              enctype="multipart/form-data"
+                              class="d-none">
+                            @csrf
                         </form>
                     @endforeach
                 </div>
@@ -425,6 +440,28 @@
     background: rgba(15, 23, 42, .8);
     color: #fff;
 }
+.professional-gallery-editor__actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px 0; }
+.professional-gallery-editor__action {
+    flex: 1 1 100px;
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 36px;
+    margin: 0;
+    padding: 0 8px;
+    border: 1px solid #c7d2fe;
+    border-radius: 8px;
+    background: #fff;
+    color: #3730a3;
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.professional-gallery-editor__action:hover { background: #eef2ff; }
+.professional-gallery-editor__action.is-danger { border-color: #fecaca; color: #b91c1c; }
+.professional-gallery-editor__action.is-danger:hover { background: #fef2f2; }
 .professional-gallery-editor__add {
     display: flex;
     flex-direction: column;
@@ -463,6 +500,17 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+// Réalisations : la nouvelle photo part dès qu'elle est choisie ; la suppression demande confirmation.
+document.querySelectorAll('[data-realization-replace]').forEach(function (input) {
+    input.addEventListener('change', function () {
+        if (input.files.length && input.form) input.form.submit();
+    });
+});
+document.querySelectorAll('form[data-confirm]').forEach(function (form) {
+    form.addEventListener('submit', function (event) {
+        if (!window.confirm(form.dataset.confirm)) event.preventDefault();
+    });
+});
 const avatarInput = document.getElementById('avatar');
 const avatarPreview = document.getElementById('avatarPreview');
 const avatarPlaceholder = document.getElementById('avatarPlaceholder');

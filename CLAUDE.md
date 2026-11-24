@@ -35,6 +35,10 @@ parsing Blade a déjà provoqué une erreur 500 en production sur `/feed`.
   `Premium@if(...)`, Blade prend `@if` pour du texte (comme dans une adresse
   e-mail) mais compile le `@endif`, et la vue plante au rendu. `view:cache`
   **ne le détecte pas** : seul un test qui rend la vue le voit. Laisse une espace.
+- **Pas de `@php(...)` en ligne dans un fichier qui contient aussi un bloc
+  `@php … @endphp`** : Blade apparie le premier `@php` avec le `@endphp` suivant,
+  et la vue plante au rendu (« Undefined variable »). Écris toujours
+  `@php $x = …; @endphp`.
 - **Aucune directive Blade dans un commentaire `{{-- --}}`.** Blade compile les
   directives *avant* de retirer les commentaires : écrire `@php` ou `@json()`
   dans un commentaire casse la vue.

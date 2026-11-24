@@ -335,8 +335,9 @@
                         <h4>Aucune annonce trouvée</h4>
                         <p>Essayez de modifier vos critères de recherche</p>
                         @auth
-                            <a href="{{ route('ads.create') }}" class="btn btn-primary mt-3">
-                                <i class="fas fa-plus me-2"></i>Publier une annonce
+                            @php $emptyPublish = \App\Support\ClientSpaceNavigation::publishAction(\App\Support\ClientSpaceNavigation::role(request(), Auth::user())); @endphp
+                            <a href="{{ $emptyPublish['url'] }}" class="btn btn-primary mt-3">
+                                <i class="fas fa-plus me-2"></i>{{ $emptyPublish['label'] }}
                             </a>
                         @endauth
                     </div>

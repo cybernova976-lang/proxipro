@@ -466,7 +466,12 @@ class ServiceProviderController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        $service->update($request->only(['experience_years', 'description', 'is_active']));
+        $data = $request->only(['experience_years', 'description', 'is_active']);
+        if (array_key_exists('experience_years', $data)) {
+            // Colonne non nullable : un champ vidé vaut « pas d'ancienneté indiquée ».
+            $data['experience_years'] = (int) ($data['experience_years'] ?? 0);
+        }
+        $service->update($data);
 
         return response()->json([
             'success' => true,
@@ -482,6 +487,16 @@ class ServiceProviderController extends Controller
     {
         $user = Auth::user();
         $service = $user->services()->findOrFail($id);
+
+        // Supprimer la dernière compétence retirerait le profil prestataire sans le dire :
+        // l'arrêt de l'activité passe par « Désactiver prestataire », qui l'annonce.
+        if ($user->services()->count() <= 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gardez au moins une compétence. Ajoutez la nouvelle avant de retirer celle-ci, ou utilisez « Désactiver prestataire ».',
+            ], 422);
+        }
+
         $service->delete();
 
         // Si plus aucun service actif, désactiver le statut prestataire

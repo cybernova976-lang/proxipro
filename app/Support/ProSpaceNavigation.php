@@ -40,7 +40,7 @@ class ProSpaceNavigation
             ]],
             ['label' => 'Trouver des clients', 'items' => [
                 self::item($request, 'opportunities', 'Demandes à examiner', 'fas fa-magnifying-glass', route('pro.opportunities'), ['pro.opportunities']),
-                self::item($request, 'ads', 'Mes annonces', 'fas fa-bullhorn', route('ads.myads'), ['ads.myads']),
+                self::item($request, 'ads', ClientSpaceNavigation::OFFERS_LABEL, 'fas fa-bullhorn', route('ads.myads', ['type' => 'offre']), ['ads.myads']),
             ]],
             ['label' => 'Gérer mon activité', 'items' => [
                 self::item($request, 'clients', 'Clients', 'fas fa-users', route('pro.clients'), ['pro.clients*']),

@@ -6802,8 +6802,9 @@
                             <i class="fas fa-table-columns"></i><span>{{ $pkDashboardEntry['label'] }}</span>
                         </a>
                         @else
-                        <a href="{{ route('home') }}" class="header-nav-btn {{ request()->routeIs('home') ? 'active' : '' }}">
-                            <i class="fas fa-clipboard-list"></i><span>{{ \App\Support\ClientSpaceNavigation::REQUESTS_LABEL }}</span>
+                        {{-- Parcours prestataire : ce qu'il publie, ce sont ses offres (il retrouve ses demandes en mode « Je cherche un service »). --}}
+                        <a href="{{ route('ads.myads', ['type' => 'offre']) }}" class="header-nav-btn {{ request()->routeIs('ads.myads') ? 'active' : '' }}" data-header-offers>
+                            <i class="fas fa-bullhorn"></i><span>{{ \App\Support\ClientSpaceNavigation::OFFERS_LABEL }}</span>
                         </a>
                         @endif
                         <a href="{{ route('pro.dashboard') }}" class="header-nav-btn {{ request()->routeIs('pro.*') ? 'active' : '' }}" data-header-pro>
@@ -7035,8 +7036,9 @@
                                 @endif
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('profile.show') }}"><i class="fas fa-user" style="color: var(--primary);"></i>Mon Profil</a></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('home') }}"><i class="fas fa-clipboard-list text-secondary"></i>{{ \App\Support\ClientSpaceNavigation::REQUESTS_LABEL }}</a></li>
+                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('ads.myads') }}" data-menu="my-ads"><i class="fas fa-bullhorn" style="color: #6366f1;"></i>{{ \App\Support\ClientSpaceNavigation::ADS_LABEL }}</a></li>
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('service-orders.index') }}" data-menu="orders"><i class="fas fa-receipt" style="color: #4f46e5;"></i>Mes commandes</a></li>
-                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('ads.index') }}"><i class="fas fa-bullhorn" style="color: #6366f1;"></i>Annonces</a></li>
+                                <li><a class="dropdown-item dropdown-item-modern" href="{{ route('ads.index') }}"><i class="fas fa-magnifying-glass" style="color: #6366f1;"></i>Parcourir les annonces</a></li>
                                 @if(!Auth::user()->isProfessionnel() && !Auth::user()->isServiceProvider())
                                 <li><a class="dropdown-item dropdown-item-modern" href="{{ route('service-provider.start') }}"><i class="fas fa-user-plus" style="color: #059669;"></i>Activer mon profil prestataire</a></li>
                                 @endif

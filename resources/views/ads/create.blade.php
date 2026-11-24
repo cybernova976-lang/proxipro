@@ -1002,7 +1002,7 @@
                 <label class="type-option {{ $selectedServiceType === 'demande' ? 'selected' : '' }}" data-service-type="demande">
                     <input type="radio" name="service_type_choice" value="demande" {{ $selectedServiceType === 'demande' ? 'checked' : '' }}>
                     <div class="type-option-icon"><i class="fas fa-search"></i></div>
-                    <h6>Demande de particulier</h6>
+                    <h6>Demande · je cherche un prestataire</h6>
                     <p>Vous cherchez un professionnel pour un travail, un dépannage ou un service.</p>
                 </label>
 
@@ -1010,7 +1010,7 @@
                     <label class="type-option {{ $selectedServiceType === 'offre' ? 'selected' : '' }}" data-service-type="offre" aria-disabled="false">
                         <input type="radio" name="service_type_choice" value="offre" {{ $selectedServiceType === 'offre' ? 'checked' : '' }}>
                         <div class="type-option-icon"><i class="fas fa-briefcase"></i></div>
-                        <h6>Offre professionnelle</h6>
+                        <h6>Offre · je présente mon activité</h6>
                         <p>Vous proposez un service, une location de matériel, une promotion ou un recrutement.</p>
                     </label>
                 @endif
@@ -1418,7 +1418,7 @@
         if (pageTitle) {
             pageTitle.innerHTML = isDemand
                 ? '<i class="fas fa-search me-2"></i>Publier une demande'
-                : '<i class="fas fa-briefcase me-2"></i>Publier une offre professionnelle';
+                : '<i class="fas fa-briefcase me-2"></i>Publier une offre';
         }
         if (pageSubtitle) {
             pageSubtitle.textContent = isDemand
