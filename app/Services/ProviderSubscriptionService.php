@@ -52,11 +52,23 @@ class ProviderSubscriptionService
         return DB::transaction(function () use ($user, $plan, $successUrl, $cancelUrl, $flow) {
             $member = User::query()->lockForUpdate()->findOrFail($user->getKey());
 
-            return $this->prepareCheckout($member, $plan, $successUrl, $cancelUrl, $flow);
+            try {
+                return $this->prepareCheckout($member, $plan, $successUrl, $cancelUrl, $flow);
+            } catch (\Throwable $exception) {
+                if (! $member->stripe_id || ! self::isUnknownStripeCustomer($exception)) {
+                    throw $exception;
+                }
+                // Client inconnu des clés actuelles : il n'a ni abonnement ni session
+                // ouverte. On en crée un nouveau et on recommence, une seule fois.
+                $stale = $member->stripe_id;
+                $member->forceFill(['stripe_id' => null])->save();
+
+                return $this->prepareCheckout($member, $plan, $successUrl, $cancelUrl, $flow, $stale);
+            }
         });
     }
 
-    private function prepareCheckout(User $user, string $plan, string $successUrl, string $cancelUrl, string $flow): StripeCheckoutSession
+    private function prepareCheckout(User $user, string $plan, string $successUrl, string $cancelUrl, string $flow, ?string $replacesCustomer = null): StripeCheckoutSession
     {
         if ($user->hasActiveProSubscription()) {
             throw new DomainException('Vous disposez déjà d’un abonnement Pro actif.');
@@ -67,7 +79,7 @@ class ProviderSubscriptionService
         }
 
         $client = $this->client();
-        $customerId = $this->ensureStripeCustomer($client, $user);
+        $customerId = $this->ensureStripeCustomer($client, $user, $replacesCustomer);
         $amount = ProviderSubscriptionPlans::amount($plan);
 
         if ($amount <= 0) {
@@ -565,7 +577,7 @@ class ProviderSubscriptionService
                 // en mode réel) : Stripe répond « resource_missing ». Ce client n'a donc
                 // aucun abonnement à résilier avec les clés actuelles. Toute autre
                 // erreur bloque toujours la suppression.
-                if ($exception->getStripeCode() !== 'resource_missing') {
+                if (! self::isUnknownStripeCustomer($exception)) {
                     throw $exception;
                 }
                 $remoteSubscriptions = [];
@@ -1081,6 +1093,22 @@ class ProviderSubscriptionService
         return new StripeClient($secret);
     }
 
+    /**
+     * Stripe ne connaît pas le client enregistré pour ce membre ?
+     *
+     * Vrai seulement sur la réponse précise « resource_missing » portant sur le
+     * client : client créé avec les clés de test, avant le passage en mode réel,
+     * ou supprimé chez Stripe. Une panne ou toute autre erreur renvoie faux : on
+     * ne remplace jamais un client sur un simple incident.
+     */
+    public static function isUnknownStripeCustomer(\Throwable $exception): bool
+    {
+        return $exception instanceof InvalidRequestException
+            && $exception->getStripeCode() === 'resource_missing'
+            && ($exception->getStripeParam() === 'customer'
+                || str_starts_with((string) $exception->getMessage(), 'No such customer'));
+    }
+
     private function openProviderCheckouts(StripeClient $client, string $customerId, User $user): iterable
     {
         $sessions = $client->checkout->sessions->all(['customer' => $customerId, 'status' => 'open', 'limit' => 100]);
@@ -1093,7 +1121,7 @@ class ProviderSubscriptionService
         }
     }
 
-    private function ensureStripeCustomer(StripeClient $client, User $user): string
+    private function ensureStripeCustomer(StripeClient $client, User $user, ?string $replaces = null): string
     {
         if ($user->stripe_id) {
             return $user->stripe_id;
@@ -1103,7 +1131,7 @@ class ProviderSubscriptionService
             'email' => $user->email,
             'name' => $user->company_name ?: $user->name,
             'metadata' => ['user_id' => (string) $user->id],
-        ], ['idempotency_key' => 'prokejem-provider-customer-'.$user->id]);
+        ], ['idempotency_key' => 'prokejem-provider-customer-'.$user->id.($replaces ? '-replaces-'.$replaces : '')]);
 
         $user->update(['stripe_id' => $customer->id]);
 

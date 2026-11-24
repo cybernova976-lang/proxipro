@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Ad;
 use App\Models\ServiceOrder;
 use App\Notifications\ServiceOrderRequestedNotification;
+use App\Services\ProviderSubscriptionService;
 use App\Services\ServiceOrderWorkflowService;
 use App\Services\StripeConnectService;
 use Illuminate\Http\Request;
@@ -145,12 +146,11 @@ class ServiceOrderController extends Controller
         }
 
         try {
-            $stripeCustomerId = $this->ensureStripeCustomer($buyer);
             $amountCents = (int) round(((float) $serviceOrder->amount) * 100);
             $currency = strtolower((string) config('marketplace.currency', 'eur'));
 
-            $session = StripeSession::create([
-                'customer' => $stripeCustomerId,
+            $openCheckout = fn () => StripeSession::create([
+                'customer' => $this->ensureStripeCustomer($buyer),
                 'payment_method_types' => ['card'],
                 'line_items' => [[
                     'price_data' => [
@@ -176,6 +176,18 @@ class ServiceOrderController extends Controller
                     'expected_currency' => $currency,
                 ],
             ]);
+
+            try {
+                $session = $openCheckout();
+            } catch (\Throwable $exception) {
+                if (! $buyer->stripe_id || ! ProviderSubscriptionService::isUnknownStripeCustomer($exception)) {
+                    throw $exception;
+                }
+                // Client créé avec les clés de test (ou supprimé chez Stripe) : on en
+                // crée un nouveau et on recommence, une seule fois.
+                $buyer->forceFill(['stripe_id' => null])->save();
+                $session = $openCheckout();
+            }
         } catch (\Throwable $exception) {
             Log::error('Unable to create service order Stripe checkout.', [
                 'service_order_id' => $serviceOrder->id,
