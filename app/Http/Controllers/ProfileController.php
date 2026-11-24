@@ -384,7 +384,14 @@ class ProfileController extends Controller
             if (! in_array($newCategory, $existingCats)) {
                 $existingCats[] = $newCategory;
             }
-            $user->service_category = implode(', ', $existingCats);
+            // La colonne est un varchar(255) : PostgreSQL refuse une valeur plus longue.
+            $kept = [];
+            foreach ($existingCats as $cat) {
+                if (mb_strlen(implode(', ', [...$kept, $cat])) <= 255) {
+                    $kept[] = $cat;
+                }
+            }
+            $user->service_category = implode(', ', $kept);
         } else {
             $user->service_category = $newCategory;
         }
@@ -414,6 +421,14 @@ class ProfileController extends Controller
         }
 
         $user->save();
+
+        // Membre qui a déjà des compétences enregistrées : les métiers choisis ici
+        // en deviennent, et le profil est recalculé à partir d'elles.
+        app(\App\Services\ProviderSkills::class)->adoptSelections(
+            $user,
+            [$newCategory],
+            is_array($newSubcategories) ? array_values($newSubcategories) : []
+        );
 
         return response()->json(['success' => true, 'message' => 'Vos nouvelles informations ont été ajoutées à votre profil. Les données précédentes ont été conservées.']);
     }

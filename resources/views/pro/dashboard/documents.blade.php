@@ -23,7 +23,7 @@
                             <span class="pk-dash-docs__number">{{ $document['number'] ?: 'Brouillon' }}</span>
                             <span class="pk-dash-docs__client">{{ Str::limit($document['client'], 32) }}</span>
                         </span>
-                        <span class="pk-dash-docs__total">{{ number_format($document['total'], 2, ',', ' ') }} €</span>
+                        <span @class(['pk-dash-docs__total', 'pk-dash-docs__total--credit' => $document['total'] < 0])>{{ \App\Support\Money::eur($document['total']) }}</span>
                         <span class="pro-status pro-status-{{ $document['tone'] }}">{{ $document['status'] }}</span>
                     </a>
                 </li>

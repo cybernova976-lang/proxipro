@@ -1310,7 +1310,7 @@ class FeedController extends Controller
 
     private function viewerServiceCategories($user): array
     {
-        if (! $user) {
+        if (! $user instanceof User) {
             return [];
         }
 
@@ -1319,26 +1319,10 @@ class FeedController extends Controller
             return $this->viewerServiceCategoryCache[$cacheKey];
         }
 
-        $profileCategories = collect([
-            ...((array) ($user->service_subcategories ?? [])),
-            ...((array) ($user->pro_service_categories ?? [])),
-            $user->service_category,
-            $user->profession,
-        ]);
-
-        $serviceCategories = $user->exists
-            ? $user->services()
-                ->where('is_active', true)
-                ->get(['main_category', 'subcategory'])
-                ->flatMap(fn ($service) => [$service->main_category, $service->subcategory])
-            : collect();
-
-        return $this->viewerServiceCategoryCache[$cacheKey] = $profileCategories
-            ->concat($serviceCategories)
-            ->filter(fn ($category) => is_string($category) && trim($category) !== '')
-            ->map(fn ($category) => trim($category))
-            ->unique()
-            ->values()
+        // Compétences actives de « Mes compétences » (colonnes du profil pour les
+        // comptes qui n'en ont aucune) : une compétence supprimée ne propose plus rien.
+        return $this->viewerServiceCategoryCache[$cacheKey] = app(\App\Services\ProviderSkills::class)
+            ->matchingCategories($user)
             ->all();
     }
 

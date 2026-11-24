@@ -56,12 +56,7 @@
     </div>
 </div>
 
-@unless($user->canIssueCommercialDocuments())
-<div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-radius: 12px;">
-    <span><i class="fas fa-lock me-2"></i>Vous pouvez préparer ce devis. Il restera en brouillon tant que la checklist PRO n’est pas terminée.</span>
-    <a href="{{ route('pro.compliance') }}" class="btn btn-sm btn-warning">Voir la checklist</a>
-</div>
-@endunless
+@include('pro.partials.seller-identity-note', ['documentLabel' => 'ce devis'])
 
 @if($template ?? null)
 <div class="alert alert-info" role="status" style="border-radius: 12px;">

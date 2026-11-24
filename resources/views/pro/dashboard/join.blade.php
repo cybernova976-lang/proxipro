@@ -48,7 +48,7 @@
         <ul class="pk-join__gains">
             <li><i class="fas fa-magnifying-glass" aria-hidden="true"></i><span><strong>Les demandes de votre métier</strong> près de chez vous, triées pour vous.</span></li>
             <li><i class="fas fa-comments" aria-hidden="true"></i><span><strong>Messagerie et suivi des missions</strong>, de la proposition au paiement.</span></li>
-            <li><i class="fas fa-file-invoice" aria-hidden="true"></i><span><strong>Devis et factures à votre nom</strong> si vous êtes auto-entrepreneur ou société.</span></li>
+            <li><i class="fas fa-file-invoice" aria-hidden="true"></i><span><strong>{{ \App\Services\CommercialDocumentAllowance::FREE['quote'] }} devis et {{ \App\Services\CommercialDocumentAllowance::FREE['invoice'] }} factures offerts</strong>, sans justificatif, dès maintenant : <a href="{{ route('pro.quotes') }}">créer mes documents</a>.</span></li>
             <li><i class="fas fa-users" aria-hidden="true"></i><span><strong>Un carnet de clients</strong> pour garder l’historique de chaque échange.</span></li>
         </ul>
     </section>

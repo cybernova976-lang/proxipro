@@ -8,7 +8,7 @@
     $selectedStatus = old('pro_status', $currentStatus);
     $statusOptions = [
         'particulier' => ['icon' => 'fa-user', 'title' => 'Particulier prestataire',
-            'text' => 'Vous rendez des services ponctuels, sans activité déclarée. Pas de devis ni de facture à votre nom.'],
+            'text' => 'Vous rendez des services ponctuels, sans activité déclarée. Vos devis et factures portent votre nom, sans numéro SIRET.'],
         'auto-entrepreneur' => ['icon' => 'fa-user-tie', 'title' => 'Auto-entrepreneur',
             'text' => 'Micro-entreprise immatriculée. Devis et factures à votre nom, avec votre SIRET.'],
         'entreprise' => ['icon' => 'fa-building', 'title' => 'Société',
@@ -68,7 +68,7 @@
     </fieldset>
 
     <div class="pk-status-submit">
-        <p class="small text-muted mb-0">Après l’enregistrement, il vous reste à cocher les conditions d’émission (profil vérifié, adresse, acceptation des conditions PRO).</p>
+        <p class="small text-muted mb-0">Après l’enregistrement, vous pourrez compléter l’identité professionnelle de vos documents (profil vérifié, adresse, conditions PRO). C’est recommandé ; vos devis et factures offerts restent disponibles en attendant.</p>
         <button type="submit" class="btn btn-pro-primary">Enregistrer mon statut</button>
     </div>
 </form>

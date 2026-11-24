@@ -2,21 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Services\CommercialDocumentAllowance;
 use App\Services\InvoiceAdjustments;
 use DomainException;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 
-/** Avoirs et factures d'acompte de l'espace Pro (règles : App\Services\InvoiceAdjustments). */
+/**
+ * Avoirs et factures d'acompte de l'espace Pro (règles : App\Services\InvoiceAdjustments).
+ * Ouverts à tout membre sur ses propres documents, comme les devis et factures.
+ */
 class ProInvoiceAdjustmentsController extends Controller
 {
     /** Émet un avoir, total ou partiel, sur une facture émise. */
     public function storeCreditNote(Request $request, int $id, InvoiceAdjustments $adjustments)
     {
-        $user = $this->professional($request);
+        // Un avoir corrige une facture déjà émise : il n'est ni compté ni bloqué.
+        $user = $request->user();
         $invoice = $user->proInvoices()->findOrFail($id);
-        $this->ensureCanIssue($user);
 
         $validated = $request->validate([
             'reason' => 'required|string|max:255',
@@ -43,10 +45,15 @@ class ProInvoiceAdjustmentsController extends Controller
     }
 
     /** Prépare la facture d'acompte d'un devis accepté, en brouillon. */
-    public function storeDepositInvoice(Request $request, int $id, InvoiceAdjustments $adjustments)
+    public function storeDepositInvoice(Request $request, int $id, InvoiceAdjustments $adjustments, CommercialDocumentAllowance $allowance)
     {
-        $user = $this->professional($request);
+        $user = $request->user();
         $quote = $user->proQuotes()->findOrFail($id);
+        // Une facture d'acompte est une facture : elle compte dans les factures offertes.
+        if (! $allowance->canCreate($user, CommercialDocumentAllowance::INVOICE)) {
+            return redirect()->route('pro.invoices')
+                ->with('warning', $allowance->limitReachedMessage(CommercialDocumentAllowance::INVOICE));
+        }
 
         try {
             $invoice = $adjustments->draftDepositInvoice($user, $quote);
@@ -56,26 +63,5 @@ class ProInvoiceAdjustmentsController extends Controller
 
         return redirect()->route('pro.invoices.edit', $invoice->id)
             ->with('success', 'Brouillon de facture d’acompte créé. Vérifiez-le, puis envoyez-le : il recevra son numéro à l’émission.');
-    }
-
-    private function professional(Request $request): User
-    {
-        $user = $request->user();
-        if (! $user->isProfessionnel()) {
-            throw new HttpResponseException(redirect()->route('pro.account-status')->with(
-                'warning', 'Les devis et factures professionnels nécessitent un statut professionnel.'
-            ));
-        }
-
-        return $user;
-    }
-
-    private function ensureCanIssue(User $user): void
-    {
-        if (! $user->canIssueCommercialDocuments()) {
-            throw new HttpResponseException(redirect()->route('pro.compliance')->with(
-                'warning', 'Un avoir ne peut pas encore être émis. Terminez la checklist de conformité PRO.'
-            ));
-        }
     }
 }

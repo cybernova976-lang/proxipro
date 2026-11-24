@@ -46,6 +46,15 @@ class OfferComparisonTest extends TestCase
             $this->assertSame([OfferComparison::INCLUDED, OfferComparison::INCLUDED, OfferComparison::INCLUDED],
                 [$row['free'], $row['unit'], $row['premium']]);
         }
+
+        // Décision du 24/11/2026 : les devis et factures ne sont plus « inclus » sans limite.
+        // Sans abonnement, 2 de chaque sont offerts ; Premium lève la limite.
+        $documents = collect(OfferComparison::sections())->flatMap(fn ($section) => $section['rows'])
+            ->firstWhere('label', 'Devis et factures de l’espace Pro, devis accepté en ligne par votre client');
+        $this->assertSame(['2 devis et 2 factures offerts', '2 devis et 2 factures offerts', 'Sans limite'],
+            [$documents['free'], $documents['unit'], $documents['premium']]);
+        $this->assertContains('Sans abonnement, chaque membre, particulier ou professionnel, crée 2 devis et 2 factures offerts, sans justificatif ; Premium lève la limite.',
+            OfferComparison::notes());
     }
 
     public function test_the_cost_argument_is_written_only_when_it_is_true_and_premium_is_on_sale(): void

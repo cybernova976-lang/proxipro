@@ -1,5 +1,12 @@
 {{-- Menu de l'espace Pro : les groupes et les compteurs viennent de App\Support\ProSpaceNavigation. --}}
 <aside class="pro-sidebar" id="proSidebar" aria-label="Menu de l'espace professionnel">
+    {{-- En-tête du tiroir, visible seulement sous 1024 px. --}}
+    <div class="pro-sidebar-head">
+        <span class="pro-sidebar-head__title">Espace professionnel</span>
+        <button type="button" class="pro-sidebar-close" data-pro-sidebar-close aria-label="Fermer le menu">
+            <i class="fas fa-xmark" aria-hidden="true"></i>
+        </button>
+    </div>
     @foreach($proNavGroups as $group)
         <div class="pro-nav-group">
             @if($group['label'])

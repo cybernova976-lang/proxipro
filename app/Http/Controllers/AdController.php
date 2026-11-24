@@ -1054,12 +1054,16 @@ class AdController extends Controller
             ->pluck('user_id')
             ->unique();
 
-        // Aussi chercher dans pro_service_categories (JSON array sur le profil pro)
+        // Comptes de l'ancien parcours, sans aucune compétence enregistrée : leurs
+        // catégories de profil font foi. Pour les autres, seules les compétences
+        // actives comptent (App\Services\ProviderSkills) : une compétence supprimée
+        // ou en pause ne déclenche plus de notification.
         $proUsers = User::where('id', '!=', $ad->user_id)
             ->where(function ($q) {
                 $q->where('user_type', 'professionnel')
                     ->orWhere('is_service_provider', true);
             })
+            ->whereDoesntHave('services')
             ->where('pro_notifications_realtime', true)
             ->get()
             ->filter(function ($user) use ($category) {

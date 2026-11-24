@@ -35,7 +35,7 @@
                         @endif
                         <form method="POST" action="{{ route('pro.quote-templates.destroy', $quoteTemplate->id) }}" onsubmit="return confirm('Supprimer ce modèle ? Les devis déjà créés ne sont pas modifiés.');">
                             @csrf @method('DELETE')
-                            <button type="submit" class="pk-templates__delete">Supprimer</button>
+                            <button type="submit" class="pk-templates__delete pk-templates__delete--icon" aria-label="Supprimer le modèle {{ $quoteTemplate->name }}" title="Supprimer ce modèle"><i class="fas fa-trash-can" aria-hidden="true"></i></button>
                         </form>
                     </div>
                 </li>

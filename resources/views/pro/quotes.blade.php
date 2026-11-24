@@ -4,56 +4,27 @@
 @section('content')
 <div class="pro-content-header">
     <div>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-1" style="font-size: 0.8rem;">
-                <li class="breadcrumb-item"><a href="{{ route('pro.dashboard') }}" style="color: var(--pro-primary);">Espace Pro</a></li>
-                <li class="breadcrumb-item active">Devis</li>
-            </ol>
-        </nav>
         <h1>Mes devis</h1>
     </div>
-    <a href="{{ route('pro.quotes.create') }}" class="btn btn-pro-primary">
-        <i class="fas fa-plus me-1"></i> Nouveau devis
-    </a>
+    @include('pro.partials.document-allowance', ['createUrl' => route('pro.quotes.create'), 'createLabel' => 'Nouveau devis'])
 </div>
 
 @include('pro.partials.quote-templates')
 
-{{-- Stats rapides --}}
-<div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-        <div class="pro-card text-center py-3 mb-0">
-            <div class="fw-bold fs-4 text-primary">{{ $quotes->total() }}</div>
-            <div class="text-muted" style="font-size: 0.78rem;">Total devis</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="pro-card text-center py-3 mb-0">
-            <div class="fw-bold fs-4 text-warning">{{ $quoteStats['waiting'] }}</div>
-            <div class="text-muted" style="font-size: 0.78rem;">En attente</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="pro-card text-center py-3 mb-0">
-            <div class="fw-bold fs-4 text-success">{{ $quoteStats['accepted'] }}</div>
-            <div class="text-muted" style="font-size: 0.78rem;">Acceptés</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="pro-card text-center py-3 mb-0">
-            <div class="fw-bold fs-4 text-danger">{{ $quoteStats['refused'] }}</div>
-            <div class="text-muted" style="font-size: 0.78rem;">Refusés</div>
-        </div>
-    </div>
-</div>
+@include('pro.partials.kpi-strip', ['label' => 'Vos devis en chiffres', 'items' => [
+    ['label' => 'Total devis', 'value' => $quotes->total(), 'tone' => 'info'],
+    ['label' => 'En attente', 'value' => $quoteStats['waiting'], 'tone' => 'warning'],
+    ['label' => 'Acceptés', 'value' => $quoteStats['accepted'], 'tone' => 'success'],
+    ['label' => 'Refusés', 'value' => $quoteStats['refused'], 'tone' => 'danger'],
+]])
 
 @if($quotes->isEmpty())
     <div class="pro-card">
         <div class="pro-empty">
-            <div class="pro-empty-icon">📄</div>
+            <div class="pro-empty-icon" aria-hidden="true"><i class="fas fa-file-lines"></i></div>
             <h5>Aucun devis</h5>
             <p>Créez votre premier devis en quelques clics.</p>
-            <a href="{{ route('pro.quotes.create') }}" class="btn btn-pro-primary mt-2">
+            <a href="{{ route('pro.quotes.create') }}" class="btn btn-pro-outline mt-2">
                 <i class="fas fa-plus me-1"></i> Nouveau devis
             </a>
         </div>
@@ -61,33 +32,33 @@
 @else
     <div class="pro-card">
         <div class="table-responsive" style="overflow: visible;">
-            <table class="pro-table">
+            <table class="pro-table pro-table--cards">
                 <thead>
                     <tr>
                         <th>N° Devis</th>
                         <th>Client</th>
                         <th>Objet</th>
-                        <th>Montant TTC</th>
+                        <th class="pk-col-amount">Montant TTC</th>
                         <th>Date</th>
                         <th>Validité</th>
                         <th>Statut</th>
-                        <th>Actions</th>
+                        <th class="pk-col-actions"><span class="visually-hidden">Actions</span></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($quotes as $quote)
                     <tr>
-                        <td><a href="{{ route('pro.quotes.show', $quote->id) }}" class="fw-bold" style="color: var(--pro-primary);">{{ $quote->quote_number }}</a></td>
-                        <td>{{ Str::limit($quote->client_name, 25) }}</td>
-                        <td>{{ Str::limit($quote->subject, 30) }}</td>
-                        <td class="fw-bold">{{ number_format($quote->total, 2, ',', ' ') }}€</td>
-                        <td>{{ $quote->created_at->format('d/m/Y') }}</td>
-                        <td>{{ $quote->valid_until ? $quote->valid_until->format('d/m/Y') : '-' }}</td>
-                        <td><span class="pro-status pro-status-{{ $quote->getStatusColor() }}">{{ $quote->getStatusLabel() }}</span></td>
-                        <td>
+                        <td class="pk-col-id"><a href="{{ route('pro.quotes.show', $quote->id) }}" class="pro-table__link">{{ $quote->quote_number }}</a></td>
+                        <td class="pk-col-client">{{ Str::limit($quote->client_name, 25) }}</td>
+                        <td class="pk-col-subject">{{ Str::limit($quote->subject, 30) }}</td>
+                        <td class="pk-col-amount">{{ \App\Support\Money::eur($quote->total) }}</td>
+                        <td class="pk-col-date" data-label="Créé le">{{ $quote->created_at->format('d/m/Y') }}</td>
+                        <td class="pk-col-due" data-label="Valide jusqu’au">@if($quote->valid_until){{ $quote->valid_until->format('d/m/Y') }}@endif</td>
+                        <td class="pk-col-status"><span class="pro-status pro-status-{{ $quote->getStatusColor() }}">{{ $quote->getStatusLabel() }}</span></td>
+                        <td class="pk-col-actions">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-light" data-bs-toggle="dropdown" style="border-radius: 8px;">
-                                    <i class="fas fa-ellipsis-v"></i>
+                                <button class="btn btn-sm btn-light pro-table__menu" data-bs-toggle="dropdown" aria-label="Actions du devis {{ $quote->quote_number }}">
+                                    <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end" style="z-index: 1050;">
                                     <li><a class="dropdown-item" href="{{ route('pro.quotes.show', $quote->id) }}"><i class="fas fa-eye me-2"></i>Voir</a></li>

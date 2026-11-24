@@ -4,53 +4,25 @@
 @section('content')
 <div class="pro-content-header">
     <div>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-1" style="font-size: 0.8rem;">
-                <li class="breadcrumb-item"><a href="{{ route('pro.dashboard') }}" style="color: var(--pro-primary);">Espace Pro</a></li>
-                <li class="breadcrumb-item active">Factures</li>
-            </ol>
-        </nav>
         <h1>Mes factures</h1>
     </div>
-    <a href="{{ route('pro.invoices.create') }}" class="btn btn-pro-primary">
-        <i class="fas fa-plus me-1"></i> Nouvelle facture
-    </a>
+    @include('pro.partials.document-allowance', ['createUrl' => route('pro.invoices.create'), 'createLabel' => 'Nouvelle facture'])
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-        <div class="pro-card text-center py-3 mb-0">
-            <div class="fw-bold fs-4 text-primary">{{ $invoices->total() }}</div>
-            <div class="text-muted" style="font-size: 0.78rem;">Total factures</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="pro-card text-center py-3 mb-0">
-            <div class="fw-bold fs-4 text-warning">{{ $invoiceStats['sent'] }}</div>
-            <div class="text-muted" style="font-size: 0.78rem;">En attente</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="pro-card text-center py-3 mb-0">
-            <div class="fw-bold fs-4 text-success">{{ $invoiceStats['paid'] }}</div>
-            <div class="text-muted" style="font-size: 0.78rem;">Payées</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="pro-card text-center py-3 mb-0">
-            <div class="fw-bold fs-4 text-danger">{{ $invoiceStats['overdue'] }}</div>
-            <div class="text-muted" style="font-size: 0.78rem;">En retard</div>
-        </div>
-    </div>
-</div>
+@include('pro.partials.kpi-strip', ['label' => 'Vos factures en chiffres', 'items' => [
+    ['label' => 'Total factures', 'value' => $invoices->total(), 'tone' => 'info'],
+    ['label' => 'En attente', 'value' => $invoiceStats['sent'], 'tone' => 'warning'],
+    ['label' => 'Payées', 'value' => $invoiceStats['paid'], 'tone' => 'success'],
+    ['label' => 'En retard', 'value' => $invoiceStats['overdue'], 'tone' => 'danger'],
+]])
 
 @if($invoices->isEmpty())
     <div class="pro-card">
         <div class="pro-empty">
-            <div class="pro-empty-icon">🧾</div>
+            <div class="pro-empty-icon" aria-hidden="true"><i class="fas fa-file-invoice"></i></div>
             <h5>Aucune facture</h5>
             <p>Créez votre première facture pour suivre vos paiements.</p>
-            <a href="{{ route('pro.invoices.create') }}" class="btn btn-pro-primary mt-2">
+            <a href="{{ route('pro.invoices.create') }}" class="btn btn-pro-outline mt-2">
                 <i class="fas fa-plus me-1"></i> Nouvelle facture
             </a>
         </div>
@@ -58,31 +30,31 @@
 @else
     <div class="pro-card">
         <div class="table-responsive" style="overflow: visible;">
-            <table class="pro-table">
+            <table class="pro-table pro-table--cards">
                 <thead>
                     <tr>
                         <th>N° Facture</th>
                         <th>Client</th>
-                        <th>Montant TTC</th>
+                        <th class="pk-col-amount">Montant TTC</th>
                         <th>Date</th>
                         <th>Échéance</th>
                         <th>Statut</th>
-                        <th style="text-align: right;">Actions</th>
+                        <th class="pk-col-actions"><span class="visually-hidden">Actions</span></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($invoices as $invoice)
                     <tr>
-                        <td><a href="{{ route('pro.invoices.show', $invoice->id) }}" class="fw-bold" style="color: var(--pro-primary);">{{ $invoice->invoice_number }}</a>@if($invoice->kind !== \App\Models\ProInvoice::KIND_INVOICE) <span class="badge bg-light text-dark border">{{ $invoice->isCreditNote() ? 'Avoir' : 'Acompte' }}</span>@endif</td>
-                        <td>{{ Str::limit($invoice->client_name, 25) }}</td>
-                        <td class="fw-bold">{{ $invoice->isCreditNote() ? '−' : '' }}{{ number_format($invoice->total, 2, ',', ' ') }}€</td>
-                        <td>{{ $invoice->created_at->format('d/m/Y') }}</td>
-                        <td>{{ $invoice->due_date ? $invoice->due_date->format('d/m/Y') : '-' }}</td>
-                        <td><span class="pro-status pro-status-{{ $invoice->getStatusColor() }}">{{ $invoice->getStatusLabel() }}</span></td>
-                        <td style="text-align: right;">
+                        <td class="pk-col-id"><a href="{{ route('pro.invoices.show', $invoice->id) }}" class="pro-table__link">{{ $invoice->invoice_number }}</a>@if($invoice->kind !== \App\Models\ProInvoice::KIND_INVOICE) <span class="pro-status pro-status-secondary">{{ $invoice->isCreditNote() ? 'Avoir' : 'Acompte' }}</span>@endif</td>
+                        <td class="pk-col-client">{{ Str::limit($invoice->client_name, 25) }}</td>
+                        <td class="pk-col-amount">{{ \App\Support\Money::eur($invoice->isCreditNote() ? -abs((float) $invoice->total) : $invoice->total) }}</td>
+                        <td class="pk-col-date" data-label="Émise le">{{ $invoice->created_at->format('d/m/Y') }}</td>
+                        <td class="pk-col-due" data-label="Échéance">@if($invoice->due_date){{ $invoice->due_date->format('d/m/Y') }}@endif</td>
+                        <td class="pk-col-status"><span class="pro-status pro-status-{{ $invoice->getStatusColor() }}">{{ $invoice->getStatusLabel() }}</span></td>
+                        <td class="pk-col-actions">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-light" data-bs-toggle="dropdown" data-bs-display="static" style="border-radius: 8px;">
-                                    <i class="fas fa-ellipsis-v"></i>
+                                <button class="btn btn-sm btn-light pro-table__menu" data-bs-toggle="dropdown" data-bs-display="static" aria-label="Actions de la facture {{ $invoice->invoice_number }}">
+                                    <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" href="{{ route('pro.invoices.show', $invoice->id) }}"><i class="fas fa-eye me-2"></i>Voir</a></li>

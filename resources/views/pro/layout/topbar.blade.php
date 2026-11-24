@@ -1,4 +1,12 @@
-{{-- Barre du haut : la marque, la page active, et trois accès (feed, messages, compte). --}}
+{{-- Barre du haut : la marque, la page active, et trois accès (accueil du site, messages, compte). --}}
+@php
+    // Initiales de l'entreprise (ou du nom) : « Atelier du Lagon » donne « AL ».
+    $proAvatarInitials = collect(preg_split('/[\s\-]+/u', trim((string) (Auth::user()->company_name ?: Auth::user()->name))) ?: [])
+        ->filter(fn ($word) => mb_strlen($word) > 2 || preg_match('/^\p{Lu}/u', $word))
+        ->take(2)
+        ->map(fn ($word) => mb_strtoupper(mb_substr($word, 0, 1)))
+        ->implode('') ?: 'P';
+@endphp
 <nav class="pro-topbar" aria-label="Navigation de l'espace professionnel">
     <div class="pro-topbar-left">
         @if($proNavGroups !== [])
@@ -19,9 +27,9 @@
     </div>
 
     <div class="pro-topbar-right">
-        <a href="{{ route('feed') }}" class="pro-topbar-action pro-topbar-return" aria-label="Retour au feed">
+        <a href="{{ route('feed') }}" class="pro-topbar-action pro-topbar-return" aria-label="Retour à l’accueil de Prokejem" title="Retour à l’accueil de Prokejem">
             <i class="fas fa-arrow-left" aria-hidden="true"></i>
-            <span class="pro-topbar-action-label">Retour au feed</span>
+            <span class="pro-topbar-action-label">Retour à l’accueil</span>
         </a>
         <a href="{{ route('messages.index') }}" class="pro-topbar-action" aria-label="Messages{{ $proUnreadMessages > 0 ? ' ('.$proUnreadMessages.' non lus)' : '' }}">
             <i class="fas fa-envelope" aria-hidden="true"></i>
@@ -40,11 +48,13 @@
         </a>
         <div class="dropdown">
             <a href="#" class="pro-user-menu dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Mon compte">
-                @if(Auth::user()->avatar)
-                    <img src="{{ storage_url(Auth::user()->avatar) }}" class="pro-user-avatar" alt="Photo de profil de {{ Auth::user()->name }}">
-                @else
-                    <span class="pro-user-avatar">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
-                @endif
+                {{-- Les initiales sont toujours dessous : une photo absente ou qui ne se charge pas les laisse voir (pro-space.js). --}}
+                <span class="pro-user-avatar" aria-hidden="true">
+                    <span class="pro-user-avatar__initials">{{ $proAvatarInitials }}</span>
+                    @if(Auth::user()->avatar)
+                        <img src="{{ storage_url(Auth::user()->avatar) }}" alt="" data-pro-avatar-photo>
+                    @endif
+                </span>
                 <span class="pro-user-info d-none d-md-flex">
                     <span class="pro-user-name">{{ Str::limit(Auth::user()->company_name ?? Auth::user()->name, 18) }}</span>
                     <span class="pro-user-role">{{ Auth::user()->getAccountTypeLabel() }}</span>

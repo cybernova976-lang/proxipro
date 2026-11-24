@@ -79,13 +79,15 @@ class OfferComparison
                 'title' => 'Publier et échanger',
                 'rows' => [
                     self::row('Publier vos offres et vos demandes, échanger par la messagerie', self::INCLUDED, self::INCLUDED, self::INCLUDED),
-                    self::row('Devis et factures de l’espace Pro, devis accepté en ligne par votre client', self::INCLUDED, self::INCLUDED, self::INCLUDED),
                 ],
             ],
             ['title' => 'Être vu', 'rows' => $visibility],
             [
                 'title' => 'Gagner du temps sur vos devis et vos factures',
                 'rows' => [
+                    // Quota réel : App\Services\CommercialDocumentAllowance (décision du 24/11/2026).
+                    self::row('Devis et factures de l’espace Pro, devis accepté en ligne par votre client',
+                        self::freeDocuments(), self::freeDocuments(), 'Sans limite'),
                     self::row('Modèles de devis et relance des devis sans réponse', self::NOT_INCLUDED, self::NOT_INCLUDED, self::INCLUDED),
                     self::row('Votre logo sur vos devis et vos factures', self::NOT_INCLUDED, self::NOT_INCLUDED, self::INCLUDED),
                     self::row('Rappel automatique de vos factures impayées', self::NOT_INCLUDED, self::NOT_INCLUDED, self::INCLUDED),
@@ -125,8 +127,16 @@ class OfferComparison
             'Les options à la carte se règlent par offre ou par demande, sans abonnement.',
             'Une mise en avant ne donne pas de place fixe et ne garantit ni demande, ni mission, ni revenu.',
             'Le nombre d’annonces actives dépend du statut du compte : Premium ne rend pas les publications illimitées.',
-            'Les outils de devis et de factures concernent les comptes professionnels.',
+            'Sans abonnement, chaque membre, particulier ou professionnel, crée '.self::freeDocuments().', sans justificatif ; Premium lève la limite.',
         ];
+    }
+
+    /** « 2 devis et 2 factures offerts », lu dans App\Services\CommercialDocumentAllowance. */
+    private static function freeDocuments(): string
+    {
+        $free = \App\Services\CommercialDocumentAllowance::FREE;
+
+        return $free['quote'].' devis et '.$free['invoice'].' factures offerts';
     }
 
     private static function row(string $label, string $free, string $unit, string $premium): array

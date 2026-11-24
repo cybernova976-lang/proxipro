@@ -46,7 +46,7 @@
                     <h2 id="providerGuidesTitle">Parcours prestataire</h2>
                 </div>
                 @auth
-                    <a href="{{ route('pro.opportunities') }}">Mes opportunités <i class="fas fa-arrow-right"></i></a>
+                    <a href="{{ route('pro.opportunities') }}">Demandes et missions <i class="fas fa-arrow-right"></i></a>
                 @else
                     <a href="{{ route('register', ['account_type' => 'professionnel']) }}">Devenir prestataire <i class="fas fa-arrow-right"></i></a>
                 @endauth

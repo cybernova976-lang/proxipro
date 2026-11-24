@@ -48,32 +48,53 @@ class ProDashboardController extends Controller
     }
 
     /**
-     * Les particuliers prestataires peuvent utiliser le CRM, mais l'édition de
-     * documents commerciaux est réservée à une activité professionnelle déclarée.
+     * Devis et factures : ouverts à tout membre connecté, particulier ou
+     * professionnel, sans profil prestataire ni justificatif (décision du
+     * fondateur du 24/11/2026). Le quota offert est appliqué à la création et à
+     * l'émission (App\Services\CommercialDocumentAllowance).
      */
-    private function ensureCommercialProfessional()
+    private function documentMember(): User
     {
-        $user = $this->ensurePro();
-
-        if (! $user->isProfessionnel()) {
-            throw new \Illuminate\Http\Exceptions\HttpResponseException(
-                redirect()->route('pro.account-status')->with(
-                    'warning',
-                    'Les devis et factures professionnels nécessitent un statut professionnel. Le CRM reste accessible aux particuliers prestataires.'
-                )
-            );
-        }
-
-        return $user;
+        return Auth::user();
     }
 
-    private function ensureCanIssueCommercialDocuments($user): void
+    private function allowance(): \App\Services\CommercialDocumentAllowance
     {
-        if (! $user->canIssueCommercialDocuments()) {
+        return app(\App\Services\CommercialDocumentAllowance::class);
+    }
+
+    /** Refuse proprement la création au-delà des documents offerts, sans rien enregistrer. */
+    private function ensureCanCreateDocument(User $user, string $type): void
+    {
+        if (! $this->allowance()->canCreate($user, $type)) {
             throw new \Illuminate\Http\Exceptions\HttpResponseException(
-                redirect()->route('pro.compliance')->with(
+                redirect()->route($type === \App\Services\CommercialDocumentAllowance::QUOTE ? 'pro.quotes' : 'pro.invoices')
+                    ->with('warning', $this->allowance()->limitReachedMessage($type))
+            );
+        }
+    }
+
+    /**
+     * Seul un document compris dans les offerts (ou un abonné Premium) reçoit un
+     * numéro définitif. Le SIRET n'est plus exigé : le document reprend ce que le
+     * membre a renseigné, sans rien inventer.
+     */
+    private function ensureCanIssueCommercialDocuments($user, ProQuote|ProInvoice $document): void
+    {
+        if (! $this->allowance()->canIssue($user, $document)) {
+            $isQuote = $document instanceof ProQuote;
+            // Tant que l'abonnement n'est pas ouvert, on ne renvoie pas vers une page
+            // où rien ne peut être souscrit : le membre revient à sa liste de documents.
+            $target = $this->allowance()->subscriptionsOpen()
+                ? 'pro.subscription'
+                : ($isQuote ? 'pro.quotes' : 'pro.invoices');
+
+            throw new \Illuminate\Http\Exceptions\HttpResponseException(
+                redirect()->route($target)->with(
                     'warning',
-                    'Ce brouillon est conservé, mais il ne peut pas encore être émis. Terminez la checklist de conformité PRO.'
+                    $this->allowance()->issueRefusedMessage($isQuote
+                        ? \App\Services\CommercialDocumentAllowance::QUOTE
+                        : \App\Services\CommercialDocumentAllowance::INVOICE)
                 )
             );
         }
@@ -125,7 +146,9 @@ class ProDashboardController extends Controller
 
     private function issueQuote(ProQuote $quote, $user): void
     {
-        $this->ensureCanIssueCommercialDocuments($user);
+        if ($quote->status === 'draft' && $quote->issued_at === null) {
+            $this->ensureCanIssueCommercialDocuments($user, $quote);
+        }
 
         if ($quote->status === 'draft' && $quote->issued_at === null) {
             $quote->update([
@@ -138,7 +161,9 @@ class ProDashboardController extends Controller
 
     private function finalizeInvoice(ProInvoice $invoice, $user): void
     {
-        $this->ensureCanIssueCommercialDocuments($user);
+        if ($invoice->status === 'draft' && $invoice->finalized_at === null) {
+            $this->ensureCanIssueCommercialDocuments($user, $invoice);
+        }
 
         if ($invoice->status === 'draft' && $invoice->finalized_at === null) {
             $invoice->update([
@@ -191,10 +216,11 @@ class ProDashboardController extends Controller
                 ->where('provider_id', $user->id)
                 ->where('status', ServiceProposal::STATUS_PENDING)
                 ->count(),
+            // Une commande en attente d'acceptation n'est pas encore une mission :
+            // elle figure dans « À faire maintenant » et dans « À examiner ».
             'active_missions' => ServiceOrder::query()
                 ->where('seller_id', $user->id)
                 ->whereIn('status', [
-                    ServiceOrder::STATUS_PENDING_ACCEPTANCE,
                     ServiceOrder::STATUS_AWAITING_PAYMENT,
                     ServiceOrder::STATUS_FUNDED,
                     ServiceOrder::STATUS_DISPUTED,
@@ -212,17 +238,19 @@ class ProDashboardController extends Controller
         ]);
 
         // Devis et factures récents dans une seule liste, du plus récent au plus ancien.
-        $recentDocuments = $isProfessional
-            ? $user->proQuotes()->latest()->take(5)->get()->map(fn (ProQuote $quote) => [
-                'type' => 'Devis', 'number' => $quote->quote_number, 'client' => $quote->client_name,
-                'total' => (float) $quote->total, 'status' => $quote->getStatusLabel(), 'tone' => $quote->getStatusColor(),
-                'url' => route('pro.quotes.show', $quote->id), 'date' => $quote->created_at,
-            ])->concat($user->proInvoices()->latest()->take(5)->get()->map(fn (ProInvoice $invoice) => [
-                'type' => 'Facture', 'number' => $invoice->invoice_number, 'client' => $invoice->client_name,
-                'total' => (float) $invoice->total, 'status' => $invoice->getStatusLabel(), 'tone' => $invoice->getStatusColor(),
-                'url' => route('pro.invoices.show', $invoice->id), 'date' => $invoice->created_at,
-            ]))->sortByDesc('date')->take(5)->values()
-            : collect();
+        // Ouverts à tous depuis le 24/11/2026 : la liste ne dépend plus du statut.
+        $recentDocuments = $user->proQuotes()->latest()->take(5)->get()->map(fn (ProQuote $quote) => [
+            'type' => 'Devis', 'number' => $quote->quote_number, 'client' => $quote->client_name,
+            'total' => (float) $quote->total, 'status' => $quote->getStatusLabel(), 'tone' => $quote->getStatusColor(),
+            'url' => route('pro.quotes.show', $quote->id), 'date' => $quote->created_at,
+        ])->concat($user->proInvoices()->latest()->take(5)->get()->map(fn (ProInvoice $invoice) => [
+            // Un avoir est affiché comme tel, en négatif : ce n'est pas une recette.
+            'type' => $invoice->isCreditNote() ? 'Avoir' : ($invoice->isDeposit() ? 'Acompte' : 'Facture'),
+            'number' => $invoice->invoice_number, 'client' => $invoice->client_name,
+            'total' => $invoice->isCreditNote() ? -abs((float) $invoice->total) : (float) $invoice->total,
+            'status' => $invoice->getStatusLabel(), 'tone' => $invoice->getStatusColor(),
+            'url' => route('pro.invoices.show', $invoice->id), 'date' => $invoice->created_at,
+        ]))->sortByDesc('date')->take(5)->values();
 
         return view('pro.dashboard', [
             'user' => $user,
@@ -267,11 +295,20 @@ class ProDashboardController extends Controller
             ->take(18)
             ->get();
 
+        // Commandes réservées par un client : une réponse est attendue, elles
+        // ouvrent la colonne « À examiner » au lieu de gonfler les missions en cours.
+        $ordersToAnswer = ServiceOrder::query()
+            ->with(['ad', 'buyer'])
+            ->where('seller_id', $user->id)
+            ->where('status', ServiceOrder::STATUS_PENDING_ACCEPTANCE)
+            ->latest()
+            ->take(18)
+            ->get();
+
         $activeMissions = ServiceOrder::query()
             ->with(['ad', 'buyer'])
             ->where('seller_id', $user->id)
             ->whereIn('status', [
-                ServiceOrder::STATUS_PENDING_ACCEPTANCE,
                 ServiceOrder::STATUS_AWAITING_PAYMENT,
                 ServiceOrder::STATUS_FUNDED,
                 ServiceOrder::STATUS_DISPUTED,
@@ -290,15 +327,21 @@ class ProDashboardController extends Controller
             ->get();
 
         $pipelineCounts = [
-            'new' => $newOpportunities->count(),
+            'new' => $ordersToAnswer->count() + $newOpportunities->count(),
             'proposed' => $sentProposals->count(),
             'active' => $activeMissions->count(),
             'completed' => $completedMissions->count(),
         ];
 
+        // Métiers affichés : les compétences actives, par leur nom de métier
+        // (la catégorie seule quand la compétence couvre toute la catégorie).
+        $providerTrades = $this->providerTrades($user, $providerCategories);
+
         return view('pro.opportunities', compact(
             'user',
             'providerCategories',
+            'providerTrades',
+            'ordersToAnswer',
             'newOpportunities',
             'sentProposals',
             'activeMissions',
@@ -307,39 +350,88 @@ class ProDashboardController extends Controller
         ));
     }
 
+    /**
+     * Compétences actives de « Mes compétences » ; les colonnes du profil ne
+     * servent qu'aux comptes qui n'en ont encore aucune (voir ProviderSkills).
+     */
     private function providerServiceCategories(User $user)
     {
-        $storedCategories = collect([$user->service_category, $user->profession])
-            ->merge((array) $user->service_subcategories)
-            ->merge((array) $user->pro_service_categories)
-            ->flatMap(function ($value) {
-                if (! is_scalar($value)) {
-                    return [];
-                }
+        return app(\App\Services\ProviderSkills::class)->matchingCategories($user);
+    }
 
-                return preg_split('/[,;|]/u', (string) $value) ?: [];
-            });
+    /**
+     * Métiers choisis pendant la configuration de l'Espace Pro : pour un membre
+     * qui a déjà des compétences enregistrées, ils deviennent des compétences
+     * (sinon ils seraient ignorés), et le profil est recalculé.
+     */
+    private function adoptOnboardingSkills(User $user, array $updateData): void
+    {
+        if (! array_key_exists('pro_service_categories', $updateData) && ! array_key_exists('service_subcategories', $updateData)) {
+            return;
+        }
 
-        return $user->services()
-            ->where('is_active', true)
-            ->get(['main_category', 'subcategory'])
-            ->flatMap(fn ($service) => [$service->main_category, $service->subcategory])
-            ->merge($storedCategories)
-            ->map(fn ($category) => trim((string) $category))
-            ->filter()
-            ->unique(fn ($category) => mb_strtolower($category))
-            ->values();
+        app(\App\Services\ProviderSkills::class)->adoptSelections(
+            $user,
+            array_values((array) ($updateData['pro_service_categories'] ?? [])),
+            array_values((array) ($updateData['service_subcategories'] ?? [])),
+        );
+    }
+
+    /**
+     * Métiers à afficher dans « Demandes reçues pour » : une compétence s'affiche
+     * par son métier (« Électricien »), la catégorie n'apparaît que pour une
+     * compétence qui la couvre entière. Compte de l'ancien parcours : ses catégories.
+     */
+    private function providerTrades(User $user, $providerCategories)
+    {
+        if (! app(\App\Services\ProviderSkills::class)->hasSkillRecords($user)) {
+            return $providerCategories->values();
+        }
+
+        return $user->services()->where('is_active', true)->orderBy('id')->get(['main_category', 'subcategory'])
+            ->map(fn ($service) => trim((string) ($service->subcategory ?: $service->main_category)))
+            ->filter()->unique(fn ($trade) => mb_strtolower($trade))->values();
+    }
+
+    /**
+     * Catégories entières couvertes par le prestataire. Une compétence précise
+     * (« Électricien ») ne rattache pas les autres métiers de sa catégorie :
+     * après la suppression de « Plombier », une demande de plomberie de
+     * « Bricolage & Travaux » ne doit plus être proposée. Compte de l'ancien
+     * parcours, sans compétence enregistrée : ses catégories de profil font foi.
+     */
+    private function wholeProviderCategories(User $user, $providerCategories)
+    {
+        if (! app(\App\Services\ProviderSkills::class)->hasSkillRecords($user)) {
+            return $providerCategories->values();
+        }
+
+        // Compétence « catégorie entière » : sans métier, ou dont le métier porte le nom de la catégorie.
+        return $user->services()->where('is_active', true)
+            ->where(fn ($query) => $query->whereNull('subcategory')->orWhere('subcategory', '')
+                ->orWhereColumn('subcategory', 'main_category'))
+            ->pluck('main_category')->filter()->unique()->values();
     }
 
     private function matchingOpportunityQuery(User $user, $providerCategories)
     {
+        $wholeCategories = $this->wholeProviderCategories($user, $providerCategories);
+
         return Ad::query()
             ->marketplaceActive()
             ->where('service_type', 'demande')
             ->where('user_id', '!=', $user->id)
-            ->where(function ($query) use ($providerCategories) {
+            ->where(function ($query) use ($providerCategories, $wholeCategories) {
+                // Le métier de la demande est une compétence active…
                 $query->whereIn('category', $providerCategories)
-                    ->orWhereIn('main_category', $providerCategories);
+                    // … ou la demande ne précise aucun métier dans une catégorie couverte…
+                    ->orWhere(function ($generic) use ($providerCategories) {
+                        $generic->whereIn('main_category', $providerCategories)
+                            ->where(fn ($noTrade) => $noTrade->whereNull('category')->orWhere('category', '')
+                                ->orWhereColumn('category', 'main_category'));
+                    })
+                    // … ou le prestataire couvre la catégorie entière.
+                    ->when($wholeCategories->isNotEmpty(), fn ($whole) => $whole->orWhereIn('main_category', $wholeCategories));
             })
             ->where(function ($query) use ($providerCategories) {
                 $query->where('visibility', 'public')->orWhereNull('visibility')
@@ -505,7 +597,7 @@ class ProDashboardController extends Controller
 
     public function quotes()
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $quotes = $user->proQuotes()->with('client')->latest()->paginate(15);
         $clients = $user->proClients()->orderBy('name')->get();
         $quoteStats = [
@@ -515,13 +607,15 @@ class ProDashboardController extends Controller
         ];
 
         $quoteTemplates = $user->proQuoteTemplates()->latest()->get();
+        $allowance = $this->allowance()->for($user, \App\Services\CommercialDocumentAllowance::QUOTE);
 
-        return view('pro.quotes', compact('user', 'quotes', 'clients', 'quoteStats', 'quoteTemplates'));
+        return view('pro.quotes', compact('user', 'quotes', 'clients', 'quoteStats', 'quoteTemplates', 'allowance'));
     }
 
     public function createQuote(Request $request)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
+        $this->ensureCanCreateDocument($user, \App\Services\CommercialDocumentAllowance::QUOTE);
         $clients = $user->proClients()->orderBy('name')->get();
         $quoteTemplates = $user->proQuoteTemplates()->latest()->get();
 
@@ -541,7 +635,8 @@ class ProDashboardController extends Controller
 
     public function storeQuote(Request $request)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
+        $this->ensureCanCreateDocument($user, \App\Services\CommercialDocumentAllowance::QUOTE);
 
         $validated = $request->validate([
             'client_id' => ['nullable', $this->proClientRule($user->id)],
@@ -612,7 +707,7 @@ class ProDashboardController extends Controller
 
     public function showQuote($id)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $quote = $user->proQuotes()->with('client')->findOrFail($id);
 
         return view('pro.quote-show', compact('user', 'quote'));
@@ -620,7 +715,7 @@ class ProDashboardController extends Controller
 
     public function updateQuoteStatus(Request $request, $id)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $quote = $user->proQuotes()->findOrFail($id);
 
         $request->validate(['status' => 'required|in:sent,accepted,refused,expired']);
@@ -656,7 +751,7 @@ class ProDashboardController extends Controller
 
     public function editQuote($id)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $quote = $user->proQuotes()->findOrFail($id);
         if (! $quote->isEditable()) {
             return redirect()->route('pro.quotes.show', $quote)->with('error', 'Un devis émis ne peut plus être modifié. Dupliquez-le pour créer une nouvelle version.');
@@ -668,7 +763,7 @@ class ProDashboardController extends Controller
 
     public function updateQuote(Request $request, $id)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $quote = $user->proQuotes()->findOrFail($id);
         if (! $quote->isEditable()) {
             return redirect()->route('pro.quotes.show', $quote)->with('error', 'Un devis émis ne peut plus être modifié.');
@@ -740,8 +835,10 @@ class ProDashboardController extends Controller
     /** Copie d'un devis en nouveau brouillon : lignes, client et conditions repris, rien de son historique. */
     public function duplicateQuote($id)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $source = $user->proQuotes()->findOrFail($id);
+        // Une copie est un nouveau devis : elle compte dans les devis offerts.
+        $this->ensureCanCreateDocument($user, \App\Services\CommercialDocumentAllowance::QUOTE);
 
         $copy = $source->replicate([
             'quote_number', 'status', 'issued_at', 'sent_at', 'accepted_at', 'refused_at', 'seller_snapshot',
@@ -761,7 +858,7 @@ class ProDashboardController extends Controller
 
     public function deleteQuote($id)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $quote = $user->proQuotes()->findOrFail($id);
         if (! $quote->isEditable()) {
             return back()->with('error', 'Seul un brouillon peut être supprimé. Les devis émis sont conservés pour garantir la traçabilité.');
@@ -773,7 +870,7 @@ class ProDashboardController extends Controller
 
     public function downloadQuote($id)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $quote = $user->proQuotes()->with('client')->findOrFail($id);
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pro.quote-pdf', compact('user', 'quote'));
@@ -784,7 +881,7 @@ class ProDashboardController extends Controller
 
     public function sendQuoteEmail(Request $request, $id)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $quote = $user->proQuotes()->with('client')->findOrFail($id);
 
         $request->validate([
@@ -834,7 +931,7 @@ class ProDashboardController extends Controller
 
     public function sendQuoteMessage(Request $request, $id)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $quote = $user->proQuotes()->with('client')->findOrFail($id);
 
         $request->validate([
@@ -910,7 +1007,7 @@ class ProDashboardController extends Controller
 
     public function invoices()
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $invoices = $user->proInvoices()->with('client')->latest()->paginate(15);
         $clients = $user->proClients()->orderBy('name')->get();
         $invoiceStats = [
@@ -918,13 +1015,15 @@ class ProDashboardController extends Controller
             'paid' => $user->proInvoices()->where('status', 'paid')->count(),
             'overdue' => $user->proInvoices()->where('status', 'overdue')->count(),
         ];
+        $allowance = $this->allowance()->for($user, \App\Services\CommercialDocumentAllowance::INVOICE);
 
-        return view('pro.invoices', compact('user', 'invoices', 'clients', 'invoiceStats'));
+        return view('pro.invoices', compact('user', 'invoices', 'clients', 'invoiceStats', 'allowance'));
     }
 
     public function createInvoice($quoteId = null)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
+        $this->ensureCanCreateDocument($user, \App\Services\CommercialDocumentAllowance::INVOICE);
         $clients = $user->proClients()->orderBy('name')->get();
         $quote = $quoteId ? $user->proQuotes()->find($quoteId) : null;
 
@@ -940,7 +1039,8 @@ class ProDashboardController extends Controller
 
     public function storeInvoice(Request $request)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
+        $this->ensureCanCreateDocument($user, \App\Services\CommercialDocumentAllowance::INVOICE);
 
         $validated = $request->validate([
             'client_id' => ['nullable', $this->proClientRule($user->id)],
@@ -1033,7 +1133,7 @@ class ProDashboardController extends Controller
 
     public function showInvoice($id)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $invoice = $user->proInvoices()->with('client', 'quote')->findOrFail($id);
 
         return view('pro.invoice-show', compact('user', 'invoice'));
@@ -1041,7 +1141,7 @@ class ProDashboardController extends Controller
 
     public function downloadInvoice($id)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $invoice = $user->proInvoices()->with('client', 'quote')->findOrFail($id);
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pro.invoice-pdf', compact('user', 'invoice'));
@@ -1052,7 +1152,7 @@ class ProDashboardController extends Controller
 
     public function sendInvoiceEmail(Request $request, $id)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $invoice = $user->proInvoices()->with('client', 'quote')->findOrFail($id);
         $sendable = $invoice->isCreditNote() ? [ProInvoice::STATUS_ISSUED] : ['draft', 'sent', 'overdue'];
         if (! in_array($invoice->status, $sendable, true)) {
@@ -1107,7 +1207,7 @@ class ProDashboardController extends Controller
 
     public function destroyInvoice($id)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $invoice = $user->proInvoices()->findOrFail($id);
         if (! $invoice->isEditable()) {
             return back()->with('error', 'Seul un brouillon peut être supprimé. Les factures émises sont conservées pour garantir la traçabilité.');
@@ -1119,7 +1219,7 @@ class ProDashboardController extends Controller
 
     public function updateInvoiceStatus(Request $request, $id)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $invoice = $user->proInvoices()->findOrFail($id);
 
         $request->validate([
@@ -1171,7 +1271,7 @@ class ProDashboardController extends Controller
 
     public function editInvoice($id)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $invoice = $user->proInvoices()->with('quote')->findOrFail($id);
         if (! $invoice->isEditable()) {
             return redirect()->route('pro.invoices.show', $invoice)->with('error', 'Une facture émise ne peut plus être modifiée.');
@@ -1183,7 +1283,7 @@ class ProDashboardController extends Controller
 
     public function updateInvoice(Request $request, $id)
     {
-        $user = $this->ensureCommercialProfessional();
+        $user = $this->documentMember();
         $invoice = $user->proInvoices()->findOrFail($id);
         if (! $invoice->isEditable()) {
             return redirect()->route('pro.invoices.show', $invoice)->with('error', 'Une facture émise ne peut plus être modifiée.');
@@ -1411,16 +1511,17 @@ class ProDashboardController extends Controller
         $wasProfessional = $user->isProfessionnel();
         $user->update($updateData);
 
-        // Passage en professionnel : on enchaîne directement sur ce qu'il reste
-        // à faire pour émettre des devis et factures, au lieu de revenir au formulaire.
+        // Passage en professionnel : on enchaîne sur l'identité qui figurera sur ses
+        // devis et factures. C'est une recommandation : l'émission dépend seulement
+        // des documents offerts et de Premium (App\Services\CommercialDocumentAllowance).
         if (! $wasProfessional && $user->isProfessionnel() && ! $user->canIssueCommercialDocuments()) {
             $remaining = count($user->proCommercialMissingRequirements());
 
             return redirect()->route('pro.compliance')->with('success', sprintf(
-                'Votre statut est maintenant « %s ». Il reste %d %s pour émettre vos devis et factures.',
+                'Votre statut est maintenant « %s ». Il reste %d %s à compléter pour l’identité professionnelle de vos devis et factures.',
                 $user->getAccountTypeLabel(),
                 $remaining,
-                $remaining > 1 ? 'étapes' : 'étape'
+                $remaining > 1 ? 'informations' : 'information'
             ));
         }
 
@@ -1595,6 +1696,7 @@ class ProDashboardController extends Controller
             }
 
             $user->update($updateData);
+            $this->adoptOnboardingSkills($user, $updateData);
 
             return response()->json(['success' => true, 'step' => $step]);
         }
@@ -1680,6 +1782,7 @@ class ProDashboardController extends Controller
             }
 
             $user->update($updateData);
+            $this->adoptOnboardingSkills($user, $updateData);
 
             return response()->json([
                 'success' => true,
@@ -1862,6 +1965,7 @@ class ProDashboardController extends Controller
                 }
 
                 $user->update($updateData);
+                $this->adoptOnboardingSkills($user, $updateData);
 
                 // Update geolocation if provided
                 if (! empty($data['latitude']) && ! empty($data['longitude'])) {
@@ -1906,6 +2010,15 @@ class ProDashboardController extends Controller
      */
     public function onboardingPaymentCancel()
     {
+        $user = Auth::user();
+
+        // L'onboarding renvoie un membre qui n'est pas prestataire vers l'accueil, et un
+        // prestataire déjà configuré vers son tableau de bord : le message serait perdu.
+        // Ils reviennent donc à la page de l'abonnement, qui affiche le message.
+        if ((! $user->isProfessionnel() && ! $user->isServiceProvider()) || $user->hasCompletedProOnboarding()) {
+            return redirect()->route('pro.subscription')->with('info', 'Le paiement a été annulé. Vous pouvez réessayer quand vous le souhaitez.');
+        }
+
         return redirect()->route('pro.onboarding')->with('info', 'Le paiement a été annulé. Vous pouvez réessayer ou choisir de configurer sans abonnement.');
     }
 

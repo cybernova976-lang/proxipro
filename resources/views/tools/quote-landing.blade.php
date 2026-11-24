@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Devis et factures en ligne pour les professionnels — {{ config('app.name', 'Prokejem') }}</title>
-    <meta name="description" content="Dans l’espace Pro de Prokejem, un professionnel crée ses devis et ses factures, les envoie par e-mail et fait accepter un devis en ligne par son client. Sans crédits à acheter.">
+    <title>Devis et factures en ligne, 2 de chaque offerts — {{ config('app.name', 'Prokejem') }}</title>
+    <meta name="description" content="Dans l’espace Pro de Prokejem, chaque membre, particulier ou professionnel, crée 2 devis et 2 factures offerts, sans justificatif. Les envoyer par e-mail et faire accepter un devis en ligne. Sans crédits à acheter.">
     <link rel="canonical" href="{{ route('quote-tool.landing') }}">
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
     @include('partials.pwa-head')
@@ -12,7 +12,12 @@
 </head>
 <body class="pk-docs">
 @php
-    // Ce que l'espace Pro fait réellement, sans abonnement puis avec Premium.
+    // Ce que l'espace Pro fait réellement, avec les documents offerts puis avec Premium.
+    // Quota : App\Services\CommercialDocumentAllowance (décision du fondateur du 24/11/2026).
+    $pkFreeQuotes = \App\Services\CommercialDocumentAllowance::FREE['quote'];
+    $pkFreeInvoices = \App\Services\CommercialDocumentAllowance::FREE['invoice'];
+    // Premium n'est promis que s'il peut être souscrit ; le quota s'applique dans les deux cas.
+    $pkSubscriptionsOpen = $proSubscriptionsEnabled ?? \App\Support\PlatformFeatures::proSubscriptionsEnabled();
     $pkIncluded = [
         ['Devis et factures numérotés', 'Chaque document reçoit son numéro définitif à l’émission, dans une suite continue. Un brouillon reste modifiable jusque-là.'],
         ['Devis accepté en ligne', 'Votre client reçoit un lien, lit le devis sans créer de compte, puis l’accepte ou le refuse. Sa réponse est datée et figure sur le PDF.'],
@@ -22,6 +27,7 @@
         ['Suivi des paiements', 'Une facture envoyée et échue passe « En retard » toute seule. Vos montants en attente et encaissés sont calculés pour vous.'],
     ];
     $pkPremium = [
+        'Devis et factures sans limite, au-delà des '.$pkFreeQuotes.' devis et '.$pkFreeInvoices.' factures offerts',
         'Modèles de devis réutilisables',
         'Relance automatique des devis sans réponse',
         'Votre logo sur vos devis et vos factures',
@@ -42,17 +48,23 @@
     <section class="pk-docs__hero" aria-labelledby="pk-docs-title">
         <span class="pk-docs__eyebrow">Espace Pro</span>
         <h1 id="pk-docs-title">Vos devis et vos factures, sans crédits à acheter.</h1>
-        <p class="pk-docs__lead">Les devis et les factures font partie de l’espace Pro de Prokejem. Ils sont réservés aux comptes professionnels, et ne demandent pas d’abonnement.</p>
+        <p class="pk-docs__lead">{{ $pkFreeQuotes }} devis et {{ $pkFreeInvoices }} factures offerts, sans justificatif : particulier ou professionnel, il suffit d’un compte Prokejem.
+            @if($pkSubscriptionsOpen)
+                Si l’outil vous plaît, l’abonnement Premium lève la limite.
+            @else
+                Au-delà, l’abonnement Premium lèvera la limite : il n’est pas encore ouvert.
+            @endif
+        </p>
         @guest
-            <a class="pk-docs__button" href="{{ route('register', ['continue' => 'provider']) }}">Créer mon compte professionnel</a>
+            <a class="pk-docs__button" href="{{ route('register') }}">Créer mon compte</a>
         @else
-            <a class="pk-docs__button" href="{{ route('pro.dashboard') }}">Ouvrir mon espace Pro</a>
+            <a class="pk-docs__button" href="{{ route('pro.quotes') }}">Créer mes devis et factures</a>
         @endguest
-        <p class="pk-docs__note">L’activation d’un profil prestataire comprend un contrôle d’identité, gratuit. <a href="{{ route('public.provider-offers') }}">Voir les offres et tarifs</a>.</p>
+        <p class="pk-docs__note">Ni SIRET, ni pièce justificative pour vos documents offerts. <a href="{{ route('public.provider-offers') }}">Voir les offres et tarifs</a>.</p>
     </section>
 
     <section aria-labelledby="pk-docs-included">
-        <h2 id="pk-docs-included">Ce que vous faites sans abonnement</h2>
+        <h2 id="pk-docs-included">Ce que comprennent vos documents offerts</h2>
         <ul class="pk-docs__grid">
             @foreach($pkIncluded as [$pkTitle, $pkText])
                 <li class="pk-docs__card">
@@ -64,7 +76,10 @@
     </section>
 
     <section class="pk-docs__premium" aria-labelledby="pk-docs-premium">
-        <h2 id="pk-docs-premium">Ce que Premium ajoute</h2>
+        <h2 id="pk-docs-premium">{{ $pkSubscriptionsOpen ? 'Ce que Premium ajoute' : 'Ce que Premium ajoutera' }}</h2>
+        @unless($pkSubscriptionsOpen)
+            <p data-pk-premium-closed>{{ \App\Services\CommercialDocumentAllowance::SUBSCRIPTIONS_CLOSED }}</p>
+        @endunless
         <ul>
             @foreach($pkPremium as $pkLine)
                 <li>{{ $pkLine }}</li>
@@ -75,7 +90,7 @@
 
     <section class="pk-docs__terms" aria-labelledby="pk-docs-terms">
         <h2 id="pk-docs-terms">Avant de commencer</h2>
-        <p>Pour émettre un devis ou une facture, la checklist de conformité de l’espace Pro doit être terminée : statut professionnel déclaré, profil complet avec le badge « Profil vérifié », raison sociale, numéro d’immatriculation valide, adresse professionnelle et conditions de l’espace Pro acceptées. En attendant, vos documents restent en brouillon.</p>
+        <p>Aucun justificatif n’est demandé pour vos {{ $pkFreeQuotes }} devis et {{ $pkFreeInvoices }} factures offerts. Chaque document reprend les informations de votre compte telles que vous les avez renseignées : votre nom ou votre raison sociale, vos coordonnées, et votre SIRET seulement si vous l’avez indiqué. Aucun numéro n’est ajouté à votre place.</p>
         <p>Le formulaire demande les mentions utiles à une facture (conditions de paiement, pénalités de retard pour un client professionnel, mention d’exonération de TVA). Vous restez responsable du contenu de vos documents : faites-les relire par votre comptable en cas de doute.</p>
         <p><a href="{{ route('legal.pro-terms') }}">Consulter les conditions de l’espace Pro</a></p>
     </section>

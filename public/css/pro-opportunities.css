@@ -1,0 +1,273 @@
+/*
+ * Espace Pro — Demandes et missions : le parcours en quatre colonnes
+ * (à examiner, propositions envoyées, missions en cours, terminées).
+ * Les colonnes sont neutres ; seule la pastille d'état d'une carte porte une couleur,
+ * celle de .pro-status (la même que pour les devis et les factures).
+ */
+.pk-opps__lead { margin: .4rem 0 0; font-size: .925rem; }
+
+/* Métiers pris en compte */
+.pk-opps-trades {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .6rem .9rem;
+    margin-bottom: 1.5rem;
+    padding: .85rem 1.25rem;
+    border: 1px solid var(--pro-border);
+    border-radius: var(--pro-radius);
+    background: #fff;
+    box-shadow: var(--pro-shadow);
+}
+
+.pk-opps-trades__label { color: var(--pro-text-secondary); font-size: .85rem; font-weight: 500; }
+.pk-opps-trades__list { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+
+.pk-opps-trades__list li {
+    padding: .3rem .65rem;
+    border: 1px solid var(--pro-border);
+    border-radius: 8px;
+    background: #fafbfd;
+    color: var(--pro-text);
+    font-size: .8rem;
+    font-weight: 600;
+}
+
+.pk-opps-trades__edit { margin-left: auto; color: var(--pro-indigo-600); font-size: .85rem; font-weight: 600; white-space: nowrap; }
+.pk-opps-trades__edit:hover { color: var(--pro-indigo-800); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Aucun métier configuré */
+.pk-opps-setup {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--pro-indigo-100);
+    border-radius: var(--pro-radius);
+    background: linear-gradient(120deg, var(--pro-indigo-50), #fff 75%);
+}
+
+.pk-opps-setup > div { flex: 1; min-width: 0; }
+.pk-opps-setup strong { color: var(--pro-heading); font-weight: 600; }
+.pk-opps-setup p { margin: .2rem 0 0; color: var(--pro-text-secondary); font-size: .875rem; }
+
+.pk-opps-setup__icon {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    color: var(--pro-indigo-600);
+    box-shadow: inset 0 0 0 1px var(--pro-indigo-100);
+}
+
+/* Colonnes */
+.pipeline-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    align-items: start;
+}
+
+.pipeline-stage {
+    min-width: 0;
+    padding: .5rem;
+    border-radius: 16px;
+    background: #eef0f6;
+}
+
+.pipeline-stage-header {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    padding: .6rem .6rem .85rem;
+}
+
+.pipeline-stage-title { min-width: 0; flex: 1; }
+.pipeline-stage-title h2 { margin: 0; color: var(--pro-heading); font-size: .9rem; font-weight: 600; line-height: 1.3; }
+.pipeline-stage-title p { margin: .05rem 0 0; color: var(--pro-text-secondary); font-size: .75rem; }
+
+.pipeline-count {
+    min-width: 26px;
+    height: 22px;
+    padding: 0 .45rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, .06);
+    color: #475569;
+    font-size: .75rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Carte */
+.pipeline-card {
+    display: flex;
+    flex-direction: column;
+    gap: .7rem;
+    margin-bottom: .5rem;
+    padding: 1rem;
+    border: 1px solid var(--pro-border);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: var(--pro-shadow);
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.pipeline-card:hover { border-color: var(--pro-indigo-200); box-shadow: 0 4px 14px rgba(15, 23, 42, .06); }
+.pipeline-card:last-child { margin-bottom: 0; }
+
+.pipeline-card-eyebrow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    color: var(--pro-text-secondary);
+    font-size: .72rem;
+    font-weight: 500;
+}
+
+.pipeline-card h3 { margin: 0; color: var(--pro-heading); font-size: .925rem; font-weight: 600; line-height: 1.4; }
+
+.pipeline-client {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    min-width: 0;
+    color: #475569;
+    font-size: .8rem;
+}
+
+.pipeline-client > i { color: var(--pro-text-subtle); font-size: 1rem; }
+.pipeline-client span { min-width: 0; overflow-wrap: anywhere; }
+
+.pipeline-avatar {
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--pro-indigo-100);
+    color: var(--pro-indigo-800);
+    font-size: .68rem;
+    font-weight: 700;
+}
+
+.pipeline-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .6rem 1rem;
+    margin: 0;
+    padding-top: .7rem;
+    border-top: 1px solid var(--pro-border-soft);
+}
+
+.pipeline-fact { min-width: 0; }
+.pipeline-fact dt { color: var(--pro-text-subtle); font-size: .7rem; font-weight: 500; }
+.pipeline-fact dd { margin: .1rem 0 0; color: var(--pro-heading); font-size: .82rem; font-weight: 600; overflow-wrap: anywhere; }
+
+.pipeline-card-eyebrow .pro-status { flex: 0 0 auto; padding: .2rem .5rem; font-size: .7rem; }
+.pipeline-card-eyebrow > span:last-child:not(.pro-status) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Action d'une carte : un lien, pas un second bouton plein. */
+.pipeline-card-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .45rem;
+    margin: 0 -1rem -1rem;
+    padding: .7rem 1rem;
+    border-top: 1px solid var(--pro-border-soft);
+    border-radius: 0 0 12px 12px;
+    color: var(--pro-indigo-600);
+    font-size: .82rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.pipeline-card-action i { font-size: .72rem; transition: transform .15s ease; }
+.pipeline-card-action:hover { background: var(--pro-indigo-50); color: var(--pro-indigo-800); }
+.pipeline-card-action:hover i { transform: translateX(2px); }
+
+/* Commande à accepter : deux actions côte à côte, « Accepter » d'abord. */
+.pipeline-card--to-answer { border-color: #fde68a; }
+
+.pipeline-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin: 0 -1rem -1rem;
+    border-top: 1px solid var(--pro-border-soft);
+}
+
+.pipeline-card-actions form { margin: 0; }
+
+.pipeline-card-actions .pipeline-card-action {
+    width: 100%;
+    margin: 0;
+    justify-content: center;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    cursor: pointer;
+}
+
+.pipeline-card-actions > :first-child .pipeline-card-action,
+.pipeline-card-actions > a:first-child { border-bottom-left-radius: 12px; }
+.pipeline-card-actions > :last-child { border-left: 1px solid var(--pro-border-soft); }
+.pipeline-card-actions > :only-child { grid-column: 1 / -1; border-left: 0; }
+.pipeline-card-actions > a:last-child { border-bottom-right-radius: 12px; }
+.pipeline-card-action--muted { color: var(--pro-text-secondary); }
+.pipeline-card-action--muted:hover { background: #fef2f2; color: var(--pro-danger); }
+
+/* Colonne vide : même hauteur dans les quatre colonnes, icône et texte sur la même ligne. */
+.pipeline-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: .5rem;
+    min-height: 11.5rem;
+    padding: 1.75rem 1rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .6);
+    text-align: center;
+}
+
+.pipeline-empty__icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #fff;
+    color: var(--pro-text-subtle);
+    font-size: .9rem;
+    box-shadow: inset 0 0 0 1px var(--pro-border);
+}
+
+.pipeline-empty p { margin: 0; max-width: 240px; color: var(--pro-text-secondary); font-size: .82rem; line-height: 1.5; }
+.pipeline-empty a { color: var(--pro-indigo-600); font-size: .82rem; font-weight: 600; }
+.pipeline-empty a i { margin-left: .15rem; font-size: .7rem; }
+
+@media (max-width: 1179.98px) {
+    .pipeline-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 639.98px) {
+    .pipeline-empty { min-height: 0; }
+    .pk-opps-trades { padding: .85rem 1rem; }
+    .pk-opps-trades__edit { margin-left: 0; }
+    .pk-opps-setup { flex-direction: column; align-items: stretch; padding: 1.1rem; }
+    .pk-opps-setup__icon { display: none; }
+    .pipeline-grid { grid-template-columns: minmax(0, 1fr); }
+}

@@ -7,8 +7,9 @@
     @include('legal.partials.operator')
     <p class="small text-muted">Identité de l’exploitant mise à jour le {{ config('legal.last_updated') }}.</p>
 
-    <h4 class="mt-4">1. Accès</h4>
-    <p>Le CRM peut être proposé aux prestataires autorisés. L’émission officielle de devis et factures est réservée à un compte professionnel dont le profil est complet, vérifié, immatriculé et ayant accepté la version en vigueur. Avant cela, les documents restent des brouillons non contractuels. La souscription d’une offre commerciale ne transforme jamais un particulier en professionnel et ne remplace aucun justificatif d’immatriculation.</p>
+    <h4 class="mt-4">1. Accès et documents offerts</h4>
+    <p>Tout membre connecté, particulier ou professionnel, peut créer, émettre et télécharger {{ \App\Services\CommercialDocumentAllowance::FREE['quote'] }} devis et {{ \App\Services\CommercialDocumentAllowance::FREE['invoice'] }} factures sans frais, sans fournir de justificatif. Au-delà, la création et l’émission de nouveaux documents nécessitent un abonnement Premium actif, lorsque celui-ci est proposé à la souscription. Les avoirs qui corrigent une facture déjà émise ne sont pas décomptés. Le carnet de clients et le suivi des demandes peuvent être réservés aux prestataires.</p>
+    <p>Le membre qui émet un document en est seul responsable : exactitude de son contenu, des montants et des informations du client, et respect des mentions légales qui s’imposent à lui. S’il exerce à titre professionnel, il lui appartient notamment d’y faire figurer son numéro d’immatriculation (SIRET en France), son régime de TVA et, le cas échéant, son assurance professionnelle. Prokejem fournit l’outil de création ; il n’est pas partie aux devis et factures échangés entre le membre et ses clients et ne vérifie pas leur conformité. Ni l’utilisation de l’outil ni la souscription d’un abonnement ne confèrent la qualité de professionnel ou ne remplacent une immatriculation.</p>
 
     <h4 class="mt-4">2. Exactitude des informations</h4>
     <p>Le professionnel garantit l’exactitude de sa raison sociale, de son immatriculation, de son adresse, de sa TVA, de ses assurances et des informations client. Il les actualise avant toute émission. Les informations de l’émetteur sont figées dans le document au moment où celui-ci reçoit son numéro définitif.</p>

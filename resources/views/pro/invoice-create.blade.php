@@ -43,12 +43,7 @@
     </div>
 </div>
 
-@unless($user->canIssueCommercialDocuments())
-<div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-radius: 12px;">
-    <span><i class="fas fa-lock me-2"></i>La facture sera enregistrée comme brouillon sans numéro définitif.</span>
-    <a href="{{ route('pro.compliance') }}" class="btn btn-sm btn-warning">Voir la checklist</a>
-</div>
-@endunless
+@include('pro.partials.seller-identity-note', ['documentLabel' => 'cette facture'])
 
 <form method="POST" action="{{ route('pro.invoices.store') }}">
     @csrf

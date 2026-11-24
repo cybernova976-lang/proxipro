@@ -356,12 +356,14 @@ class DemandController extends Controller
             ->pluck('user_id')
             ->unique();
 
-        // Chercher les pros via leurs catégories de profil
+        // Chercher les pros via leurs catégories de profil : seulement les comptes
+        // sans compétence enregistrée (App\Services\ProviderSkills).
         $profileProIds = User::where('id', '!=', $ad->user_id)
             ->where(function ($q) {
                 $q->where('user_type', 'professionnel')
                     ->orWhere('is_service_provider', true);
             })
+            ->whereDoesntHave('services')
             ->get()
             ->filter(function ($user) use ($category) {
                 $proCats = $user->pro_service_categories ?? [];
@@ -468,6 +470,7 @@ class DemandController extends Controller
                 $q->where('user_type', 'professionnel')
                     ->orWhere('is_service_provider', true);
             })
+            ->whereDoesntHave('services')
             ->get()
             ->filter(function ($user) use ($category) {
                 $proCats = $user->pro_service_categories ?? [];

@@ -4,12 +4,6 @@
 @section('content')
 <div class="pro-content-header">
     <div>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-1" style="font-size: 0.8rem;">
-                <li class="breadcrumb-item"><a href="{{ route('pro.dashboard') }}" style="color: var(--pro-primary);">Espace Pro</a></li>
-                <li class="breadcrumb-item active">Mes clients</li>
-            </ol>
-        </nav>
         <h1>Mes clients</h1>
     </div>
     <button class="btn btn-pro-primary" data-bs-toggle="modal" data-bs-target="#addClientModal">
@@ -20,10 +14,10 @@
 @if($clients->isEmpty())
     <div class="pro-card">
         <div class="pro-empty">
-            <div class="pro-empty-icon">👥</div>
+            <div class="pro-empty-icon" aria-hidden="true"><i class="fas fa-users"></i></div>
             <h5>Pas encore de clients</h5>
             <p>Ajoutez vos clients manuellement ou ils seront ajoutés automatiquement lors de la création d'un devis ou d'une facture.</p>
-            <button class="btn btn-pro-primary mt-2" data-bs-toggle="modal" data-bs-target="#addClientModal">
+            <button class="btn btn-pro-outline mt-2" data-bs-toggle="modal" data-bs-target="#addClientModal">
                 <i class="fas fa-plus me-1"></i> Ajouter un client
             </button>
         </div>
@@ -31,25 +25,25 @@
 @else
     <div class="pro-card">
         <div class="table-responsive">
-            <table class="pro-table">
+            <table class="pro-table pro-table--cards pro-table--clients">
                 <thead>
                     <tr>
                         <th>Client</th>
                         <th>Contact</th>
                         <th>Ville</th>
                         <th>Projets</th>
-                        <th>CA généré</th>
+                        <th class="pk-col-amount">CA généré</th>
                         <th>Statut</th>
-                        <th>Actions</th>
+                        <th class="pk-col-actions"><span class="visually-hidden">Actions</span></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($clients as $client)
                     <tr>
-                        <td>
+                        <td class="pk-col-id">
                             <div class="d-flex align-items-center gap-2">
-                                <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(59,130,246,0.1); color: #3b82f6; display: flex; align-items: center; justify-content: center; font-weight: 700;">
-                                    {{ strtoupper(substr($client->name, 0, 1)) }}
+                                <div class="pro-table__initial" aria-hidden="true">
+                                    {{ mb_strtoupper(mb_substr($client->name, 0, 1)) }}
                                 </div>
                                 <div>
                                     <strong>{{ $client->name }}</strong>
@@ -59,18 +53,18 @@
                                 </div>
                             </div>
                         </td>
-                        <td>
-                            @if($client->email)<div style="font-size: 0.82rem;">{{ $client->email }}</div>@endif
-                            @if($client->phone)<div style="font-size: 0.82rem;">{{ $client->phone }}</div>@endif
+                        <td class="pk-col-subject">
+                            @if($client->email)<div>{{ $client->email }}</div>@endif
+                            @if($client->phone)<div>{{ $client->phone }}</div>@endif
                         </td>
-                        <td>{{ $client->city ?? '-' }}</td>
-                        <td class="fw-semibold">{{ $client->total_projects ?? 0 }}</td>
-                        <td class="fw-semibold">{{ number_format($client->total_revenue ?? 0, 0, ',', ' ') }}€</td>
-                        <td><span class="pro-status pro-status-{{ $client->getStatusColor() }}">{{ $client->getStatusLabel() }}</span></td>
-                        <td>
+                        <td class="pk-col-date" data-label="Ville">@if($client->city){{ $client->city }}@endif</td>
+                        <td class="pk-col-due" data-label="Projets">{{ $client->total_projects ?? 0 }}</td>
+                        <td class="pk-col-amount">{{ \App\Support\Money::eur($client->total_revenue ?? 0, 0) }}</td>
+                        <td class="pk-col-status"><span class="pro-status pro-status-{{ $client->getStatusColor() }}">{{ $client->getStatusLabel() }}</span></td>
+                        <td class="pk-col-actions">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-light" data-bs-toggle="dropdown" style="border-radius: 8px;">
-                                    <i class="fas fa-ellipsis-v"></i>
+                                <button class="btn btn-sm btn-light pro-table__menu" data-bs-toggle="dropdown" aria-label="Actions pour {{ $client->name }}">
+                                    <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
                                 </button>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" href="#" onclick="editClient({{ $client->id }}, '{{ $client->name }}', '{{ $client->email }}', '{{ $client->phone }}', '{{ $client->address }}', '{{ $client->city }}', '{{ $client->company }}', '{{ $client->notes }}', '{{ $client->status }}')"><i class="fas fa-edit me-2"></i>Modifier</a></li>

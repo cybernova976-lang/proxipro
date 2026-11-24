@@ -23,7 +23,14 @@ class QuoteToolRetiredTest extends TestCase
             ->assertSee('Vos devis et vos factures, sans crédits à acheter.')
             ->assertSee('Devis accepté en ligne')->assertSee('Avoirs')
             ->assertSee('css/quote-landing.css', false)
-            ->assertSee(route('register', ['continue' => 'provider']), false)
+            // Décision du 24/11/2026 : 2 devis et 2 factures offerts à tout membre, sans
+            // justificatif. L'inscription n'est plus celle d'un prestataire.
+            ->assertSee('2 devis et 2 factures offerts, sans justificatif')
+            ->assertSee('Devis et factures sans limite')
+            ->assertSee('href="'.route('register').'"', false)
+            ->assertDontSee(route('register', ['continue' => 'provider']), false)
+            ->assertDontSee('réservés aux comptes professionnels')
+            ->assertDontSee('la checklist de conformité de l’espace Pro doit être terminée')
             ->assertSee(route('public.provider-offers'), false)
             ->assertDontSee('<form', false);
 
@@ -36,8 +43,9 @@ class QuoteToolRetiredTest extends TestCase
         $this->assertStringNotContainsString('<style', $view);
         $this->assertStringNotContainsString('<script', $view);
 
+        // Un membre connecté, prestataire ou non, va directement à ses devis.
         $this->actingAs(User::factory()->create())->get(route('quote-tool.landing'))->assertOk()
-            ->assertSee(route('pro.dashboard'), false)->assertSee('Ouvrir mon espace Pro');
+            ->assertSee(route('pro.quotes'), false)->assertSee('Créer mes devis et factures');
     }
 
     public function test_creation_and_credit_purchase_are_closed_and_redirect_to_the_pro_space(): void

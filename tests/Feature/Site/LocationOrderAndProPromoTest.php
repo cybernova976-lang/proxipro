@@ -57,13 +57,20 @@ class LocationOrderAndProPromoTest extends TestCase
         $this->actingAs($member)->get(route('feed'))->assertOk()
             ->assertSee('data-pk-pro-promo', false)
             ->assertSee('href="'.route('quote-tool.landing').'"', false)
-            ->assertSee('Éditez vos devis et factures gratuitement')
-            ->assertSee('Sans abonnement ni crédits. Il suffit d’activer votre profil prestataire.')
+            // Décision du 24/11/2026 : 2 devis et 2 factures offerts à tout membre, sans
+            // justificatif ; plus besoin d'activer un profil prestataire.
+            ->assertSee('Deux devis et deux factures offerts')
+            ->assertSee('Sans justificatif ni abonnement, que vous soyez particulier ou professionnel.')
+            ->assertDontSee('Il suffit d’activer votre profil prestataire.')
             ->assertSee('Découvrir l’Espace Pro');
 
-        // La page vers laquelle elle mène dit la même chose.
+        // Le texte en lettres suit le quota réellement appliqué.
+        $this->assertSame(['quote' => 2, 'invoice' => 2], \App\Services\CommercialDocumentAllowance::FREE);
+
+        // La page vers laquelle elle mène dit la même chose, et mène à ses devis.
         $this->get(route('quote-tool.landing'))->assertOk()
-            ->assertSee('sans crédits à acheter')->assertSee('ne demandent pas d’abonnement');
+            ->assertSee('sans crédits à acheter')->assertSee('2 devis et 2 factures offerts, sans justificatif')
+            ->assertSee(route('pro.quotes'), false);
 
         // Un prestataire a déjà son Espace Pro : pas de promotion, même côté « Je cherche un service ».
         $provider = User::factory()->create(['user_type' => 'professionnel', 'is_service_provider' => true]);

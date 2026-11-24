@@ -130,7 +130,8 @@ class ProviderOpportunityPipelineFeatureTest extends TestCase
             ->get(route('pro.opportunities'))
             ->assertOk()
             ->assertSee('Indiquez vos métiers pour recevoir les bonnes demandes')
-            ->assertSee(route('pro.profile.edit'), false);
+            ->assertSee(route('service-provider.mes-services'), false)
+            ->assertSee('Ajouter mes compétences');
     }
 
     public function test_client_cannot_open_the_provider_pipeline(): void

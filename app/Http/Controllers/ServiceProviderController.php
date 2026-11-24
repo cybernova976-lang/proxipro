@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ProSubscription;
 use App\Models\UserService;
+use App\Services\ProviderSkills;
 use App\Services\ProviderSubscriptionService;
 use App\Support\MarketplaceCategoryRegistry;
 use App\Support\PlatformFeatures;
@@ -19,7 +20,10 @@ use Illuminate\Validation\Rule;
 
 class ServiceProviderController extends Controller
 {
-    public function __construct(private ProviderSubscriptionService $providerSubscriptionService) {}
+    public function __construct(
+        private ProviderSubscriptionService $providerSubscriptionService,
+        private ProviderSkills $providerSkills,
+    ) {}
 
     /**
      * Point d'entrée unique du parcours particulier vers le profil prestataire.
@@ -169,15 +173,21 @@ class ServiceProviderController extends Controller
         try {
             DB::beginTransaction();
 
-            // Ajouter les nouveaux services sans supprimer les anciens (mode additif)
+            // Première compétence enregistrée : les métiers de l'ancien profil deviennent
+            // des compétences, sinon le recalcul ci-dessous les effacerait.
+            $this->providerSkills->absorbLegacyProfile($user);
+
+            // Ajouter les nouveaux services sans supprimer les anciens (mode additif).
+            // Recherche sur la clé de l'index unique (user_id, subcategory) : un métier
+            // déjà enregistré sous une autre catégorie est mis à jour, pas inséré.
             foreach ($request->services as $service) {
                 UserService::updateOrCreate(
                     [
                         'user_id' => $user->id,
-                        'main_category' => $service['main_category'],
                         'subcategory' => $service['subcategory'],
                     ],
                     [
+                        'main_category' => $service['main_category'],
                         'experience_years' => $service['experience_years'] ?? 0,
                         'description' => $service['description'] ?? null,
                         'is_active' => true,
@@ -185,21 +195,8 @@ class ServiceProviderController extends Controller
                 );
             }
 
-            $mainCategories = collect($request->services)
-                ->pluck('main_category')
-                ->filter()
-                ->unique()
-                ->values()
-                ->all();
-
-            $subcategories = collect($request->services)
-                ->pluck('subcategory')
-                ->filter()
-                ->unique()
-                ->values()
-                ->all();
-
-            // Activer le statut prestataire
+            // Activer le statut prestataire. Métier principal et catégories du profil
+            // sont recalculés à partir de toutes les compétences (ProviderSkills::sync).
             $profileUpdate = [
                 'is_service_provider' => true,
                 'service_provider_since' => $user->service_provider_since ?? now(),
@@ -207,9 +204,6 @@ class ServiceProviderController extends Controller
                 'profile_completed_at' => $user->profile_completed_at ?? now(),
                 'pro_onboarding_completed' => true,
                 'pro_onboarding_step' => max((int) ($user->pro_onboarding_step ?? 0), 4),
-                'pro_service_categories' => $mainCategories,
-                'service_category' => implode(', ', $mainCategories),
-                'service_subcategories' => $subcategories,
             ];
 
             if ($user->user_type !== 'professionnel' && $user->account_type !== 'professionnel') {
@@ -217,11 +211,8 @@ class ServiceProviderController extends Controller
                 $profileUpdate['account_type'] = 'particulier';
             }
 
-            if (blank($user->profession) && ! empty($subcategories)) {
-                $profileUpdate['profession'] = $subcategories[0];
-            }
-
             $user->update($profileUpdate);
+            $this->providerSkills->sync($user);
 
             // Enregistrer les préférences de notification si fournies
             if ($request->has('notification_preferences')) {
@@ -419,6 +410,7 @@ class ServiceProviderController extends Controller
 
             // Désactiver le statut prestataire
             $user->update(['is_service_provider' => false]);
+            $this->providerSkills->sync($user);
 
             return response()->json([
                 'success' => true,
@@ -472,6 +464,8 @@ class ServiceProviderController extends Controller
             $data['experience_years'] = (int) ($data['experience_years'] ?? 0);
         }
         $service->update($data);
+        // Une compétence en pause ne fait plus correspondre de demandes.
+        $this->providerSkills->sync($user);
 
         return response()->json([
             'success' => true,
@@ -497,7 +491,12 @@ class ServiceProviderController extends Controller
             ], 422);
         }
 
+        $removedSkill = $service->subcategory;
         $service->delete();
+
+        // La compétence disparaît partout : métier principal, catégories du profil,
+        // « Mes opportunités » et notifications de nouvelles demandes.
+        $this->providerSkills->sync($user, [$removedSkill]);
 
         // Si plus aucun service actif, désactiver le statut prestataire
         if ($user->services()->active()->count() === 0) {

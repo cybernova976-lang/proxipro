@@ -1,0 +1,119 @@
+/* Espace Pro — Statistiques : indicateurs, graphiques et synthèses mesurés. */
+.analytics-kpi-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    transition: transform .2s, box-shadow .2s;
+}
+.analytics-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+.kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.kpi-content {
+    display: flex;
+    flex-direction: column;
+}
+.kpi-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.2;
+}
+.kpi-value small {
+    font-size: .7em;
+    color: #94a3b8;
+}
+.kpi-label {
+    font-size: .75rem;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.analytics-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    overflow: hidden;
+}
+.analytics-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.analytics-card-body {
+    padding: 20px;
+}
+
+.mini-stat-card {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+}
+.mini-stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    display: block;
+}
+.mini-stat-label {
+    font-size: .72rem;
+    color: #94a3b8;
+    margin-top: 4px;
+    display: block;
+}
+
+.activity-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+.activity-metric:last-child {
+    border-bottom: none;
+}
+.activity-metric-label {
+    color: #64748b;
+    font-size: .85rem;
+}
+.activity-metric-value {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+/* Harmonisation avec le reste de l'espace Pro : cartes bordées, une seule couleur d'icône. */
+.analytics-kpi-card, .analytics-card { border: 1px solid var(--pro-border); box-shadow: var(--pro-shadow); }
+.analytics-kpi-card { transition: border-color .15s ease; }
+.analytics-kpi-card:hover { transform: none; box-shadow: var(--pro-shadow); border-color: var(--pro-indigo-200); }
+.kpi-icon { width: 40px; height: 40px; border-radius: 10px; font-size: 1rem; background: var(--pro-indigo-50); color: var(--pro-indigo-600); }
+.kpi-value { font-size: 1.375rem; color: var(--pro-heading); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.kpi-label { font-size: .8rem; color: var(--pro-text-secondary); }
+.analytics-card-header { padding: 1rem 1.25rem; border-bottom-color: var(--pro-border-soft); }
+.analytics-card-header h6 { font-size: .95rem; font-weight: 600 !important; color: var(--pro-heading); }
+.analytics-card-body { padding: 1.25rem; }
+.pro-card-icon { color: var(--pro-indigo-500); }
+.mini-stat-card { background: #fafbfd; border: 1px solid var(--pro-border-soft); }
+.mini-stat-value { color: var(--pro-heading); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.mini-stat-label { color: var(--pro-text-secondary); }
+.activity-metric { border-bottom-color: var(--pro-border-soft); }
+.activity-metric-value.text-success { color: var(--pro-heading) !important; }
+.analytics-page .progress-bar.bg-success { background-color: var(--pro-indigo-600) !important; }
+
+/* Un graphique a une hauteur fixe : sans elle, Chart.js agrandit sa carte à l'infini
+   (la carte « Conversion devis » faisait plus de 15 000 px de haut). */
+.analytics-chart { position: relative; width: 100%; }
+.analytics-chart:has(canvas:not([hidden])) { height: 220px; }
+.analytics-chart--tall:has(canvas:not([hidden])) { height: 280px; }

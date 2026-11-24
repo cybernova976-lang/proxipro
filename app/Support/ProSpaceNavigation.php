@@ -21,36 +21,45 @@ class ProSpaceNavigation
      */
     public static function groups(Request $request, User $user): array
     {
-        // Un membre qui ne propose pas encore de services n'a qu'une page utile :
-        // le parcours pour devenir prestataire. Pas de menu vers des outils fermés.
+        // Devis et factures sont ouverts à tout membre (décision du 24/11/2026) :
+        // plus de cadenas ni de « Statut professionnel requis ».
+        $quotesItem = self::item($request, 'quotes', 'Devis', 'fas fa-file-lines', route('pro.quotes'), ['pro.quotes*', 'pro.quote-templates*']);
+        $unpaidInvoices = $user->proInvoices()->whereIn('status', ['sent', 'overdue'])->count();
+        $invoicesItem = self::item($request, 'invoices', 'Factures', 'fas fa-file-invoice', route('pro.invoices'), ['pro.invoices*'],
+            badge: $unpaidInvoices > 0 ? (string) $unpaidInvoices : null, tone: 'alert');
+        $subscription = $user->proSubscription;
+
+        // Un membre qui ne propose pas encore de services : le parcours pour devenir
+        // prestataire, ses devis et factures offerts, et l'abonnement. Aucun lien vers
+        // les outils de prestataire qui lui restent fermés.
         if (! $user->isProfessionnel() && ! $user->isServiceProvider()) {
-            return [];
+            return [
+                ['label' => null, 'items' => [
+                    self::item($request, 'home', 'Devenir prestataire', 'fas fa-house', route('pro.dashboard'), ['pro.dashboard']),
+                ]],
+                ['label' => 'Mes documents', 'items' => [$quotesItem, $invoicesItem]],
+                ['label' => 'Mon compte', 'items' => [
+                    self::item($request, 'subscription', 'Abonnement', 'fas fa-crown', route('pro.subscription'), ['pro.subscription*', 'pro.onboarding*'],
+                        badge: $subscription ? 'Actif' : null, tone: 'ok'),
+                ]],
+            ];
         }
 
         $isProfessional = $user->isProfessionnel();
-        // Devis et factures exigent un statut professionnel : le lien mène
-        // alors au changement de statut au lieu d'une redirection surprise.
         $statusUrl = route('pro.account-status');
-        $unpaidInvoices = $isProfessional ? $user->proInvoices()->whereIn('status', ['sent', 'overdue'])->count() : 0;
-        $subscription = $user->proSubscription;
 
         $groups = [
             ['label' => null, 'items' => [
                 self::item($request, 'home', 'Accueil', 'fas fa-house', route('pro.dashboard'), ['pro.dashboard']),
             ]],
             ['label' => 'Trouver des clients', 'items' => [
-                self::item($request, 'opportunities', 'Demandes à examiner', 'fas fa-magnifying-glass', route('pro.opportunities'), ['pro.opportunities']),
+                self::item($request, 'opportunities', 'Demandes et missions', 'fas fa-magnifying-glass', route('pro.opportunities'), ['pro.opportunities']),
                 self::item($request, 'ads', ClientSpaceNavigation::OFFERS_LABEL, 'fas fa-bullhorn', route('ads.myads', ['type' => 'offre']), ['ads.myads']),
             ]],
             ['label' => 'Gérer mon activité', 'items' => [
                 self::item($request, 'clients', 'Clients', 'fas fa-users', route('pro.clients'), ['pro.clients*']),
-                $isProfessional
-                    ? self::item($request, 'quotes', 'Devis', 'fas fa-file-lines', route('pro.quotes'), ['pro.quotes*', 'pro.quote-templates*'])
-                    : self::item($request, 'quotes', 'Devis', 'fas fa-lock', $statusUrl, [], hint: 'Statut professionnel requis'),
-                $isProfessional
-                    ? self::item($request, 'invoices', 'Factures', 'fas fa-file-invoice', route('pro.invoices'), ['pro.invoices*'],
-                        badge: $unpaidInvoices > 0 ? (string) $unpaidInvoices : null, tone: 'alert')
-                    : self::item($request, 'invoices', 'Factures', 'fas fa-lock', $statusUrl, [], hint: 'Statut professionnel requis'),
+                $quotesItem,
+                $invoicesItem,
                 self::item($request, 'agenda', 'Agenda', 'fas fa-calendar-days', route('pro.agenda'), ['pro.agenda*']),
             ]],
             ['label' => 'Suivre mes résultats', 'items' => [

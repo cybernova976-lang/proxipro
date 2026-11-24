@@ -127,10 +127,14 @@
     </div>
 </div>
 
-@if($invoice->status === 'draft' && ! $user->canIssueCommercialDocuments())
-<div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-radius: 12px;">
-    <span><i class="fas fa-lock me-2"></i>Cette facture est un brouillon. Complétez la conformité PRO pour lui attribuer un numéro définitif et l’envoyer.</span>
-    <a href="{{ route('pro.compliance') }}" class="btn btn-sm btn-warning">Checklist PRO</a>
+@if($invoice->status === 'draft' && ! app(\App\Services\CommercialDocumentAllowance::class)->canIssue($user, $invoice))
+<div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-radius: 12px;" data-invoice-over-allowance>
+    @if($proSubscriptionsEnabled ?? false)
+        <span><i class="fas fa-crown me-2" aria-hidden="true"></i>Cette facture dépasse vos {{ \App\Services\CommercialDocumentAllowance::FREE['invoice'] }} factures gratuites : elle reste en brouillon tant que vous n’êtes pas abonné à Premium.</span>
+        <a href="{{ route('pro.subscription') }}" class="btn btn-sm btn-warning">Passer à Premium</a>
+    @else
+        <span><i class="fas fa-info-circle me-2" aria-hidden="true"></i>Cette facture dépasse vos {{ \App\Services\CommercialDocumentAllowance::FREE['invoice'] }} factures gratuites : elle reste en brouillon. {{ \App\Services\CommercialDocumentAllowance::SUBSCRIPTIONS_CLOSED }}</span>
+    @endif
 </div>
 @endif
 

@@ -4,12 +4,6 @@
 @section('content')
 <div class="pro-content-header">
     <div>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-1" style="font-size: 0.8rem;">
-                <li class="breadcrumb-item"><a href="{{ route('pro.dashboard') }}" style="color: var(--pro-primary);">Espace Pro</a></li>
-                <li class="breadcrumb-item active">Documents</li>
-            </ol>
-        </nav>
         <h1>Mes documents</h1>
         <p class="text-muted mb-0" style="font-size: 0.88rem;">Uploadez vos attestations d'assurance, diplômes, certifications, etc.</p>
     </div>
@@ -21,10 +15,10 @@
 @if($documents->isEmpty())
     <div class="pro-card">
         <div class="pro-empty">
-            <div class="pro-empty-icon">📂</div>
+            <div class="pro-empty-icon" aria-hidden="true"><i class="fas fa-folder-open"></i></div>
             <h5>Aucun document</h5>
             <p>Uploadez vos documents professionnels pour renforcer la confiance de vos clients.</p>
-            <button class="btn btn-pro-primary mt-2" data-bs-toggle="modal" data-bs-target="#uploadDocModal">
+            <button class="btn btn-pro-outline mt-2" data-bs-toggle="modal" data-bs-target="#uploadDocModal">
                 <i class="fas fa-upload me-1"></i> Uploader
             </button>
         </div>

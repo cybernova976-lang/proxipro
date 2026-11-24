@@ -17,7 +17,12 @@ class ProCommercialDocumentsFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_particular_provider_cannot_issue_professional_documents(): void
+    /**
+     * Changement de règle du 24/11/2026 : les devis et factures ne sont plus réservés au
+     * statut professionnel. Un particulier prestataire ouvre le formulaire (2 devis et
+     * 2 factures offerts, voir FreeCommercialDocumentsTest) au lieu d'être renvoyé au statut.
+     */
+    public function test_particular_provider_can_open_the_quote_form(): void
     {
         $user = User::factory()->create([
             'account_type' => 'particulier',
@@ -26,7 +31,8 @@ class ProCommercialDocumentsFeatureTest extends TestCase
         ]);
 
         $this->actingAs($user)->get(route('pro.quotes.create'))
-            ->assertRedirect(route('pro.account-status'));
+            ->assertOk()
+            ->assertSee('Créer un devis');
     }
 
     public function test_provider_can_upload_a_professional_document_for_review(): void
@@ -53,8 +59,13 @@ class ProCommercialDocumentsFeatureTest extends TestCase
         Storage::disk('public')->assertExists($document->file_path);
     }
 
-    public function test_professional_can_prepare_draft_before_registration_is_complete(): void
+    /**
+     * Changement de règle du 24/11/2026 : l'immatriculation n'est plus exigée pour émettre un
+     * des documents offerts. Le devis reçoit son numéro et ne porte aucun SIRET inventé.
+     */
+    public function test_professional_issues_a_free_quote_before_registration_is_complete(): void
     {
+        Mail::fake();
         $user = $this->professional(['siret' => null, 'identity_verified' => false]);
 
         $this->actingAs($user)->post(route('pro.quotes.store'), $this->quotePayload())
@@ -72,9 +83,12 @@ class ProCommercialDocumentsFeatureTest extends TestCase
 
         $this->actingAs($user)->post(route('pro.quotes.sendEmail', $quote), [
             'email' => 'client@example.test',
-        ])->assertRedirect(route('pro.compliance'));
+        ])->assertRedirect(route('pro.quotes.show', $quote));
 
-        $this->assertSame('draft', $quote->fresh()->status);
+        $quote->refresh();
+        $this->assertSame('sent', $quote->status);
+        $this->assertStringStartsWith('DEV-', $quote->quote_number);
+        $this->assertNull($quote->seller_snapshot['siret']);
     }
 
     public function test_client_selection_is_scoped_to_the_authenticated_professional(): void

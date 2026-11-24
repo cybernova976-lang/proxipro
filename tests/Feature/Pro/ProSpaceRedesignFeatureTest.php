@@ -32,9 +32,12 @@ class ProSpaceRedesignFeatureTest extends TestCase
         }
         $this->assertSame(1, substr_count($menu, 'aria-current="page"'));
         $this->assertStringContainsString('data-pro-nav="clients"', $menu);
-        // Devis et factures mènent au changement de statut, avec l'explication.
-        $this->assertMatchesRegularExpression('#href="'.preg_quote(route('pro.account-status'), '#').'"[^>]*data-pro-nav="quotes"#', $menu);
-        $this->assertStringContainsString('Statut professionnel requis', $menu);
+        // Changement de règle du 24/11/2026 : devis et factures sont ouverts à tous (2 + 2 offerts),
+        // ils mènent à leurs pages, sans cadenas ni « Statut professionnel requis ».
+        $this->assertMatchesRegularExpression('#href="'.preg_quote(route('pro.quotes'), '#').'"[^>]*data-pro-nav="quotes"#', $menu);
+        $this->assertMatchesRegularExpression('#href="'.preg_quote(route('pro.invoices'), '#').'"[^>]*data-pro-nav="invoices"#', $menu);
+        $this->assertStringNotContainsString('Statut professionnel requis', $menu);
+        $this->assertStringNotContainsString('fa-lock', $menu);
         $this->assertStringContainsString('Passer pro', $menu);
         // La cloche n'est plus un bouton sans action : c'est un lien vers la page des notifications.
         $this->assertStringNotContainsString('<button type="button" class="pro-topbar-btn"', $html);
@@ -98,9 +101,16 @@ class ProSpaceRedesignFeatureTest extends TestCase
             ->assertDontSee('Jean Dupont')
             ->getContent();
 
-        // Pas de menu vers des outils qui lui sont encore fermés.
-        $this->assertStringNotContainsString('id="proSidebar"', $html);
-        $this->assertStringNotContainsString('id="sidebarToggle"', $html);
+        // Changement de règle du 24/11/2026 : ses devis et factures offerts lui sont ouverts, le
+        // menu les montre. Aucun lien vers les outils de prestataire qui lui restent fermés.
+        $menu = $this->between($html, 'id="proSidebar"', '</aside>');
+        foreach (['dashboard' => 'home', 'quotes' => 'quotes', 'invoices' => 'invoices', 'subscription' => 'subscription'] as $route => $key) {
+            $this->assertMatchesRegularExpression('#href="'.preg_quote(route('pro.'.$route), '#').'"[^>]*data-pro-nav="'.$key.'"#', $menu);
+        }
+        foreach (['opportunities', 'ads', 'clients', 'agenda', 'analytics', 'report', 'profile', 'status', 'documents'] as $closed) {
+            $this->assertStringNotContainsString('data-pro-nav="'.$closed.'"', $menu);
+        }
+        $this->assertStringContainsString('2 devis et 2 factures offerts', $html);
         $this->assertStringContainsString('pk-join__step--done" data-join-step="1"', $html);
         $this->assertStringContainsString('pk-join__step--current" data-join-step="2"', $html);
         $this->assertSame(1, substr_count($this->between($html, 'id="proMain"', '</main>'), 'btn-pro-primary'));
@@ -128,13 +138,13 @@ class ProSpaceRedesignFeatureTest extends TestCase
 
         $this->actingAs($provider)->get(route('pro.account-status'))->assertOk()
             ->assertSee('Quelle est votre situation ?')
-            ->assertSee('Conditions pour émettre devis et factures');
+            ->assertSee('Identité sur vos documents');
 
         $this->put(route('pro.account-status.update'), [
             'pro_status' => 'auto-entrepreneur', 'company_name' => 'Atelier du Lagon', 'siret' => '123 456 789 00012',
         ])->assertRedirect(route('pro.compliance'))
             ->assertSessionHas('success', fn (string $message) => str_contains($message, '« Auto-entrepreneur »')
-                && str_contains($message, 'pour émettre vos devis et factures'));
+                && str_contains($message, 'identité professionnelle de vos devis et factures'));
 
         $this->assertTrue($provider->fresh()->isAutoEntrepreneur());
 

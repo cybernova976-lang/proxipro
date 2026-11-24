@@ -109,16 +109,10 @@ class ProQuoteToolsController extends Controller
             : 'Rappel automatique annulé : votre client ne recevra pas de rappel.');
     }
 
+    /** Devis et factures sont ouverts à tout membre (24/11/2026) : seul l'abonnement compte ici. */
     private function professional(Request $request): User
     {
-        $user = $request->user();
-        if (! $user->isProfessionnel()) {
-            throw new HttpResponseException(redirect()->route('pro.account-status')->with(
-                'warning', 'Les devis et factures professionnels nécessitent un statut professionnel.'
-            ));
-        }
-
-        return $user;
+        return $request->user();
     }
 
     private function requirePremium(User $user): void

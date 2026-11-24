@@ -4,12 +4,6 @@
 @section('content')
 <div class="pro-content-header">
     <div>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-1" style="font-size: 0.8rem;">
-                <li class="breadcrumb-item"><a href="{{ route('pro.dashboard') }}" style="color: var(--pro-primary);">Espace Pro</a></li>
-                <li class="breadcrumb-item active">Mon profil</li>
-            </ol>
-        </nav>
         <h1>Mon profil professionnel</h1>
     </div>
     <div class="d-flex gap-2">
@@ -131,7 +125,7 @@
     </div>
     @if($reviews->isEmpty())
         <div class="pro-empty py-4">
-            <div class="pro-empty-icon">⭐</div>
+            <div class="pro-empty-icon" aria-hidden="true"><i class="fas fa-star"></i></div>
             <h5>Pas encore d'avis</h5>
             <p>Les avis de vos clients apparaîtront ici</p>
         </div>

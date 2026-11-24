@@ -15,7 +15,9 @@
     ];
     $completedChecks = collect($checks)->where('ok', true)->count();
     $nextCheck = collect($checks)->firstWhere('ok', false);
-    $canIssue = $user->canIssueCommercialDocuments();
+    // Ces informations figurent sur les documents ; elles ne conditionnent plus leur
+    // création ni leur émission (App\Services\CommercialDocumentAllowance, 24/11/2026).
+    $identityComplete = $user->proCommercialMissingRequirements() === [];
 @endphp
 <div class="pro-content-header">
     <div>
@@ -25,12 +27,12 @@
                 <li class="breadcrumb-item active">Conformité</li>
             </ol>
         </nav>
-        <h1>Checklist de conformité PRO</h1>
-        <p class="text-muted mb-0">Configurez votre identité professionnelle, puis préparez et émettez vos documents.</p>
+        <h1>Identité professionnelle sur vos documents</h1>
+        <p class="text-muted mb-0">Les mentions qui apparaîtront sur vos devis et vos factures. Elles ne conditionnent pas leur création.</p>
     </div>
-    <span class="pro-status pro-status-{{ $canIssue ? 'success' : 'warning' }}" style="padding: 9px 14px;">
-        <i class="fas fa-{{ $canIssue ? 'check-circle' : 'clock' }} me-1"></i>
-        {{ $canIssue ? 'Émission autorisée' : ($user->isProfessionnel() ? 'Brouillons uniquement' : 'Statut professionnel à déclarer') }}
+    <span class="pro-status pro-status-{{ $identityComplete ? 'success' : 'warning' }}" style="padding: 9px 14px;">
+        <i class="fas fa-{{ $identityComplete ? 'check-circle' : 'clock' }} me-1" aria-hidden="true"></i>
+        {{ $identityComplete ? 'Identité complète' : ($user->isProfessionnel() ? 'Identité à compléter' : 'Statut professionnel à déclarer') }}
     </span>
 </div>
 
@@ -39,10 +41,11 @@
 <div class="row g-4">
     <div class="col-lg-7">
         <div class="pro-card">
-            <div class="pro-card-title"><i class="fas fa-tasks text-primary"></i> Conditions d’émission</div>
+            <div class="pro-card-title"><i class="fas fa-id-card text-primary" aria-hidden="true"></i> Identité professionnelle sur vos documents</div>
+            <p class="small text-muted mb-2" data-identity-not-a-lock>Recommandé, pas obligatoire pour créer vos documents : chaque membre crée {{ \App\Services\CommercialDocumentAllowance::FREE['quote'] }} devis et {{ \App\Services\CommercialDocumentAllowance::FREE['invoice'] }} factures offerts, que ces étapes soient faites ou non. Si vous exercez une activité professionnelle, indiquer votre SIRET sur vos devis et factures fait partie de vos obligations.</p>
             <p class="small text-muted">{{ $completedChecks }} / {{ count($checks) }} étapes complétées</p>
-            <div class="progress mb-3" role="progressbar" aria-label="Configuration de l’espace PRO" aria-valuenow="{{ $completedChecks }}" aria-valuemin="0" aria-valuemax="{{ count($checks) }}" style="height: 6px;">
-                <div class="progress-bar {{ $canIssue ? 'bg-success' : '' }}" style="width: {{ $completedChecks / count($checks) * 100 }}%; background-color: #6366f1;"></div>
+            <div class="progress mb-3" role="progressbar" aria-label="Identité professionnelle sur vos documents" aria-valuenow="{{ $completedChecks }}" aria-valuemin="0" aria-valuemax="{{ count($checks) }}" style="height: 6px;">
+                <div class="progress-bar {{ $identityComplete ? 'bg-success' : '' }}" style="width: {{ $completedChecks / count($checks) * 100 }}%; background-color: #6366f1;"></div>
             </div>
             @if($nextCheck)
                 <div class="rounded-3 p-3 mb-3" style="background: #eef2ff; border: 1px solid #c7d2fe;">
@@ -51,8 +54,8 @@
                 </div>
             @else
                 <div class="rounded-3 p-3 mb-3" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
-                    <strong class="d-block mb-2">Votre espace est prêt pour l’émission.</strong>
-                    <a class="btn btn-pro-primary" href="{{ route('pro.quotes.create') }}">Créer un devis <i class="fas fa-arrow-right ms-1" aria-hidden="true"></i></a>
+                    <strong class="d-block mb-2">Votre identité professionnelle est complète : elle figurera sur vos documents.</strong>
+                    <a class="btn btn-pro-primary" href="{{ route('pro.quotes') }}">Voir mes devis <i class="fas fa-arrow-right ms-1" aria-hidden="true"></i></a>
                 </div>
             @endif
             <div class="d-grid gap-2">
@@ -92,6 +95,7 @@
     <div class="col-lg-5">
         <div class="pro-card" style="border-top: 4px solid #6366f1; overflow-wrap: anywhere;">
             <div class="pro-card-title"><i class="fas fa-building text-primary" aria-hidden="true"></i> Votre identité d’émetteur</div>
+            <p class="small text-muted">Telle qu’elle apparaîtra sur vos prochains documents. Un champ vide n’y figure pas : aucun numéro n’est ajouté à votre place.</p>
             <dl class="mb-3">
                 <dt>Statut</dt><dd>{{ $user->getAccountTypeLabel() }}</dd>
                 <dt>Raison sociale</dt><dd>{{ $user->company_name ?: 'À renseigner' }}</dd>

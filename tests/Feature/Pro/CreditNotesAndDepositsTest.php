@@ -5,6 +5,7 @@ namespace Tests\Feature\Pro;
 use App\Models\ProClient;
 use App\Models\ProInvoice;
 use App\Models\ProQuote;
+use App\Models\ProSubscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -75,7 +76,7 @@ class CreditNotesAndDepositsTest extends TestCase
         $this->assertStringContainsString('Avoir_'.$credit->invoice_number.'.pdf',
             (string) $this->get(route('pro.invoices.download', $credit))->assertOk()->headers->get('content-disposition'));
 
-        $this->get(route('pro.invoices'))->assertOk()->assertSee('Annulée par avoir')->assertSee('−120,00€');
+        $this->get(route('pro.invoices'))->assertOk()->assertSee('Annulée par avoir')->assertSee('−120,00 €');
     }
 
     public function test_a_partial_credit_note_lowers_what_is_due_and_the_revenue(): void
@@ -225,14 +226,23 @@ class CreditNotesAndDepositsTest extends TestCase
         $this->get(route('pro.invoices.create', ['quoteId' => $quote->id]))->assertOk();
     }
 
+    /**
+     * Depuis le 24/11/2026, sans abonnement, seuls 2 devis et 2 factures sont offerts
+     * (FreeCommercialDocumentsTest). Ces scénarios enchaînent plus de documents : le
+     * professionnel est abonné à Premium pour ne tester que les avoirs et les acomptes.
+     */
     private function professional(): User
     {
-        return User::factory()->completeForVerification()->create([
+        $pro = User::factory()->completeForVerification()->create([
             'account_type' => 'professionnel', 'user_type' => 'professionnel', 'is_service_provider' => true,
             'identity_verified' => true, 'company_name' => 'Entreprise Test', 'siret' => '12345678900012',
             'business_type' => 'entreprise', 'is_active' => true,
             'pro_terms_accepted_at' => now(), 'pro_terms_version' => config('legal.pro_terms_version'),
         ]);
+        ProSubscription::create(['user_id' => $pro->id, 'plan' => 'monthly', 'amount' => 9.99, 'status' => 'active',
+            'starts_at' => now()->subDay(), 'ends_at' => now()->addMonth()]);
+
+        return $pro;
     }
 
     private function invoice(User $user, array $overrides = []): ProInvoice

@@ -416,12 +416,17 @@ class User extends Authenticatable
     /** @return array<string, mixed> */
     /**
      * Taux de TVA proposé par défaut sur un nouveau devis ou une nouvelle
-     * facture : 0 % pour un auto-entrepreneur sans numéro de TVA (franchise en
-     * base), 20 % sinon. Le prestataire reste libre de le changer.
+     * facture : 0 % sans numéro de TVA pour un auto-entrepreneur (franchise en
+     * base) et pour tout compte qui n'est pas professionnel (un particulier ne
+     * collecte pas la TVA), 20 % sinon. Le membre reste libre de le changer.
      */
     public function defaultVatRate(): float
     {
-        return $this->business_type === 'auto_entrepreneur' && blank($this->tva_number) ? 0.0 : 20.0;
+        if (filled($this->tva_number)) {
+            return 20.0;
+        }
+
+        return ($this->business_type === 'auto_entrepreneur' || ! $this->isProfessionnel()) ? 0.0 : 20.0;
     }
 
     public function commercialIdentitySnapshot(): array

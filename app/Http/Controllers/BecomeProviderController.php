@@ -191,19 +191,26 @@ class BecomeProviderController extends Controller
 
             $user->update($updateData);
 
-            // Créer ou mettre à jour le service principal (sans supprimer les existants)
+            // Créer ou mettre à jour le service principal (sans supprimer les existants).
+            // Les métiers de l'ancien profil deviennent d'abord des compétences, puis
+            // le profil est recalculé à partir de toutes (App\Services\ProviderSkills).
+            $providerSkills = app(\App\Services\ProviderSkills::class);
+            $providerSkills->absorbLegacyProfile($user);
+            // Clé de l'index unique (user_id, subcategory) : un métier déjà enregistré
+            // sous une autre catégorie est mis à jour, pas recréé.
             UserService::updateOrCreate(
                 [
                     'user_id' => $user->id,
-                    'main_category' => $request->category,
                     'subcategory' => $request->subcategory,
                 ],
                 [
+                    'main_category' => $request->category,
                     'experience_years' => 0,
                     'description' => null,
                     'is_active' => true,
                 ]
             );
+            $providerSkills->sync($user);
 
             DB::commit();
 

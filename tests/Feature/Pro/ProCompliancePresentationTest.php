@@ -19,7 +19,7 @@ class ProCompliancePresentationTest extends TestCase
             ->assertSee('Statut professionnel à déclarer')
             ->assertSee('Prochaine étape : Statut professionnel déclaré')
             ->assertSee(route('pro.account-status'))
-            ->assertDontSee('Brouillons uniquement');
+            ->assertDontSee('Identité à compléter');
 
         $this->assertNull($user->fresh()->pro_terms_accepted_at);
         $this->assertFalse($user->fresh()->canIssueCommercialDocuments());
@@ -29,9 +29,11 @@ class ProCompliancePresentationTest extends TestCase
     {
         $user = $this->provider(['company_name' => 'Atelier du Lagon', 'siret' => null]);
 
+        // Depuis le 24/11/2026, la checklist ne bloque plus l'émission des documents offerts :
+        // l'ancien libellé « Brouillons uniquement » devient « Identité à compléter ».
         $this->actingAs($user)->get(route('pro.compliance'))
             ->assertOk()
-            ->assertSee('Brouillons uniquement')
+            ->assertSee('Identité à compléter')
             ->assertSee('Votre identité d’émetteur')
             ->assertSee('Atelier du Lagon')
             ->assertSee('Prochaine étape : Numéro d’immatriculation renseigné au format attendu')
@@ -51,7 +53,7 @@ class ProCompliancePresentationTest extends TestCase
 
         $this->actingAs($user)->get(route('pro.compliance'))
             ->assertOk()
-            ->assertSee('Émission autorisée')
+            ->assertSee('Identité complète')
             ->assertSee('7 / 7 étapes complétées')
             ->assertDontSee('Prochaine étape :')
             ->assertDontSee('id="acceptProTerms"', false);

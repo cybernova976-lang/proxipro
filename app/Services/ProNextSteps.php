@@ -48,33 +48,33 @@ class ProNextSteps
                 'Envoyez une proposition aux clients qui cherchent quelqu’un comme vous.', route('pro.opportunities'), 'Examiner');
         }
 
+        // Devis et factures ne dépendent plus du statut (24/11/2026) : ces étapes
+        // complètent l'identité qui figure sur les documents, sans rien bloquer.
         if (! $isProfessional) {
             $steps[] = $this->step('status', 'Passez en professionnel',
-                'Auto-entrepreneur ou société : émettez vos devis et factures à votre nom.', route('pro.account-status'), 'Déclarer mon statut');
+                'Auto-entrepreneur ou société : votre SIRET figurera sur vos devis et factures.', route('pro.account-status'), 'Déclarer mon statut');
         } elseif (! $user->canIssueCommercialDocuments()) {
             $missing = $user->proCommercialMissingRequirements();
-            $steps[] = $this->step('compliance', 'Terminez votre conformité pour émettre devis et factures',
-                $this->plural(count($missing), 'étape restante', 'étapes restantes').' : '.$missing[0].'.', route('pro.compliance'), 'Continuer');
+            $steps[] = $this->step('compliance', 'Complétez votre identité professionnelle',
+                'Elle figurera sur vos devis et factures ('.$this->plural(count($missing), 'information', 'informations').' à compléter) : '.$missing[0].'.', route('pro.compliance'), 'Continuer');
         }
 
-        if ($isProfessional) {
-            $unpaid = $user->proInvoices()->whereIn('status', ['sent', 'overdue'])->count();
-            if ($unpaid > 0) {
-                $steps[] = $this->step('invoices', $this->plural($unpaid, 'facture envoyée non réglée', 'factures envoyées non réglées'),
-                    'Vérifiez les paiements reçus ou relancez vos clients.', route('pro.invoices'), 'Suivre');
-            }
+        $unpaid = $user->proInvoices()->whereIn('status', ['sent', 'overdue'])->count();
+        if ($unpaid > 0) {
+            $steps[] = $this->step('invoices', $this->plural($unpaid, 'facture envoyée non réglée', 'factures envoyées non réglées'),
+                'Vérifiez les paiements reçus ou relancez vos clients.', route('pro.invoices'), 'Suivre');
+        }
 
-            $drafts = $user->proQuotes()->where('status', 'draft')->count();
-            if ($drafts > 0) {
-                $steps[] = $this->step('drafts', $this->plural($drafts, 'devis en brouillon', 'devis en brouillon'),
-                    'Finalisez-les et envoyez-les à vos clients.', route('pro.quotes'), 'Finaliser');
-            }
+        $drafts = $user->proQuotes()->where('status', 'draft')->count();
+        if ($drafts > 0) {
+            $steps[] = $this->step('drafts', $this->plural($drafts, 'devis en brouillon', 'devis en brouillon'),
+                'Finalisez-les et envoyez-les à vos clients.', route('pro.quotes'), 'Finaliser');
+        }
 
-            $awaiting = $user->proQuotes()->where('status', 'sent')->count();
-            if ($awaiting > 0) {
-                $steps[] = $this->step('awaiting', $this->plural($awaiting, 'devis en attente de réponse', 'devis en attente de réponse'),
-                    'Marquez-les acceptés ou refusés dès que le client répond.', route('pro.quotes'), 'Voir');
-            }
+        $awaiting = $user->proQuotes()->where('status', 'sent')->count();
+        if ($awaiting > 0) {
+            $steps[] = $this->step('awaiting', $this->plural($awaiting, 'devis en attente de réponse', 'devis en attente de réponse'),
+                'Marquez-les acceptés ou refusés dès que le client répond.', route('pro.quotes'), 'Voir');
         }
 
         return array_slice($steps, 0, self::MAX_STEPS);

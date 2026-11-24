@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="{{ asset('css/form-validation.css') }}?v=20260902">
     <script defer src="{{ asset('js/form-validation.js') }}?v=20260902"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('css/pro-space.css') }}?v=20261113">
+    <link rel="stylesheet" href="{{ asset('css/pro-space.css') }}?v={{ filemtime(public_path('css/pro-space.css')) }}">
     <style>
     @yield('styles')
     </style>
@@ -37,15 +37,17 @@
     @endif
 
     <main class="pro-main" id="proMain">
-        @include('partials.billing-alert')
-        @include('pro.layout.flash')
+        <div class="pro-main__inner">
+            @include('partials.billing-alert')
+            @include('pro.layout.flash')
 
-        @yield('content')
+            @yield('content')
+        </div>
     </main>
 
     @include('partials.provider-modal')
 
-    <script defer src="{{ asset('js/pro-space.js') }}?v=20261113"></script>
+    <script defer src="{{ asset('js/pro-space.js') }}?v={{ filemtime(public_path('js/pro-space.js')) }}"></script>
     @yield('scripts')
     @include('partials.usage-analytics')
     @include('partials.push-notifications')

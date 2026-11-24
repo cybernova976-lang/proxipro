@@ -143,7 +143,7 @@ class MobileExperienceFeatureTest extends TestCase
         );
         $this->assertStringContainsString("yieldContent('topbar_title')", $layout);
         $this->assertStringContainsString('class="pro-topbar-context"', $topbar);
-        $this->assertStringContainsString('pro-topbar-action-label">Retour au feed', $topbar);
+        $this->assertStringContainsString('pro-topbar-action-label">Retour à l’accueil', $topbar);
         $this->assertStringContainsString('pro-topbar-action-label">Messages', $topbar);
         $this->assertStringContainsString('aria-controls="proSidebar" aria-expanded="false"', $topbar);
         $this->assertStringContainsString('const setProSidebarOpen = (open) =>', $script);
@@ -166,7 +166,7 @@ class MobileExperienceFeatureTest extends TestCase
             ->assertOk()
             ->assertSee('Espace professionnel')
             ->assertSee('Abonnement Premium', false)
-            ->assertSee('Retour au feed')
+            ->assertSee('Retour à l’accueil')
             ->assertSee('pro-content-header subscription-page-header', false)
             ->assertSee('sub-page-card', false);
     }

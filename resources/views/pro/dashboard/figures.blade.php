@@ -6,7 +6,7 @@
         ['key' => 'missions', 'value' => $stats['active_missions'], 'label' => 'Missions en cours', 'url' => route('service-orders.index')],
     ];
     if ($isProfessional) {
-        $pkFigures[] = ['key' => 'revenue', 'value' => number_format($stats['monthly_revenue'], 0, ',', ' ').' €',
+        $pkFigures[] = ['key' => 'revenue', 'value' => \App\Support\Money::eur($stats['monthly_revenue'], 0),
             'label' => 'Encaissé ce mois-ci', 'url' => route('pro.invoices')];
     } else {
         $pkFigures[] = ['key' => 'rating',
