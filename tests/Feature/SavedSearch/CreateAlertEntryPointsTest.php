@@ -48,9 +48,10 @@ class CreateAlertEntryPointsTest extends TestCase
             ->getContent();
 
         $this->assertSame('976', SavedSearch::where('user_id', $reader->id)->sole()->territory_code);
-        // La ligne « À faire » disparaît, et l'accès à « Mes alertes » apparaît.
+        // La ligne « À faire » disparaît sans réintroduire le raccourci retiré de Repères.
         $this->assertStringNotContainsString('pk-landmarks__form', $after);
-        $this->assertStringContainsString('href="'.route('saved-searches.index').'"', $after);
+        $this->assertStringNotContainsString('href="'.route('saved-searches.index').'"', $after);
+        $this->assertStringContainsString('href="'.route('ads.myads').'"', $after);
     }
 
     public function test_my_alerts_page_creates_the_alert_instead_of_sending_back_home(): void

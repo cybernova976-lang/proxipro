@@ -10,8 +10,7 @@ use Tests\TestCase;
 
 /**
  * Activer une alerte laisse une trace visible : le bouton change d'état sur
- * place, un message confirme l'action, et « Mes alertes » affiche le nombre
- * d'alertes actives.
+ * place et un message confirme l'action. Repères ne présente plus de compteur.
  */
 class AlertConfirmationTest extends TestCase
 {
@@ -48,20 +47,18 @@ class AlertConfirmationTest extends TestCase
         $this->assertSame(2, SavedSearch::count());
     }
 
-    public function test_the_feed_shows_the_alert_count_and_the_confirmed_state_of_each_button(): void
+    public function test_the_feed_confirms_each_alert_without_a_landmarks_counter(): void
     {
         $viewer = User::factory()->create(['city' => 'Mamoudzou', 'country' => 'Mayotte']);
         $provider = $this->provider();
         $this->offer($provider);
         $this->actingAs($viewer);
 
-        // Aucune alerte : « Mes alertes » est là, sans nombre affiché.
+        // Les alertes restent disponibles sur les offres, sans raccourci dans Repères.
         $html = $this->get(route('feed'))->assertOk()
-            ->assertSee('Mes alertes')
             ->assertSee('js/alert-forms.js', false)->assertSee('css/alert-forms.css', false)
             ->getContent();
-        $this->assertMatchesRegularExpression('/data-pk-alert-count\s+hidden/', $html);
-        $this->assertStringContainsString('<span data-pk-alert-count-value></span>', $html);
+        $this->assertStringNotContainsString('data-pk-alert-count', $html);
 
         // La cloche d'une offre porte son état « alerte active », prêt à être affiché au clic.
         $this->assertMatchesRegularExpression('/<span class="pk-alert-slot" data-pk-alert>\s*<template data-pk-alert-done>\s*<form method="POST" action="__STOP_URL__" class="pk-follow"/', $html);
@@ -69,12 +66,14 @@ class AlertConfirmationTest extends TestCase
 
         $this->postJson(route('saved-searches.store'), ['provider' => $provider->id])->assertOk();
         $this->postJson(route('saved-searches.store'), ['provider' => $this->provider()->id])->assertOk();
-        // Une alerte arrêtée par le système ne compte pas : seules les alertes actives sont affichées.
+        // Une alerte arrêtée par le système ne change pas l'état de celle du prestataire.
         SavedSearch::create(['user_id' => $viewer->id, 'name' => 'Ancienne alerte', 'filters' => [], 'is_active' => false]);
 
         $html = $this->get(route('feed'))->assertOk()->getContent();
-        $this->assertStringContainsString('<span data-pk-alert-count-value>2</span>', $html);
-        $this->assertDoesNotMatchRegularExpression('/data-pk-alert-count\s+hidden/', $html);
+        $alert = SavedSearch::where('user_id', $viewer->id)->where('provider_id', $provider->id)->sole();
+        $this->assertStringContainsString('action="'.route('saved-searches.destroy', $alert).'"', $html);
+        $this->assertStringContainsString('Alerte active. Cliquez pour ne plus être prévenu', $html);
+        $this->assertStringNotContainsString('data-pk-alert-count', $html);
     }
 
     public function test_the_offer_page_button_also_confirms_in_place(): void
