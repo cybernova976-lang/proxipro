@@ -113,11 +113,12 @@ class SocialAuthController extends Controller
                     $user->update([
                         'provider' => $provider,
                         'provider_id' => $socialProviderId,
-                        'avatar' => $user->avatar ?? $this->saveAvatar($socialUser->getAvatar()),
+                        // Une photo retirée par le membre n'est jamais remise par le compte social.
+                        'avatar' => $user->avatar ?? ($user->avatar_removed_at ? null : $this->saveAvatar($socialUser->getAvatar())),
                     ]);
                 } else {
                     // Mettre à jour l'avatar si nécessaire
-                    if (! $user->avatar && $socialUser->getAvatar()) {
+                    if (! $user->avatar && ! $user->avatar_removed_at && $socialUser->getAvatar()) {
                         $user->update([
                             'avatar' => $this->saveAvatar($socialUser->getAvatar()),
                         ]);

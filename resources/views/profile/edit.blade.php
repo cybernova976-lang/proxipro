@@ -41,6 +41,13 @@
                                 <input type="file" id="avatar" name="avatar" class="d-none" accept="image/jpeg,image/png,image/webp,image/gif">
                                 <input type="hidden" id="avatar_cropped" name="avatar_cropped" value="">
                             </div>
+                            @if($user->avatar)
+                                <div class="mt-2">
+                                    <button type="submit" form="deleteAvatarForm" formnovalidate class="btn btn-link btn-sm text-danger text-decoration-none p-0" data-avatar-delete>
+                                        <i class="far fa-trash-alt me-1" aria-hidden="true"></i>Supprimer la photo
+                                    </button>
+                                </div>
+                            @endif
                             <div class="text-muted small mt-2">
                                 La photo de profil est obligatoire avant une demande de vérification. Recadrez-la avant l'enregistrement.
                             </div>
@@ -260,6 +267,14 @@
                             </button>
                         </div>
                     </form>
+
+                    @if($user->avatar)
+                        <form id="deleteAvatarForm" action="{{ route('profile.avatar.destroy') }}" method="POST" class="d-none"
+                              data-confirm="Supprimer votre photo de profil ? Votre profil affichera l’initiale de votre nom.">
+                            @csrf
+                            @method('DELETE')
+                        </form>
+                    @endif
 
                     @foreach($user->professionalRealizations as $realization)
                         <form id="deleteProfessionalRealization{{ $realization->id }}"

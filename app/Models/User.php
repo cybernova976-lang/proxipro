@@ -193,6 +193,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'avatar_removed_at' => 'datetime',
             'stripe_connect_onboarding_completed_at' => 'datetime',
             'email_verification_code_expires_at' => 'datetime',
             'referral_bonus_granted_at' => 'datetime',

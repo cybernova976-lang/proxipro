@@ -142,6 +142,11 @@
                 </div>
                 <input type="file" name="avatar" id="avatarInput" class="form-control" accept="image/*" style="border-radius: 10px; font-size: 0.85rem;">
                 <small class="text-muted d-block mt-1">JPG, PNG — Max 2 Mo</small>
+                @if($user->avatar)
+                    <button type="submit" form="deleteAvatarForm" formnovalidate class="btn btn-link btn-sm text-danger text-decoration-none p-0 mt-2">
+                        <i class="far fa-trash-alt me-1" aria-hidden="true"></i>Supprimer la photo
+                    </button>
+                @endif
             </div>
 
             @include('pro.partials.document-logo')
@@ -188,6 +193,14 @@
         </div>
     </div>
 </form>
+
+@if($user->avatar)
+    <form id="deleteAvatarForm" action="{{ route('profile.avatar.destroy') }}" method="POST" class="d-none">
+        @csrf
+        @method('DELETE')
+        <input type="hidden" name="return" value="pro">
+    </form>
+@endif
 
 {{-- Delete Account Section --}}
 <div class="row mt-4">
@@ -324,5 +337,11 @@ document.getElementById('avatarInput').addEventListener('change', function(e) {
     };
     reader.readAsDataURL(file);
 });
+var deleteAvatarForm = document.getElementById('deleteAvatarForm');
+if (deleteAvatarForm) {
+    deleteAvatarForm.addEventListener('submit', function (e) {
+        if (!window.confirm('Supprimer votre photo de profil ? Votre profil affichera l’initiale de votre nom.')) e.preventDefault();
+    });
+}
 </script>
 @endsection

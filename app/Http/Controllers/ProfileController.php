@@ -295,6 +295,37 @@ class ProfileController extends Controller
     }
 
     /**
+     * Retirer la photo de profil : le profil affiche alors l'initiale du nom.
+     * Le fichier n'est effacé qu'après l'enregistrement du retrait.
+     */
+    public function destroyAvatar(Request $request)
+    {
+        $user = Auth::user();
+        $previousAvatar = $user->avatar;
+
+        // Le retrait est mémorisé : une connexion par Google ou Facebook ne remet pas la photo du compte social.
+        $user->forceFill(['avatar' => null, 'avatar_removed_at' => now()])->save();
+
+        if ($previousAvatar) {
+
+            // Une photo reprise d'un compte Google ou Facebook est une adresse externe : rien à effacer chez nous.
+            if (! str_starts_with($previousAvatar, 'http')) {
+                try {
+                    Storage::disk(config('filesystems.default', 'public'))->delete($previousAvatar);
+                } catch (\Throwable $e) {
+                    Log::warning('Impossible d’effacer la photo de profil retirée : '.$e->getMessage(), ['user_id' => $user->id]);
+                }
+            }
+        }
+
+        $target = $request->input('return') === 'pro' && \Illuminate\Support\Facades\Route::has('pro.profile.edit')
+            ? route('pro.profile.edit')
+            : route('profile.edit').'#profile-photo-section';
+
+        return redirect()->to($target)->with('success', 'Votre photo de profil a été supprimée.');
+    }
+
+    /**
      * Remplacer la photo d'une réalisation, en gardant sa place et sa légende.
      */
     public function replaceProfessionalRealization(Request $request, ProfessionalRealization $professionalRealization)
