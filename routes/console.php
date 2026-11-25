@@ -68,11 +68,21 @@ Schedule::command('boosts:send-expiring-alerts')
     ->appendOutputTo(storage_path('logs/boosts-alerts.log'));
 
 // Les abonnements récurrents sont synchronisés par webhook Stripe. Ce nettoyage
-// concerne uniquement les accès manuels accordés par un administrateur.
+// concerne les accès sans abonnement Stripe : accès manuels accordés par un
+// administrateur et accès à paiement unique, qui s'arrêtent seuls à leur date de fin.
 Schedule::command('subscriptions:expire-pro')
     ->everyFifteenMinutes()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/pro-subscriptions-cleanup.log'));
+
+// Accès Premium à paiement unique : rien ne se renouvelle, le membre est prévenu
+// quelques jours avant la fin, une seule fois par accès. Jamais la nuit.
+Schedule::command('subscriptions:remind-one-time-ending')
+    ->hourly()
+    ->timezone('Indian/Mayotte')
+    ->between('8:00', '20:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/pro-subscriptions-one-time-reminders.log'));
 
 // Paiements d'abonnement refusés : rappels pendant le délai de régularisation,
 // puis résiliation et retour au compte gratuit quand le délai est écoulé.

@@ -977,9 +977,10 @@ class User extends Authenticatable
      */
     public function proSubscription()
     {
+        // La contrainte « en cours » doit être dans la sous-requête : sinon un accès
+        // déjà payé qui commence plus tard (id plus grand) masque l'accès en cours.
         return $this->hasOne(ProSubscription::class)
-            ->currentlyActive()
-            ->latestOfMany();
+            ->ofMany(['id' => 'max'], fn ($query) => $query->currentlyActive());
     }
 
     /**

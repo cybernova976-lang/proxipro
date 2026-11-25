@@ -37,7 +37,11 @@ return [
     |
     */
 
-    'lifetime' => (int) env('SESSION_LIFETIME', 120),
+    // La session doit survivre plus longtemps que la déconnexion pour inactivité
+    // (App\Services\SessionInactivity : 3 heures), sinon elle expirerait avant
+    // elle quand l'onglet est fermé. Jamais moins de 200 minutes, même si
+    // SESSION_LIFETIME est réglée plus bas sur l'hébergement.
+    'lifetime' => max((int) env('SESSION_LIFETIME', 200), 200),
 
     'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
 

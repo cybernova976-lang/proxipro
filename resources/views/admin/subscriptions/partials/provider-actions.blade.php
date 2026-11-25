@@ -5,6 +5,16 @@
     $actionLate = $subscription->isPaymentLate();
     $actionStripe = $subscription->hasOpenBilling();
     $actionEnded = in_array($subscription->status, ['cancelled', 'expired'], true);
+    // Accès réglé en une fois : il n'y a ni prélèvement à suspendre, ni abonnement Stripe à couper.
+    $actionOneTime = $subscription->isOneTimeAccess();
+    // Accès lui-même payé d'avance (il n'a pas encore commencé), ou accès en cours suivi d'un accès déjà payé.
+    $actionQueued = $actionOneTime && $subscription->isPaidAhead();
+    $actionNext = $actionOneTime && ! $actionQueued && $subscription->user
+        ? $subscription->user->proSubscriptions()->paidAhead()->whereKeyNot($subscription->id)->orderBy('starts_at')->get()
+        : collect();
+    $actionNextNote = $actionNext->isNotEmpty()
+        ? ' Attention : un accès déjà payé (du '.$actionNext->first()->starts_at->format('d/m').' au '.$actionNext->max('ends_at')->format('d/m').') existe en file : il commencera quand même à sa date, sauf si vous l’annulez aussi.'
+        : '';
     $actionDays = 7;
     $actions = [];
 
@@ -17,7 +27,11 @@
         }
     } elseif ($subscription->status === 'active') {
         $actions[] = ['route' => 'admin.subscriptions.provider.suspend', 'label' => 'Suspendre', 'icon' => 'fa-pause', 'color' => 'warning',
-            'confirm' => 'Suspendre cet abonnement et les prochains prélèvements ?'];
+            'confirm' => match (true) {
+                $actionQueued => 'Suspendre cet accès payé d’avance (du '.$subscription->starts_at->format('d/m').' au '.$subscription->ends_at?->format('d/m').') ? Il ne commencera pas à sa date tant qu’il n’est pas réactivé ; ses dates ne changent pas.',
+                $actionOneTime => 'Suspendre cet accès à paiement unique ? Le membre perd ses avantages jusqu’à sa réactivation ; la date de fin ne change pas.'.$actionNextNote,
+                default => 'Suspendre cet abonnement et les prochains prélèvements ?',
+            }];
         if ($actionStripe && $subscription->auto_renew) {
             $actions[] = ['route' => 'admin.subscriptions.provider.end-at-period-end', 'label' => 'Résilier à l’échéance', 'icon' => 'fa-calendar-xmark', 'color' => 'secondary',
                 'confirm' => 'Arrêter cet abonnement à la fin de la période payée ? Le membre garde ses avantages jusque-là.'];
@@ -31,9 +45,12 @@
 
     if (! $actionEnded) {
         $actions[] = ['route' => 'admin.subscriptions.provider.cancel', 'label' => 'Annuler immédiatement', 'icon' => 'fa-ban', 'color' => 'danger',
-            'confirm' => $actionLate
-                ? 'Annuler immédiatement cet abonnement ? La facture impayée sera annulée chez Stripe et le compte repassera en gratuit.'
-                : 'Annuler immédiatement cet abonnement ? Cette action coupe aussi Stripe.'];
+            'confirm' => match (true) {
+                $actionLate => 'Annuler immédiatement cet abonnement ? La facture impayée sera annulée chez Stripe et le compte repassera en gratuit.',
+                $actionQueued => 'Annuler cet accès payé d’avance (du '.$subscription->starts_at->format('d/m').' au '.$subscription->ends_at?->format('d/m').') ? Il ne commencera pas. Son paiement n’est pas remboursé par cette action : un remboursement se fait depuis Stripe.',
+                $actionOneTime => 'Annuler immédiatement cet accès à paiement unique ? Le membre perd ses avantages tout de suite. Son paiement n’est pas remboursé par cette action : un remboursement se fait depuis Stripe.'.$actionNextNote,
+                default => 'Annuler immédiatement cet abonnement ? Cette action coupe aussi Stripe.',
+            }];
     }
 @endphp
 @foreach($actions as $action)

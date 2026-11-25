@@ -1,4 +1,4 @@
-{{-- Paiements d'abonnement réellement reçus, puis les abonnements terminés. --}}
+{{-- Paiements Premium réellement reçus (échéances d'abonnement et paiements uniques), puis les abonnements terminés. --}}
 @if($payments->isNotEmpty() || $user->stripe_id)
     <section class="pk-billing__section" aria-labelledby="pk-billing-payments">
         <h2 id="pk-billing-payments">Mes paiements</h2>
@@ -9,12 +9,17 @@
                 </thead>
                 <tbody>
                     @foreach($payments as $pkPayment)
+                        @php
+                            // Abonnement : le paiement porte l'identifiant de sa facture. Paiement unique : Stripe émet un justificatif après le paiement.
+                            $pkHasInvoice = str_starts_with((string) $pkPayment->stripe_session_id, 'in_')
+                                || ($pkPayment->metadata['kind'] ?? null) === \App\Services\ProviderSubscriptionService::ONE_TIME_CHECKOUT_TYPE;
+                        @endphp
                         <tr>
                             <td data-label="Date">{{ $pkPayment->created_at->format('d/m/Y') }}</td>
                             <td data-label="Objet">{{ $pkPayment->description }}</td>
                             <td data-label="Montant">{{ number_format((float) $pkPayment->amount, 2, ',', ' ') }} €</td>
                             <td data-label="Facture">
-                                @if(str_starts_with((string) $pkPayment->stripe_session_id, 'in_'))
+                                @if($pkHasInvoice)
                                     <a class="pk-billing-invoice" href="{{ route('billing.invoice', $pkPayment) }}" target="_blank" rel="noopener"
                                        aria-label="Télécharger la facture du {{ $pkPayment->created_at->format('d/m/Y') }}">
                                         <i class="fas fa-file-pdf" aria-hidden="true"></i> Télécharger
@@ -28,7 +33,7 @@
                 </tbody>
             </table>
         @else
-            <p class="pk-billing__empty">Aucun paiement d’abonnement enregistré pour le moment.</p>
+            <p class="pk-billing__empty">Aucun paiement Premium enregistré pour le moment.</p>
         @endif
         @if($payments->isNotEmpty())
             <p class="pk-billing__invoices">Chaque facture vous est aussi envoyée par e-mail dès que le paiement est reçu.</p>

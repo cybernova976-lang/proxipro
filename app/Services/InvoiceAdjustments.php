@@ -97,7 +97,8 @@ class InvoiceAdjustments
                 'status' => ProInvoice::STATUS_ISSUED,
                 'seller_snapshot' => $user->commercialIdentitySnapshot(),
                 'finalized_at' => now(),
-            ]);
+                // Un avoir suit la règle du filigrane « version gratuite » : émis sous Premium, il reste propre.
+            ] + app(CommercialDocumentAllowance::class)->issueStamp($user));
 
             $credited = round((float) $invoice->credited_total + $total, 2);
             $fullyCredited = $credited >= round((float) $invoice->total, 2);

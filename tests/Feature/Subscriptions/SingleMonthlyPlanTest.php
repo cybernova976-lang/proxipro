@@ -51,6 +51,32 @@ class SingleMonthlyPlanTest extends TestCase
             $this->assertNotContains($text, $features);
         }
         $this->assertSame(['monthly' => ['summary' => 'Mensuel (9,99€/mois)', 'total' => '9,99 €']], ProviderSubscriptionPlans::summaries());
+
+        // Une seule formule à prélèvement, strictement inchangée : 9,99 € par mois.
+        $this->assertSame(['monthly'], array_keys(ProviderSubscriptionPlans::all()));
+        $monthly = ProviderSubscriptionPlans::get('monthly');
+        $this->assertSame('recurring', $monthly['billing']);
+        $this->assertSame(1, $monthly['months']);
+        $this->assertSame(9.99, ProviderSubscriptionPlans::amount('monthly'));
+        $this->assertSame(['Mensuel', '9,99€', '/mois'], [$monthly['label'], $monthly['price'], $monthly['period']]);
+        $this->assertSame('Abonnement Prokejem Mensuel', ProviderSubscriptionPlans::stripeLabel('monthly'));
+        // Les accès à paiement unique (25/11/2026) sont à part : jamais vendus comme abonnement.
+        $this->assertSame(['monthly', 'pass_3m', 'pass_6m'], array_keys(ProviderSubscriptionPlans::catalog()));
+        $this->assertSame(['pass_3m', 'pass_6m'], array_keys(ProviderSubscriptionPlans::oneTime()));
+    }
+
+    public function test_a_stored_setting_never_turns_a_one_time_access_into_a_subscription(): void
+    {
+        Setting::set('provider_subscription_plans', json_encode([
+            'pass_3m' => ['billing' => 'recurring', 'months' => 12, 'amount' => 30, 'enabled' => true],
+        ]), 'subscriptions');
+
+        $this->assertTrue(ProviderSubscriptionPlans::isOneTime('pass_3m'));
+        $this->assertSame('one_time', ProviderSubscriptionPlans::get('pass_3m')['billing']);
+        $this->assertSame(3, ProviderSubscriptionPlans::months('pass_3m'));
+        $this->assertSame(['monthly'], array_keys(ProviderSubscriptionPlans::active()));
+        // Le prix, lui, se règle depuis l'administration.
+        $this->assertSame(30.0, ProviderSubscriptionPlans::amount('pass_3m'));
     }
 
     public function test_stored_plans_lose_the_annual_plan_and_the_advantages_that_are_free(): void
@@ -147,6 +173,25 @@ class SingleMonthlyPlanTest extends TestCase
 
         $this->actingAs($provider)->post(route('pro.onboarding.subscribe'), ['plan' => 'annual'])
             ->assertSessionHasErrors('plan');
+        $this->assertDatabaseCount('pro_subscriptions', 0);
+    }
+
+    public function test_a_one_time_access_can_never_be_bought_as_a_subscription(): void
+    {
+        $this->enableSubscriptions();
+        $provider = User::factory()->create(['is_service_provider' => true, 'stripe_id' => 'cus_never']);
+
+        foreach (['pass_3m', 'pass_6m'] as $plan) {
+            $this->actingAs($provider)->post(route('pro.onboarding.subscribe'), ['plan' => $plan])
+                ->assertSessionHasErrors('plan');
+            try {
+                // Même sans le contrôle du formulaire, le service refuse avant tout appel à Stripe.
+                app(\App\Services\ProviderSubscriptionService::class)->createCheckoutSession($provider, $plan, 'https://marketplace.example/ok', 'https://marketplace.example/ko');
+                $this->fail('Un accès à paiement unique ne doit pas ouvrir un abonnement.');
+            } catch (\DomainException $exception) {
+                $this->assertSame('Cet abonnement n’est pas disponible pour le moment.', $exception->getMessage());
+            }
+        }
         $this->assertDatabaseCount('pro_subscriptions', 0);
     }
 

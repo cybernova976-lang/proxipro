@@ -82,7 +82,7 @@ class LoginController extends Controller
 
     protected function attemptLogin(Request $request)
     {
-        // Persistent login must not undo the one-hour inactivity policy.
+        // Persistent login must not undo the inactivity policy (SessionInactivity::TIMEOUT_SECONDS).
         return $this->guard()->attempt($this->credentials($request), false);
     }
 

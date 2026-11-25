@@ -107,6 +107,16 @@ class AccountStatusNotification extends Notification
                 'message' => 'Votre accès Premium a été réactivé. Vous retrouvez tous vos avantages'.$until.'.'],
             'premium_cancelled' => $premium + ['title' => 'Premium arrêté',
                 'message' => 'Votre accès Premium a été arrêté. Vous gardez votre espace prestataire et vos annonces.'],
+            // Accès à paiement unique : un paiement, aucun abonnement, aucun prélèvement ensuite.
+            // Le libellé du bouton est placé à gauche de l'union : il remplace celui de $premium.
+            'premium_pass_activated' => ['title' => 'Votre accès Premium est actif',
+                'message' => 'Votre paiement est confirmé : Premium est actif'.$until
+                    .'. C’est un paiement unique : aucun prélèvement ne suivra et l’accès s’arrêtera seul à cette date.',
+                'cta' => 'Voir ma facturation'] + $premium,
+            'premium_pass_ending' => ['title' => 'Votre accès Premium se termine bientôt',
+                'message' => $this->passDaysLeftSentence().'Votre accès Premium à paiement unique se termine le '.$deadline
+                    .'. Rien ne sera prélevé et rien ne se renouvelle tout seul : pour garder vos avantages sans interruption, reprenez un accès avant cette date.',
+                'cta' => 'Reprendre un accès'] + $premium,
             'premium_expired' => $premium + ['title' => 'Votre accès Premium est terminé',
                 'message' => 'Votre accès Premium est arrivé à son terme. Vous pouvez le reprendre à tout moment depuis votre espace.'],
             'payment_failed' => $payment + ['title' => 'Le paiement de votre abonnement a échoué',
@@ -164,6 +174,17 @@ class AccountStatusNotification extends Notification
         return match (true) {
             $days > 1 => 'Il vous reste '.$days.' jours pour régler votre abonnement Premium. ',
             $days === 1 => 'Il vous reste un jour pour régler votre abonnement Premium. ',
+            default => '',
+        };
+    }
+
+    private function passDaysLeftSentence(): string
+    {
+        $days = (int) ($this->context['days_left'] ?? 0);
+
+        return match (true) {
+            $days > 1 => 'Il vous reste '.$days.' jours de Premium. ',
+            $days === 1 => 'Il vous reste un jour de Premium. ',
             default => '',
         };
     }

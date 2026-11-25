@@ -51,7 +51,8 @@ class PaidSubscriptionCheckoutTest extends TestCase
             ->assertDontSee('Acheter des points')->assertDontSee('points disponibles');
 
         $http = Mockery::mock(ClientInterface::class);
-        $http->shouldReceive('request')->times(3)->andReturnUsing(function ($method, $url, $headers, $params, $hasFile) use ($plan, $cents, $interval, $user) {
+        // Paiements uniques réglés non enregistrés, sessions ouvertes, abonnements, puis création.
+        $http->shouldReceive('request')->times(4)->andReturnUsing(function ($method, $url, $headers, $params, $hasFile) use ($plan, $cents, $interval, $user) {
             if (strtolower($method) === 'get') {
                 $this->assertSame($user->stripe_id, $params['customer']);
                 return [json_encode(['object' => 'list', 'has_more' => false, 'data' => []]), 200, []];
@@ -99,6 +100,10 @@ class PaidSubscriptionCheckoutTest extends TestCase
                 if ($path === '/v1/subscriptions') {
                     $data = $paid ? [['id' => 'sub_confirming', 'object' => 'subscription', 'status' => 'active',
                         'metadata' => ['type' => 'pro_subscription']]] : [];
+                } elseif (($params['status'] ?? null) === 'complete') {
+                    // Paiements uniques réglés mais pas encore enregistrés : aucun ici.
+                    $this->assertSame('/v1/checkout/sessions', $path);
+                    $data = [];
                 } else {
                     $this->assertSame('/v1/checkout/sessions', $path);
                     $this->assertSame('open', $params['status']);

@@ -31,24 +31,24 @@ class SessionInactivityDatabaseSessionsTest extends SessionInactivityFeatureTest
         $this->freezeTime();
         $user = User::factory()->create(['is_active' => true]);
         $this->actingAs($user)->getJson(route('auth.session-activity'))->assertOk()
-            ->assertJsonPath('remaining_seconds', 3600);
+            ->assertJsonPath('remaining_seconds', 10800);
         $firstId = session()->getId();
         $secondId = Str::random(40);
         $this->withCredentials();
 
-        $this->travel(30)->minutes();
+        $this->travel(90)->minutes();
         $this->switchDevice();
         $this->withCookie(config('session.cookie'), $secondId)->getJson(route('auth.session-activity'))->assertOk()
-            ->assertJsonPath('remaining_seconds', 3600);
+            ->assertJsonPath('remaining_seconds', 10800);
 
-        $this->travel(30)->minutes();
+        $this->travel(90)->minutes();
         $this->switchDevice();
         $this->withCookie(config('session.cookie'), $firstId)
             ->getJson(route('auth.session-activity'))->assertUnauthorized();
 
         $this->switchDevice();
         $this->actingAs($user)->withCookie(config('session.cookie'), $secondId)
-            ->getJson(route('auth.session-activity'))->assertOk()->assertJsonPath('remaining_seconds', 1800);
+            ->getJson(route('auth.session-activity'))->assertOk()->assertJsonPath('remaining_seconds', 5400);
     }
 
     private function switchDevice(): void

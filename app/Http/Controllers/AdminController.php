@@ -753,20 +753,32 @@ class AdminController extends Controller
 
     public function updateProviderSubscriptionPlans(Request $request)
     {
-        $validated = $request->validate([
-            'plans' => 'required|array',
-            'plans.*.enabled' => 'nullable|boolean',
-            'plans.*.recommended' => 'nullable|boolean',
-            'plans.*.label' => 'required|string|max:80',
-            'plans.*.price' => 'required|string|max:40',
-            'plans.*.amount' => 'required|numeric|min:0.5',
-            'plans.*.period' => 'required|string|max:40',
-            'plans.*.original_price' => 'nullable|string|max:40',
-            'plans.*.badge' => 'nullable|string|max:80',
-            'plans.*.subtitle' => 'nullable|string|max:120',
-            'plans.*.description' => 'nullable|string|max:255',
-            'plans.*.features' => 'required|string',
-        ]);
+        // Une formule à prélèvement se règle en entier. Un accès à paiement unique
+        // n'expose que sa mise en vente, son prix et sa description : sa durée et sa
+        // nature viennent de la configuration.
+        $rules = ['plans' => 'required|array'];
+        foreach (array_keys(ProviderSubscriptionPlans::catalog()) as $key) {
+            $field = 'plans.'.$key;
+            $rules += [
+                $field => 'sometimes|array',
+                $field.'.enabled' => 'nullable|boolean',
+                $field.'.amount' => 'required_with:'.$field.'|numeric|min:'.ProviderSubscriptionPlans::MINIMUM_AMOUNT.'|max:9999',
+                $field.'.description' => 'nullable|string|max:255',
+            ];
+            if (! ProviderSubscriptionPlans::isOneTime($key)) {
+                $rules += [
+                    $field.'.recommended' => 'nullable|boolean',
+                    $field.'.label' => 'required_with:'.$field.'|string|max:80',
+                    $field.'.price' => 'required_with:'.$field.'|string|max:40',
+                    $field.'.period' => 'required_with:'.$field.'|string|max:40',
+                    $field.'.original_price' => 'nullable|string|max:40',
+                    $field.'.badge' => 'nullable|string|max:80',
+                    $field.'.subtitle' => 'nullable|string|max:120',
+                    $field.'.features' => 'required_with:'.$field.'|string',
+                ];
+            }
+        }
+        $validated = $request->validate($rules);
 
         ProviderSubscriptionPlans::saveFromAdminInput($validated['plans']);
 

@@ -24,7 +24,7 @@ class EnforceSessionInactivity
                 $guard->logoutCurrentDevice();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
-                $message = 'Vous avez été déconnecté après une heure d’inactivité. Veuillez vous reconnecter.';
+                $message = 'Vous avez été déconnecté après '.SessionInactivity::TIMEOUT_LABEL.' d’inactivité. Veuillez vous reconnecter.';
                 $request->session()->flash('error', $message);
 
                 return $request->expectsJson()

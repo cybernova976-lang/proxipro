@@ -80,10 +80,10 @@ class BoostController extends Controller
                 if ($this->subscriptionCovers($subscription, $package['duration_days'])) {
                     $pkg['is_useful'] = false;
                     $pkg['warning'] = 'Inutile : votre abonnement Premium affiche déjà cette offre parmi les offres sponsorisées'
-                        .($subscription->ends_at ? ' jusqu’au '.$subscription->ends_at->format('d/m/Y') : '').'.';
+                        .($this->sponsoredUntil($subscription) ? ' jusqu’au '.$this->sponsoredUntil($subscription)->format('d/m/Y') : '').'.';
                 } else {
                     $pkg['warning'] = 'Votre abonnement place déjà cette offre parmi les offres sponsorisées jusqu’au '
-                        .$subscription->ends_at->format('d/m/Y').' : le boost ne change l’affichage qu’après cette date.';
+                        .$this->sponsoredUntil($subscription)->format('d/m/Y').' : le boost ne change l’affichage qu’après cette date.';
                 }
             }
 
@@ -332,7 +332,7 @@ class BoostController extends Controller
                     match (true) {
                         (bool) $boostedUntil => 'Prolonge jusqu’au '.$boostedUntil->copy()->addDays((int) $pack['duration_days'])->format('d/m/Y'),
                         // Abonnement qui s'arrête avant la fin du pack : l'achat n'agit qu'ensuite.
-                        $subscription && ! $covered => 'Votre abonnement met déjà cette offre à la une jusqu’au '.$subscription->ends_at->format('d/m/Y'),
+                        $subscription && ! $covered => 'Votre abonnement met déjà cette offre à la une jusqu’au '.$this->sponsoredUntil($subscription)->format('d/m/Y'),
                         default => null,
                     });
             }
@@ -360,7 +360,7 @@ class BoostController extends Controller
 
             if ($subscription) {
                 $current[] = 'Abonnement Premium : vos offres sont à la une et remontent chaque semaine'
-                    .($subscription->ends_at ? ', jusqu’au '.$subscription->ends_at->format('d/m/Y') : '').'.';
+                    .($this->sponsoredUntil($subscription) ? ', jusqu’au '.$this->sponsoredUntil($subscription)->format('d/m/Y') : '').'.';
             }
             if ($boostedUntil) {
                 $current[] = 'À la une jusqu’au '.$boostedUntil->format('d/m/Y').'.';
@@ -486,7 +486,33 @@ class BoostController extends Controller
 
     private function subscriptionCovers(\App\Models\ProSubscription $subscription, int $days): bool
     {
-        return $subscription->ends_at === null || $subscription->ends_at->greaterThanOrEqualTo(now()->addDays($days));
+        $until = $this->sponsoredUntil($subscription);
+
+        return $until === null || $until->greaterThanOrEqualTo(now()->addDays($days));
+    }
+
+    /** @var array<int, ?\Carbon\Carbon> fin de la mise en avant Premium, par abonnement lu */
+    private array $sponsoredUntilCache = [];
+
+    /**
+     * Fin de la mise en avant apportée par Premium (null : sans date de fin). Un accès
+     * sans prélèvement prolongé par un accès déjà payé (paiement unique enchaîné) compte
+     * jusqu'au bout de la couverture continue, et pas seulement jusqu'à la fin de la
+     * ligne en cours. Un abonnement mensuel garde sa propre échéance.
+     */
+    private function sponsoredUntil(\App\Models\ProSubscription $subscription): ?\Carbon\Carbon
+    {
+        if ($subscription->ends_at === null || $subscription->stripe_subscription_id) {
+            return $subscription->ends_at;
+        }
+
+        return $this->sponsoredUntilCache[$subscription->id] ??= (function () use ($subscription) {
+            $chainEnd = $subscription->user
+                ? app(\App\Services\ProviderSubscriptionService::class)->oneTimeAccessEnd($subscription->user)
+                : null;
+
+            return $chainEnd && $chainEnd->greaterThan($subscription->ends_at) ? $chainEnd : $subscription->ends_at;
+        })();
     }
 
     /** Refuse un pack dont toute la durée est déjà couverte par l'abonnement Premium. */
@@ -498,7 +524,7 @@ class BoostController extends Controller
         }
 
         return back()->with('error', 'Inutile : votre abonnement Premium affiche déjà cette offre parmi les offres sponsorisées'
-            .($subscription->ends_at ? ' jusqu’au '.$subscription->ends_at->format('d/m/Y') : '').'.');
+            .($this->sponsoredUntil($subscription) ? ' jusqu’au '.$this->sponsoredUntil($subscription)->format('d/m/Y') : '').'.');
     }
 
     /**

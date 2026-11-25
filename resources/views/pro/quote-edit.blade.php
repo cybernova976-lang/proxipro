@@ -177,6 +177,8 @@
                     </div>
                 </div>
 
+                @include('pro.partials.free-watermark-notice', ['documentLabel' => 'ce devis', 'pkDocument' => $quote])
+
                 <div class="d-grid gap-2 mt-4">
                     <button type="submit" class="btn btn-pro-primary">
                         <i class="fas fa-save me-1"></i> Enregistrer les modifications

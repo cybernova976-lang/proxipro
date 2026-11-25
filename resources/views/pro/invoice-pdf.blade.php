@@ -2,301 +2,123 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>Facture {{ $invoice->invoice_number }}</title>
+    <title>{{ $invoice->documentLabel() }} {{ $invoice->invoice_number }}</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'DejaVu Sans', sans-serif; font-size: 12px; color: #1e293b; line-height: 1.5; }
-        .container { padding: 40px; }
-
-        /* Header */
-        .header { display: table; width: 100%; margin-bottom: 30px; padding-bottom: 24px; border-bottom: 3px solid #6366f1; }
-        .header-left { display: table-cell; width: 55%; vertical-align: top; }
-        .header-right { display: table-cell; width: 45%; vertical-align: top; text-align: right; }
-
-        /* Company name as logo */
-        .company-logo {
-            background: #4f46e5;
-            color: #ffffff;
-            font-size: 20px;
-            font-weight: 900;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            padding: 14px 28px;
-            display: inline-block;
-            line-height: 1;
-            border-radius: 8px;
-            margin-bottom: 12px;
-        }
-        .company-info { font-size: 10px; color: #64748b; line-height: 1.7; margin-top: 4px; }
-
-        .doc-title { font-size: 30px; font-weight: bold; color: #6366f1; letter-spacing: 1px; margin-bottom: 10px; }
-        .doc-info { font-size: 10px; color: #64748b; line-height: 1.8; }
-        .doc-info strong { color: #0f172a; }
-
-        /* Status badge */
-        .status-badge { display: inline-block; padding: 4px 14px; border-radius: 12px; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; }
-        .status-draft { background: #f1f5f9; color: #64748b; }
-        .status-sent { background: #fef3c7; color: #d97706; }
-        .status-paid { background: #d1fae5; color: #059669; }
-        .status-overdue { background: #fee2e2; color: #dc2626; }
-        .status-cancelled { background: #f1f5f9; color: #94a3b8; }
-
-        /* Emitter + Client row */
-        .parties-row { display: table; width: 100%; margin-bottom: 24px; }
-        .party-left { display: table-cell; width: 50%; vertical-align: top; }
-        .party-right { display: table-cell; width: 50%; vertical-align: top; text-align: right; }
-        .party-box { border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; display: inline-block; min-width: 200px; text-align: left; }
-        .info-box-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1.2px; color: #94a3b8; font-weight: bold; margin-bottom: 8px; }
-        .info-box-name { font-size: 14px; font-weight: bold; color: #0f172a; margin-bottom: 4px; }
-        .info-box-detail { font-size: 10px; color: #64748b; line-height: 1.6; }
-
-        /* Items table */
-        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
-        .items-table thead th {
-            background: #0f172a;
-            color: #ffffff;
-            padding: 10px 14px;
-            font-size: 9px;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            text-align: left;
-        }
-        .items-table thead th:nth-child(2) { text-align: center; }
-        .items-table thead th:nth-child(3),
-        .items-table thead th:last-child { text-align: right; }
-        .items-table tbody td {
-            padding: 11px 14px;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 11px;
-            color: #334155;
-        }
-        .items-table tbody td:nth-child(2) { text-align: center; }
-        .items-table tbody td:nth-child(3),
-        .items-table tbody td:last-child { text-align: right; }
-        .items-table tbody tr:nth-child(even) td { background: #f8fafc; }
-
-        /* Totals */
-        .totals-wrapper { display: table; width: 100%; margin-bottom: 24px; }
-        .totals-spacer { display: table-cell; width: 55%; }
-        .totals-box { display: table-cell; width: 45%; }
-        .totals { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
-        .total-row { display: table; width: 100%; padding: 9px 16px; font-size: 11px; }
-        .total-row .label { display: table-cell; width: 55%; color: #64748b; }
-        .total-row .value { display: table-cell; width: 45%; text-align: right; font-weight: bold; color: #0f172a; }
-        .total-row.grand {
-            background: #6366f1;
-            color: #ffffff;
-            padding: 14px 16px;
-            font-size: 15px;
-        }
-        .total-row.grand .label,
-        .total-row.grand .value { color: #ffffff; font-weight: bold; }
-
-        /* Payment info */
-        .payment-box {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            border-radius: 8px;
-            padding: 14px 16px;
-            margin-bottom: 16px;
-        }
-        .payment-box-title { font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #16a34a; margin-bottom: 4px; }
-        .payment-box-text { font-size: 10px; color: #166534; }
-
-        /* Notes */
-        .notes-section { margin-top: 20px; padding-top: 16px; border-top: 1px solid #e2e8f0; }
-        .notes-title { font-size: 10px; font-weight: bold; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-        .notes-text { font-size: 10px; color: #64748b; white-space: pre-line; line-height: 1.5; }
-
-        /* Footer */
-        .footer {
-            position: fixed;
-            bottom: 25px;
-            left: 40px;
-            right: 40px;
-            text-align: center;
-            font-size: 8px;
-            color: #94a3b8;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 10px;
-        }
-        .draft-watermark { position: fixed; top: 42%; left: 7%; right: 7%; text-align: center; transform: rotate(-28deg); font-size: 44px; font-weight: bold; color: rgba(220, 38, 38, .16); z-index: -1; }
-        .legal-box { margin-top: 14px; padding: 11px 14px; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 9px; line-height: 1.55; color: #475569; }
+@include('pro.partials.pdf-styles')
     </style>
 </head>
 <body>
-    @php $seller = $invoice->seller_snapshot ?: $user->commercialIdentitySnapshot(); @endphp
-    @if($invoice->status === 'draft')<div class="draft-watermark">BROUILLON — NON CONTRACTUEL</div>@endif
-    <div class="container">
-        {{-- Header --}}
-        <div class="header">
-            <div class="header-left">
-                @if($pkDocumentLogo = \App\Support\DocumentLogo::dataUri($user))
-                    <img src="{{ $pkDocumentLogo }}" alt="" style="max-height: 60px; max-width: 220px; margin-bottom: 8px;">
-                @endif
-                <div class="company-logo">{{ $seller['company_name'] ?? $seller['name'] }}</div>
-                <div class="company-info">
-                    @if(!empty($seller['name']) && $seller['name'] !== ($seller['company_name'] ?? null)){{ $seller['name'] }}<br>@endif
-                    @if(!empty($seller['address'])){{ $seller['address'] }}<br>@endif
-                    @if(!empty($seller['postal_code']) || !empty($seller['city'])){{ $seller['postal_code'] ?? '' }} {{ $seller['city'] ?? '' }}@if(!empty($seller['country'])), {{ $seller['country'] }}@endif<br>@endif
-                    @if(!empty($seller['phone']))Tél : {{ $seller['phone'] }}<br>@endif
-                    {{ $seller['email'] ?? '' }}
-                    @if(!empty($seller['siret']))<br>SIRET : {{ $seller['siret'] }}@endif
-                    @if(!empty($seller['tva_number']))<br>TVA : {{ $seller['tva_number'] }}@endif
-                </div>
-            </div>
-            <div class="header-right">
-                <div class="doc-title">{{ mb_strtoupper($invoice->documentLabel()) }}</div>
-                <div class="doc-info">
-                    <strong>N° :</strong> {{ $invoice->invoice_number }}<br>
-                    <strong>Date d’émission :</strong> {{ ($invoice->finalized_at ?? $invoice->created_at)->format('d/m/Y') }}<br>
-                    @if($invoice->service_date)<strong>Date de l’opération :</strong> {{ $invoice->service_date->format('d/m/Y') }}<br>@endif
-                    @if($invoice->due_date)
-                    <strong>Échéance :</strong> {{ $invoice->due_date->format('d/m/Y') }}<br>
-                    @endif
-                    @if($invoice->quote)
-                    <strong>Réf. devis :</strong> {{ $invoice->quote->quote_number }}<br>
-                    @endif
-                    @if($invoice->isCreditNote() && $invoice->parentInvoice)
-                    <strong>Avoir sur la facture :</strong> {{ $invoice->parentInvoice->invoice_number }} du {{ ($invoice->parentInvoice->finalized_at ?? $invoice->parentInvoice->created_at)->format('d/m/Y') }}<br>
-                    @endif
-                    @if($invoice->purchase_order_number)<strong>Bon de commande :</strong> {{ $invoice->purchase_order_number }}<br>@endif
-                    <span class="status-badge status-{{ $invoice->status }}">{{ $statusLabel ?? $invoice->getStatusLabel() }}</span>
-                </div>
-            </div>
-        </div>
-
-        {{-- Client (right-aligned, below header) --}}
-        <div class="parties-row">
-            <div class="party-left"></div>
-            <div class="party-right">
-                <div class="party-box">
-                    <div class="info-box-label">Client</div>
-                    <div class="info-box-name">{{ $invoice->client_name }}</div>
-                    @if($invoice->client_company)<div class="info-box-detail"><strong>{{ $invoice->client_company }}</strong></div>@endif
-                    @if($invoice->client_address)<div class="info-box-detail">{{ $invoice->client_address }}</div>@endif
-                    @if($invoice->delivery_address && $invoice->delivery_address !== $invoice->client_address)<div class="info-box-detail">Adresse de livraison : {{ $invoice->delivery_address }}</div>@endif
-                    @if($invoice->client_registration_number)<div class="info-box-detail">Immatriculation : {{ $invoice->client_registration_number }}</div>@endif
-                    @if($invoice->client_vat_number)<div class="info-box-detail">TVA : {{ $invoice->client_vat_number }}</div>@endif
-                    @if($invoice->client_email)<div class="info-box-detail">{{ $invoice->client_email }}</div>@endif
-                    @if($invoice->client_phone)<div class="info-box-detail">{{ $invoice->client_phone }}</div>@endif
-                </div>
-            </div>
-        </div>
-
-        {{-- Subject --}}
-        @if($invoice->subject && $invoice->subject !== 'Facture')
-        <div style="margin-bottom: 20px; font-size: 12px;">
-            <strong>Objet :</strong> {{ $invoice->subject }} — {{ ['services' => 'Prestations de services', 'goods' => 'Vente de biens', 'mixed' => 'Biens et services'][$invoice->operation_type] ?? 'Prestation' }}
-        </div>
-        @endif
-
-        {{-- Items Table --}}
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th style="width: 48%;">Désignation</th>
-                    <th style="width: 12%;">Quantité</th>
-                    <th style="width: 20%;">Prix unitaire HT</th>
-                    <th style="width: 20%;">Total HT</th>
-                </tr>
-            </thead>
-            <tbody>
 @php
+    // Identité figée à l'émission ; à défaut (brouillon), celle du compte.
+    $seller = $invoice->seller_snapshot ?: $user->commercialIdentitySnapshot();
     $pkDefaultRate = (float) ($invoice->tax_rate ?? 0);
     $pkSeveralRates = \App\Support\DocumentTotals::hasSeveralRates($invoice->items, $pkDefaultRate);
     $pkVatLines = \App\Support\DocumentTotals::vatLines($invoice->items, $pkDefaultRate, (float) $invoice->tax_amount);
+    $pkDeductions = app(\App\Services\InvoiceAdjustments::class)->deductionLines($invoice);
+    $pkTitle = mb_strtoupper($invoice->documentLabel());
+    $pkNature = ['services' => 'Prestations de services', 'goods' => 'Vente de biens', 'mixed' => 'Biens et services'][$invoice->operation_type] ?? 'Prestation';
+    $pkClientContact = implode(' · ', array_filter([$invoice->client_email, $invoice->client_phone]));
+    // Mentions courtes : à gauche des totaux, pour tenir sur une page. Longues :
+    // en pleine largeur sous les totaux, où elles peuvent changer de page.
+    $pkMentions = $invoice->payment_terms.$invoice->early_payment_discount.$invoice->vat_exemption_reason.$invoice->credit_reason;
+    $pkCompact = mb_strlen($pkMentions) <= 260;
+    // Une note courte se range alors sous les totaux ; une note longue garde toute la largeur.
+    $pkNotes = trim((string) $invoice->notes);
+    $pkNotesAside = $pkCompact && $pkNotes !== '' && mb_strlen($pkNotes) <= 220 && preg_match_all('/\R/u', $pkNotes) <= 3;
 @endphp
-                @foreach($invoice->items as $item)
-                <tr>
-                    <td>{{ $item['description'] }}@include('pro.partials.document-line-note')</td>
-                    <td>{{ $item['quantity'] }}</td>
-                    <td>{{ number_format($item['unit_price'], 2, ',', ' ') }} €</td>
-                    <td style="font-weight: 600;">{{ number_format($item['total'] ?? ($item['quantity'] * $item['unit_price']), 2, ',', ' ') }} €</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+@include('pro.partials.pdf-furniture', ['pkOwner' => $user, 'pkDocument' => $invoice, 'pkSeller' => $seller, 'pkDraftNote' => 'Brouillon sans valeur de facture définitive'])
 
-        {{-- Totals --}}
-        <div class="totals-wrapper">
-            <div class="totals-spacer"></div>
-            <div class="totals-box">
-                <div class="totals">
-                    <div class="total-row">
-                        <span class="label">Sous-total HT</span>
-                        <span class="value">{{ number_format($invoice->subtotal, 2, ',', ' ') }} €</span>
-                    </div>
-                    @foreach($pkVatLines as $pkVat)
-                    <div class="total-row">
-                        <span class="label">TVA ({{ number_format($pkVat['rate'], 2, ',', ' ') }}%)@if($pkSeveralRates) sur {{ number_format($pkVat['base'], 2, ',', ' ') }} €@endif</span>
-                        <span class="value">{{ number_format($pkVat['tax'], 2, ',', ' ') }} €</span>
-                    </div>
-                    @endforeach
-                    <div class="total-row grand">
-                        <span class="label">{{ $invoice->isCreditNote() ? 'Total TTC de l’avoir' : 'Total TTC' }}</span>
-                        <span class="value">{{ number_format($invoice->total, 2, ',', ' ') }} €</span>
-                    </div>
-                    @if($pkDeductions = app(\App\Services\InvoiceAdjustments::class)->deductionLines($invoice))
-                        @foreach($pkDeductions['lines'] as $pkLine)
-                        <div class="total-row">
-                            <span class="label">{{ $pkLine['label'] }}</span>
-                            <span class="value">{{ number_format($pkLine['amount'], 2, ',', ' ') }} €</span>
-                        </div>
-                        @endforeach
-                        <div class="total-row grand">
-                            <span class="label">{{ $pkDeductions['net_label'] }}</span>
-                            <span class="value">{{ number_format($pkDeductions['net'], 2, ',', ' ') }} €</span>
-                        </div>
-                    @endif
+<table class="pk-head">
+    <tr>
+        <td class="pk-head-seller">
+            @include('pro.partials.pdf-seller', ['pkSeller' => $seller, 'pkLogoOwner' => $user])
+        </td>
+        <td class="pk-head-doc">
+            <div class="pk-doc-title {{ mb_strlen($pkTitle) > 8 ? 'pk-doc-title-long' : '' }}">{{ $pkTitle }}</div>
+            <div class="pk-doc-number">N° {{ $invoice->invoice_number }}</div>
+            <span class="pk-badge {{ $invoice->status === 'paid' ? 'pk-badge-strong' : '' }}">{{ $statusLabel ?? $invoice->getStatusLabel() }}</span>
+        </td>
+    </tr>
+</table>
+<div class="pk-rule"></div>
+
+<table class="pk-band">
+    <tr>
+        <td class="pk-band-meta">
+            <table class="pk-kv">
+                <tr><td class="k">Date d’émission :</td><td class="v">{{ ($invoice->finalized_at ?? $invoice->created_at)->format('d/m/Y') }}</td></tr>
+                @if($invoice->service_date)
+                <tr><td class="k">Date de l’opération :</td><td class="v">{{ $invoice->service_date->format('d/m/Y') }}</td></tr>
+                @endif
+                @if($invoice->due_date)
+                <tr><td class="k">Échéance :</td><td class="v">{{ $invoice->due_date->format('d/m/Y') }}</td></tr>
+                @endif
+                @if($invoice->quote)
+                <tr><td class="k">Réf. devis :</td><td class="v">{{ $invoice->quote->quote_number }}</td></tr>
+                @endif
+                @if($invoice->isCreditNote() && $invoice->parentInvoice)
+                <tr><td class="k">Avoir sur la facture :</td><td class="v">{{ $invoice->parentInvoice->invoice_number }} du {{ ($invoice->parentInvoice->finalized_at ?? $invoice->parentInvoice->created_at)->format('d/m/Y') }}</td></tr>
+                @endif
+                @if($invoice->purchase_order_number)
+                <tr><td class="k">Bon de commande :</td><td class="v">{{ $invoice->purchase_order_number }}</td></tr>
+                @endif
+                <tr><td class="k">Nature :</td><td class="v">{{ $pkNature }}</td></tr>
+            </table>
+        </td>
+        <td class="pk-band-client">
+            <div class="pk-client">
+                <div class="pk-label">Client</div>
+                <div class="pk-client-name">{{ $invoice->client_name }}</div>
+                <div class="pk-client-info">
+                    @if($invoice->client_company) <strong>{{ $invoice->client_company }}</strong><br> @endif
+                    @if($invoice->client_address) {{ $invoice->client_address }}<br> @endif
+                    @if($invoice->delivery_address && $invoice->delivery_address !== $invoice->client_address) Adresse de livraison : {{ $invoice->delivery_address }}<br> @endif
+                    @if($invoice->client_registration_number) Immatriculation : {{ $invoice->client_registration_number }}<br> @endif
+                    @if($invoice->client_vat_number) TVA : {{ $invoice->client_vat_number }}<br> @endif
+                    {{ $pkClientContact }}
                 </div>
             </div>
-        </div>
+        </td>
+    </tr>
+</table>
 
-        {{-- Payment --}}
-        @if($invoice->paid_at)
-        <div class="payment-box">
-            <div class="payment-box-title">Paiement reçu</div>
-            <div class="payment-box-text">
-                Payée le {{ $invoice->paid_at->format('d/m/Y') }}
-                @if($invoice->payment_method) — Mode : {{ ucfirst($invoice->payment_method) }}@endif
+<div class="pk-subject">
+    @if($invoice->subject && $invoice->subject !== 'Facture')
+    <div class="pk-label">Objet</div>
+    <div class="pk-subject-text">{{ $invoice->subject }}</div>
+    @endif
+</div>
+
+@include('pro.partials.pdf-lines', ['pkItems' => $invoice->items, 'pkFirstColumn' => 'Désignation'])
+
+<table class="pk-summary">
+    <tr>
+        <td class="pk-summary-left">
+            @if($pkCompact)
+            @include('pro.partials.pdf-invoice-mentions', ['pkFirst' => true])
+            @endif
+        </td>
+        <td class="pk-summary-right">
+            @include('pro.partials.pdf-totals', ['pkSubtotal' => $invoice->subtotal, 'pkTotalLabel' => $invoice->isCreditNote() ? 'Total TTC de l’avoir' : 'Total TTC', 'pkTotal' => $invoice->total])
+            @if($pkNotesAside)
+            <div class="pk-section">
+                <div class="pk-section-title">Notes</div>
+                <div class="pk-section-text pk-pre">{{ $pkNotes }}</div>
             </div>
-        </div>
-        @elseif($invoice->payment_method)
-        <div class="payment-box">
-            <div class="payment-box-title">Mode de paiement</div>
-            <div class="payment-box-text">{{ ucfirst($invoice->payment_method) }}</div>
-        </div>
-        @endif
+            @endif
+        </td>
+    </tr>
+</table>
 
-        @if($invoice->isCreditNote())
-        <div class="legal-box">
-            @if(\App\Support\DocumentTotals::hasZeroRate($invoice->items, (float) $invoice->tax_rate) && $invoice->vat_exemption_reason)<strong>{{ $invoice->vat_exemption_reason }}</strong><br>@endif
-            <strong>Motif de l’avoir :</strong> {{ $invoice->credit_reason ?: 'Non précisé' }}<br>
-            Le montant de cet avoir vient en déduction de la facture citée ci-dessus. S’il a déjà été réglé, il est à rembourser au client ou à déduire d’une prochaine facture.
-        </div>
-        @else
-        <div class="legal-box">
-            @if(\App\Support\DocumentTotals::hasZeroRate($invoice->items, (float) $invoice->tax_rate) && $invoice->vat_exemption_reason)<strong>{{ $invoice->vat_exemption_reason }}</strong><br>@endif
-            <strong>Conditions de paiement :</strong> {{ $invoice->payment_terms ?: 'À convenir' }}@if($invoice->due_date) — échéance au {{ $invoice->due_date->format('d/m/Y') }}@endif<br>
-            <strong>Escompte pour paiement anticipé :</strong> {{ $invoice->early_payment_discount ?: 'Néant' }}.<br>
-            @if($invoice->client_type === 'business')<strong>Retard :</strong> pénalités au taux annuel de {{ number_format($invoice->late_penalty_rate ?? 0, 2, ',', ' ') }} % et indemnité forfaitaire de 40 € pour frais de recouvrement.@endif
-        </div>
-        @endif
+@if(! $pkCompact)
+@include('pro.partials.pdf-invoice-mentions', ['pkFirst' => false])
+@endif
 
-        {{-- Notes --}}
-        @if($invoice->notes)
-        <div class="notes-section">
-            <div class="notes-title">Notes & conditions</div>
-            <div class="notes-text">{{ $invoice->notes }}</div>
-        </div>
-        @endif
-    </div>
-
-    <div class="footer">
-        @if($invoice->status === 'draft')Brouillon sans valeur de facture définitive — @endif
-        Document généré le {{ now()->format('d/m/Y') }} — {{ $seller['company_name'] ?? $seller['name'] }}
-        @if(!empty($seller['siret'])) — SIRET : {{ $seller['siret'] }}@endif
-    </div>
+@if($pkNotes !== '' && ! $pkNotesAside)
+<div class="pk-section {{ mb_strlen($pkNotes) <= 600 ? 'pk-keep' : '' }}">
+    <div class="pk-section-title">Notes</div>
+    <div class="pk-section-text pk-pre">{{ $pkNotes }}</div>
+</div>
+@endif
 </body>
 </html>

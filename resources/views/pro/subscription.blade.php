@@ -4,6 +4,7 @@
 
 @push('head')
 <link rel="stylesheet" href="{{ asset('css/pro-subscription.css') }}?v={{ filemtime(public_path('css/pro-subscription.css')) }}">
+<link rel="stylesheet" href="{{ asset('css/one-time-access.css') }}?v={{ filemtime(public_path('css/one-time-access.css')) }}">
 @endpush
 
 @section('content')
@@ -15,9 +16,13 @@
     $pkOpenBilling = (bool) $subscription?->hasOpenBilling();
     $pkManaged = $pkActive && filled($subscription->stripe_subscription_id);
     $pkStopping = $pkManaged && ! $subscription->auto_renew && ! $pkLatePayment;
+    // Accès réglé en une fois : ni abonnement, ni prélèvement, ni renouvellement.
+    $pkOneTime = $pkActive && $subscription->isOneTimeAccess();
+    $pkOneTimeOffers = $oneTimeOffers ?? [];
     [$pkTone, $pkChip, $pkStateTitle] = match (true) {
         $pkLatePayment => ['late', 'Paiement en retard', 'Votre paiement est en retard'],
         $pkStopping => ['muted', 'Résiliation programmée', 'Votre abonnement est actif'],
+        $pkOneTime => ['ok', 'Paiement unique', 'Votre accès Premium est actif'],
         $pkActive && ! $pkManaged => ['ok', 'Accès offert', 'Votre abonnement est actif'],
         $pkActive => ['ok', 'Actif', 'Votre abonnement est actif'],
         $pkOpenBilling => ['late', 'Paiement à confirmer', 'Votre facturation demande une action'],
@@ -38,7 +43,9 @@
             </ol>
         </nav>
         <h1>Abonnement Premium</h1>
-        <p class="pk-sub__lead">Une seule formule, mensuelle et sans engagement : vos offres sont vues avant les autres.</p>
+        <p class="pk-sub__lead">{{ $pkOneTimeOffers
+            ? 'Par abonnement mensuel sans engagement, ou par un paiement unique sans prélèvement : vos offres sont vues avant les autres.'
+            : 'Une seule formule, mensuelle et sans engagement : vos offres sont vues avant les autres.' }}</p>
     </div>
 </div>
 
@@ -63,6 +70,8 @@
                     <div><dt>Formule</dt><dd>{{ $subscription->getPlanLabel() }}</dd></div>
                     @if($pkLatePayment)
                         <div><dt>À régler avant le</dt><dd>{{ $subscription->grace_ends_at->format('d/m/Y') }}</dd></div>
+                    @elseif($pkOneTime)
+                        <div><dt>Accès Premium</dt><dd>Jusqu’au {{ $pkDate }} — aucun renouvellement</dd></div>
                     @elseif($pkActive && ! $pkManaged)
                         <div><dt>Accès accordé par Prokejem</dt><dd>{{ $pkDate ? 'Valable jusqu’au '.$pkDate : 'Sans date de fin définie' }} · sans prélèvement</dd></div>
                     @elseif($pkStopping)
@@ -74,6 +83,8 @@
 
                 @if($pkLatePayment)
                     <p class="pk-sub-state__note pk-sub-state__note--late">Votre dernier paiement a échoué. Réglez-le avant le {{ $subscription->grace_ends_at->format('d/m/Y') }} pour garder vos avantages Premium ; passé cette date, votre compte repassera en gratuit.</p>
+                @elseif($pkOneTime)
+                    <p class="pk-sub-state__note">Vous avez réglé cet accès en une fois : aucun prélèvement ne suivra. Il s’arrête seul à cette date, puis votre compte redevient gratuit.</p>
                 @elseif($pkStopping)
                     <p class="pk-sub-state__note">Le renouvellement est arrêté. Votre accès reste actif jusqu’à cette date, puis votre compte redevient gratuit.</p>
                 @elseif(! $pkActive && $pkOpenBilling)
@@ -88,7 +99,7 @@
             <div class="pk-sub-actions subscription-management">
                 @if($subscription || $user->stripe_id)
                     <a class="pk-sub-btn{{ $pkLatePayment ? ' pk-sub-btn--primary' : '' }}" href="{{ route('billing.index') }}">
-                        {{ $pkLatePayment ? 'Régler mon paiement' : 'Gérer mon abonnement et mes factures' }}
+                        {{ $pkLatePayment ? 'Régler mon paiement' : ($pkOneTime ? 'Voir mes paiements et mes factures' : 'Gérer mon abonnement et mes factures') }}
                     </a>
                 @endif
                 <a class="pk-sub-link" href="{{ route('contact.index') }}">Contacter l’assistance</a>
@@ -129,7 +140,7 @@
         @endforeach
     @elseif($pkActive && $pkCurrentPlan)
         <section class="pro-card sub-page-card" aria-labelledby="pkSubIncluded">
-            <h2 class="pk-sub__h2" id="pkSubIncluded">Ce que votre abonnement vous ouvre</h2>
+            <h2 class="pk-sub__h2" id="pkSubIncluded">{{ $pkOneTime ? 'Ce que votre accès Premium vous ouvre' : 'Ce que votre abonnement vous ouvre' }}</h2>
             <ul class="pk-sub-features pk-sub-features--columns">
                 @foreach($pkCurrentPlan['features'] ?? [] as $feature)
                     <li><i class="fas fa-check" aria-hidden="true"></i><span>{{ $feature }}</span></li>
@@ -141,6 +152,13 @@
             <h2 class="pk-sub__h2">Abonnement Premium momentanément indisponible</h2>
             <p>La souscription en ligne est suspendue pour le moment. Aucun paiement n’est demandé et aucun abonnement n’est activé automatiquement.</p>
         </section>
+    @endif
+
+    {{-- Sans abonnement : l'accès à paiement unique, sous la formule mensuelle (ou pour prolonger un accès en cours). --}}
+    @if($pkOneTimeOffers)
+        <div class="pro-card sub-page-card">
+            @include('partials.one-time-access', ['oneTimeOffers' => $pkOneTimeOffers, 'oneTimeOrigin' => 'subscription'])
+        </div>
     @endif
 
     {{-- Zone 3 · le comparatif Gratuit / À la carte / Premium --}}

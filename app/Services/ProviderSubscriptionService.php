@@ -17,11 +17,16 @@ use Stripe\StripeClient;
 
 class ProviderSubscriptionService
 {
+    use Concerns\SellsOneTimePremiumAccess;
+
     public const CHECKOUT_TYPES = [
         'pro_subscription',
         'become_provider_subscription',
         'provider_subscription',
     ];
+
+    /** Session Stripe d'un accès Premium à paiement unique : un paiement, aucun abonnement. */
+    public const ONE_TIME_CHECKOUT_TYPE = 'premium_one_time_access';
 
     /** Session Stripe qui enregistre un nouveau moyen de paiement, sans rien débiter. */
     public const PAYMENT_METHOD_CHECKOUT_TYPE = 'subscription_payment_method';
@@ -43,9 +48,24 @@ class ProviderSubscriptionService
             throw new DomainException(PlatformFeatures::proSubscriptionUnavailableMessage());
         }
 
+        // Un accès à paiement unique ne se vend jamais en abonnement (il se paie par createOneTimeCheckoutSession).
         $planConfig = ProviderSubscriptionPlans::get($plan);
-        if (! $planConfig || empty($planConfig['enabled'])) {
+        if (! $planConfig || empty($planConfig['enabled']) || ProviderSubscriptionPlans::isOneTime($plan)) {
             throw new DomainException('Cet abonnement n’est pas disponible pour le moment.');
+        }
+
+        // Un paiement unique déjà réglé chez Stripe peut précéder son retour et son webhook :
+        // il est enregistré ici, hors de la transaction ci-dessous (que le refus annulerait),
+        // puis l'abonnement est refusé pour ne pas faire payer Premium deux fois.
+        // Inutile de le chercher si l'abonnement sera de toute façon refusé (accès ou facturation en cours).
+        $refusedAnyway = $user->hasActiveProSubscription()
+            || $user->proSubscriptions()->paidAhead()->exists()
+            || $user->proSubscriptions()->billingOpen()->exists();
+        if (! $refusedAnyway && $this->recordPaidOneTimeCheckouts($user)) {
+            $user->refresh();
+            if (! $user->proSubscriptions()->activeOrPaidAhead()->exists()) {
+                throw new DomainException('Un paiement unique Premium récent est en cours de vérification. Contactez l’assistance avant de souscrire un abonnement : rien ne vous sera prélevé en double.');
+            }
         }
 
         // Subscription entry points and account deletion share the same member lock.
@@ -70,8 +90,13 @@ class ProviderSubscriptionService
 
     private function prepareCheckout(User $user, string $plan, string $successUrl, string $cancelUrl, string $flow, ?string $replacesCustomer = null): StripeCheckoutSession
     {
-        if ($user->hasActiveProSubscription()) {
-            throw new DomainException('Vous disposez déjà d’un abonnement Pro actif.');
+        // Accès en cours, ou accès à paiement unique déjà payé qui commencera plus tard.
+        if ($user->hasActiveProSubscription() || $user->proSubscriptions()->paidAhead()->exists()) {
+            $oneTimeEnd = $user->proSubscriptions()->activeOrPaidAhead()->oneTimeAccess()->max('ends_at');
+
+            throw new DomainException($oneTimeEnd
+                ? 'Votre accès Premium à paiement unique est en cours jusqu’au '.Carbon::parse($oneTimeEnd)->format('d/m/Y').'. Vous pourrez vous abonner à la fin de cette période.'
+                : 'Vous disposez déjà d’un abonnement Pro actif.');
         }
 
         if ($user->proSubscriptions()->billingOpen()->exists()) {
@@ -434,6 +459,9 @@ class ProviderSubscriptionService
     {
         $subscriptionId = $this->invoiceSubscriptionId($invoice);
         if ($subscriptionId === '') {
+            // Aucun abonnement derrière cette facture : c'est peut-être le justificatif d'un paiement unique.
+            $this->syncOneTimeInvoicePaid($invoice);
+
             return null;
         }
 
@@ -1114,8 +1142,11 @@ class ProviderSubscriptionService
         $sessions = $client->checkout->sessions->all(['customer' => $customerId, 'status' => 'open', 'limit' => 100]);
         foreach ($sessions->autoPagingIterator() as $session) {
             $metadata = $this->metadata($session);
-            if ($session->mode === 'subscription' && in_array($metadata['type'] ?? null, self::CHECKOUT_TYPES, true)
-                && ($metadata['user_id'] ?? null) === (string) $user->id) {
+            $type = $metadata['type'] ?? null;
+            // Abonnement ou accès à paiement unique : les deux ouvrent Premium, un seul doit rester payable.
+            $premium = ($session->mode === 'subscription' && in_array($type, self::CHECKOUT_TYPES, true))
+                || ($session->mode === 'payment' && $type === self::ONE_TIME_CHECKOUT_TYPE);
+            if ($premium && ($metadata['user_id'] ?? null) === (string) $user->id) {
                 yield $session;
             }
         }
@@ -1165,7 +1196,9 @@ class ProviderSubscriptionService
     private function requireStripeSubscription(ProSubscription $subscription): void
     {
         if (! $subscription->stripe_subscription_id) {
-            throw new DomainException('Cet accès a été accordé manuellement et n’est pas renouvelé par Stripe.');
+            throw new DomainException($subscription->isOneTimeAccess()
+                ? 'Cet accès a été réglé en une seule fois : il n’est ni prélevé ni renouvelé, et s’arrête seul à sa date de fin.'
+                : 'Cet accès a été accordé manuellement et n’est pas renouvelé par Stripe.');
         }
     }
 

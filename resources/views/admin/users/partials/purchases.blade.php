@@ -60,7 +60,7 @@
                                 <td>@include('admin.subscriptions.partials.provider-state', ['subscription' => $subscription])</td>
                                 <td class="text-nowrap">{{ optional($subscription->starts_at)->format('d/m/Y') ?: '—' }}</td>
                                 <td class="text-nowrap">{{ optional($subscription->ends_at)->format('d/m/Y') ?: '—' }}</td>
-                                <td>{{ $subscription->stripe_subscription_id ? 'Paiement Stripe' : 'Accordé par un administrateur' }}</td>
+                                <td>{{ $subscription->stripe_subscription_id ? 'Paiement Stripe' : ($subscription->isOneTimeAccess() ? 'Paiement unique par carte' : 'Accordé par un administrateur') }}</td>
                                 <td class="text-nowrap">{{ optional($subscription->last_payment_at)->format('d/m/Y') ?: '—' }}</td>
                             </tr>
                         @endforeach

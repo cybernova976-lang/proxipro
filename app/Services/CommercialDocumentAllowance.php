@@ -15,6 +15,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * crée et télécharge 2 devis et 2 factures gratuits. S'il veut aller plus loin,
  * il s'abonne : un abonnement Premium actif lève la limite.
  *
+ * Version gratuite (décision du fondateur du 25/11/2026) : sans Premium, le PDF
+ * d'un document émis porte le filigrane « Prokejem · version gratuite » et une
+ * ligne en pied de page. Premium le retire. La règle tient en une seule
+ * méthode : carriesFreeWatermark().
+ *
  * Les compteurs sont mesurés sur les documents réellement enregistrés du membre
  * (aucun chiffre estimé). Un avoir corrige une facture déjà émise : il n'est pas
  * compté et n'est jamais bloqué. Une facture d'acompte est une facture : elle compte.
@@ -30,6 +35,12 @@ class CommercialDocumentAllowance
 
     /** Phrase neutre quand l'abonnement Premium n'est pas encore ouvert à la souscription. */
     public const SUBSCRIPTIONS_CLOSED = 'L’abonnement n’est pas encore ouvert.';
+
+    /** Texte du filigrane en diagonale sur les PDF de la version gratuite. */
+    public const FREE_WATERMARK = 'PROKEJEM · VERSION GRATUITE';
+
+    /** Ligne ajoutée au pied de page des PDF de la version gratuite. */
+    public const FREE_FOOTER = 'Document créé avec la version gratuite de Prokejem — prokejem.fr';
 
     /**
      * État du quota pour l'affichage et les contrôles.
@@ -82,6 +93,38 @@ class CommercialDocumentAllowance
         $rank = $this->countedDocuments($user, $type)->where('id', '<=', $document->id)->count();
 
         return $rank <= self::FREE[$type];
+    }
+
+    /**
+     * LA règle du filigrane « version gratuite » : c'est le seul endroit à modifier
+     * pour la changer. Les vues PDF, les formulaires et les fiches l'interrogent.
+     *
+     *  - Avec un document : son PDF porte-t-il le filigrane aujourd'hui ? Oui si son
+     *    auteur n'a pas de Premium actif au moment du rendu ET si le document n'a
+     *    pas été émis pendant une période Premium (un document émis sous Premium
+     *    reste propre pour toujours). Un avoir suit la même règle. Un brouillon ne
+     *    porte que son filigrane « BROUILLON » : jamais deux filigranes superposés.
+     *  - Sans document : un document que ce membre émettrait maintenant le
+     *    porterait-il ? C'est la question des formulaires de création.
+     */
+    public function carriesFreeWatermark(User $owner, ProQuote|ProInvoice|null $document = null): bool
+    {
+        if ($document !== null && ($document->status === 'draft' || $document->issued_with_premium)) {
+            return false;
+        }
+
+        return ! $owner->hasActiveProSubscription();
+    }
+
+    /**
+     * Attribut à enregistrer en même temps que le numéro définitif d'un document :
+     * il retient que l'émission a eu lieu pendant une période Premium.
+     *
+     * @return array{issued_with_premium: bool}
+     */
+    public function issueStamp(User $owner): array
+    {
+        return ['issued_with_premium' => $owner->hasActiveProSubscription()];
     }
 
     /**

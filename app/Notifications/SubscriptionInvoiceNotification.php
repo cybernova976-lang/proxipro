@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Facture d'un paiement d'abonnement, envoyée au membre dès que le paiement
- * est reçu. La facture est celle émise par Stripe : elle est jointe en PDF
+ * Facture d'un paiement Premium (échéance d'abonnement ou accès à paiement
+ * unique), envoyée au membre dès que le paiement est reçu. La facture est celle émise par Stripe : elle est jointe en PDF
  * quand elle a pu être récupérée, et reste téléchargeable depuis la page
  * « Facturation ». C'est un document de facturation, pas une notification
  * de confort : l'e-mail part même si le membre a coupé les autres e-mails.
@@ -62,7 +62,9 @@ class SubscriptionInvoiceNotification extends Notification implements ShouldQueu
         $mail = (new MailMessage)
             ->subject('Votre facture — '.config('app.name', 'Prokejem'))
             ->greeting('Bonjour '.$notifiable->name.',')
-            ->line('Nous avons bien reçu votre paiement de '.$amount.' le '.$date.' pour votre abonnement Premium.')
+            ->line('Nous avons bien reçu votre paiement de '.$amount.' le '.$date.($this->isOneTimeAccess($transaction)
+                ? ' pour votre accès Premium à paiement unique. Aucun prélèvement ne suivra.'
+                : ' pour votre abonnement Premium.'))
             ->line($pdf !== null
                 ? $label.' est jointe à cet e-mail.'
                 : $label.' est disponible dans votre compte.')
@@ -81,11 +83,19 @@ class SubscriptionInvoiceNotification extends Notification implements ShouldQueu
         return [
             'type' => 'subscription_invoice',
             'title' => 'Votre facture est disponible',
-            'message' => 'Votre paiement d’abonnement est reçu. Vous pouvez télécharger votre facture.',
+            'message' => $this->isOneTimeAccess(Transaction::find($this->transactionId))
+                ? 'Votre paiement unique est reçu. Vous pouvez télécharger votre facture.'
+                : 'Votre paiement d’abonnement est reçu. Vous pouvez télécharger votre facture.',
             'icon' => 'fas fa-file-invoice',
             'color' => '#4f46e5',
             'action_url' => route('billing.index'),
         ];
+    }
+
+    /** Paiement d'un accès à paiement unique, et non une échéance d'abonnement ? */
+    private function isOneTimeAccess(?Transaction $transaction): bool
+    {
+        return ($transaction?->metadata['kind'] ?? null) === \App\Services\ProviderSubscriptionService::ONE_TIME_CHECKOUT_TYPE;
     }
 
     /** Le PDF de Stripe, ou null : l'e-mail part alors avec le seul lien de téléchargement. */

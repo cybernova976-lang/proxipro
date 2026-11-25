@@ -99,6 +99,7 @@
                 <a href="{{ route('quote-tool.download', ['token' => $token]) }}?pdf=1" class="btn-download">
                     <i class="fas fa-download"></i> Télécharger le PDF
                 </a>
+                @include('pro.partials.free-watermark-notice', ['documentLabel' => $type === 'quote' ? 'le PDF de ce devis' : 'le PDF de cette facture', 'pkDocument' => $document, 'pkLine' => true])
             </div>
         </div>
     </div>

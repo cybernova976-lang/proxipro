@@ -13,10 +13,9 @@
         default => null,
     };
     $pkHasTodo = ! empty($pkTodo) || $pkIdentityLine !== null;
-    // Promotion de l'Espace Pro (demande du fondateur, 24/11/2026), pour les membres qui
-    // ne sont pas encore prestataires. Ce qu'elle annonce est vrai dans le code : 2 devis et
-    // 2 factures offerts à tout membre, sans justificatif (App\Services\CommercialDocumentAllowance).
-    // Écrit en lettres pour garder la zone sans compteur.
+    // Entrée vers l'Espace Pro pour les membres qui ne sont pas encore prestataires.
+    // Le fondateur a demandé le 25/11/2026 de n'y laisser que l'invitation « Découvrir
+    // l'Espace Pro » : l'offre (devis et factures offerts) est expliquée sur la page d'arrivée.
     $pkShowProPromo = ! \App\Support\ClientSpaceNavigation::proEntry(auth()->user())['is_provider'];
 @endphp
 <details class="pk-rcard pk-landmarks" open>
@@ -67,15 +66,9 @@
 
     @if($pkShowProPromo)
         <a class="pk-landmarks__pro" href="{{ route('quote-tool.landing') }}" data-pk-pro-promo>
-            <span class="pk-landmarks__pro-eyebrow">
-                <span class="pk-landmarks__pro-icon" aria-hidden="true"><i class="fas fa-file-invoice"></i></span>
-                Espace Pro
-            </span>
-            <span class="pk-landmarks__pro-body">
-                <strong>Deux devis et deux factures offerts</strong>
-                <span class="pk-landmarks__pro-text">Sans justificatif ni abonnement, que vous soyez particulier ou professionnel.</span>
-                <span class="pk-landmarks__pro-cta">Découvrir l’Espace Pro <i class="fas fa-arrow-right" aria-hidden="true"></i></span>
-            </span>
+            <span class="pk-landmarks__pro-icon" aria-hidden="true"><i class="fas fa-file-invoice"></i></span>
+            <span class="pk-landmarks__pro-cta">Découvrir l’Espace Pro</span>
+            <i class="fas fa-arrow-right pk-landmarks__pro-arrow" aria-hidden="true"></i>
         </a>
     @endif
 

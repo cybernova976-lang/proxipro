@@ -35,6 +35,16 @@ class StripeCheckoutFulfillmentService
             return 'processed';
         }
 
+        if ($type === ProviderSubscriptionService::ONE_TIME_CHECKOUT_TYPE) {
+            // Accès Premium à paiement unique : rien n'est ouvert tant que la carte n'a pas été débitée.
+            if (! StripeSessionData::isPaid($session)) {
+                return 'ignored';
+            }
+            $this->subscriptions->completeOneTimeCheckoutSession(is_array($session) ? (object) $session : $session);
+
+            return 'processed';
+        }
+
         if ($type === 'points' || isset($metadata['product_key'])) {
             return $this->pointPurchases->fulfill($session)['status'];
         }

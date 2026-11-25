@@ -156,7 +156,7 @@ class ReleaseReminderTest extends TestCase
         $this->assertSame(1, $this->remind()['sent']);
         $this->assertDatabaseHas('notifications', ['notifiable_id' => $order->buyer_id, 'type' => ServiceOrderStatusNotification::class]);
 
-        // Trois jours ont passé : la session précédente a expiré (déconnexion après une heure).
+        // Trois jours ont passé : la session précédente a expiré (déconnexion après trois heures).
         $this->flushSession();
         $this->actingAs($order->seller)->get(route('service-orders.index'))->assertOk()
             ->assertSee('Nous avons rappelé au client de confirmer la fin de la prestation le 04/11/2026.');

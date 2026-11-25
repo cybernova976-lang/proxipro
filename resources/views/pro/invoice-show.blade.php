@@ -290,6 +290,8 @@
     </a>
 </div>
 
+@include('pro.partials.free-watermark-notice', ['documentLabel' => $invoice->isCreditNote() ? 'le PDF de cet avoir' : 'le PDF de cette facture', 'pkDocument' => $invoice, 'pkLine' => true])
+
 @include('pro.partials.invoice-reminder')
 @include('pro.partials.invoice-adjustments')
 

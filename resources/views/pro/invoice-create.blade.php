@@ -200,6 +200,8 @@
                     <div class="d-flex justify-content-between py-2 mt-1" style="font-size: 1.15rem; font-weight: 800; color: var(--pro-primary); border-top: 2px solid var(--pro-border);"><span>Total TTC</span><span id="totalTTC">0,00€</span></div>
                 </div>
 
+                @include('pro.partials.free-watermark-notice', ['documentLabel' => 'cette facture'])
+
                 <div class="d-grid gap-2 mt-4">
                     <button type="submit" class="btn btn-pro-primary"><i class="fas fa-file-invoice me-1"></i> Créer la facture</button>
                     <a href="{{ route('pro.invoices') }}" class="btn btn-light" style="border-radius: 10px;">Annuler</a>

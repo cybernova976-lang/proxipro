@@ -17,16 +17,16 @@ class SessionInactivityFeatureTest extends TestCase
         $this->freezeTime();
         $user = User::factory()->create(['is_active' => true]);
         $this->actingAs($user)->getJson(route('auth.session-activity'))->assertOk()
-            ->assertJsonPath('remaining_seconds', 3600);
+            ->assertJsonPath('remaining_seconds', 10800);
         $this->withCredentials()->withCookie(config('session.cookie'), session()->getId());
 
         return $user;
     }
 
-    public function test_background_checks_do_not_extend_the_one_hour_deadline(): void
+    public function test_background_checks_do_not_extend_the_three_hour_deadline(): void
     {
         $this->signIn();
-        $this->travel(59)->minutes();
+        $this->travel(179)->minutes();
         $this->getJson(route('auth.session-activity'))->assertOk()->assertJsonPath('remaining_seconds', 60);
         $this->travel(1)->minutes();
         $this->getJson(route('auth.session-activity'))->assertUnauthorized()->assertJsonPath('reason', 'session_inactive');
@@ -36,9 +36,9 @@ class SessionInactivityFeatureTest extends TestCase
     public function test_expired_html_request_redirects_to_login_and_does_not_execute_action(): void
     {
         $this->signIn();
-        $this->travel(1)->hours();
+        $this->travel(3)->hours();
         $this->get(route('feed'))->assertRedirect(route('login'))
-            ->assertSessionHas('error', 'Vous avez été déconnecté après une heure d’inactivité. Veuillez vous reconnecter.');
+            ->assertSessionHas('error', 'Vous avez été déconnecté après 3 heures d’inactivité. Veuillez vous reconnecter.');
         $this->assertGuest();
     }
 
@@ -47,19 +47,19 @@ class SessionInactivityFeatureTest extends TestCase
         $this->signIn();
         $this->travel(30)->minutes();
         $this->postJson(route('auth.session-activity'), ['age_ms' => 15000])->assertOk()
-            ->assertJsonPath('remaining_seconds', 3585);
-        $this->getJson(route('auth.session-activity'))->assertOk()->assertJsonPath('remaining_seconds', 3585);
-        $this->travel(59)->minutes();
+            ->assertJsonPath('remaining_seconds', 10785);
+        $this->getJson(route('auth.session-activity'))->assertOk()->assertJsonPath('remaining_seconds', 10785);
+        $this->travel(179)->minutes();
         $this->getJson(route('auth.session-activity'))->assertOk()->assertJsonPath('remaining_seconds', 45);
         $this->travel(45)->seconds();
         $this->getJson(route('auth.session-activity'))->assertUnauthorized();
     }
 
-    public function test_first_click_after_one_hour_cannot_revive_session(): void
+    public function test_first_click_after_three_hours_cannot_revive_session(): void
     {
         $this->signIn();
         $before = DB::table('session_user_activity')->value('last_interaction_at');
-        $this->travel(61)->minutes();
+        $this->travel(181)->minutes();
         $this->postJson(route('auth.session-activity'), ['age_ms' => 0])->assertUnauthorized();
         $this->assertSame($before, DB::table('session_user_activity')->value('last_interaction_at'));
     }
@@ -86,7 +86,7 @@ class SessionInactivityFeatureTest extends TestCase
         $this->getJson(route('auth.session-activity'))->assertUnauthorized();
         $this->signIn();
         $this->postJson(route('auth.session-activity'), ['age_ms' => -1])->assertUnprocessable();
-        $this->postJson(route('auth.session-activity'), ['age_ms' => 3600000])->assertUnprocessable();
+        $this->postJson(route('auth.session-activity'), ['age_ms' => 10800000])->assertUnprocessable();
     }
 
     public function test_password_login_starts_a_new_deadline_and_ignores_remember_checkbox_from_old_forms(): void
@@ -96,8 +96,8 @@ class SessionInactivityFeatureTest extends TestCase
         $this->post(route('login.attempt'), ['email' => $user->email, 'password' => 'password', 'remember' => '1'])
             ->assertRedirect(route('feed'))->assertCookieMissing(Auth::guard('web')->getRecallerName());
         $this->assertAuthenticatedAs($user);
-        $this->getJson(route('auth.session-activity'))->assertOk()->assertJsonPath('remaining_seconds', 3600);
-        $this->travel(1)->hours();
+        $this->getJson(route('auth.session-activity'))->assertOk()->assertJsonPath('remaining_seconds', 10800);
+        $this->travel(3)->hours();
         $this->getJson(route('auth.session-activity'))->assertUnauthorized();
     }
 
@@ -105,7 +105,7 @@ class SessionInactivityFeatureTest extends TestCase
     {
         $this->signIn();
         $tab = (string) \Illuminate\Support\Str::uuid();
-        $this->travel(59)->minutes();
+        $this->travel(179)->minutes();
         $this->postJson(route('presence.heartbeat'), ['tab_id' => $tab, 'sequence' => 1, 'active' => true])->assertOk();
         $this->travel(1)->minutes();
         $this->postJson(route('presence.heartbeat'), ['tab_id' => $tab, 'sequence' => 2, 'active' => true])->assertUnauthorized();
@@ -117,7 +117,7 @@ class SessionInactivityFeatureTest extends TestCase
         $this->signIn();
         $this->travel(20)->minutes();
         $this->get(route('feed'))->assertOk()->assertSee('data-session-inactivity', false)
-            ->assertSee('data-remaining="2400"', false);
+            ->assertSee('data-remaining="9600"', false);
         $this->assertStringContainsString('no-store', $this->getJson(route('auth.session-activity'))->headers->get('Cache-Control'));
     }
 
@@ -126,8 +126,8 @@ class SessionInactivityFeatureTest extends TestCase
         $this->signIn();
         $this->travel(20)->minutes();
         $this->withHeaders(['Sec-Fetch-User' => '?1', 'Sec-Fetch-Mode' => 'navigate'])
-            ->get(route('feed'))->assertOk()->assertSee('data-remaining="3600"', false);
-        $this->travel(1)->hours();
+            ->get(route('feed'))->assertOk()->assertSee('data-remaining="10800"', false);
+        $this->travel(3)->hours();
         $this->get(route('feed'))->assertRedirect(route('login'));
     }
 
@@ -136,16 +136,16 @@ class SessionInactivityFeatureTest extends TestCase
         $user = $this->signIn();
         $firstId = session()->getId();
         $secondId = \Illuminate\Support\Str::random(40);
-        $this->travel(30)->minutes();
+        $this->travel(90)->minutes();
         session()->flush();
         $this->withCookie(config('session.cookie'), $secondId)->getJson(route('auth.session-activity'))->assertOk()
-            ->assertJsonPath('remaining_seconds', 3600);
-        $this->travel(30)->minutes();
+            ->assertJsonPath('remaining_seconds', 10800);
+        $this->travel(90)->minutes();
         session()->flush();
         $this->withCookie(config('session.cookie'), $firstId)
             ->getJson(route('auth.session-activity'))->assertUnauthorized();
         session()->flush();
         $this->actingAs($user)->withCookie(config('session.cookie'), $secondId)
-            ->getJson(route('auth.session-activity'))->assertOk()->assertJsonPath('remaining_seconds', 1800);
+            ->getJson(route('auth.session-activity'))->assertOk()->assertJsonPath('remaining_seconds', 5400);
     }
 }

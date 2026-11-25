@@ -16,6 +16,8 @@ class ProQuote extends Model
         'seller_snapshot', 'issued_at', 'sent_at', 'accepted_at', 'refused_at',
         'sent_to_email', 'reminder_enabled', 'reminder_sent_at',
         'public_token', 'response_name', 'response_channel',
+        // Émis pendant une période Premium : jamais de filigrane « version gratuite ».
+        'issued_with_premium',
     ];
 
     protected $casts = [
@@ -34,6 +36,7 @@ class ProQuote extends Model
         'refused_at' => 'datetime',
         'reminder_enabled' => 'boolean',
         'reminder_sent_at' => 'datetime',
+        'issued_with_premium' => 'boolean',
     ];
 
     public function user()

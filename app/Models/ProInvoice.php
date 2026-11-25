@@ -36,6 +36,8 @@ class ProInvoice extends Model
         'sent_to_email', 'reminder_enabled', 'reminder_sent_at',
         'kind', 'parent_invoice_id', 'credit_reason', 'credited_total',
         'deposit_deducted', 'deposit_percentage',
+        // Émis pendant une période Premium : jamais de filigrane « version gratuite ».
+        'issued_with_premium',
     ];
 
     protected $attributes = [
@@ -62,6 +64,7 @@ class ProInvoice extends Model
         'credited_total' => 'decimal:2',
         'deposit_deducted' => 'decimal:2',
         'deposit_percentage' => 'decimal:2',
+        'issued_with_premium' => 'boolean',
     ];
 
     public function user()

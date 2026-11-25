@@ -18,6 +18,9 @@
     $pkFreeInvoices = \App\Services\CommercialDocumentAllowance::FREE['invoice'];
     // Premium n'est promis que s'il peut être souscrit ; le quota s'applique dans les deux cas.
     $pkSubscriptionsOpen = $proSubscriptionsEnabled ?? \App\Support\PlatformFeatures::proSubscriptionsEnabled();
+    // Version gratuite : les PDF portent un filigrane, que Premium retire (décision du 25/11/2026).
+    $pkWatermarkNote = 'Leurs PDF portent le filigrane « Prokejem · version gratuite »'
+        .($pkSubscriptionsOpen ? ' ; Premium le retire.' : '.');
     $pkIncluded = [
         ['Devis et factures numérotés', 'Chaque document reçoit son numéro définitif à l’émission, dans une suite continue. Un brouillon reste modifiable jusque-là.'],
         ['Devis accepté en ligne', 'Votre client reçoit un lien, lit le devis sans créer de compte, puis l’accepte ou le refuse. Sa réponse est datée et figure sur le PDF.'],
@@ -28,6 +31,7 @@
     ];
     $pkPremium = [
         'Devis et factures sans limite, au-delà des '.$pkFreeQuotes.' devis et '.$pkFreeInvoices.' factures offerts',
+        'Vos devis et vos factures sans le filigrane de la version gratuite',
         'Modèles de devis réutilisables',
         'Relance automatique des devis sans réponse',
         'Votre logo sur vos devis et vos factures',
@@ -60,7 +64,7 @@
         @else
             <a class="pk-docs__button" href="{{ route('pro.quotes') }}">Créer mes devis et factures</a>
         @endguest
-        <p class="pk-docs__note">Ni SIRET, ni pièce justificative pour vos documents offerts. <a href="{{ route('public.provider-offers') }}">Voir les offres et tarifs</a>.</p>
+        <p class="pk-docs__note">Ni SIRET, ni pièce justificative pour vos documents offerts. {{ $pkWatermarkNote }} <a href="{{ route('public.provider-offers') }}">Voir les offres et tarifs</a>.</p>
     </section>
 
     <section aria-labelledby="pk-docs-included">

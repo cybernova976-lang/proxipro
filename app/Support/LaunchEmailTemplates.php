@@ -76,11 +76,25 @@ class LaunchEmailTemplates
                         ."À la carte : vous mettez en avant une offre précise, pour une durée choisie, sans abonnement. C’est adapté si vous publiez de temps en temps.\n\n"
                         ."Premium : un abonnement mensuel, sans engagement de durée, qui met en avant toutes vos offres et ajoute les outils de l’espace Pro : modèles de devis, relance des devis sans réponse, votre logo sur vos documents, rappel des factures impayées et rapport d’activité mensuel. C’est adapté si vous vivez de votre activité.\n\n"
                         .'Vous pouvez arrêter le renouvellement de Premium à tout moment depuis votre compte : vous gardez vos avantages jusqu’à la fin de la période payée, puis votre compte reste gratuit.'
+                        .self::oneTimeSentence()
                     ),
                     self::button('Comparer les offres', route('public.provider-offers')),
                 ],
             ],
         ];
+    }
+
+    /**
+     * Premium sans abonnement : annoncé seulement s'il est en vente. Les prix ne sont
+     * pas écrits ici : ils figurent sous le comparatif, lus dans le catalogue à l'envoi.
+     */
+    private static function oneTimeSentence(): string
+    {
+        if (! PlatformFeatures::proSubscriptionsEnabled() || ProviderSubscriptionPlans::oneTimeOffers() === []) {
+            return '';
+        }
+
+        return "\n\n".'Vous préférez ne pas être prélevé chaque mois ? Premium se prend aussi par un paiement unique par carte, sans abonnement : les durées et les prix sont indiqués sous le comparatif.';
     }
 
     public static function get(?string $key): ?array

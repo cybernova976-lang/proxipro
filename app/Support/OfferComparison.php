@@ -123,12 +123,26 @@ class OfferComparison
     /** Limites dites en clair, sous le comparatif. */
     public static function notes(): array
     {
-        return [
+        return array_values(array_filter([
             'Les options à la carte se règlent par offre ou par demande, sans abonnement.',
             'Une mise en avant ne donne pas de place fixe et ne garantit ni demande, ni mission, ni revenu.',
             'Le nombre d’annonces actives dépend du statut du compte : Premium ne rend pas les publications illimitées.',
             'Sans abonnement, chaque membre, particulier ou professionnel, crée '.self::freeDocuments().', sans justificatif ; Premium lève la limite.',
-        ];
+            self::oneTimeNote(),
+        ]));
+    }
+
+    /**
+     * Premium sans abonnement : l'accès à paiement unique, à ses prix en vigueur.
+     * Null tant qu'il n'est pas réellement en vente.
+     */
+    private static function oneTimeNote(): ?string
+    {
+        $offers = self::premiumOnSale() ? ProviderSubscriptionPlans::oneTimeSentence() : null;
+
+        return $offers === null ? null
+            : 'Premium se prend aussi sans abonnement, par un paiement unique par carte : '.$offers
+                .'. Mêmes avantages, aucun prélèvement ensuite : l’accès s’arrête seul à la fin de la période.';
     }
 
     /** « 2 devis et 2 factures offerts », lu dans App\Services\CommercialDocumentAllowance. */

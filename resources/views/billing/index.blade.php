@@ -3,6 +3,7 @@
 
 @section('content')
 <link rel="stylesheet" href="{{ asset('css/billing.css') }}?v={{ filemtime(public_path('css/billing.css')) }}">
+<link rel="stylesheet" href="{{ asset('css/one-time-access.css') }}?v={{ filemtime(public_path('css/one-time-access.css')) }}">
 <div class="pk-billing">
     <header class="pk-billing__head">
         <p class="pk-billing__eyebrow">Mon compte</p>
@@ -22,6 +23,7 @@
             <p class="pk-billing__empty">Vous n’avez aucun abonnement en cours : votre compte est gratuit.</p>
             @include('billing.partials.plans')
         @endforelse
+        @include('partials.one-time-access', ['oneTimeOrigin' => 'billing', 'oneTimeFramed' => true])
     </section>
 
     @include('billing.partials.payments')

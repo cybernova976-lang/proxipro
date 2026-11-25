@@ -184,6 +184,8 @@
     @endif
 </div>
 
+@include('pro.partials.free-watermark-notice', ['documentLabel' => 'le PDF de ce devis', 'pkDocument' => $quote, 'pkLine' => true])
+
 @include('pro.partials.quote-response')
 @include('pro.partials.quote-premium-tools')
 

@@ -28,7 +28,7 @@
     <div class="card-header bg-white border-0 pt-4 px-4 d-flex flex-wrap justify-content-between align-items-start gap-3">
         <div>
             <h5 class="fw-bold mb-1"><i class="fas fa-repeat text-primary me-2"></i>Abonnements prestataires</h5>
-            <p class="text-muted mb-0">État local synchronisé avec Stripe. Un accès manuel ne crée aucun prélèvement.</p>
+            <p class="text-muted mb-0">État local synchronisé avec Stripe. Un accès manuel ou à paiement unique ne crée aucun prélèvement.</p>
         </div>
         <button class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#manualProviderGrant">
             <i class="fas fa-gift me-1"></i>Accorder un accès manuel
@@ -80,6 +80,8 @@
                         <td>
                             @if($providerSubscription->stripe_subscription_id)
                                 <span class="badge bg-primary-subtle text-primary border">Stripe</span><div class="small text-muted">{{ \App\Support\StatusLabels::stripeSubscription($providerSubscription->stripe_status) }}</div>
+                            @elseif($providerSubscription->isOneTimeAccess())
+                                <span class="badge bg-info-subtle text-info-emphasis border">Paiement unique</span><div class="small text-muted">Carte, sans prélèvement</div>
                             @else
                                 <span class="badge bg-light text-dark border">Manuel</span>
                             @endif

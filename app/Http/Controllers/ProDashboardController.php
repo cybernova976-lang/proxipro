@@ -155,7 +155,11 @@ class ProDashboardController extends Controller
                 'quote_number' => ProQuote::generateNumber($user->id),
                 'seller_snapshot' => $user->commercialIdentitySnapshot(),
                 'issued_at' => now(),
-            ]);
+                // Émis sous Premium : le PDF reste sans filigrane « version gratuite » pour toujours.
+            ] + $this->allowance()->issueStamp($user));
+        } elseif ($quote->status === 'draft') {
+            // Reprise après un envoi échoué : le numéro est gardé, la marque Premium suit le moment réel de l'envoi.
+            $quote->update($this->allowance()->issueStamp($user));
         }
     }
 
@@ -172,7 +176,11 @@ class ProDashboardController extends Controller
                 'finalized_at' => now(),
                 // Acomptes déjà facturés sur le même devis : déduits une fois pour toutes.
                 'deposit_deducted' => app(\App\Services\InvoiceAdjustments::class)->deductibleDeposits($invoice),
-            ]);
+                // Émise sous Premium : le PDF reste sans filigrane « version gratuite » pour toujours.
+            ] + $this->allowance()->issueStamp($user));
+        } elseif ($invoice->status === 'draft') {
+            // Reprise après un envoi échoué : le numéro est gardé, la marque Premium suit le moment réel de l'envoi.
+            $invoice->update($this->allowance()->issueStamp($user));
         }
     }
 
@@ -843,6 +851,8 @@ class ProDashboardController extends Controller
         $copy = $source->replicate([
             'quote_number', 'status', 'issued_at', 'sent_at', 'accepted_at', 'refused_at', 'seller_snapshot',
             'sent_to_email', 'reminder_enabled', 'reminder_sent_at', 'public_token', 'response_name', 'response_channel',
+            // La copie sera émise à son tour : elle ne reprend pas l'émission sous Premium de l'original.
+            'issued_with_premium',
         ]);
         $copy->fill([
             'quote_number' => 'BROUILLON-DEV-'.strtoupper(Str::random(10)),
@@ -1538,8 +1548,12 @@ class ProDashboardController extends Controller
         $subscription = $user->subscriptionForManagement();
         $subscriptions = $user->proSubscriptions()->latest()->get();
         $proSubscriptionsEnabled = PlatformFeatures::proSubscriptionsEnabled();
+        // Accès Premium à paiement unique (sans abonnement) que ce membre peut réellement payer.
+        $oneTime = $this->providerSubscriptionService->oneTimeSalesFor($user);
+        $oneTimeOffers = $oneTime['offers'];
+        $oneTimeExtendsFrom = $oneTime['extends_from'];
 
-        return view('pro.subscription', compact('user', 'subscription', 'subscriptions', 'proSubscriptionsEnabled'));
+        return view('pro.subscription', compact('user', 'subscription', 'subscriptions', 'proSubscriptionsEnabled', 'oneTimeOffers', 'oneTimeExtendsFrom'));
     }
 
     public function cancelSubscriptionRenewal()

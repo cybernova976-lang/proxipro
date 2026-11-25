@@ -142,7 +142,8 @@ class LineDiscountAndVatTest extends TestCase
         $invoice = ProInvoice::sole();
         $this->assertSame(['140.00', '20.00', '160.00'], [$invoice->subtotal, $invoice->tax_amount, $invoice->total]);
 
-        $pdf = view('pro.invoice-pdf', ['user' => $pro, 'invoice' => $invoice])->render();
+        // Texte du PDF sans balises : la base d'un taux est insécable (balise de mise en forme).
+        $pdf = preg_replace('/\s+/u', ' ', strip_tags(view('pro.invoice-pdf', ['user' => $pro, 'invoice' => $invoice])->render()));
         foreach (['TVA (0,00%) sur 40,00 €', 'TVA (20,00%) sur 100,00 €', 'Débours, art. 267 II du CGI', 'TVA 0 %'] as $text) {
             $this->assertStringContainsString($text, $pdf);
         }
@@ -214,7 +215,7 @@ class LineDiscountAndVatTest extends TestCase
         $this->assertSame('cancelled', $invoice->fresh()->status);
         $this->assertSame(0.0, $invoice->fresh()->netTotal());
 
-        $pdf = view('pro.invoice-pdf', ['user' => $pro, 'invoice' => $rest])->render();
+        $pdf = preg_replace('/\s+/u', ' ', strip_tags(view('pro.invoice-pdf', ['user' => $pro, 'invoice' => $rest])->render()));
         foreach (['TVA (10,00%) sur 450,00 €', 'TVA (20,00%) sur 900,00 €', '1 575,00 €'] as $text) {
             $this->assertStringContainsString($text, $pdf);
         }

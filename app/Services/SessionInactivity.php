@@ -8,7 +8,11 @@ use Illuminate\Support\Str;
 
 class SessionInactivity
 {
-    public const TIMEOUT_SECONDS = 3600;
+    /** Trois heures sans geste du membre (décision du fondateur du 25/11/2026 ; une heure auparavant). */
+    public const TIMEOUT_SECONDS = 10800;
+
+    /** La même durée, telle qu'elle est écrite dans l'interface. */
+    public const TIMEOUT_LABEL = '3 heures';
 
     public function key(Request $request): string
     {

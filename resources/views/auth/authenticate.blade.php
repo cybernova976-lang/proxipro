@@ -427,7 +427,7 @@
                     </div>
                     
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <p class="small text-muted mb-0">Déconnexion après 1 heure d’inactivité.</p>
+                        <p class="small text-muted mb-0">Déconnexion après {{ \App\Services\SessionInactivity::TIMEOUT_LABEL }} d’inactivité.</p>
                         @if (Route::has('password.request'))
                             <a href="{{ route('password.request') }}" class="auth-link small">Mot de passe oublié ?</a>
                         @endif

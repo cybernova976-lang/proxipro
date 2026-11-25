@@ -516,6 +516,13 @@ body {
 .pro-content-header .pk-doc-allowance { display: flex; flex-direction: row-reverse; align-items: center; gap: .9rem; }
 .pro-content-header .pk-doc-allowance p { margin: 0 !important; color: var(--pro-text-secondary) !important; font-size: .8rem; text-align: right; }
 
+/* Version gratuite : avertissement du filigrane, avant le bouton d'enregistrement d'un devis ou
+   d'une facture ; variante « ligne », discrète, près d'un téléchargement ou d'un envoi. */
+.pk-free-watermark { display: flex; align-items: flex-start; gap: .6rem; margin: 1rem 0 0; padding: .7rem .85rem; border: 1px solid var(--pro-indigo-200); border-radius: 10px; background: var(--pro-indigo-50); color: var(--pro-indigo-900); font-size: .82rem; line-height: 1.45; }
+.pk-free-watermark i { margin-top: .2rem; color: var(--pro-indigo-600); }
+.pk-free-watermark a { color: var(--pro-indigo-700); font-weight: 600; white-space: nowrap; }
+.pk-free-watermark--line { display: block; margin: .6rem 0 0; padding: 0; border: 0; border-radius: 0; background: none; font-size: .8rem; }
+
 .pro-content-header p { color: var(--pro-text-secondary); }
 
 .pro-main .breadcrumb {

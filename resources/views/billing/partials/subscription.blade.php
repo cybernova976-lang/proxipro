@@ -1,12 +1,17 @@
-{{-- Un abonnement en cours : état, échéance, moyen de paiement, puis les actions possibles. --}}
+{{-- Un abonnement ou un accès à paiement unique en cours : état, échéance, moyen de paiement,
+     puis les actions possibles. Un accès à paiement unique n'a ni moyen de paiement ni résiliation. --}}
 @php
     $pkManaged = $subscription->hasOpenBilling();
-    $pkActive = $subscription->isActive();
+    $pkOneTime = $subscription->isOneTimeAccess();
+    // Accès déjà payé qui commencera à la fin de l'accès en cours : présenté avec lui.
+    $pkQueued = $pkOneTime && $subscription->isPaidAhead();
+    $pkActive = $subscription->isActive() || $pkQueued;
     $pkLate = $subscription->inPaymentGrace();
     $pkStopping = $pkActive && $pkManaged && ! $subscription->auto_renew && ! $pkLate;
     [$pkTone, $pkState] = match (true) {
         $pkLate => ['late', 'Paiement en retard'],
         $pkStopping => ['muted', 'Résiliation programmée'],
+        $pkActive && $pkOneTime => ['ok', $pkQueued ? 'À venir' : 'Actif'],
         $pkActive && ! $pkManaged => ['ok', 'Accès offert'],
         $pkActive => ['ok', 'Actif'],
         default => ['late', 'Paiement à confirmer'],
@@ -18,8 +23,8 @@
 <article class="pk-billing-card">
     <header class="pk-billing-card__head">
         <div>
-            <h3>Premium · {{ $pkPlan['label'] ?? ucfirst($subscription->plan) }}</h3>
-            <p class="pk-billing-card__price">{{ number_format((float) $subscription->amount, 2, ',', ' ') }} € {{ $pkPeriod }}</p>
+            <h3>Premium · {{ $pkOneTime ? $subscription->oneTimeLabel() : ($pkPlan['label'] ?? ucfirst($subscription->plan)) }}</h3>
+            <p class="pk-billing-card__price">{{ number_format((float) $subscription->amount, 2, ',', ' ') }} € {{ $pkOneTime ? 'réglés en une fois' : $pkPeriod }}</p>
         </div>
         <span class="pk-billing-chip pk-billing-chip--{{ $pkTone }}">{{ $pkState }}</span>
     </header>
@@ -28,6 +33,11 @@
         @if($pkLate)
             <div><dt>Paiement refusé le</dt><dd>{{ $subscription->payment_failed_at->format('d/m/Y') }}</dd></div>
             <div><dt>À régler avant le</dt><dd>{{ $subscription->grace_ends_at->format('d/m/Y') }}</dd></div>
+        @elseif($pkActive && $pkOneTime)
+            <div>
+                <dt>{{ $pkQueued ? 'À la suite de votre accès en cours' : 'Accès Premium' }}</dt>
+                <dd>{{ $pkQueued ? 'Du '.$subscription->starts_at->format('d/m/Y').' au '.$pkDate : 'Jusqu’au '.$pkDate }} — aucun renouvellement</dd>
+            </div>
         @elseif(! $pkManaged)
             <div><dt>Accès accordé par Prokejem</dt><dd>{{ $pkDate ? 'Valable jusqu’au '.$pkDate : 'Sans date de fin' }} · aucun prélèvement</dd></div>
         @elseif($pkStopping)
@@ -41,7 +51,7 @@
             <div><dt>Moyen de paiement</dt><dd>{{ $paymentMethod['label'] ?? 'Enregistré chez Stripe, notre prestataire de paiement' }}</dd></div>
         @endif
         @if($subscription->last_payment_at)
-            <div><dt>Dernier paiement reçu</dt><dd>{{ $subscription->last_payment_at->format('d/m/Y') }}</dd></div>
+            <div><dt>{{ $pkOneTime ? 'Paiement unique reçu' : 'Dernier paiement reçu' }}</dt><dd>{{ $subscription->last_payment_at->format('d/m/Y') }}</dd></div>
         @endif
     </dl>
 
@@ -73,5 +83,7 @@
         @unless($pkLate)
             <p class="pk-billing-card__note">{{ $sepaAvailable ? 'Vous pouvez payer par carte bancaire ou par prélèvement SEPA.' : 'Le paiement se fait par carte bancaire.' }} Rien n’est débité quand vous changez de moyen de paiement.</p>
         @endunless
+    @elseif($pkActive && $pkOneTime)
+        <p class="pk-billing-card__note">Aucun prélèvement ne suivra : cet accès s’arrête seul à sa date de fin, sans résiliation à faire.</p>
     @endif
 </article>

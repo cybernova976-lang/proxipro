@@ -367,6 +367,12 @@ Route::middleware(['auth'])->group(function () {
         ->name('billing.payment-method');
     Route::get('/facturation/moyen-de-paiement/retour', [\App\Http\Controllers\BillingController::class, 'paymentMethodReturn'])
         ->name('billing.payment-method.return');
+    // Accès Premium à paiement unique : un paiement par carte, sans abonnement ni prélèvement.
+    Route::post('/facturation/acces-unique', [\App\Http\Controllers\BillingController::class, 'buyOneTimeAccess'])
+        ->middleware('throttle:10,1,billing.one-time:')
+        ->name('billing.one-time');
+    Route::get('/facturation/acces-unique/retour', [\App\Http\Controllers\BillingController::class, 'oneTimeAccessReturn'])
+        ->name('billing.one-time.return');
 
     Route::post('/push-notifications/subscriptions', [PushSubscriptionController::class, 'store'])
         ->middleware('throttle:30,1,push-subscriptions.store:')

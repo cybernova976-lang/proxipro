@@ -19,7 +19,7 @@
                     @include('admin.subscriptions.partials.provider-state', ['subscription' => $providerSubscription])
                 </li>
                 <li class="mb-1"><span class="text-muted">Période :</span> {{ optional($providerSubscription->starts_at)->format('d/m/Y') ?: '—' }} → {{ optional($providerSubscription->ends_at)->format('d/m/Y') ?: '—' }}</li>
-                <li><span class="text-muted">Origine :</span> {{ $providerSubscription->stripe_subscription_id ? 'Paiement Stripe' : 'Accès accordé par un administrateur' }}</li>
+                <li><span class="text-muted">Origine :</span> {{ $providerSubscription->stripe_subscription_id ? 'Paiement Stripe' : ($providerSubscription->isOneTimeAccess() ? 'Paiement unique par carte, sans abonnement' : 'Accès accordé par un administrateur') }}</li>
             </ul>
 
             <div class="d-flex flex-wrap gap-2 mb-3">

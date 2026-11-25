@@ -65,6 +65,7 @@
                     <input class="form-check-input" type="checkbox" name="confirm" id="pkCreditConfirm" value="1" required>
                     <label class="form-check-label" for="pkCreditConfirm">Je confirme l’émission de cet avoir : il recevra un numéro définitif et ne pourra plus être modifié.</label>
                 </div>
+                @include('pro.partials.free-watermark-notice', ['documentLabel' => 'cet avoir', 'pkLine' => true])
                 <button type="submit" class="btn btn-pro-outline mt-3">Émettre l’avoir</button>
             </form>
         </details>

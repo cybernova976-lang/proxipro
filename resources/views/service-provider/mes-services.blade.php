@@ -40,7 +40,7 @@
                             <i class="fas fa-check-circle me-1"></i>Prestataire actif
                         @endif
                         @if($subscription)
-                            · <i class="fas fa-crown me-1"></i>{{ $subscription->plan === 'annual' ? 'Abonnement Annuel' : 'Abonnement Mensuel' }}
+                            · <i class="fas fa-crown me-1"></i>{{ $subscription->isOneTimeAccess() ? 'Premium, '.$subscription->oneTimeLabel() : ($subscription->plan === 'annual' ? 'Abonnement Annuel' : 'Abonnement Mensuel') }}
                         @endif
                     </div>
                 </div>
@@ -220,7 +220,7 @@
                         <i class="fas fa-crown"></i>
                     </div>
                     <div class="flex-grow-1">
-                        <h6 class="fw-bold mb-0">Abonnement {{ $subscription->getPlanLabel() }} actif</h6>
+                        <h6 class="fw-bold mb-0">{{ $subscription->isOneTimeAccess() ? 'Premium actif · '.$subscription->oneTimeLabel() : 'Abonnement '.$subscription->getPlanLabel().' actif' }}</h6>
                         <small class="text-muted">Expire le {{ $subscription->ends_at->format('d/m/Y') }} · {{ number_format((float) $subscription->amount, 2, ',', ' ') }} €</small>
                     </div>
                     <a href="{{ route('pro.subscription') }}" class="btn btn-sm btn-outline-warning" style="border-radius: 8px;">

@@ -11,7 +11,7 @@ class SessionActivityController extends Controller
     public function __invoke(Request $request, SessionInactivity $activity): JsonResponse
     {
         if ($request->isMethod('post')) {
-            $data = $request->validate(['age_ms' => ['required', 'integer', 'min:0', 'max:3599999']]);
+            $data = $request->validate(['age_ms' => ['required', 'integer', 'min:0', 'max:'.(SessionInactivity::TIMEOUT_SECONDS * 1000 - 1)]]);
             $activity->touch($request, (int) $data['age_ms']);
         }
 

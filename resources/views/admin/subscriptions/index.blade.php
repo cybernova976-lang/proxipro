@@ -182,6 +182,7 @@
                     </div>
                 @endforeach
             </div>
+            @include('admin.subscriptions.partials.one-time-plans')
             <div class="d-flex justify-content-end mt-4">
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save me-1"></i>Enregistrer les cartes

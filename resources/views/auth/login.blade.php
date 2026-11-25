@@ -120,7 +120,7 @@
                     @enderror
                 </div>
 
-                <p class="text-sm text-gray-600">Pour votre sécurité, vous serez déconnecté après 1 heure d’inactivité.</p>
+                <p class="text-sm text-gray-600">Pour votre sécurité, vous serez déconnecté après {{ \App\Services\SessionInactivity::TIMEOUT_LABEL }} d’inactivité.</p>
 
                 <button type="submit" id="loginSubmitBtn" class="w-full py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed">
                     Se connecter

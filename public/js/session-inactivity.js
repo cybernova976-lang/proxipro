@@ -1,4 +1,4 @@
-/* One hour of human inactivity, shared by all tabs through the server session. */
+/* Human inactivity limit (3 h, App\Services\SessionInactivity), shared by all tabs through the server session. */
 (function () {
   'use strict';
   const script = document.querySelector('script[data-session-inactivity]');
