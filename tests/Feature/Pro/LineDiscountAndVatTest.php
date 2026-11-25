@@ -147,7 +147,7 @@ class LineDiscountAndVatTest extends TestCase
         foreach (['TVA (0,00%) sur 40,00 €', 'TVA (20,00%) sur 100,00 €', 'Débours, art. 267 II du CGI', 'TVA 0 %'] as $text) {
             $this->assertStringContainsString($text, $pdf);
         }
-        $this->get(route('pro.invoices.show', $invoice))->assertOk()->assertSee('TVA (20,00%) sur 100,00 €')->assertSee('Débours, art. 267 II du CGI');
+        $this->get(route('pro.invoices.show', $invoice))->assertOk()->assertSeeText('TVA (20,00%) sur 100,00 €')->assertSee('Débours, art. 267 II du CGI');
 
         // Même exigence à la modification, sans effacer la mention déjà enregistrée.
         $update = ['client_name' => 'Client Exemple', 'subject' => 'Travaux', 'tax_rate' => 20, 'items' => $payload['items']];

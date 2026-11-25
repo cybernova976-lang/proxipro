@@ -95,7 +95,7 @@ class CreditNotesAndDepositsTest extends TestCase
         $this->assertSame(90.0, $invoice->fresh()->netTotal());
 
         $this->get(route('pro.invoices.show', $invoice))->assertOk()
-            ->assertSee('Avoir '.$first->invoice_number)->assertSee('-30,00 €')
+            ->assertSee('Avoir '.$first->invoice_number)->assertSee('−30,00 €')
             ->assertSee('Net à payer')->assertSee('90,00 €')->assertSee('Il reste 90,00 € TTC');
         $pdf = view('pro.invoice-pdf', ['user' => $pro, 'invoice' => $invoice->fresh()])->render();
         $this->assertStringContainsString('Net à payer', $pdf);
@@ -168,7 +168,7 @@ class CreditNotesAndDepositsTest extends TestCase
             'payment_terms' => 'Paiement à réception.', 'early_payment_discount' => 'Néant'])->assertSessionHasNoErrors();
         $final = ProInvoice::where('kind', 'invoice')->sole();
         $this->get(route('pro.invoices.show', $final))->assertOk()
-            ->assertSee('Acompte déjà facturé ('.$deposit->invoice_number)->assertSee('-360,00 €')
+            ->assertSee('Acompte déjà facturé')->assertSee('('.$deposit->invoice_number)->assertSee('−360,00 €')
             ->assertSee('Net à payer')->assertSee('840,00 €');
         $this->assertSame('0.00', $final->deposit_deducted, 'Rien n’est figé avant l’émission.');
 

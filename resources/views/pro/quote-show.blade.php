@@ -29,113 +29,13 @@
     </div>
 </div>
 
-<div class="pro-card" id="quotePrintArea">
-    {{-- Header --}}
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4 pb-3" style="border-bottom: 2px solid var(--pro-border);">
-        <div>
-            <h4 class="fw-bold mb-1" style="color: var(--pro-primary);">{{ $user->company_name ?? $user->name }}</h4>
-            <div style="font-size: 0.85rem; color: var(--pro-text-secondary);">
-                @if($user->address)<div>{{ $user->address }}</div>@endif
-                @if($user->city)<div>{{ $user->city }}, {{ $user->country }}</div>@endif
-                @if($user->phone)<div>Tél : {{ $user->phone }}</div>@endif
-                <div>{{ $user->email }}</div>
-                @if($user->siret)<div>SIRET : {{ $user->siret }}</div>@endif
-            </div>
-        </div>
-        <div class="text-end pro-mobile-text-start">
-            <h3 class="fw-bold" style="color: var(--pro-primary);">DEVIS</h3>
-            <div style="font-size: 0.88rem;">
-                <div><strong>N° :</strong> {{ $quote->quote_number }}</div>
-                <div><strong>Date :</strong> {{ $quote->created_at->format('d/m/Y') }}</div>
-                @if($quote->valid_until)
-                    <div><strong>Validité :</strong> {{ $quote->valid_until->format('d/m/Y') }}</div>
-                @endif
-            </div>
-        </div>
-    </div>
-
-    {{-- Client info --}}
-    <div class="mb-4 p-3" style="background: #f8fafc; border-radius: 12px;">
-        <strong style="font-size: 0.78rem; text-transform: uppercase; color: var(--pro-text-secondary);">Destinataire</strong>
-        <h5 class="fw-bold mb-1 mt-1">{{ $quote->client_name }}</h5>
-        <div style="font-size: 0.85rem; color: var(--pro-text-secondary);">
-            @if($quote->client_address)<div>{{ $quote->client_address }}</div>@endif
-            @if($quote->client_email)<div>{{ $quote->client_email }}</div>@endif
-            @if($quote->client_phone)<div>{{ $quote->client_phone }}</div>@endif
-        </div>
-    </div>
-
-    {{-- Subject --}}
-    <div class="mb-4">
-        <strong>Objet :</strong> {{ $quote->subject }}
-    </div>
-
-    {{-- Items --}}
-    <div class="table-responsive mb-4">
-        <table class="pro-table">
-            <thead>
-                <tr>
-                    <th style="width: 50%;">Description</th>
-                    <th class="text-center">Quantité</th>
-                    <th class="text-end">Prix unitaire</th>
-                    <th class="text-end">Total HT</th>
-                </tr>
-            </thead>
-            <tbody>
-@php
-    $pkDefaultRate = (float) ($quote->tax_rate ?? 0);
-    $pkSeveralRates = \App\Support\DocumentTotals::hasSeveralRates($quote->items, $pkDefaultRate);
-    $pkVatLines = \App\Support\DocumentTotals::vatLines($quote->items, $pkDefaultRate, (float) $quote->tax_amount);
-@endphp
-                @foreach($quote->items as $item)
-                <tr>
-                    <td>{{ $item['description'] }}@include('pro.partials.document-line-note')</td>
-                    <td class="text-center">{{ $item['quantity'] }}</td>
-                    <td class="text-end">{{ number_format($item['unit_price'], 2, ',', ' ') }}€</td>
-                    <td class="text-end fw-semibold">{{ number_format($item['total'] ?? ($item['quantity'] * $item['unit_price']), 2, ',', ' ') }}€</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-
-    {{-- Totals --}}
-    <div class="d-flex justify-content-end">
-        <div class="pro-mobile-full" style="min-width: 250px; background: #f8fafc; border-radius: 12px; padding: 1rem 1.25rem;">
-            <div class="d-flex justify-content-between py-1" style="font-size: 0.9rem;">
-                <span>Sous-total HT</span>
-                <strong>{{ number_format($quote->subtotal, 2, ',', ' ') }}€</strong>
-            </div>
-            @foreach($pkVatLines as $pkVat)
-            <div class="d-flex justify-content-between py-1" style="font-size: 0.9rem;">
-                <span>TVA ({{ \App\Support\DocumentTotals::formatRate($pkVat['rate']) }} %)@if($pkSeveralRates) sur {{ number_format($pkVat['base'], 2, ',', ' ') }} €@endif</span>
-                <strong>{{ number_format($pkVat['tax'], 2, ',', ' ') }}€</strong>
-            </div>
-            @endforeach
-            <div class="d-flex justify-content-between py-2 mt-1" style="font-size: 1.15rem; font-weight: 800; color: var(--pro-primary); border-top: 2px solid var(--pro-border);">
-                <span>Total TTC</span>
-                <span>{{ number_format($quote->total, 2, ',', ' ') }}€</span>
-            </div>
-        </div>
-    </div>
-
-    {{-- Notes & Conditions --}}
-    @if($quote->notes || $quote->conditions)
-    <div class="row g-3 mt-4 pt-3" style="border-top: 1px solid var(--pro-border);">
-        @if($quote->notes)
-        <div class="col-md-6">
-            <strong style="font-size: 0.82rem;">Notes :</strong>
-            <p class="text-muted mt-1" style="font-size: 0.85rem; white-space: pre-line;">{{ $quote->notes }}</p>
-        </div>
-        @endif
-        @if($quote->conditions)
-        <div class="col-md-6">
-            <strong style="font-size: 0.82rem;">Conditions :</strong>
-            <p class="text-muted mt-1" style="font-size: 0.85rem; white-space: pre-line;">{{ $quote->conditions }}</p>
-        </div>
-        @endif
-    </div>
-    @endif
+@push('head')
+<link rel="stylesheet" href="{{ asset('css/pro-document-sheet.css') }}?v={{ @filemtime(public_path('css/pro-document-sheet.css')) }}">
+@endpush
+<div class="pk-sheet-frame">
+    <article class="pk-sheet" aria-label="Aperçu du devis">
+        @include('pro.partials.quote-sheet')
+    </article>
 </div>
 
 @if(session('success'))

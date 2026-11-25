@@ -2,104 +2,18 @@
 @section('title', $invoice->documentLabel() . ' ' . $invoice->invoice_number . ' - Espace Pro')
 
 @section('content')
+@push('head')
+<link rel="stylesheet" href="{{ asset('css/pro-document-sheet.css') }}?v={{ @filemtime(public_path('css/pro-document-sheet.css')) }}">
+@endpush
 <style>
-    .invoice-logo-block {
-        display: inline-block;
-        font-size: 1.25rem;
-        font-weight: 800;
-        color: #0f172a;
-        letter-spacing: 0.3px;
-        padding-bottom: 8px;
-        border-bottom: 3px solid #6366f1;
-        margin-bottom: 10px;
-    }
-    .invoice-doc-title {
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: #6366f1;
-        letter-spacing: 2px;
-    }
-    .invoice-info-card {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 16px 20px;
-    }
-    .invoice-info-label {
-        font-size: 0.68rem;
-        text-transform: uppercase;
-        letter-spacing: 1.2px;
-        color: #94a3b8;
-        font-weight: 700;
-        margin-bottom: 8px;
-    }
-    .invoice-info-name {
-        font-size: 1rem;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 4px;
-    }
-    .invoice-info-detail {
-        font-size: 0.82rem;
-        color: #64748b;
-        line-height: 1.6;
-    }
-    .invoice-totals {
-        min-width: 280px;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 0;
-        overflow: hidden;
-    }
-    .invoice-totals .total-line {
-        display: flex;
-        justify-content: space-between;
-        padding: 10px 18px;
-        font-size: 0.88rem;
-        color: #475569;
-    }
-    .invoice-totals .total-line-grand {
-        display: flex;
-        justify-content: space-between;
-        padding: 14px 18px;
-        font-size: 1.15rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #6366f1, #4f46e5);
-        color: #ffffff;
-    }
-    .invoice-actions-bar {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 20px;
-    }
-    .invoice-actions-bar .btn {
-        border-radius: 10px;
-        font-size: 0.85rem;
-        padding: 8px 18px;
-    }
-    .btn-download-pdf {
-        background: linear-gradient(135deg, #10b981, #059669);
-        color: #fff;
-        border: none;
-    }
-    .btn-download-pdf:hover {
-        background: linear-gradient(135deg, #059669, #047857);
-        color: #fff;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
-    }
+    .invoice-actions-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+    .invoice-actions-bar .btn { border-radius: 10px; font-size: 0.85rem; padding: 8px 18px; }
+    .btn-download-pdf { background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: none; }
+    .btn-download-pdf:hover { background: linear-gradient(135deg, #059669, #047857); color: #fff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35); }
     @media (max-width: 576px) {
-        .invoice-doc-title { font-size: 1.45rem; }
         .invoice-actions-bar .btn,
-        .invoice-actions-bar form { width: 100%; }
+        .invoice-actions-bar form,
         .invoice-actions-bar form .btn { width: 100%; }
-        .invoice-info-card,
-        .invoice-totals {
-            width: 100%;
-            min-width: 0;
-        }
     }
 </style>
 
@@ -138,138 +52,10 @@
 </div>
 @endif
 
-<div class="pro-card">
-    {{-- Header: Logo + Infos + Invoice Title --}}
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4 pb-4" style="border-bottom: 3px solid #6366f1;">
-        <div>
-            <div class="invoice-logo-block">{{ $user->company_name ?? $user->name }}</div>
-            <div style="font-size: 0.82rem; color: var(--pro-text-secondary); line-height: 1.7; margin-top: 4px;">
-                @if($user->address)<div>{{ $user->address }}</div>@endif
-                @if($user->city)<div>{{ $user->city }}@if($user->country), {{ $user->country }}@endif</div>@endif
-                @if($user->phone)<div>Tél : {{ $user->phone }}</div>@endif
-                <div>{{ $user->email }}</div>
-                @if($user->siret)<div style="color: #94a3b8; font-size: 0.78rem;">SIRET : {{ $user->siret }}</div>@endif
-                @if($user->tva_number)<div style="color: #94a3b8; font-size: 0.78rem;">TVA : {{ $user->tva_number }}</div>@endif
-            </div>
-        </div>
-        <div class="text-end pro-mobile-text-start">
-            <div class="invoice-doc-title">{{ mb_strtoupper($invoice->documentLabel()) }}</div>
-            <div style="font-size: 0.88rem; color: #475569; line-height: 1.8; margin-top: 4px;">
-                <div><strong>N° :</strong> {{ $invoice->invoice_number }}</div>
-                <div><strong>Date d’émission :</strong> {{ ($invoice->finalized_at ?? $invoice->created_at)->format('d/m/Y') }}</div>
-                @if($invoice->service_date)<div><strong>Date de l’opération :</strong> {{ $invoice->service_date->format('d/m/Y') }}</div>@endif
-                @if($invoice->due_date)<div><strong>Échéance :</strong> {{ $invoice->due_date->format('d/m/Y') }}</div>@endif
-                @if($invoice->quote)<div><strong>Réf. devis :</strong> {{ $invoice->quote->quote_number }}</div>@endif
-            </div>
-        </div>
-    </div>
-
-    {{-- Client (right-aligned, below header) --}}
-    <div class="d-flex justify-content-end mb-4">
-        <div class="invoice-info-card pro-mobile-full" style="min-width: 280px;">
-            <div class="invoice-info-label">Client</div>
-            <div class="invoice-info-name">{{ $invoice->client_name }}</div>
-            <div class="invoice-info-detail">
-                @if($invoice->client_company)<div><strong>{{ $invoice->client_company }}</strong></div>@endif
-                @if($invoice->client_address)<div>{{ $invoice->client_address }}</div>@endif
-                @if($invoice->delivery_address && $invoice->delivery_address !== $invoice->client_address)<div>Adresse de livraison : {{ $invoice->delivery_address }}</div>@endif
-                @if($invoice->client_registration_number)<div>Immatriculation : {{ $invoice->client_registration_number }}</div>@endif
-                @if($invoice->client_vat_number)<div>TVA : {{ $invoice->client_vat_number }}</div>@endif
-                @if($invoice->client_email)<div>{{ $invoice->client_email }}</div>@endif
-                @if($invoice->client_phone)<div>{{ $invoice->client_phone }}</div>@endif
-            </div>
-        </div>
-    </div>
-
-    {{-- Items Table --}}
-    <div class="table-responsive mb-4" style="overflow: visible;">
-        <table class="pro-table">
-            <thead>
-                <tr>
-                    <th style="width: 48%;">Désignation</th>
-                    <th class="text-center" style="width: 12%;">Qté</th>
-                    <th class="text-end" style="width: 20%;">Prix unitaire HT</th>
-                    <th class="text-end" style="width: 20%;">Total HT</th>
-                </tr>
-            </thead>
-            <tbody>
-@php
-    $pkDefaultRate = (float) ($invoice->tax_rate ?? 0);
-    $pkSeveralRates = \App\Support\DocumentTotals::hasSeveralRates($invoice->items, $pkDefaultRate);
-    $pkVatLines = \App\Support\DocumentTotals::vatLines($invoice->items, $pkDefaultRate, (float) $invoice->tax_amount);
-@endphp
-                @foreach($invoice->items as $item)
-                <tr>
-                    <td>{{ $item['description'] }}@include('pro.partials.document-line-note')</td>
-                    <td class="text-center">{{ $item['quantity'] }}</td>
-                    <td class="text-end">{{ number_format($item['unit_price'], 2, ',', ' ') }} €</td>
-                    <td class="text-end fw-semibold">{{ number_format($item['total'] ?? ($item['quantity'] * $item['unit_price']), 2, ',', ' ') }} €</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-
-    {{-- Totals --}}
-    <div class="d-flex justify-content-end mb-4">
-        <div class="invoice-totals pro-mobile-full">
-            <div class="total-line">
-                <span>Sous-total HT</span>
-                <strong>{{ number_format($invoice->subtotal, 2, ',', ' ') }} €</strong>
-            </div>
-            @foreach($pkVatLines as $pkVat)
-            <div class="total-line" style="border-top: 1px solid #e2e8f0;">
-                <span>TVA ({{ number_format($pkVat['rate'], 2, ',', ' ') }}%)@if($pkSeveralRates) sur {{ number_format($pkVat['base'], 2, ',', ' ') }} €@endif</span>
-                <strong>{{ number_format($pkVat['tax'], 2, ',', ' ') }} €</strong>
-            </div>
-            @endforeach
-            <div class="total-line-grand">
-                <span>Total TTC</span>
-                <span>{{ number_format($invoice->total, 2, ',', ' ') }} €</span>
-            </div>
-            @if($pkDeductions = app(\App\Services\InvoiceAdjustments::class)->deductionLines($invoice))
-                @foreach($pkDeductions['lines'] as $pkLine)
-                <div class="total-line">
-                    <span>{{ $pkLine['label'] }}</span>
-                    <strong>{{ number_format($pkLine['amount'], 2, ',', ' ') }} €</strong>
-                </div>
-                @endforeach
-                <div class="total-line-grand">
-                    <span>{{ $pkDeductions['net_label'] }}</span>
-                    <span>{{ number_format($pkDeductions['net'], 2, ',', ' ') }} €</span>
-                </div>
-            @endif
-        </div>
-    </div>
-
-    {{-- Payment status --}}
-    @if($invoice->paid_at)
-    <div class="p-3 mb-3" style="background: rgba(16,185,129,0.06); border-radius: 12px; border: 1px solid rgba(16,185,129,0.2);">
-        <i class="fas fa-check-circle text-success me-2"></i>
-        <strong>Payée le {{ $invoice->paid_at->format('d/m/Y') }}</strong>
-        @if($invoice->payment_method) — Mode : {{ ucfirst($invoice->payment_method) }}@endif
-    </div>
-    @endif
-
-    <div class="p-3 mb-3" style="background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; font-size: .83rem; color: #475569;">
-        @if(\App\Support\DocumentTotals::hasZeroRate($invoice->items, (float) $invoice->tax_rate) && $invoice->vat_exemption_reason)<div class="fw-bold mb-1">{{ $invoice->vat_exemption_reason }}</div>@endif
-        @if($invoice->isCreditNote())
-        <div><strong>Motif de l’avoir :</strong> {{ $invoice->credit_reason ?: 'Non précisé' }}</div>
-        <div>Le montant de cet avoir vient en déduction de la facture qu’il corrige.</div>
-        @else
-        <div><strong>Conditions de paiement :</strong> {{ $invoice->payment_terms ?: 'À convenir' }}</div>
-        <div><strong>Escompte :</strong> {{ $invoice->early_payment_discount ?: 'Néant' }}</div>
-        @if($invoice->client_type === 'business')<div><strong>Retard :</strong> {{ number_format($invoice->late_penalty_rate ?? 0, 2, ',', ' ') }} % par an + indemnité forfaitaire de recouvrement de 40 €.</div>@endif
-        @endif
-    </div>
-
-    {{-- Notes --}}
-    @if($invoice->notes)
-    <div class="pt-3" style="border-top: 1px solid var(--pro-border);">
-        <strong style="font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b;">Notes & conditions</strong>
-        <p class="text-muted mt-2" style="font-size: 0.85rem; white-space: pre-line;">{{ $invoice->notes }}</p>
-    </div>
-    @endif
+<div class="pk-sheet-frame">
+    <article class="pk-sheet" aria-label="Aperçu du document">
+        @include('pro.partials.invoice-sheet')
+    </article>
 </div>
 
 {{-- Action Buttons --}}
