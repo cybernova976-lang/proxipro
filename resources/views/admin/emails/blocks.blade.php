@@ -22,6 +22,7 @@
     $savedLayout = old('content_layout');
     if (is_string($savedLayout) && is_array(json_decode($savedLayout, true))) $initialBlocks = json_decode($savedLayout, true);
     $editorImages = array_map(fn($path) => storage_url($path), $existingPaths);
+    $messageSpacingHtml = view('emails.partials.responsive-spacing')->render();
 @endphp
 <section id="email-block-editor" class="mt-3" aria-label="Mise en page du message">
     <h3 class="h6 fw-bold">Composez votre message par blocs</h3>
@@ -48,6 +49,7 @@
     const existing = @json($editorImages);
     const initial = @json($initialBlocks);
     const comparisonHtml = @json($comparisonHtml);
+    const messageSpacingHtml = @json($messageSpacingHtml);
     const titles = {text:'Texte', image:'Photo', button:'Bouton avec lien', comparison:'Comparatif des offres'};
     const blocks = initial.filter(b => ['text','image','button'].includes(b.type) || (b.type === 'comparison' && comparisonHtml)).map(b => b.type === 'image'
         ? {...b, url: /^existing:\d+$/.test(b.ref || '') ? existing[Number(b.ref.split(':')[1])] : null}
@@ -80,7 +82,17 @@
             if (b.type === 'button') return `<div style="text-align:${align};margin:6px 0 24px">${/^https?:\/\//i.test(b.url||'')&&b.label?`<a href="${safe(b.url)}" style="display:inline-block;padding:16px 26px;background:#2563eb;color:white;border-radius:999px;text-decoration:none;font-weight:700;box-shadow:0 10px 22px rgba(37,99,235,.22)">${safe(b.label)} &nbsp;→</a>`:'<span style="color:#b45309">Complétez le texte et le lien du bouton</span>'}</div>`;
             return `<div style="text-align:${align};margin:0 0 20px">${b.url?`<img src="${safe(b.url)}" alt="${safe(b.caption||'Illustration')}" width="${Number(b.width)||560}" style="display:inline-block;width:${Number(b.width)||560}px;max-width:100%;height:auto;border-radius:8px">`:'<p>Photo à sélectionner à nouveau</p>'}${b.caption?`<div style="font-size:12px;color:#64748b;margin-top:6px">${safe(b.caption)}</div>`:''}</div>`;
         }).join('');
-        target.srcdoc=`<!doctype html><html lang="fr"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0;background:#f3f6fb;font-family:Arial;color:#172033"><div style="max-width:620px;margin:20px auto;background:white;border-radius:20px;overflow:hidden"><div style="padding:24px;text-align:center;border-bottom:1px solid #e8eef8"><img src="${safe(@json(asset('images/brand/prokejem-logo.png')))}" alt="Prokejem" width="180" style="max-width:100%;height:auto"></div><div style="padding:30px"><p style="color:#2563eb;font-size:12px;text-transform:uppercase">${safe(field('eyebrow'))}</p><h1 style="font-size:28px;overflow-wrap:anywhere">${safe(field('headline')||'Votre prochain message')}</h1>${html}</div><div style="text-align:center;padding:20px;font-size:12px;background:#f8fafc">Prokejem · Gérer mes préférences e-mail</div></div></body></html>`;
+        const eyebrow = field('eyebrow');
+        target.srcdoc = `<!doctype html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${messageSpacingHtml}</head>
+            <body style="margin:0;padding:0;background:#f3f6fb;font-family:Arial,Helvetica,sans-serif;color:#172033;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f6fb;border-collapse:collapse;"><tr><td class="pk-mail-outer" align="center" style="padding:16px 6px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;table-layout:fixed;background:#fff;border-radius:20px;overflow:hidden;border-collapse:separate;box-shadow:0 14px 40px rgba(37,99,235,.10);">
+            <tr><td style="padding:24px 28px 18px;text-align:center;border-bottom:1px solid #e8eef8;"><img src="${safe(@json(asset('images/brand/prokejem-logo.png')))}" alt="Prokejem" width="180" style="display:inline-block;width:180px;max-width:70%;height:auto;"></td></tr>
+            <tr><td class="pk-mail-content" style="padding:24px 14px;">
+            ${eyebrow ? `<div style="margin-bottom:14px;color:#2563eb;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;">${safe(eyebrow)}</div>` : ''}
+            <h1 style="margin:0 0 14px;color:#111827;font-size:28px;line-height:1.22;">${safe(field('headline') || 'Votre prochain message')}</h1>${html}</td></tr>
+            <tr><td style="text-align:center;padding:20px 28px;font-size:12px;background:#f8fafc;">Prokejem · Gérer mes préférences e-mail</td></tr>
+            </table></td></tr></table></body></html>`;
     }
     function button(text, label, action, disabled=false) {
         const el=document.createElement('button'); el.type='button'; el.className='btn btn-sm btn-outline-secondary';

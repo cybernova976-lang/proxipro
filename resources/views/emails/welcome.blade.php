@@ -4,10 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bienvenue sur {{ $appName }}</title>
+    @include('emails.partials.responsive-spacing')
 </head>
 <body style="margin: 0; padding: 0; background-color: #f5f7fb; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1e293b;">
 
-    <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    <div class="pk-welcome-outer" style="max-width: 600px; margin: 0 auto; padding: 24px 6px;">
 
         {{-- Header --}}
         <div style="text-align: center; margin-bottom: 32px;">
@@ -15,7 +16,7 @@
         </div>
 
         {{-- Main Card --}}
-        <div style="background: white; border-radius: 16px; padding: 40px 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+        <div class="pk-welcome-content" style="background: white; border-radius: 16px; padding: 24px 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
 
             <h2 style="margin: 0 0 8px; font-size: 1.5rem; color: #1e293b;">Bienvenue {{ $user->name }} !</h2>
             <p style="color: #64748b; font-size: 1rem; line-height: 1.7; margin: 0 0 24px;">
@@ -50,14 +51,14 @@
             </div>
 
             {{-- Bloc PRO --}}
-            <div style="background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%); border-radius: 14px; padding: 24px; margin-bottom: 24px; border: 1px solid rgba(99, 102, 241, 0.15);">
+            <div class="pk-welcome-pro" style="background: #eff6ff; background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%); border-radius: 14px; padding: 14px 12px; margin-bottom: 24px; border: 1px solid rgba(99, 102, 241, 0.15);">
                 <h3 style="margin: 0 0 10px; font-size: 1.15rem; color: #0f766e;">💼 Passez au niveau supérieur avec le compte Pro</h3>
                 <p style="color: #475569; font-size: 0.92rem; line-height: 1.6; margin: 0 0 16px;">
                     Les professionnels sur {{ $appName }} bénéficient d'avantages exclusifs pour développer leur activité :
                 </p>
-                <table style="width: 100%; border-collapse: collapse;">
+                <table role="presentation" style="width: 100%; border-collapse: collapse;">
                     <tr>
-                        <td style="padding: 8px 0; vertical-align: top; width: 28px;">
+                        <td class="pk-welcome-check" style="padding: 8px 0; vertical-align: top; width: 18px;">
                             <span style="color: #22c55e; font-weight: bold;">✓</span>
                         </td>
                         <td style="padding: 8px 0; color: #334155; font-size: 0.9rem;">
@@ -65,7 +66,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td style="padding: 8px 0; vertical-align: top; width: 28px;">
+                        <td class="pk-welcome-check" style="padding: 8px 0; vertical-align: top; width: 18px;">
                             <span style="color: #22c55e; font-weight: bold;">✓</span>
                         </td>
                         <td style="padding: 8px 0; color: #334155; font-size: 0.9rem;">
@@ -73,7 +74,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td style="padding: 8px 0; vertical-align: top; width: 28px;">
+                        <td class="pk-welcome-check" style="padding: 8px 0; vertical-align: top; width: 18px;">
                             <span style="color: #22c55e; font-weight: bold;">✓</span>
                         </td>
                         <td style="padding: 8px 0; color: #334155; font-size: 0.9rem;">
@@ -81,7 +82,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td style="padding: 8px 0; vertical-align: top; width: 28px;">
+                        <td class="pk-welcome-check" style="padding: 8px 0; vertical-align: top; width: 18px;">
                             <span style="color: #22c55e; font-weight: bold;">✓</span>
                         </td>
                         <td style="padding: 8px 0; color: #334155; font-size: 0.9rem;">
@@ -89,7 +90,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td style="padding: 8px 0; vertical-align: top; width: 28px;">
+                        <td class="pk-welcome-check" style="padding: 8px 0; vertical-align: top; width: 18px;">
                             <span style="color: #22c55e; font-weight: bold;">✓</span>
                         </td>
                         <td style="padding: 8px 0; color: #334155; font-size: 0.9rem;">
@@ -97,7 +98,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td style="padding: 8px 0; vertical-align: top; width: 28px;">
+                        <td class="pk-welcome-check" style="padding: 8px 0; vertical-align: top; width: 18px;">
                             <span style="color: #22c55e; font-weight: bold;">✓</span>
                         </td>
                         <td style="padding: 8px 0; color: #334155; font-size: 0.9rem;">

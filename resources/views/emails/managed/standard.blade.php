@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ $email->subject }}</title></head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>{{ $email->subject }}</title>
+    @include('emails.partials.responsive-spacing')
+</head>
 <body style="margin:0;padding:0;background:#f3f6fb;font-family:Arial,Helvetica,sans-serif;color:#172033;">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">{{ $email->headline }}</div>
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f6fb;border-collapse:collapse;"><tr><td align="center" style="padding:28px 12px;">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;background:#fff;border-radius:20px;overflow:hidden;border-collapse:separate;box-shadow:0 14px 40px rgba(37,99,235,.10);">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f6fb;border-collapse:collapse;"><tr><td class="pk-mail-outer" align="center" style="padding:16px 6px;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;table-layout:fixed;background:#fff;border-radius:20px;overflow:hidden;border-collapse:separate;box-shadow:0 14px 40px rgba(37,99,235,.10);">
 <tr><td style="padding:24px 28px 18px;text-align:center;border-bottom:1px solid #e8eef8;"><img src="{{ asset('images/brand/prokejem-logo.png') }}" width="180" alt="Prokejem" style="display:inline-block;width:180px;max-width:70%;height:auto;"></td></tr>
 @if(empty($email->metadata['content_blocks']) && count($email->image_paths ?? []))
 <tr><td style="padding:0;">
@@ -13,7 +18,7 @@
     @endforeach
 </td></tr>
 @endif
-<tr><td style="padding:34px 30px 30px;">
+<tr><td class="pk-mail-content" style="padding:24px 14px;">
     @if($email->eyebrow)<div style="margin-bottom:14px;color:#2563eb;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;">{{ $email->eyebrow }}</div>@endif
     <h1 style="margin:0 0 14px;color:#111827;font-size:28px;line-height:1.22;">{{ $email->headline }}</h1>
     @if(!empty($email->metadata['content_blocks']))
