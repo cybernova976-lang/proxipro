@@ -462,7 +462,6 @@
         }
         .footer-brand p { font-size: 0.9rem; line-height: 1.7; margin-bottom: 20px; }
         .footer-brand > [data-site-share-trigger] { margin-bottom: 18px; }
-        .footer .pwa-install-button { position: static; margin: 0 0 18px; box-shadow: none; }
         .footer-social { display: flex; gap: 10px; }
         .footer-social a {
             width: 38px; height: 38px; border-radius: 10px;
@@ -730,7 +729,6 @@
                     <button type="button" class="btn btn-outline-light rounded-3" data-site-share-trigger>
                         <i class="fas fa-share-nodes me-2"></i>Partager {{ config('app.name', 'Prokejem') }}
                     </button>
-                    @include('partials.pwa-install')
                     @if(collect(config('site.social', []))->filter()->isNotEmpty())
                     <div class="footer-social">
                         @foreach(config('site.social') as $network => $url)
@@ -841,6 +839,8 @@
     </script>
     @include('partials.usage-analytics')
     @include('partials.push-notifications')
+    {{-- Installation : pastille flottante, visible dès l'arrivée (comme sur les autres pages), pas dans le pied de page. --}}
+    @include('partials.pwa-install')
     @include('partials.session-inactivity')
 </body>
 </html>
