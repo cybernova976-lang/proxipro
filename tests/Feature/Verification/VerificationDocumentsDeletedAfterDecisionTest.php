@@ -30,7 +30,7 @@ class VerificationDocumentsDeletedAfterDecisionTest extends TestCase
         ])->assertSessionHasNoErrors();
 
         $verification = IdentityVerification::where('user_id', $user->id)->firstOrFail();
-        $this->assertSame(2, IdentityVerificationDocument::count());
+        $this->assertSame(2, IdentityVerificationDocument::where('identity_verification_id', $verification->id)->count());
 
         return [$user, $verification, User::factory()->create(['role' => 'admin'])];
     }
@@ -89,6 +89,33 @@ class VerificationDocumentsDeletedAfterDecisionTest extends TestCase
         $this->assertNotNull($verification->document_front);
         $this->assertNull($verification->documents_deleted_at);
         $this->assertSame(2, IdentityVerificationDocument::count());
+    }
+
+    public function test_the_one_time_migration_deletes_only_decided_requests_documents(): void
+    {
+        [, $approved] = $this->submitted();
+        $approved->forceFill(['status' => 'approved'])->save();
+        [, $rejected] = $this->submitted();
+        $rejected->forceFill(['status' => 'rejected', 'rejection_reason' => 'Illisible'])->save();
+        [, $pending] = $this->submitted();
+        $this->assertSame(6, IdentityVerificationDocument::count());
+
+        (require database_path('migrations/2026_11_26_120000_delete_documents_of_decided_verifications.php'))->up();
+
+        foreach ([$approved, $rejected] as $decided) {
+            $decided->refresh();
+            $this->assertNull($decided->document_front);
+            $this->assertNull($decided->document_back);
+            $this->assertNotNull($decided->documents_deleted_at);
+            $this->assertSame(0, IdentityVerificationDocument::where('identity_verification_id', $decided->id)->count());
+        }
+        $this->assertSame('approved', $approved->status);
+        $this->assertSame('Illisible', $rejected->rejection_reason);
+
+        // Une demande encore en examen garde ses pièces.
+        $this->assertNotNull($pending->fresh()->document_front);
+        $this->assertNull($pending->fresh()->documents_deleted_at);
+        $this->assertSame(2, IdentityVerificationDocument::where('identity_verification_id', $pending->id)->count());
     }
 
     public function test_the_command_only_counts_unless_forced(): void
