@@ -11,7 +11,7 @@
             <a href="{{ route('profile.public', $pro->id) }}" class="home-provider-item">
                 <img src="{{ storage_url($pro->avatar) }}" alt="" width="64" height="64" loading="lazy">
                 <div class="home-provider-info">
-                    <h3>{{ $pro->company_name ?: $pro->name }} @if($pro->identity_verified)<i class="fas fa-check-circle" aria-label="Identité vérifiée"></i>@endif</h3>
+                    <h3>{{ $pro->company_name ?: $pro->name }} @if($pro->identity_verified)<i class="fas fa-check-circle" aria-label="Profil vérifié"></i>@endif</h3>
                     <p class="home-provider-profession">{{ $pro->profession }}</p>
                     <p class="home-provider-location">{{ $pro->city }}{{ $pro->country ? ', '.$pro->country : '' }}</p>
                     @if($pro->verified_reviews_count > 0)<p class="home-provider-rating"><i class="fas fa-star" aria-hidden="true"></i> {{ number_format((float) $pro->verified_reviews_avg, 1, ',', ' ') }} · {{ $pro->verified_reviews_count }} avis de mission</p>@endif

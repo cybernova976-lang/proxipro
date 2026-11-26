@@ -76,7 +76,7 @@
                                 <ul class="card-features">
                                     <li><i class="fas fa-check"></i> Jusqu'à 20 annonces actives</li>
                                     <li><i class="fas fa-check"></i> Badge "Entreprise"</li>
-                                    <li><i class="fas fa-check"></i> Annonces illimitées après vérification</li>
+                                    <li><i class="fas fa-check"></i> Jusqu'à 1 000 annonces actives une fois le profil vérifié</li>
                                 </ul>
                             </div>
                         </div>
@@ -86,7 +86,7 @@
                                 <h5>Auto-entrepreneur</h5>
                                 <p>Micro-entreprise, indépendant</p>
                                 <ul class="card-features">
-                                    <li><i class="fas fa-check"></i> Jusqu'à 10 annonces actives</li>
+                                    <li><i class="fas fa-check"></i> Jusqu'à 10 annonces actives, 15 une fois le profil vérifié</li>
                                     <li><i class="fas fa-check"></i> Badge "Auto-entrepreneur"</li>
                                     <li><i class="fas fa-check"></i> Simple et rapide</li>
                                 </ul>
@@ -1304,8 +1304,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <ul style="list-style: none; padding: 0; margin: 0;">
                             <li style="padding: 0.25rem 0; font-size: 0.85rem; color: #4b5563;"><i class="fas fa-check" style="color: #10b981; margin-right: 0.5rem;"></i> Badge "Profil vérifié" visible</li>
-                            <li style="padding: 0.25rem 0; font-size: 0.85rem; color: #4b5563;"><i class="fas fa-check" style="color: #10b981; margin-right: 0.5rem;"></i> Plus de visibilité dans les résultats</li>
-                            <li style="padding: 0.25rem 0; font-size: 0.85rem; color: #4b5563;"><i class="fas fa-check" style="color: #10b981; margin-right: 0.5rem;"></i> Annonces illimitées (entreprises)</li>
+                            <li style="padding: 0.25rem 0; font-size: 0.85rem; color: #4b5563;"><i class="fas fa-check" style="color: #10b981; margin-right: 0.5rem;"></i> Requis pour activer votre profil prestataire</li>
+                            <li style="padding: 0.25rem 0; font-size: 0.85rem; color: #4b5563;"><i class="fas fa-check" style="color: #10b981; margin-right: 0.5rem;"></i> Jusqu'à 1 000 annonces actives pour une entreprise</li>
                         </ul>
                     </div>
                     

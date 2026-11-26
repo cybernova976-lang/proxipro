@@ -122,7 +122,7 @@
                             <div class="compare-provider__name">
                                 <a href="{{ route('profile.public', $provider) }}">{{ $provider->name }}</a>
                                 @if($provider->hasVerifiedProfileBadge())
-                                    <span class="compare-verified" title="Identité vérifiée" aria-label="Identité vérifiée"><i class="fas fa-check"></i></span>
+                                    <span class="compare-verified" title="Profil vérifié" aria-label="Profil vérifié"><i class="fas fa-check"></i></span>
                                 @endif
                             </div>
                             <span class="compare-job">{{ $job }}</span>

@@ -63,10 +63,10 @@ class ProviderDirectoryExperienceFeatureTest extends TestCase
         $provider = $this->provider(['name' => 'Amina Très Long Nom Complet Sans Troncature', 'hourly_rate' => 987, 'show_hourly_rate' => false]);
         $response = $this->actingAs($viewer)->get(route('feed.professionals'))->assertOk()
             ->assertSee($provider->name)->assertSee('Voir le profil')->assertSee('Décrire mon besoin')
-            ->assertDontSee('987')->assertDontSee('Identité vérifiée');
+            ->assertDontSee('987')->assertDontSee('Profil vérifié');
         $response->assertSee(route('profile.public', ['id' => $provider->id, 'contact' => 1]).'#profile-contact', false);
         $provider->forceFill(['show_hourly_rate' => true, 'identity_verified' => true])->save();
-        $this->get(route('feed.professionals'))->assertOk()->assertSee('987')->assertSee('Identité vérifiée');
+        $this->get(route('feed.professionals'))->assertOk()->assertSee('987')->assertSee('Profil vérifié');
     }
 
     public function test_compact_search_keeps_category_and_specialty_filters_available(): void

@@ -301,6 +301,11 @@
                 @endif
             </div>
             <div class="card-body">
+                @if($verification->documents_deleted_at)
+                    <div class="alert alert-secondary small mb-4" role="status">
+                        <i class="fas fa-trash-can me-2"></i>Pièces effacées le {{ $verification->documents_deleted_at->format('d/m/Y à H:i') }}, après la décision, comme l’annonce la politique de confidentialité. Le résultat du contrôle est conservé.
+                    </div>
+                @endif
                 <div class="row g-4">
                     {{-- RECTO --}}
                     @php $fs = $verification->document_front_status ?? 'pending'; @endphp
@@ -331,7 +336,7 @@
                                 </div>
                             @else
                                 <div class="p-4 text-center text-muted" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
-                                    <div><i class="fas fa-image fa-2x mb-2 d-block"></i><small>Non fourni</small></div>
+                                    <div><i class="fas fa-image fa-2x mb-2 d-block"></i><small>{{ $verification->documents_deleted_at ? 'Effacée après la décision' : 'Non fourni' }}</small></div>
                                 </div>
                             @endif
                             @if($verification->isPending() || $verification->isReturned())
@@ -400,7 +405,7 @@
                                 @endif
                             @else
                                 <div class="p-4 text-center text-muted" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
-                                    <div><i class="fas fa-image fa-2x mb-2 d-block"></i><small>Non fourni</small></div>
+                                    <div><i class="fas fa-image fa-2x mb-2 d-block"></i><small>{{ $verification->documents_deleted_at ? 'Effacée après la décision' : 'Non fourni' }}</small></div>
                                 </div>
                             @endif
                         </div>
@@ -436,7 +441,7 @@
                                 </div>
                             @else
                                 <div class="p-4 text-center text-muted" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
-                                    <div><i class="fas fa-image fa-2x mb-2 d-block"></i><small>Non fourni</small></div>
+                                    <div><i class="fas fa-image fa-2x mb-2 d-block"></i><small>{{ $verification->documents_deleted_at ? 'Effacée après la décision' : 'Non fourni' }}</small></div>
                                 </div>
                             @endif
                             @if($verification->isPending() || $verification->isReturned())

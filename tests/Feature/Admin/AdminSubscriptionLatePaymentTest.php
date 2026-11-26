@@ -110,9 +110,10 @@ class AdminSubscriptionLatePaymentTest extends TestCase
             ->assertSee(route('admin.subscriptions.provider.extend-grace', $this->subscription), false)
             ->assertSee(route('admin.subscriptions.provider.retry-payment', $this->subscription), false)
             ->assertSee('Membre À Jour')
-            // L'ancien bouton ne promet plus le Premium.
+            // L'ancien système n'a plus d'effet : plus aucun bouton pour attribuer un ancien plan.
             ->assertDontSee('Accorder Premium')
-            ->assertSee('Attribuer un ancien plan');
+            ->assertDontSee('Attribuer un ancien plan')
+            ->assertSee('sans effet sur le site depuis le 26/11/2026');
 
         // Le filtre ne garde que les retards ; la recherche retrouve un membre par son nom.
         $this->actingAs($this->admin)->get(route('admin.subscriptions', ['provider_state' => 'late']))->assertOk()

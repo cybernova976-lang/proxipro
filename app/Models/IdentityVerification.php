@@ -47,7 +47,43 @@ class IdentityVerification extends Model
         'submitted_at' => 'datetime',
         'resubmitted_at' => 'datetime',
         'reviewed_at' => 'datetime',
+        'documents_deleted_at' => 'datetime',
     ];
+
+    /** Champs qui pointent vers une pièce envoyée par le membre. */
+    public const DOCUMENT_FIELDS = ['document_front', 'document_back', 'selfie', 'professional_document'];
+
+    /**
+     * Efface les pièces de la demande une fois la décision finale prise (validation
+     * ou refus) : la politique de confidentialité promet leur suppression après la
+     * décision. Seul le résultat du contrôle reste (statuts, motifs, dates).
+     * Une demande renvoyée au membre pour correction garde ses pièces : l'examen
+     * n'est pas terminé.
+     */
+    public function deleteDocumentsAfterDecision(): void
+    {
+        if (! in_array($this->status, ['approved', 'rejected'], true)) {
+            return;
+        }
+
+        foreach (self::DOCUMENT_FIELDS as $field) {
+            $path = $this->{$field};
+            if (! $path || IdentityVerificationDocument::isDatabasePath($path)) {
+                continue;
+            }
+            // Ancien stockage en fichier : un échec de suppression ne doit pas bloquer la décision.
+            try {
+                \Illuminate\Support\Facades\Storage::disk(config('filesystems.default', 'public'))->delete($path);
+            } catch (\Throwable $error) {
+                report($error);
+            }
+        }
+
+        // Pièces enregistrées en base, y compris celles remplacées pendant l'examen.
+        $this->documents()->delete();
+
+        $this->forceFill(array_fill_keys(self::DOCUMENT_FIELDS, null) + ['documents_deleted_at' => now()])->saveQuietly();
+    }
 
     public function user()
     {

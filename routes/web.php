@@ -734,7 +734,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/subscriptions/provider/{proSubscription}/extend-grace', [AdminController::class, 'extendProviderSubscriptionGrace'])->name('admin.subscriptions.provider.extend-grace');
     Route::post('/subscriptions/provider/{proSubscription}/retry-payment', [AdminController::class, 'retryProviderSubscriptionPayment'])->name('admin.subscriptions.provider.retry-payment');
     Route::put('/subscriptions/{id}', [AdminController::class, 'updateSubscription'])->name('admin.subscriptions.update');
-    Route::post('/subscriptions/{id}/grant-premium', [AdminController::class, 'grantPremium'])->name('admin.subscriptions.grant-premium');
     Route::post('/subscriptions/{id}/suspend', [AdminController::class, 'suspendSubscription'])->name('admin.subscriptions.suspend');
     Route::post('/subscriptions/{id}/cancel', [AdminController::class, 'cancelSubscription'])->name('admin.subscriptions.cancel');
 
@@ -750,7 +749,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     // Paramètres
     Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
     Route::post('/settings/general', [AdminController::class, 'updateSettingsGeneral'])->name('admin.settings.general');
-    Route::post('/settings/ads', [AdminController::class, 'updateSettingsAds'])->name('admin.settings.ads');
     Route::post('/settings/catalog', [AdminController::class, 'updateSettingsCatalog'])->name('admin.settings.catalog');
     Route::post('/settings/legal', [AdminController::class, 'updateSettingsLegal'])->name('admin.settings.legal');
     Route::post('/settings/pro-subscriptions', [AdminController::class, 'updateSettingsProSubscriptions'])->name('admin.settings.pro-subscriptions');

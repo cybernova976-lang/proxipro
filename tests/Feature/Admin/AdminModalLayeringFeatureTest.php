@@ -27,8 +27,8 @@ class AdminModalLayeringFeatureTest extends TestCase
         $subscriptionsPage = $this->actingAs($admin)->get(route('admin.subscriptions'));
 
         $subscriptionsPage->assertOk()
-            ->assertSee('data-bs-target="#grantModal'.$member->id.'"', false)
-            ->assertSee('id="grantModal'.$member->id.'"', false)
+            ->assertSee('data-bs-target="#editModal'.$member->id.'"', false)
+            ->assertSee('id="editModal'.$member->id.'"', false)->assertDontSee('grantModal', false)
             ->assertSee("document.querySelectorAll('.main-content .modal')", false)
             ->assertSee('document.body.appendChild(modal)', false)
             ->assertSee('z-index: 1060', false);

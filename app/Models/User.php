@@ -267,6 +267,18 @@ class User extends Authenticatable
         return (bool) ($this->is_verified || $this->identity_verified);
     }
 
+    /** Membres qui portent le badge « Profil vérifié » : même règle que hasVerifiedProfileBadge(). */
+    public function scopeWithVerifiedProfileBadge($query)
+    {
+        return $query->where(fn ($q) => $q->where('is_verified', true)->orWhere('identity_verified', true));
+    }
+
+    public function scopeWithoutVerifiedProfileBadge($query)
+    {
+        return $query->where(fn ($q) => $q->where(fn ($w) => $w->where('is_verified', false)->orWhereNull('is_verified'))
+            ->where(fn ($w) => $w->where('identity_verified', false)->orWhereNull('identity_verified')));
+    }
+
     /**
      * Champs indispensables avant de pouvoir demander la vérification du profil.
      *

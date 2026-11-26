@@ -126,7 +126,7 @@
         <h2 id="offers-payment">Et le prix de la prestation ?</h2>
         <p>Le client et le prestataire conviennent du service, du prix et des modalités avant de commencer.</p>
         <p>Pour une commande réglée via PROKEJEM, la commission de la plateforme est de <strong>{{ number_format((float) $commissionPercent, 2, ',', ' ') }} %</strong> du prix de la prestation. Elle est déduite du montant versé au prestataire. Le détail de la commande est présenté avant validation.</p>
-        <p class="offers-small">Les outils de devis et factures professionnels nécessitent une identité professionnelle renseignée et les conditions PRO applicables. <a href="{{ route('legal.pro-terms') }}">Consulter les conditions de l’espace PRO</a>.</p>
+        <p class="offers-small">Chaque membre qui émet un devis ou une facture en reste responsable, y compris des mentions légales qui s’imposent à lui (numéro SIRET et TVA s’il exerce à titre professionnel). <a href="{{ route('legal.pro-terms') }}">Consulter les conditions de l’espace PRO</a>.</p>
     </section>
     <div class="offers-actions"><a class="offers-button" href="{{ route('register', ['continue' => 'provider']) }}">Créer mon profil prestataire →</a><a href="{{ route('contact.index') }}">Une question sur les offres ? Contactez-nous.</a></div>
 </main>

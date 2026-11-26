@@ -155,7 +155,7 @@
                 </span>
                 <span class="nm">{{ $pkName }}</span>
                 @if($pkVerified)
-                    <span class="pk-verified" title="Identité vérifiée" aria-label="Identité vérifiée"><i class="fas fa-check" aria-hidden="true"></i></span>
+                    <span class="pk-verified" title="Profil vérifié" aria-label="Profil vérifié"><i class="fas fa-check" aria-hidden="true"></i></span>
                 @endif
             @if($pkAuthor)</a>@else</span>@endif
             @if($pkStatus)

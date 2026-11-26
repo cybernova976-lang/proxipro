@@ -1041,7 +1041,7 @@
             @elseif($user->identity_verified)
             <div class="verification-card text-center">
                 <i class="fas fa-check-circle fa-4x text-success mb-4"></i>
-                <h4 class="fw-bold mb-3">Identité vérifiée !</h4>
+                <h4 class="fw-bold mb-3">Profil vérifié !</h4>
                 <p class="text-muted mb-4">
                     Félicitations ! Votre identité a été vérifiée avec succès.<br>
                     Le badge "Vérifié" apparaît désormais sur votre profil.

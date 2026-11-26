@@ -116,7 +116,7 @@
                     <div class="mb-2">
                         @if($profileVerified)
                             <span class="badge bg-success px-3 py-2">
-                                <i class="fas fa-check-circle me-1"></i>Identité vérifiée
+                                <i class="fas fa-check-circle me-1"></i>Profil vérifié
                             </span>
                         @elseif($isOwnProfile)
                             <a href="{{ route('verification.index') }}" class="btn btn-sm btn-outline-success rounded-pill px-3 py-2">
@@ -284,7 +284,7 @@
                     <div class="profile-trust-grid">
                         <div class="profile-trust-item {{ $profileVerified ? 'is-confirmed' : 'is-pending' }}">
                             <i class="fas {{ $profileVerified ? 'fa-check-circle' : 'fa-clock' }}"></i>
-                            <div><strong>{{ $profileVerified ? 'Identité vérifiée' : 'Identité non vérifiée' }}</strong><span>{{ $profileVerified ? 'Documents validés par la plateforme' : 'Vérification pas encore obtenue' }}</span></div>
+                            <div><strong>{{ $profileVerified ? 'Profil vérifié' : 'Vérification du profil' }}</strong><span>{{ $profileVerified ? 'Documents validés par la plateforme' : 'Vérification pas encore obtenue' }}</span></div>
                         </div>
                         <div class="profile-trust-item {{ $user->email_verified_at ? 'is-confirmed' : 'is-pending' }}">
                             <i class="fas {{ $user->email_verified_at ? 'fa-envelope-circle-check' : 'fa-envelope' }}"></i>

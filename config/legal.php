@@ -19,6 +19,8 @@ return [
     'privacy_contact' => env('PRIVACY_CONTACT_EMAIL') ?: (env('SUPPORT_EMAIL') ?: 'contact@prokejem.fr'),
     'last_updated' => env('LEGAL_LAST_UPDATED') ?: '23/10/2026',
     // Règles de la marketplace (classement et visibilité payante) réécrites au lot 1 du feed.
+    // Date du dernier changement du texte des CGU, affichée tant qu'aucune version n'est publiée depuis l'administration.
+    'terms_updated' => env('LEGAL_TERMS_UPDATED') ?: '18/11/2026',
     'platform_rules_updated' => env('LEGAL_PLATFORM_RULES_UPDATED') ?: '20/11/2026',
-    'pro_terms_version' => env('PRO_TERMS_VERSION', '2026-07-19'),
+    'pro_terms_version' => env('PRO_TERMS_VERSION', '2026-11-26'),
 ];

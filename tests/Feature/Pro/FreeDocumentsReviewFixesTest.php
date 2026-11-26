@@ -140,7 +140,7 @@ class FreeDocumentsReviewFixesTest extends TestCase
     {
         $this->get(route('legal.pro-terms'))->assertOk()
             ->assertSee('Tout membre connecté, particulier ou professionnel, peut créer, émettre et télécharger 2 devis et 2 factures sans frais, sans fournir de justificatif.')
-            ->assertSee('nécessitent un abonnement Premium actif')
+            ->assertSee('nécessitent un Premium actif (abonnement ou accès à paiement unique)')
             ->assertSee('il n’est pas partie aux devis et factures')
             ->assertDontSee('réservée à un compte professionnel')
             ->assertDontSee('brouillons non contractuels');

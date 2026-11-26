@@ -10,9 +10,9 @@
                     <i class="fas fa-user"></i>
                 </div>
             @endif
-            @if($pro->plan && $pro->plan !== 'free')
+            @if($pro->hasActiveProSubscription())
             <div class="pro-badge-premium">
-                <i class="fas fa-crown"></i> PRO
+                <i class="fas fa-crown"></i> Premium
             </div>
             @endif
         </div>

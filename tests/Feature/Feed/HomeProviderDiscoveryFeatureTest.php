@@ -93,7 +93,7 @@ class HomeProviderDiscoveryFeatureTest extends TestCase
         $provider = $this->provider(['city' => null, 'country' => null, 'is_verified' => false]);
         $this->actingAs($viewer)->get(route('feed'))->assertOk()
             ->assertSee('Prestataires à découvrir')->assertSee('Localisation non renseignée')
-            ->assertDontSee('Identité vérifiée')->assertDontSee('(0 avis)');
+            ->assertDontSee('Profil vérifié')->assertDontSee('(0 avis)');
         $provider->update(['profile_public' => false]);
         $result = app(HomeProviderDiscoveryService::class)->discover($viewer, null, null);
         $this->assertTrue($result['profiles']->isEmpty());

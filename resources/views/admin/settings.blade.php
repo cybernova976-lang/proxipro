@@ -25,28 +25,13 @@
             <div class="card-body">
                 <form action="{{ route('admin.settings.general') }}" method="POST">
                     @csrf
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Nom de la plateforme</label>
-                        <input type="text" class="form-control" name="site_name" value="{{ $settings['general']['site_name'] ?? 'Prokejem' }}">
-                        <small class="text-muted">Ce nom sera affiché dans tout le site</small>
-                    </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">Email de contact public</label>
                         <input type="email" class="form-control" name="contact_email" value="{{ $settings['general']['contact_email'] ?? config('site.support_email') }}" placeholder="support@votre-domaine.fr">
                         <small class="text-muted">Adresse affichée aux utilisateurs pour joindre la plateforme.</small>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Mode maintenance</label>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="maintenance_mode" id="maintenanceMode" {{ ($settings['general']['maintenance_mode'] ?? '0') == '1' ? 'checked' : '' }}>
-                            <label class="form-check-label" for="maintenanceMode">Activer le mode maintenance</label>
-                        </div>
-                        <small class="text-muted">Le site sera inaccessible aux utilisateurs pendant la maintenance</small>
-                    </div>
-                    
+
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save me-2"></i>Enregistrer
                     </button>
@@ -61,35 +46,16 @@
             <div class="card-header bg-white border-0 py-3">
                 <h5 class="mb-0">
                     <i class="fas fa-bullhorn me-2 text-success"></i>
-                    Paramètres des Annonces
+                    Règles des annonces
                 </h5>
             </div>
-            <div class="card-body">
-                <form action="{{ route('admin.settings.ads') }}" method="POST">
-                    @csrf
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Annonces gratuites par mois (plan FREE)</label>
-                        <input type="number" class="form-control" name="free_ads_limit" value="{{ $settings['ads']['free_ads_limit'] ?? '3' }}" min="0">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Durée de validité des annonces (jours)</label>
-                        <input type="number" class="form-control" name="ad_validity_days" value="{{ $settings['ads']['ad_validity_days'] ?? '30' }}" min="1">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Modération automatique</label>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="auto_moderation" id="autoModeration" {{ ($settings['ads']['auto_moderation'] ?? '1') == '1' ? 'checked' : '' }}>
-                            <label class="form-check-label" for="autoModeration">Approuver automatiquement les nouvelles annonces</label>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i>Enregistrer
-                    </button>
-                </form>
+            <div class="card-body" data-ad-rules>
+                <p class="text-muted small">Règles appliquées par le site. Elles sont fixées dans le code et ne se modifient pas ici.</p>
+                <ul class="small mb-0 ps-3">
+                    <li class="mb-2"><strong>Annonces actives par compte :</strong> 5 pour un particulier, 10 pour un auto-entrepreneur (15 une fois son profil vérifié), 20 pour une entreprise (1 000 une fois son profil vérifié).</li>
+                    <li class="mb-2"><strong>Durée de publication :</strong> 30 jours pour une demande, 90 jours pour une offre.</li>
+                    <li><strong>Mise en ligne :</strong> une annonce est publiée dès son envoi ; la modération se fait ensuite depuis la page Annonces.</li>
+                </ul>
             </div>
         </div>
     </div>
@@ -326,14 +292,6 @@
 
                     <div class="mb-3">
                         <label class="form-label">Notifications par email</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="email_new_user" id="emailNewUser" {{ ($settings['email']['email_new_user'] ?? '1') == '1' ? 'checked' : '' }}>
-                            <label class="form-check-label" for="emailNewUser">Nouvelle inscription</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="email_new_ad" id="emailNewAd" {{ ($settings['email']['email_new_ad'] ?? '1') == '1' ? 'checked' : '' }}>
-                            <label class="form-check-label" for="emailNewAd">Nouvelle annonce</label>
-                        </div>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="email_new_message" id="emailNewMessage" {{ ($settings['email']['email_new_message'] ?? '1') == '1' ? 'checked' : '' }}>
                             <label class="form-check-label" for="emailNewMessage">Nouveau message du formulaire de contact</label>

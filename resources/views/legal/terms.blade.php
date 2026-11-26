@@ -59,7 +59,7 @@
     @php
         $pkTermsVersion = \App\Models\TermsVersion::current();
     @endphp
-    <p class="mt-5 text-muted small">@if($pkTermsVersion)<span data-terms-version>Version des conditions : {{ $pkTermsVersion->version }}, applicable à partir du {{ $pkTermsVersion->effective_at->format('d/m/Y') }}.</span>@endif
+    <p class="mt-5 text-muted small">@if($pkTermsVersion)<span data-terms-version>Version des conditions : {{ $pkTermsVersion->version }}, applicable à partir du {{ $pkTermsVersion->effective_at->format('d/m/Y') }}.</span>@else <span data-terms-updated>Dernière mise à jour des conditions : {{ config('legal.terms_updated') }}.</span>@endif
     Dernière mise à jour de l’identité de l’exploitant : {{ config('legal.last_updated') }}.</p>
 </div></div>
 </div></div></div>

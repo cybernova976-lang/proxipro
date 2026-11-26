@@ -93,7 +93,7 @@
                             <span class="pk-pro__fallback" aria-hidden="true">{{ Str::upper(Str::substr($pkPro->name, 0, 1)) }}</span>
                         @endif
                         @if($pkIsVerified)
-                            <span class="pk-pro__verified" title="Identité vérifiée" aria-label="Identité vérifiée">
+                            <span class="pk-pro__verified" title="Profil vérifié" aria-label="Profil vérifié">
                                 <i class="fas fa-check" aria-hidden="true"></i>
                             </span>
                         @endif

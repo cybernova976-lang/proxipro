@@ -104,7 +104,7 @@ class FeedHomeShowcaseFeatureTest extends TestCase
             ->assertSee(route('profile.public', $provider->id), false)
             ->assertDontSee('Bonjour, je souhaite demander vos services')
             ->assertDontSee('service en ligne')
-            ->assertDontSee('Profil vérifié')
+            ->assertDontSee('>Profil vérifié<', false)->assertSee('aria-label="Profil vérifié"', false)
             ->assertSee('Voir tous les services, la carte et les filtres')
             ->assertDontSee('home-showcase-section', false)
             ->assertDontSee('adsFeedMap', false);

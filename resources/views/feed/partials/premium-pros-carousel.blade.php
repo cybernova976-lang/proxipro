@@ -30,9 +30,9 @@
                                         <i class="fas fa-user"></i>
                                     </div>
                                 @endif
-                                @if($pro->plan && $pro->plan !== 'free')
+                                @if($pro->hasActiveProSubscription())
                                 <div class="pro-badge-premium">
-                                    <i class="fas fa-crown"></i> PRO
+                                    <i class="fas fa-crown"></i> Premium
                                 </div>
                                 @endif
                             </div>
@@ -466,8 +466,8 @@
                 ? `<img src="${pro.avatar}" alt="${pro.name}" class="pro-photo">`
                 : `<div class="pro-photo-placeholder"><i class="fas fa-user"></i></div>`;
             
-            const badgeHtml = pro.is_premium 
-                ? `<div class="pro-badge-premium"><i class="fas fa-crown"></i> PRO</div>`
+            const badgeHtml = pro.has_active_pro_subscription 
+                ? `<div class="pro-badge-premium"><i class="fas fa-crown"></i> Premium</div>`
                 : '';
             
             const bioHtml = pro.bio 

@@ -240,15 +240,7 @@ class FeedController extends Controller
                 });
         })
             ->whereNotIn('id', $boostedUserIds)
-            ->where(function ($q) {
-                $q->whereNotNull('plan')
-                    ->where('plan', '!=', '')
-                    ->whereRaw('LOWER(plan) != ?', ['free'])
-                    ->where(function ($q2) {
-                        $q2->whereNull('subscription_end')
-                            ->orWhere('subscription_end', '>', now());
-                    });
-            })
+            ->whereHas('proSubscriptions', fn ($subscriptions) => $subscriptions->currentlyActive())
             ->withCount(['ads as ads_count' => fn ($q) => $q->marketplaceActive()])
             ->with(['ads' => fn ($q) => $q->marketplaceActive()->latest()->take(1)])
             ->inRandomOrder()
@@ -1413,22 +1405,7 @@ class FeedController extends Controller
             $q->where('user_type', 'professionnel')
                 ->orWhere('is_service_provider', true)
                 ->orWhere('pro_onboarding_completed', true)
-                ->orWhereHas('proSubscriptions', function ($q2) {
-                    $q2->where('status', 'active')
-                        ->where(function ($q3) {
-                            $q3->whereNull('ends_at')
-                                ->orWhere('ends_at', '>', now());
-                        });
-                })
-                ->orWhere(function ($q2) {
-                    $q2->whereNotNull('plan')
-                        ->where('plan', '!=', '')
-                        ->whereRaw('LOWER(plan) != ?', ['free'])
-                        ->where(function ($q3) {
-                            $q3->whereNull('subscription_end')
-                                ->orWhere('subscription_end', '>', now());
-                        });
-                });
+                ->orWhereHas('proSubscriptions', fn ($subscriptions) => $subscriptions->currentlyActive());
         });
     }
 
@@ -1439,21 +1416,7 @@ class FeedController extends Controller
                 $q2->where('status', 'active')
                     ->where('is_boosted', true)
                     ->where('boost_end', '>', now());
-            })->orWhereHas('proSubscriptions', function ($q2) {
-                $q2->where('status', 'active')
-                    ->where(function ($q3) {
-                        $q3->whereNull('ends_at')
-                            ->orWhere('ends_at', '>', now());
-                    });
-            })->orWhere(function ($q2) {
-                $q2->whereNotNull('plan')
-                    ->where('plan', '!=', '')
-                    ->whereRaw('LOWER(plan) != ?', ['free'])
-                    ->where(function ($q3) {
-                        $q3->whereNull('subscription_end')
-                            ->orWhere('subscription_end', '>', now());
-                    });
-            });
+            })->orWhereHas('proSubscriptions', fn ($subscriptions) => $subscriptions->currentlyActive());
         });
     }
 
@@ -1478,21 +1441,7 @@ class FeedController extends Controller
                 $q->where('status', 'active')
                     ->where('is_boosted', true)
                     ->where('boost_end', '>', now());
-            })->orWhereHas('proSubscriptions', function ($q) {
-                $q->where('status', 'active')
-                    ->where(function ($q2) {
-                        $q2->whereNull('ends_at')
-                            ->orWhere('ends_at', '>', now());
-                    });
-            })->orWhere(function ($q) {
-                $q->whereNotNull('plan')
-                    ->where('plan', '!=', '')
-                    ->whereRaw('LOWER(plan) != ?', ['free'])
-                    ->where(function ($q2) {
-                        $q2->whereNull('subscription_end')
-                            ->orWhere('subscription_end', '>', now());
-                    });
-            });
+            })->orWhereHas('proSubscriptions', fn ($subscriptions) => $subscriptions->currentlyActive());
         };
 
         $rankPros = function ($query, int $take) {
@@ -2204,15 +2153,7 @@ class FeedController extends Controller
         $remainingPremiumSlots = max(0, 20 - count($boostedUserIds));
         $subscribedPros = $remainingPremiumSlots === 0 ? collect() : (clone $query)
             ->whereNotIn('id', $boostedUserIds)
-            ->where(function ($q) {
-                $q->whereNotNull('plan')
-                    ->where('plan', '!=', '')
-                    ->whereRaw('LOWER(plan) != ?', ['free'])
-                    ->where(function ($q2) {
-                        $q2->whereNull('subscription_end')
-                            ->orWhere('subscription_end', '>', now());
-                    });
-            })
+            ->whereHas('proSubscriptions', fn ($subscriptions) => $subscriptions->currentlyActive())
             ->with(['ads' => function ($q) use ($categoriesToSearch) {
                 $q->marketplaceActive();
                 if (! empty($categoriesToSearch)) {

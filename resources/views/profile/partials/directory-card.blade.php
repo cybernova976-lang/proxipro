@@ -15,7 +15,7 @@
         <div class="directory-identity">
             <h3><a href="{{ route('profile.public', $pro) }}">{{ $pro->name }}</a></h3>
             @if($pro->hasVerifiedProfileBadge())
-                <span class="directory-verified" role="img" aria-label="Identité vérifiée" title="Identité vérifiée : ce badge ne certifie pas les qualifications professionnelles.">✓</span>
+                <span class="directory-verified" role="img" aria-label="Profil vérifié" title="Profil vérifié : ce badge ne certifie pas les qualifications professionnelles.">✓</span>
             @endif
             @if($trade)<p class="directory-trade">{{ $trade }}</p>@endif
             @if($place)<p class="directory-place">{{ $place }}</p>@endif

@@ -17,7 +17,7 @@
 @include('admin.subscriptions.partials.provider-subscriptions')
 
 <!-- Statistiques -->
-<div class="mb-2"><h5 class="fw-bold mb-0">Anciens plans de visibilité (STARTER / PRO / BUSINESS)</h5><p class="text-muted small mb-0">Ancien système, distinct du Premium prestataire ci-dessus : ces compteurs ne comptent pas les abonnements Premium.</p></div>
+<div class="mb-2"><h5 class="fw-bold mb-0">Anciens plans de visibilité (STARTER / PRO / BUSINESS)</h5><p class="text-muted small mb-0">Ancien système, sans effet sur le site depuis le 26/11/2026 : un ancien plan ne donne ni visibilité ni avantage, et ces compteurs ne comptent pas les abonnements Premium. Pour offrir Premium, utilisez « Accorder un accès manuel ».</p></div>
 <div class="row g-4 mb-4">
     <div class="col-xl-2 col-lg-4 col-md-6">
         <div class="card stat-card border-0 bg-primary bg-gradient text-white">
@@ -314,13 +314,6 @@
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 
-                                <!-- Attribuer un ancien plan -->
-                                <button class="btn btn-sm btn-outline-warning" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#grantModal{{ $user->id }}"
-                                        title="Attribuer un ancien plan">
-                                    <i class="fas fa-crown"></i>
-                                </button>
                                 
                                 @if($user->plan !== 'FREE' && ($user->subscription_end && \Carbon\Carbon::parse($user->subscription_end)->isFuture()))
                                 <!-- Suspendre -->
@@ -385,58 +378,6 @@
                         </div>
                     </div>
 
-                    <!-- Modal : attribuer un ancien plan -->
-                    <div class="modal fade" id="grantModal{{ $user->id }}" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header bg-warning bg-opacity-25">
-                                    <h5 class="modal-title">
-                                        <i class="fas fa-crown text-warning me-2"></i>
-                                        Attribuer un ancien plan à {{ $user->name }}
-                                    </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <form action="{{ route('admin.subscriptions.grant-premium', $user->id) }}" method="POST">
-                                    @csrf
-                                    <div class="modal-body">
-                                        <div class="alert alert-info">
-                                            <i class="fas fa-info-circle me-2"></i>
-                                            Cette action attribue un ancien plan de visibilité, sans paiement. Ce n’est pas l’abonnement Premium : pour l’offrir, utilisez « Accorder un accès manuel » en haut de cette page.
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-bold">Plan à accorder</label>
-                                            <div class="row g-2">
-                                                @foreach(['STARTER' => 'Starter', 'PRO' => 'Pro', 'BUSINESS' => 'Business'] as $key => $label)
-                                                <div class="col-4">
-                                                    <input type="radio" class="btn-check" name="plan" id="plan{{ $key }}{{ $user->id }}" value="{{ $key }}" {{ $key == 'PRO' ? 'checked' : '' }}>
-                                                    <label class="btn btn-outline-{{ $plans[$key]['color'] ?? 'primary' }} w-100" for="plan{{ $key }}{{ $user->id }}">
-                                                        {{ $label }}
-                                                    </label>
-                                                </div>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-bold">Durée</label>
-                                            <select name="duration" class="form-select">
-                                                <option value="7">7 jours</option>
-                                                <option value="30" selected>1 mois</option>
-                                                <option value="90">3 mois</option>
-                                                <option value="365">1 an</option>
-                                                <option value="unlimited">Illimité</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                        <button type="submit" class="btn btn-warning">
-                                            <i class="fas fa-crown me-2"></i>Attribuer ce plan
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
                     @empty
                     <tr>
                         <td colspan="5" class="text-center py-5">

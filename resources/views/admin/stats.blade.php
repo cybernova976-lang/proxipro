@@ -161,7 +161,7 @@
             <div class="card-header bg-white border-0 py-3">
                 <h5 class="mb-0">
                     <i class="fas fa-crown me-2 text-warning"></i>
-                    Répartition des Plans
+                    Répartition Premium
                 </h5>
             </div>
             <div class="card-body d-flex align-items-center justify-content-center">
@@ -516,20 +516,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Graphique Plans
-    const planColors = {
-        'FREE': colors.secondary,
-        'STARTER': colors.info,
-        'PRO': colors.success,
-        'BUSINESS': colors.warning
-    };
+    // Gris pour les membres sans Premium, puis une couleur par formule Premium.
+    const planPalette = [colors.secondary, colors.primary, colors.success, colors.warning, colors.info, colors.danger];
     
     new Chart(document.getElementById('plansChart'), {
         type: 'doughnut',
         data: {
-            labels: plansData.map(d => d.plan || 'FREE'),
+            labels: plansData.map(d => d.plan),
             datasets: [{
                 data: plansData.map(d => d.count),
-                backgroundColor: plansData.map(d => planColors[d.plan || 'FREE'] || colors.secondary),
+                backgroundColor: plansData.map((d, i) => planPalette[i % planPalette.length]),
                 borderWidth: 0
             }]
         },

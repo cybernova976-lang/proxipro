@@ -42,7 +42,7 @@ class AdminController extends Controller
             'active_ads' => Ad::where('status', 'active')->count(),
             'pending_ads' => Ad::where('status', 'pending')->count(),
             'new_users_today' => User::whereDate('created_at', today())->count(),
-            'verified_users' => User::where('is_verified', true)->count(),
+            'verified_users' => User::withVerifiedProfileBadge()->count(),
             'pending_verifications' => IdentityVerification::where('status', 'pending')->where('payment_status', 'paid')->count(),
         ];
 
@@ -215,10 +215,10 @@ class AdminController extends Controller
         if ($request->filled('status')) {
             switch ($request->status) {
                 case 'verified':
-                    $query->where('is_verified', true);
+                    $query->withVerifiedProfileBadge();
                     break;
                 case 'unverified':
-                    $query->where('is_verified', false);
+                    $query->withoutVerifiedProfileBadge();
                     break;
                 case 'active':
                     $query->where('is_active', true);
@@ -959,29 +959,6 @@ class AdminController extends Controller
         return back()->with('success', 'Abonnement de '.$user->name.' mis à jour avec succès');
     }
 
-    // Accorder le premium gratuitement
-    public function grantPremium(Request $request, $id)
-    {
-        $user = User::findOrFail($id);
-
-        $validated = $request->validate([
-            'plan' => 'required|in:STARTER,PRO,BUSINESS',
-            'duration' => 'required|in:7,30,90,365,unlimited',
-        ]);
-
-        $user->plan = $validated['plan'];
-
-        if ($validated['duration'] === 'unlimited') {
-            $user->subscription_end = now()->addYears(100);
-        } else {
-            $user->subscription_end = now()->addDays((int) $validated['duration']);
-        }
-
-        $user->save();
-
-        return back()->with('success', 'Premium '.$validated['plan'].' accordé à '.$user->name);
-    }
-
     // Suspendre un abonnement
     public function suspendSubscription($id)
     {
@@ -1012,13 +989,14 @@ class AdminController extends Controller
             'total_users' => User::count(),
             'total_ads' => Ad::count(),
             'active_ads' => Ad::where('status', 'active')->count(),
-            'verified_users' => User::where('is_verified', true)->count(),
-            'premium_users' => User::where('plan', '!=', 'FREE')->count(),
+            'verified_users' => User::withVerifiedProfileBadge()->count(),
+            // Premium réel : abonnement ou accès à paiement unique en cours (pas l'ancienne colonne users.plan).
+            'premium_users' => ProSubscription::currentlyActive()->distinct()->count('user_id'),
         ];
 
         // Inscriptions par jour (30 derniers jours)
         $registrationsByDay = User::select(
-            DB::raw('created_at::date as date'),
+            DB::raw('DATE(created_at) as date'),
             DB::raw('COUNT(*) as count')
         )
             ->where('created_at', '>=', now()->subDays(30))
@@ -1028,7 +1006,7 @@ class AdminController extends Controller
 
         // Annonces par jour (30 derniers jours)
         $adsByDay = Ad::select(
-            DB::raw('created_at::date as date'),
+            DB::raw('DATE(created_at) as date'),
             DB::raw('COUNT(*) as count')
         )
             ->where('created_at', '>=', now()->subDays(30))
@@ -1043,10 +1021,8 @@ class AdminController extends Controller
             ->limit(10)
             ->get();
 
-        // Répartition des plans
-        $usersByPlan = User::select('plan', DB::raw('COUNT(*) as count'))
-            ->groupBy('plan')
-            ->get();
+        // Répartition Premium : membres sans Premium, puis Premium en cours par formule.
+        $usersByPlan = $this->premiumBreakdown($generalStats['total_users'], $generalStats['premium_users']);
 
         // Répartition par type d'utilisateur
         $usersByType = User::select('user_type', DB::raw('COUNT(*) as count'))
@@ -1103,6 +1079,29 @@ class AdminController extends Controller
         ));
     }
 
+    /**
+     * Membres sans Premium et Premium en cours par formule (mensuel, 3 mois, 6 mois, accès offert).
+     *
+     * @return array<int, array{plan: string, count: int}>
+     */
+    private function premiumBreakdown(int $totalUsers, int $premiumUsers): array
+    {
+        $rows = [['plan' => 'Sans Premium', 'count' => max(0, $totalUsers - $premiumUsers)]];
+
+        $byPlan = ProSubscription::currentlyActive()
+            ->select('plan', DB::raw('COUNT(DISTINCT user_id) as count'))
+            ->groupBy('plan')
+            ->orderBy('plan')
+            ->get();
+
+        foreach ($byPlan as $row) {
+            $label = ProviderSubscriptionPlans::get((string) $row->plan)['label'] ?? (string) $row->plan;
+            $rows[] = ['plan' => 'Premium '.$label, 'count' => (int) $row->count];
+        }
+
+        return $rows;
+    }
+
     // ===== PARAMÈTRES =====
 
     public function settings()
@@ -1147,32 +1146,14 @@ class AdminController extends Controller
     public function updateSettingsGeneral(Request $request)
     {
         $validated = $request->validate([
-            'site_name' => 'required|string|max:100',
             'contact_email' => 'required|email|max:255',
-            'maintenance_mode' => 'nullable',
         ]);
 
-        Setting::set('site_name', $validated['site_name'], 'general');
         Setting::set('contact_email', $validated['contact_email'], 'general');
-        Setting::set('maintenance_mode', $request->has('maintenance_mode') ? '1' : '0', 'general');
 
         return back()->with('success', 'Paramètres généraux mis à jour avec succès');
     }
 
-    public function updateSettingsAds(Request $request)
-    {
-        $validated = $request->validate([
-            'free_ads_limit' => 'required|integer|min:0',
-            'ad_validity_days' => 'required|integer|min:1',
-            'auto_moderation' => 'nullable',
-        ]);
-
-        Setting::set('free_ads_limit', $validated['free_ads_limit'], 'ads');
-        Setting::set('ad_validity_days', $validated['ad_validity_days'], 'ads');
-        Setting::set('auto_moderation', $request->has('auto_moderation') ? '1' : '0', 'ads');
-
-        return back()->with('success', 'Paramètres des annonces mis à jour avec succès');
-    }
 
     public function updateSettingsCatalog(Request $request)
     {
@@ -1262,8 +1243,6 @@ class AdminController extends Controller
         Setting::set('mail_admin_address', $validated['mail_admin_address'], 'email');
         // Copie des alertes de contact vers une seconde adresse (vide = pas de copie).
         Setting::set('mail_admin_copy_address', trim((string) ($validated['mail_admin_copy_address'] ?? '')), 'email');
-        Setting::set('email_new_user', $request->has('email_new_user') ? '1' : '0', 'email');
-        Setting::set('email_new_ad', $request->has('email_new_ad') ? '1' : '0', 'email');
         Setting::set('email_new_message', $request->has('email_new_message') ? '1' : '0', 'email');
 
         return back()->with('success', 'Paramètres email mis à jour avec succès');
@@ -1712,6 +1691,9 @@ class AdminController extends Controller
             // Envoyer notification
             \App\Support\SafeNotifier::send($user, new \App\Notifications\VerificationApproved($verification));
 
+            // Décision prise : les pièces ne sont plus nécessaires (politique de confidentialité).
+            $verification->refresh()->deleteDocumentsAfterDecision();
+
             DB::commit();
 
             return back()->with('success', 'Vérification approuvée avec succès. L\'utilisateur '.$user->name.' est maintenant vérifié.');
@@ -1764,6 +1746,9 @@ class AdminController extends Controller
         \App\Support\SafeNotifier::send($verification->user, new \App\Notifications\VerificationDocumentRejected(
             $verification, $rejectedDocs, $request->rejection_reason
         ));
+
+        // Refus définitif : une nouvelle demande repart de nouvelles pièces.
+        $verification->refresh()->deleteDocumentsAfterDecision();
 
         return back()->with('success', 'Vérification rejetée. L\'utilisateur a été notifié du motif.');
     }
@@ -1833,6 +1818,8 @@ class AdminController extends Controller
                 ]);
 
                 \App\Support\SafeNotifier::send($user, new \App\Notifications\VerificationApproved($verification));
+
+                $verification->refresh()->deleteDocumentsAfterDecision();
 
                 DB::commit();
 

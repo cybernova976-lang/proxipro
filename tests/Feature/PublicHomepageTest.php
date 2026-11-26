@@ -103,7 +103,10 @@ class PublicHomepageTest extends TestCase
             ->assertSee('Quelques réponses, tout simplement.')
             ->assertSee('Combien coûte un profil prestataire ?')
             ->assertSee('Y a-t-il des prestataires dans ma ville ?')
-            ->assertSee('Les outils d’émission de devis et factures PRO sont réservés aux professionnels');
+            ->assertSee('Tout membre connecté, particulier ou professionnel, peut créer 2 devis et 2 factures sans frais ni justificatif')
+            ->assertSee('obtenu gratuitement après l’examen de votre pièce d’identité')
+            ->assertDontSee('vérification d’identité payante')
+            ->assertDontSee('réservés aux professionnels qui remplissent');
 
         $this->assertSame(1, substr_count($response->getContent(), '<h1 '));
         $this->assertStringNotContainsString('id="home-provider-panel" hidden', $response->getContent());
