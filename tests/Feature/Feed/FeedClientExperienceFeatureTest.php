@@ -47,8 +47,12 @@ class FeedClientExperienceFeatureTest extends TestCase
     public function test_provider_home_keeps_its_own_workflow(): void
     {
         $provider = User::factory()->create(['is_service_provider' => true, 'user_type' => 'professionnel']);
-        $this->actingAs($provider)->get(route('feed'))->assertOk()
+        $response = $this->actingAs($provider)->get(route('feed'))->assertOk()
             ->assertSee('Votre activité prestataire')->assertDontSee('pk-client-welcome', false)
             ->assertDontSee('id="pkProblemTitle"', false)->assertDontSee('id="pkEmploymentTitle"', false);
+
+        $this->assertSame(1, preg_match('#<section class="pk-discover"[^>]*>(.*?)</section>#s', $response->getContent(), $providerIntro));
+        $this->assertStringNotContainsString('Publier une offre', $providerIntro[1]);
+        $response->assertSee('Publier une offre')->assertSee(route('ads.create', ['type' => 'offre']), false);
     }
 }

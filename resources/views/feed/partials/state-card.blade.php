@@ -1,7 +1,6 @@
 @php
     $pkFirstName = trim(Str::before(trim(Auth::user()->name ?? 'Utilisateur'), ' ')) ?: 'Utilisateur';
     $pkProviderMode = ($pkRole ?? 'client') === 'provider';
-    $pkStatePublish = \App\Support\ClientSpaceNavigation::publishAction($pkProviderMode ? 'provider' : 'client');
 @endphp
 <section class="pk-discover" aria-labelledby="pkStateTitle">
     <div class="pk-discover__heading">
@@ -11,10 +10,6 @@
                 ? 'Explorez les demandes et retrouvez vos missions en cours.'
                 : 'Un service à trouver, un projet à faire avancer.' }}</p>
         </div>
-        <a class="pk-btn" href="{{ $pkStatePublish['url'] }}">
-            <i class="fas fa-plus" aria-hidden="true"></i>
-            {{ $pkStatePublish['label'] }}
-        </a>
     </div>
     <div class="pk-discover__searchline">
         @include('feed.partials.intent-bar')

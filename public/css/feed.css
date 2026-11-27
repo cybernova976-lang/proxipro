@@ -870,10 +870,9 @@
 /* L'accueil connecté reste un espace de travail : recherche courte, annonces puis repères. */
 .pk-mode { margin-bottom: 18px; }
 .pk-discover { padding: 0 0 24px; border-bottom: 1px solid var(--pk-rule); }
-.pk-discover__heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
+.pk-discover__heading { margin-bottom: 20px; }
 .pk-discover h1 { margin: 0; font-size: clamp(1.35rem, 2vw, 1.75rem); line-height: 1.3; font-weight: 800; letter-spacing: -.035em; }
 .pk-discover__heading p { margin: 6px 0 0; font-size: .88rem; color: var(--pk-ink-2); }
-.pk-discover__heading .pk-btn { min-height: 44px; box-shadow: none; }
 .pk-discover__searchline { display: flex; align-items: stretch; gap: 16px; }
 .pk-discover .pk-intent { flex: 1; min-width: 0; padding: 0; gap: 10px; border: 0; box-shadow: none; background: transparent; }
 .pk-discover .pk-intent__field { border-radius: 11px; background: #fff; border-color: #ced9e7; min-height: 50px; font-size: 16px; }
@@ -948,8 +947,7 @@
   .pk-body { padding: 20px 16px 28px; gap: 22px; }
   .pk-main { gap: 16px; }
   .pk-discover { padding-bottom: 18px; }
-  .pk-discover__heading { margin-bottom: 16px; gap: 12px; align-items: flex-start; }
-  .pk-discover__heading > .pk-btn { display: none; } /* Publier reste accessible dans la navigation mobile. */
+  .pk-discover__heading { margin-bottom: 16px; }
   .pk-discover__heading p { font-size: .82rem; }
   .pk-discover__searchline { flex-wrap: wrap; gap: 6px; }
   .pk-discover .pk-intent { flex-basis: 100%; gap: 8px; }

@@ -25,25 +25,32 @@ class LocationOrderAndProPromoTest extends TestCase
         $this->assertSame(1, preg_match('#<select[^>]*id="'.$selectId.'"[^>]*>(.*?)</select>#s', $html, $select), $selectId);
         preg_match_all('#<option value="([^"]*)"#u', $select[1], $values);
 
-        return array_values(array_filter($values[1], fn ($value) => $value !== ''));
+        $values = array_filter($values[1], fn ($value) => $value !== '');
+
+        return array_values(array_map('html_entity_decode', $values));
     }
 
-    public function test_france_mayotte_and_la_reunion_open_every_location_list(): void
+    public function test_every_location_list_starts_with_france_and_overseas_then_sorts_the_other_countries(): void
     {
-        $this->assertSame(self::HEAD, array_slice(array_keys(config('locations.countries')), 0, 6));
+        $countries = array_keys(config('locations.countries'));
+        $this->assertSame(self::HEAD, array_slice($countries, 0, 6));
+        $otherCountries = array_slice($countries, 6);
+        $alphabetical = $otherCountries;
+        usort($alphabetical, fn ($a, $b) => strcasecmp(\Illuminate\Support\Str::ascii($a), \Illuminate\Support\Str::ascii($b)));
+        $this->assertSame($alphabetical, $otherCountries);
 
         // Inscription.
-        $this->assertSame(self::HEAD, array_slice($this->optionValues($this->get(route('register'))->assertOk()->getContent(), 'country'), 0, 6));
+        $this->assertSame($countries, $this->optionValues($this->get(route('register'))->assertOk()->getContent(), 'country'));
 
         // Publication d'une demande (formulaire complet).
         $member = User::factory()->create(['country' => null, 'city' => null, 'postal_code' => null]);
         $demand = $this->actingAs($member)->get(route('demand.create'))->assertOk()->getContent();
-        $this->assertSame(self::HEAD, array_slice($this->optionValues($demand, 'demandCountry'), 0, 6));
+        $this->assertSame($countries, $this->optionValues($demand, 'demandCountry'));
 
         // Publication d'une offre.
         $provider = User::factory()->create(['user_type' => 'professionnel', 'is_service_provider' => true]);
         $offer = $this->actingAs($provider)->get(route('ads.create'))->assertOk()->getContent();
-        $this->assertSame(self::HEAD, array_slice($this->optionValues($offer, 'country'), 0, 6));
+        $this->assertSame($countries, $this->optionValues($offer, 'country'));
 
         // Aucun pays n'a disparu en réordonnant.
         $this->assertCount(55, config('locations.countries'));

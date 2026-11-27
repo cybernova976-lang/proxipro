@@ -288,6 +288,7 @@
                             autocomplete="new-password"
                             autocapitalize="off"
                             spellcheck="false"
+                            aria-describedby="password-help password-strength-text"
                             class="w-full px-3 py-2.5 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 @error('password') border-red-400 @enderror"
                         >
                         <button type="button" onclick="togglePassword('password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -297,11 +298,11 @@
                     @error('password')
                         <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                     @enderror
-                    <p class="mt-2 text-xs text-gray-500">8 à 40 caractères. Les phrases de passe sont autorisées (espaces inclus).</p>
+                    <p id="password-help" class="mt-2 text-xs text-gray-500">8 à 40 caractères. Vous pouvez choisir une phrase de passe avec plusieurs mots sans lien.</p>
                     <div class="mt-1.5 h-1 bg-gray-100 rounded-full overflow-hidden">
                         <div id="password-strength-bar" class="h-full rounded-full transition-all duration-500 bg-gray-300" style="width: 0%"></div>
                     </div>
-                    <p id="password-strength-text" class="text-xs mt-1 text-gray-400">Sécurité du mot de passe</p>
+                    <p id="password-strength-text" class="text-xs mt-1 text-gray-400" aria-live="polite">Sécurité du mot de passe</p>
                 </div>
 
                 <div>
@@ -510,11 +511,12 @@
             return { width: '0%', color: '#9ca3af', text: 'Sécurité du mot de passe' };
         }
 
-        if (password.length < 8) {
+        const length = [...password].length;
+        if (length < 8) {
             return { width: '20%', color: '#ef4444', text: 'Insuffisant (minimum 8 caractères)' };
         }
 
-        if (password.length > 40) {
+        if (length > 40) {
             return { width: '20%', color: '#ef4444', text: 'Insuffisant (maximum 40 caractères)' };
         }
 
@@ -526,24 +528,24 @@
             return { width: '20%', color: '#ef4444', text: 'Insuffisant (trop proche de vos informations)' };
         }
 
-        let score = 0;
-        if (password.length >= 8) score++;
-        if (password.length >= 12) score++;
-        if (password.length >= 16) score++;
-        if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
-        if (/[0-9]/.test(password)) score++;
-        if (/[^A-Za-z0-9\s]/.test(password)) score++;
-        if (password.includes(' ') && password.trim().split(/\s+/).length >= 3) score++;
-
-        if (score <= 2) {
-            return { width: '35%', color: '#f97316', text: 'Moyen' };
+        const medium = { width: '35%', color: '#c2410c', text: 'Moyen' };
+        const compact = normalized.replace(/\s/gu, '');
+        const distinct = new Set(compact).size;
+        if (distinct < 4 || /^(.+?)\1+$/u.test(compact)) {
+            return medium;
         }
 
-        if (score <= 5) {
-            return { width: '70%', color: '#22c55e', text: 'Fort' };
+        const characterTypes = [/\p{Lu}/u, /\p{Ll}/u, /\p{Nd}/u, /[\p{P}\p{S}]/u]
+            .filter(pattern => pattern.test(password)).length;
+
+        if (characterTypes === 4 && distinct >= 6) {
+            return { width: '100%', color: '#166534', text: 'Très fort' };
+        }
+        if (characterTypes >= 2 || (length >= 14 && distinct >= 7)) {
+            return { width: '70%', color: '#15803d', text: 'Fort' };
         }
 
-        return { width: '100%', color: '#16a34a', text: 'Très fort' };
+        return medium;
     }
 
     function updatePasswordStrength(password) {
@@ -553,7 +555,9 @@
         bar.style.width = level.width;
         bar.style.backgroundColor = level.color;
         text.style.color = level.color;
-        text.textContent = level.text;
+        if (text.textContent !== level.text) {
+            text.textContent = level.text;
+        }
     }
 
     document.getElementById('password').addEventListener('input', function(e) {
