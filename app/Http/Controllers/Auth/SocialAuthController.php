@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\BlockedEmail;
 use App\Models\User;
+use App\Support\UserLoginHistory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -100,7 +101,7 @@ class SocialAuthController extends Controller
                 $user->is_active = true;
                 $user->save();
 
-                Auth::login($user, false);
+                $this->loginWithGoogle($user);
                 session()->flash('show_provider_welcome', true);
 
                 return redirect()->to(\App\Support\DemandPublicationContinuation::destination(request()))->with('success', 'Votre compte a été réactivé et connecté via '.ucfirst($provider).' !');
@@ -125,7 +126,7 @@ class SocialAuthController extends Controller
                     }
                 }
 
-                Auth::login($user, false);
+                $this->loginWithGoogle($user);
 
                 return redirect()->to(\App\Support\DemandPublicationContinuation::destination(request()))->with('success', 'Connexion réussie via '.ucfirst($provider).' !');
             }
@@ -151,7 +152,7 @@ class SocialAuthController extends Controller
             session()->flash('show_provider_welcome', true);
 
             // Connecter l'utilisateur
-            Auth::login($user, false);
+            $this->loginWithGoogle($user);
 
             return redirect()->to(\App\Support\DemandPublicationContinuation::destination(request()))->with('success', 'Bienvenue ! Votre compte a été créé via '.ucfirst($provider).'.');
 
@@ -167,6 +168,12 @@ class SocialAuthController extends Controller
 
             return redirect()->route('login')->with('error', 'Erreur de connexion avec '.ucfirst($provider).'. Veuillez réessayer.');
         }
+    }
+
+    private function loginWithGoogle(User $user): void
+    {
+        Auth::login($user, false);
+        UserLoginHistory::record($user, 'google');
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\IdentityVerification;
 use App\Models\TermsAcceptance;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 /**
@@ -41,6 +42,7 @@ class AdminUserProfile
             'provider' => ['title' => 'Profil prestataire', 'icon' => 'fa-briefcase', 'empty' => 'Aucun profil prestataire renseigné.', 'rows' => self::provider($user)],
             'location' => ['title' => 'Localisation', 'icon' => 'fa-location-dot', 'empty' => 'Aucune localisation renseignée.', 'rows' => self::location($user)],
             'account' => ['title' => 'Compte et consentements', 'icon' => 'fa-user-lock', 'empty' => '', 'rows' => self::account($user)],
+            'logins' => ['title' => 'Dernières connexions', 'icon' => 'fa-clock-rotate-left', 'empty' => 'Aucune connexion enregistrée pour ce compte.', 'rows' => self::logins($user)],
         ];
     }
 
@@ -204,6 +206,18 @@ class AdminUserProfile
         ])];
 
         return $rows;
+    }
+
+    private static function logins(User $user): array
+    {
+        return UserLoginHistory::recent($user)->map(function ($login): array {
+            $date = Carbon::parse($login->logged_in_at, 'UTC');
+
+            return [
+                'label' => $login->method === 'google' ? 'Google' : 'E-mail et mot de passe',
+                'value' => $date->format('d/m/Y').' à '.$date->format('H:i:s').' UTC',
+            ];
+        })->all();
     }
 
     /** @param array<int, string> $keys */

@@ -10,6 +10,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Rules\EmailNotBlocked;
 use App\Services\ReferralService;
+use App\Support\UserLoginHistory;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -181,6 +182,7 @@ class RegisterController extends Controller
 
         // Auto-login and redirect
         $this->guard()->login($user);
+        UserLoginHistory::record($user, 'password');
 
         if ($response = $this->registered($request, $user)) {
             return $response;

@@ -103,11 +103,13 @@ class AdContactContinuationFeatureTest extends TestCase
             ->assertRedirect(route('verification.code.show', ['email' => $user->email]))
             ->assertSessionHas(DemandPublicationContinuation::AD_SESSION_KEY, $ad->id);
         $this->assertGuest();
+        $this->assertDatabaseMissing('user_logins', ['user_id' => $user->id]);
         $code = Mail::sent(EmailVerificationCode::class)->first()->code;
         $this->post(route('verification.code.verify'), ['email' => $user->email, 'code' => $code])
             ->assertRedirect(route('login'));
         $this->post(route('login.attempt'), ['email' => $user->email, 'password' => 'password'])
             ->assertRedirect(route('ads.show', $ad).'#ad-contact-author');
+        $this->assertDatabaseHas('user_logins', ['user_id' => $user->id, 'method' => 'password']);
         $this->assertDatabaseCount('messages', 0);
     }
 

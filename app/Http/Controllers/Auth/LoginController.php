@@ -7,6 +7,7 @@ use App\Mail\EmailVerificationCode;
 use App\Models\Setting;
 use App\Models\User;
 use App\Support\DemandPublicationContinuation;
+use App\Support\UserLoginHistory;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -222,6 +223,10 @@ class LoginController extends Controller
                 'error' => $e->getMessage(),
                 'exception' => get_class($e),
             ]);
+        }
+
+        if ($this->guard()->check()) {
+            UserLoginHistory::record($user, 'password');
         }
 
         // Conserver le feed par défaut, sauf reprise explicite d'une demande.

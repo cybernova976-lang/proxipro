@@ -7,6 +7,9 @@ use App\Models\TermsVersion;
 use App\Models\User;
 use App\Support\AdminUserProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+use Laravel\Socialite\Facades\Socialite;
+use Mockery;
 use Tests\TestCase;
 
 /**
@@ -82,6 +85,7 @@ class AdminUserProfileFactsTest extends TestCase
             ->assertSee('Aucune localisation renseignée.')
             ->assertSee('Non confirmée')
             ->assertSee('Aucune acceptation enregistrée')
+            ->assertSee('Aucune connexion enregistrée pour ce compte.')
             ->assertDontSee('Stripe Connect');
 
         $wrong = AdminUserProfile::registrationNumber('12345678900012');
@@ -110,5 +114,51 @@ class AdminUserProfileFactsTest extends TestCase
         $this->actingAs($principal)->get(route('admin.users.show', $principal->id))->assertOk()
             ->assertSee('Société Principale')
             ->assertSee('data-profile-section="account"', false);
+    }
+
+    public function test_only_the_three_most_recent_successful_logins_appear_on_the_members_admin_profile(): void
+    {
+        $member = User::factory()->create();
+        $otherMember = User::factory()->create();
+        $start = Carbon::parse('2026-11-27 08:07:15', 'UTC');
+        $profileUrl = route('admin.users.show', $member->id);
+
+        $this->travelTo($start->copy()->subHour());
+        $this->post(route('login.attempt'), ['email' => $otherMember->email, 'password' => 'password'])
+            ->assertRedirect(route('feed'));
+        $this->post(route('logout'));
+
+        foreach ([0, 1, 2] as $hours) {
+            $this->travelTo($start->copy()->addHours($hours));
+            $this->post(route('login.attempt'), ['email' => $member->email, 'password' => 'password'])
+                ->assertRedirect(route('feed'));
+            $this->post(route('logout'));
+        }
+
+        $socialUser = Mockery::mock();
+        $socialUser->shouldReceive('getEmail')->once()->andReturn($member->email);
+        $socialUser->shouldReceive('getId')->once()->andReturn('member-google');
+        $socialUser->shouldReceive('getAvatar')->once()->andReturn(null);
+        $driver = Mockery::mock();
+        $driver->shouldReceive('user')->once()->andReturn($socialUser);
+        Socialite::shouldReceive('driver')->once()->with('google')->andReturn($driver);
+
+        $this->travelTo($start->copy()->addHours(3));
+        $this->get(route('social.callback', ['provider' => 'google']))->assertRedirect(route('feed'));
+        $this->get($profileUrl)->assertForbidden();
+        $this->post(route('logout'));
+
+        $this->travelTo($start->copy()->addHours(4));
+        $this->post(route('login.attempt'), ['email' => $member->email, 'password' => 'incorrect'])
+            ->assertSessionHasErrors('email');
+
+        $this->assertDatabaseCount('user_logins', 4);
+        $this->assertDatabaseHas('user_logins', ['user_id' => $member->id, 'method' => 'google']);
+        $this->actingAs($this->admin())->get($profileUrl)->assertOk()
+            ->assertSee('Dernières connexions')
+            ->assertSeeInOrder(['27/11/2026 à 11:07:15 UTC', '27/11/2026 à 10:07:15 UTC', '27/11/2026 à 09:07:15 UTC'])
+            ->assertDontSee('27/11/2026 à 08:07:15 UTC')
+            ->assertDontSee('27/11/2026 à 07:07:15 UTC')
+            ->assertDontSee('27/11/2026 à 12:07:15 UTC');
     }
 }
